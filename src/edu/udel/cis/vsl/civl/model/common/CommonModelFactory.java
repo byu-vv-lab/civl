@@ -162,7 +162,7 @@ import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonRangeType;
-import edu.udel.cis.vsl.civl.model.common.type.CommonStructField;
+import edu.udel.cis.vsl.civl.model.common.type.CommonStructOrUnionField;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
@@ -377,16 +377,6 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private List<SymbolicExpression> scopeValues = new ArrayList<SymbolicExpression>();
 
-	// /**
-	// * The unique symbolic string type used in the system.
-	// */
-	// private SymbolicArrayType stringSymbolicType;
-
-	// /**
-	// * The unique string type used in the system.
-	// */
-	// private CIVLPrimitiveType stringType;
-
 	/**
 	 * The system source, used to create the identifier of the system function
 	 * (_CIVL_System), and for elements introduced during translation but
@@ -447,6 +437,8 @@ public class CommonModelFactory implements ModelFactory {
 	private CIVLRangeType rangeType;
 
 	private FunctionIdentifierExpression waitallFuncPointer;
+
+	private Map<String, CIVLType> systemTypes = new HashMap<>();
 
 	/* **************************** Constructors *************************** */
 
@@ -1842,7 +1834,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public StructOrUnionField structField(Identifier name, CIVLType type) {
-		return new CommonStructField(name, type);
+		return new CommonStructOrUnionField(name, type);
 	}
 
 	@Override
@@ -2581,5 +2573,15 @@ public class CommonModelFactory implements ModelFactory {
 		if (pid == -2)
 			return true;
 		return false;
+	}
+
+	@Override
+	public void addSystemType(String name, CIVLType type) {
+		this.systemTypes.put(name, type);
+	}
+
+	@Override
+	public CIVLType getSystemType(String name) {
+		return systemTypes.get(name);
 	}
 }

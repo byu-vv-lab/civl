@@ -155,16 +155,6 @@ public class CommonEvaluator implements Evaluator {
 	private SymbolicUnionType bundleType;
 
 	/**
-	 * The dynamic gcomm object type.
-	 */
-	private SymbolicType gcommType;
-
-	/**
-	 * The dynamic comm object type.
-	 */
-	private SymbolicType commType;
-
-	/**
 	 * The dynamic heap type.
 	 */
 	private SymbolicTupleType heapType;
@@ -358,11 +348,6 @@ public class CommonEvaluator implements Evaluator {
 						new Singleton<SymbolicType>(universe.realType()),
 						universe.realType()));
 		bigOFunction = universe.canonic(bigOFunction);
-		if (modelFactory.model().gcommType() != null)
-			gcommType = modelFactory.model().gcommType()
-					.getDynamicType(universe);
-		if (modelFactory.model().commType() != null)
-			commType = modelFactory.model().commType().getDynamicType(universe);
 		charType = universe.characterType();
 		nullCharExpr = universe.canonic(universe.character('\u0000'));
 		this.bitAndFunc = universe.symbolicConstant(universe
@@ -1131,8 +1116,8 @@ public class CommonEvaluator implements Evaluator {
 		Evaluation eval = this.evaluate(state, pid, domain);
 		SymbolicExpression domainValue = eval.value;
 		SymbolicExpression initValue = symbolicUtil.initialValueOfRange(
-				symbolicUtil.rangeOfDomainAt(domainValue, index),
-				index, domainInit.dimension());
+				symbolicUtil.rangeOfDomainAt(domainValue, index), index,
+				domainInit.dimension());
 
 		state = eval.state;
 		return new Evaluation(state, initValue);
@@ -2022,8 +2007,7 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicType type = expr.type();
 
 		// TODO check comm type
-		if (type != null && !type.equals(heapType) && !type.equals(gcommType)
-				&& !type.equals(commType) && !type.equals(bundleType)) {
+		if (type != null && !type.equals(heapType) && !type.equals(bundleType)) {
 			// need to eliminate heap type as well. each proc has its own.
 			if (pointerType.equals(type)) {
 				SymbolicExpression pointerValue;
@@ -2672,6 +2656,63 @@ public class CommonEvaluator implements Evaluator {
 		function = state.getDyscope(scopeId).lexicalScope()
 				.getFunction(funcName);
 		return new Triple<>(state, function, scopeId);
+	}
+
+	@Override
+	public Evaluation initialValueOfStateVariable(CIVLSource source,
+			State state, int pid, CIVLType type)
+			throws UnsatisfiablePathConditionException {
+		TypeKind kind = type.typeKind();
+		Evaluation eval = null;
+
+		switch (kind) {
+		case COMPLETE_ARRAY: {
+			CIVLCompleteArrayType arrayType = (CIVLCompleteArrayType) type;
+			NumericExpression size;
+			SymbolicExpression element;
+
+			eval = this.evaluate(state, pid, arrayType.extent());
+			size = (NumericExpression) eval.value;
+			state = eval.state;
+			eval = this.initialValueOfStateVariable(source, state, pid,
+					arrayType.elementType());
+			state = eval.state;
+			element = eval.value;
+			eval.value = symbolicUtil.newArray(state.getPathCondition(), size,
+					element);
+			break;
+		}
+		case STRUCT_OR_UNION: {
+			CIVLStructOrUnionType strType = (CIVLStructOrUnionType) type;
+
+			if (strType.isStructType()) {
+				List<SymbolicExpression> comps = new ArrayList<>(
+						strType.numFields());
+
+				for (StructOrUnionField field : strType.fields()) {
+					eval = this.initialValueOfStateVariable(source, state, pid,
+							field.type());
+					state = eval.state;
+					comps.add(eval.value);
+				}
+				eval.value = universe.tuple(
+						(SymbolicTupleType) strType.getDynamicType(universe),
+						comps);
+			} else {
+				// TODO union Think about it
+			}
+			break;
+		}
+		case PRIMITIVE:
+		case ENUM:
+		case POINTER:
+			eval = new Evaluation(state, universe.integer(-1));
+			break;
+		default:
+			throw new CIVLInternalException("Invalid type of state variables",
+					source);
+		}
+		return eval;
 	}
 
 	@Override

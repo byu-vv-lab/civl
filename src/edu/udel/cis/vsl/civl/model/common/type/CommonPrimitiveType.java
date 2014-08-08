@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.model.common.type;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -190,5 +191,10 @@ public class CommonPrimitiveType extends CommonType implements
 	@Override
 	public TypeKind typeKind() {
 		return TypeKind.PRIMITIVE;
+	}
+
+	@Override
+	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
+		return type;
 	}
 }

@@ -19,13 +19,13 @@ public class CommonRangeType extends CommonStructOrUnionType implements
 		super(name, true);
 		List<StructOrUnionField> myfields = new ArrayList<>(3);
 
-		myfields.add(new CommonStructField(new CommonIdentifier(name
+		myfields.add(new CommonStructOrUnionField(new CommonIdentifier(name
 				.getSource(), (StringObject) universe.canonic(universe
 				.stringObject("low"))), integerType));
-		myfields.add(new CommonStructField(new CommonIdentifier(name
+		myfields.add(new CommonStructOrUnionField(new CommonIdentifier(name
 				.getSource(), (StringObject) universe.canonic(universe
 				.stringObject("high"))), integerType));
-		myfields.add(new CommonStructField(new CommonIdentifier(name
+		myfields.add(new CommonStructOrUnionField(new CommonIdentifier(name
 				.getSource(), (StringObject) universe.canonic(universe
 				.stringObject("step"))), integerType));
 		this.complete(myfields);

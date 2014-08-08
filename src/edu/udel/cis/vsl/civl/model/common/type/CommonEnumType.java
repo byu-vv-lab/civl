@@ -6,6 +6,8 @@ import java.util.Map;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -80,5 +82,10 @@ public class CommonEnumType extends CommonType implements CIVLEnumType {
 			return this.valueMap.get(key);
 		}
 		return BigInteger.ZERO;
+	}
+
+	@Override
+	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
+		return type;
 	}
 }

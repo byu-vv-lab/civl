@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.model.common.type;
 import java.util.LinkedList;
 
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -109,6 +110,11 @@ public class CommonFunctionType extends CommonType implements CIVLFunctionType {
 	@Override
 	public TypeKind typeKind() {
 		return TypeKind.FUNCTION;
+	}
+
+	@Override
+	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
+		return type;
 	}
 
 }

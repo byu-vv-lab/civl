@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -169,7 +170,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression procMapArray;
 		LinkedList<SymbolicExpression> barrierComponents = new LinkedList<>();
 		CIVLSource civlsource = arguments[1].getSource();
-		CIVLType barrierType = model.barrierType();
+		CIVLType barrierType = modelFactory.getSystemType(Model.BARRIER_TYPE);
 		Evaluation eval;
 		int place_num = ((IntegerNumber) universe
 				.extractNumber((NumericExpression) place)).intValue();
@@ -184,14 +185,6 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 				false);
 		state = eval.state;
 		gbarrierObj = eval.value;
-		// if (symbolicUtil.isInvalidHeapObject(gbarrierObj)) {
-		// CIVLExecutionException err = new CIVLExecutionException(
-		// ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
-		// "The gbarrier object of " + arguments[1] + " is invalid",
-		// source);
-		//
-		// this.errorLogger.reportError(err);
-		// }
 		totalPlaces = ((IntegerNumber) universe
 				.extractNumber((NumericExpression) universe.tupleRead(
 						gbarrierObj, zeroObject))).intValue();
@@ -353,7 +346,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		Expression scopeExpression = arguments[0];
 		SymbolicExpression procMapArray;
 		SymbolicExpression inBarrierArray;
-		CIVLType gbarrierType = model.gbarrierType();
+		CIVLType gbarrierType = modelFactory.getSystemType(Model.GBARRIER_TYPE);
 		BooleanExpression context = state.getPathCondition();
 
 		inBarrierArray = symbolicUtil

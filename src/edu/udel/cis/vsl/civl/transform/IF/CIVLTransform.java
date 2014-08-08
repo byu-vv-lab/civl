@@ -15,7 +15,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
-import edu.udel.cis.vsl.civl.transform.common.AST2CIVL;
 import edu.udel.cis.vsl.civl.transform.common.CIVLBaseTransformer;
 import edu.udel.cis.vsl.civl.transform.common.CIVLPragmaTransformer;
 import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
@@ -121,10 +120,9 @@ public class CIVLTransform {
 	 * @param program
 	 *            The program to be printed.
 	 */
-	public static void printProgram2CIVL(PrintStream out, Program program) {
-		AST2CIVL toCIVL = new AST2CIVL();
-
-		toCIVL.astToCIVL(out, program.getAST());
+	public static void printProgram2CIVL(PrintStream out, Program program,
+			boolean ignoreStdLibs) {
+		program.getAST().prettyPrint(out, ignoreStdLibs);
 	}
 
 	public static boolean hasFunctionCalls(AST ast, List<String> functions) {

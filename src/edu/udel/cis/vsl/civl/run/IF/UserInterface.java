@@ -122,6 +122,9 @@ public class UserInterface {
 	 */
 	private final double startTime = System.currentTimeMillis();
 
+	/**
+	 * The ABC front end.
+	 */
 	private FrontEnd frontEnd = new FrontEnd();
 
 	/* ************************** Constructors ***************************** */
@@ -196,6 +199,42 @@ public class UserInterface {
 				Models.newModelBuilder(universe));
 	}
 
+	@SuppressWarnings("unused")
+	private AST[] linkFiles(Preprocessor preprocessor, GMCConfiguration config)
+			throws PreprocessorException, SyntaxException, ParseException {
+		File file;
+		CTokenSource tokensH;
+		CParser parserH;
+		ASTBuilder builderH;
+		AST astH;
+		List<AST> ASTs = new ArrayList<>();
+		Set<String> headerFile = preprocessor.headerFiles();
+
+		if (headerFile.contains("comm.cvh")) {
+			file = new File("text/include/comm.cvl");
+			tokensH = preprocessor.outputTokenSource(file);
+			parserH = frontEnd.getParser(tokensH);
+			builderH = frontEnd.getASTBuilder(parserH);
+			astH = builderH.getTranslationUnit();
+			ASTs.add(astH);
+		} else if (headerFile.contains("concurrency.cvh")) {
+			file = new File("text/include/concurrency.cvl");
+			tokensH = preprocessor.outputTokenSource(file);
+			parserH = frontEnd.getParser(tokensH);
+			builderH = frontEnd.getASTBuilder(parserH);
+			astH = builderH.getTranslationUnit();
+			ASTs.add(astH);
+		} else if (headerFile.contains("mpi.h")) {
+			file = new File("text/include/mpi.cvl");
+			tokensH = preprocessor.outputTokenSource(file);
+			parserH = frontEnd.getParser(tokensH);
+			builderH = frontEnd.getASTBuilder(parserH);
+			astH = builderH.getTranslationUnit();
+			ASTs.add(astH);
+		}
+		return (AST[]) ASTs.toArray();
+	}
+
 	private Pair<Model, Preprocessor> extractModel(PrintStream out,
 			GMCConfiguration config, String filename, ModelBuilder modelBuilder)
 			throws ABCException, IOException, CommandLineException {
@@ -204,7 +243,6 @@ public class UserInterface {
 		boolean debug = civlConfig.debug();
 		boolean verbose = civlConfig.verbose();
 		boolean showModel = config.isTrue(showModelO);
-		// Program program = this.getProgram(filename, config);
 		File file = new File(filename);
 		Preprocessor preprocessor = frontEnd.getPreprocessor(
 				this.getSysIncludes(config), this.getUserIncludes(config));
@@ -212,36 +250,19 @@ public class UserInterface {
 		CParser parser = frontEnd.getParser(tokens);
 		ASTBuilder builder = frontEnd.getASTBuilder(parser);
 		AST userAST = builder.getTranslationUnit();
-		// Analyzer analyzer = frontEnd.getStandardAnalyzer(Language.CIVL_C);
 		Model model;
 		List<String> inputVars = getInputVariables(config);
 		boolean hasFscanf = false;
-		// Set<String> headerFiles = preprocessor.headerFiles();
 		Program program;
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
 
-		// userAST =
 		asts.add(userAST);
-		// if (headerFiles.contains("concurrency.cvh")) {
-		// file = new File("text/include/concurrency.cvh");
-		// Preprocessor preprocessorH = frontEnd.getPreprocessor(
-		// this.getSysIncludes(config), this.getUserIncludes(config));
-		// CTokenSource tokensH = preprocessorH.outputTokenSource(file);
-		// CParser parserH = frontEnd.getParser(tokensH);
-		// ASTBuilder builderH = frontEnd.getASTBuilder(parserH,
-		// parserH.getTree());
-		// AST astH = builderH.getTranslationUnit();
-		//
-		// asts.add(astH);
-		//
-		// }
 		TUs = new AST[asts.size()];
 		asts.toArray(TUs);
-
+		// this.linkFiles(preprocessor, config); TODO
 		program = frontEnd.link(TUs, Language.CIVL_C);
-		// TODO link header files
-
+		// TODO link header files TODO
 		try {
 			if (verbose || debug)
 				// shows absolutely everything
@@ -249,7 +270,7 @@ public class UserInterface {
 			applyTransformers(filename, preprocessor, builder, program,
 					civlConfig, inputVars);
 			if (civlConfig.showProgram() && !civlConfig.debugOrVerbose())
-				CIVLTransform.printProgram2CIVL(out, program);
+				CIVLTransform.printProgram2CIVL(out, program, true);
 			hasFscanf = CIVLTransform.hasFunctionCalls(program.getAST(),
 					Arrays.asList("scanf", "fscanf"));
 			if (config.isTrue(showInputVarsO) || verbose || debug) {
@@ -336,7 +357,7 @@ public class UserInterface {
 				inputVars, astBuilder, config);
 		if (config.debugOrVerbose()) {
 			program.print(out);
-			CIVLTransform.printProgram2CIVL(out, program);
+			CIVLTransform.printProgram2CIVL(out, program, true);
 		}
 		if (hasCIVLPragma) {
 			if (config.debugOrVerbose())
@@ -345,7 +366,7 @@ public class UserInterface {
 					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
 				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program);
+				CIVLTransform.printProgram2CIVL(out, program, true);
 			}
 		}
 		if (hasStdio) {
@@ -355,7 +376,7 @@ public class UserInterface {
 					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
 				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program);
+				CIVLTransform.printProgram2CIVL(out, program, true);
 			}
 		}
 		if (hasOmp) {
@@ -371,7 +392,7 @@ public class UserInterface {
 					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
 				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program);
+				CIVLTransform.printProgram2CIVL(out, program, true);
 			}
 		}
 		if (hasPthread) {
@@ -381,7 +402,7 @@ public class UserInterface {
 					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
 				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program);
+				CIVLTransform.printProgram2CIVL(out, program, true);
 			}
 		}
 		if (hasMpi) {
@@ -391,7 +412,7 @@ public class UserInterface {
 					inputVars, null, config);
 			if (config.debugOrVerbose()) {
 				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program);
+				CIVLTransform.printProgram2CIVL(out, program, true);
 			}
 		}
 		// always apply pruner and side effect remover
@@ -400,43 +421,16 @@ public class UserInterface {
 		program.applyTransformer("prune");
 		if (config.debugOrVerbose()) {
 			program.print(out);
-			CIVLTransform.printProgram2CIVL(out, program);
+			CIVLTransform.printProgram2CIVL(out, program, true);
 		}
 		if (config.debugOrVerbose())
 			this.out.println("Apply side-effect remover...");
 		program.applyTransformer("sef");
 		if (config.debugOrVerbose()) {
 			program.print(out);
-			CIVLTransform.printProgram2CIVL(out, program);
+			CIVLTransform.printProgram2CIVL(out, program, true);
 		}
 	}
-
-	/**
-	 * Instantiates, initializes, and returns a new compiler front end (an
-	 * instance of ABC's Activator class) from the ABC compiler. The user and
-	 * system include paths, if specified in the config, are used to instantiate
-	 * the front end. The front end can then be used preprocess, parse, and
-	 * transform the input file.
-	 * 
-	 * @param filename
-	 *            the name of the file to be parsed
-	 * @param config
-	 *            the configuration parameters for this session
-	 * @return the ABC Activator that can be used to parse and process the file
-	 * @throws ParseException
-	 * @throws SyntaxException
-	 * @throws PreprocessorException
-	 */
-	// private Program compileAndLink(String filename, GMCConfiguration config)
-	// throws PreprocessorException, SyntaxException, ParseException {
-	// File file = new File(filename);
-	// File[] userIncludes = extractPaths((String) config
-	// .getValue(userIncludePathO));
-	// File[] sysIncludes = this.getSysIncludes(config);
-	//
-	// return frontEnd.compileAndLink(new File[] { file }, Language.CIVL_C,
-	// sysIncludes, userIncludes);
-	// }
 
 	private File[] getUserIncludes(GMCConfiguration config) {
 		return extractPaths((String) config.getValue(userIncludePathO));
@@ -893,10 +887,10 @@ public class UserInterface {
 				combinedAST);
 		if (verbose || debug) {
 			compositeProgram.print(out);
-			CIVLTransform.printProgram2CIVL(out, compositeProgram);
+			CIVLTransform.printProgram2CIVL(out, compositeProgram, true);
 		}
 		if (showProgram && !(verbose || debug))
-			CIVLTransform.printProgram2CIVL(out, compositeProgram);
+			CIVLTransform.printProgram2CIVL(out, compositeProgram, true);
 		if (config.isTrue(showInputVarsO) || verbose || debug) {
 			List<String> inputVarNames = inputVariableNames(compositeProgram
 					.getAST());

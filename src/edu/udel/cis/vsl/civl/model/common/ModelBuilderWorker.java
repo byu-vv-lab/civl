@@ -478,17 +478,17 @@ public class ModelBuilderWorker {
 		model = factory.model(system.getSource(), system);
 		model.setMessageType(messageType);
 		model.setQueueType(queueType);
-		model.setCommType(commType);
-		model.setGcommType(gcommType);
-		model.setBarrierType(this.barrierType);
-		model.setGbarrierType(gbarrierType);
-		model.setBasedFilesystemType(this.basedFilesystemType);
-		model.setFileType(this.fileType);
-		model.setFILEType(this.FILEtype);
-		model.setBundleType(this.bundleType);
-		model.setIntIterType(this.intIterType);
-		model.setOmpGwsType(this.ompGwsType);
-		model.setOmpWsType(this.ompWsType);
+		// model.setCommType(commType);
+		// model.setGcommType(gcommType);
+		// model.setBarrierType(this.barrierType);
+		// model.setGbarrierType(gbarrierType);
+		// model.setBasedFilesystemType(this.basedFilesystemType);
+		// model.setFileType(this.fileType);
+		// model.setFILEType(this.FILEtype);
+		// model.setBundleType(this.bundleType);
+		// model.setIntIterType(this.intIterType);
+		// model.setOmpGwsType(this.ompGwsType);
+		// model.setOmpWsType(this.ompWsType);
 		model.setName(modelName);
 		// add all functions to model except main:
 		for (CIVLFunction f : functionMap.values()) {

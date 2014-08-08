@@ -6,6 +6,7 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
@@ -79,5 +80,10 @@ public class CommonDomainType extends CommonType implements CIVLDomainType {
 	@Override
 	public TypeKind typeKind() {
 		return TypeKind.DOMAIN;
+	}
+
+	@Override
+	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
+		return this;
 	}
 }

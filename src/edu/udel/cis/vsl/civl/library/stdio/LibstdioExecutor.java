@@ -227,7 +227,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
 		super(name, primaryExecutor, modelFactory, symbolicUtil,
 				symbolicAnalyzer, civlConfig);
-		Model model = modelFactory.model();
 		SymbolicType stringArrayType;
 
 		EOF = universe.canonic(universe.integer(-100));
@@ -247,15 +246,18 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 								universe.integerType())));
 		createStringToDataFunctions();
 		createDataToStringFunctions();
-		this.filesystemStructType = model.basedFilesystemType();
+		this.filesystemStructType = (CIVLStructOrUnionType) modelFactory
+				.getSystemType(Model.FILE_SYSTEM_TYPE);
 		if (filesystemStructType != null)
 			this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
 					.getDynamicType(universe);
-		this.fileType = model.fileType();
+		this.fileType = (CIVLStructOrUnionType) modelFactory
+				.getSystemType(Model.REAL_FILE_TYPE);
 		if (fileType != null)
 			this.fileSymbolicType = (SymbolicTupleType) this.fileType
 					.getDynamicType(universe);
-		this.FILEtype = model.FILEtype();
+		this.FILEtype = (CIVLStructOrUnionType) modelFactory
+				.getSystemType(Model.FILE_STREAM_TYPE);
 	}
 
 	/* ************************** Private Methods ************************** */

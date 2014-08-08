@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -104,5 +105,10 @@ public class CommonBundleType extends CommonType implements CIVLBundleType {
 	@Override
 	public TypeKind typeKind() {
 		return TypeKind.BUNDLE;
+	}
+
+	@Override
+	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
+		return this;
 	}
 }

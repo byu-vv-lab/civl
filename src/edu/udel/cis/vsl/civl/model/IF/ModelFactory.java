@@ -307,6 +307,10 @@ public interface ModelFactory {
 	 * @return The CIVL void type
 	 */
 	CIVLPrimitiveType voidType();
+	
+	void addSystemType(String name, CIVLType type);
+	
+	CIVLType getSystemType(String name);
 
 	/* *********************************************************************
 	 * SARL symbolic types

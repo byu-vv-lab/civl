@@ -111,6 +111,9 @@ public interface Evaluator {
 			int pid, Expression functionPointer, CIVLSource source)
 			throws UnsatisfiablePathConditionException;
 
+	Evaluation initialValueOfStateVariable(CIVLSource source, State state,
+			int pid, CIVLType type) throws UnsatisfiablePathConditionException;
+
 	/**
 	 * Evaluate the size of a CIVL type.
 	 * 
@@ -203,9 +206,9 @@ public interface Evaluator {
 	 *         Every member of the set is a pointer value, and is a pointer to a
 	 *         memory unit.
 	 */
-	Set<SymbolicExpression> memoryUnitsReachableFromVariable(CIVLType variableType,
-			SymbolicExpression variableValue, int dyScopeID, int vid,
-			State state, String process);
+	Set<SymbolicExpression> memoryUnitsReachableFromVariable(
+			CIVLType variableType, SymbolicExpression variableValue,
+			int dyScopeID, int vid, State state, String process);
 
 	/**
 	 * The model factory should be the unique one used in the system.

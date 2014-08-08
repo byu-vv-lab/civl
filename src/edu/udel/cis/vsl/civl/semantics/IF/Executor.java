@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public interface Executor {
@@ -101,6 +102,35 @@ public interface Executor {
 	 */
 	State malloc(CIVLSource source, State state, int pid, String process,
 			LHSExpression lhs, Expression scopeExpression,
+			SymbolicExpression scopeValue, CIVLType objectType,
+			SymbolicExpression objectValue)
+			throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Adds a new object to the heap of a certain scope; returns the pointer of
+	 * the object in the heap.
+	 * 
+	 * @param source
+	 *            The source code element to be used to report errors.
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The ID of the process where this computation happens.
+	 * @param scopeExpression
+	 *            The static expression of the scope value.
+	 * @param scopeValue
+	 *            The symbolic expression of the scope.
+	 * @param objectType
+	 *            The CIVL type of the object to be added, needed to decide the
+	 *            field index in the heap.
+	 * @param objectValue
+	 *            The object to be added to the heap.
+	 * @return The new state after allocating the specified object in the heap
+	 *         and the pointer of the object in the heap.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	Pair<State, SymbolicExpression> malloc(CIVLSource source, State state,
+			int pid, String process, Expression scopeExpression,
 			SymbolicExpression scopeValue, CIVLType objectType,
 			SymbolicExpression objectValue)
 			throws UnsatisfiablePathConditionException;

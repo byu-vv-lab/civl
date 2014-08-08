@@ -172,4 +172,5 @@ public interface CIVLType {
 
 	boolean isDomainType();
 
+	CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe);
 }

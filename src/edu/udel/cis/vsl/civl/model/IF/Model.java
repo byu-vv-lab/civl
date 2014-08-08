@@ -9,7 +9,6 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -20,6 +19,34 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * 
  */
 public interface Model extends Sourceable {
+
+	public static final String BARRIER_TYPE = "__barrier__";
+
+	public static final String COMM_TYPE = "__comm__";
+
+	public static final String GBARRIER_TYPE = "__gbarrier__";
+
+	public static final String GCOMM_TYPE = "__gcomm__";
+
+	public static final String INT_ITER_TYPE = "__int_iter__";
+
+	public static final String FILE_SYSTEM_TYPE = "CIVL_filesystem";
+
+	public static final String REAL_FILE_TYPE = "$file";
+
+	public static final String FILE_STREAM_TYPE = "FILE";
+
+	public static final String OMP_GSHARED_TYPE = "__OMP_gshared__";
+
+	public static final String OMP_SHARED_TYPE = "__OMP_shared__";
+
+	public static final String OMP_LOOP_RECORD_TYPE = "OMP_loop_record";
+
+	public static final String OMP_WORK_RECORD_TYPE = "OMP_work_record";
+
+	public static final String OMP_GTEAM_TYPE = "__OMP_gteam__";
+
+	public static final String OMP_TEAM_TYPE = "__OMP_team__";
 
 	/**
 	 * @return The model factory that created this model.
@@ -116,11 +143,11 @@ public interface Model extends Sourceable {
 	 */
 	void setMessageType(CIVLType messageType);
 
-	/**
-	 * @param commType
-	 *            The comm type used by this model.
-	 */
-	void setCommType(CIVLType commType);
+	// /**
+	// * @param commType
+	// * The comm type used by this model.
+	// */
+	// void setCommType(CIVLType commType);
 
 	/**
 	 * @return The queue type used by this model.
@@ -132,10 +159,10 @@ public interface Model extends Sourceable {
 	 */
 	CIVLType mesageType();
 
-	/**
-	 * @return The comm type used by this model.
-	 */
-	CIVLType commType();
+	// /**
+	// * @return The comm type used by this model.
+	// */
+	// CIVLType commType();
 
 	/**
 	 * 
@@ -143,19 +170,19 @@ public interface Model extends Sourceable {
 	 */
 	CIVLBundleType bundleType();
 
-	/**
-	 * 
-	 * @return The gcomm type of by this model
-	 */
-	CIVLType gcommType();
+	// /**
+	// *
+	// * @return The gcomm type of by this model
+	// */
+	// CIVLType gcommType();
 
-	/**
-	 * NULL if there is no communicator operation.
-	 * 
-	 * @param gcommType
-	 *            The gcomm type used by this model
-	 */
-	void setGcommType(CIVLType gcommType);
+	// /**
+	// * NULL if there is no communicator operation.
+	// *
+	// * @param gcommType
+	// * The gcomm type used by this model
+	// */
+	// void setGcommType(CIVLType gcommType);
 
 	void setBundleType(CIVLBundleType type);
 
@@ -165,111 +192,112 @@ public interface Model extends Sourceable {
 	 */
 	void complete();
 
-	/**
-	 * The base type of the pointer type $filesystem; a structure type with
-	 * fields (0) scope, and (1) files. Returns NULL if there is no IO
-	 * operation.
-	 * 
-	 * @return The base type of the handle <code>$filesystem</code>
-	 */
-	CIVLStructOrUnionType basedFilesystemType();
-
-	void setBasedFilesystemType(CIVLStructOrUnionType type);
-
-	/**
-	 * The CIVL struct type $file, defined in stdio. Returns NULL if there is no
-	 * IO operation.
-	 * 
-	 * @return The <code>$file</code> type.
-	 */
-	CIVLStructOrUnionType fileType();
-
-	void setFileType(CIVLStructOrUnionType type);
-
-	/**
-	 * The CIVL type FILE, defined in stdio. Returns NULL if there is no IO
-	 * operation.
-	 * 
-	 * @return The <code>FILE</code> type.
-	 */
-	CIVLStructOrUnionType FILEtype();
-
-	void setFILEType(CIVLStructOrUnionType type);
-
-	/**
-	 * NULL if there is no barrier operation.
-	 * 
-	 * @return The base type of the handle $gbarrier
-	 */
-	CIVLType gbarrierType();
-
-	/**
-	 * Updates the base type of the $gbarrier handle.
-	 * 
-	 * @param gbarrierType
-	 *            The type to be used as the base type of the $gbarrier handle.
-	 */
-	void setGbarrierType(CIVLType gbarrierType);
-
-	/**
-	 * NULL if there is no barrier operation.
-	 * 
-	 * @return The base type of the handle $barrier.
-	 */
-	CIVLType barrierType();
-
-	/**
-	 * Updates the base type of the $barrier handle.
-	 * 
-	 * @param barrierType
-	 *            The type to be used as the base type of the $barrier handle.
-	 */
-	void setBarrierType(CIVLType barrierType);
-
-	/**
-	 * NULL if there is no integer iterator operation.
-	 * 
-	 * @return The base type of the handle $int_iter.
-	 */
-	CIVLType intIterType();
-
-	/**
-	 * Updates the base type of the $barrier handle.
-	 * 
-	 * @param intIterType
-	 *            The type to be used as the base type of the $int_iter handle.
-	 */
-	void setIntIterType(CIVLType intIterType);
-
-	/**
-	 * Updates the base type of the $omp_gws handle.
-	 * 
-	 * @param ompGwsType
-	 *            The type to be used as the base type of the $omp_gws handle.
-	 */
-	CIVLType ompGwsType();
-
-	/**
-	 * NULL if there is no omp_gws operation.
-	 * 
-	 * @return The base type of the handle $omp_gws.
-	 */
-	void setOmpGwsType(CIVLType ompGwsType);
-
-	/**
-	 * NULL if there is no omp_ws operation.
-	 * 
-	 * @return The base type of the handle $omp_ws.
-	 */
-	CIVLType ompWsType();
-
-	/**
-	 * Updates the base type of the $omp_ws handle.
-	 * 
-	 * @param ompWsType
-	 *            The type to be used as the base type of the $omp_ws handle.
-	 */
-	void setOmpWsType(CIVLType ompWsType);
+	// /**
+	// * The base type of the pointer type $filesystem; a structure type with
+	// * fields (0) scope, and (1) files. Returns NULL if there is no IO
+	// * operation.
+	// *
+	// * @return The base type of the handle <code>$filesystem</code>
+	// */
+	// CIVLStructOrUnionType basedFilesystemType();
+	//
+	// void setBasedFilesystemType(CIVLStructOrUnionType type);
+	//
+	// /**
+	// * The CIVL struct type $file, defined in stdio. Returns NULL if there is
+	// no
+	// * IO operation.
+	// *
+	// * @return The <code>$file</code> type.
+	// */
+	// CIVLStructOrUnionType fileType();
+	//
+	// void setFileType(CIVLStructOrUnionType type);
+	//
+	// /**
+	// * The CIVL type FILE, defined in stdio. Returns NULL if there is no IO
+	// * operation.
+	// *
+	// * @return The <code>FILE</code> type.
+	// */
+	// CIVLStructOrUnionType FILEtype();
+	//
+	// void setFILEType(CIVLStructOrUnionType type);
+	//
+	// /**
+	// * NULL if there is no barrier operation.
+	// *
+	// * @return The base type of the handle $gbarrier
+	// */
+	// CIVLType gbarrierType();
+	//
+	// /**
+	// * Updates the base type of the $gbarrier handle.
+	// *
+	// * @param gbarrierType
+	// * The type to be used as the base type of the $gbarrier handle.
+	// */
+	// void setGbarrierType(CIVLType gbarrierType);
+	//
+	// /**
+	// * NULL if there is no barrier operation.
+	// *
+	// * @return The base type of the handle $barrier.
+	// */
+	// CIVLType barrierType();
+	//
+	// /**
+	// * Updates the base type of the $barrier handle.
+	// *
+	// * @param barrierType
+	// * The type to be used as the base type of the $barrier handle.
+	// */
+	// void setBarrierType(CIVLType barrierType);
+	//
+	// /**
+	// * NULL if there is no integer iterator operation.
+	// *
+	// * @return The base type of the handle $int_iter.
+	// */
+	// CIVLType intIterType();
+	//
+	// /**
+	// * Updates the base type of the $barrier handle.
+	// *
+	// * @param intIterType
+	// * The type to be used as the base type of the $int_iter handle.
+	// */
+	// void setIntIterType(CIVLType intIterType);
+	//
+	// /**
+	// * Updates the base type of the $omp_gws handle.
+	// *
+	// * @param ompGwsType
+	// * The type to be used as the base type of the $omp_gws handle.
+	// */
+	// CIVLType ompGwsType();
+	//
+	// /**
+	// * NULL if there is no omp_gws operation.
+	// *
+	// * @return The base type of the handle $omp_gws.
+	// */
+	// void setOmpGwsType(CIVLType ompGwsType);
+	//
+	// /**
+	// * NULL if there is no omp_ws operation.
+	// *
+	// * @return The base type of the handle $omp_ws.
+	// */
+	// CIVLType ompWsType();
+	//
+	// /**
+	// * Updates the base type of the $omp_ws handle.
+	// *
+	// * @param ompWsType
+	// * The type to be used as the base type of the $omp_ws handle.
+	// */
+	// void setOmpWsType(CIVLType ompWsType);
 
 	void setHasFscanf(boolean value);
 

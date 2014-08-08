@@ -892,22 +892,32 @@ public class CommonExecutor implements Executor {
 			SymbolicExpression scopeValue, CIVLType objectType,
 			SymbolicExpression objectValue)
 			throws UnsatisfiablePathConditionException {
+		Pair<State, SymbolicExpression> mallocResult = this.malloc(source,
+				state, pid, process, scopeExpression, scopeValue, objectType,
+				objectValue);
+
+		state = mallocResult.left;
+		if (lhs != null)
+			state = assign(state, pid, process, lhs, mallocResult.right);
+		return state;
+	}
+
+	@Override
+	public Pair<State, SymbolicExpression> malloc(CIVLSource source,
+			State state, int pid, String process, Expression scopeExpression,
+			SymbolicExpression scopeValue, CIVLType objectType,
+			SymbolicExpression objectValue)
+			throws UnsatisfiablePathConditionException {
 		int mallocId = modelFactory.getHeapFieldId(objectType);
 		int dyscopeID;
 		SymbolicExpression heapObject;
 		CIVLSource scopeSource = scopeExpression == null ? source
 				: scopeExpression.getSource();
-		Pair<State, SymbolicExpression> mallocResult;
 
 		dyscopeID = modelFactory.getScopeId(scopeSource, scopeValue);
 		heapObject = universe.array(objectType.getDynamicType(universe),
 				Arrays.asList(objectValue));
-		mallocResult = stateFactory.malloc(state, dyscopeID, mallocId,
-				heapObject);
-		state = mallocResult.left;
-		if (lhs != null)
-			state = assign(state, pid, process, lhs, mallocResult.right);
-		return state;
+		return stateFactory.malloc(state, dyscopeID, mallocId, heapObject);
 	}
 
 	@Override

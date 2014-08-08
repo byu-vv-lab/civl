@@ -3,15 +3,20 @@
  */
 package edu.udel.cis.vsl.civl.model.common.type;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
+import edu.udel.cis.vsl.civl.model.common.CommonIdentifier;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -189,5 +194,20 @@ public class CommonStructOrUnionType extends CommonType implements
 	@Override
 	public TypeKind typeKind() {
 		return TypeKind.STRUCT_OR_UNION;
+	}
+
+	@Override
+	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
+		String newName = "CIVL" + name;
+		Identifier newId = new CommonIdentifier(name.getSource(),
+				universe.stringObject(newName));
+		CIVLStructOrUnionType newType = new CommonStructOrUnionType(newId,
+				isHandleObject);
+		List<StructOrUnionField> newFields = new ArrayList<>(this.numFields());
+		
+		for(StructOrUnionField field: fields)
+			newFields.add(field.copyAs(type, universe));
+		newType.complete(newFields);
+		return newType;
 	}
 }

@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -184,7 +185,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression isInitArray;
 		LinkedList<SymbolicExpression> commComponents = new LinkedList<SymbolicExpression>();
 		CIVLSource civlsource = arguments[0].getSource();
-		CIVLType commType = model.commType();
+		CIVLType commType = modelFactory.getSystemType(Model.COMM_TYPE);
 		Evaluation eval;
 
 		eval = this.evaluator.dereference(civlsource, state, process,
@@ -629,7 +630,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression emptyMessages;
 		CIVLType queueType = model.queueType();
 		CIVLType messageType = model.mesageType();
-		CIVLType gcommType = model.gcommType();
+		CIVLType gcommType = modelFactory.getSystemType(Model.GCOMM_TYPE);
 		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
 		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
 		BooleanExpression context = state.getPathCondition();
@@ -760,7 +761,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 	private SymbolicExpression getEmptyMessage(State state) {
 		SymbolicExpression message;
 		CIVLType messageType = model.mesageType();
-		CIVLBundleType bundleType = model.bundleType();
+		CIVLBundleType bundleType = modelFactory.bundleType();
 		LinkedList<SymbolicExpression> emptyMessageComponents = new LinkedList<SymbolicExpression>();
 		StringObject name;
 		SymbolicExpression bundle;
