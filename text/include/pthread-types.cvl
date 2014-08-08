@@ -1,7 +1,7 @@
 #ifdef __PTHREAD_TYPES__
 #else
 #define __PTHREAD_TYPES__
-
+#include <sched.cvl>
 
 //Mutex types
 enum{
@@ -56,6 +56,12 @@ ERSCH
 };
 
 // In process of implementing
+
+typedef struct {
+  $proc queue[];
+  $proc head;
+  $proc tail;
+} proc_fifo_queue;
 
 typedef struct { 
   int pshared;
@@ -138,6 +144,7 @@ typedef struct {
   $proc owner;
   int lock;
   int prioceiling;
+  proc_fifo_queue contenders;
   pthread_mutexattr_t attr;
 } pthread_mutex_t;
 

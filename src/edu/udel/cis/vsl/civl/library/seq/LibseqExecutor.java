@@ -371,25 +371,26 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			return state;
 		}
 		arrayEleType = ((CIVLArrayType) arrayType).elementType();
-		valueType = symbolicAnalyzer.typeOfObjByPointer(valuesPtrSource, state,
-				valuesPtr);
-		if (!arrayEleType.equals(valueType)) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.SEQUENCE,
-					Certainty.PROVEABLE,
-					process,
-					"The first argument of "
-							+ functionName
-							+ " must be a pointer to incomplete array of type T, and"
-							+ " the third argument must be a pointer to type T. \n"
-							+ "actual type of the first argument: pointer to "
-							+ arrayEleType + "\n"
-							+ "actual type of the third argument: pointer to "
-							+ valueType, symbolicAnalyzer.stateToString(state),
-					source);
-
-			this.errorLogger.reportError(err);
-			return state;
+		if(!symbolicUtil.isNullPointer(valuesPtr)){
+			valueType = symbolicAnalyzer.typeOfObjByPointer(valuesPtrSource, state, valuesPtr);
+			if (!arrayEleType.equals(valueType)) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.SEQUENCE,
+						Certainty.PROVEABLE,
+						process,
+						"The first argument of "
+								+ functionName
+								+ " must be a pointer to incomplete array of type T, and"
+								+ " the third argument must be a pointer to type T. \n"
+								+ "actual type of the first argument: pointer to "
+								+ arrayEleType + "\n"
+								+ "actual type of the third argument: pointer to "
+								+ valueType, symbolicAnalyzer.stateToString(state),
+						source);
+	
+				this.errorLogger.reportError(err);
+				return state;
+			}
 		}
 		eval = evaluator.dereference(arrayPtrSource, state, process, arrayPtr,
 				false);
@@ -417,7 +418,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 				.length(arrayValue))).intValue();
 		isOldArrayEmpty = indexInt == 0 && lengthInt == 0;
 		if (isInsert && !isOldArrayEmpty
-				&& (indexInt < 0 || indexInt >= lengthInt)) {
+				&& (indexInt < 0 || indexInt > lengthInt)) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.SEQUENCE, Certainty.PROVEABLE, process,
 					"The index for $seq_insert() is out of the range of the array index.\n"
@@ -469,8 +470,10 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 				}
 			} else {
 				value = universe.arrayRead(arrayValue, index);
-				state = primaryExecutor.assign(valuesPtrSource, state, process,
+				if(!symbolicUtil.isNullPointer(valuePtr)){
+					state = primaryExecutor.assign(valuesPtrSource, state, process,
 						valuePtr, value);
+				}
 				arrayValue = universe.removeElementAt(arrayValue, indexInt);
 			}
 		}

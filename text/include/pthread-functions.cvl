@@ -81,6 +81,8 @@ int pthread_rwlock_init(pthread_rwlock_t *rwlock, const pthread_rwlockattr_t * a
   else{
     rwlock->attr = *attr;
   }
+  int zero = 0;
+  $proc nu = $proc_null;
   rwlock->wrowner = $proc_null;
   rwlock->wrlock = false;
   rwlock->empty = true;
@@ -124,13 +126,15 @@ int pthread_rwlock_unlock(pthread_rwlock_t *rwlock){
   $atomic{
     _Bool found = false;
     int len = $seq_length(&(rwlock->rdowners));
-    for(int x = 0; x < len; x++){
+    for(int x = 0; x < len; x++){      
       if(rwlock->rdowners[x] == $self){
         found = true;
         rwlock->rdlocks[x]--;
         if(rwlock->rdlocks[x] == 0){
           $seq_remove(&(rwlock->rdowners), x, NULL, 1);
           $seq_remove(&(rwlock->rdlocks), x, NULL, 1);
+          len--;
+          x--;
           break;
         }
       }
