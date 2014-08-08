@@ -92,9 +92,16 @@ public class OmpTransformerTest {
 			out.println("======== After applying OpenMP Pragma Transformer ========");
 			frontEnd.printProgram(out, program, true);
 		}
+		if (debug) {
+			PrintStream before = new PrintStream("/tmp/before_simplify");
+			program.getAST().prettyPrint(before, true);
+		}
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 				new ArrayList<String>(0), builder, config);
 		if (debug) {
+			PrintStream after = new PrintStream("/tmp/after_simplify");
+			program.getAST().prettyPrint(after, true);
+			
 			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program, true);
 		}
