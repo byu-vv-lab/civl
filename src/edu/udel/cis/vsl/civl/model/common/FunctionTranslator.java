@@ -181,21 +181,11 @@ import edu.udel.cis.vsl.gmc.CommandLineException;
  */
 public class FunctionTranslator {
 
-	private static final String BARRIER_TYPE = "__barrier__";
-
 	private static final String BUNDLE_TYPE = "__bundle__";
-
-	private static final String COMM_TYPE = "__comm__";
 
 	private static final String DYNAMIC_TYPE = "__dynamic__";
 
-	private static final String GBARRIER_TYPE = "__gbarrier__";
-
-	private static final String GCOMM_TYPE = "__gcomm__";
-
 	private static final String HEAP_TYPE = "__heap__";
-
-	private static final String INT_ITER_TYPE = "__int_iter__";
 
 	private static final String MESSAGE_TYPE = "__message__";
 
@@ -207,17 +197,9 @@ public class FunctionTranslator {
 
 	private static final String QUEUE_TYPE = "__queue__";
 
-	private static final String FILE_SYSTEM_TYPE = "CIVL_filesystem";
-
-	private static final String REAL_FILE_TYPE = "$file";
-
-	private static final String FILE_STREAM_TYPE = "FILE";
-
 	private static final String PAR_FUNC_NAME = "_par_proc";
 
 	/* ************************** Instance Fields ************************** */
-
-	private Map<String, CIVLType> systemTypes;
 
 	private int atomicCount = 0;
 
