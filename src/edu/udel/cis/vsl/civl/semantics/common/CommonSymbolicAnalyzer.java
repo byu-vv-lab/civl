@@ -244,6 +244,16 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		return typeOfObjByRef(varType, reference);
 	}
 
+	@Override
+	public CIVLType getArrayElementType(State state, CIVLSource source,
+			SymbolicExpression arrayPtr) {
+		CIVLType type = this.typeOfObjByPointer(source, state, arrayPtr);
+
+		while (type instanceof CIVLArrayType)
+			type = ((CIVLArrayType) type).elementType();
+		return type;
+	}
+
 	/* *************************** Private Methods ************************* */
 
 	/**
@@ -1110,15 +1120,5 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			return ((CIVLStructOrUnionType) parentType).getField(index).type();
 		}
-	}
-
-	@Override
-	public CIVLType getArrayElementType(State state, CIVLSource source,
-			SymbolicExpression arrayPtr) {
-		CIVLType type = this.typeOfObjByPointer(source, state, arrayPtr);
-
-		while (type instanceof CIVLArrayType)
-			type = ((CIVLArrayType) type).elementType();
-		return type;
 	}
 }
