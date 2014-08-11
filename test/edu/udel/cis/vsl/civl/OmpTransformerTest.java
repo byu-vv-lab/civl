@@ -94,7 +94,7 @@ public class OmpTransformerTest {
 		}
 		if (debug) {
 			PrintStream before = new PrintStream("/tmp/before_simplify");
-			frontEnd.printProgram(before, program, true);
+			program.getAST().prettyPrint(before, true);
 			PrintStream beforeAST = new PrintStream("/tmp/before_AST");
 			frontEnd.printProgram(beforeAST, program, false);
 		}
@@ -102,10 +102,11 @@ public class OmpTransformerTest {
 				new ArrayList<String>(0), builder, config);
 		if (debug) {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
-			frontEnd.printProgram(after, program, true);
-			
+			program.getAST().prettyPrint(after, true);
+		}
+		if (debug) {
 			out.println("======== After applying OpenMP Simplifier ========");
-			//frontEnd.printProgram(out, program, true);
+			frontEnd.printProgram(out, program, true);
 		}
 		program.applyTransformer("prune");
 		if (debug) {

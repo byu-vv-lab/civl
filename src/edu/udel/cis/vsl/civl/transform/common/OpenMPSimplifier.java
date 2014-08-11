@@ -77,7 +77,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
 
-		System.out.println("OpenMP Simplifier Activated");
+		//System.out.println("OpenMP Simplifier Activated");
 		transformOmpParallel(rootNode);
 
 		return astFactory.newAST(rootNode);
