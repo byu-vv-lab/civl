@@ -2,6 +2,7 @@
 #else
 #define __MPI__
 #include<civlc.h>
+#include<string.h>
 
 typedef enum {
     MPIX_NO_OP,

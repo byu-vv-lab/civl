@@ -214,22 +214,34 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
 int MPI_Reduce(void* sendbuf, void* recvbuf, int count,
 	       MPI_Datatype datatype, MPI_Op op, int root,
 	       MPI_Comm comm) {
+  int rank;
+
   $assert(comm.status == __INIT,
 	  "MPI_Reduce() cannot be invoked without "
 	  "MPI_Init() being called before.\n");
-  CMPI_Send(sendbuf, count, datatype, root, REDUCE_TAG, comm.col);
-  if ($comm_place(comm.col) == root) {
+  rank = $comm_place(comm.col);
+  if (rank != root)
+    CMPI_Send(sendbuf, count, datatype, root, REDUCE_TAG, comm.col);
+  else {
     int nprocs = $comm_size(comm.col);
+    int size;
 
     for (int i = 0; i<nprocs; i++) {
-      $message in = $comm_dequeue(comm.col, i, REDUCE_TAG);
-      int size = count * sizeofDatatype(datatype);
+      if(i == root) continue;
+      else{
+	$message in = $comm_dequeue(comm.col, i, REDUCE_TAG);
+	size = count * sizeofDatatype(datatype);
 
-      $bundle_unpack_apply(in.data, recvbuf, count, op);
-      $assert(in.size <= size, 
-	      "Message of size %d exceeds the specified size %d.",
-	      in.size, size);
+	/* the third argument "count" indicates the number of cells needs doing the
+	   operation. */
+	$bundle_unpack_apply(in.data, sendbuf, count, op);
+	$assert(in.size <= size, 
+		"Message of size %d exceeds the specified size %d.",
+		in.size, size);
+      }
     }
+    size = count * sizeofDatatype(datatype);
+    memcpy(recvbuf, sendbuf, size);
   }
   return 0;
 }
