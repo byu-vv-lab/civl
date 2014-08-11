@@ -92,7 +92,7 @@ public class OmpTransformerTest {
 			out.println("======== After applying OpenMP Pragma Transformer ========");
 			frontEnd.printProgram(out, program, true);
 		}
-		if (debug) {
+		if (true) {
 			PrintStream before = new PrintStream("/tmp/before_simplify");
 			program.getAST().prettyPrint(before, true);
 			PrintStream beforeAST = new PrintStream("/tmp/before_AST");
@@ -100,7 +100,7 @@ public class OmpTransformerTest {
 		}
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 				new ArrayList<String>(0), builder, config);
-		if (debug) {
+		if (true) {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
 			program.getAST().prettyPrint(after, true);
 		}
@@ -108,6 +108,7 @@ public class OmpTransformerTest {
 			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program, true);
 		}
+		/*
 		program.applyTransformer("prune");
 		if (debug) {
 			out.println("======== After applying Pruner ========");
@@ -118,6 +119,7 @@ public class OmpTransformerTest {
 			out.println("======== After applying Side Effect Remover ========");
 			frontEnd.printProgram(out, program, true);
 		}
+		*/
 	}
 
 	/* **************************** Test Methods *************************** */

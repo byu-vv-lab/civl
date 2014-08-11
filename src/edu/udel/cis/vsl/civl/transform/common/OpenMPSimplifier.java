@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpReductionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode.OmpWorksharingNodeKind;
@@ -62,6 +63,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 
 	private Set<OperatorNode> writeArrayRefs;
 	private Set<OperatorNode> readArrayRefs;
+	
+	private boolean allIndependent;
 
 	private List<Entity> privateIDs;
 	private List<Entity> loopPrivateIDs;
@@ -129,11 +132,28 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 					addEntities(privateIDs, r.variables());
 				}
 			}
+			
+			allIndependent = true;
 
 			// Visit the rest of this node
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
 				transformOmpWorkshare(child);
+			}
+			
+			if (allIndependent) {
+				// Remove the nested workshares - since they are all independent (i.e., single)
+				children = node.children();
+				for (ASTNode child : children) {
+					removeOmpWorkshare(child);
+				}
+				
+				// Remove the "omp parallel" pragma
+				ASTNode parent = node.parent();
+				int nodeIndex = getChildIndex(parent, node);
+				assert nodeIndex != -1;
+				assert node instanceof OmpStatementNode : "OMPSimplifier expected single parallel statement node";
+				parent.setChild(nodeIndex, ((OmpStatementNode) node).statementNode());
 			}
 
 		} else if (node != null) {
@@ -149,6 +169,22 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			}
 		}
 	}
+	
+	private void removeOmpWorkshare(ASTNode node) {
+		if (node instanceof OmpStatementNode) {
+			ASTNode parent = node.parent();
+			int nodeIndex = getChildIndex(parent, node);
+			assert nodeIndex != -1;
+			parent.setChild(nodeIndex, ((OmpStatementNode) node).statementNode());
+
+		} else if (node != null) {
+			Iterable<ASTNode> children = node.children();
+			for (ASTNode child : children) {
+				removeOmpWorkshare(child);
+			}
+		}
+	}
+
 
 	private void transformOmpWorkshare(ASTNode node) {
 		if (node instanceof OmpForNode) {
@@ -175,14 +211,28 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			}
 			
 			processFor(ompFor);
+			
+			// Record of independent workshare is computed in processFor
 
 		} else if (node instanceof OmpWorksharingNode) {
 			OmpWorksharingNode wsNode = (OmpWorksharingNode) node;
 			//System.out.println("OpenMP Simplifier : Found Workshare "+node);
 
 			OmpWorksharingNodeKind kind = wsNode.ompWorkshareNodeKind();
-			if (kind == OmpWorksharingNode.OmpWorksharingNodeKind.SECTIONS) {
+			switch(kind) {
+			case SECTIONS:
 				processSections(wsNode);
+				allIndependent = false;
+				break;
+			case SECTION:
+				allIndependent = false;
+				break;
+			case SINGLE:
+				allIndependent &= true;
+				break;
+			default:
+				allIndependent = false;
+				break;
 			}
 
 		} else if (node != null) {
@@ -402,6 +452,9 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 				parent.setChild(ompForIndex, single);
 			}
 		}
+		
+		allIndependent &= !hasDeps;
+
 	}
 
 	/*
