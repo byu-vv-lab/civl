@@ -1,8 +1,6 @@
 package edu.udel.cis.vsl.civl.semantics.common;
 
-import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
@@ -73,7 +71,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 	private NumericExpression zero;
 
-	private NumericExpression one;
+	// private NumericExpression one;
 
 	private IntObject oneObj;
 
@@ -102,129 +100,10 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		this.oneObj = (IntObject) universe.canonic(universe.intObject(1));
 		this.twoObj = (IntObject) universe.canonic(universe.intObject(2));
 		zero = (NumericExpression) universe.canonic(universe.integer(0));
-		one = (NumericExpression) universe.canonic(universe.integer(1));
+		// one = (NumericExpression) universe.canonic(universe.integer(1));
 	}
 
 	/* ******************** Methods From SymbolicAnalyzer ****************** */
-
-	@Override
-	public SymbolicExpression arrayCasting(State state, String process,
-			SymbolicExpression oldArray, SymbolicType type,
-			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
-		BooleanExpression pathCondition = state.getPathCondition();
-		Reasoner reasoner = universe.reasoner(pathCondition);
-
-		if (oldArray.type().equals(type))
-			return oldArray;
-		if (!(oldArray.type() instanceof SymbolicArrayType)
-				&& !(type instanceof SymbolicArrayType))
-			return oldArray;
-		else if (!(type instanceof SymbolicArrayType)) {
-			if (reasoner
-					.isValid(universe.equals(universe.length(oldArray), one))) {
-				return universe.arrayRead(oldArray, zero);
-			} else {
-				return oldArray;
-			}
-		} else {
-			SymbolicType elementType = ((SymbolicArrayType) type).elementType();
-			NumericExpression i = universe.zeroInt();
-			NumericExpression dimensionLength; // length of current dimension
-			NumericExpression chunkLength; // (the unrolled old array length) /
-											// (dimensionLength)
-			NumericExpression subEndIndex, subStartIndex;
-			List<SymbolicExpression> newElements = new LinkedList<>();
-			SymbolicExpression unrolledArray;
-			SymbolicExpression subArray;
-			BooleanExpression claim;
-
-			// ------Cast the oldArray to an array of the compatible new type
-			if (!((SymbolicArrayType) type).isComplete()) {
-				// ------For incomplete array type, only 1-d array type is
-				// allowed.
-				// ------Unrolling old array
-				return this.arrayFlatten(state, process, oldArray, civlsource);
-			}
-			// ------For complete array, we have to compute recursively.
-			dimensionLength = ((SymbolicCompleteArrayType) type).extent();
-			claim = universe.lessThan(i, dimensionLength);
-			unrolledArray = this.arrayFlatten(state, process, oldArray,
-					civlsource);
-			chunkLength = universe.divide(universe.length(unrolledArray),
-					dimensionLength);
-			subStartIndex = i;
-			subEndIndex = chunkLength;
-			while (reasoner.isValid(claim)) {
-				subArray = this.getSubArray(unrolledArray, subStartIndex,
-						subEndIndex, state, process, civlsource);
-				newElements.add(this.arrayCasting(state, process, subArray,
-						elementType, civlsource));
-				i = universe.add(i, one);
-				subStartIndex = subEndIndex;
-				subEndIndex = universe.add(chunkLength, chunkLength);
-				claim = universe.lessThan(i, dimensionLength);
-			}
-			return universe.array(newElements.get(0).type(), newElements);
-		}
-	}
-
-	@Override
-	public SymbolicExpression arrayFlatten(State state, String process,
-			SymbolicExpression array, CIVLSource civlsource) {
-		List<SymbolicExpression> unrolledElementList;
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-
-		if (array.isNull() || array == null)
-			throw new CIVLInternalException("parameter array is null.",
-					civlsource);
-
-		if (array.type() instanceof SymbolicArrayType) {
-			if (array.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
-				if (reasoner.extractNumber(universe.length(array)) == null)
-					return array;
-			}
-		} else
-			return universe.array(array.type(), Arrays.asList(array));
-
-		unrolledElementList = this.arrayUnrollingWorker(state, array,
-				civlsource);
-		if (unrolledElementList.size() > 0)
-			return universe.array(unrolledElementList.get(0).type(),
-					unrolledElementList);
-		else if (array instanceof SymbolicArrayType)
-			return universe.emptyArray(((SymbolicArrayType) array)
-					.elementType());
-		else
-			return universe.emptyArray(array.type());
-	}
-
-	@Override
-	public List<SymbolicExpression> arrayFlattenList(State state,
-			String process, SymbolicExpression array, CIVLSource civlsource) {
-		List<SymbolicExpression> flattenElementList = new LinkedList<>();
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-
-		if (array == null)
-			throw new CIVLInternalException("parameter array is null.",
-					civlsource);
-		if (array.isNull())
-			return flattenElementList;
-		if (array.type() instanceof SymbolicArrayType) {
-			if (array.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
-				if (reasoner.extractNumber(universe.length(array)) == null) {
-					flattenElementList.add(array);
-					return flattenElementList;
-				}
-			}
-		} else {
-			flattenElementList.add(array);
-			return flattenElementList;
-		}
-
-		flattenElementList = this.arrayFlattenWorker(state, array, civlsource);
-		return flattenElementList;
-	}
-
 	@Override
 	public SymbolicExpression getSubArray(SymbolicExpression array,
 			NumericExpression startIndex, NumericExpression endIndex,
@@ -392,110 +271,6 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				buffer.append(opString);
 			buffer.append(symbolicExpressionToString(source, state, arg, first));
 		}
-	}
-
-	// Recursive helper function for arrayUnrolling, must be private.
-	private List<SymbolicExpression> arrayFlattenWorker(State state,
-			SymbolicExpression array, CIVLSource civlsource) {
-		BooleanExpression pathCondition = state.getPathCondition();
-		List<SymbolicExpression> unrolledElementList = new LinkedList<>();
-		Reasoner reasoner = universe.reasoner(pathCondition);
-
-		if (array.isNull() || array == null)
-			throw new CIVLInternalException("parameter array is null.",
-					civlsource);
-
-		// If the array object is a symbolic value without provable concrete
-		// length, leave it as symbolic.
-		if (array.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
-			if (reasoner.extractNumber(universe.length(array)) == null) {
-				unrolledElementList.add(array);
-				return unrolledElementList;
-			}
-		}
-
-		if (array.type() instanceof SymbolicArrayType) {
-			BooleanExpression claim;
-			NumericExpression i = universe.zeroInt();
-			NumericExpression length = universe.length(array);
-
-			claim = universe.lessThan(i, length);
-			if (((SymbolicArrayType) array.type()).elementType() instanceof SymbolicArrayType) {
-				while (reasoner.isValid(claim)) {
-					SymbolicExpression element = universe.arrayRead(array, i);
-
-					unrolledElementList.addAll(arrayFlattenWorker(state,
-							element, civlsource));
-					// update
-					i = universe.add(i, one);
-					claim = universe.lessThan(i, length);
-				}
-			} else {
-				while (reasoner.isValid(claim)) {
-					SymbolicExpression element = universe.arrayRead(array, i);
-
-					unrolledElementList.add(element);
-					// update
-					i = universe.add(i, one);
-					claim = universe.lessThan(i, length);
-				}
-			}
-		} else {
-			unrolledElementList.add(array);
-		}
-		return unrolledElementList;
-	}
-
-	// TODO: Too much functions about operation on arrays, do we need a sub
-	// class for it?
-	// Recursive helper function for arrayUnrolling, must be private.
-	private List<SymbolicExpression> arrayUnrollingWorker(State state,
-			SymbolicExpression array, CIVLSource civlsource) {
-		BooleanExpression pathCondition = state.getPathCondition();
-		List<SymbolicExpression> unrolledElementList = new LinkedList<>();
-		Reasoner reasoner = universe.reasoner(pathCondition);
-
-		if (array.isNull() || array == null)
-			throw new CIVLInternalException("parameter array is null.",
-					civlsource);
-
-		if (array.operator() == SymbolicOperator.SYMBOLIC_CONSTANT) {
-			if (reasoner.extractNumber(universe.length(array)) == null) {
-				unrolledElementList.add(array);
-				return unrolledElementList;
-			}
-		}
-
-		if (array.type() instanceof SymbolicArrayType) {
-			BooleanExpression claim;
-			NumericExpression i = universe.zeroInt();
-			NumericExpression length = universe.length(array);
-
-			claim = universe.lessThan(i, length);
-			if (((SymbolicArrayType) array.type()).elementType() instanceof SymbolicArrayType) {
-				while (reasoner.isValid(claim)) {
-					SymbolicExpression element = universe.arrayRead(array, i);
-
-					unrolledElementList.addAll(arrayUnrollingWorker(state,
-							element, civlsource));
-					// update
-					i = universe.add(i, one);
-					claim = universe.lessThan(i, length);
-				}
-			} else {
-				while (reasoner.isValid(claim)) {
-					SymbolicExpression element = universe.arrayRead(array, i);
-
-					unrolledElementList.add(element);
-					// update
-					i = universe.add(i, one);
-					claim = universe.lessThan(i, length);
-				}
-			}
-		} else {
-			unrolledElementList.add(array);
-		}
-		return unrolledElementList;
 	}
 
 	/**
@@ -1335,5 +1110,15 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			return ((CIVLStructOrUnionType) parentType).getField(index).type();
 		}
+	}
+
+	@Override
+	public CIVLType getArrayElementType(State state, CIVLSource source,
+			SymbolicExpression arrayPtr) {
+		CIVLType type = this.typeOfObjByPointer(source, state, arrayPtr);
+
+		while (type instanceof CIVLArrayType)
+			type = ((CIVLArrayType) type).elementType();
+		return type;
 	}
 }

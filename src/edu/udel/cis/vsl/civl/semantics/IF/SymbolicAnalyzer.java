@@ -1,14 +1,11 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
-import java.util.List;
-
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * This class provides methods dealing with symbolic expressions and states,
@@ -19,85 +16,6 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  * 
  */
 public interface SymbolicAnalyzer {
-
-	/**
-	 * Casting an array to a new array with the given array type.<br>
-	 * 
-	 * Pre-Condition: <br>
-	 * 1. The old array should be a complete array (or a object is allowed).<br>
-	 * 
-	 * 2. The cast should be a legal cast. <br>
-	 * 
-	 * 
-	 * Special cases:<br>
-	 * If the array(the "oldArray") is not an array type, return the object (the
-	 * "oldArray") immediately.<br>
-	 * If the given type is not an array type( but the "oldArray" is an array
-	 * type), the length of the "oldArray" must be one, then return the first
-	 * element of the "oldArray". Else, return null<br>
-	 * 
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The identifier of the process
-	 * @param oldArray
-	 *            The array needs being casted.
-	 * @param type
-	 *            The given type that the "oldArray" will try to cast to.
-	 * @param civlsource
-	 *            The CIVL source of the given array.
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	SymbolicExpression arrayCasting(State state, String process,
-			SymbolicExpression array, SymbolicType type, CIVLSource civlsource)
-			throws UnsatisfiablePathConditionException;
-
-	/**
-	 * Flatten a given array to a ordered list of elements of that array(Here
-	 * element should never be array type any more). <br>
-	 * 
-	 * e.g. 1 For an array <code>int a[2][2] = {1,2,3,4}</code>, the unrolled
-	 * list will be <code>{1,2,3,4}</code>
-	 * 
-	 * e.g. 2. Given a variable <code> int a = 1;</code>, this function will
-	 * give you an unrolled list <code>{1}</code>.
-	 * 
-	 * @author Ziqing Luo
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The identifier of the process
-	 * @param array
-	 *            The given array.(Or can be a single object, but by intention,
-	 *            this function is mainly for multi-dimensional arrays)
-	 * @param civlsource
-	 *            The CIVL source of the given array.
-	 * @return
-	 */
-	SymbolicExpression arrayFlatten(State state, String process,
-			SymbolicExpression array, CIVLSource civlsource);
-
-	/**
-	 * Similar function to @link{arrayFlatten} with the @link{java.util.List} as
-	 * the form of return type.
-	 * 
-	 * @author Ziqing Luo
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The information of the process
-	 * @param array
-	 *            THe array needs being flattened
-	 * @param civlsource
-	 *            The CIVL source of the array
-	 * @return a list of flatten elements of the given array.
-	 */
-	public List<SymbolicExpression> arrayFlattenList(State state,
-			String process, SymbolicExpression array, CIVLSource civlsource);
-
 	/**
 	 * Given an array, a start index, and end index, returns the array which is
 	 * the subsequence of the given array consisting of the elements in
@@ -199,4 +117,13 @@ public interface SymbolicAnalyzer {
 	 */
 	CIVLType typeOfObjByPointer(CIVLSource soruce, State state,
 			SymbolicExpression pointer);
+
+	/**
+	 * Get the type of the non-array element of an array by given a pointer to
+	 * an array
+	 * 
+	 * @param array
+	 * @return the type of the non-array element of an array
+	 */
+	CIVLType getArrayElementType(State state, CIVLSource source, SymbolicExpression arrayPtr);
 }
