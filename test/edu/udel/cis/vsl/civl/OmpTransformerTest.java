@@ -94,16 +94,18 @@ public class OmpTransformerTest {
 		}
 		if (debug) {
 			PrintStream before = new PrintStream("/tmp/before_simplify");
-			program.getAST().prettyPrint(before, true);
+			frontEnd.printProgram(before, program, true);
+			PrintStream beforeAST = new PrintStream("/tmp/before_AST");
+			frontEnd.printProgram(beforeAST, program, false);
 		}
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 				new ArrayList<String>(0), builder, config);
 		if (debug) {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
-			program.getAST().prettyPrint(after, true);
+			frontEnd.printProgram(after, program, true);
 			
 			out.println("======== After applying OpenMP Simplifier ========");
-			frontEnd.printProgram(out, program, true);
+			//frontEnd.printProgram(out, program, true);
 		}
 		program.applyTransformer("prune");
 		if (debug) {
@@ -121,14 +123,26 @@ public class OmpTransformerTest {
 
 	@Ignore
 	@Test
-	public void dotProduct_critical1() throws ABCException, IOException {
+	public void dotProduct_critical1_run() throws ABCException, IOException {
 		assertTrue(ui.run("parse", filename("dotProduct_critical.c")));
+	}
+
+	@Ignore
+	@Test
+	public void nested_run() throws ABCException, IOException {
+		assertTrue(ui.run("parse", filename("nested.c")));
+	}
+	
+	@Test
+	public void dotProduct_critical1() throws ABCException, IOException {
+		check("dotProduct_critical", false);
 	}
 
 	@Test
 	public void nested() throws ABCException, IOException {
-		assertTrue(ui.run("parse", filename("nested.c")));
+		check("nested", false);
 	}
+
 
 	@Test
 	public void dotProduct_critical() throws ABCException, IOException {
@@ -175,7 +189,6 @@ public class OmpTransformerTest {
 		check("vecAdd_fix", false);
 	}
 
-	@Ignore
 	@Test
 	public void fig310_mxv_omp() throws ABCException, IOException {
 		check("fig3.10-mxv-omp", false);
@@ -189,5 +202,30 @@ public class OmpTransformerTest {
 	@Test
 	public void parallelfor() throws ABCException, IOException {
 		check("parallelfor", false);
+	}
+	
+	@Test
+	public void dijkstra() throws ABCException, IOException {
+		check("dijkstra_openmp", false);
+	}
+	
+	@Test
+	public void fft() throws ABCException, IOException {
+		check("fft_openmp", false);
+	}
+	
+	@Test
+	public void md() throws ABCException, IOException {
+		check("md_openmp", false);
+	}
+	
+	@Test
+	public void poisson() throws ABCException, IOException {
+		check("poisson_openmp", false);
+	}
+	
+	@Test
+	public void quad() throws ABCException, IOException {
+		check("quad_openmp", false);
 	}
 }

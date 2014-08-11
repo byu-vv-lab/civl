@@ -77,7 +77,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
 
-		// System.out.println("LoopDependenceAnnotator Activated");
+		System.out.println("OpenMP Simplifier Activated");
 		transformOmpParallel(rootNode);
 
 		return astFactory.newAST(rootNode);
@@ -104,6 +104,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	 */
 	private void transformOmpParallel(ASTNode node) {
 		if (node instanceof OmpParallelNode) {
+			//System.out.println("OpenMP Simplifier : Found Parallel "+node);
+
 			/*
 			 * TBD: this code does not yet handle: - nested parallel blocks -
 			 * sections workshares - collapse clauses - chunk clauses -
@@ -151,6 +153,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	private void transformOmpWorkshare(ASTNode node) {
 		if (node instanceof OmpForNode) {
 			OmpForNode ompFor = (OmpForNode) node;
+			//System.out.println("OpenMP Simplifier : Found For "+node);
+
 			
 			/*
 			 * Determine the private variables since they cannot generate
@@ -174,6 +178,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 
 		} else if (node instanceof OmpWorksharingNode) {
 			OmpWorksharingNode wsNode = (OmpWorksharingNode) node;
+			//System.out.println("OpenMP Simplifier : Found Workshare "+node);
+
 			OmpWorksharingNodeKind kind = wsNode.ompWorkshareNodeKind();
 			if (kind == OmpWorksharingNode.OmpWorksharingNodeKind.SECTIONS) {
 				processSections(wsNode);
@@ -189,7 +195,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			 */
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				transformOmpParallel(child);
+				transformOmpWorkshare(child);
 			}
 		}
 	}
@@ -350,6 +356,13 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 		 * Check for array-based dependences.
 		 */
 		hasDeps |= hasArrayRefDependences(boundingConditions, writeArrayRefs, readArrayRefs);
+		/*
+		System.out.println("Found "+(hasDeps?"dependent":"independent")+" loop "+ompFor+"\nwith the following:");
+		System.out.println("  writeVars : "+writeVars);
+		System.out.println("  readVars : "+readVars);
+		System.out.println("  writeArrays : "+writeArrayRefs);
+		System.out.println("  readArrays : "+readArrayRefs);
+		*/
 
 		if (!hasDeps) {
 			/*
@@ -488,31 +501,68 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	 * case that for all values of the index variable that satisfy initCondition and exitCondition that
 	 * e1 == e2.   
 	 * 
-	 * TBD: Currently this analysis does not 
+	 * TBD: Currently this analysis does not handle copy statements and may therefore overestimate dependences
+	 * 
+	 * TBD: Currently this code only handles single dimensional arrays
 	 */
 	private boolean hasArrayRefDependences(List<ExpressionNode> boundingConditions,
 			Set<OperatorNode> writes, Set<OperatorNode> reads) {
 		for (OperatorNode w : writes) {
-			if (!(w instanceof IdentifierExpressionNode))
-				;
-			IdentifierExpressionNode baseWrite = (IdentifierExpressionNode) w
-					.getArgument(0);
+			IdentifierExpressionNode baseWrite = baseArray(w);
 
 			for (OperatorNode r : reads) {
-				IdentifierExpressionNode baseRead = (IdentifierExpressionNode) r
-						.getArgument(0);
+				IdentifierExpressionNode baseRead = baseArray(r);
 
 				if (baseWrite.getIdentifier().getEntity() == 
 					baseRead.getIdentifier().getEntity()) {
 					// Need to check logical equality of these expressions
-					if (!ExpressionEvaluator.checkEqualityWithConditions(w.getArgument(1),
-							r.getArgument(1), boundingConditions)) {
+					if (!ExpressionEvaluator.checkEqualityWithConditions(indexExpression(w,1),
+							indexExpression(r,1), boundingConditions)) {
 						return true;
 					}
 				}
 			}
 		}
 		return false;
+	}
+	
+	/*
+	 * For a given subscript node recursively traverse down the 0th argument of
+	 * the nested subscript expressions to return the base array identifier.
+	 */
+	private IdentifierExpressionNode baseArray(OperatorNode subscript) {
+		assert subscript.getOperator() == OperatorNode.Operator.SUBSCRIPT : "Expected subscript expression";
+		if (subscript.getArgument(0) instanceof IdentifierExpressionNode) {
+			return (IdentifierExpressionNode) subscript.getArgument(0);
+		}
+		return baseArray((OperatorNode)subscript.getArgument(0));
+	}
+	
+	/*
+	 * For multi-dimensional arrays the index expressions are nested in reverse order
+	 * of source text nesting.  The 1st index is the deepest, etc.  Here we recurse down
+	 * the 0th argument then count back up to return the appropriate index expression.
+	 */
+	private ExpressionNode indexExpression(OperatorNode subscript, int dimension) {
+		assert subscript.getOperator() == OperatorNode.Operator.SUBSCRIPT : "Expected subscript expression";
+		int d = indexExpressionDepth(subscript)-dimension;
+		return indexExpressionAtDepth(subscript, d);
+	}
+	
+	private ExpressionNode indexExpressionAtDepth(OperatorNode subscript, int depth) {
+		assert subscript.getOperator() == OperatorNode.Operator.SUBSCRIPT : "Expected subscript expression";
+		if (depth == 0) {
+			return (ExpressionNode)subscript.getArgument(1);
+		}
+		return indexExpressionAtDepth(subscript, depth-1);
+	}
+	
+	private int indexExpressionDepth(OperatorNode subscript) {
+		assert subscript.getOperator() == OperatorNode.Operator.SUBSCRIPT : "Expected subscript expression";
+		if (subscript.getArgument(0) instanceof IdentifierExpressionNode) {
+			return 1;
+		}
+		return indexExpressionDepth((OperatorNode)subscript.getArgument(0))+1;
 	}
 
 }
