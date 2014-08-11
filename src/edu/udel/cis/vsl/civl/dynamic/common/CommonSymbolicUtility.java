@@ -825,5 +825,4 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		}
 		return components;
 	}
-
 }
