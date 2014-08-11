@@ -206,8 +206,8 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression charPointer2 = argumentValues[1];
 		int numChars1;
 		int numChars2;
-		SymbolicSequence<?> originalArray1;
-		SymbolicSequence<?> originalArray2;
+		SymbolicSequence<?> originalArray1 = null;
+		SymbolicSequence<?> originalArray2 = null;
 		String s1 = "";
 		String s2 = "";
 		
@@ -239,9 +239,18 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			NumericExpression arrayIndex1 = arrayRef1.getIndex();
 			eval = evaluator.dereference(source, state, process, arrayPointer1,
 					false);
+			int numOfArgs;
 
 			state = eval.state;
-			originalArray1 = (SymbolicSequence<?>) eval.value.argument(0);
+			numOfArgs = eval.value.numArguments();
+
+			for (int i = 0; i < numOfArgs; i++) {
+				if (eval.value.argument(i) instanceof SymbolicSequence<?>) {
+					originalArray1 = (SymbolicSequence<?>) eval.value
+							.argument(i);
+					break;
+				}
+			}
 			startIndex1 = symbolicUtil.extractInt(source, arrayIndex1);
 		}
 		numChars1 = originalArray1.size();
@@ -264,10 +273,20 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			NumericExpression arrayIndex2 = arrayRef2.getIndex();
 			eval = evaluator.dereference(source, state, process, arrayPointer2,
 					false);
+			int numOfArgs;
 
 			state = eval.state;
-			originalArray2 = (SymbolicSequence<?>) eval.value.argument(0);
+			numOfArgs = eval.value.numArguments();
+
+			for (int i = 0; i < numOfArgs; i++) {
+				if (eval.value.argument(i) instanceof SymbolicSequence<?>) {
+					originalArray2 = (SymbolicSequence<?>) eval.value
+							.argument(i);
+					break;
+				}
+			}
 			startIndex2 = symbolicUtil.extractInt(source, arrayIndex2);
+			
 		}
 		numChars2 = originalArray2.size();
 		for (int i = 0; i < numChars2; i++) {
