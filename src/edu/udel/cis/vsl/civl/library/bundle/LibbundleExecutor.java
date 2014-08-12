@@ -444,9 +444,10 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			SymbolicType elementType;
 			SymbolicCompleteArrayType newArrayType;
 
-			arrayEleFunc = universe.add(
+			arrayEleFunc = libevaluator.civlOperation(state, process,
 					(NumericExpression) universe.arrayRead(data, index),
-					(NumericExpression) universe.arrayRead(secOperand, index));
+					(NumericExpression) universe.arrayRead(secOperand, index),
+					CIVL_Op, source);
 			lambdaFunc = universe.lambda(index, arrayEleFunc);
 			elementType = ((SymbolicArrayType) data.type()).elementType();
 			newArrayType = universe.arrayType(elementType, count);
