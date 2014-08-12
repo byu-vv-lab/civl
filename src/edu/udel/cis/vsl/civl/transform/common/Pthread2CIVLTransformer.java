@@ -287,24 +287,10 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 		}
 		if (this.isVoidPointer(returnType) && threadList.contains(name)) {
-			function.getTypeNode()
-					.setParameters(
-							nodeFactory
-									.newSequenceNode(
-											source,
-											"parameters",
-											Arrays.asList(nodeFactory
-													.newVariableDeclarationNode(
-															source,
-															nodeFactory
-																	.newIdentifierNode(
-																			source,
-																			"arg"),
-															nodeFactory
-																	.newPointerTypeNode(
-																			source,
-																			nodeFactory
-																					.newVoidTypeNode(source))))));
+			if(function.getTypeNode().getParameters().numChildren()==0){
+				function.getTypeNode().setParameters(nodeFactory.newSequenceNode(source, "parameters", Arrays.asList(nodeFactory.newVariableDeclarationNode(source,
+						nodeFactory.newIdentifierNode(source, "arg"), nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source))))));
+			}
 			ExpressionNode nullNode = nodeFactory.newCastNode(
 					source,
 					nodeFactory.newPointerTypeNode(source,

@@ -39,11 +39,6 @@ enum{
 PTHREAD_BARRIER_SERIAL_THREAD
 };
 
-//Mutex initializer
-#define __LOCK_INITIALIZER	0
-#define PTHREAD_MUTEX_INITIALIZER	{0,0,0,PTHREAD_MUTEX_NORMAL,__LOCK_INITIALIZER}
-#define PTHREAD_COND_INITIALIZER	{__LOCK_INITIALIZER,0}
-
 //Error definitions
 enum{
 EINVAL,      //Designates an invalid value
@@ -141,7 +136,7 @@ typedef struct {
 
 typedef struct {
   int count;
-  $proc owner;
+  int ownerid;
   int lock;
   int prioceiling;
   proc_fifo_queue contenders;
@@ -186,12 +181,12 @@ typedef struct {
   $proc thr;
   const pthread_attr_t attr;
   int pid;
+  _Bool terminated;
 } pthread_t;
 
-typedef struct __pthread_pool_t {
+typedef struct {
   pthread_t** threads;
   int len;
 } __pthread_pool_t;
 
 #endif
-
