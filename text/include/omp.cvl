@@ -25,13 +25,6 @@ typedef enum __OMP_var_status_{
  * the type of the original variable by replacing
  * all leaf nodes in the type tree with "int".
  */
- /*
-typedef struct OMP_gshared {
-  _Bool init[]; // which threads have joined
-  void * original; // pointer to original variable
-  void * status; // pointer to status variable
-} * $omp_gshared;*/
-
 typedef struct OMP_gshared {
   _Bool init[]; // which threads have joined
   void * original; // pointer to original variable
@@ -94,6 +87,7 @@ typedef struct OMP_gteam {
 
 typedef struct OMP_team {
   $omp_gteam gteam;
+  $scope scope;
   int tid;
   $omp_shared shared[];
   $barrier barrier;
@@ -102,6 +96,20 @@ typedef struct OMP_team {
 
 
 /* *********************** Functions *********************** */
+
+/* called by a thread when it reaches an omp sections
+ * construct, this function returns the subset of the
+ * integers 0..numSections-1 specifying the indexes of
+ * the sections that this thread will execute. The sections
+ * are numbered from 0 in increasing order.
+ */
+$domain(1) $omp_arrive_sections($omp_team team, int numSections){
+  int low = team->tid, high = numSections - 1, step = team->gteam->nthreads;
+  $range range = low .. high # step;
+  $domain(1) dom = ($domain(1)) {range};
+  
+  return dom;
+}
 
 /* creates new global team object, allocating object in heap
  * in specified scope. Number of threads that will be in the
@@ -151,6 +159,7 @@ $omp_team $omp_team_create($scope scope, $omp_gteam gteam, int tid) {
           tid);
   gteam->init[tid] = $true;
   result->gteam = gteam;
+  result->scope = scope;
   result->tid = tid;
   $seq_init(result->shared, 0, NULL);
   result->barrier = $barrier_create(scope, gteam->gbarrier, tid);
@@ -177,7 +186,9 @@ $omp_gshared $omp_gshared_create($omp_gteam gteam,
                                  void *original) {
   $omp_gshared result =
     ($omp_gshared)$malloc(gteam->scope, sizeof(struct OMP_gshared));
-
+  _Bool f = $false;
+ 
+  $seq_init(result->init, gteam->nthreads, &f);
   result->original = original;
   //result->status = status;
   return result;
@@ -196,6 +207,7 @@ $omp_shared $omp_shared_create($omp_team team,
   $omp_shared result =
     ($omp_shared)$malloc(team->scope, sizeof(struct OMP_shared));
 
+  $assert(!gshared->init[team->tid], "Thread %d has already created its local copy for %p.\n", team->tid, gshared);
   result->gshared = gshared;
   result->tid = team->tid;
   result->local = local;
@@ -238,7 +250,7 @@ void $omp_read($omp_shared shared, void *result, void *ref) {
 void $omp_write($omp_shared shared, void *ref, void *value) {
   int tid = shared->tid;
   void *local = $translate_ptr(ref, shared->local);
-  void *status_ref = $translate_ptr(ref, shared->status);
+  int *status_ref = (int*)$translate_ptr(ref, shared->status);
   
   $copy(local, value);
   *status_ref = MODIFIED;
@@ -279,9 +291,9 @@ void $omp_flush($omp_shared shared, void *ref) {
   numRefs = $seq_length(&refs);
   for(int i = 0; i < numRefs; i++){
     void *leaf = refs[i];
-    int *leaf_status = (int *)$translate_ptr(leaf, shared->stats);
+    int *leaf_status = (int *)$translate_ptr(leaf, shared->status);
     void *leaf_local = (int *)$translate_ptr(leaf, shared->local);
-    void *leaf_shared = (int *)$translate_ptr(leaf, gshared->shared);
+    void *leaf_shared = (int *)$translate_ptr(leaf, gshared->original);
     
     switch(*leaf_status){
       case EMPTY:
@@ -335,20 +347,6 @@ void $omp_barrier_and_flush($omp_team team) {
  * dimension of the given domain loop_dom.
  */
 $domain $omp_arrive_loop($omp_team, $domain loop_dom);
-
-/* called by a thread when it reaches an omp sections
- * construct, this function returns the subset of the
- * integers 0..numSections-1 specifying the indexes of
- * the sections that this thread will execute. The sections
- * are numbered from 0 in increasing order.
- */
-$domain(1) $omp_arrive_sections($omp_team team, int numSections){
-  int low = team->tid, high = numSections - 1, step = team->numThreads;
-  $range range = low .. high # numThreads;
-  $domain(1) dom = ($domain(1)) {range};
-  
-  return dom;
-}
 
 /* called by a thread when it reaches on omp single
  * construct, returns the thread ID of the thread that
