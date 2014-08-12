@@ -26,14 +26,17 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
@@ -208,11 +211,10 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression pointer = argumentValues[0];
 		NumericExpression size = (NumericExpression) argumentValues[1];
-		// count : number of elements.(size div (datatype'size))
 		NumericExpression count = null;
 		SymbolicType elementType;
 		SymbolicUnionType symbolicBundleType;
-		SymbolicExpression arrayInBundle;
+		SymbolicExpression arrayInBundle = null;
 		SymbolicExpression bundle = null;
 		IntObject elementTypeIndexObj;
 		Evaluation eval;
@@ -243,21 +245,36 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 			BooleanExpression claim;
 
-			elementType = symbolicAnalyzer.getArrayElementType(state, source,
-					pointer).getDynamicType(universe);
+			elementType = symbolicAnalyzer.getArrayElementType(state,
+					arguments[0].getSource(), pointer).getDynamicType(universe);
 			count = universe.divide(size,
 					symbolicUtil.sizeof(arguments[1].getSource(), elementType));
-			// TODO: why pointers here doesn't been cast to the deepest element
-			// reference ?
-			// If count is greater than one, using the function
-			// getDataBetween(), else
-			// directly dereference pointer
+			// If count == 1, directly dereferencing the pointer to get the
+			// first non-array element.
 			claim = universe.equals(count, one);
 			if (!reasoner.isValid(claim)) {
-				eval = libevaluator.getDataFrom(state, process, pointer, count,
-						false, source);
-				state = eval.state;
-				arrayInBundle = eval.value;
+				try {
+					eval = libevaluator.getDataFrom(state, process, pointer,
+							count, false, arguments[0].getSource());
+					state = eval.state;
+					arrayInBundle = eval.value;
+				} catch (CIVLInternalException | CIVLExecutionException e) {
+					CIVLExecutionException err = new CIVLExecutionException(
+							ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE,
+							process,
+							"Packing data with count: "
+									+ count
+									+ "from pointer: "
+									+ symbolicAnalyzer
+											.symbolicExpressionToString(source,
+													state, pointer), source);
+					errorLogger.reportError(err);
+				} catch (Exception e) {
+					CIVLExecutionException err = new CIVLExecutionException(
+							ErrorKind.INTERNAL, Certainty.PROVEABLE, process,
+							"Bundle pack failed", source);
+					errorLogger.reportError(err);
+				}
 			} else {
 				eval = evaluator.dereference(source, state, process, pointer,
 						true);
@@ -269,6 +286,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 							Arrays.asList(eval.value));
 				state = eval.state;
 			}
+			assert (arrayInBundle != null);
 			symbolicBundleType = bundleType.getDynamicType(universe);
 			elementTypeIndex = bundleType.getIndexOf(universe
 					.pureType(elementType));
@@ -326,18 +344,23 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			bufPointer = eval_and_pointer.right;
 			state = eval.state;
 			targetObject = eval.value;
-		} catch (CIVLInternalException e) {
+		} catch (CIVLInternalException | CIVLExecutionException e) {
 			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OUT_OF_BOUNDS,
-					Certainty.PROVEABLE,
-					process,
-					"Out of bound error happens when executing bundle_unpack()\n",
+					ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE, process,
+					"Unpacking data from bundle to pointer: "
+							+ symbolicAnalyzer.symbolicExpressionToString(
+									arguments[1].getSource(), state, pointer),
 					source);
+
 			errorLogger.reportError(err);
 		} catch (Exception e) {
 			// Out of bound exception will be throw inside the bundleUnpack
 			// function when an array write fails.
-			throw new CIVLInternalException("Cannot complete unpack", source);
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.INTERNAL, Certainty.PROVEABLE, process,
+					"Bundle unpacking failed", source);
+
+			errorLogger.reportError(err);
 		}
 		// If it's assigned to an array or an object
 		if (bufPointer != null && targetObject != null)
@@ -385,7 +408,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression data = null;
 		SymbolicExpression dataElement = null;
 		SymbolicExpression secOperandElement = null;
-		SymbolicExpression assignPtr;
+		SymbolicExpression assignPtr = null;
 		SymbolicExpression opRet = null; // result after applying one operation
 		NumericExpression count = (NumericExpression) argumentValues[2];
 		NumericExpression i;
@@ -394,7 +417,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		BooleanExpression claim;
 		Reasoner reasoner = universe.reasoner(pathCondition);
 		CIVLOperation CIVL_Op;
-		Evaluation eval;
+		Evaluation eval = null;
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
 		// Obtain data form bundle
@@ -407,26 +430,78 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		CIVL_Op = CIVLOperation.values()[((IntegerNumber) reasoner
 				.extractNumber(operation)).intValue()];
 		// Get the second operand from pointer
+
 		eval = libevaluator.getDataFrom(state, process, pointer, count, false,
 				source);
 		state = eval.state;
 		secOperand = eval.value;
-		i = zero;
-		claim = universe.lessThan(i, count);
-		while (reasoner.isValid(claim)) {
-			dataElement = universe.arrayRead(data, i);
-			secOperandElement = universe.arrayRead(secOperand, i);
-			opRet = libevaluator.civlOperation(state, process, dataElement,
-					secOperandElement, CIVL_Op, source);
-			secOperand = universe.arrayWrite(secOperand, i, opRet);
-			i = universe.add(i, one);
-			claim = universe.lessThan(i, count);
+		// If count is non-concrete
+		if (reasoner.extractNumber(count) == null) {
+			NumericSymbolicConstant index = (NumericSymbolicConstant) universe
+					.symbolicConstant(universe.stringObject("i"),
+							universe.integerType());
+			SymbolicExpression arrayEleFunc, lambdaFunc, newArray;
+			SymbolicType elementType;
+			SymbolicCompleteArrayType newArrayType;
+
+			arrayEleFunc = universe.add(
+					(NumericExpression) universe.arrayRead(data, index),
+					(NumericExpression) universe.arrayRead(secOperand, index));
+			lambdaFunc = universe.lambda(index, arrayEleFunc);
+			elementType = ((SymbolicArrayType) data.type()).elementType();
+			newArrayType = universe.arrayType(elementType, count);
+			newArray = universe.arrayLambda(newArrayType, lambdaFunc);
+			eval_and_pointer = libevaluator.setDataFrom(state, process,
+					pointer, count, newArray, false, source);
+			eval = eval_and_pointer.left;
+			assignPtr = eval_and_pointer.right;
+			state = eval.state;
+			state = primaryExecutor.assign(source, state, process, assignPtr,
+					eval.value);
+			return state;
 		}
-		eval_and_pointer = libevaluator.setDataFrom(state, process, pointer,
-				count, secOperand, false, source);
-		eval = eval_and_pointer.left;
-		assignPtr = eval_and_pointer.right;
-		state = eval.state;
+		try {
+			i = zero;
+			claim = universe.lessThan(i, count);
+
+			while (reasoner.isValid(claim)) {
+				dataElement = universe.arrayRead(data, i);
+				secOperandElement = universe.arrayRead(secOperand, i);
+				opRet = libevaluator.civlOperation(state, process, dataElement,
+						secOperandElement, CIVL_Op, source);
+				secOperand = universe.arrayWrite(secOperand, i, opRet);
+				i = universe.add(i, one);
+				claim = universe.lessThan(i, count);
+			}
+
+			eval_and_pointer = libevaluator.setDataFrom(state, process,
+					pointer, count, secOperand, false, source);
+			eval = eval_and_pointer.left;
+			assignPtr = eval_and_pointer.right;
+			state = eval.state;
+		} catch (SARLException e) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE, process,
+					"Operands of CIVL Operation", source);
+
+			errorLogger.reportError(err);
+
+		} catch (CIVLInternalException | CIVLExecutionException e) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE, process,
+					symbolicAnalyzer.symbolicExpressionToString(
+							arguments[1].getSource(), state, pointer), source);
+
+			errorLogger.reportError(err);
+		} catch (Exception e) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.INTERNAL, Certainty.PROVEABLE, process,
+					"$bundle_unpack_apply", source);
+
+			errorLogger.reportError(err);
+		}
+		assert (assignPtr != null);
+		assert (eval != null);
 		state = primaryExecutor.assign(source, state, process, assignPtr,
 				eval.value);
 		return state;

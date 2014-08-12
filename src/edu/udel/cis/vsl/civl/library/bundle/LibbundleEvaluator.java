@@ -308,7 +308,8 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		} else if (reasoner.isValid(universe.equals(dataSize, one))) {
 			// If data size is one, reading array to get the element
 			eval = new Evaluation(state, universe.arrayRead(data, zero));
-			pointer = this.castToArrayElementReference(state, pointer, civlsource);
+			pointer = this.castToArrayElementReference(state, pointer,
+					civlsource);
 			return new Pair<Evaluation, SymbolicExpression>(eval, pointer);
 		}
 		// If data size larger than one, return an array and the corresponding
@@ -702,7 +703,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		}
 		// If the array has at least one dimension whose length is non-concrete,
 		// using array lambda to flatten it.
-		if (this.hasNonConcreteFactor(reasoner, array)) {
+		if (this.hasNonConcreteExtent(reasoner, array)) {
 			flattenElementList.add(this.arrayLambdaFlatten(state, array,
 					arrayCapacities, civlsource));
 			return flattenElementList;
@@ -806,7 +807,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 * Helper function for @link{arrayFlatten}. Returns true if and only if
 	 * there is at least one array (in nested arrays ) has non-concrete length.
 	 */
-	private boolean hasNonConcreteFactor(Reasoner reasoner,
+	private boolean hasNonConcreteExtent(Reasoner reasoner,
 			SymbolicExpression array) {
 		NumericExpression extent;
 		SymbolicExpression element = array;
@@ -960,7 +961,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 * @param pointer
 	 *            The pointer needs being casted
 	 * @param source
-	 *            The civl source of the pointer
+	 *            The CIVL source of the pointer
 	 * @return The casted pointer
 	 * @throws UnsatisfiablePathConditionException
 	 */
@@ -1109,12 +1110,12 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			size = universe.multiply(size, dimExtents.get(dim));
 			dim++;
 		}
-
 		return size;
 	}
 
 	/**
-	 * Get the pointer to the outer most array from an array element reference.
+	 * Get the most ancestor pointer of the given array element reference
+	 * pointer.
 	 * 
 	 * @param arrayPtr
 	 *            An array element reference pointer or a pointer to an array
