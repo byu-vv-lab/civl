@@ -147,13 +147,18 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 				for (ASTNode child : children) {
 					removeOmpWorkshare(child);
 				}
-				
-				// Remove the "omp parallel" pragma
+								
+				// Remove "statement" node from "omp parallel" node
+				StatementNode stmt = ((OmpStatementNode) node).statementNode();
+				int stmtIndex = getChildIndex(node, stmt);
+				assert stmtIndex != -1;
+				node.removeChild(stmtIndex);
+
+				// Link "statement" into the "omp parallel" parent
 				ASTNode parent = node.parent();
-				int nodeIndex = getChildIndex(parent, node);
-				assert nodeIndex != -1;
-				assert node instanceof OmpStatementNode : "OMPSimplifier expected single parallel statement node";
-				parent.setChild(nodeIndex, ((OmpStatementNode) node).statementNode());
+				int parentIndex = getChildIndex(parent, node);
+				assert parentIndex != -1;
+				parent.setChild(parentIndex, stmt);
 			}
 
 		} else if (node != null) {
@@ -171,11 +176,18 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	}
 	
 	private void removeOmpWorkshare(ASTNode node) {
-		if (node instanceof OmpStatementNode) {
+		if (node instanceof OmpWorksharingNode) {
+			// Remove "statement" node from "omp parallel" node
+			StatementNode stmt = ((OmpStatementNode) node).statementNode();
+			int stmtIndex = getChildIndex(node, stmt);
+			assert stmtIndex != -1;
+			node.removeChild(stmtIndex);
+
+			// Link "statement" into the "omp parallel" parent
 			ASTNode parent = node.parent();
-			int nodeIndex = getChildIndex(parent, node);
-			assert nodeIndex != -1;
-			parent.setChild(nodeIndex, ((OmpStatementNode) node).statementNode());
+			int parentIndex = getChildIndex(parent, node);
+			assert parentIndex != -1;
+			parent.setChild(parentIndex, stmt);
 
 		} else if (node != null) {
 			Iterable<ASTNode> children = node.children();
@@ -421,7 +433,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			 * 2) otherwise a "single" workshare
 			 */
 			ASTNode parent = ompFor.parent();
-			if (parent instanceof OmpParallelNode) {
+			/*if (parent instanceof OmpParallelNode) {
 				// Remove "for" node from "omp for" node
 				int forIndex = getChildIndex(ompFor, fln);
 				assert forIndex != -1;
@@ -433,7 +445,8 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 				assert parentIndex != -1;
 				grand.setChild(parentIndex, fln);
 				
-			} else {
+			} else */
+			{
 				int ompForIndex = getChildIndex(parent, ompFor);
 				assert ompForIndex != -1;
 				parent.removeChild(ompForIndex);
