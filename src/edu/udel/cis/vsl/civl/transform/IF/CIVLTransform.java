@@ -58,8 +58,8 @@ public class CIVLTransform {
 	 *            <li>"general": general transformer</li>
 	 *            <li>"io": IO transformer</li>
 	 *            <li>"mpi": MPI-to-CIVL transformer</li>
-	 *            <li>"_omp_": OpenMP pragma transformer</li>
-	 *            <li>"omp": OpenMP-to-CIVL transformer</li>
+	 *            <li>"omp": OpenMP pragma transformer</li>
+	 *            <li>"omp_simplify": OpenMP simplifier transformer</li>
 	 *            <li>"pthread": Pthread-to-CIVL transformer</li>
 	 *            </ul>
 	 * @param inputVars

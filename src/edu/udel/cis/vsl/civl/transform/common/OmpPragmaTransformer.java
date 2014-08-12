@@ -26,7 +26,7 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 public class OmpPragmaTransformer extends CIVLBaseTransformer {
 
-	public final static String CODE = "_omp_";
+	public final static String CODE = "omp";
 	public final static String LONG_NAME = "Omp Parser";
 	public final static String SHORT_DESCRIPTION = "parse omp pragmas into omp AST nodes";
 	public final static String OMP = "omp";

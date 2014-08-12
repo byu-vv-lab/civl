@@ -46,12 +46,16 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
  * 
  * 2) Transform OpenMP constructs based on the analysis results.
  * 
+ * TBD: 
+ *   a) support nowait clauses
+ *   b) support collapse clauses (confirm whether collapse uses variables or the first "k" row indices)
+ * 
  * @author dwyer
  * 
  */
 public class OpenMPSimplifier extends CIVLBaseTransformer {
 
-	public final static String CODE = "omp";
+	public final static String CODE = "omp_simplifier";
 	public final static String LONG_NAME = "OpenMPSimplifier";
 	public final static String SHORT_DESCRIPTION = "simplifies independent C/OpenMP constructs";
 
@@ -110,9 +114,12 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 			//System.out.println("OpenMP Simplifier : Found Parallel "+node);
 
 			/*
-			 * TBD: this code does not yet handle: - nested parallel blocks -
-			 * sections workshares - collapse clauses - chunk clauses -
-			 * multi-dimensional arrays
+			 * TBD: this code does not yet handle: 
+			 * - nested parallel blocks 
+			 * - sections workshares 
+			 * - collapse clauses 
+			 * - chunk clauses 
+			 * - omp_* calls which should be interpreted as being dependent
 			 */
 
 			/*
@@ -177,13 +184,13 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 	
 	private void removeOmpWorkshare(ASTNode node) {
 		if (node instanceof OmpWorksharingNode) {
-			// Remove "statement" node from "omp parallel" node
+			// Remove "statement" node from "omp workshare" node
 			StatementNode stmt = ((OmpStatementNode) node).statementNode();
 			int stmtIndex = getChildIndex(node, stmt);
 			assert stmtIndex != -1;
 			node.removeChild(stmtIndex);
 
-			// Link "statement" into the "omp parallel" parent
+			// Link "statement" into the "omp workshare" parent
 			ASTNode parent = node.parent();
 			int parentIndex = getChildIndex(parent, node);
 			assert parentIndex != -1;
@@ -428,24 +435,9 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 
 		if (!hasDeps) {
 			/*
-			 * Transform this OpenMP "for" into either: 
-			 * 1) a plain loop if parent is an OpenMP "parallel" statement 
-			 * 2) otherwise a "single" workshare
+			 * Transform this OpenMP "for" into a "single" workshare
 			 */
 			ASTNode parent = ompFor.parent();
-			/*if (parent instanceof OmpParallelNode) {
-				// Remove "for" node from "omp for" node
-				int forIndex = getChildIndex(ompFor, fln);
-				assert forIndex != -1;
-				ompFor.removeChild(forIndex);
-
-				// Link "for" into the grand parent
-				ASTNode grand = parent.parent();
-				int parentIndex = getChildIndex(grand, parent);
-				assert parentIndex != -1;
-				grand.setChild(parentIndex, fln);
-				
-			} else */
 			{
 				int ompForIndex = getChildIndex(parent, ompFor);
 				assert ompForIndex != -1;
