@@ -129,7 +129,15 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			throws SyntaxException {
 		process_VERIFIER_function_call_worker(node);
 	}
-
+	/**
+	 * Transforms VERIFIER functions into their corresponding counterparts:
+	 * VERIFIER_nondet_int: abstract integer function
+	 * VERIFIER_atomic: atomic function
+	 * 
+	 * @param node 
+	 * 			ASTNode to be be checked for a VERIFIER
+	 * 
+	 */
 	private void process_VERIFIER_function_call_worker(ASTNode node)
 			throws SyntaxException {
 		if (node instanceof FunctionCallNode) {
@@ -177,6 +185,13 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		}
 	}
 
+	/**
+	 * Inserts an abstract function node in place of VERIFIER_nondet_int
+	 * 
+	 * @param function
+	 * 			Node to be checked and converted for VERIFIER function
+	 * 
+	 */
 	private void process_VERIFIER_functions(FunctionDeclarationNode function) {
 		IdentifierNode functionName = function.getIdentifier();
 
@@ -199,6 +214,13 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		}
 	}
 
+	/**
+	 * Translates nodes if they meet one of various specific cases
+	 * 
+	 * @param node 
+	 * 			Node to be translated
+	 * 
+	 */
 	private void translateNode(ASTNode node) {
 		if (node instanceof LabeledStatementNode) {
 			LabeledStatementNode labelStatement = (LabeledStatementNode) node;
@@ -263,7 +285,13 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		return nodeFactory.newWhenNode(mySource, expression, nodeFactory.newNullStatementNode(mySource));
 	}
 	*/
-
+	/**
+	 * Creates an assertFalse StatementNode
+	 * 
+	 * @param mySource
+	 * 			
+	 * @return
+	 */
 	private StatementNode assertFalse(Source mySource) {
 		ExpressionNode falseExpression = nodeFactory.newBooleanConstantNode(
 				source, false);
