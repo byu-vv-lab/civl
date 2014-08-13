@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -87,7 +86,7 @@ public class OmpTransformerTest {
 		if (debug)
 			frontEnd.printProgram(out, program, true);
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
-				new ArrayList<String>(0), builder, config);
+				builder, config);
 		if (debug) {
 			out.println("======== After applying OpenMP Pragma Transformer ========");
 			frontEnd.printProgram(out, program, true);
@@ -99,27 +98,23 @@ public class OmpTransformerTest {
 			frontEnd.printProgram(beforeAST, program, false);
 		}
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-				new ArrayList<String>(0), builder, config);
+				builder, config);
 		if (true) {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
 			program.getAST().prettyPrint(after, true);
 		}
-		if (debug) {
-			out.println("======== After applying OpenMP Simplifier ========");
-			frontEnd.printProgram(out, program, true);
-		}
+		 if (debug) {
+		out.println("======== After applying OpenMP Simplifier ========");
+		frontEnd.printProgram(out, program, true);
+		 }
 		/*
-		program.applyTransformer("prune");
-		if (debug) {
-			out.println("======== After applying Pruner ========");
-			frontEnd.printProgram(out, program, true);
-		}
-		program.applyTransformer("sef");
-		if (debug) {
-			out.println("======== After applying Side Effect Remover ========");
-			frontEnd.printProgram(out, program, true);
-		}
-		*/
+		 * program.applyTransformer("prune"); // if (debug) {
+		 * out.println("======== After applying Pruner ========");
+		 * frontEnd.printProgram(out, program, true); // }
+		 * program.applyTransformer("sef"); if (debug) {
+		 * out.println("======== After applying Side Effect Remover ========");
+		 * frontEnd.printProgram(out, program, true); }
+		 */
 	}
 
 	/* **************************** Test Methods *************************** */
@@ -135,7 +130,7 @@ public class OmpTransformerTest {
 	public void nested_run() throws ABCException, IOException {
 		assertTrue(ui.run("parse", filename("nested.c")));
 	}
-	
+
 	@Test
 	public void dotProduct_critical1() throws ABCException, IOException {
 		check("dotProduct_critical", false);
@@ -145,7 +140,6 @@ public class OmpTransformerTest {
 	public void nested() throws ABCException, IOException {
 		check("nested", false);
 	}
-
 
 	@Test
 	public void dotProduct_critical() throws ABCException, IOException {
@@ -206,27 +200,27 @@ public class OmpTransformerTest {
 	public void parallelfor() throws ABCException, IOException {
 		check("parallelfor", false);
 	}
-	
+
 	@Test
 	public void dijkstra() throws ABCException, IOException {
 		check("dijkstra_openmp", false);
 	}
-	
+
 	@Test
 	public void fft() throws ABCException, IOException {
 		check("fft_openmp", false);
 	}
-	
+
 	@Test
 	public void md() throws ABCException, IOException {
 		check("md_openmp", false);
 	}
-	
+
 	@Test
 	public void poisson() throws ABCException, IOException {
 		check("poisson_openmp", false);
 	}
-	
+
 	@Test
 	public void quad() throws ABCException, IOException {
 		check("quad_openmp", false);
