@@ -132,7 +132,6 @@ int CMPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
     int size = count*sizeofDatatype(datatype);
     int place = $comm_place(comm);
     $message out = $message_pack(place, dest, tag, buf, size);
-
     $comm_enqueue(comm, out);
   }
   return 0;
