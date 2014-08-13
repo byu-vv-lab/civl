@@ -22,7 +22,7 @@ typedef enum __OMP_var_status_{
 typedef enum __OMP_loop_policy_{
   ROUND_ROBIN, // partition by round robin order
   RANDOM, // a random partition
-  FULL // all possible partitions
+  ALL // all possible partitions
 } $omp_loop_policy;
 
 /* global shared object, containing a reference to a shared variable. 
