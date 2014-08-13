@@ -19,31 +19,28 @@ typedef enum __OMP_var_status_{
   MODIFIED // local is occupied, writes have been made to it
 } $omp_var_status;
 
-/* global shared object, used to represent the state of
- * a shared variable. A handle type.
- * The type of the status variable is obtained from
- * the type of the original variable by replacing
- * all leaf nodes in the type tree with "int".
+typedef enum __OMP_loop_policy_{
+  ROUND_ROBIN, // partition by round robin order
+  RANDOM, // a random partition
+  FULL // all possible partitions
+} $omp_loop_policy;
+
+/* global shared object, containing a reference to a shared variable. 
+ * A handle type.
  */
 typedef struct OMP_gshared {
   _Bool init[]; // which threads have joined
   void * original; // pointer to original variable
 } * $omp_gshared;
 
-/* local view of the shared object, belonging to a single
- * thread, with reference to the global object.
- * A handle type.
+/* local view of a shared object, belonging to a single
+ * thread, with reference to the global object, and
+ * a local copy and a status of the shared object. 
+ * The type of the status variable is obtained from
+ * the type of the original variable by replacing
+ * all leaf nodes in the type tree with "int".
+ * A handle type. 
  */
- /*
-typedef struct OMP_shared {
-  $omp_gshared gshared;
-  // The thread id
-  int tid;
-  // Pointer to the local copy of the shared variable.
-  // This provides the thread's "private view" of the variable.
-  void * local;
-} * $omp_shared;*/
-
 typedef struct OMP_shared {
   $omp_gshared gshared;
   // The thread id
@@ -55,20 +52,25 @@ typedef struct OMP_shared {
   void * status;
 } * $omp_shared;
 
+/* the worksharing information that a thread needs for executing 
+ * a worksharing region. It contains the kind of the worksharing 
+ * region, the location of the region, the status of the region 
+ * and the subdomain (iterations/sections/task assigned to the thread).
+ */
 typedef struct OMP_work_record {
   int kind; // loop, barrier, sections, or single
   int location; // location in model of construct
   _Bool arrived; // has this thread arrived yet?
-  $domain loop_domain; // full loop domain; null if not loop
+  //$domain loop_domain; // full loop domain; null if not loop
   $domain subdomain; // tasks this thread must do
   // reduction operation?
-} OMP_work_record;
+} $omp_work_record;
 
 /* global team object, represents a team of threads executing
  * in a parallel region. A handle type. This is where all the
  * state needed to correctly execute a parallel region will
- * be stored. This includes all the shared object data,
- * and a worksharking queue for every thread.
+ * be stored. This includes a global barrier, and a worksharing 
+ * queue for every thread.
  */
 typedef struct OMP_gteam {
   /* scope in which data is allocated in heap */
@@ -79,12 +81,16 @@ typedef struct OMP_gteam {
   _Bool init[];
   /* work queues.  Length nthreads. For each thread,
    * a FIFO queue of work records */
-  OMP_work_record work[][];
+  $omp_work_record work[][];
   /* the shared object data. */
   $omp_gshared shared[];
   $gbarrier gbarrier;
 } * $omp_gteam;
 
+/*
+ * local object belonging to a single thread and referencing the global team object.  
+ * A handle type. It also includes the local views of all shared data and a local barrier.
+ */
 typedef struct OMP_team {
   $omp_gteam gteam;
   $scope scope;
@@ -97,26 +103,12 @@ typedef struct OMP_team {
 
 /* *********************** Functions *********************** */
 
-/* called by a thread when it reaches an omp sections
- * construct, this function returns the subset of the
- * integers 0..numSections-1 specifying the indexes of
- * the sections that this thread will execute. The sections
- * are numbered from 0 in increasing order.
- */
-$domain(1) $omp_arrive_sections($omp_team team, int numSections){
-  int low = team->tid, high = numSections - 1, step = team->gteam->nthreads;
-  $range range = low .. high # step;
-  $domain(1) dom = ($domain(1)) {range};
-  
-  return dom;
-}
-
 /* creates new global team object, allocating object in heap
  * in specified scope. Number of threads that will be in the
  * team is nthreads.
  */
 $omp_gteam $omp_gteam_create($scope scope, int nthreads) {
-  OMP_work_record empty[0];
+  $omp_work_record empty[0];
   $omp_gteam result = ($omp_gteam)$malloc(scope, sizeof(struct OMP_gteam));
   _Bool f = $false;
 
@@ -179,8 +171,7 @@ void $omp_team_destroy($omp_team team) {
 
 /* creates new global shared object, associated to the given
  * global team. A pointer to the shared variable that this
- * object corresponds to is given. The new object is initialized
- * by copying the values from the original variable.
+ * object corresponds to is given.
  */
 $omp_gshared $omp_gshared_create($omp_gteam gteam,
                                  void *original) {
@@ -201,7 +192,11 @@ void $omp_gshared_destroy($omp_gshared gshared) {
   $free(gshared);
 }
 
-/* creates a local shared object, returning handle to it */
+/* creates a local shared object, returning handle to it.  
+ * The local copy of the shared object is initialized
+ * by copying the values from the original variable referenced to
+ * by the gshared object. The created shared object is appended
+ * to the shared queue of the $omp_team object. */
 $omp_shared $omp_shared_create($omp_team team,
                                $omp_gshared gshared, void *local, void *status) {
   $omp_shared result =
@@ -246,26 +241,27 @@ void $omp_read($omp_shared shared, void *result, void *ref) {
  * ref is a pointer into the local copy of the shared variable.
  * The value to be written is taken
  * from the memory unit pointed to by value.
+ * assumes ref is a pointer to a scalar.
  */
 void $omp_write($omp_shared shared, void *ref, void *value) {
   int tid = shared->tid;
-  void *local = $translate_ptr(ref, shared->local);
   int *status_ref = (int*)$translate_ptr(ref, shared->status);
   
-  $copy(local, value);
+  $copy(ref, value);
   *status_ref = MODIFIED;
 }
 
-/* Reads the reference, applies the associative operator
- * specified by op to the read value and the value pointed
- * to by value, and writes the result back to ref.
+/* applies the associative operator
+ * specified by op to the local copy and the corresponding shared copy, 
+ * and writes the result back to the shared copy.
  * This happens in one atomic step. Example: you can
  * use this to add some value to a shared variable,
  * using CIVL_SUM for op.
+ * assumes local is a pointer to a scalar.
  */
-void $omp_apply_assoc($omp_shared shared, void *local,
+void $omp_apply_assoc($omp_shared shared,
                       $operation op,
-                      void *value){
+                      void *local){
   $atomic{
     void *shared_ref = $translate_ptr(local, shared->gshared->original);
 
@@ -338,15 +334,33 @@ void $omp_barrier_and_flush($omp_team team) {
   // this is a collective operation: all members of team call
   $barrier_call(team->barrier);
   $omp_flush_all(team);
+  $barrier_call(team->barrier);
 }
 
+// To be continued: needs a way to specify non-rectangular 
+// domains.
 /* called by a thread when it reaches an omp for loop,
  * this function returns the subset of the loop domain
- * specifying the iterations that this thread will execute.
+ * specifying the iterations that this thread will execute,
+ * according to the given policy.
  * The dimension of the domain returned equals the
  * dimension of the given domain loop_dom.
  */
-$domain $omp_arrive_loop($omp_team, $domain loop_dom);
+$domain $omp_arrive_loop($omp_team, $domain loop_dom, int policy);
+
+/* called by a thread when it reaches an omp sections
+ * construct, this function returns the subset of the
+ * integers 0..numSections-1 specifying the indexes of
+ * the sections that this thread will execute. The sections
+ * are numbered from 0 in increasing order.
+ */
+$domain(1) $omp_arrive_sections($omp_team team, int numSections){
+  int low = team->tid, high = numSections - 1, step = team->gteam->nthreads;
+  $range range = low .. high # step;
+  $domain(1) dom = ($domain(1)) {range};
+  
+  return dom;
+}
 
 /* called by a thread when it reaches on omp single
  * construct, returns the thread ID of the thread that
