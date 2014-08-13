@@ -49,6 +49,16 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
  * TBD: 
  *   a) support nowait clauses
  *   b) support collapse clauses (confirm whether collapse uses variables or the first "k" row indices)
+ *   c) what is the semantics of a parallel region with no pragma, i.e., do we have to reason about
+ *      its independence to remove the parallel pragma
+ *   d) intra-iteration dependences, e.g., x[i] = x[i] + a;
+ *   e) critical, barrier, master, single and other workshares
+ *   f) calling sensitive parallel workshare nesting, i.e., caller has parallel pragma, callee has workshare
+ *   g) semantics of nowait for that continues to method return
+ *   h) treatment of omp_ calls, i.e., should we preserve the parallelism since the calls likely depend on it
+ *   i) detect non-escaping heap data from within a omp pragma context, e.g., fig4.98-threadprivate.c
+ *   j) default private/shared when there are explicit shared/private clauses that don't mention the var
+ *   
  * 
  * @author dwyer
  * 

@@ -3,15 +3,23 @@ package edu.udel.cis.vsl.civl;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
+import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
+import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
+import edu.udel.cis.vsl.abc.parse.IF.CParser;
+import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
+import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
 
 public class OmpSimplifierTest {
 
@@ -25,8 +33,6 @@ public class OmpSimplifierTest {
 
 	private PrintStream out = System.out;
 	
-	private static List<String> codes = Arrays.asList("omp", "omp_simplifier");
-
 	/* *************************** Helper Methods ************************** */
 
 	/* check whether the result of running the OMP simplifier is equivalent to the
@@ -40,24 +46,47 @@ public class OmpSimplifierTest {
 	 */
 	private void check(String fileNameRoot) throws ABCException, IOException {
 		FrontEnd frontEnd = new FrontEnd();
-
+		CIVLConfiguration config = new CIVLConfiguration();
+		Preprocessor preprocessor;
+		CTokenSource tokens;
+		CParser parser;
+		ASTBuilder builder;
+		AST ast;
+		
 		File file = new File(rootDir, fileNameRoot + ".c");
 		File simplifiedFile = new File(new File(rootDir, "simple"), fileNameRoot + ".c.s");
-
+		
 		Program program, simplifiedProgram;
 
-		program = frontEnd.compileAndLink(new File[] { file }, Language.C,
-				systemIncludes, userIncludes);
-		program.applyTransformers(codes);
+		{ // Parse the program and apply the CIVL transformations
+			preprocessor = frontEnd.getPreprocessor(systemIncludes, userIncludes);
+			tokens = preprocessor.outputTokenSource(file);
+			parser = frontEnd.getParser(tokens);
+			builder = frontEnd.getASTBuilder(parser);
+			ast = builder.getTranslationUnit();
+			program = frontEnd.getProgramFactory(
+					frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(ast);
+			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
+					new ArrayList<String>(0), builder, config);
+			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
+					new ArrayList<String>(0), builder, config);
+		}
 
-		simplifiedProgram = frontEnd.compileAndLink(new File[] { simplifiedFile }, Language.C,
-				systemIncludes, userIncludes);
-		simplifiedProgram.applyTransformers(codes);
+		{ // Parse the simplified program 
+			preprocessor = frontEnd.getPreprocessor(systemIncludes, userIncludes);
+			tokens = preprocessor.outputTokenSource(simplifiedFile);
+			parser = frontEnd.getParser(tokens);
+			builder = frontEnd.getASTBuilder(parser);
+			ast = builder.getTranslationUnit();
+			simplifiedProgram = frontEnd.getProgramFactory(
+					frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(ast);
+		}
+
 
 		if (!program.getAST().getRootNode()
 				.equiv(simplifiedProgram.getAST().getRootNode()) ) {
 			out.println("For "+fileNameRoot+" expected simplified version to be:");
-			simplifiedProgram.getAST().prettyPrint(out, true);
+			frontEnd.printProgram(out, simplifiedProgram, false);
 			out.println("Computed simplified version was:");
 			program.getAST().prettyPrint(out, true);
 			assert false;
