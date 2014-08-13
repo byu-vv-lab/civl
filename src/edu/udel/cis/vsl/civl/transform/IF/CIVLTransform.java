@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.transform.IF;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
@@ -91,8 +92,73 @@ public class CIVLTransform {
 			transformer = new MPI2CIVLTransformer(astFactory, inputVars, config);
 			break;
 		case CIVLTransform.OMP_PRAGMA:
-			transformer = new OmpPragmaTransformer(astFactory, inputVars,
-					astBuilder, config);
+			transformer = new OmpPragmaTransformer(astFactory, astBuilder,
+					config);
+			break;
+		case CIVLTransform.OMP_SIMPLIFY:
+			transformer = new OpenMPSimplifier(astFactory, config);
+			break;
+		case CIVLTransform.PTHREAD:
+			transformer = new Pthread2CIVLTransformer(astFactory, config);
+			break;
+		case CIVLTransform.CIVL_PRAGMA:
+			transformer = new CIVLPragmaTransformer(astFactory, astBuilder,
+					config);
+			break;
+		default:
+			// try applying the transformer from ABC, might fail.
+			program.applyTransformer(code);
+			return;
+		}
+		program.apply(transformer);
+	}
+
+	/**
+	 * Applies a transformer to a program.
+	 * 
+	 * @param program
+	 *            The program to be transformed.
+	 * @param code
+	 *            The code of a transformer, should be one of the following:<br>
+	 *            <ul>
+	 *            <li>"general": general transformer</li>
+	 *            <li>"io": IO transformer</li>
+	 *            <li>"mpi": MPI-to-CIVL transformer</li>
+	 *            <li>"_omp_": OpenMP pragma transformer</li>
+	 *            <li>"omp": OpenMP-to-CIVL transformer</li>
+	 *            <li>"pthread": Pthread-to-CIVL transformer</li>
+	 *            </ul>
+	 * @param astBuilder
+	 *            The AST builder to be reused in the transformer to parse
+	 *            tokens. For example, the OpenMP pragma transformer uses the
+	 *            AST builder to parse expressions.
+	 * @param debug
+	 *            The flag to turn on/off debugging. Useful for printing more
+	 *            information in debug mode.
+	 * @throws SyntaxException
+	 */
+	public static void applyTransformer(Program program, String code,
+			ASTBuilder astBuilder, CIVLConfiguration config)
+			throws SyntaxException {
+		CIVLBaseTransformer transformer;
+		ASTFactory astFactory = program.getAST().getASTFactory();
+
+		switch (code) {
+		case CIVLTransform.GENERAL:
+			transformer = new GeneralTransformer(astFactory,
+					new ArrayList<String>(0), config);
+			break;
+		case CIVLTransform.IO:
+			transformer = new IOTransformer(astFactory,
+					new ArrayList<String>(0), config);
+			break;
+		case CIVLTransform.MPI:
+			transformer = new MPI2CIVLTransformer(astFactory,
+					new ArrayList<String>(0), config);
+			break;
+		case CIVLTransform.OMP_PRAGMA:
+			transformer = new OmpPragmaTransformer(astFactory, astBuilder,
+					config);
 			break;
 		case CIVLTransform.OMP_SIMPLIFY:
 			transformer = new OpenMPSimplifier(astFactory, config);

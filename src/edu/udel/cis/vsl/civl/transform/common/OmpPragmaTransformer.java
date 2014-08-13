@@ -33,10 +33,9 @@ public class OmpPragmaTransformer extends CIVLBaseTransformer {
 
 	private OmpBuilder ompBuilder;
 
-	public OmpPragmaTransformer(ASTFactory astFactory,
-			List<String> inputVariables, ASTBuilder astBuilder,
+	public OmpPragmaTransformer(ASTFactory astFactory,ASTBuilder astBuilder,
 			CIVLConfiguration config) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, new ArrayList<String>(),
 				astBuilder, config);
 		this.ompBuilder = Antlr2AST.newOmpBuilder(astFactory, astBuilder);
 	}
