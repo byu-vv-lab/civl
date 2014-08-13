@@ -390,6 +390,10 @@ public class UserInterface {
 				this.out.println("Apply OpenMP transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 					inputVars, astBuilder, config);
+			if (config.debugOrVerbose())
+				this.out.println("Apply OpenMP transformer...");
+			CIVLTransform.applyTransformer(program, CIVLTransform.OPENMP,
+					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
 				program.print(out);
 				CIVLTransform.printProgram2CIVL(out, program, true);

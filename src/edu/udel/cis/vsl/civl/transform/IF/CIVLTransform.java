@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
 import edu.udel.cis.vsl.civl.transform.common.MPI2CIVLTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OmpPragmaTransformer;
+import edu.udel.cis.vsl.civl.transform.common.OpenMP2CIVLTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPSimplifier;
 import edu.udel.cis.vsl.civl.transform.common.Pthread2CIVLTransformer;
 
@@ -45,6 +46,7 @@ public class CIVLTransform {
 	public final static String OMP_PRAGMA = OmpPragmaTransformer.CODE;
 	public final static String OMP_SIMPLIFY = OpenMPSimplifier.CODE;
 	public final static String MPI = MPI2CIVLTransformer.CODE;
+	public final static String OPENMP = OpenMP2CIVLTransformer.CODE;
 	public final static String PTHREAD = Pthread2CIVLTransformer.CODE;
 	public final static String CIVL_PRAGMA = CIVLPragmaTransformer.CODE;
 
@@ -97,6 +99,9 @@ public class CIVLTransform {
 			break;
 		case CIVLTransform.OMP_SIMPLIFY:
 			transformer = new OpenMPSimplifier(astFactory, config);
+			break;
+		case CIVLTransform.OPENMP:
+			transformer = new OpenMP2CIVLTransformer(astFactory, inputVars, config);
 			break;
 		case CIVLTransform.PTHREAD:
 			transformer = new Pthread2CIVLTransformer(astFactory, config);
@@ -162,6 +167,9 @@ public class CIVLTransform {
 			break;
 		case CIVLTransform.OMP_SIMPLIFY:
 			transformer = new OpenMPSimplifier(astFactory, config);
+			break;
+		case CIVLTransform.OPENMP:
+			transformer = new OpenMP2CIVLTransformer(astFactory, new ArrayList<String>(0), config);
 			break;
 		case CIVLTransform.PTHREAD:
 			transformer = new Pthread2CIVLTransformer(astFactory, config);
