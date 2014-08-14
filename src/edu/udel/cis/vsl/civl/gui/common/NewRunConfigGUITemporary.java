@@ -38,6 +38,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
@@ -313,7 +314,7 @@ public class NewRunConfigGUITemporary extends JFrame {
 		for (int i = 0; i < optModel_ru.getRowCount(); i++) {
 			optModel_ru.setValueAt(valCollection.get(i), i, 1);
 		}
-		//sp_optTable_ru.setViewportView(tbl_optTable_ru);
+		// sp_optTable_ru.setViewportView(tbl_optTable_ru);
 	}
 
 	/**
@@ -598,8 +599,8 @@ public class NewRunConfigGUITemporary extends JFrame {
 
 				int modelRow = currTable.getSelectedRow();
 				Object valToDefault = currOptModel.getValueAt(modelRow, 1);
-				Option optToDefault = getOption((String) currOptModel
-						.getValueAt(modelRow, 0));
+				Option optToDefault = (Option) currOptModel.getValueAt(
+						modelRow, 0);
 
 				if (valToDefault instanceof Boolean) {
 					Boolean defValue = (Boolean) optToDefault.defaultValue();
@@ -638,8 +639,8 @@ public class NewRunConfigGUITemporary extends JFrame {
 
 		tbl_optTable_ru = tbl_optTable;
 		tbl_inputTable_ru = tbl_inputTable;
-		//sp_optTable_ru = sp_optTable;
-		//sp_inputTable_ru = sp_inputTable;
+		// sp_optTable_ru = sp_optTable;
+		// sp_inputTable_ru = sp_inputTable;
 		tf_chosenFile_ru = tf_chosenFile;
 
 		commands[3] = run;
@@ -701,8 +702,8 @@ public class NewRunConfigGUITemporary extends JFrame {
 
 				int modelRow = tbl_optTable.getSelectedRow();
 				Object valToDefault = currOptModel.getValueAt(modelRow, 1);
-				Option optToDefault = getOption((String) currOptModel
-						.getValueAt(modelRow, 0));
+				Option optToDefault = (Option) currOptModel.getValueAt(
+						modelRow, 0);
 				if (valToDefault instanceof Boolean) {
 					Boolean defValue = (Boolean) optToDefault.defaultValue();
 
@@ -908,6 +909,7 @@ public class NewRunConfigGUITemporary extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				Object config = savedConfigs.get(tf_name.getText());
 				boolean dontCreate = false;
+
 				if (config != null) {
 					dontCreate = true;
 				}
@@ -924,7 +926,8 @@ public class NewRunConfigGUITemporary extends JFrame {
 					if (tf_name.getText().equals(null)
 							|| tf_name.getText().equals("")) {
 						newName = "New Configuration(" + newConfigsNum + ")";
-						newConfigsNum++;
+						if (selected.getPathCount() == 2)
+							newConfigsNum++;
 					}
 					newChild.setUserObject(newName);
 					currConfig = (RunConfigDataNode) newChild;
@@ -943,26 +946,45 @@ public class NewRunConfigGUITemporary extends JFrame {
 						}
 
 						currConfig.setOptValMap(optValMap);
-
+						int configNum = selectedNode.getChildCount();
+						int row = 0;
+						int row_pa = 1;
+						int row_pp = 2;
+						int row_rp = 3;
+						int row_ru = 4;
+						int row_vf = 5;
 						if (selectedCom.getName().equals("run")) {
+							// System.out.println(configNum);
+							row = row_ru;
 							JTabbedPane newRun = initRun();
 							p_runCards.add(newRun, currConfig.getName());
+							savedConfigs.put(currConfig.getName(), currConfig);
 						} else if (selectedCom.getName().equals("verify")) {
+							row = row_vf;
 							JTabbedPane newVerify = initVerify();
 							p_verifyCards.add(newVerify, currConfig.getName());
+							savedConfigs.put(currConfig.getName(), currConfig);
 						} else if (selectedCom.getName().equals("parse")) {
+							row = row_pa;
 							JTabbedPane newParse = initParse();
 							p_parseCards.add(newParse, currConfig.getName());
+							savedConfigs.put(currConfig.getName(), currConfig);
 						} else if (selectedCom.getName().equals("preprocess")) {
+							row = row_pp;
 							JTabbedPane newPreproc = initPreproc();
 							p_preprocCards
 									.add(newPreproc, currConfig.getName());
+							savedConfigs.put(currConfig.getName(), currConfig);
 						} else if (selectedCom.getName().equals("replay")) {
+							row = row_rp;
 							JTabbedPane newReplay = initReplay();
 							p_replayCards.add(newReplay, currConfig.getName());
+							savedConfigs.put(currConfig.getName(), currConfig);
 						}
 
-						savedConfigs.put(currConfig.getName(), currConfig);
+						jt_commands.expandPath(selected);
+						jt_commands.setSelectionRow(row + configNum);
+
 					}
 					tf_name.setText("");
 
