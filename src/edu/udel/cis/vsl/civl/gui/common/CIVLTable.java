@@ -1,10 +1,11 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
 import javax.swing.table.*;
-
-import java.util.*;
-
+import java.awt.Component;
+import java.awt.event.MouseEvent;
 import javax.swing.*;
+
+import edu.udel.cis.vsl.gmc.Option;
 
 /**
  * This class is used to ensure that the first column of the
@@ -44,7 +45,7 @@ public class CIVLTable extends JTable {
 
 	/**
 	 * The columns that can be edited in an instance of a
-	 * <code>CIVL_Table</code>
+	 * <code>CIVL_Table</code>.
 	 */
 	private int[] editableCols;
 
@@ -55,10 +56,35 @@ public class CIVLTable extends JTable {
 	 */
 	private String tableType;
 
+	/**
+	 * The renderer for option values.
+	 */
+	private OptionCellRenderer option_render;
+
+	/**
+	 * This custom class renders option values as option.name() in uneditable
+	 * JTextAreas.
+	 * 
+	 * @author noyes
+	 * 
+	 */
+	private class OptionCellRenderer implements TableCellRenderer {
+		private Option option;
+
+		@Override
+		public Component getTableCellRendererComponent(JTable table,
+				Object value, boolean isSelected, boolean hasFocus, int row,
+				int column) {
+			return new JTextArea(option.name());
+		}
+
+	}
+
 	CIVLTable(int[] editableCols, String tableType) {
 		super();
 		boolean_render = new BooleanCellRenderer();
 		boolean_edit = new BooleanCellEditor();
+		option_render = new OptionCellRenderer();
 		text_render = new FormattedTextFieldRenderer();
 		text_edit = new FormattedTextFieldEditor();
 		this.editableCols = editableCols;
@@ -120,6 +146,11 @@ public class CIVLTable extends JTable {
 				&& tableType == "option") {
 			return text_render;
 		}
+		
+		else if (value instanceof Option){
+			option_render.option = (Option) value;
+			return option_render;
+		}
 
 		else if (value instanceof Boolean)
 			return boolean_render;
@@ -151,4 +182,23 @@ public class CIVLTable extends JTable {
 		return found;
 	}
 
+	public String getToolTipText(MouseEvent e) {
+		String tip = null;
+		java.awt.Point p = e.getPoint();
+		int rowIndex = rowAtPoint(p);
+		int colIndex = columnAtPoint(p);
+
+		try {
+			// comment row, exclude heading
+			if (colIndex == 0 && tableType == "option") {
+				// tip = getValueAt(rowIndex, colIndex).toString();
+				tip = ((Option) getValueAt(rowIndex, colIndex)).description();
+
+			}
+		} catch (RuntimeException e1) {
+			// catch null pointer exception if mouse is over an empty line
+		}
+
+		return tip;
+	}
 }

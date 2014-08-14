@@ -49,7 +49,8 @@ import edu.udel.cis.vsl.gmc.Option;
  * @author Steven Noyes (noyes)
  * 
  */
-public class NewRunConfigGUI extends JFrame {
+// TODO: CHANGE absoluteLayouts(setLayout(null)) to groupLayouts
+public class NewRunConfigGUITemporary extends JFrame {
 
 	private static final long serialVersionUID = 5152675076717228871L;
 
@@ -98,31 +99,21 @@ public class NewRunConfigGUI extends JFrame {
 	 * A simple label. (Name: )
 	 */
 	private JLabel lb_name;
-	
+
 	/**
 	 * Explains what the 'new' button does.
 	 */
 	private JLabel lb_new;
-	
+
 	/**
 	 * Explains what the 'duplicate' button does.
 	 */
 	private JLabel lb_duplicate;
-	
+
 	/**
 	 * Explains what the 'delete' button does.
 	 */
 	private JLabel lb_delete;
-
-	/**
-	 * The label: "Chosen File". It indicates the JTextField that displays the
-	 * chosen file.
-	 */
-	private JLabel lb_chosenFile_pa;
-	private JLabel lb_chosenFile_pp;
-	private JLabel lb_chosenFile_rp;
-	private JLabel lb_chosenFile_ru;
-	private JLabel lb_chosenFile_vf;
 
 	/**
 	 * The JTree that contains the list of commands.
@@ -184,25 +175,10 @@ public class NewRunConfigGUI extends JFrame {
 	private JButton bt_deleteConfig;
 
 	/**
-	 * Allows the user to browse for a file.
-	 */
-	private JButton bt_browse_pa;
-	private JButton bt_browse_pp;
-	private JButton bt_browse_rp;
-	private JButton bt_browse_ru;
-	private JButton bt_browse_vf;
-
-	/**
 	 * The JTable that displays all of the options the user can choose from.
 	 */
 	private JTable tbl_optTable_ru;
 	private JTable tbl_optTable_vf;
-
-	/**
-	 * The JScrollPane that the tbl_optTable is displayed within.
-	 */
-	private JScrollPane sp_optTable_ru;
-	private JScrollPane sp_optTable_vf;
 
 	/**
 	 * The JTable that displays all of the inputs the user can specify values
@@ -210,12 +186,6 @@ public class NewRunConfigGUI extends JFrame {
 	 */
 	private JTable tbl_inputTable_ru;
 	private JTable tbl_inputTable_vf;
-
-	/**
-	 * The JScrollPane that the tbl_inputTable is displayed within.
-	 */
-	private JScrollPane sp_inputTable_ru;
-	private JScrollPane sp_inputTable_vf;
 
 	/**
 	 * The list of CIVL_Commands that are available to the user.
@@ -243,46 +213,70 @@ public class NewRunConfigGUI extends JFrame {
 	private Option[] options;
 
 	/**
-	 * The tab(JPanel) that the user can Fs options from(RUN & VERIFY).
+	 * The currently selected <code>RunConfigurationDataNode</code>.
 	 */
-	//private JPanel tab_setOptions_ru;
-	private JPanel tab_setOptions_vf;
-
-	/**
-	 * The tab(JPanel) that the user can set inputs from(RUN & VERIFY).
-	 */
-	//private JPanel tab_setInputs_ru;
-	private JPanel tab_setInputs_vf;
-
 	private RunConfigDataNode currConfig;
 
 	/**
-	 * A Map of all of the saved configurations that the user has
-	 * created. TODO: possibly eliminate this as it may not be terribly
-	 * necessary.
+	 * A Map of all of the saved configurations that the user has created. TODO:
+	 * possibly eliminate this as it may not be terribly necessary.
 	 */
-	private HashMap<String,RunConfigDataNode> savedConfigs = new HashMap<String,RunConfigDataNode>();
+	private HashMap<String, RunConfigDataNode> savedConfigs = new HashMap<String, RunConfigDataNode>();
 
 	/**
 	 * The number of run configurations that have been created but not named in
 	 * this session.
 	 */
 	private int newConfigsNum;
-	
+
 	/**
 	 * The panel that explains to the user how to create new configurations etc.
 	 */
 	private JPanel p_info;
-	
+
+	/**
+	 * The JPanel(with cards Layout) that each command has. These will contain
+	 * cards that switch the view based on what configuration is selected.
+	 * 
+	 */
 	private JPanel p_parseCards;
 	private JPanel p_preprocCards;
 	private JPanel p_replayCards;
 	private JPanel p_runCards;
 	private JPanel p_verifyCards;
-	
-	private CardLayout runCardsLayout;
 
-	public NewRunConfigGUI() {
+	private CardLayout parseCardsLayout;
+	private CardLayout preprocCardsLayout;
+	private CardLayout replayCardsLayout;
+	private CardLayout runCardsLayout;
+	private CardLayout verifyCardsLayout;
+
+	/**
+	 * The action Listener for the file browse button.
+	 */
+	private ActionListener browse;
+
+	/**
+	 * The action Listener for the revert button.
+	 */
+	private ActionListener revert;
+
+	/**
+	 * The action Listener for the 'new' button.
+	 */
+	private ActionListener newConfig;
+
+	/**
+	 * The action Listener for the apply button.
+	 */
+	private ActionListener apply;
+
+	/**
+	 * The action Listener for the cancel button.
+	 */
+	private ActionListener close;
+
+	public NewRunConfigGUITemporary() {
 		this.setSize(1200, 700);
 		this.setVisible(true);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -294,6 +288,7 @@ public class NewRunConfigGUI extends JFrame {
 		int additionalNewConfigs = 0;
 		newConfigsNum = 0 + additionalNewConfigs;
 
+		initListeners();
 		initJLabel();
 		initJTextField();
 		initJTextArea();
@@ -302,26 +297,23 @@ public class NewRunConfigGUI extends JFrame {
 	}
 
 	/**
-	 * Takes an xml file and parses it to create a runConfiguration object that
-	 * will be stored in the t_commands JTree.
+	 * Function that may be used later to reduce the number of instances of
+	 * components that are created, currently does not work.
 	 */
-	public void runConfigFromXML() {
-
-	}
-	
-	public void drawView(){
-		HashMap<String,Object> optValMap = currConfig.getOptValMap();
+	public void drawView() {
+		HashMap<String, Object> optValMap = currConfig.getOptValMap();
 		ArrayList<Object> valCollection = new ArrayList<Object>();
-		for(int i = 0; i<optValMap.size(); i++){
+		for (int i = 0; i < optValMap.size(); i++) {
 			Object key = selectedCom.getAllowedOptions()[i].name();
 			Object element = optValMap.get(key);
 			valCollection.add(i, element);
 		}
-		DefaultTableModel optModel_ru = (DefaultTableModel) tbl_optTable_ru.getModel();
-		for(int i = 0; i < optModel_ru.getRowCount(); i++){
+		DefaultTableModel optModel_ru = (DefaultTableModel) tbl_optTable_ru
+				.getModel();
+		for (int i = 0; i < optModel_ru.getRowCount(); i++) {
 			optModel_ru.setValueAt(valCollection.get(i), i, 1);
-		}		
-		sp_optTable_ru.setViewportView(tbl_optTable_ru);
+		}
+		//sp_optTable_ru.setViewportView(tbl_optTable_ru);
 	}
 
 	/**
@@ -368,23 +360,17 @@ public class NewRunConfigGUI extends JFrame {
 	 * Populates the input table of the current view with all of the inputs
 	 * returned by <code>parseInputs()</code>.
 	 */
+	// TODO: Figure out why inputs dont show up for tables that belong to
+	// configs without names: newConfiguration(x)
 	public void setInputs() {
 		CIVLTable currTable = null;
 		if (selectedCom.getName() == "run") {
-			currTable = (CIVLTable) tbl_optTable_ru;
+			currTable = (CIVLTable) tbl_inputTable_ru;
 
 		} else if (selectedCom.getName() == "verify") {
-			currTable = (CIVLTable) tbl_optTable_vf;
+			currTable = (CIVLTable) tbl_inputTable_vf;
 		}
-		
-		//CardLayout cardLayout = (CardLayout) selectedCom.getView().getLayout();
-		//JPanel currView = selectedCom.getView();
-		//currConfig.getName()
-		//int x = sp_inputTable_ru.getX();
-		//int y = sp_inputTable_ru.getY();
-		//CIVLTable inputTable = (CIVLTable) ((JScrollPane) currView
-		//		.getComponentAt(x, y)).getViewport().getView();
-		
+
 		LinkedList<CIVL_Input> inputs = parseInputs();
 		final DefaultTableModel inputModel = (DefaultTableModel) currTable
 				.getModel();
@@ -406,6 +392,8 @@ public class NewRunConfigGUI extends JFrame {
 						currInput.getType(), "" });
 			}
 		}
+		revalidate();
+		repaint();
 	}
 
 	/**
@@ -454,14 +442,32 @@ public class NewRunConfigGUI extends JFrame {
 	public JTabbedPane initParse() {
 		JTabbedPane parseView = new JTabbedPane();
 		JPanel tab_chooseFile = new JPanel();
+		JTextField tf_chosenFile = new JTextField();
+		JLabel lb_chosenFile = new JLabel("Chosen File:");
+		JButton bt_browse = new JButton("Browse...");
+
 		tab_chooseFile.setLayout(null);
 		parseView.setName("parse");
 
-		tab_chooseFile.add(lb_chosenFile_pa);
-		tab_chooseFile.add(tf_chosenFile_pa);
-		tab_chooseFile.add(bt_browse_pa);
+		tf_chosenFile.setBounds(6, 21, 805, 28);
+		lb_chosenFile.setBounds(6, 6, 100, 16);
+		bt_browse.setBounds(823, 22, 117, 29);
+
+		bt_browse.addActionListener(browse);
+
+		tab_chooseFile.add(lb_chosenFile);
+		tab_chooseFile.add(tf_chosenFile);
+		tab_chooseFile.add(bt_browse);
 
 		parseView.addTab("New tab", null, tab_chooseFile, null);
+
+		tf_chosenFile_pa = tf_chosenFile;
+
+		CIVL_Command parse = new CIVL_Command("parse",
+				"show result of preprocessing and parsing filename",
+				new Option[] {}, false, p_parseCards);
+
+		commands[0] = parse;
 
 		return parseView;
 	}
@@ -472,14 +478,32 @@ public class NewRunConfigGUI extends JFrame {
 	public JTabbedPane initPreproc() {
 		JTabbedPane preprocView = new JTabbedPane();
 		JPanel tab_chooseFile = new JPanel();
+		JTextField tf_chosenFile = new JTextField();
+		JLabel lb_chosenFile = new JLabel("Chosen File:");
+		JButton bt_browse = new JButton("Browse...");
+
 		tab_chooseFile.setLayout(null);
 		preprocView.setName("preprocess");
 
-		tab_chooseFile.add(lb_chosenFile_pp);
-		tab_chooseFile.add(tf_chosenFile_pp);
-		tab_chooseFile.add(bt_browse_pp);
+		tf_chosenFile.setBounds(6, 21, 805, 28);
+		lb_chosenFile.setBounds(6, 6, 100, 16);
+		bt_browse.setBounds(823, 22, 117, 29);
+
+		bt_browse.addActionListener(browse);
+
+		tab_chooseFile.add(lb_chosenFile);
+		tab_chooseFile.add(tf_chosenFile);
+		tab_chooseFile.add(bt_browse);
 
 		preprocView.addTab("New tab", null, tab_chooseFile, null);
+
+		tf_chosenFile_pp = tf_chosenFile;
+
+		CIVL_Command preprocess = new CIVL_Command("preprocess",
+				"show result of preprocessing filename", new Option[] {},
+				false, p_preprocCards);
+
+		commands[1] = preprocess;
 
 		return preprocView;
 	}
@@ -490,14 +514,32 @@ public class NewRunConfigGUI extends JFrame {
 	public JTabbedPane initReplay() {
 		JTabbedPane replayView = new JTabbedPane();
 		JPanel tab_chooseFile = new JPanel();
+		JTextField tf_chosenFile = new JTextField();
+		JLabel lb_chosenFile = new JLabel("Chosen File:");
+		JButton bt_browse = new JButton("Browse...");
+
 		tab_chooseFile.setLayout(null);
 		replayView.setName("replay");
 
-		tab_chooseFile.add(lb_chosenFile_rp);
-		tab_chooseFile.add(tf_chosenFile_rp);
-		tab_chooseFile.add(bt_browse_rp);
+		tf_chosenFile.setBounds(6, 21, 805, 28);
+		lb_chosenFile.setBounds(6, 6, 100, 16);
+		bt_browse.setBounds(823, 22, 117, 29);
+
+		bt_browse.addActionListener(browse);
+
+		tab_chooseFile.add(lb_chosenFile);
+		tab_chooseFile.add(tf_chosenFile);
+		tab_chooseFile.add(bt_browse);
 
 		replayView.addTab("New tab", null, tab_chooseFile, null);
+
+		tf_chosenFile_rp = tf_chosenFile;
+
+		CIVL_Command replay = new CIVL_Command("replay",
+				"replay trace for program filename", new Option[] {}, false,
+				p_replayCards);
+
+		commands[2] = replay;
 
 		return replayView;
 	}
@@ -506,22 +548,101 @@ public class NewRunConfigGUI extends JFrame {
 	 * Creates the run view.
 	 */
 	public JTabbedPane initRun() {
+		JLabel lb_chosenFile = new JLabel("Chosen File:");
+		JTextField tf_chosenFile = new JTextField();
 		JTabbedPane runView = new JTabbedPane();
 		JPanel tab_chooseFile = new JPanel();
 		JPanel tab_setOptions_ru = new JPanel();
 		JPanel tab_setInputs_ru = new JPanel();
+		JButton bt_browse = new JButton("Browse...");
+
 		tab_setOptions_ru.setLayout(null);
 		tab_setInputs_ru.setLayout(null);
 		tab_chooseFile.setLayout(null);
 		runView.setName("run");
-		
-		tab_chooseFile.add(lb_chosenFile_ru);
-		tab_chooseFile.add(tf_chosenFile_ru);
-		tab_chooseFile.add(bt_browse_ru);
+
+		JScrollPane sp_optTable = new JScrollPane();
+		JScrollPane sp_inputTable = new JScrollPane();
+		sp_optTable.setBounds(6, 6, 967 - 36, 425);
+		sp_inputTable.setBounds(6, 6, 967 - 36, 425);
+		lb_chosenFile.setBounds(6, 6, 100, 16);
+		tf_chosenFile.setBounds(6, 21, 805, 28);
+		bt_browse.setBounds(823, 22, 117, 29);
+
+		bt_browse.addActionListener(browse);
+
+		final JTable tbl_optTable = new CIVLTable(new int[] { 1, 2 }, "option");
+		JTable tbl_inputTable = new CIVLTable(new int[] { 2 }, "input");
+		sp_optTable.setViewportView(tbl_optTable_ru);
+		sp_inputTable.setViewportView(tbl_inputTable_ru);
+
+		tbl_optTable.setModel(new DefaultTableModel(null, new String[] {
+				"Option", "Value", "Default" }));
+		tbl_inputTable.setModel(new DefaultTableModel(null, new String[] {
+				"Variable", "Type", "Value" }));
+
+		tbl_optTable.setCellSelectionEnabled(true);
+		tbl_inputTable.setCellSelectionEnabled(true);
+
+		tbl_optTable.setRowHeight(30);
+		tbl_inputTable.setRowHeight(30);
+
+		final DefaultTableModel optModel_ru = (DefaultTableModel) tbl_optTable
+				.getModel();
+
+		@SuppressWarnings("serial")
+		Action defaultize = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				DefaultTableModel currOptModel = optModel_ru;
+				JTable currTable = tbl_optTable;
+
+				int modelRow = currTable.getSelectedRow();
+				Object valToDefault = currOptModel.getValueAt(modelRow, 1);
+				Option optToDefault = getOption((String) currOptModel
+						.getValueAt(modelRow, 0));
+
+				if (valToDefault instanceof Boolean) {
+					Boolean defValue = (Boolean) optToDefault.defaultValue();
+
+					// MAIN DEFAULT ACTION:
+					currTable.setValueAt(defValue, modelRow, 1);
+				}
+
+				else
+					currOptModel.setValueAt(optToDefault.defaultValue(),
+							modelRow, 1);
+				repaint();
+			}
+		};
+
+		CIVL_Command run = new CIVL_Command("run", "run program filename",
+				options, true, p_runCards);
+
+		// options for RUN
+		for (int i = 0; i < run.getAllowedOptions().length; i++) {
+			optModel_ru.addRow(new Object[] { options[i],
+					options[i].defaultValue(), "Default" });
+			new ButtonColumn(tbl_optTable, defaultize, 2);
+		}
+
+		tab_chooseFile.add(lb_chosenFile);
+		tab_chooseFile.add(tf_chosenFile);
+		tab_chooseFile.add(bt_browse);
+
+		tab_setOptions_ru.add(sp_optTable);
+		tab_setInputs_ru.add(sp_inputTable);
 
 		runView.addTab("Choose File", null, tab_chooseFile, null);
 		runView.addTab("Options", null, tab_setOptions_ru, null);
 		runView.addTab("Inputs", null, tab_setInputs_ru, null);
+
+		tbl_optTable_ru = tbl_optTable;
+		tbl_inputTable_ru = tbl_inputTable;
+		//sp_optTable_ru = sp_optTable;
+		//sp_inputTable_ru = sp_inputTable;
+		tf_chosenFile_ru = tf_chosenFile;
+
+		commands[3] = run;
 
 		return runView;
 	}
@@ -532,102 +653,134 @@ public class NewRunConfigGUI extends JFrame {
 	public JTabbedPane initVerify() {
 		JTabbedPane verifyView = new JTabbedPane();
 		JPanel tab_chooseFile = new JPanel();
-		tab_setOptions_vf = new JPanel();
-		tab_setInputs_vf = new JPanel();
-		tab_setOptions_vf.setLayout(null);
-		tab_setInputs_vf.setLayout(null);
+		JPanel tab_setOptions = new JPanel();
+		JPanel tab_setInputs = new JPanel();
+		JLabel lb_chosenFile = new JLabel("Chosen File:");
+		JTextField tf_chosenFile = new JTextField();
+		JButton bt_browse = new JButton("Browse...");
+
+		tab_setOptions.setLayout(null);
+		tab_setInputs.setLayout(null);
 		tab_chooseFile.setLayout(null);
 		verifyView.setName("verify");
 
-		tab_chooseFile.add(lb_chosenFile_vf);
-		tab_chooseFile.add(tf_chosenFile_vf);
-		tab_chooseFile.add(bt_browse_vf);
+		JScrollPane sp_optTable = new JScrollPane();
+		JScrollPane sp_inputTable = new JScrollPane();
+
+		sp_optTable.setBounds(6, 6, 967 - 36, 425);
+		sp_inputTable.setBounds(6, 6, 967 - 36, 425);
+		lb_chosenFile.setBounds(6, 6, 100, 16);
+		tf_chosenFile.setBounds(6, 21, 805, 28);
+		bt_browse.setBounds(823, 22, 117, 29);
+
+		bt_browse.addActionListener(browse);
+
+		final JTable tbl_optTable = new CIVLTable(new int[] { 1, 2 }, "option");
+		JTable tbl_inputTable = new CIVLTable(new int[] { 2 }, "input");
+
+		sp_optTable.setViewportView(tbl_optTable);
+		sp_inputTable.setViewportView(tbl_inputTable);
+		tbl_optTable.setModel(new DefaultTableModel(null, new String[] {
+				"Option", "Value", "Default" }));
+
+		tbl_inputTable.setModel(new DefaultTableModel(null, new String[] {
+				"Variable", "Type", "Value" }));
+
+		tbl_optTable.setCellSelectionEnabled(true);
+		tbl_inputTable.setCellSelectionEnabled(true);
+
+		tbl_optTable.setRowHeight(30);
+		tbl_inputTable.setRowHeight(30);
+		final DefaultTableModel optModel_vf = (DefaultTableModel) tbl_optTable
+				.getModel();
+
+		@SuppressWarnings("serial")
+		Action defaultize = new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				DefaultTableModel currOptModel = optModel_vf;
+
+				int modelRow = tbl_optTable.getSelectedRow();
+				Object valToDefault = currOptModel.getValueAt(modelRow, 1);
+				Option optToDefault = getOption((String) currOptModel
+						.getValueAt(modelRow, 0));
+				if (valToDefault instanceof Boolean) {
+					Boolean defValue = (Boolean) optToDefault.defaultValue();
+
+					// MAIN DEFAULT ACTION:
+					tbl_optTable.setValueAt(defValue, modelRow, 1);
+				}
+
+				else
+					currOptModel.setValueAt(optToDefault.defaultValue(),
+							modelRow, 1);
+				repaint();
+			}
+		};
+
+		CIVL_Command verify = new CIVL_Command("verify",
+				"verify program filename", options, true, p_verifyCards);
+
+		// options for VERIFY
+		for (int i = 0; i < verify.getAllowedOptions().length; i++) {
+			optModel_vf.addRow(new Object[] { options[i],
+					options[i].defaultValue(), "Default" });
+			new ButtonColumn(tbl_optTable, defaultize, 2);
+		}
+
+		tab_chooseFile.add(lb_chosenFile);
+		tab_chooseFile.add(tf_chosenFile);
+		tab_chooseFile.add(bt_browse);
+
+		tab_setOptions.add(sp_optTable);
+		tab_setInputs.add(sp_inputTable);
+
+		tbl_optTable_vf = tbl_optTable;
+		tbl_inputTable_vf = tbl_inputTable;
+		tf_chosenFile_vf = tf_chosenFile;
 
 		verifyView.addTab("Choose File", null, tab_chooseFile, null);
-		verifyView.addTab("Options", null, tab_setOptions_vf, null);
-		verifyView.addTab("Inputs", null, tab_setInputs_vf, null);
+		verifyView.addTab("Options", null, tab_setOptions, null);
+		verifyView.addTab("Inputs", null, tab_setInputs, null);
+
+		commands[4] = verify;
 
 		return verifyView;
 	}
 
 	/**
-	 * Creates all of the commandViews. TODO: get rid of the help view(not
-	 * needed)
-	 */
-	public void initCommandViews() {
-		initParse();
-		initPreproc();
-		initReplay();
-		initRun();
-		initVerify();
-	}
-
-	/**
 	 * Creates all of the <code>CIVL_Command</code> that the GUI will need.
 	 */
-	@SuppressWarnings("unused")
 	public void initCommands() {
-		commands = new CIVL_Command[6];
-		options = CIVLConstants.getAllOptions();		
-		
+		commands = new CIVL_Command[5];
+		options = CIVLConstants.getAllOptions();
+
 		p_parseCards = new JPanel();
 		p_preprocCards = new JPanel();
 		p_replayCards = new JPanel();
 		p_runCards = new JPanel();
 		p_verifyCards = new JPanel();
-		
-		runCardsLayout = new CardLayout();
-		
-		p_parseCards.setLayout(new CardLayout());
-		p_preprocCards.setLayout(new CardLayout());
-		p_replayCards.setLayout(new CardLayout());
-		p_runCards.setLayout(runCardsLayout);
-		p_verifyCards.setLayout(new CardLayout());
-		
-		JTabbedPane parseView = initParse();
-		JTabbedPane preprocView = initPreproc();
-		JTabbedPane replayView = initReplay();
-		JTabbedPane runView = initRun();
-		JTabbedPane verifyView = initVerify();
-		
-		//p_runCards.add(runView);
-		
-		
-		CIVL_Command parse = new CIVL_Command("parse",
-				"show result of preprocessing and parsing filename",
-				new Option[] {}, false, p_parseCards);
-		CIVL_Command preprocess = new CIVL_Command("preprocess",
-				"show result of preprocessing filename", new Option[] {},
-				false, p_preprocCards);
-		CIVL_Command replay = new CIVL_Command("replay",
-				"replay trace for program filename", new Option[] {}, false,
-				p_replayCards);
-		CIVL_Command run = new CIVL_Command("run", "run program filename",
-				options, true, p_runCards);
-		CIVL_Command verify = new CIVL_Command("verify",
-				"verify program filename", options, true, p_verifyCards);
-				
-		/*
-		CIVL_Command parse = new CIVL_Command("parse",
-				"show result of preprocessing and parsing filename",
-				new Option[] {}, false, parseView);
-		CIVL_Command preprocess = new CIVL_Command("preprocess",
-				"show result of preprocessing filename", new Option[] {},
-				false, preprocView);
-		CIVL_Command replay = new CIVL_Command("replay",
-				"replay trace for program filename", new Option[] {}, false,
-				replayView);
-		CIVL_Command run = new CIVL_Command("run", "run program filename",
-				options, true, runView);
-		CIVL_Command verify = new CIVL_Command("verify",
-				"verify program filename", options, true, verifyView);
-				*/
 
-		commands[0] = parse;
-		commands[1] = preprocess;
-		commands[2] = replay;
-		commands[3] = run;
-		commands[4] = verify;
+		parseCardsLayout = new CardLayout();
+		preprocCardsLayout = new CardLayout();
+		replayCardsLayout = new CardLayout();
+		runCardsLayout = new CardLayout();
+		verifyCardsLayout = new CardLayout();
+
+		p_parseCards.setLayout(parseCardsLayout);
+		p_preprocCards.setLayout(preprocCardsLayout);
+		p_replayCards.setLayout(replayCardsLayout);
+		p_runCards.setLayout(runCardsLayout);
+		p_verifyCards.setLayout(verifyCardsLayout);
+
+		// TODO: these calls shouldn't be here, however certain parts of these
+		// functions are need to be called to avoid code dependencies in other
+		// initialization functions, fix this bad code design
+		initParse();
+		initPreproc();
+		initReplay();
+		initRun();
+		initVerify();
+
 	}
 
 	/**
@@ -638,7 +791,7 @@ public class NewRunConfigGUI extends JFrame {
 		p_info = new JPanel();
 		p_info.setLayout(null);
 		viewCardsLayout = new CardLayout();
-		
+
 		viewCards = new JPanel();
 
 		viewCards.setBorder(new TitledBorder(null, null, TitledBorder.LEADING,
@@ -651,9 +804,8 @@ public class NewRunConfigGUI extends JFrame {
 		viewCards.add(commands[2].getView(), "replay");
 		viewCards.add(commands[3].getView(), "run");
 		viewCards.add(commands[4].getView(), "verify");
-		
 		viewCards.add(p_info, "info");
-		
+
 	}
 
 	/**
@@ -704,38 +856,8 @@ public class NewRunConfigGUI extends JFrame {
 		p_info.add(lb_delete);
 	}
 
-	/**
-	 * Creates all of the JButtons in the GUI.
-	 */
-	public void initJButton() {
-		bt_cancel = new JButton("Cancel");
-		bt_run = new JButton("Run");
-		bt_browse_pa = new JButton("Browse...");
-		bt_browse_pp = new JButton("Browse...");
-		bt_browse_rp = new JButton("Browse...");
-		bt_browse_ru = new JButton("Browse...");
-		bt_browse_vf = new JButton("Browse...");
-		bt_revert = new JButton("Revert");
-		bt_apply = new JButton("Apply");
-		bt_new = new JButton("New");
-		bt_duplicate = new JButton("Duplicate");
-		bt_deleteConfig = new JButton("X");
-
-		bt_apply.setBounds(717, 531, 117, 29);
-		bt_revert.setBounds(844, 531, 117, 29);
-
-		bt_cancel.setBounds(1077, 643, 117, 29);
-		bt_run.setBounds(948, 643, 117, 29);
-		bt_browse_pa.setBounds(823, 22, 117, 29);
-		bt_browse_pp.setBounds(823, 22, 117, 29);
-		bt_browse_rp.setBounds(823, 22, 117, 29);
-		bt_browse_ru.setBounds(823, 22, 117, 29);
-		bt_browse_vf.setBounds(823, 22, 117, 29);
-		bt_new.setBounds(10, 65, 53, 29);
-		bt_duplicate.setBounds(59, 65, 89, 29);
-		bt_deleteConfig.setBounds(142, 65, 61, 29);
-
-		ActionListener browse = new ActionListener() {
+	public void initListeners() {
+		browse = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String examplesPath = "/Users/noyes/Documents/workspace/CIVL/examples";
 
@@ -759,21 +881,14 @@ public class NewRunConfigGUI extends JFrame {
 							tf_chosenFile_vf.setText(selectedFile.getName());
 							setInputs();
 						}
+
 					}
 				});
 				chooser.showOpenDialog(null);
 			}
 		};
 
-		bt_cancel.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				Window window = SwingUtilities.windowForComponent((Component) e
-						.getSource());
-				window.dispose();
-			}
-		});
-
-		bt_revert.addActionListener(new ActionListener() {
+		revert = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JTable currTable = null;
 				Option[] selectedOptions = selectedCom.getAllowedOptions();
@@ -787,9 +902,77 @@ public class NewRunConfigGUI extends JFrame {
 					currTable.setValueAt(defValue, i, 1);
 				}
 			}
-		});
+		};
 
-		bt_apply.addActionListener(new ActionListener() {
+		newConfig = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Object config = savedConfigs.get(tf_name.getText());
+				boolean dontCreate = false;
+				if (config != null) {
+					dontCreate = true;
+				}
+
+				if (!dontCreate) {
+					TreePath selected = jt_commands.getSelectionPath();
+
+					DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) jt_commands
+							.getLastSelectedPathComponent();
+
+					DefaultMutableTreeNode newChild = new RunConfigDataNode(
+							selectedCom);
+					String newName = tf_name.getText();
+					if (tf_name.getText().equals(null)
+							|| tf_name.getText().equals("")) {
+						newName = "New Configuration(" + newConfigsNum + ")";
+						newConfigsNum++;
+					}
+					newChild.setUserObject(newName);
+					currConfig = (RunConfigDataNode) newChild;
+					currConfig.setName(newName);
+					if (selected.getPathCount() == 2) {
+						((DefaultTreeModel) jt_commands.getModel())
+								.insertNodeInto(currConfig, selectedNode,
+										selectedNode.getChildCount());
+
+						HashMap<String, Object> optValMap = new HashMap<String, Object>();
+						Option[] opts = selectedCom.getAllowedOptions();
+
+						for (int i = 0; i < opts.length; i++) {
+							Object value = opts[i].defaultValue();
+							optValMap.put(opts[i].name(), value);
+						}
+
+						currConfig.setOptValMap(optValMap);
+
+						if (selectedCom.getName().equals("run")) {
+							JTabbedPane newRun = initRun();
+							p_runCards.add(newRun, currConfig.getName());
+						} else if (selectedCom.getName().equals("verify")) {
+							JTabbedPane newVerify = initVerify();
+							p_verifyCards.add(newVerify, currConfig.getName());
+						} else if (selectedCom.getName().equals("parse")) {
+							JTabbedPane newParse = initParse();
+							p_parseCards.add(newParse, currConfig.getName());
+						} else if (selectedCom.getName().equals("preprocess")) {
+							JTabbedPane newPreproc = initPreproc();
+							p_preprocCards
+									.add(newPreproc, currConfig.getName());
+						} else if (selectedCom.getName().equals("replay")) {
+							JTabbedPane newReplay = initReplay();
+							p_replayCards.add(newReplay, currConfig.getName());
+						}
+
+						savedConfigs.put(currConfig.getName(), currConfig);
+					}
+					tf_name.setText("");
+
+				}
+				dontCreate = false;
+			}
+
+		};
+
+		apply = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JTable currTable = null;
 				if (selectedCom.getName() == "run") {
@@ -798,7 +981,7 @@ public class NewRunConfigGUI extends JFrame {
 					currTable = tbl_optTable_vf;
 				}
 				savedConfigs.remove(currConfig.getName());
-				currConfig.setName(tf_name.getText());				
+				currConfig.setName(tf_name.getText());
 				HashMap<String, Object> optValMap = new HashMap<String, Object>();
 				Option[] opts = selectedCom.getAllowedOptions();
 				for (int i = 0; i < optValMap.size(); i++) {
@@ -810,63 +993,45 @@ public class NewRunConfigGUI extends JFrame {
 				currConfig.setToSave(true);
 				savedConfigs.put(currConfig.getName(), currConfig);
 			}
-		});
-		
-		bt_new.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {				
-				TreePath selected = jt_commands.getSelectionPath();
-				
-				DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) jt_commands
-						.getLastSelectedPathComponent();
-				
-				
-				// DefaultMutableTreeNode newChild = new DefaultMutableTreeNode(
-				// "New Configuration(" + newConfigsNum + ")");
-				DefaultMutableTreeNode newChild = new RunConfigDataNode(
-						selectedCom);
-				String newName = tf_name.getText();
-				if (tf_name.getText().equals(null)
-						|| tf_name.getText().equals(""))
-					newName = "New Configuration(" + newConfigsNum + ")";
-				newChild.setUserObject(newName);
-				currConfig = (RunConfigDataNode) newChild;
-				currConfig.setName(newName);
-				if (selected.getPathCount() == 2){										
-					((DefaultTreeModel) jt_commands.getModel()).insertNodeInto(
-							currConfig, selectedNode,
-							selectedNode.getChildCount());
-					//selectedCom.getView().add(initRun());
-					JTabbedPane newRun = initRun();
-					//JPanel newRunOptTab = (JPanel) newRun.getComponent(1);
-					//JPanel newRunInputTab = (JPanel) newRun.getComponent(2);
-					
-					HashMap<String, Object> optValMap = new HashMap<String, Object>();
-					Option[] opts = selectedCom.getAllowedOptions();
-					
-					for (int i = 0; i < opts.length; i++) {
-						Object value = opts[i].defaultValue();
-						//System.out.println("val " + i + " " + value);
-						optValMap.put(opts[i].name(), value);
-					}
-					
-					currConfig.setOptValMap(optValMap);
-					
-					//newRunOptTab.add(sp_optTable_ru);
-					//newRunInputTab.add(sp_inputTable_ru);
-					p_runCards.add(newRun,currConfig.getName());
-					
-					//viewCards.add(selectedCom.getView(),currConfig.getName());
-					savedConfigs.put(currConfig.getName(),currConfig);
-				}
-				p_commands.repaint();
-			}
-		});
+		};
 
-		bt_browse_pa.addActionListener(browse);
-		bt_browse_pp.addActionListener(browse);
-		bt_browse_rp.addActionListener(browse);
-		bt_browse_ru.addActionListener(browse);
-		bt_browse_vf.addActionListener(browse);
+		close = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Window window = SwingUtilities.windowForComponent((Component) e
+						.getSource());
+				window.dispose();
+			}
+		};
+
+	}
+
+	/**
+	 * Creates all of the JButtons in the GUI.
+	 */
+	public void initJButton() {
+		bt_cancel = new JButton("Cancel");
+		bt_run = new JButton("Run");
+
+		bt_revert = new JButton("Revert");
+		bt_apply = new JButton("Apply");
+		bt_new = new JButton("New");
+		bt_duplicate = new JButton("Duplicate");
+		bt_deleteConfig = new JButton("X");
+
+		bt_apply.setBounds(717, 531, 117, 29);
+		bt_revert.setBounds(844, 531, 117, 29);
+
+		bt_cancel.setBounds(1077, 643, 117, 29);
+		bt_run.setBounds(948, 643, 117, 29);
+		bt_new.setBounds(10, 65, 53, 29);
+		bt_duplicate.setBounds(59, 65, 89, 29);
+		bt_deleteConfig.setBounds(142, 65, 61, 29);
+
+		bt_cancel.addActionListener(close);
+		bt_revert.addActionListener(revert);
+		bt_apply.addActionListener(apply);
+		bt_new.addActionListener(newConfig);
+
 	}
 
 	// TODO: FILL TABLE WITH "ALLOWED" OPTIONS INSTEAD OF ALL OF THEM
@@ -882,105 +1047,7 @@ public class NewRunConfigGUI extends JFrame {
 	 * Creates the JTables and all necessary components related to them.
 	 */
 	public void initJTable() {
-		sp_optTable_ru = new JScrollPane();
-		sp_optTable_vf = new JScrollPane();
-		sp_inputTable_ru = new JScrollPane();
-		sp_inputTable_vf = new JScrollPane();
 
-		sp_optTable_ru.setBounds(6, 6, 967 - 36, 425);
-		sp_optTable_vf.setBounds(6, 6, 967 - 36, 425);
-		sp_inputTable_ru.setBounds(6, 6, 967 - 36, 425);
-		sp_inputTable_vf.setBounds(6, 6, 967 - 36, 425);
-
-		tbl_optTable_ru = new CIVLTable(new int[] { 1, 2 }, "option");
-		tbl_optTable_vf = new CIVLTable(new int[] { 1, 2 }, "option");
-		tbl_inputTable_ru = new CIVLTable(new int[] { 2 }, "input");
-		tbl_inputTable_vf = new CIVLTable(new int[] { 2 }, "input");
-
-		sp_optTable_ru.setViewportView(tbl_optTable_ru);
-		sp_optTable_vf.setViewportView(tbl_optTable_vf);
-		sp_inputTable_ru.setViewportView(tbl_inputTable_ru);
-		sp_inputTable_vf.setViewportView(tbl_inputTable_vf);
-
-		tbl_optTable_ru.setModel(new DefaultTableModel(null, new String[] {
-				"Option", "Value", "Default" }));
-		tbl_optTable_vf.setModel(new DefaultTableModel(null, new String[] {
-				"Option", "Value", "Default" }));
-		tbl_inputTable_ru.setModel(new DefaultTableModel(null, new String[] {
-				"Variable", "Type", "Value" }));
-		tbl_inputTable_vf.setModel(new DefaultTableModel(null, new String[] {
-				"Variable", "Type", "Value" }));
-
-		tbl_optTable_ru.setCellSelectionEnabled(true);
-		tbl_optTable_vf.setCellSelectionEnabled(true);
-		tbl_inputTable_ru.setCellSelectionEnabled(true);
-		tbl_inputTable_vf.setCellSelectionEnabled(true);
-
-		tbl_optTable_ru.setRowHeight(30);
-		tbl_optTable_vf.setRowHeight(30);
-		tbl_inputTable_ru.setRowHeight(30);
-		tbl_inputTable_vf.setRowHeight(30);
-
-		final DefaultTableModel optModel_ru = (DefaultTableModel) tbl_optTable_ru
-				.getModel();
-		final DefaultTableModel optModel_vf = (DefaultTableModel) tbl_optTable_vf
-				.getModel();
-		tbl_inputTable_ru.getModel();
-
-		@SuppressWarnings("serial")
-		Action defaultize = new AbstractAction() {
-			public void actionPerformed(ActionEvent e) {
-				DefaultTableModel currOptModel = null;
-				JTable currTable = null;
-
-				if (selectedCom.getName() == "run") {
-					currOptModel = optModel_ru;
-					currTable = tbl_optTable_ru;
-
-				} else if (selectedCom.getName() == "verify") {
-					currOptModel = optModel_vf;
-					currTable = tbl_optTable_vf;
-				}
-
-				int modelRow = currTable.getSelectedRow();
-				Object valToDefault = currOptModel.getValueAt(modelRow, 1);
-				Option optToDefault = getOption((String) currOptModel
-						.getValueAt(modelRow, 0));
-				if (valToDefault instanceof Boolean) {
-					Boolean defValue = (Boolean) optToDefault.defaultValue();
-
-					// MAIN DEFAULT ACTION:
-					currTable.setValueAt(defValue, modelRow, 1);
-				}
-
-				else
-					currOptModel.setValueAt(optToDefault.defaultValue(),
-							modelRow, 1);
-				repaint();
-			}
-		};
-
-		// options for RUN
-		for (int i = 0; i < (getCommand("run").getAllowedOptions().length); i++) {
-			optModel_ru.addRow(new Object[] { options[i].name(),
-					options[i].defaultValue(), "Default" });
-			new ButtonColumn(tbl_optTable_ru, defaultize, 2);
-		}
-
-		// options for VERIFY
-		for (int i = 0; i < (getCommand("verify").getAllowedOptions().length); i++) {
-			optModel_vf.addRow(new Object[] { options[i].name(),
-					options[i].defaultValue(), "Default" });
-			new ButtonColumn(tbl_optTable_vf, defaultize, 2);
-		}
-				
-		//tab_setOptions_ru.add(sp_optTable_ru);
-		//tab_setOptions_vf.add(sp_optTable_vf);
-		//tab_setInputs_ru.add(sp_inputTable_ru);
-		//tab_setInputs_vf.add(sp_inputTable_vf);
-
-		validate();
-		repaint();
 	}
 
 	/**
@@ -988,28 +1055,20 @@ public class NewRunConfigGUI extends JFrame {
 	 */
 	public void initJLabel() {
 		lb_icon = new JLabel("");
-		lb_chosenFile_pa = new JLabel("Chosen File:");
-		lb_chosenFile_pp = new JLabel("Chosen File:");
-		lb_chosenFile_rp = new JLabel("Chosen File:");
-		lb_chosenFile_ru = new JLabel("Chosen File:");
-		lb_chosenFile_vf = new JLabel("Chosen File:");
 		lb_name = new JLabel("Name:");
-		lb_new = new JLabel("New - Press the new button to create a new run confiruagion of the selected type.");
-		lb_duplicate = new JLabel("Duplicate - Press the 'duplicate' button to duplicate the currently selected run configuration.");
-		lb_delete = new JLabel("Delete - Press the 'delete' button to delete the currently selected run configuration.");
-				
-		lb_chosenFile_pa.setBounds(6, 6, 100, 16);
-		lb_chosenFile_pp.setBounds(6, 6, 100, 16);
-		lb_chosenFile_rp.setBounds(6, 6, 100, 16);
-		lb_chosenFile_ru.setBounds(6, 6, 100, 16);
-		lb_chosenFile_vf.setBounds(6, 6, 100, 16);
-		lb_new.setBounds(6, 6, 554, 16);		
+		lb_new = new JLabel(
+				"New - Press the new button to create a new run configuration of the selected type.");
+		lb_duplicate = new JLabel(
+				"Duplicate - Press the 'duplicate' button to duplicate the currently selected run configuration.");
+		lb_delete = new JLabel(
+				"Delete - Press the 'delete' button to delete the currently selected run configuration.");
+		lb_new.setBounds(6, 6, 554, 16);
 		lb_duplicate.setBounds(6, 39, 589, 16);
 		lb_delete.setBounds(6, 72, 589, 16);
 		lb_name.setBounds(9, 8, 61, 16);
 		lb_icon.setBounds(1040, 3, 207, 47);
 		lb_icon.setIcon(new ImageIcon("Images/logo.png"));
-		
+
 	}
 
 	/**
@@ -1038,15 +1097,11 @@ public class NewRunConfigGUI extends JFrame {
 		tf_chosenFile_pa = new JTextField();
 		tf_chosenFile_pp = new JTextField();
 		tf_chosenFile_rp = new JTextField();
-		tf_chosenFile_ru = new JTextField();
-		tf_chosenFile_vf = new JTextField();
 		tf_name = new JTextField();
 
 		tf_chosenFile_pa.setBounds(6, 21, 805, 28);
 		tf_chosenFile_pp.setBounds(6, 21, 805, 28);
 		tf_chosenFile_rp.setBounds(6, 21, 805, 28);
-		tf_chosenFile_ru.setBounds(6, 21, 805, 28);
-		tf_chosenFile_vf.setBounds(6, 21, 805, 28);
 		tf_name.setBounds(52, 4, 905, 28);
 
 	}
@@ -1070,7 +1125,7 @@ public class NewRunConfigGUI extends JFrame {
 		verifyNode = new DefaultMutableTreeNode("verify");
 
 		/*
-		 * for (int i = 0; i < savedConfigs.size(); i++) { RunConfigData
+		 * for (int i = 0; i < savedConfigs.size(); i++) { RunConfigDataNode
 		 * currConfig = savedConfigs.get(i); String currCommandName =
 		 * currConfig.getCommand().getName(); if (currCommandName == "parse")
 		 * parseNode.add(new DefaultMutableTreeNode(currConfig.getName())); else
@@ -1104,32 +1159,46 @@ public class NewRunConfigGUI extends JFrame {
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
 				String nodeString = node.toString();
-				
+
 				if (selected.getPathCount() == 2) {
 					selectedCom = getCommand(nodeString);
 					ta_header_info.setText("     " + selectedCom.getName()
 							+ ": " + selectedCom.getDescription());
-					viewCardsLayout.show(viewCards,"info");										
-				} 
-				
-				else if(selected.getPathCount() == 3){
-					currConfig = (RunConfigDataNode) node;
-					//drawView();
-					viewCardsLayout.show(viewCards, "run");
-					System.out.println(currConfig.getName());
-					//JTabbedPane newRun = initRun();
-					//JPanel newRunOptTab = (JPanel) newRun.getComponent(1);
-					//JPanel newRunInputTab = (JPanel) newRun.getComponent(2);
-					//newRunOptTab.add(sp_optTable_ru);
-					//newRunInputTab.add(sp_inputTable_ru);
-					//p_runCards.add(newRun);
-					runCardsLayout.show(p_runCards, currConfig.getName());
+					viewCardsLayout.show(viewCards, "info");
+					tf_name.setText("");
 				}
-				else
+
+				else if (selected.getPathCount() == 3) {
+					currConfig = (RunConfigDataNode) node;
+					// drawView();
+					viewCardsLayout.show(viewCards, selectedCom.getName());
+					DefaultMutableTreeNode child = (DefaultMutableTreeNode) jt_commands
+							.getLastSelectedPathComponent();
+					selectedCom = getCommand(child.getParent().toString());
+
+					if (selectedCom.getName().equals("run"))
+						runCardsLayout.show(p_runCards, currConfig.getName());
+					else if (selectedCom.getName().equals("verify"))
+						verifyCardsLayout.show(p_verifyCards,
+								currConfig.getName());
+					else if (selectedCom.getName().equals("parse"))
+						parseCardsLayout.show(p_parseCards,
+								currConfig.getName());
+					else if (selectedCom.getName().equals("preprocess"))
+						preprocCardsLayout.show(p_preprocCards,
+								currConfig.getName());
+					else if (selectedCom.getName().equals("replay"))
+						replayCardsLayout.show(p_replayCards,
+								currConfig.getName());
+
+					tf_name.setText(currConfig.getName());
+				} else
 					ta_header_info.setText("     " + "Select a command");
+
 				revalidate();
 				repaint();
 			}
+
 		});
 		revalidate();
 		repaint();
