@@ -2,10 +2,12 @@ package edu.udel.cis.vsl.civl.semantics.common;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -1402,8 +1404,8 @@ public class CommonEvaluator implements Evaluator {
 					(NumericExpression) right);
 			break;
 		case POINTER_SUBTRACT:
-			eval = pointerAdd(eval.state, pid, process, expression, left,
-					universe.minus((NumericExpression) right));
+			eval = pointerSubtraction(eval.state, pid, process, expression,
+					left, right);
 			break;
 		case IMPLIES:
 		case AND:
@@ -3196,6 +3198,88 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
+	public Evaluation pointerSubtraction(State state, int pid, String process,
+			BinaryExpression expression, SymbolicExpression leftPtr,
+			SymbolicExpression rightPtr)
+			throws UnsatisfiablePathConditionException {
+		int leftVid, leftSid, rightVid, rightSid;
+		SymbolicExpression array, arrayPtr;
+		NumericExpression leftPos = zero, rightPos = zero;
+		Map<Integer, NumericExpression> leftPtrIndexes, rightPtrIndexes;
+		Map<Integer, NumericExpression> dimCapacities;
+		Evaluation eval;
+		int dim = 0;
+
+		leftVid = symbolicUtil.getVariableId(expression.left().getSource(),
+				leftPtr);
+		leftSid = symbolicUtil.getDyscopeId(expression.left().getSource(),
+				leftPtr);
+		rightVid = symbolicUtil.getVariableId(expression.right().getSource(),
+				rightPtr);
+		rightSid = symbolicUtil.getDyscopeId(expression.right().getSource(),
+				rightPtr);
+		if ((rightVid != leftVid) || (rightSid != leftSid))
+			state = errorLogger
+					.logError(expression.getSource(), state, process,
+							symbolicAnalyzer.stateToString(state), null,
+							ResultType.NO, ErrorKind.POINTER,
+							"Operands of pointer subtraction point to incompatiable obejcts");
+		arrayPtr = this.arrayRootPtr(leftPtr, expression.left().getSource());
+		if (!(symbolicAnalyzer.typeOfObjByPointer(
+				expression.left().getSource(), state, arrayPtr) instanceof CIVLArrayType))
+			state = errorLogger
+					.logError(expression.getSource(), state, process,
+							symbolicAnalyzer.stateToString(state), null,
+							ResultType.NO, ErrorKind.POINTER,
+							"Operands of pointer subtraction point to a non-array object");
+		leftPtrIndexes = this.arrayIndexesByPointer(state, expression.left()
+				.getSource(), leftPtr, true);
+		rightPtrIndexes = this.arrayIndexesByPointer(state, expression.right()
+				.getSource(), rightPtr, true);
+		if (leftVid == 0) {
+			boolean isCompatiable = true;
+
+			if (leftPtrIndexes.size() != rightPtrIndexes.size())
+				isCompatiable = false;
+			else {
+				for (int i = leftPtrIndexes.size() - 1; i >= 1; i--) {
+					if (leftPtrIndexes.get(i) != rightPtrIndexes.get(i)) {
+						isCompatiable = false;
+						break;
+					}
+				}
+			}
+			if (!isCompatiable)
+				state = errorLogger
+						.logError(expression.getSource(), state, process,
+								symbolicAnalyzer.stateToString(state), null,
+								ResultType.NO, ErrorKind.POINTER,
+								"Operands of pointer subtraction point to incompatiable obejcts");
+		}
+		eval = this.dereference(expression.left().getSource(), state, process,
+				arrayPtr, false);
+		state = eval.state;
+		array = eval.value;
+		dimCapacities = this.arrayCapacities(array, expression.left()
+				.getSource());
+		while (leftPtrIndexes.containsKey(dim)) {
+			NumericExpression leftIdx, rightIdx;
+			NumericExpression capacity = dimCapacities.get(dim);
+
+			leftIdx = leftPtrIndexes.get(dim);
+			rightIdx = rightPtrIndexes.get(dim);
+			leftPos = universe.add(leftPos,
+					universe.multiply(leftIdx, capacity));
+			rightPos = universe.add(rightPos,
+					universe.multiply(rightIdx, capacity));
+			dim++;
+		}
+		eval.state = state;
+		eval.value = universe.subtract(leftPos, rightPos);
+		return eval;
+	}
+
+	@Override
 	public Evaluation reference(State state, int pid, LHSExpression operand)
 			throws UnsatisfiablePathConditionException {
 		Evaluation result;
@@ -3278,4 +3362,80 @@ public class CommonEvaluator implements Evaluator {
 		return universe;
 	}
 
+	/* ************** Public Array Processing Helper Functions *************** */
+	@Override
+	public Map<Integer, NumericExpression> arrayIndexesByPointer(State state,
+			CIVLSource source, SymbolicExpression pointer,
+			boolean isUsedBySubtraction) {
+		Map<Integer, NumericExpression> dimIndexes = new HashMap<>();
+		int dim = 0;
+		int vid = symbolicUtil.getVariableId(source, pointer);
+		ReferenceExpression ref;
+
+		// pointer = this.castToArrayElementReference(state, pointer, source);
+		ref = symbolicUtil.getSymRef(pointer);
+		while (ref.isArrayElementReference()) {
+			dimIndexes.put(dim, ((ArrayElementReference) ref).getIndex());
+			dim++;
+			pointer = symbolicUtil.parentPointer(source, pointer);
+			ref = symbolicUtil.getSymRef(pointer);
+			if (vid == 0 && !isUsedBySubtraction)
+				break;
+		}
+		return dimIndexes;
+	}
+
+	@Override
+	public Map<Integer, NumericExpression> arrayExtents(CIVLSource source,
+			SymbolicExpression array) {
+		SymbolicExpression element = array;
+		SymbolicType type = array.type();
+		Map<Integer, NumericExpression> dimExtents = new HashMap<>();
+		int dim = 0;
+
+		if (!(type instanceof SymbolicArrayType))
+			throw new CIVLInternalException(
+					"Cannot get extents from an non-array object", source);
+		while (type instanceof SymbolicArrayType) {
+			dimExtents.put(dim, universe.length(element));
+			dim++;
+			element = universe.arrayRead(element, zero);
+			type = element.type();
+		}
+		return dimExtents;
+	}
+
+	@Override
+	public Map<Integer, NumericExpression> arrayCapacities(
+			SymbolicExpression array, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		NumericExpression capacity = one;
+		Map<Integer, NumericExpression> dimExtents;
+		Map<Integer, NumericExpression> dimCapacities = new HashMap<>();
+		int dim;
+		int extentIter;
+
+		dimExtents = this.arrayExtents(source, array);
+		extentIter = dimExtents.size() - 1;
+		dim = 1;
+		dimCapacities.put(0, capacity);
+		while (dimExtents.containsKey(extentIter - 1)) {
+			capacity = universe.multiply(capacity, dimExtents.get(extentIter));
+			dimCapacities.put(dim, capacity);
+			extentIter--;
+			dim++;
+		}
+		return dimCapacities;
+	}
+
+	@Override
+	public SymbolicExpression arrayRootPtr(SymbolicExpression arrayPtr,
+			CIVLSource source) {
+		SymbolicExpression arrayRootPtr = arrayPtr;
+
+		while (symbolicUtil.getSymRef(arrayRootPtr).isArrayElementReference())
+			arrayRootPtr = symbolicUtil.parentPointer(source, arrayRootPtr);
+
+		return arrayRootPtr;
+	}
 }
