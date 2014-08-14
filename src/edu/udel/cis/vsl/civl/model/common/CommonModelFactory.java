@@ -729,7 +729,7 @@ public class CommonModelFactory implements ModelFactory {
 			CIVLType rightType = right.getExpressionType();
 
 			// Types should be the same unless we're doing pointer arithmetic.
-			if (leftType.equals(rightType)) {
+			if (leftType.getDynamicType(universe).equals(rightType.getDynamicType(universe))) {
 				((CommonBinaryExpression) result).setExpressionType(leftType);
 			} else if (leftType instanceof CIVLPointerType
 					&& rightType instanceof CIVLPrimitiveType) {
