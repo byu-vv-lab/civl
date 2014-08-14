@@ -199,45 +199,40 @@ public class UserInterface {
 				Models.newModelBuilder(universe));
 	}
 
-	private List<AST> asts2Link(Preprocessor preprocessor,
-			GMCConfiguration config) throws PreprocessorException,
-			SyntaxException, ParseException {
+	@SuppressWarnings("unused")
+	private AST[] linkFiles(Preprocessor preprocessor, GMCConfiguration config)
+			throws PreprocessorException, SyntaxException, ParseException {
 		File file;
 		CTokenSource tokensH;
 		CParser parserH;
 		ASTBuilder builderH;
 		AST astH;
 		List<AST> ASTs = new ArrayList<>();
-		Set<String> headerFiles = preprocessor.headerFiles();
+		Set<String> headerFile = preprocessor.headerFiles();
 
-		for (String header : headerFiles) {
-			if (header.equals("comm.cvh")) {
-				file = new File("text/include/comm.cvl");
-				tokensH = preprocessor.outputTokenSource(file);
-				parserH = frontEnd.getParser(tokensH);
-				builderH = frontEnd.getASTBuilder(parserH);
-				astH = builderH.getTranslationUnit();
-				ASTs.add(astH);
-			} else if (header.equals("concurrency.cvh")) {
-				file = new File("text/include/concurrency.cvl");
-				tokensH = preprocessor.outputTokenSource(file);
-				parserH = frontEnd.getParser(tokensH);
-				builderH = frontEnd.getASTBuilder(parserH);
-				astH = builderH.getTranslationUnit();
-				ASTs.add(astH);
-			} 
-			
-//			else if (header.equals("mpi.h")) {
-//				file = new File("text/include/mpi.cvl");
-//				tokensH = preprocessor.outputTokenSource(file);
-//				parserH = frontEnd.getParser(tokensH);
-//				builderH = frontEnd.getASTBuilder(parserH);
-//				astH = builderH.getTranslationUnit();
-//				ASTs.add(astH);
-//			}
+		if (headerFile.contains("comm.cvh")) {
+			file = new File("text/include/comm.cvl");
+			tokensH = preprocessor.outputTokenSource(file);
+			parserH = frontEnd.getParser(tokensH);
+			builderH = frontEnd.getASTBuilder(parserH);
+			astH = builderH.getTranslationUnit();
+			ASTs.add(astH);
+		} else if (headerFile.contains("concurrency.cvh")) {
+			file = new File("text/include/concurrency.cvl");
+			tokensH = preprocessor.outputTokenSource(file);
+			parserH = frontEnd.getParser(tokensH);
+			builderH = frontEnd.getASTBuilder(parserH);
+			astH = builderH.getTranslationUnit();
+			ASTs.add(astH);
+		} else if (headerFile.contains("mpi.h")) {
+			file = new File("text/include/mpi.cvl");
+			tokensH = preprocessor.outputTokenSource(file);
+			parserH = frontEnd.getParser(tokensH);
+			builderH = frontEnd.getASTBuilder(parserH);
+			astH = builderH.getTranslationUnit();
+			ASTs.add(astH);
 		}
-
-		return ASTs;
+		return (AST[]) ASTs.toArray();
 	}
 
 	private Pair<Model, Preprocessor> extractModel(PrintStream out,
@@ -263,10 +258,11 @@ public class UserInterface {
 		AST[] TUs;
 
 		asts.add(userAST);
-		asts.addAll(this.asts2Link(preprocessor, config));
 		TUs = new AST[asts.size()];
 		asts.toArray(TUs);
+		// this.linkFiles(preprocessor, config); TODO
 		program = frontEnd.link(TUs, Language.CIVL_C);
+		// TODO link header files TODO
 		try {
 			if (verbose || debug)
 				// shows absolutely everything
