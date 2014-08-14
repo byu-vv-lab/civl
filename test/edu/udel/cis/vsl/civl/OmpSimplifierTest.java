@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import org.junit.Test;
 
@@ -26,22 +24,25 @@ public class OmpSimplifierTest {
 	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"), "omp");
-	
+
 	private static File[] systemIncludes = new File[0];
 
 	private static File[] userIncludes = new File[0];
 
 	private PrintStream out = System.out;
-	
+
 	/* *************************** Helper Methods ************************** */
 
-	/* check whether the result of running the OMP simplifier is equivalent to the
-	 * expected output, which is stored as a file with an added suffix of ".s" in 
-	 * the subdirectory "examples/simple".
+	/*
+	 * check whether the result of running the OMP simplifier is equivalent to
+	 * the expected output, which is stored as a file with an added suffix of
+	 * ".s" in the subdirectory "examples/simple".
 	 * 
-	 * @param filenameRoot
-	 *            The file name of the OpenMP program (without extension).
+	 * @param filenameRoot The file name of the OpenMP program (without
+	 * extension).
+	 * 
 	 * @throws ABCException
+	 * 
 	 * @throws IOException
 	 */
 	private void check(String fileNameRoot) throws ABCException, IOException {
@@ -52,49 +53,55 @@ public class OmpSimplifierTest {
 		CParser parser;
 		ASTBuilder builder;
 		AST ast;
-		
+
 		File file = new File(rootDir, fileNameRoot + ".c");
-		File simplifiedFile = new File(new File(rootDir, "simple"), fileNameRoot + ".c.s");
-		
+		File simplifiedFile = new File(new File(rootDir, "simple"),
+				fileNameRoot + ".c.s");
+
 		Program program, simplifiedProgram;
 
 		{ // Parse the program and apply the CIVL transformations
-			preprocessor = frontEnd.getPreprocessor(systemIncludes, userIncludes);
+			preprocessor = frontEnd.getPreprocessor(systemIncludes,
+					userIncludes);
 			tokens = preprocessor.outputTokenSource(file);
 			parser = frontEnd.getParser(tokens);
 			builder = frontEnd.getASTBuilder(parser);
 			ast = builder.getTranslationUnit();
 			program = frontEnd.getProgramFactory(
-					frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(ast);
+					frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
+					ast);
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
 					new ArrayList<String>(0), builder, config);
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 					new ArrayList<String>(0), builder, config);
 		}
 
-		{ // Parse the simplified program 
-			preprocessor = frontEnd.getPreprocessor(systemIncludes, userIncludes);
+		{ // Parse the simplified program
+			preprocessor = frontEnd.getPreprocessor(systemIncludes,
+					userIncludes);
 			tokens = preprocessor.outputTokenSource(simplifiedFile);
 			parser = frontEnd.getParser(tokens);
 			builder = frontEnd.getASTBuilder(parser);
 			ast = builder.getTranslationUnit();
 			simplifiedProgram = frontEnd.getProgramFactory(
-					frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(ast);
+					frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
+					ast);
 		}
 
-
 		if (!program.getAST().getRootNode()
-				.equiv(simplifiedProgram.getAST().getRootNode()) ) {
-			out.println("For "+fileNameRoot+" expected simplified version to be:");
-			frontEnd.printProgram(out, simplifiedProgram, false);
+				.equiv(simplifiedProgram.getAST().getRootNode())) {
+			out.println("For " + fileNameRoot
+					+ " expected simplified version to be:");
+			frontEnd.printProgram(out, simplifiedProgram, false, false);
 			out.println("Computed simplified version was:");
 			program.getAST().prettyPrint(out, true);
 			assert false;
-		};
+		}
+		;
 	}
 
 	/* **************************** Test Methods *************************** */
-	
+
 	@Test
 	public void dotProduct_critical1() throws ABCException, IOException {
 		check("dotProduct_critical");
@@ -104,7 +111,6 @@ public class OmpSimplifierTest {
 	public void nested() throws ABCException, IOException {
 		check("nested");
 	}
-
 
 	@Test
 	public void dotProduct_critical() throws ABCException, IOException {
@@ -165,27 +171,27 @@ public class OmpSimplifierTest {
 	public void parallelfor() throws ABCException, IOException {
 		check("parallelfor");
 	}
-	
+
 	@Test
 	public void dijkstra() throws ABCException, IOException {
 		check("dijkstra_openmp");
 	}
-	
+
 	@Test
 	public void fft() throws ABCException, IOException {
 		check("fft_openmp");
 	}
-	
+
 	@Test
 	public void md() throws ABCException, IOException {
 		check("md_openmp");
 	}
-	
+
 	@Test
 	public void poisson() throws ABCException, IOException {
 		check("poisson_openmp");
 	}
-	
+
 	@Test
 	public void quad() throws ABCException, IOException {
 		check("quad_openmp");

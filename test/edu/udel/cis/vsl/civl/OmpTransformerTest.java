@@ -84,18 +84,18 @@ public class OmpTransformerTest {
 		program = frontEnd.getProgramFactory(
 				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(ast);
 		if (debug)
-			frontEnd.printProgram(out, program, true);
+			frontEnd.printProgram(out, program, true, false);
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
 				builder, config);
 		if (debug) {
 			out.println("======== After applying OpenMP Pragma Transformer ========");
-			frontEnd.printProgram(out, program, true);
+			frontEnd.printProgram(out, program, true, false);
 		}
 		if (true) {
 			PrintStream before = new PrintStream("/tmp/before_simplify");
 			program.getAST().prettyPrint(before, true);
 			PrintStream beforeAST = new PrintStream("/tmp/before_AST");
-			frontEnd.printProgram(beforeAST, program, false);
+			frontEnd.printProgram(beforeAST, program, false, false);
 		}
 		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 				builder, config);
@@ -103,10 +103,10 @@ public class OmpTransformerTest {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
 			program.getAST().prettyPrint(after, true);
 		}
-		 if (debug) {
-		out.println("======== After applying OpenMP Simplifier ========");
-		frontEnd.printProgram(out, program, true);
-		 }
+		if (debug) {
+			out.println("======== After applying OpenMP Simplifier ========");
+			frontEnd.printProgram(out, program, true, false);
+		}
 		/*
 		 * program.applyTransformer("prune"); // if (debug) {
 		 * out.println("======== After applying Pruner ========");
