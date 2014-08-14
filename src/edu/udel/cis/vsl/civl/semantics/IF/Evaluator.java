@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
+import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -241,6 +242,34 @@ public interface Evaluator {
 			throws UnsatisfiablePathConditionException;
 
 	/**
+	 * Evaluation pointer subtraction. Pointer subtraction operation, a binary
+	 * operation, whose two operands are both pointers to qualified or
+	 * unqualified versions of compatible complete object types. Returns the
+	 * difference of the two operands. Both pointers must point to elements of
+	 * the same array or one past the last element of the same array.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param process
+	 *            The information of the process
+	 * @param expression
+	 *            The expression of the pointer subtraction statement
+	 * @param leftPtr
+	 *            The pointer at the left side of the minus operator
+	 * @param rightPtr
+	 *            The pointer at the right side of the minus operator
+	 * 
+	 * @return the difference of the subscripts of the two array elements
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	Evaluation pointerSubtraction(State state, int pid, String process,
+			BinaryExpression expression, SymbolicExpression leftPtr,
+			SymbolicExpression rightPtr)
+			throws UnsatisfiablePathConditionException;
+
+	/**
 	 * Creates a pointer value by evaluating a left-hand-side expression in the
 	 * given state.
 	 * 
@@ -294,4 +323,75 @@ public interface Evaluator {
 	 * @return The symbolic universe of the evaluator.
 	 */
 	SymbolicUniverse universe();
+
+	/* ************** Public Array Processing Helper Functions *************** */
+	/**
+	 * Computes the array element indexes in an array element reference.<br>
+	 * Indexes are stored in a map whose keys indicate the dimension of the
+	 * array. Here 0 marks the deepest dimension and 1 marks the second deepest
+	 * dimension and so forth.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param source
+	 *            The CIVL source of the pointer
+	 * @param pointer
+	 *            The array element reference pointer
+	 * @param ignoreDiffBetweenHeapAndArray
+	 *            flag indicates if returning all indexes from a pointer to heap
+	 *            object. Since in CIVL, heap is represented as two dimensional
+	 *            array which may be lumped with nested array incorrectly. Set
+	 *            this flag to false, this function will ignore the difference
+	 *            between heap and nested arrays(which currently is just used by
+	 *            pointer subtraction).
+	 * @return
+	 */
+	public Map<Integer, NumericExpression> arrayIndexesByPointer(State state,
+			CIVLSource source, SymbolicExpression pointer,
+			boolean ignoreDiffBetweenHeapAndArray);
+
+	/**
+	 * Computes extents of every dimension of an array.<br>
+	 * The extents informations are stored in a map whose keys indicate the
+	 * dimension of the array. Here 0 marks the outer most dimension, 1 marks
+	 * the second outer most dimension and so forth.
+	 * 
+	 * @param source
+	 *            The CIVL source of the array or the pointer to the array
+	 * @param array
+	 *            The target array.
+	 * @return The Map contains array extents information.
+	 */
+	public Map<Integer, NumericExpression> arrayExtents(CIVLSource source,
+			SymbolicExpression array);
+
+	/**
+	 * Computes the array capacity informations(@link{setDataBetween}) of the
+	 * given array. Array capacity informations are stored in a map whose keys
+	 * indicates each dimension of the array. Here, 0 marks the deepest
+	 * dimension, 1 marks the second deepest dimension and so forth.
+	 * 
+	 * @param array
+	 *            The target array
+	 * @param source
+	 *            The CIVL source of the array or the pointer to the array
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public Map<Integer, NumericExpression> arrayCapacities(
+			SymbolicExpression array, CIVLSource source)
+			throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Get the most ancestor pointer of the given array element reference
+	 * pointer.
+	 * 
+	 * @param arrayPtr
+	 *            An array element reference pointer or a pointer to an array
+	 * @param source
+	 *            The CIVL source of the pointer
+	 * @return
+	 */
+	public SymbolicExpression arrayRootPtr(SymbolicExpression arrayPtr,
+			CIVLSource source);
 }
