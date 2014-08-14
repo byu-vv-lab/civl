@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
@@ -175,6 +176,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		Map<Integer, NumericExpression> arrayCapacities;
 		SymbolicExpression startPtr, endPtr;
 		Evaluation eval;
+		//TODO: change map to arraylist
 		Pair<Evaluation, Map<Integer, NumericExpression>> ret;
 
 		startPtr = pointer;
@@ -481,13 +483,14 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 * @return a sequence of data which is in form of an one dimensional array.
 	 * @throws UnsatisfiablePathConditionException
 	 */
+	//TODO: make it private
 	SymbolicExpression getDataBetween(State state, String process,
 			SymbolicExpression startPtr, SymbolicExpression endPtr,
 			Map<Integer, NumericExpression> arrayCapacities, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression startPointer, endPointer;
 		SymbolicExpression oldLeastCommonArray = null;
-		SymbolicExpression flattenLeastComArray;
+		SymbolicExpression flattenedLeastComArray;
 		NumericExpression startPos = zero;
 		NumericExpression endPos = zero;
 		NumericExpression dataLength;
@@ -509,6 +512,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		// Cast pointers to the form of an array element reference
 		startPointer = this
 				.castToArrayElementReference(state, startPtr, source);
+		//TODO: avoiding this call
 		endPointer = this.castToArrayElementReference(state, endPtr, source);
 		startIndexes = this.arrayIndexesByPointer(state, source, startPointer);
 		endIndexes = this.arrayIndexesByPointer(state, source, endPointer);
@@ -537,11 +541,12 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		}
 		commonArrayCapacities = this.arrayCapacities(oldLeastCommonArray,
 				source);
-		flattenLeastComArray = arrayFlatten(state, process,
+		flattenedLeastComArray = arrayFlatten(state, process,
 				oldLeastCommonArray, commonArrayCapacities, source);
 		try {
-			flattenLeastComArray = symbolicAnalyzer.getSubArray(
-					flattenLeastComArray, startPos, universe.add(endPos, one),
+			//TODO: thow null pointer exception is bug in get sub array
+			flattenedLeastComArray = symbolicAnalyzer.getSubArray(
+					flattenedLeastComArray, startPos, universe.add(endPos, one),
 					state, process, source);
 		} catch (java.lang.NullPointerException e) {
 			throw new CIVLInternalException("Get subarray from index:"
@@ -550,9 +555,9 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 					+ endPos
 					+ " on array:"
 					+ symbolicAnalyzer.symbolicExpressionToString(source,
-							state, flattenLeastComArray), source);
+							state, flattenedLeastComArray), source);
 		}
-		return flattenLeastComArray;
+		return flattenedLeastComArray;
 	}
 
 	/**
@@ -577,13 +582,13 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			Map<Integer, NumericExpression> arrayCapacities,
 			CIVLSource civlsource) {
 		List<SymbolicExpression> flattenElementList;
-
+//TODO: change arrayCapacities name
 		if (array == null)
 			throw new CIVLInternalException("parameter 'array' is null.",
 					civlsource);
 		if (array.isNull())
 			return array;
-		flattenElementList = this.arrayFlattenList(state, process, array,
+		flattenElementList = this.flattenArrayToList(state, process, array,
 				arrayCapacities, civlsource);
 		if (flattenElementList.size() > 0) {
 			if (flattenElementList.size() == 1
@@ -680,9 +685,9 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 * The helper function for @link{arrayFlatten}. Returns the list of all
 	 * non-array elements in the given array. Or if the given array has
 	 * non-concrete length, the returned list will have only one element and
-	 * that element has an @link{SymbolicArrayType}
+	 * that element has an @link{SymbolicArrayType}.
 	 */
-	private List<SymbolicExpression> arrayFlattenList(State state,
+	private List<SymbolicExpression> flattenArrayToList(State state,
 			String process, SymbolicExpression array,
 			Map<Integer, NumericExpression> arrayCapacities,
 			CIVLSource civlsource) {
@@ -697,10 +702,12 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		if (!(array.type() instanceof SymbolicCompleteArrayType))
 			throw new CIVLInternalException("Cannot flatten imcomplete array",
 					civlsource);
+		//TODO: make it more readable
 		if (!(((SymbolicArrayType) array.type()).elementType() instanceof SymbolicArrayType)) {
 			flattenElementList.add(array);
 			return flattenElementList;
 		}
+		//TODO: move to caller
 		// If the array has at least one dimension whose length is non-concrete,
 		// using array lambda to flatten it.
 		if (this.hasNonConcreteExtent(reasoner, array)) {
@@ -829,6 +836,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 * information(@link{setDataBetween}) of the array pointed by the original
 	 * pointer.
 	 */
+	//TODO: explain why array capacities info not computed
 	private Pair<Evaluation, Map<Integer, NumericExpression>> pointerAddWorker(
 			State state, String process, SymbolicExpression pointer,
 			NumericExpression offset, boolean checkOutput, CIVLSource source)
@@ -982,9 +990,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		objType = symbolicAnalyzer.typeOfObjByPointer(source, state, pointer);
 		while (objType.isArrayType()) {
 			ref = universe.arrayElementReference(ref, zero);
-			pointer = symbolicUtil.makePointer(sid, vid, ref);
-			objType = symbolicAnalyzer.typeOfObjByPointer(source, state,
-					pointer);
+			objType = ((CIVLArrayType) objType).elementType();
 		}
 		return symbolicUtil.makePointer(sid, vid, ref);
 	}

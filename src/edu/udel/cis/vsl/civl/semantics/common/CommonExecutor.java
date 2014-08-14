@@ -607,9 +607,9 @@ public class CommonExecutor implements Executor {
 			NumericExpression rangeSize = symbolicUtil.getRangeSize(rangeV);
 
 			domSizeV = universe.multiply(domSizeV, rangeSize);
-			lows.add(symbolicUtil.getLowOfRange(rangeV));
-			steps.add(symbolicUtil.getStepOfRange(rangeV));
-			highs.add(symbolicUtil.getHighOfRange(rangeV));
+			lows.add(symbolicUtil.getRegRangeMin(rangeV));
+			steps.add(symbolicUtil.getRangeStep(rangeV));
+			highs.add(symbolicUtil.getRangeMax(rangeV));
 		}
 		state = this.assign(state, pid, process, domSize, domSizeV);
 		number_domSize = (IntegerNumber) reasoner.extractNumber(domSizeV);
@@ -723,8 +723,8 @@ public class CommonExecutor implements Executor {
 			eval = evaluator.evaluate(state, pid, var);
 			varValue = eval.value;
 			state = eval.state;
-			newValue = symbolicUtil.rangeIncremental(varValue,
-					symbolicUtil.rangeOfDomainAt(domValue, i));
+			newValue = symbolicUtil.incrementRegularRange(varValue,
+					symbolicUtil.rangeOfRectangularDomainAt(domValue, i));
 			inRange = symbolicUtil.isInRange(newValue, domValue, i);
 			if (!inRange.isFalse()) {
 				state = this.assign(state, pid, process, var, newValue);

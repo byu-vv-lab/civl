@@ -221,7 +221,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	 * <code>&</code>.
 	 */
 	@Override
-	public SymbolicExpression contains(SymbolicExpression pointer1,
+	public BooleanExpression contains(SymbolicExpression pointer1,
 			SymbolicExpression pointer2) {
 		// TODO checks null pointer
 		ReferenceExpression ref1 = (ReferenceExpression) universe.tupleRead(
@@ -238,7 +238,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		BooleanExpression result = this.trueValue;
 
 		if (ref1.isIdentityReference() && ref2.isIdentityReference()) {
-			return universe.canonic(universe.equals(ref1, ref2));
+			return (BooleanExpression) universe.canonic(universe.equals(ref1,
+					ref2));
 		}
 		if (ref2.isIdentityReference() // second contains first
 				|| universe.equals(scope1, scope2).isFalse() // different scope
@@ -319,7 +320,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public NumericExpression getHighOfRange(SymbolicExpression range) {
+	public NumericExpression getRangeMax(SymbolicExpression range) {
 		return (NumericExpression) universe.tupleRead(range, oneObj);
 	}
 
@@ -333,7 +334,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public NumericExpression getLowOfRange(SymbolicExpression range) {
+	public NumericExpression getRegRangeMin(SymbolicExpression range) {
 		return (NumericExpression) universe.tupleRead(range, zeroObj);
 	}
 
@@ -355,7 +356,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public NumericExpression getStepOfRange(SymbolicExpression range) {
+	public NumericExpression getRangeStep(SymbolicExpression range) {
 		return (NumericExpression) universe.tupleRead(range, twoObj);
 	}
 
@@ -433,7 +434,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public boolean isHeapAtomicObjectPointer(CIVLSource source,
+	public boolean isMallocPointer(CIVLSource source,
 			SymbolicExpression pointer) {
 		return heapAnalyzer.isHeapAtomicObjectPointer(source, pointer);
 	}
@@ -483,7 +484,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public boolean isPointerToHeap(SymbolicExpression pointer) {
+	public boolean isHeapPointer(SymbolicExpression pointer) {
 		return heapAnalyzer.isPointerToHeap(pointer);
 	}
 
@@ -524,7 +525,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public SymbolicExpression makePointer(SymbolicExpression objectPointer,
+	public SymbolicExpression extendPointer(SymbolicExpression objectPointer,
 			ReferenceExpression reference) {
 		ReferenceExpression objRef = (ReferenceExpression) universe.tupleRead(
 				objectPointer, twoObj);
@@ -581,7 +582,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public SymbolicExpression rangeIncremental(SymbolicExpression value,
+	public SymbolicExpression incrementRegularRange(SymbolicExpression value,
 			SymbolicExpression range) {
 		NumericExpression step = (NumericExpression) universe.tupleRead(range,
 				twoObj);
@@ -590,7 +591,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public SymbolicExpression rangeOfDomainAt(SymbolicExpression domain,
+	public SymbolicExpression rangeOfRectangularDomainAt(SymbolicExpression domain,
 			int index) {
 		return universe.tupleRead(domain, universe.intObject(index));
 	}
@@ -600,7 +601,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		ReferenceExpression ref = (ReferenceExpression) universe.tupleRead(
 				pointer, twoObj);
 
-		if (this.isPointerToHeap(pointer)) {
+		if (this.isHeapPointer(pointer)) {
 			Pair<ReferenceExpression, Integer> refResult = heapAnalyzer
 					.heapReference(ref, true);
 

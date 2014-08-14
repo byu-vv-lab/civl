@@ -245,7 +245,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	}
 
 	@Override
-	public CIVLType getArrayElementType(State state, CIVLSource source,
+	public CIVLType getFlattenedArrayElementType(State state, CIVLSource source,
 			SymbolicExpression arrayPtr) {
 		CIVLType type = this.typeOfObjByPointer(source, state, arrayPtr);
 

@@ -252,7 +252,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		} else {
 			ReferenceExpression reference = this.symbolicUtil
 					.referenceOfPointer(pointer);
-			SymbolicExpression newPointer = symbolicUtil.makePointer(objPtr,
+			SymbolicExpression newPointer = symbolicUtil.extendPointer(objPtr,
 					reference);
 			CIVLSource objSource = arguments[1].getSource();
 			int dyscopeId = symbolicUtil.getDyscopeId(objSource, newPointer);

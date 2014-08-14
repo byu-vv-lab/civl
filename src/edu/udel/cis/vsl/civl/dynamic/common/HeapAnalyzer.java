@@ -26,22 +26,23 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  * <ul>
  * <li>each dyscope has a heap by default, as the 0 variable of that dyscope;</li>
  * <li>the initial value of a heap is a SARL NULL expression (not JAVA's NULL);</li>
- * <li>a heap has the type &lt;arrays of arrays of type T1, arrays of arrays of
- * type T2, ...>, corresponding to malloc statements and handle objects used in
- * the model;</li>
- * <li>a heap field has the type arrays of array of type T;</li>
+ * <li>a heap has the type &lt;array-of-array-of-T1, array-of-array-of-T2, ...>,
+ * corresponding to malloc statements and handle objects used in the model;</li>
+ * <li>a heap field has the type array-of-array-of-T;</li>
  * <li>a heap object has the type array of type T, which is
  * allocated/deallocated by malloc(handle create)/deallocate(handle destroy)
  * methods;</li>
  * <li>a heap atomic object has the type T, and is an element of a certain heap
  * object;</li>
- * <li>a heap memory unit is a pointer to a heap object, which has type pointer
- * to array of type T, and has the form <code>&di$heap&lt;j,k></code>, where
+ * <li>a heap memory unit is a pointer to a heap object, which has type
+ * pointer-to-array-of-T, and has the form <code>&di$heap&lt;j,k></code>, where
  * <code>i</code> is the dyscope ID of the heap, <code>j</code> is the index of
  * the heap field that the heap object belongs to, and <code>k</code> is the
  * index of the heap object in the heap field.</li>
  * <li>a heap pointer is any pointer pointing to some part of the heap.</li>
  * </ul>
+ * 
+ * TODO: malloc pointer
  * This class is part of the symbolic utility, the purpose of which is to factor
  * out the code related to heap.
  * 
@@ -210,9 +211,9 @@ public class HeapAnalyzer {
 
 			for (int i = 0; i < count; i++) {
 				SymbolicExpression heapField = heapFields.get(i);
-				SymbolicSequence<?> objectsOfHeapField = (SymbolicSequence<?>) heapField
+				SymbolicSequence<?> heapObjects = (SymbolicSequence<?>) heapField
 						.argument(0);
-				Iterator<? extends SymbolicExpression> iter = objectsOfHeapField
+				Iterator<? extends SymbolicExpression> iter = heapObjects
 						.iterator();
 
 				while (iter.hasNext()) {
@@ -227,9 +228,9 @@ public class HeapAnalyzer {
 	}
 
 	/**
-	 * Is the given pointer pointing to the first element of a heap object,
-	 * i.e., a heap atomic object? A pointer to a heap atomic object shall have
-	 * the form of: <code>&<dn,i,j>[k]</code>
+	 * TODO never called? Is the given pointer pointing to the first element of
+	 * a heap object, i.e., a heap atomic object? A pointer to a heap atomic
+	 * object shall have the form of: <code>&<dn,i,j>[0]</code>
 	 * 
 	 * @param source
 	 *            The source code information for error report.

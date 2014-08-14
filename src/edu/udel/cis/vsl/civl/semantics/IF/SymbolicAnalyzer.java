@@ -125,5 +125,5 @@ public interface SymbolicAnalyzer {
 	 * @param array
 	 * @return the type of the non-array element of an array
 	 */
-	CIVLType getArrayElementType(State state, CIVLSource source, SymbolicExpression arrayPtr);
+	CIVLType getFlattenedArrayElementType(State state, CIVLSource source, SymbolicExpression arrayPtr);
 }

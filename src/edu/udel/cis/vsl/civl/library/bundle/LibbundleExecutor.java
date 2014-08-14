@@ -245,7 +245,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 			BooleanExpression claim;
 
-			elementType = symbolicAnalyzer.getArrayElementType(state,
+			elementType = symbolicAnalyzer.getFlattenedArrayElementType(state,
 					arguments[0].getSource(), pointer).getDynamicType(universe);
 			count = universe.divide(size,
 					symbolicUtil.sizeof(arguments[1].getSource(), elementType));
@@ -278,6 +278,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			} else {
 				eval = evaluator.dereference(source, state, process, pointer,
 						true);
+				//TODO: getSubArray can not handle multi-d array
 				if (eval.value.type() instanceof SymbolicArrayType)
 					arrayInBundle = symbolicAnalyzer.getSubArray(eval.value,
 							zero, one, state, process, source);

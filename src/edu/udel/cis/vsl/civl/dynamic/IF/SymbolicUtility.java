@@ -22,9 +22,11 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public interface SymbolicUtility {
 	/**
-	 * Constructs the string representation of an array of characters.
+	 * Constructs the string representation of an array of characters. TODO
+	 * complete javadocs
 	 * 
 	 * @param source
+	 *            The source code information for error report.
 	 * @param charArray
 	 * @param startIndex
 	 * @param forPrint
@@ -34,18 +36,19 @@ public interface SymbolicUtility {
 			SymbolicSequence<?> charArray, int startIndex, boolean forPrint);
 
 	/**
-	 * Checks if the object that the first pointer points to contains that of
-	 * the send pointer.
+	 * Checks if the object that the container pointer points to contains that
+	 * of the element pointer.
 	 * 
-	 * @param first
-	 *            The first pointer.
-	 * @param second
-	 *            The second pointer.
+	 * @param container
+	 *            The pointer that is expected to contain the object of the
+	 *            element pointer.
+	 * @param element
+	 *            The element pointer.
 	 * @return True iff the object that the first pointer points to contains
 	 *         that of the send pointer.
 	 */
-	SymbolicExpression contains(SymbolicExpression first,
-			SymbolicExpression second);
+	BooleanExpression contains(SymbolicExpression container,
+			SymbolicExpression element);
 
 	/**
 	 * Given a symbolic type, returns a canonic symbolic expression which
@@ -63,6 +66,8 @@ public interface SymbolicUtility {
 	 * 
 	 * Gets a Java concrete int from a symbolic expression or throws exception.
 	 * 
+	 * @param source
+	 *            source code information for error report
 	 * @param expression
 	 *            a numeric expression expected to hold concrete int value
 	 * @return the concrete int
@@ -75,6 +80,8 @@ public interface SymbolicUtility {
 	 * Gets a concrete Java int from the field of a symbolic expression of tuple
 	 * type or throws exception.
 	 * 
+	 * @param source
+	 *            source code information for error report
 	 * @param tuple
 	 *            symbolic expression of tuple type
 	 * @param fieldIndex
@@ -108,6 +115,8 @@ public interface SymbolicUtility {
 	 * Given a pointer value, returns the dynamic scope ID component of that
 	 * pointer value.
 	 * 
+	 * @param source
+	 *            the source code information for error report.
 	 * @param pointer
 	 *            a pointer value
 	 * @return the dynamic scope ID component of that pointer value
@@ -121,9 +130,10 @@ public interface SymbolicUtility {
 	 *            The range.
 	 * @return The upper bound of the range.
 	 */
-	NumericExpression getHighOfRange(SymbolicExpression range);
+	NumericExpression getRangeMax(SymbolicExpression range);
 
 	/**
+	 * TODO get rid of this method, use tupleRead() + getLowOfRange() instead.
 	 * Computes the lower bound of the index-th range of a domain.
 	 * 
 	 * @param domain
@@ -135,26 +145,26 @@ public interface SymbolicUtility {
 	SymbolicExpression getLowOfDomainAt(SymbolicExpression domain, int index);
 
 	/**
-	 * Computes the lower bound of a certain range.
+	 * Computes the lower bound of a certain regular range.
 	 * 
-	 * @param range
-	 *            The range.
+	 * @param regRange
+	 *            The regular range.
 	 * @return The lower bound of the range.
 	 */
-	NumericExpression getLowOfRange(SymbolicExpression range);
+	NumericExpression getRegRangeMin(SymbolicExpression regRange);
 
 	/**
-	 * Computes the step of a range.
+	 * TODO Computes the step of a range.
 	 * 
 	 * @param range
 	 *            The range.
 	 * @return The step of the range.
 	 */
-	NumericExpression getStepOfRange(SymbolicExpression range);
+	NumericExpression getRangeStep(SymbolicExpression range);
 
 	/**
-	 * Computes the size of a range, that is the number of values covered by the
-	 * range.
+	 * TODO Computes the size of a range, that is the number of values covered
+	 * by the range.
 	 * 
 	 * @param range
 	 *            The range.
@@ -179,7 +189,7 @@ public interface SymbolicUtility {
 	 * @param pointer
 	 *            a pointer value
 	 * @param symRef
-	 *            a symbolic refererence expression
+	 *            a symbolic reference expression
 	 * @return the pointer obtained by modifying the given one by replacing its
 	 *         symRef field with the given symRef
 	 */
@@ -189,6 +199,8 @@ public interface SymbolicUtility {
 	/**
 	 * Given a pointer value, returns the variable ID component of that value.
 	 * 
+	 * @param source
+	 *            the source code information for error report.
 	 * @param pointer
 	 *            a pointer value
 	 * @return the variable ID component of that value
@@ -207,18 +219,21 @@ public interface SymbolicUtility {
 	SymbolicExpression heapMemUnit(SymbolicExpression pointer);
 
 	/**
-	 * Computes the initial value of the index-th range of a given domain.
+	 * Computes the initial value of the index-th range of a given rectangular
+	 * domain.
 	 * 
-	 * @param range
-	 *            The range value.
+	 * @param domain
+	 *            The rectangular domain value.
 	 * @param index
 	 *            The index of the range.
 	 * @param dimension
-	 *            The number of ranges that the domain contains.
-	 * @return The initial value of the index-th range of a given domain.
+	 *            TODO get rid of me The number of ranges that the rectangular
+	 *            domain contains.
+	 * @return The initial value of the index-th range of a given rectangular
+	 *         domain.
 	 */
-	SymbolicExpression initialValueOfRange(SymbolicExpression range, int index,
-			int dimension);
+	SymbolicExpression initialValueOfRange(SymbolicExpression domain,
+			int index, int dimension);
 
 	/**
 	 * Constructs an invalid heap object of a certain type. A heap object
@@ -231,14 +246,14 @@ public interface SymbolicUtility {
 	SymbolicConstant invalidHeapObject(SymbolicType heapObjectType);
 
 	/**
-	 * Checks if the objects that the two pointers point to have any
-	 * intersection.
+	 * Checks if the components (either a complete object or a sub-component of
+	 * an object) that the two pointers point to have no intersection.
 	 * 
 	 * @param pointer1
 	 *            The first pointer.
 	 * @param pointer2
 	 *            The second pointer.
-	 * @return True iff there is no intersection between the objects that the
+	 * @return True iff there is no intersection between the components that the
 	 *         given two pointers point to.
 	 */
 	boolean isDisjointWith(SymbolicExpression pointer1,
@@ -255,17 +270,16 @@ public interface SymbolicUtility {
 	boolean isEmptyHeap(SymbolicExpression heapValue);
 
 	/**
-	 * Is the given pointer pointing to the first element of a heap object?
+	 * Is the given pointer the result of some malloc/handle create operation?
 	 * 
 	 * @param source
 	 *            The source code information for error report.
 	 * @param pointer
 	 *            The pointer to be checked.
-	 * @return True iff the given pointer is pointing to the first element of a
-	 *         heap object.
+	 * @return True iff the given pointer is the result of some malloc/handle
+	 *         create operation.
 	 */
-	boolean isHeapAtomicObjectPointer(CIVLSource source,
-			SymbolicExpression pointer);
+	boolean isMallocPointer(CIVLSource source, SymbolicExpression pointer);
 
 	/**
 	 * Checks if a given value is initialized.
@@ -278,12 +292,12 @@ public interface SymbolicUtility {
 
 	/**
 	 * Checks if the given value is within the index-th range of a certain
-	 * domain.
+	 * rectangular domain.
 	 * 
 	 * @param value
 	 *            The value to be tested if it is in range.
 	 * @param domain
-	 *            The domain that the value wants to test with.
+	 *            The rectangular domain that the value wants to test with.
 	 * @param index
 	 *            The index of the range that the test bases on.
 	 * @return True iff the given value is within the index-th range of a
@@ -318,7 +332,7 @@ public interface SymbolicUtility {
 	 * 
 	 * @return True iff the pointer points to a certain part of some heap.
 	 */
-	boolean isPointerToHeap(SymbolicExpression pointer);
+	boolean isHeapPointer(SymbolicExpression pointer);
 
 	/**
 	 * Is this an undefined pointer?
@@ -330,9 +344,9 @@ public interface SymbolicUtility {
 	boolean isUndefinedPointer(SymbolicExpression pointer);
 
 	/**
-	 * Checks if a pointer is valid for dereference, i.e., it isn't NULL, nor it
-	 * isn't pointing to a deallocated memory space, nor it doesn't point to a
-	 * memory unit of an invalid scope.
+	 * Checks if a pointer is valid for dereference, i.e., it isn't NULL, nor is
+	 * it pointing to a deallocated memory space, nor does it point to a memory
+	 * unit of an invalid scope.
 	 * 
 	 * @param pointer
 	 *            The pointer to be checked.
@@ -341,22 +355,24 @@ public interface SymbolicUtility {
 	boolean isValidPointer(SymbolicExpression pointer);
 
 	/**
-	 * Checks if the given reference is valid for a certain object.
+	 * Checks if the given reference is valid for a certain object or a
+	 * sub-component of some object.
 	 * 
 	 * @param ref
 	 *            The reference.
-	 * @param object
-	 *            The object.
+	 * @param component
+	 *            The given component which can be an object or a sub-component
+	 *            of an object.
 	 * @return True iff the given reference expression is applicable for the
 	 *         given object.
 	 */
-	boolean isValidRefOf(ReferenceExpression ref, SymbolicExpression object);
+	boolean isValidRefOf(ReferenceExpression ref, SymbolicExpression component);
 
 	/**
 	 * Makes a pointer value from the given dynamic scope ID, variable ID, and
 	 * symbolic reference value.
 	 * 
-	 * @param scopeId
+	 * @param dyscopeId
 	 *            ID number of a dynamic scope
 	 * @param varId
 	 *            ID number of a variable within that scope
@@ -364,19 +380,24 @@ public interface SymbolicUtility {
 	 *            a symbolic reference to a point within the variable
 	 * @return a pointer value as specified by the 3 components
 	 */
-	SymbolicExpression makePointer(int scopeId, int varId,
+	SymbolicExpression makePointer(int dyscopeId, int varId,
 			ReferenceExpression symRef);
 
 	/**
-	 * Constructs a pointer by combining a pointer to an object, either a heap
-	 * atomic object or a normal object, and a reference expression w.r.t that
-	 * object.
+	 * TODO a better name?
 	 * 
-	 * @param objectPointer
+	 * Constructs a pointer by combining a pointer to a component, either an
+	 * object (a heap atomic object or a normal object) or a sub-component of an
+	 * object, and a reference expression w.r.t that component.
+	 * 
+	 * @param componentPointer
+	 *            a pointer to a component
 	 * @param reference
-	 * @return
+	 *            a reference expression
+	 * @return A new pointer by combining the component pointer and the given
+	 *         reference w.r.t. that component.
 	 */
-	SymbolicExpression makePointer(SymbolicExpression objectPointer,
+	SymbolicExpression extendPointer(SymbolicExpression componentPointer,
 			ReferenceExpression reference);
 
 	/**
@@ -418,15 +439,15 @@ public interface SymbolicUtility {
 			SymbolicExpression pointer);
 
 	/**
-	 * Increments a certain value based on the step of a given range.
+	 * Increments a certain value based on the step of a given regular range.
 	 * 
 	 * @param value
 	 *            The value to be incremented.
 	 * @param range
 	 *            The range whose step is to be used.
-	 * @return The result of incremental.
+	 * @return The new value after the incremental.
 	 */
-	SymbolicExpression rangeIncremental(SymbolicExpression value,
+	SymbolicExpression incrementRegularRange(SymbolicExpression value,
 			SymbolicExpression range);
 
 	/**
@@ -448,24 +469,25 @@ public interface SymbolicUtility {
 	 * @return The index-th range of the domain, which has the form (low, high,
 	 *         step).
 	 */
-	SymbolicExpression rangeOfDomainAt(SymbolicExpression domain, int index);
+	SymbolicExpression rangeOfRectangularDomainAt(SymbolicExpression domain,
+			int index);
 
 	/**
 	 * Computes the reference expression of a pointer. If the pointer is
 	 * pointing to some part of the heap, then the reference expression is the
-	 * reference expression w.r.t to the corresponding heap atomic object;
+	 * reference expression w.r.t the corresponding heap atomic object;
 	 * otherwise, it is the original reference expression of the pointer.
 	 * 
 	 * @param pointer
 	 *            The pointer to whose reference is to be computed.
-	 * @return The reference expression of the pointer w.r.t to the object it
+	 * @return The reference expression of the pointer w.r.t the object it
 	 *         points to.
 	 */
 	ReferenceExpression referenceOfPointer(SymbolicExpression pointer);
 
 	/**
 	 * Computes the reference expression of a given heap pointer w.r.t the
-	 * corresponding heap memory unit.
+	 * corresponding heap object.
 	 * 
 	 * @param heapPointer
 	 *            The heap pointer.
@@ -482,7 +504,7 @@ public interface SymbolicUtility {
 	 *            any).
 	 * @param type
 	 *            The symbolic type whose size is to evaluated.
-	 * @return The symbolic representation of the symbolic type.
+	 * @return The symbolic representation of the size of the symbolic type.
 	 */
 	NumericExpression sizeof(CIVLSource source, SymbolicType type);
 
@@ -494,11 +516,11 @@ public interface SymbolicUtility {
 	SymbolicExpression sizeofFunction();
 
 	/**
-	 * Recursively updates the array references for an multi-dimensional array
-	 * by using a set of indexes and a given reference to an array element. e.g.
-	 * If the arrayReference is a[x][y], then the size of newIndexes should be
-	 * 2. And newIndexes[0] corresponds to update the x, newIndexes[1]
-	 * corresponds to update the y, and so forth.
+	 * Updates the array references for an multi-dimensional array by using a
+	 * set of indexes and a given reference to an array element. e.g. If the
+	 * arrayReference is <code>a[x][y]</code>, then the size of newIndexes
+	 * should be 2. And the return reference will be
+	 * <code>a[newIndexes[0]][newIndexes[1]]</code>.
 	 * 
 	 * @author Ziqing Luo
 	 * @param arrayReference
