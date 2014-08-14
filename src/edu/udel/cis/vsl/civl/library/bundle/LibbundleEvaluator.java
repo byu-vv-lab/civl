@@ -173,10 +173,12 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			SymbolicExpression pointer, NumericExpression count,
 			boolean checkOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		Map<Integer, NumericExpression> arrayCapacities;
+		Map<Integer, NumericExpression> arrayElementsSizes;
 		SymbolicExpression startPtr, endPtr;
 		Evaluation eval;
-		//TODO: change map to arraylist
+		// The reason of using map here is that we can use a "int dim;" variable
+		// to control while loops and the condition can easily all be
+		// "isContainsKey(dim)".
 		Pair<Evaluation, Map<Integer, NumericExpression>> ret;
 
 		startPtr = pointer;
@@ -186,20 +188,20 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		// Data stored from "pointer" to "pointer + (count - 1)"
 		ret = this.pointerAddWorker(state, process, startPtr,
 				universe.subtract(count, one), false, source);
-		arrayCapacities = ret.right;
+		arrayElementsSizes = ret.right;
 		eval = ret.left;
 		endPtr = eval.value;
 		// If pointerAddWorker didn't computes array information, do it here.
 		// But it's no need to computes the whole information of the array,
 		// because pointerAddWorker's not doing it means new pointer and
 		// original pointer are in the same dimension.
-		if (arrayCapacities == null) {
-			arrayCapacities = new HashMap<>();
-			arrayCapacities.put(0, one);
+		if (arrayElementsSizes == null) {
+			arrayElementsSizes = new HashMap<>();
+			arrayElementsSizes.put(0, one);
 		}
 		try {
 			eval.value = this.getDataBetween(eval.state, process, startPtr,
-					endPtr, arrayCapacities, source);
+					endPtr, arrayElementsSizes, source);
 			return eval;
 		} catch (CIVLInternalException e) {
 			throw new CIVLInternalException(
@@ -233,7 +235,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			NumericExpression count, SymbolicExpression dataArray,
 			boolean checkOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		Map<Integer, NumericExpression> arrayCapacities;
+		Map<Integer, NumericExpression> getArrayElementsSizes;
 		SymbolicExpression startPtr, endPtr;
 		Evaluation eval;
 		Pair<Evaluation, Map<Integer, NumericExpression>> ret;
@@ -242,16 +244,16 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		startPtr = pointer;
 		ret = this.pointerAddWorker(state, process, startPtr,
 				universe.subtract(count, one), checkOutput, source);
-		arrayCapacities = ret.right;
+		getArrayElementsSizes = ret.right;
 		eval = ret.left;
 		endPtr = eval.value;
-		if (arrayCapacities == null) {
-			arrayCapacities = new HashMap<>();
-			arrayCapacities.put(0, one);
+		if (getArrayElementsSizes == null) {
+			getArrayElementsSizes = new HashMap<>();
+			getArrayElementsSizes.put(0, one);
 		}
 		try {
 			eval_and_pointer = this.setDataBetween(eval.state, process,
-					startPtr, endPtr, dataArray, arrayCapacities, source);
+					startPtr, endPtr, dataArray, getArrayElementsSizes, source);
 			return eval_and_pointer;
 		} catch (CIVLInternalException e) {
 			throw new CIVLInternalException(
@@ -336,7 +338,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 *            The pointer to the end position
 	 * @param dataArray
 	 *            The sequence of data which is going to be set
-	 * @param arrayCapacities
+	 * @param arrayElementsSizes
 	 *            The capacity information of the array pointed by the startPtr
 	 *            or endPtr(These two pointers point to the same object).<br>
 	 *            Note: Here capacity information of an array means that for one
@@ -352,11 +354,11 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 * @return the settled new array and the pointer to that array.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	Pair<Evaluation, SymbolicExpression> setDataBetween(State state,
+	private Pair<Evaluation, SymbolicExpression> setDataBetween(State state,
 			String process, SymbolicExpression startPtr,
 			SymbolicExpression endPtr, SymbolicExpression dataArray,
-			Map<Integer, NumericExpression> arrayCapacities, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
+			Map<Integer, NumericExpression> arrayElementsSizes,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression startPointer, endPointer;
 		SymbolicExpression leastCommonArray, oldLeastCommonArray;
 		NumericExpression startPos = zero;
@@ -370,7 +372,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		int dim = 0;
 		Map<Integer, NumericExpression> startIndexes;
 		Map<Integer, NumericExpression> endIndexes;
-		Map<Integer, NumericExpression> commonArrayCapacities;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
 		// Checking if they are pointing to the same thing
@@ -390,11 +391,11 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			startPos = universe.add(
 					startPos,
 					universe.multiply(startIndexes.get(dim),
-							arrayCapacities.get(dim)));
+							arrayElementsSizes.get(dim)));
 			endPos = universe.add(
 					endPos,
 					universe.multiply(endIndexes.get(dim),
-							arrayCapacities.get(dim)));
+							arrayElementsSizes.get(dim)));
 			dim++;
 			startPointer = symbolicUtil.parentPointer(source, startPointer);
 			endPointer = symbolicUtil.parentPointer(source, endPointer);
@@ -417,10 +418,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			eval = new Evaluation(state, oldLeastCommonArray);
 			return new Pair<>(eval, startPtr);
 		}
-		// re-compute the array capacities information of the
-		// oldLeastCommonArray
-		commonArrayCapacities = this.arrayCapacities(oldLeastCommonArray,
-				source);
 		// Direct assignment conditions:
 		// 1. start position is zero.
 		// 2. Interval between pointers equals to data size.
@@ -434,14 +431,14 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 					universe.equals(dataSize, arrayCapacity));
 			if (reasoner.isValid(claim)) {
 				dataArray = arrayCasting(state, process, dataArray,
-						oldLeastCommonArray, commonArrayCapacities, source);
+						oldLeastCommonArray, source);
 				eval = new Evaluation(state, dataArray);
 				return new Pair<Evaluation, SymbolicExpression>(eval,
 						startPointer);
 			}
 		}
 		leastCommonArray = arrayFlatten(state, process, oldLeastCommonArray,
-				commonArrayCapacities, source);
+				source);
 		i = startPos;
 		j = zero;
 		claim = universe.lessThan(j, dataSize);
@@ -458,7 +455,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		}
 
 		leastCommonArray = arrayCasting(state, process, leastCommonArray,
-				oldLeastCommonArray, arrayCapacities, source);
+				oldLeastCommonArray, source);
 		eval = new Evaluation(state, leastCommonArray);
 		return new Pair<Evaluation, SymbolicExpression>(eval, startPointer);
 	}
@@ -476,18 +473,17 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 *            The pointer to the start position
 	 * @param endPtr
 	 *            The pointer to the end position
-	 * @param arrayCapacities
+	 * @param arrayElementsSizes
 	 *            same as the same argument in @link{setDataBetween}
 	 * @param source
 	 *            The CIVL source of start pointer.
 	 * @return a sequence of data which is in form of an one dimensional array.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	//TODO: make it private
-	SymbolicExpression getDataBetween(State state, String process,
+	private SymbolicExpression getDataBetween(State state, String process,
 			SymbolicExpression startPtr, SymbolicExpression endPtr,
-			Map<Integer, NumericExpression> arrayCapacities, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
+			Map<Integer, NumericExpression> arrayElementsSizes,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression startPointer, endPointer;
 		SymbolicExpression oldLeastCommonArray = null;
 		SymbolicExpression flattenedLeastComArray;
@@ -496,7 +492,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		NumericExpression dataLength;
 		Map<Integer, NumericExpression> startIndexes;
 		Map<Integer, NumericExpression> endIndexes;
-		Map<Integer, NumericExpression> commonArrayCapacities;
 		boolean sidMatch, vidMatch;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		int dim = 0;
@@ -512,19 +507,25 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		// Cast pointers to the form of an array element reference
 		startPointer = this
 				.castToArrayElementReference(state, startPtr, source);
-		//TODO: avoiding this call
-		endPointer = this.castToArrayElementReference(state, endPtr, source);
+		endPointer = endPtr;
 		startIndexes = this.arrayIndexesByPointer(state, source, startPointer);
 		endIndexes = this.arrayIndexesByPointer(state, source, endPointer);
+		// If sizes of the two sets are not equal which means endPointer is
+		// still pointing to a array type component. Then we need cast it.
+		if (startIndexes.size() != endIndexes.size()) {
+			endPointer = this
+					.castToArrayElementReference(state, endPtr, source);
+			endIndexes = this.arrayIndexesByPointer(state, source, endPointer);
+		}
 		while (!startPointer.equals(endPointer)) {
 			startPos = universe.add(
 					startPos,
 					universe.multiply(startIndexes.get(dim),
-							arrayCapacities.get(dim)));
+							arrayElementsSizes.get(dim)));
 			endPos = universe.add(
 					endPos,
 					universe.multiply(endIndexes.get(dim),
-							arrayCapacities.get(dim)));
+							arrayElementsSizes.get(dim)));
 			dim++;
 			startPointer = symbolicUtil.parentPointer(source, startPointer);
 			endPointer = symbolicUtil.parentPointer(source, endPointer);
@@ -539,15 +540,13 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			return universe.array(oldLeastCommonArray.type(),
 					Arrays.asList(oldLeastCommonArray));
 		}
-		commonArrayCapacities = this.arrayCapacities(oldLeastCommonArray,
-				source);
 		flattenedLeastComArray = arrayFlatten(state, process,
-				oldLeastCommonArray, commonArrayCapacities, source);
+				oldLeastCommonArray, source);
 		try {
-			//TODO: thow null pointer exception is bug in get sub array
+			// TODO: thow null pointer exception is bug in get sub array
 			flattenedLeastComArray = symbolicAnalyzer.getSubArray(
-					flattenedLeastComArray, startPos, universe.add(endPos, one),
-					state, process, source);
+					flattenedLeastComArray, startPos,
+					universe.add(endPos, one), state, process, source);
 		} catch (java.lang.NullPointerException e) {
 			throw new CIVLInternalException("Get subarray from index:"
 					+ startPos
@@ -571,32 +570,41 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 *            The information of the process
 	 * @param array
 	 *            The array which is going to be flatten
-	 * @param arrayCapacities
+	 * @param arrayElementsSizes
 	 *            Same as the same argument in @link{setDataBetween}
 	 * @param civlsource
 	 *            The CIVL source the array or the pointer to the array
 	 * @return the flatten array
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	SymbolicExpression arrayFlatten(State state, String process,
-			SymbolicExpression array,
-			Map<Integer, NumericExpression> arrayCapacities,
-			CIVLSource civlsource) {
+	private SymbolicExpression arrayFlatten(State state, String process,
+			SymbolicExpression array, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
 		List<SymbolicExpression> flattenElementList;
-//TODO: change arrayCapacities name
+		Map<Integer, NumericExpression> arrayElementsSizes;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+
 		if (array == null)
 			throw new CIVLInternalException("parameter 'array' is null.",
 					civlsource);
 		if (array.isNull())
 			return array;
-		flattenElementList = this.flattenArrayToList(state, process, array,
-				arrayCapacities, civlsource);
+		// If the array is already a one-dimensional array no matter if the
+		// length is concrete or non-concrete, return it directly.
+		if (!(((SymbolicArrayType) array.type()).elementType() instanceof SymbolicArrayType))
+			return array;
+		// If the array has at least one dimension whose length is non-concrete,
+		// using array lambda to flatten it.
+		if (this.hasNonConcreteExtent(reasoner, array)) {
+			arrayElementsSizes = this.getArrayElementsSizes(array, civlsource);
+			return this.arrayLambdaFlatten(state, array, arrayElementsSizes,
+					civlsource);
+		}
+		flattenElementList = this.arrayFlattenWorker(state, array, civlsource);
 		if (flattenElementList.size() > 0) {
-			if (flattenElementList.size() == 1
-					&& (flattenElementList.get(0).type() instanceof SymbolicArrayType))
-				return flattenElementList.get(0);
-			else
-				return universe.array(flattenElementList.get(0).type(),
-						flattenElementList);
+			assert (!(flattenElementList.get(0).type() instanceof SymbolicArrayType));
+			return universe.array(flattenElementList.get(0).type(),
+					flattenElementList);
 		} else if (array instanceof SymbolicArrayType)
 			return universe.emptyArray(((SymbolicArrayType) array)
 					.elementType());
@@ -619,17 +627,16 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 *            The array before casting
 	 * @param targetTypeArray
 	 *            The array has the type which is the target type of casting
-	 * @param arrayCapacities
+	 * @param arrayElementsSizes
 	 *            Same as the same argument in @link{setDataBetween}
 	 * @param source
 	 *            The CIVL source of the oldArray or the pointer to OldArray
 	 * @return casted array
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	SymbolicExpression arrayCasting(State state, String process,
+	private SymbolicExpression arrayCasting(State state, String process,
 			SymbolicExpression oldArray, SymbolicExpression targetTypeArray,
-			Map<Integer, NumericExpression> arrayCapacities, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
+			CIVLSource source) throws UnsatisfiablePathConditionException {
 		BooleanExpression claim;
 		NumericExpression extent, chunkLength, oldArraySize;
 		List<SymbolicExpression> elements = new LinkedList<>();
@@ -654,7 +661,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			NumericExpression i = zero;
 			NumericExpression endIndex = chunkLength;
 			SymbolicExpression flattenOldArray = arrayFlatten(state, process,
-					oldArray, arrayCapacities, source);
+					oldArray, source);
 
 			if (!(((SymbolicArrayType) targetTypeArray.type()).elementType() instanceof SymbolicArrayType))
 				throw new CIVLInternalException(
@@ -667,8 +674,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 				SymbolicExpression childArray;
 
 				childArray = arrayCasting(state, process, subArray,
-						universe.arrayRead(targetTypeArray, zero),
-						arrayCapacities, source);
+						universe.arrayRead(targetTypeArray, zero), source);
 
 				elements.add(childArray);
 				// update
@@ -681,44 +687,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	}
 
 	/* ********************* Private Helper Functions ********************** */
-	/**
-	 * The helper function for @link{arrayFlatten}. Returns the list of all
-	 * non-array elements in the given array. Or if the given array has
-	 * non-concrete length, the returned list will have only one element and
-	 * that element has an @link{SymbolicArrayType}.
-	 */
-	private List<SymbolicExpression> flattenArrayToList(State state,
-			String process, SymbolicExpression array,
-			Map<Integer, NumericExpression> arrayCapacities,
-			CIVLSource civlsource) {
-		List<SymbolicExpression> flattenElementList = new LinkedList<>();
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-
-		if (array == null)
-			throw new CIVLInternalException("parameter array is null.",
-					civlsource);
-		if (array.isNull())
-			return flattenElementList;
-		if (!(array.type() instanceof SymbolicCompleteArrayType))
-			throw new CIVLInternalException("Cannot flatten imcomplete array",
-					civlsource);
-		//TODO: make it more readable
-		if (!(((SymbolicArrayType) array.type()).elementType() instanceof SymbolicArrayType)) {
-			flattenElementList.add(array);
-			return flattenElementList;
-		}
-		//TODO: move to caller
-		// If the array has at least one dimension whose length is non-concrete,
-		// using array lambda to flatten it.
-		if (this.hasNonConcreteExtent(reasoner, array)) {
-			flattenElementList.add(this.arrayLambdaFlatten(state, array,
-					arrayCapacities, civlsource));
-			return flattenElementList;
-		}
-		flattenElementList = this.arrayFlattenWorker(state, array, civlsource);
-		return flattenElementList;
-	}
-
 	/**
 	 * Helper function for @link{arrayFlattenList}. Recursively flatten the
 	 * given array. Only can be used on arrays have concrete lengths.
@@ -771,7 +739,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 */
 	private SymbolicExpression arrayLambdaFlatten(State state,
 			SymbolicExpression array,
-			Map<Integer, NumericExpression> arrayCapacities,
+			Map<Integer, NumericExpression> arrayElementsSizes,
 			CIVLSource civlsource) {
 		SymbolicExpression myArray = array;
 		NumericSymbolicConstant index = null;
@@ -788,13 +756,13 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		index = (NumericSymbolicConstant) universe.symbolicConstant(
 				universe.stringObject("i"), universe.integerType());
 		// From outer to inner. later from inner to outer
-		dim = arrayCapacities.size() - 1;
+		dim = arrayElementsSizes.size() - 1;
 		tempIndex = index;
 		newExtent = one;
-		while (arrayCapacities.containsKey(dim)) {
+		while (arrayElementsSizes.containsKey(dim)) {
 			NumericExpression newIndex; // new index is remainder
 
-			capacity = arrayCapacities.get(dim);
+			capacity = arrayElementsSizes.get(dim);
 			newIndex = universe.divide(tempIndex, capacity);
 			newExtent = universe.multiply(newExtent, universe.length(myArray));
 			myArray = universe.arrayRead(myArray, newIndex);
@@ -834,9 +802,11 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 * Helper function for @link{pointerAdd}. Returns the new pointer after
 	 * adding an increment or decrement and the array capacities
 	 * information(@link{setDataBetween}) of the array pointed by the original
-	 * pointer.
+	 * pointer. If the pointer addition operation can be done only on one
+	 * dimension (like for<code>int a[3][3];</code>, addition operation
+	 * "&a[0][0] + 2" can be done without known the whole array information),
+	 * the returned map container will be null.
 	 */
-	//TODO: explain why array capacities info not computed
 	private Pair<Evaluation, Map<Integer, NumericExpression>> pointerAddWorker(
 			State state, String process, SymbolicExpression pointer,
 			NumericExpression offset, boolean checkOutput, CIVLSource source)
@@ -907,7 +877,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 				eval = evaluator.dereference(source, state, process,
 						arrayRootPtr, false);
 				state = eval.state;
-				dimCapacities = this.arrayCapacities(eval.value, source);
+				dimCapacities = this.getArrayElementsSizes(eval.value, source);
 				parentPtr = arrayPtr;
 				while (dimCapacities.containsKey(dim)) {
 					NumericExpression oldIndex = universe.integer(symbolicUtil
@@ -1073,7 +1043,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Map<Integer, NumericExpression> arrayCapacities(
+	private Map<Integer, NumericExpression> getArrayElementsSizes(
 			SymbolicExpression array, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		NumericExpression capacity = one;
