@@ -279,10 +279,15 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 				eval = evaluator.dereference(source, state, process, pointer,
 						true);
 				// TODO: getSubArray can not handle multi-d array
-				if (eval.value.type() instanceof SymbolicArrayType)
-					arrayInBundle = symbolicAnalyzer.getSubArray(eval.value,
+				if (eval.value.type() instanceof SymbolicArrayType) {
+					SymbolicExpression arraySubObj = eval.value;
+
+					while (((SymbolicArrayType) arraySubObj.type())
+							.elementType() instanceof SymbolicArrayType)
+						arraySubObj = universe.arrayRead(arraySubObj, zero);
+					arrayInBundle = symbolicAnalyzer.getSubArray(arraySubObj,
 							zero, one, state, process, source);
-				else
+				} else
 					arrayInBundle = universe.array(elementType,
 							Arrays.asList(eval.value));
 				state = eval.state;
