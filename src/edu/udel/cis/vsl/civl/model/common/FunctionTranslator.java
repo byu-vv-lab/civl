@@ -3662,27 +3662,44 @@ public class FunctionTranslator {
 			return modelFactory.binaryExpression(source, BINARY_OPERATOR.MINUS,
 					arg0, arg1);
 		} else {
-			Expression pointer, offset;
+			Expression pointer, rightPtr, offset;
+			boolean isSub = false;
 
+			rightPtr = null;
+			offset = null;
 			if (isNumeric1) {
 				pointer = arrayToPointer(arg0);
 				offset = arg1;
 			} else if (isNumeric0) {
 				pointer = arrayToPointer(arg1);
 				offset = arg0;
-			} else
-				throw new CIVLInternalException(
-						"Expected at least one numeric argument", source);
+			} else {
+				pointer = arrayToPointer(arg0);
+				rightPtr = arrayToPointer(arg1);
+				isSub = true;
+			}
 			if (!pointer.getExpressionType().isPointerType())
 				throw new CIVLInternalException(
 						"Expected expression of pointer type",
 						pointer.getSource());
-			if (!offset.getExpressionType().isIntegerType())
-				throw new CIVLInternalException(
-						"Expected expression of integer type",
-						offset.getSource());
-			return modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.POINTER_SUBTRACT, pointer, offset);
+			if (isSub) {
+				if (!rightPtr.getExpressionType().isPointerType())
+					throw new CIVLInternalException(
+							"Expected expression of pointer type",
+							rightPtr.getSource());
+				return modelFactory.binaryExpression(source,
+						BINARY_OPERATOR.POINTER_SUBTRACT, pointer, rightPtr);
+			} else {
+				if (!offset.getExpressionType().isIntegerType())
+					throw new CIVLInternalException(
+							"Expected expression of integer type",
+							offset.getSource());
+				return modelFactory.binaryExpression(source,
+						BINARY_OPERATOR.POINTER_ADD, pointer, modelFactory
+								.unaryExpression(offset.getSource(),
+										UNARY_OPERATOR.NEGATIVE, offset));
+			}
+
 		}
 	}
 
