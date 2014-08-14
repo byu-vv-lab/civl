@@ -353,7 +353,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 	 */
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
-		SequenceNode<ExternalDefinitionNode> root = (SequenceNode<ExternalDefinitionNode>) ast.getRootNode();
+		SequenceNode<ExternalDefinitionNode> root = ast.getRootNode();
 		AST newAst;
 		List<ExternalDefinitionNode> externalList;
 		VariableDeclarationNode threadMax;
@@ -450,25 +450,21 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			VariableDeclarationNode threadRange;
 			threadRange = nodeFactory.newVariableDeclarationNode(source, 
 					nodeFactory.newIdentifierNode(source, "thread_range"), 
-					nodeFactory.newRangeTypeNode(source), 
-					nodeFactory.newFunctionCallNode(source, 
-							this.identifierExpression(source, "$range_regular"),
-							Arrays.asList(nodeFactory.newIntegerConstantNode(
-									source, "0"), nodeFactory.newOperatorNode(
-											source, Operator.MINUS, 
-											Arrays.asList(this.identifierExpression(source, "_nthreads"), 
-													nodeFactory.newIntegerConstantNode(source, "1"))), 
-										nodeFactory.newIntegerConstantNode(source, "1")), null));
+					nodeFactory.newRangeTypeNode(source), nodeFactory.newRegularRangeNode(source, nodeFactory.newIntegerConstantNode(
+							source, "0"),  nodeFactory.newOperatorNode(
+									source, Operator.MINUS, 
+									Arrays.asList(this.identifierExpression(source, "_nthreads"), 
+											nodeFactory.newIntegerConstantNode(source, "1")))));
 			items.add(threadRange);
+			
+			
 			
 			VariableDeclarationNode loopDomain;
 			loopDomain = nodeFactory.newVariableDeclarationNode(source,
-					nodeFactory.newIdentifierNode(source, "loop_domain"),
-					nodeFactory.newDomainTypeNode(source), nodeFactory
-					.newFunctionCallNode(source, this.identifierExpression(
-							source, "$domain_rectangular"), Arrays.asList(
-									this.identifierExpression(source, 
-											"thread_range")), null));
+					nodeFactory.newIdentifierNode(source, "dom"),
+					nodeFactory.newDomainTypeNode(source), nodeFactory.
+					newCastNode(source, nodeFactory.newDomainTypeNode(source), 
+							this.identifierExpression(source, "thread_range")));
 			items.add(loopDomain);
 
 			// Declaring $omp_gteam gteam = $omp_gteam_create($here, nthreads);
@@ -586,10 +582,9 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 					parForItems);
 
 			cfn = nodeFactory.newCivlForNode(source, true,
-					(DeclarationListNode) initializerNode, nodeFactory
-							.newIdentifierExpressionNode(source, nodeFactory
-									.newIdentifierNode(source, "loop_domain")),
-					parForBody, null);
+					(DeclarationListNode) initializerNode, 
+					this.identifierExpression(source, "dom"),
+							parForBody, null);
 
 			items.add(cfn);
 
@@ -662,6 +657,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				ranges.add(new Pair<ASTNode, ASTNode>(initializer.child(1), condition.child(1)));
 				loopVariables.add((IdentifierNode) initializer.child(0).child(0));
 			}
+			
 			children = body.children();
 			loopDomain = nodeFactory.newVariableDeclarationNode(source,
 					nodeFactory.newIdentifierNode(source, "loop_domain"),
