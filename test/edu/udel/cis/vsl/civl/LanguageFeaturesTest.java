@@ -116,6 +116,16 @@ public class LanguageFeaturesTest {
 	public void bundleArray() throws ABCException {
 		assertTrue(ui.run("verify", filename("bundleArray.cvl")));
 	}
+	
+	@Test
+	public void bundleTest() throws ABCException {
+		assertTrue(ui.run("verify", filename("bundleTest.cvl")));
+	}
+	
+	@Test
+	public void bundleTestBad() throws ABCException {
+		assertFalse(ui.run("verify", filename("bundleTestBad.cvl")));
+	}
 
 	@Test
 	public void bundleConcrete() throws ABCException {
