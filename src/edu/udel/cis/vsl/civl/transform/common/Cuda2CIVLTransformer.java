@@ -115,6 +115,7 @@ public class Cuda2CIVLTransformer extends CIVLBaseTransformer {
 
 	protected FunctionDefinitionNode kernelDefinitonTransform(
 			FunctionDefinitionNode oldDefinition) {
+		// TODO: add execution configuration parameters as regular parameters
 		Source source = oldDefinition.getSource();
 		FunctionDefinitionNode innerKernelDefinition = this
 				.buildInnerKernelDefinition(oldDefinition.getBody());
