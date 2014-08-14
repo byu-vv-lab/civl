@@ -2,5 +2,5 @@
 #else
 #define __OMP__
 #include<omp-common.h>
-#include<civlc-omp.cvl>
+#include<omp.cvl>
 #endif
