@@ -88,14 +88,19 @@ void empty()
 void workfunc(size_t local, size_t global, cl_kernel param)
 {
   $proc procs[local];
+  char * squareChar = "square";
   for(int i = local * param.workgroup; i < local * param.workgroup + local; i++)
   {
     int count = *(int*)(((args*)param.arguments)->param[2]);
     param.local_id = i % local;
     param.global_id = i;
     printf("My workgroup id is %d, my global id is %d, my local id is %d, and my method is %s\n", param.workgroup, param.global_id, param.local_id, param.method);
-
-    procs[param.local_id] = $spawn square(param.workgroup, param.global_id, param.local_id, ((args*)param.arguments)->param[0], ((args*)param.arguments)->param[1], count);
+    
+    
+    if(strcmp(param.method, squareChar) == 0)
+    {
+      procs[param.local_id] = $spawn square(param.workgroup, param.global_id, param.local_id, ((args*)param.arguments)->param[0], ((args*)param.arguments)->param[1], count);
+    }
 
   }
   for(int j = 0; j < local; j++)

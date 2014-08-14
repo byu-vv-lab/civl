@@ -20,6 +20,7 @@
 #include <civlc.h>
 
 int numArgs = 2;
+int numKernels = 3;
 
 typedef struct
 {
@@ -57,7 +58,7 @@ void clReleaseKernel(cl_kernel kernel)
 int main(int argc, char** argv)
 {
   args * arguments;
-  arguments = (args*)malloc(sizeof(args) * 3);
+  arguments = (args*)malloc(sizeof(args) * numKernels);
   
   
   int star = 1;
@@ -65,16 +66,18 @@ int main(int argc, char** argv)
   int * one = (int*)malloc(sizeof(int));
   memcpy(one, &star, sizeof(int));
 
-  //cl_kernel *kernels = (cl_kernel*)malloc(3 * sizeof(cl_kernel));
-  cl_kernel kernels[3];
+  //cl_kernel *kernels = (cl_kernel*)malloc(numKernels * sizeof(cl_kernel));
+  cl_kernel kernels[numKernels];
   
   printf("%d, %d\n", star, *one);
 
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < numKernels; i++)
   {
     kernels[i] = clCreateKernel(arguments+i, "eh");
+    
+
   }
-  for (int j = 0; j < 3; j++)
+  for (int j = 0; j < numKernels; j++)
   {
     //printf("starts here\n");
     ((args*)kernels[j].arguments)->param[0] = (int*)malloc(sizeof(int));
@@ -84,17 +87,20 @@ int main(int argc, char** argv)
     
     //printf("I am kernel of index %d, with a value of %d\n", j, ((args*)kernels[j].arguments)->param[0]);
     
-    ((args*)kernels[j].arguments)->param[1] = one;
+    //((args*)kernels[j].arguments)->param[1] = one;
+    
+    
+
   }
   
   //printf("assigned properly\n");
   
-  for (int k = 0; k < 3; k++)
+  for (int k = 0; k < numKernels; k++)
   {
     clReleaseKernel(kernels[k]);
   }
   
-  for (int k = 0; k < 3; k++)
+  for (int k = 0; k < numKernels; k++)
   {
     //free(((args*)kernels[k].arguments)->param[0]);
   }

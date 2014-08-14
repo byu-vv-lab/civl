@@ -56,7 +56,7 @@ void reduce(
   for(op = 0; op < OPERATIONS; op++)
   {
     const unsigned int offset = (last - op);
-    const size_t local_id = local_id + offset;
+    const size_t local_id = cl_local_id + offset;
 
     STORE_LOCAL_I1(shared, local_id, zero);
         

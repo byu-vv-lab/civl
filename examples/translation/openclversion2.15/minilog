@@ -14,7 +14,25 @@ ToDo: Long term:
 
 Problems:
   This example does not neatly into work already done.
-  No memset();  
+  No memset(); 
+  No strcmp();
   Program crash when using array index of kernel
   Bug in memory leak detection
   Forgot to notice that there need to be multiple args
+  
+  -------
+  
+Done:
+
+  
+  
+ToDo:
+
+  
+ToDo: Long term:
+  Possible implementation of clGetKernelWorkGroupInfo, if an example that needs it is used
+  Possible implementation of clGetDeviceInfo
+  Re-arrange code so that the group designation is actually possible
+
+Problems:
+  Bug where there are many files that aren't there, and the printing of each file is not there
