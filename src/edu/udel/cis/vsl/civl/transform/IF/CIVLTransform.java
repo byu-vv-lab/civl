@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.transform.IF;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -184,19 +183,6 @@ public class CIVLTransform {
 			return;
 		}
 		program.apply(transformer);
-	}
-
-	/**
-	 * Prints the AST of a given program in the representation of CIVL-C code.
-	 * 
-	 * @param out
-	 *            The print stream to be used.
-	 * @param program
-	 *            The program to be printed.
-	 */
-	public static void printProgram2CIVL(PrintStream out, Program program,
-			boolean ignoreStdLibs) {
-		program.getAST().prettyPrint(out, ignoreStdLibs);
 	}
 
 	public static boolean hasFunctionCalls(AST ast, List<String> functions) {
