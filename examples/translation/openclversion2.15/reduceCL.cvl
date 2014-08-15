@@ -320,7 +320,8 @@ int main(int argc, char** argv)
 */
     ((args*)kernels[i].arguments)->param[0] = pass_output;
     ((args*)kernels[i].arguments)->param[1] = pass_input;
-    ((args*)kernels[i].arguments)->param[2] = NULL;
+    
+    ((args*)kernels[i].arguments)->param[2] = (int*)malloc(shared_size);
     
     
     ((args*)kernels[i].arguments)->param[3] = (int*)malloc(sizeof(int));

@@ -20,13 +20,16 @@ Problems:
   Bug in memory leak detection
   Forgot to notice that there need to be multiple args
   
+
+  
   -------
   
 Done:
-
+Change square.cvl to reflect new changes
   
   
 ToDo:
+Alter wiki again
 
   
 ToDo: Long term:
@@ -36,3 +39,7 @@ ToDo: Long term:
 
 Problems:
   Bug where there are many files that aren't there, and the printing of each file is not there
+  Error: This feature is not yet implemented: Pointer addition for anything other than array elements or variables
+at f31:24.4-30 "((  int*)(shared) ... ]".
+  This kernel really doesn't play nice with CIVL
+  heap object names are unique, but not in this program
