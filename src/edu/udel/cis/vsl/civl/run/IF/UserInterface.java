@@ -224,7 +224,9 @@ public class UserInterface {
 			String header = headerFiles.pop();
 
 			checkedHeaderFiles.add(header);
-			if (header.equals("mpi.h")) {
+			if (header.equals("civlmpi.cvh")) {
+				ASTs.add(this.compileHeaderFile(preprocessor, "civlmpi.cvl"));
+			} else if (header.equals("mpi.h")) {
 				ASTs.add(this.compileHeaderFile(preprocessor, "mpi.cvl"));
 			} else if (header.equals("comm.cvh")) {
 				ASTs.add(this.compileHeaderFile(preprocessor, "comm.cvl"));
