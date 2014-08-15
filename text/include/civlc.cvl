@@ -2,13 +2,13 @@
  * including standard types and function prototypes.
  */
 
-#ifdef __CIVLC__
+#ifdef __CIVLC_CIVL__
 #else
-#define __CIVLC__
+#define __CIVLC_CIVL__
 
-#include <civlc-common.cvh>
+#include <civlc.cvh>
 
-/* Completes the declaration of this type in civlc-common.cvh */
+/* Completes the declaration of this type in civlc.cvh */
 struct __int_iter__ {
   int size;
   int content[];

@@ -49,8 +49,6 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 	private final static String PTHREAD_POOL = "_pool";
 
-	private final static String ASSERT = "$assert";
-
 	private final static String ERROR = "ERROR";
 
 	private final static String VERIFIER_NONDET_UINT = "__VERIFIER_nondet_uint";
@@ -129,13 +127,14 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			throws SyntaxException {
 		process_VERIFIER_function_call_worker(node);
 	}
+
 	/**
 	 * Transforms VERIFIER functions into their corresponding counterparts:
-	 * VERIFIER_nondet_int: abstract integer function
-	 * VERIFIER_atomic: atomic function
+	 * VERIFIER_nondet_int: abstract integer function VERIFIER_atomic: atomic
+	 * function
 	 * 
-	 * @param node 
-	 * 			ASTNode to be be checked for a VERIFIER
+	 * @param node
+	 *            ASTNode to be be checked for a VERIFIER
 	 * 
 	 */
 	private void process_VERIFIER_function_call_worker(ASTNode node)
@@ -189,7 +188,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	 * Inserts an abstract function node in place of VERIFIER_nondet_int
 	 * 
 	 * @param function
-	 * 			Node to be checked and converted for VERIFIER function
+	 *            Node to be checked and converted for VERIFIER function
 	 * 
 	 */
 	private void process_VERIFIER_functions(FunctionDeclarationNode function) {
@@ -217,8 +216,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	/**
 	 * Translates nodes if they meet one of various specific cases
 	 * 
-	 * @param node 
-	 * 			Node to be translated
+	 * @param node
+	 *            Node to be translated
 	 * 
 	 */
 	private void translateNode(ASTNode node) {
@@ -291,7 +290,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	 * Creates an assertFalse StatementNode
 	 * 
 	 * @param mySource
-	 * 			
+	 * 
 	 * @return
 	 */
 	private StatementNode assertFalse(Source mySource) {

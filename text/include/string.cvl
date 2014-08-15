@@ -1,9 +1,10 @@
-/* CIVL model of string.h */
+/* CIVL implementation of string.h */
 
-#ifdef __STRING__
+#ifdef __STRING_CIVL__
 #else
-#define __STRING__
-#include<string-common.h>
+#define __STRING_CIVL__
+
+#include<string.h>
 #include<bundle.cvh>
 
 /* Copies a region of memory */

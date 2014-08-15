@@ -224,7 +224,11 @@ public class UserInterface {
 			String header = headerFiles.pop();
 
 			checkedHeaderFiles.add(header);
-			if (header.equals("civlmpi.cvh")) {
+			if (header.equals("string.h")) {
+				ASTs.add(this.compileHeaderFile(preprocessor, "string.cvl"));
+			} else if (header.equals("civlc.cvh")) {
+				ASTs.add(this.compileHeaderFile(preprocessor, "civlc.cvl"));
+			} else if (header.equals("civlmpi.cvh")) {
 				ASTs.add(this.compileHeaderFile(preprocessor, "civlmpi.cvl"));
 			} else if (header.equals("mpi.h")) {
 				ASTs.add(this.compileHeaderFile(preprocessor, "mpi.cvl"));
@@ -422,7 +426,7 @@ public class UserInterface {
 				this.out.println("Apply OpenMP transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OPENMP,
 					inputVars, astBuilder, config);
-			if (config.debugOrVerbose()) 
+			if (config.debugOrVerbose())
 				program.prettyPrint(out);
 		}
 		if (hasPthread) {
