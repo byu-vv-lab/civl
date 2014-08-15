@@ -1267,7 +1267,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				includedNodes.add(child);
 			} else if (sourceFile.equals("stdio.cvl")) {
 				includedNodes.add(child);
-			} else if (sourceFile.endsWith(".h")) {
+			} else if (sourceFile.endsWith(".h") || sourceFile.endsWith(".cvh")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
 					if (sourceFile.equals("stdio.h")) {

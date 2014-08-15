@@ -301,7 +301,7 @@ public class UserInterface {
 			program = this.compileLinkAndTransform(preprocessor, filename,
 					config, civlConfig);
 			if (civlConfig.showProgram() && !civlConfig.debugOrVerbose())
-				CIVLTransform.printProgram2CIVL(out, program, true);
+				program.prettyPrint(out);
 			hasFscanf = CIVLTransform.hasFunctionCalls(program.getAST(),
 					Arrays.asList("scanf", "fscanf"));
 			if (config.isTrue(showInputVarsO) || verbose || debug) {
@@ -387,8 +387,7 @@ public class UserInterface {
 		CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL,
 				inputVars, astBuilder, config);
 		if (config.debugOrVerbose()) {
-			program.print(out);
-			CIVLTransform.printProgram2CIVL(out, program, true);
+			program.prettyPrint(out);
 		}
 		if (hasCIVLPragma) {
 			if (config.debugOrVerbose())
@@ -396,8 +395,7 @@ public class UserInterface {
 			CIVLTransform.applyTransformer(program, CIVLTransform.CIVL_PRAGMA,
 					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
-				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program, true);
+				program.prettyPrint(out);
 			}
 		}
 		if (hasStdio) {
@@ -406,8 +404,7 @@ public class UserInterface {
 			CIVLTransform.applyTransformer(program, CIVLTransform.IO,
 					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
-				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program, true);
+				program.prettyPrint(out);
 			}
 		}
 		if (hasOmp) {
@@ -416,19 +413,17 @@ public class UserInterface {
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
 					inputVars, astBuilder, config);
 			if (config.debugOrVerbose())
-				program.print(out);
+				program.prettyPrint(out);
 			if (config.debugOrVerbose())
-				this.out.println("Apply OpenMP transformer...");
+				this.out.println("Apply OpenMP simplifier...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
 					inputVars, astBuilder, config);
 			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP transformer...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OPENMP,
 					inputVars, astBuilder, config);
-			if (config.debugOrVerbose()) {
-				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program, true);
-			}
+			if (config.debugOrVerbose()) 
+				program.prettyPrint(out);
 		}
 		if (hasPthread) {
 			if (config.debugOrVerbose())
@@ -436,8 +431,7 @@ public class UserInterface {
 			CIVLTransform.applyTransformer(program, CIVLTransform.PTHREAD,
 					inputVars, astBuilder, config);
 			if (config.debugOrVerbose()) {
-				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program, true);
+				program.prettyPrint(out);
 			}
 		}
 		if (hasMpi) {
@@ -446,8 +440,7 @@ public class UserInterface {
 			CIVLTransform.applyTransformer(program, CIVLTransform.MPI,
 					inputVars, null, config);
 			if (config.debugOrVerbose()) {
-				program.print(out);
-				CIVLTransform.printProgram2CIVL(out, program, true);
+				program.prettyPrint(out);
 			}
 		}
 		// always apply pruner and side effect remover
@@ -455,15 +448,13 @@ public class UserInterface {
 			this.out.println("Apply pruner...");
 		program.applyTransformer("prune");
 		if (config.debugOrVerbose()) {
-			program.print(out);
-			CIVLTransform.printProgram2CIVL(out, program, true);
+			program.prettyPrint(out);
 		}
 		if (config.debugOrVerbose())
 			this.out.println("Apply side-effect remover...");
 		program.applyTransformer("sef");
 		if (config.debugOrVerbose()) {
-			program.print(out);
-			CIVLTransform.printProgram2CIVL(out, program, true);
+			program.prettyPrint(out);
 		}
 	}
 
@@ -889,12 +880,9 @@ public class UserInterface {
 		compositeProgram = frontEnd.getProgramFactory(
 				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
 				combinedAST);
-		if (verbose || debug) {
-			compositeProgram.print(out);
-			CIVLTransform.printProgram2CIVL(out, compositeProgram, true);
+		if (showProgram || verbose || debug) {
+			compositeProgram.prettyPrint(out);
 		}
-		if (showProgram && !(verbose || debug))
-			CIVLTransform.printProgram2CIVL(out, compositeProgram, true);
 		if (config.isTrue(showInputVarsO) || verbose || debug) {
 			List<String> inputVarNames = inputVariableNames(compositeProgram
 					.getAST());
