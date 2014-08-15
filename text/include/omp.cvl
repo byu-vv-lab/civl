@@ -128,14 +128,14 @@ $omp_gteam $omp_gteam_create($scope scope, int nthreads) {
 void $omp_gteam_destroy($omp_gteam gteam) {
   int nthreads = gteam->nthreads;
 
-  $assert($seq_length(&gteam->shared)==0,
-          "shared objects must be deallocated before freeing gteam");
+  $assert $seq_length(&gteam->shared)==0 :
+          "shared objects must be deallocated before freeing gteam";
   for (int i=0; i<nthreads; i++) {
     int numRecords = $seq_length(&gteam->work[i]);
 
-    $assert(numRecords == 0,
+    $assert numRecords == 0 :
             "Thread %d still has %d queued worksharing events",
-            i, numRecords);
+            i, numRecords;
   }
   $free(gteam->gbarrier);
   $free(gteam);
@@ -146,9 +146,9 @@ void $omp_gteam_destroy($omp_gteam gteam) {
 $omp_team $omp_team_create($scope scope, $omp_gteam gteam, int tid) {
   $omp_team result = ($omp_team)$malloc(scope, sizeof(struct OMP_team));
 
-  $assert(!gteam->init[tid],
+  $assert !gteam->init[tid] :
           "Thread %d has already joined gteam",
-          tid);
+          tid;
   gteam->init[tid] = $true;
   result->gteam = gteam;
   result->scope = scope;
@@ -202,7 +202,9 @@ $omp_shared $omp_shared_create($omp_team team,
   $omp_shared result =
     ($omp_shared)$malloc(team->scope, sizeof(struct OMP_shared));
 
-  $assert(!gshared->init[team->tid], "Thread %d has already created its local copy for %p.\n", team->tid, gshared);
+  $assert !gshared->init[team->tid] :
+          "Thread %d has already created its local copy for %p.\n", 
+          team->tid, gshared;
   result->gshared = gshared;
   result->tid = team->tid;
   result->local = local;

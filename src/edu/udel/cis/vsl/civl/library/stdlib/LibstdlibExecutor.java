@@ -146,8 +146,9 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 			String argString;
 
 			try {
-				argStringPair = this.getString(arguments[0].getSource(), state,
-						process, argumentValues[0]);
+				argStringPair = this.evaluator.getString(
+						arguments[0].getSource(), state, process,
+						argumentValues[0]);
 			} catch (CIVLUnimplementedFeatureException e) {
 				intValue = universe.apply(atoiFunction,
 						Arrays.asList(argumentValues[0]));
@@ -170,9 +171,8 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 				}
 			}
 		}
-		if (lhs != null && intValue != null) 
-				state = primaryExecutor.assign(state, pid, process, lhs,
-						intValue);
+		if (lhs != null && intValue != null)
+			state = primaryExecutor.assign(state, pid, process, lhs, intValue);
 		return state;
 	}
 

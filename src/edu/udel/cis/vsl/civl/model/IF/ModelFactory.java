@@ -307,9 +307,9 @@ public interface ModelFactory {
 	 * @return The CIVL void type
 	 */
 	CIVLPrimitiveType voidType();
-	
+
 	void addSystemType(String name, CIVLType type);
-	
+
 	CIVLType getSystemType(String name);
 
 	/* *********************************************************************
@@ -781,10 +781,24 @@ public interface ModelFactory {
 	 *            The source location for this statement.
 	 * @param expression
 	 *            The expression being added to the path condition.
-	 * @return A new assume statement.
+	 * @return A new fragment containing the assume statement.
 	 */
 	Fragment assumeFragment(CIVLSource civlSource, Location source,
 			Expression expression);
+
+	/**
+	 * Create a one-statement fragment that contains the assert statement.
+	 * 
+	 * @param civlSource
+	 *            The CIVL source of the assume statement
+	 * @param source
+	 *            The source location for this statement.
+	 * @param condition
+	 *            The expression being added to the path condition.
+	 * @return A new fragment containing the assert statement.
+	 */
+	Fragment assertFragment(CIVLSource civlSource, Location source,
+			Expression condition, Expression[] explanation);
 
 	/**
 	 * Generate an atomic fragment based on a certain fragment, by adding one

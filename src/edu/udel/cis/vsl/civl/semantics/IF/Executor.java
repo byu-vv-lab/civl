@@ -1,5 +1,8 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
+import java.io.PrintStream;
+import java.util.List;
+
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -156,4 +159,14 @@ public interface Executor {
 	 * @return The error logger used by this executor.
 	 */
 	CIVLErrorLogger errorLogger();
+
+	State execute_printf(CIVLSource source, State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException;
+
+	List<Format> splitFormat(CIVLSource source, StringBuffer formatBuffer);
+
+	void printf(PrintStream printStream, CIVLSource source,
+			List<Format> formats, List<StringBuffer> arguments);
 }

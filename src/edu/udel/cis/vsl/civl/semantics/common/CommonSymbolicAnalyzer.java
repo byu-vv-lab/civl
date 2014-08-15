@@ -104,6 +104,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	}
 
 	/* ******************** Methods From SymbolicAnalyzer ****************** */
+
 	@Override
 	public SymbolicExpression getSubArray(SymbolicExpression array,
 			NumericExpression startIndex, NumericExpression endIndex,
@@ -245,8 +246,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	}
 
 	@Override
-	public CIVLType getFlattenedArrayElementType(State state, CIVLSource source,
-			SymbolicExpression arrayPtr) {
+	public CIVLType getFlattenedArrayElementType(State state,
+			CIVLSource source, SymbolicExpression arrayPtr) {
 		CIVLType type = this.typeOfObjByPointer(source, state, arrayPtr);
 
 		while (type instanceof CIVLArrayType)

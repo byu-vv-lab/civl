@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -323,6 +324,10 @@ public interface Evaluator {
 	 * @return The symbolic universe of the evaluator.
 	 */
 	SymbolicUniverse universe();
+
+	Pair<State, StringBuffer> getString(CIVLSource source, State state,
+			String process, SymbolicExpression charPointer)
+			throws UnsatisfiablePathConditionException;
 
 	/* ************** Public Array Processing Helper Functions *************** */
 	/**

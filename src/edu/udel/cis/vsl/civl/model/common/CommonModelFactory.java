@@ -72,6 +72,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -136,6 +137,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonVariableExpression;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonAssertStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
@@ -1224,20 +1226,16 @@ public class CommonModelFactory implements ModelFactory {
 		return new CommonFragment(result);
 	}
 
-	// @Override
-	// public void enterAtomicBlock(boolean deterministic) {
-	// this.atomicBlocks.push(deterministic ? 1 : 0);
-	// }
-	//
-	// @Override
-	// public void leaveAtomicBlock(boolean deterministic) {
-	// this.atomicBlocks.pop();
-	// }
+	@Override
+	public Fragment assertFragment(CIVLSource civlSource, Location source,
+			Expression condition, Expression[] explanation) {
+		AssertStatement result = new CommonAssertStatement(civlSource, source,
+				condition, explanation);
 
-	// @Override
-	// public boolean inAtomicBlock() {
-	// return !this.atomicBlocks.isEmpty();
-	// }
+		result.setStatementScope(condition.expressionScope());
+		((CommonExpression) result.guard()).setExpressionType(booleanType);
+		return new CommonFragment(result);
+	}
 
 	@Override
 	public Fragment atomicFragment(boolean deterministic, Fragment fragment,

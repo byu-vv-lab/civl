@@ -73,6 +73,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.StringLiteralNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssertNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
@@ -458,6 +459,9 @@ public class FunctionTranslator {
 		case ASSUME:
 			result = translateAssumeNode(scope, (AssumeNode) statementNode);
 			break;
+		case ASSERT:
+			result = translateAssertNode(scope, (AssertNode) statementNode);
+			break;
 		case ATOMIC:
 			result = translateAtomicNode(scope, (AtomicNode) statementNode);
 			break;
@@ -482,12 +486,12 @@ public class FunctionTranslator {
 			result = translateExpressionStatementNode(scope,
 					((ExpressionStatementNode) statementNode).getExpression());
 			break;
-		case FOR:
-			result = translateForLoopNode(scope, (ForLoopNode) statementNode);
-			break;
-		case GOTO:
-			result = translateGotoNode(scope, (GotoNode) statementNode);
-			break;
+		// case FOR:
+		// result = translateForLoopNode(scope, (ForLoopNode) statementNode);
+		// break;
+		// case GOTO:
+		// result = translateGotoNode(scope, (GotoNode) statementNode);
+		// break;
 		case IF:
 			result = translateIfNode(scope, (IfNode) statementNode);
 			break;
@@ -505,9 +509,9 @@ public class FunctionTranslator {
 			result = translateNullStatementNode(scope,
 					(NullStatementNode) statementNode);
 			break;
-		case RETURN:
-			result = translateReturnNode(scope, (ReturnNode) statementNode);
-			break;
+		// case RETURN:
+		// result = translateReturnNode(scope, (ReturnNode) statementNode);
+		// break;
 		case SWITCH:
 			result = translateSwitchNode(scope, (SwitchNode) statementNode);
 			break;
@@ -1227,7 +1231,7 @@ public class FunctionTranslator {
 	 * @param scope
 	 *            The scope containing this statement.
 	 * @param assumeNode
-	 *            The scope containing this statement.
+	 *            The assume node to be translated.
 	 * @return the fragment
 	 */
 	private Fragment translateAssumeNode(Scope scope, AssumeNode assumeNode) {
@@ -1244,6 +1248,59 @@ public class FunctionTranslator {
 				location, expression);
 		result = result.combineWith(accuracyAssumptionBuilder
 				.accuracyAssumptions(expression, scope));
+		return result;
+	}
+
+	/**
+	 * 
+	 * Translate an assert node into a fragment of CIVL statements
+	 * 
+	 * @param scope
+	 *            The scope containing this statement.
+	 * @param assertNode
+	 *            The assert node to be translated.
+	 * @return the result fragment
+	 */
+	private Fragment translateAssertNode(Scope scope, AssertNode assertNode) {
+		Expression expression;
+		Location location;
+		Fragment result;
+		Expression[] explanation = null;
+		SequenceNode<ExpressionNode> explanationNode = assertNode
+				.getExplanation();
+
+		modelFactory.setCurrentScope(scope);
+		expression = translateExpressionNode(assertNode.getCondition(), scope,
+				true);
+		try {
+			expression = modelFactory.booleanExpression(expression);
+		} catch (ModelFactoryException e) {
+			throw new CIVLSyntaxException(
+					"The expression of the $assert statement "
+							+ expression
+							+ " is of "
+							+ expression.getExpressionType()
+							+ " type which cannot be converted to boolean type.",
+					assertNode.getSource());
+		}
+		location = modelFactory.location(
+				modelFactory.sourceOfBeginning(assertNode), scope);
+		if (explanationNode != null) {
+			int numArgs = explanationNode.numChildren();
+			List<Expression> args = new ArrayList<>(numArgs);
+
+			explanation = new Expression[numArgs];
+			for (int i = 0; i < numArgs; i++) {
+				Expression arg = translateExpressionNode(
+						explanationNode.getSequenceChild(i), scope, true);
+
+				arg = this.arrayToPointer(arg);
+				args.add(arg);
+			}
+			args.toArray(explanation);
+		}
+		result = modelFactory.assertFragment(modelFactory.sourceOf(assertNode),
+				location, expression, explanation);
 		return result;
 	}
 
@@ -2125,16 +2182,29 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(jumpNode), scope);
 		Statement result = modelFactory.noopStatement(
 				modelFactory.sourceOf(jumpNode), location);
+		JumpKind kind = jumpNode.getKind();
 
-		if (jumpNode.getKind() == JumpKind.CONTINUE) {
-			functionInfo.peekContinueStack().add(result);
-		} else if (jumpNode.getKind() == JumpKind.BREAK) {
+		switch (kind) {
+		case BREAK:
 			functionInfo.peekBreakStack().add(result);
-		} else {
-			throw new CIVLInternalException(
-					"Jump nodes other than BREAK and CONTINUE should be handled seperately.",
-					modelFactory.sourceOf(jumpNode.getSource()));
+			break;
+		case CONTINUE:
+			functionInfo.peekContinueStack().add(result);
+			break;
+		case GOTO:
+			return translateGotoNode(scope, (GotoNode) jumpNode);
+		default:// RETURN
+			return translateReturnNode(scope, (ReturnNode) jumpNode);
 		}
+		// if (jumpNode.getKind() == JumpKind.CONTINUE) {
+		// functionInfo.peekContinueStack().add(result);
+		// } else if (jumpNode.getKind() == JumpKind.BREAK) {
+		// functionInfo.peekBreakStack().add(result);
+		// } else {
+		// throw new CIVLInternalException(
+		// "Jump nodes other than BREAK and CONTINUE should be handled seperately.",
+		// modelFactory.sourceOf(jumpNode.getSource()));
+		// }
 		return new CommonFragment(result);
 	}
 
@@ -2169,15 +2239,14 @@ public class FunctionTranslator {
 	 */
 	private Fragment translateLoopNode(Scope scope, LoopNode loopNode) {
 		switch (loopNode.getKind()) {
-		case WHILE:
-			return composeLoopFragment(scope, loopNode.getCondition(),
-					loopNode.getBody(), null, false);
 		case DO_WHILE:
 			return composeLoopFragment(scope, loopNode.getCondition(),
 					loopNode.getBody(), null, true);
-		default:
-			throw new CIVLInternalException("Unreachable",
-					modelFactory.sourceOf(loopNode));
+		case FOR:
+			return translateForLoopNode(scope, (ForLoopNode) loopNode);
+		default:// case WHILE:
+			return composeLoopFragment(scope, loopNode.getCondition(),
+					loopNode.getBody(), null, false);
 		}
 	}
 
@@ -2916,6 +2985,7 @@ public class FunctionTranslator {
 								.getStringRepresentation())));
 			break;
 		case POINTER:
+		case ARRAY:
 			boolean isSupportedChar = false;
 
 			if (constantNode.getStringRepresentation().equals("0")) {
@@ -2924,20 +2994,45 @@ public class FunctionTranslator {
 						source);
 				break;
 			} else if (constantNode instanceof StringLiteralNode) {
-				if (((PointerType) convertedType).referencedType().kind() == TypeKind.BASIC
-						&& ((StandardBasicType) ((PointerType) convertedType)
-								.referencedType()).getBasicTypeKind() == BasicTypeKind.CHAR) {
-					isSupportedChar = true;
-				} else if (((PointerType) convertedType).referencedType()
-						.kind() == TypeKind.QUALIFIED
-						&& ((QualifiedObjectType) ((PointerType) convertedType)
-								.referencedType()).getBaseType() instanceof StandardBasicType) {
-					StandardBasicType basicType = (StandardBasicType) (((QualifiedObjectType) ((PointerType) convertedType)
-							.referencedType()).getBaseType());
+				Type elementType = null;
 
-					if (basicType.getBasicTypeKind() == BasicTypeKind.CHAR)
+				if (convertedType.kind() == TypeKind.POINTER) {
+					elementType = ((PointerType) convertedType)
+							.referencedType();
+				} else {// convertedType.kind() == ARRAY
+					elementType = ((ArrayType) convertedType).getElementType();
+				}
+				if (elementType.kind() == TypeKind.QUALIFIED) {
+					elementType = ((QualifiedObjectType) elementType)
+							.getBaseType();
+				}
+				if (elementType != null && elementType.kind() == TypeKind.BASIC) {
+					if (((StandardBasicType) elementType).getBasicTypeKind() == BasicTypeKind.CHAR)
 						isSupportedChar = true;
 				}
+				// }
+				//
+				// if(convertedType.kind() == TypeKind.POINTER && ((PointerType)
+				// convertedType).referencedType().kind() == TypeKind.BASIC
+				// && ((StandardBasicType) ((PointerType) convertedType)
+				// .referencedType()).getBasicTypeKind() == BasicTypeKind.CHAR)
+				// {
+				// isSupportedChar = true;
+				// }else if(((ArrayType)convertedType).getElementType().kind()
+				// == ){
+				//
+				// } else if (((PointerType) convertedType).referencedType()
+				// .kind() == TypeKind.QUALIFIED
+				// && ((QualifiedObjectType) ((PointerType) convertedType)
+				// .referencedType()).getBaseType() instanceof
+				// StandardBasicType) {
+				// StandardBasicType basicType = (StandardBasicType)
+				// (((QualifiedObjectType) ((PointerType) convertedType)
+				// .referencedType()).getBaseType());
+				//
+				// if (basicType.getBasicTypeKind() == BasicTypeKind.CHAR)
+				// isSupportedChar = true;
+				// }
 				if (isSupportedChar) {
 					StringLiteralNode stringLiteralNode = (StringLiteralNode) constantNode;
 					StringLiteral stringValue = stringLiteralNode

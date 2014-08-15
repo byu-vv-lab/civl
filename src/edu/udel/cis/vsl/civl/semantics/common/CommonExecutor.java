@@ -3,10 +3,13 @@
  */
 package edu.udel.cis.vsl.civl.semantics.common;
 
+import java.io.PrintStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
@@ -18,6 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
@@ -28,6 +32,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -37,11 +42,14 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.Format;
+import edu.udel.cis.vsl.civl.semantics.IF.Format.ConversionType;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
@@ -58,11 +66,13 @@ import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
@@ -114,6 +124,12 @@ public class CommonExecutor implements Executor {
 	private int parProcId = 0;
 
 	private SymbolicAnalyzer symbolicAnalyzer;
+	
+	/**
+	 * The set of characters that are used to construct a number in a format
+	 * string.
+	 */
+	private Set<Character> numbers;
 
 	/* ***************************** Constructors ************************** */
 
@@ -150,6 +166,10 @@ public class CommonExecutor implements Executor {
 		this.loader = loader;
 		this.symbolicUtil = evaluator.symbolicUtility();
 		this.errorLogger = errorLogger;
+		numbers = new HashSet<Character>(10);
+		for (int i = 0; i < 10; i++) {
+			numbers.add(Character.forDigit(i, 10));
+		}
 	}
 
 	/* ************************** Private methods ************************** */
@@ -546,6 +566,8 @@ public class CommonExecutor implements Executor {
 					(AssignStatement) statement);
 		case ASSUME:
 			return executeAssume(state, pid, (AssumeStatement) statement);
+		case ASSERT:
+			return executeAssert(state, pid, (AssertStatement) statement);
 		case CALL_OR_SPAWN:
 			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
@@ -574,6 +596,63 @@ public class CommonExecutor implements Executor {
 		default:
 			throw new CIVLInternalException("Unknown statement kind", statement);
 		}
+	}
+
+	private State executeAssert(State state, int pid, AssertStatement assertStmt)
+			throws UnsatisfiablePathConditionException {
+		BooleanExpression assertValue;
+		Evaluation eval;
+		Reasoner reasoner;
+		ValidityResult valid;
+		ResultType resultType;
+		CIVLSource source = assertStmt.getSource();
+		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+
+		eval = evaluator.evaluate(state, pid, assertStmt.getCondition());
+		assertValue = (BooleanExpression) eval.value;
+		state = eval.state;
+		reasoner = universe.reasoner(state.getPathCondition());
+		valid = reasoner.valid(assertValue);
+		resultType = valid.getResultType();
+		if (resultType != ResultType.YES) {	
+			Expression[] explanation = assertStmt.getExplanation();
+			
+			if(explanation != null){
+				 if (civlConfig.enablePrintf()) {
+				 SymbolicExpression[] pArgumentValues = new  SymbolicExpression[explanation.length];
+				 
+				 
+				 for(int i = 0; i < explanation.length; i++){
+					 eval = this.evaluator.evaluate(state, pid, explanation[i]);
+					 state = eval.state;
+					 pArgumentValues[i] = eval.value;
+				 }
+				
+				 state = this.execute_printf(source, state, pid, process,
+				 null, explanation, pArgumentValues);
+				 }
+			}
+			
+			// if (arguments.length > 1) {
+			// if (civlConfig.enablePrintf()) {
+			// Expression[] pArguments = Arrays.copyOfRange(arguments, 1,
+			// arguments.length);
+			// SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
+			// argumentValues, 1, argumentValues.length);
+			//
+			// state = this.execute_printf(source, state, pid, process,
+			// null, pArguments, pArgumentValues);
+			// }
+			// }
+			state = errorLogger.logError(source, state, process,
+					symbolicAnalyzer.stateToString(state), assertValue,
+					resultType, ErrorKind.ASSERTION_VIOLATION,
+					"Cannot prove assertion holds: " + assertStmt.toString()
+							+ "\n  Path condition: " + state.getPathCondition()
+							+ "\n  Assertion: " + assertValue + "\n");
+		}
+		state = stateFactory.setLocation(state, pid, assertStmt.target());
+		return state;
 	}
 
 	private State executeCivlParFor(State state, int pid,
@@ -739,6 +818,302 @@ public class CommonExecutor implements Executor {
 		state = stateFactory.setLocation(state, pid, forEnter.target());
 		return state;
 	}
+	
+	@Override
+	public State execute_printf(CIVLSource source, State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		StringBuffer stringOfSymbolicExpression;
+		StringBuffer formatBuffer;
+		List<StringBuffer> printedContents = new ArrayList<>();
+		Pair<State, StringBuffer> concreteString;
+		List<Format> formats;
+		List<Format> nonVoidFormats = new ArrayList<>();
+
+		concreteString = this.evaluator.getString(arguments[0].getSource(), state,
+				process, argumentValues[0]);
+		formatBuffer = concreteString.right;
+		state = concreteString.left;
+		formats = this.splitFormat(arguments[0].getSource(), formatBuffer);
+		for (Format format : formats) {
+			if (format.type != ConversionType.VOID)
+				nonVoidFormats.add(format);
+		}
+		assert nonVoidFormats.size() == argumentValues.length - 1;
+		for (int i = 1; i < argumentValues.length; i++) {
+			SymbolicExpression argumentValue = argumentValues[i];
+			CIVLType argumentType = arguments[i].getExpressionType();
+
+			if (argumentType instanceof CIVLPointerType
+					&& ((CIVLPointerType) argumentType).baseType().isCharType()
+					&& argumentValue.operator() == SymbolicOperator.CONCRETE) {
+				Format myFormat = nonVoidFormats.get(i - 1);
+
+				if (myFormat.type == ConversionType.STRING) {
+					concreteString = this.evaluator.getString(arguments[i].getSource(),
+							state, process, argumentValue);
+					stringOfSymbolicExpression = concreteString.right;
+					state = concreteString.left;
+					printedContents.add(stringOfSymbolicExpression);
+				} else if (myFormat.type == ConversionType.POINTER) {
+					printedContents.add(new StringBuffer(symbolicAnalyzer
+							.symbolicExpressionToString(
+									arguments[i].getSource(), state,
+									argumentValue)));
+				} else {
+					throw new CIVLSyntaxException("Array pointer unaccepted",
+							arguments[i].getSource());
+				}
+
+			} else
+				printedContents.add(new StringBuffer(this.symbolicAnalyzer
+						.symbolicExpressionToString(arguments[i].getSource(),
+								state, argumentValue)));
+		}
+		this.printf(civlConfig.out(), arguments[0].getSource(), formats,
+				printedContents);
+		return state;
+	}
+	
+	/**
+	 * Parses the format string, according to C11 standards. For example,
+	 * <code>"This is process %d.\n"</code> will be parsed into a list of
+	 * strings: <code>"This is process "</code>, <code>"%d"</code>,
+	 * <code>".\n"</code>.<br>
+	 * 
+	 * In Paragraph 4, Section 7.21.6.1, C11 Standards:<br>
+	 * Each conversion specification is introduced by the character %. After the
+	 * %, the following appear in sequence:
+	 * <ul>
+	 * <li>Zero or more flags (in any order) that modify the meaning of the
+	 * conversion specification.</li>
+	 * <li>An optional minimum field width. If the converted value has fewer
+	 * characters than the field width, it is padded with spaces (by default) on
+	 * the left (or right, if the left adjustment flag, described later, has
+	 * been given) to the field width. The field width takes the form of an
+	 * asterisk * (described later) or a nonnegative decimal integer.</li>
+	 * <li>An optional precision that gives the minimum number of digits to
+	 * appear for the d, i, o, u, x, and X conversions, the number of digits to
+	 * appear after the decimal-point character for a, A, e, E, f, and F
+	 * conversions, the maximum number of significant digits for the g and G
+	 * conversions, or the maximum number of bytes to be written for s
+	 * conversions. The precision takes the form of a period (.) followed either
+	 * by an asterisk * (described later) or by an optional decimal integer; if
+	 * only the period is specified, the precision is taken as zero. If a
+	 * precision appears with any other conversion specifier, the behavior is
+	 * undefined.</li>
+	 * <li>An optional length modifier that specifies the size of the argument.</li>
+	 * <li>A conversion specifier character that specifies the type of
+	 * conversion to be applied.</li>
+	 * </ul>
+	 * 
+	 * @param source
+	 *            The source code element of the format argument.
+	 * @param formatBuffer
+	 *            The string buffer containing the content of the format string.
+	 * @return A list of string buffers by splitting the format by conversion
+	 *         specifiers.
+	 */
+	@Override
+	public List<Format> splitFormat(CIVLSource source,
+			StringBuffer formatBuffer) {
+		int count = formatBuffer.length();
+		List<Format> result = new ArrayList<>();
+		StringBuffer stringBuffer = new StringBuffer();
+		boolean inConversion = false;
+		boolean hasFieldWidth = false;
+		boolean hasPrecision = false;
+
+		for (int i = 0; i < count; i++) {
+			Character current = formatBuffer.charAt(i);
+			Character code;
+			ConversionType type = ConversionType.VOID;
+
+			if (current.equals('%')) {
+				code = formatBuffer.charAt(i + 1);
+
+				if (code.equals('%')) {
+					stringBuffer.append("%%");
+					i = i + 1;
+					continue;
+				}
+				if (stringBuffer.length() > 0) {
+					if (stringBuffer.charAt(0) == '%'
+							&& stringBuffer.charAt(1) != '%') {
+						throw new CIVLSyntaxException("The format %"
+								+ stringBuffer + " is not allowed in fprintf",
+								source);
+					}
+					result.add(new Format(stringBuffer, type));
+					stringBuffer = new StringBuffer();
+				}
+				inConversion = true;
+				stringBuffer.append('%');
+				current = formatBuffer.charAt(++i);
+			}
+			if (inConversion) {
+				// field width
+				if (current.equals('*')) {
+					stringBuffer.append('*');
+					current = formatBuffer.charAt(++i);
+				} else if (numbers.contains(current)) {
+					Character next = current;
+
+					if (hasFieldWidth) {
+						stringBuffer.append(next);
+						throw new CIVLSyntaxException(
+								"Duplicate field width in \"" + stringBuffer
+										+ "\"...", source);
+					}
+					hasFieldWidth = true;
+					while (numbers.contains(next)) {
+						stringBuffer.append(next);
+						next = formatBuffer.charAt(++i);
+					}
+					current = next;
+				}
+				// precision
+				if (current.equals('.')) {
+					Character next;
+
+					next = formatBuffer.charAt(++i);
+					stringBuffer.append('.');
+					if (hasPrecision) {
+						throw new CIVLSyntaxException(
+								"Duplicate precision detected in \""
+										+ stringBuffer + "\"...", source);
+					}
+					hasPrecision = true;
+					if (next.equals('*')) {
+						stringBuffer.append(next);
+						next = formatBuffer.charAt(++i);
+					} else {
+						while (numbers.contains(next)) {
+							stringBuffer.append(next);
+							next = formatBuffer.charAt(++i);
+						}
+					}
+					current = next;
+				}
+				// length modifier
+				switch (current) {
+				case 'h':
+				case 'l':
+					stringBuffer.append(current);
+					if (i + 1 >= count)
+						throw new CIVLSyntaxException("The format "
+								+ stringBuffer + " is not allowed.", source);
+					else {
+						Character next = formatBuffer.charAt(i + 1);
+
+						if (next.equals(current)) {
+							i++;
+							stringBuffer.append(next);
+						}
+						current = formatBuffer.charAt(++i);
+					}
+					break;
+				case 'j':
+				case 'z':
+				case 't':
+				case 'L':
+					stringBuffer.append(current);
+					current = formatBuffer.charAt(++i);
+					break;
+				default:
+				}
+				// conversion specifier
+				switch (current) {
+				case 'c':
+				case 'p':
+				case 'n':
+					if (hasFieldWidth || hasPrecision) {
+						throw new CIVLSyntaxException(
+								"Invalid precision for the format \"%"
+										+ current + "\"...", source);
+					}
+				default:
+				}
+				switch (current) {
+				case 'c':
+					type = ConversionType.CHAR;
+					break;
+				case 'p':
+				case 'n':
+					type = ConversionType.POINTER;
+					break;
+				case 'd':
+				case 'i':
+				case 'o':
+				case 'u':
+				case 'x':
+				case 'X':
+					type = ConversionType.INT;
+					break;
+				case 'a':
+				case 'A':
+				case 'e':
+				case 'E':
+				case 'f':
+				case 'F':
+				case 'g':
+				case 'G':
+					type = ConversionType.DOUBLE;
+					break;
+				case 's':
+					type = ConversionType.STRING;
+					break;
+				default:
+					stringBuffer.append(current);
+					throw new CIVLSyntaxException("The format %" + stringBuffer
+							+ " is not allowed in fprintf", source);
+				}
+				stringBuffer.append(current);
+				result.add(new Format(stringBuffer, type));
+				inConversion = false;
+				hasFieldWidth = false;
+				hasPrecision = false;
+				stringBuffer = new StringBuffer();
+			} else {
+				stringBuffer.append(current);
+			}
+		}
+		if (stringBuffer.length() > 0)
+			result.add(new Format(stringBuffer, ConversionType.VOID));
+		return result;
+	}
+	
+	/**
+	 * Prints to the standard output stream.
+	 * 
+	 * @param source
+	 *            The source code information of the format argument.
+	 * @param formatBuffer
+	 *            The format string buffer.
+	 * @param arguments
+	 *            The list of arguments to be printed according to the format.
+	 */
+	@Override
+	public void printf(PrintStream printStream, CIVLSource source,
+			List<Format> formats, List<StringBuffer> arguments) {
+		if (this.civlConfig.enablePrintf()) {
+			int argIndex = 0;
+
+			for (Format format : formats) {
+				String formatString = format.toString();
+
+				switch (format.type) {
+				case VOID:
+					printStream.print(formatString);
+					break;
+				default:
+					printStream.printf("%s", arguments.get(argIndex++));
+				}
+			}
+		}
+	}
+	
 
 	/**
 	 * TODO
@@ -936,4 +1311,5 @@ public class CommonExecutor implements Executor {
 	public CIVLErrorLogger errorLogger() {
 		return this.errorLogger;
 	}
+
 }

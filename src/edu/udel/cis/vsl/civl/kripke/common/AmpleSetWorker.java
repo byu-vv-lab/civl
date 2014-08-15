@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -558,6 +559,19 @@ public class AmpleSetWorker {
 			Expression assumeExpression = assumeStatement.getExpression();
 
 			partialResult = memoryUnit(assumeExpression, pid);
+			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
+				return partialResult;
+			memUnitsPartial = partialResult.right;
+			if (memUnitsPartial != null) {
+				memUnits.addAll(memUnitsPartial);
+			}
+		}
+			break;
+		case ASSERT: {
+			AssertStatement assertStatement = (AssertStatement) statement;
+			Expression assertExpression = assertStatement.getCondition();
+
+			partialResult = memoryUnit(assertExpression, pid);
 			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
 				return partialResult;
 			memUnitsPartial = partialResult.right;

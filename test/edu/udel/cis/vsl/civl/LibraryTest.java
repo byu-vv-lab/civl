@@ -56,21 +56,6 @@ public class LibraryTest {
 	public void commBad() throws ABCException {
 		assertFalse(ui.run("verify", filename("civlc/commBad.cvl")));
 	}
-
-	@Test
-	public void assertNonNullPointer() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/assertNonNullPointer.cvl")));
-	}
-
-	@Test
-	public void assertNullPointer() throws ABCException {
-		assertFalse(ui.run("verify", filename("civlc/assertNullPointer.cvl")));
-	}
-
-	@Test
-	public void assertPrintf() throws ABCException {
-		assertFalse(ui.run("verify", filename("civlc/assertPrintf.cvl")));
-	}
 	
 	@Test
 	public void malloc1() throws ABCException {

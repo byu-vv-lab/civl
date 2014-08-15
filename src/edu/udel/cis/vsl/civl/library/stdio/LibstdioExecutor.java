@@ -25,6 +25,8 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.Format;
+import edu.udel.cis.vsl.civl.semantics.IF.Format.ConversionType;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -424,7 +426,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				expressions[1].getSource(), argumentValues[1]);
 		state = eval.state;
 		filename = eval.value;
-		fileNameStringPair = this.getString(expressions[1].getSource(), state,
+		fileNameStringPair = this.evaluator.getString(expressions[1].getSource(), state,
 				process, argumentValues[1]);
 		state = fileNameStringPair.left;
 		// fileNameString = fileNameStringPair.right.toString();
@@ -601,7 +603,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 					arguments, argumentValues);
 			break;
 		case "printf":
-			state = execute_printf(source, state, pid, process, lhs, arguments,
+			state = this.primaryExecutor.execute_printf(source, state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
 		case "fscanf":
@@ -804,7 +806,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				return state;
 			}
 		}
-		formatString = this.getString(arguments[1].getSource(), state, process,
+		formatString = this.evaluator.getString(arguments[1].getSource(), state, process,
 				argumentValues[1]);
 		formatBuffer = formatString.right;
 		state = formatString.left;
@@ -812,7 +814,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		{ // reads the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,
 					oneObject);
-			List<Format> formats = this.splitFormat(arguments[1].getSource(),
+			List<Format> formats = this.primaryExecutor.splitFormat(arguments[1].getSource(),
 					formatBuffer);
 			int numOfFormats = formats.size();
 			int dataPointerIndex = 2;
@@ -924,14 +926,14 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		fileObject = eval.value;
 		state = eval.state;
 		fileName = universe.tupleRead(fileObject, zeroObject);
-		stringResult = this.getString(source, state, process, fileName);
+		stringResult = this.evaluator.getString(source, state, process, fileName);
 		state = stringResult.left;
 		fileNameString = stringResult.right.toString();
-		concreteString = this.getString(arguments[1].getSource(), state,
+		concreteString = this.evaluator.getString(arguments[1].getSource(), state,
 				process, argumentValues[1]);
 		formatBuffer = concreteString.right;
 		state = concreteString.left;
-		formats = this.splitFormat(arguments[1].getSource(), formatBuffer);
+		formats = this.primaryExecutor.splitFormat(arguments[1].getSource(), formatBuffer);
 		for (Format format : formats) {
 			if (format.type == ConversionType.STRING)
 				sIndexes.add(sCount++);
@@ -950,7 +952,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 					throw new CIVLSyntaxException("Array pointer unaccepted",
 							arguments[i].getSource());
 				}
-				concreteString = this.getString(arguments[i].getSource(),
+				concreteString = this.evaluator.getString(arguments[i].getSource(),
 						state, process, argumentValue);
 				stringOfSymbolicExpression = concreteString.right;
 				state = concreteString.left;
@@ -961,14 +963,14 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 								state, argumentValue)));
 		}
 		if (fileNameString.compareTo(STDOUT) == 0) {
-			this.printf(civlConfig.out(), arguments[1].getSource(), formats,
+			this.primaryExecutor.printf(civlConfig.out(), arguments[1].getSource(), formats,
 					printedContents);
 			if (civlConfig.statelessPrintf())
 				return state;
 		} else if (fileNameString.compareTo(STDIN) == 0) {
 			// TODO: stdin
 		} else if (fileNameString.equals(STDERR)) {
-			this.printf(civlConfig.err(), arguments[1].getSource(), formats,
+			this.primaryExecutor.printf(civlConfig.err(), arguments[1].getSource(), formats,
 					printedContents);
 		}
 		{ // updates the file

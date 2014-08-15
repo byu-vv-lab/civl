@@ -2728,6 +2728,86 @@ public class CommonEvaluator implements Evaluator {
 			throws UnsatisfiablePathConditionException {
 		return dereference(source, state, process, pointer, checkOutput, false);
 	}
+	
+	/**
+	 * * Only three types (represented differently in CIVL) of the symbolic
+	 * expression "charPointer" is acceptable:<br>
+	 * A pointer to char <br>
+	 * A pointer to an element of array of char. (e.g. char a[N][M]; a[x] or
+	 * &a[x][0] are acceptable. Address of an element of array of char or
+	 * pointer to an array of char are same as this situation.)<br>
+	 * A complete char array
+	 * 
+	 * @param source
+	 *            The CIVL source of the pointer to char expression
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The identifier of the process
+	 * @param charPointer
+	 *            The pointer to char
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	@Override
+	public Pair<State, StringBuffer> getString(CIVLSource source, State state,
+			String process, SymbolicExpression charPointer)
+			throws UnsatisfiablePathConditionException {
+		if (charPointer.operator() == SymbolicOperator.CONCRETE) {
+			SymbolicSequence<?> originalArray = null;
+			int int_arrayIndex = -1;
+			StringBuffer result = new StringBuffer();
+			ReferenceExpression ref = null;
+			Evaluation eval;
+
+			if (charPointer.type() instanceof SymbolicCompleteArrayType) {
+				originalArray = (SymbolicSequence<?>) charPointer.argument(0);
+				int_arrayIndex = 0;
+			} else {
+				ref = symbolicUtil.getSymRef(charPointer);
+				if (ref instanceof ArrayElementReference) {
+					SymbolicExpression pointerCharArray = symbolicUtil
+							.parentPointer(source, charPointer);
+					SymbolicExpression charArray;
+
+					eval = dereference(source, state, process,
+							pointerCharArray, false);
+					state = eval.state;
+					charArray = eval.value;
+					try {
+						originalArray = (SymbolicSequence<?>) charArray
+								.argument(0);
+					} catch (ClassCastException e) {
+						throw new CIVLUnimplementedFeatureException(
+								"non-concrete strings", source);
+					}
+					int_arrayIndex = symbolicUtil.extractInt(source,
+							((ArrayElementReference) ref).getIndex());
+
+				} else {
+					eval = dereference(source, state, process,
+							charPointer, false);
+					state = eval.state;
+					// A single character is not acceptable.
+					if (eval.value.arguments().length <= 1)
+						throw new CIVLExecutionException(ErrorKind.OTHER,
+								Certainty.PROVEABLE, process,
+								"Try to obtain a string from a sequence of char has length"
+										+ " less than or equal to one", source);
+					else {
+						originalArray = (SymbolicSequence<?>) eval.value
+								.argument(0);
+						int_arrayIndex = 0;
+					}
+				}
+			}
+			result = symbolicUtil.charArrayToString(source, originalArray,
+					int_arrayIndex, false);
+			return new Pair<>(state, result);
+		} else
+			throw new CIVLUnimplementedFeatureException("non-concrete strings",
+					source);
+	}
 
 	@Override
 	public Evaluation getStringExpression(State state, String process,

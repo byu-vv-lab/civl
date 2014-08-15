@@ -273,18 +273,20 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	}
 
 	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
-		FunctionCallNode functionCall = nodeFactory.newFunctionCallNode(source,
-				this.identifierExpression(mySource, ASSERT),
-				Arrays.asList(expression), null);
+		return nodeFactory.newAssertNode(source, expression, null);
+		// FunctionCallNode functionCall =
+		// nodeFactory.newFunctionCallNode(source,
+		// this.identifierExpression(mySource, ASSERT),
+		// Arrays.asList(expression), null);
+		//
+		// return nodeFactory.newExpressionStatementNode(functionCall);
+	}
 
-		return nodeFactory.newExpressionStatementNode(functionCall);
-	}
-	
 	/*
-	private StatementNode whenNode(Source mySource, ExpressionNode expression) {
-		return nodeFactory.newWhenNode(mySource, expression, nodeFactory.newNullStatementNode(mySource));
-	}
-	*/
+	 * private StatementNode whenNode(Source mySource, ExpressionNode
+	 * expression) { return nodeFactory.newWhenNode(mySource, expression,
+	 * nodeFactory.newNullStatementNode(mySource)); }
+	 */
 	/**
 	 * Creates an assertFalse StatementNode
 	 * 
@@ -315,9 +317,20 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 		}
 		if (this.isVoidPointer(returnType) && threadList.contains(name)) {
-			if(function.getTypeNode().getParameters().numChildren()==0){
-				function.getTypeNode().setParameters(nodeFactory.newSequenceNode(source, "parameters", Arrays.asList(nodeFactory.newVariableDeclarationNode(source,
-						nodeFactory.newIdentifierNode(source, "arg"), nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source))))));
+			if (function.getTypeNode().getParameters().numChildren() == 0) {
+				function.getTypeNode()
+						.setParameters(
+								nodeFactory.newSequenceNode(
+										source,
+										"parameters",
+										Arrays.asList(nodeFactory.newVariableDeclarationNode(
+												source,
+												nodeFactory.newIdentifierNode(
+														source, "arg"),
+												nodeFactory.newPointerTypeNode(
+														source,
+														nodeFactory
+																.newVoidTypeNode(source))))));
 			}
 			ExpressionNode nullNode = nodeFactory.newCastNode(
 					source,

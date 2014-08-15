@@ -86,8 +86,7 @@ public class PthreadTest {
 	@Test
 	public void indexer_true() throws ABCException {
 		assertTrue(ui.run("verify", filename("indexer_true.c"), "-svcomp",
-				"-inputSIZE=2", "-inputMAX=2", "-inputNUM_THREADS=2",
-				"-showProgram"));
+				"-inputSIZE=2", "-inputMAX=2", "-inputNUM_THREADS=2"));
 	}
 
 	@Test
