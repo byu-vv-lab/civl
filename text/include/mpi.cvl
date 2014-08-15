@@ -1,5 +1,12 @@
 #ifndef __MPI_CVL__
 #define __MPI_CVL__
+
+#include<mpi.h>
+#include<civlc.cvh>
+#include<comm.cvh>
+#include<concurrency.cvh>
+#include<string.h>
+
 //TODO make a Datatype struct, which has a field "int size;" Define one of these objects for MPI_INT, MPI_DOUBLE, etc. 
 //TODO Then provide methods like MPI provides for creating new ones.
 //TODO then support MPI_Type_contig(datatype, int n).

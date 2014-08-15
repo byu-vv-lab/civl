@@ -1,9 +1,7 @@
 #ifdef __MPI__
 #else
 #define __MPI__
-#include<civlc.h>
-#include<string.h>
-
+#include<civlc.cvh>
 typedef enum {
     MPIX_NO_OP = CIVL_NO_OP,
     MPI_MAX = CIVL_MAX, 
@@ -20,7 +18,5 @@ typedef enum {
     MPI_MAXLOC = CIVL_MAXLOC,  
     MPI_REPLACE = CIVL_REPLACE
 }MPI_Op;
-
 #include<mpi-common.h>
-#include<mpi.cvl>
 #endif

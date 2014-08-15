@@ -5,6 +5,6 @@
 #define __CONCURRENCY__
 
 #include <concurrency-common.cvh>
-#include <concurrency.cvl>
+//#include <concurrency.cvl>
 
 #endif

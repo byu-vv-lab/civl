@@ -6,20 +6,9 @@
 #else
 #define __CIVLC_COMM__
 
-/* includes bundle.cvh because this implementation references $bundle */
-#include<bundle.cvh>
+#include<comm.cvh>
 
 /* *********************** Types *********************** */
-
-/* A message formed by $message_pack.  Completes the declaration
- * of this structure type in civlc-common.h */
-struct __message__ {
-  int source;
-  int dest;
-  int tag;
-  $bundle data;
-  int size;
-};
 
 /* A datatype representing a queue of messages.  All message
  * data is encapsulated inside this value; no external allocation

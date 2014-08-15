@@ -44,12 +44,13 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
-import edu.udel.cis.vsl.abc.analysis.IF.Analyzer;
 import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -63,7 +64,6 @@ import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.abc.program.IF.ProgramFactory;
 import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.Combiner;
@@ -199,40 +199,86 @@ public class UserInterface {
 				Models.newModelBuilder(universe));
 	}
 
-	@SuppressWarnings("unused")
-	private AST[] linkFiles(Preprocessor preprocessor, GMCConfiguration config)
+	/**
+	 * Gets default implementation of CIVL's libraries and compile them to ASTs,
+	 * greedily.
+	 * 
+	 * @param preprocessor
+	 *            the preprocessor for preprocessing tokens.
+	 * @param config
+	 *            the command line
+	 * @return
+	 * @throws PreprocessorException
+	 * @throws SyntaxException
+	 * @throws ParseException
+	 */
+	private List<AST> asts2Link(Preprocessor preprocessor)
 			throws PreprocessorException, SyntaxException, ParseException {
-		File file;
-		CTokenSource tokensH;
-		CParser parserH;
-		ASTBuilder builderH;
-		AST astH;
 		List<AST> ASTs = new ArrayList<>();
-		Set<String> headerFile = preprocessor.headerFiles();
+		Set<String> checkedHeaderFiles = new HashSet<>();
+		Stack<String> headerFiles = new Stack<>();
 
-		if (headerFile.contains("comm.cvh")) {
-			file = new File("text/include/comm.cvl");
-			tokensH = preprocessor.outputTokenSource(file);
-			parserH = frontEnd.getParser(tokensH);
-			builderH = frontEnd.getASTBuilder(parserH);
-			astH = builderH.getTranslationUnit();
-			ASTs.add(astH);
-		} else if (headerFile.contains("concurrency.cvh")) {
-			file = new File("text/include/concurrency.cvl");
-			tokensH = preprocessor.outputTokenSource(file);
-			parserH = frontEnd.getParser(tokensH);
-			builderH = frontEnd.getASTBuilder(parserH);
-			astH = builderH.getTranslationUnit();
-			ASTs.add(astH);
-		} else if (headerFile.contains("mpi.h")) {
-			file = new File("text/include/mpi.cvl");
-			tokensH = preprocessor.outputTokenSource(file);
-			parserH = frontEnd.getParser(tokensH);
-			builderH = frontEnd.getASTBuilder(parserH);
-			astH = builderH.getTranslationUnit();
-			ASTs.add(astH);
+		for (String header : preprocessor.headerFiles())
+			headerFiles.push(header);
+		while (!headerFiles.isEmpty()) {
+			String header = headerFiles.pop();
+
+			checkedHeaderFiles.add(header);
+			if (header.equals("mpi.h")) {
+				ASTs.add(this.compileHeaderFile(preprocessor, "mpi.cvl"));
+			} else if (header.equals("comm.cvh")) {
+				ASTs.add(this.compileHeaderFile(preprocessor, "comm.cvl"));
+			} else if (header.equals("concurrency.cvh")) {
+				ASTs.add(this
+						.compileHeaderFile(preprocessor, "concurrency.cvl"));
+			}
+			for (String newHeader : preprocessor.headerFiles()) {
+				if (!headerFiles.contains(newHeader)
+						&& !checkedHeaderFiles.contains(newHeader))
+					headerFiles.push(newHeader);
+			}
 		}
-		return (AST[]) ASTs.toArray();
+		return ASTs;
+	}
+
+	private AST compileHeaderFile(Preprocessor preprocessor, String filename)
+			throws PreprocessorException, SyntaxException, ParseException {
+		String root = "text/include";
+		File file = new File(root, filename);
+		CTokenSource tokens = preprocessor.outputTokenSource(file);
+		CParser parser = frontEnd.getParser(tokens);
+		ASTBuilder builder = frontEnd.getASTBuilder(parser);
+
+		return builder.getTranslationUnit();
+	}
+
+	private Program compileLinkAndTransform(Preprocessor preprocessor,
+			String filename, GMCConfiguration config,
+			CIVLConfiguration civlConfig) throws PreprocessorException,
+			SyntaxException, ParseException {
+		File file = new File(filename);
+		CTokenSource tokens = preprocessor.outputTokenSource(file);
+		CParser parser = frontEnd.getParser(tokens);
+		ASTBuilder builder = frontEnd.getASTBuilder(parser);
+		AST userAST = builder.getTranslationUnit();
+		List<String> inputVars = getInputVariables(config);
+		Program program;
+		ArrayList<AST> asts = new ArrayList<>();
+		AST[] TUs;
+		boolean debug = civlConfig.debug();
+		boolean verbose = civlConfig.verbose();
+
+		asts.addAll(this.asts2Link(preprocessor));
+		asts.add(userAST);
+		TUs = new AST[asts.size()];
+		asts.toArray(TUs);
+		program = frontEnd.link(TUs, Language.CIVL_C);
+		if (verbose || debug)
+			// shows absolutely everything
+			program.print(out);
+		applyTransformers(filename, preprocessor, builder, program, civlConfig,
+				inputVars);
+		return program;
 	}
 
 	private Pair<Model, Preprocessor> extractModel(PrintStream out,
@@ -243,32 +289,15 @@ public class UserInterface {
 		boolean debug = civlConfig.debug();
 		boolean verbose = civlConfig.verbose();
 		boolean showModel = config.isTrue(showModelO);
-		File file = new File(filename);
 		Preprocessor preprocessor = frontEnd.getPreprocessor(
 				this.getSysIncludes(config), this.getUserIncludes(config));
-		CTokenSource tokens = preprocessor.outputTokenSource(file);
-		CParser parser = frontEnd.getParser(tokens);
-		ASTBuilder builder = frontEnd.getASTBuilder(parser);
-		AST userAST = builder.getTranslationUnit();
 		Model model;
-		List<String> inputVars = getInputVariables(config);
 		boolean hasFscanf = false;
 		Program program;
-		ArrayList<AST> asts = new ArrayList<>();
-		AST[] TUs;
 
-		asts.add(userAST);
-		TUs = new AST[asts.size()];
-		asts.toArray(TUs);
-		// this.linkFiles(preprocessor, config); TODO
-		program = frontEnd.link(TUs, Language.CIVL_C);
-		// TODO link header files TODO
 		try {
-			if (verbose || debug)
-				// shows absolutely everything
-				program.print(out);
-			applyTransformers(filename, preprocessor, builder, program,
-					civlConfig, inputVars);
+			program = this.compileLinkAndTransform(preprocessor, filename,
+					config, civlConfig);
 			if (civlConfig.showProgram() && !civlConfig.debugOrVerbose())
 				CIVLTransform.printProgram2CIVL(out, program, true);
 			hasFscanf = CIVLTransform.hasFunctionCalls(program.getAST(),
@@ -834,55 +863,24 @@ public class UserInterface {
 		boolean debug = config.isTrue(debugO);
 		boolean verbose = config.isTrue(verboseO);
 		boolean showModel = config.isTrue(showModelO);
-		// Activator frontEnd0, frontEnd1;
 		boolean parse = "parse".equals(config.getFreeArg(0));
 		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
 		Preprocessor preprocessor0;
 		Preprocessor preprocessor1;
-		List<String> inputVars = getInputVariables(config);
 		CIVLConfiguration civlConfig = new CIVLConfiguration(config);
 		AST combinedAST;
-		File file0, file1;
 
 		checkFilenames(2, config);
 		filename0 = config.getFreeArg(1);
 		filename1 = config.getFreeArg(2);
-		file0 = new File(filename0);
-		file1 = new File(filename1);
 		preprocessor0 = frontEnd.getPreprocessor(this.getSysIncludes(config),
 				this.getUserIncludes(config));
-		CTokenSource tokens = preprocessor0.outputTokenSource(file0);
-		CParser parser = frontEnd.getParser(tokens);
-		ASTBuilder builder0 = frontEnd.getASTBuilder(parser), builder1;
-		AST ast0 = builder0.getTranslationUnit();
-		Analyzer analyzer = frontEnd.getStandardAnalyzer(Language.CIVL_C);
-		ProgramFactory programFactory = frontEnd.getProgramFactory(analyzer);
-
 		preprocessor1 = frontEnd.getPreprocessor(this.getSysIncludes(config),
 				this.getUserIncludes(config));
-		tokens = preprocessor1.outputTokenSource(file1);
-		parser = frontEnd.getParser(tokens);
-		builder1 = frontEnd.getASTBuilder(parser);
-		AST ast1 = builder1.getTranslationUnit();
-
-		// analyzer.analyze(ast0);
-		// analyzer.analyze(ast1);
-
-		// frontEnd0 = getFrontEnd(filename0, config);
-		// frontEnd1 = getFrontEnd(filename1, config);
-		// preprocessor0 = frontEnd0.getPreprocessor();
-		// preprocessor1 = frontEnd1.getPreprocessor();
-		program0 = programFactory.newProgram(ast0);
-		program1 = programFactory.newProgram(ast1);
-		if (verbose || debug) {
-			// shows absolutely everything
-			program0.print(out);
-			program1.print(out);
-		}
-		applyTransformers(filename0, preprocessor0, builder0, program0,
-				civlConfig, inputVars);
-		applyTransformers(filename1, preprocessor1, builder1, program1,
-				civlConfig, inputVars);
+		program0 = this.compileLinkAndTransform(preprocessor0, filename0,
+				config, civlConfig);
+		program1 = this.compileLinkAndTransform(preprocessor1, filename1,
+				config, civlConfig);
 		if (verbose || debug)
 			out.println("Generating composite program...");
 		combinedAST = combiner.combine(program0.getAST(), program1.getAST());

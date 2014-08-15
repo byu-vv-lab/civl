@@ -6,6 +6,8 @@
 #else
 #define __CIVLC_CONCURRENCY__
 
+#include<concurrency.cvh>
+
 /* *********************** Types *********************** */
 
 /* A data type representing a global barrier which must be operated by local

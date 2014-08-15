@@ -5,6 +5,16 @@
 #define __COMM__
 
 #include <comm-common.cvh>
-#include <comm.cvl>
+#include <bundle.cvh>
+
+/* A message formed by $message_pack.  Completes the declaration
+ * of this structure type in civlc-common.h */
+struct __message__ {
+  int source;
+  int dest;
+  int tag;
+  $bundle data;
+  int size;
+};
 
 #endif
