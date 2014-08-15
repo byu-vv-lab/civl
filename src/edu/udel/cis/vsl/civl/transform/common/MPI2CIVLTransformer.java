@@ -560,6 +560,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 					includedNodes.add(child);
 			} else if (sourceFile.endsWith(".cvh")
 					|| sourceFile.equals("comm.cvl")
+					|| sourceFile.equals("civlmpi.cvl")
 					|| sourceFile.equals("concurrency.cvl")
 					|| sourceFile.equals("stdio.cvl")
 					|| sourceFile.equals("pthread.cvl"))
