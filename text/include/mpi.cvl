@@ -1,18 +1,12 @@
-#ifndef __MPI_CVL__
-#define __MPI_CVL__
+#ifdef __CIVL_MPI__
+#else
+#define __CIVL_MPI__
 
-#include<mpi.h>
-#include<civlc.cvh>
-#include<comm.cvh>
-#include<concurrency.cvh>
-#include<string.h>
-
-//TODO make a Datatype struct, which has a field "int size;" Define one of these objects for MPI_INT, MPI_DOUBLE, etc. 
-//TODO Then provide methods like MPI provides for creating new ones.
-//TODO then support MPI_Type_contig(datatype, int n).
-
-#define BCAST_TAG   999
-#define REDUCE_TAG  998
+#include <concurrency.cvh>
+#include <bundle.cvh>
+#include <mpi.h>
+#include <civlmpi.cvh>
+#include <string.h>
 
 /* Completed definition for mpi-common.h */
 struct MPI_Status{
@@ -22,23 +16,9 @@ struct MPI_Status{
   int size;
 };
 
-/* Definition of CIVL-MPI */
-typedef enum {
-  __UNINIT,
-  __INIT,
-  __FINALIZED
-}__MPI_Sys_status__;
-
 struct MPI_Request{
   int id;
 };
-
-/* Definition of CMPI_Gcomm and MPI_Comm */
-typedef struct CMPI_Gcomm {
-  $gcomm p2p; // point-to-point communication
-  $gcomm col; // collective communication
-  $gbarrier gbarrier;
-} CMPI_Gcomm;
 
 struct MPI_Comm {
   $comm p2p; // point-to-point communication
@@ -47,31 +27,11 @@ struct MPI_Comm {
   __MPI_Sys_status__ status;
 };
 
-/********************************** State **************************************/
-
+/********************************** State *****************************************/
 /* The number of times the MPI_Wtime function has been called */
 int CMPI_time_count = 0;
 
-/****************************** Helper Functions **********************************/
-int sizeofDatatype(MPI_Datatype datatype) {
-  switch (datatype) {
-  case MPI_INT:
-    return sizeof(int);
-  case MPI_FLOAT:
-    return sizeof(float);
-  case MPI_DOUBLE:
-    return sizeof(double);
-  case MPI_CHAR:
-    return sizeof(char);
-  default:
-    $assert(0, "Unreachable");
-  }
-}
-
 /************************** MPI LIB Implementations *******************************/
-
-$abstract double CMPI_time(int count);
-
 double MPI_Wtime() {
   double result = CMPI_time(CMPI_time_count);
   
@@ -79,100 +39,32 @@ double MPI_Wtime() {
   return result;
 }
 
-CMPI_Gcomm CMPI_Gcomm_create($scope scope, int size) {
-  CMPI_Gcomm result;
-
-  result.p2p = $gcomm_create(scope, size);
-  result.col = $gcomm_create(scope, size);
-  result.gbarrier = $gbarrier_create(scope, size);
-  return result;
-}
-
-void CMPI_Gcomm_destroy(CMPI_Gcomm gc) {
-  $gcomm_destroy(gc.p2p);
-  $gcomm_destroy(gc.col);
-  $gbarrier_destroy(gc.gbarrier);
-}
-
-MPI_Comm CMPI_Comm_create($scope scope, CMPI_Gcomm gc, int rank) {
-  MPI_Comm result;
-  
-  result.p2p = $comm_create(scope, gc.p2p, rank);
-  result.col = $comm_create(scope, gc.col, rank);
-  result.barrier = $barrier_create(scope, gc.gbarrier, rank);
-  result.status = __UNINIT;
-  return result;
-}
-
-void CMPI_Comm_destroy(MPI_Comm comm) {
-  $comm_destroy(comm.p2p);
-  $comm_destroy(comm.col);
-  $barrier_destroy(comm.barrier);
-}
-
-int __MPI_Init(MPI_Comm *comm) {
-  comm->status = __INIT;
-  return 0;
-}
-
-int __MPI_Finalize(MPI_Comm *comm) {
-  comm->status = __FINALIZED;
-  return 0;
-}
-
 int MPI_Comm_size(MPI_Comm comm, int *size) {
-  $assert(comm.status == __INIT, "MPI_Comm_size() cannot be invoked without MPI_Init() being called before.\n");
+  $assert comm.status == __INIT :
+  "MPI_Comm_size() cannot be invoked without MPI_Init() being called before.\n";
   *size = $comm_size(comm.p2p);
   return 0;
 }
 
 int MPI_Comm_rank(MPI_Comm comm, int *rank) {
-  $assert(comm.status == __INIT, "MPI_Comm_rank() cannot be invoked without MPI_Init() being called before.\n");
+  $assert comm.status == __INIT :
+  "MPI_Comm_rank() cannot be invoked without MPI_Init() being called before.\n";
   *rank = $comm_place(comm.p2p);
-  return 0;
-}
-
-
-int CMPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
-	      int tag, $comm comm) {
-  if (dest >= 0) {
-    int size = count*sizeofDatatype(datatype);
-    int place = $comm_place(comm);
-    $message out = $message_pack(place, dest, tag, buf, size);
-    $comm_enqueue(comm, out);
-  }
   return 0;
 }
 
 int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
 	     int tag, MPI_Comm comm) {
-  $assert(comm.status == __INIT, "MPI_Send() cannot be invoked without MPI_Init() being called before.\n");
+  $assert comm.status == __INIT :
+  "MPI_Send() cannot be invoked without MPI_Init() being called before.\n";
   return CMPI_Send(buf, count, datatype, dest, tag, comm.p2p);
-}
-
-
-int CMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
-	      int tag, $comm comm, MPI_Status *status) {
-  if (source >= 0 || source == MPI_ANY_SOURCE) {
-    $message in = $comm_dequeue(comm, source, tag);
-    int size = count*sizeofDatatype(datatype);
-
-    $message_unpack(in, buf, size);
-    if (status != MPI_STATUS_IGNORE) {
-      status->size = $message_size(in);
-      status->MPI_SOURCE = $message_source(in);
-      status->MPI_TAG = $message_tag(in);
-      status->MPI_ERROR = 0;
-    }
-  }
-  return 0;
 }
 
 int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
 	     int tag, MPI_Comm comm, MPI_Status *status) {
-  $assert(comm.status == __INIT,
+  $assert comm.status == __INIT :
 	  "MPI_Recv() cannot be invoked without "
-	  "MPI_Init() being called before.\n");
+	  "MPI_Init() being called before.\n";
   return CMPI_Recv(buf, count, datatype, source, tag, comm.p2p, status);
 }
 
@@ -186,9 +78,9 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		 void *recvbuf, int recvcount, MPI_Datatype recvtype,
 		 int source, int recvtag,
 		 MPI_Comm comm, MPI_Status *status) {
-  $assert(comm.status == __INIT,
+  $assert comm.status == __INIT :
 	  "MPI_Sendrecv() cannot be invoked "
-	  "without MPI_Init() being called before.\n");
+	  "without MPI_Init() being called before.\n";
   // not correct for checking potential deadlock...rewrite:
   MPI_Send(sendbuf, sendcount, sendtype, dest, sendtag, comm);
   MPI_Recv(recvbuf, recvcount, recvtype, source, recvtag, comm, status);
@@ -200,9 +92,9 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
  */
 int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
 	      MPI_Comm comm) {
-  $assert(comm.status == __INIT,
+  $assert comm.status == __INIT :
 	  "MPI_Bcast() cannot be invoked without MPI_Init() "
-	  "being called before.\n");
+	  "being called before.\n";
   if ($comm_place(comm.col) == root) {
     int nprocs = $comm_size(comm.col);
 
@@ -222,9 +114,9 @@ int MPI_Reduce(void* sendbuf, void* recvbuf, int count,
 	       MPI_Comm comm) {
   int rank;
 
-  $assert(comm.status == __INIT,
+  $assert comm.status == __INIT :
 	  "MPI_Reduce() cannot be invoked without "
-	  "MPI_Init() being called before.\n");
+	  "MPI_Init() being called before.\n";
   rank = $comm_place(comm.col);
   if (rank != root)
     CMPI_Send(sendbuf, count, datatype, root, REDUCE_TAG, comm.col);
@@ -241,9 +133,9 @@ int MPI_Reduce(void* sendbuf, void* recvbuf, int count,
 	/* the third argument "count" indicates the number of cells needs doing the
 	   operation. */
 	$bundle_unpack_apply(in.data, sendbuf, count, op);
-	$assert(in.size <= size, 
-		"Message of size %d exceeds the specified size %d.",
-		in.size, size);
+	$assert in.size <= size :
+	"Message of size %d exceeds the specified size %d." :
+	in.size : size;
       }
     }
     size = count * sizeofDatatype(datatype);
@@ -260,17 +152,16 @@ int MPI_Allreduce(void* sendbuf, void* recvbuf, int count,
   int root = 0;
   MPI_Status status;
   
-  $assert(comm.status == __INIT,
+  $assert comm.status == __INIT :
 	  "MPI_Allreduce() cannot be invoked without "
-	  "MPI_Init() being called before.\n");
+	  "MPI_Init() being called before.\n";
   MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
   MPI_Bcast(recvbuf, count, datatype, root, comm);
   return 0;
 }
 
 int MPI_Barrier(MPI_Comm comm){
-
-  $assert(comm.status == __INIT, "MPI_Allreduce() cannot be invoked without MPI_Init() being called before.\n");
+  $assert comm.status == __INIT : "MPI_Allreduce() cannot be invoked without MPI_Init() being called before.\n";
   $barrier_call(comm.barrier);
 }
 #endif

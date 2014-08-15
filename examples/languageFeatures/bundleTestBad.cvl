@@ -2,45 +2,20 @@
    Bad example.
  */
 #include <civlc.h>
-#include <mpi.h>
+#include <bundle.cvh>
 
-CMPI_Gcomm Gcomm;
 void main(){
-  /* Process function */
-  void Process(int i){
-    MPI_Comm comm = CMPI_Comm_create($here, Gcomm, i);
-    int rank;
+  int a3d[3][4][5];
+  int counter = 0;
+  int a4d[2][2][2][2];
+  $bundle bun;
 
-    __MPI_Init(&comm);
-    MPI_Comm_rank(comm, &rank);
-    /* In total 2 processes, 0 sends and 1 receives */
-    if (rank == 0){
-      int a3d[3][4][5];
-      int counter = 0;
+  for(int i=0; i<3; i++)
+    for(int j=0; j<4; j++)
+      for(int k=0; k<5; k++)
+	a3d[i][j][k] = counter++;
 
-      for(int i=0; i<3; i++)
-	for(int j=0; j<4; j++)
-	  for(int k=0; k<5; k++)
-	    a3d[i][j][k] = counter++;
+  bun = $bundle_pack(&a3d[1][0][3], 8 * sizeof(int));
 
-      MPI_Send(&a3d[1][0][3], 8, MPI_INT, 1, 0, comm);
-    }
-    else{
-      int a4d[2][2][2][2];
-
-      MPI_Recv(&a4d[1][0][1], 8, MPI_INT, 0, 0, comm, MPI_STATUS_IGNORE);
-    }
-    CMPI_Comm_destroy(comm);
-    __MPI_Finalize(&comm);
-  }
-
-  $proc procs[2];
-
-  Gcomm = CMPI_Gcomm_create($root, 2);
-  for(int i=0; i<2; i++)
-    procs[i] = $spawn Process(i);
-
-  for(int i=0; i<2; i++)
-    $wait(procs[i]);
-  CMPI_Gcomm_destroy(Gcomm);
+  $bundle_unpack(bun, &a4d[1][0][1]);
 }

@@ -61,6 +61,7 @@ public class MessagePassingTest {
 		assertTrue(ui.run("verify", filename("ring1.cvl"), "-inputNPROCS=3"));
 	}
 
+	@Ignore
 	@Test
 	public void ring2() {
 		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));

@@ -1,6 +1,6 @@
-#include <comm.cvh>
 #include <stdio.h>
 #include <mpi.h>
+#include <civlmpi.cvh>
 
 $input int NPROCS;
 CMPI_Gcomm __MPI_COMM_WORLD;
