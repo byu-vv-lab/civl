@@ -25,8 +25,6 @@ import edu.udel.cis.vsl.abc.ast.conversion.IF.PointerBoolConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.VoidPointerConversion;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity.EntityKind;
-import edu.udel.cis.vsl.abc.ast.entity.IF.Enumerator;
-import edu.udel.cis.vsl.abc.ast.entity.IF.Field;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Label;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -103,6 +101,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.DomainType;
 import edu.udel.cis.vsl.abc.ast.type.IF.EnumerationType;
+import edu.udel.cis.vsl.abc.ast.type.IF.Enumerator;
+import edu.udel.cis.vsl.abc.ast.type.IF.Field;
 import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.ObjectType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
@@ -1392,7 +1392,6 @@ public class FunctionTranslator {
 	private CIVLType translateABCEnumerationType(CIVLSource source,
 			Scope scope, EnumerationType enumType) {
 		String name = enumType.getTag();
-		Iterator<Enumerator> enumerators = enumType.getEnumerators();
 		int numOfEnumerators = enumType.getNumEnumerators();
 		BigInteger currentValue = BigInteger.ZERO;
 		Map<String, BigInteger> valueMap = new LinkedHashMap<>(numOfEnumerators);
@@ -1400,8 +1399,7 @@ public class FunctionTranslator {
 		if (name == null) {
 			name = "__enum_";
 		}
-		while (enumerators.hasNext()) {
-			Enumerator enumerator = enumerators.next();
+		for (Enumerator enumerator : enumType.getEnumerators()) {
 			String member = enumerator.getName();
 			Value abcValue = enumerator.getValue();
 			BigInteger value;
