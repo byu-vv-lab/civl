@@ -1118,8 +1118,8 @@ public class CommonEvaluator implements Evaluator {
 		Evaluation eval = this.evaluate(state, pid, domain);
 		SymbolicExpression domainValue = eval.value;
 		SymbolicExpression initValue = symbolicUtil.initialValueOfRange(
-				symbolicUtil.rangeOfRectangularDomainAt(domainValue, index), index,
-				domainInit.dimension());
+				symbolicUtil.rangeOfRectangularDomainAt(domainValue, index),
+				index, domainInit.dimension());
 
 		state = eval.state;
 		return new Evaluation(state, initValue);
@@ -2728,7 +2728,7 @@ public class CommonEvaluator implements Evaluator {
 			throws UnsatisfiablePathConditionException {
 		return dereference(source, state, process, pointer, checkOutput, false);
 	}
-	
+
 	/**
 	 * * Only three types (represented differently in CIVL) of the symbolic
 	 * expression "charPointer" is acceptable:<br>
@@ -2785,8 +2785,8 @@ public class CommonEvaluator implements Evaluator {
 							((ArrayElementReference) ref).getIndex());
 
 				} else {
-					eval = dereference(source, state, process,
-							charPointer, false);
+					eval = dereference(source, state, process, charPointer,
+							false);
 					state = eval.state;
 					// A single character is not acceptable.
 					if (eval.value.arguments().length <= 1)
@@ -3290,6 +3290,9 @@ public class CommonEvaluator implements Evaluator {
 		Evaluation eval;
 		int dim = 0;
 
+		// ModelFactory already checked type compatibility, so here we just
+		// check if these two pointers are pointing to same object and array
+		// element reference pointers.
 		leftVid = symbolicUtil.getVariableId(expression.left().getSource(),
 				leftPtr);
 		leftSid = symbolicUtil.getDyscopeId(expression.left().getSource(),
@@ -3298,24 +3301,37 @@ public class CommonEvaluator implements Evaluator {
 				rightPtr);
 		rightSid = symbolicUtil.getDyscopeId(expression.right().getSource(),
 				rightPtr);
+		// Check if the two point to the same object
 		if ((rightVid != leftVid) || (rightSid != leftSid))
+			state = errorLogger.logError(expression.getSource(), state,
+					process, symbolicAnalyzer.stateToString(state), null,
+					ResultType.NO, ErrorKind.POINTER,
+					"Operands of pointer subtraction point to the same obejct");
+		// Check if two pointers are array element reference pointers. Based on
+		// C11 Standard 6.5.6, entry 9: When two pointers are subtracted, both
+		// shall point to elements of the same array object, or one past the
+		// last element of the array object; the result is the difference of the
+		// subscripts of the two array elements.
+		// Thus, any pointer which is not an array element reference is invalid
+		// for pointer subtraction.
+		if (!(symbolicUtil.getSymRef(leftPtr).isArrayElementReference() && symbolicUtil
+				.getSymRef(rightPtr).isArrayElementReference()))
 			state = errorLogger
 					.logError(expression.getSource(), state, process,
 							symbolicAnalyzer.stateToString(state), null,
 							ResultType.NO, ErrorKind.POINTER,
-							"Operands of pointer subtraction point to incompatiable obejcts");
+							"Not both of the operands of pointer subtraction points to an array element");
+		// Get the pointer to the whole array
 		arrayPtr = this.arrayRootPtr(leftPtr, expression.left().getSource());
-		if (!(symbolicAnalyzer.typeOfObjByPointer(
-				expression.left().getSource(), state, arrayPtr) instanceof CIVLArrayType))
-			state = errorLogger
-					.logError(expression.getSource(), state, process,
-							symbolicAnalyzer.stateToString(state), null,
-							ResultType.NO, ErrorKind.POINTER,
-							"Operands of pointer subtraction point to a non-array object");
 		leftPtrIndexes = this.arrayIndexesByPointer(state, expression.left()
 				.getSource(), leftPtr, true);
 		rightPtrIndexes = this.arrayIndexesByPointer(state, expression.right()
 				.getSource(), rightPtr, true);
+		// Check compatibility for heap objects:
+		// If VID == 0, all ancestor indexes of left pointer should be same as
+		// right pointer. Because different heap objects all have variable ID of
+		// number zero and ancestor indexes indicate if they are same heap
+		// objects.
 		if (leftVid == 0) {
 			boolean isCompatiable = true;
 
@@ -3323,7 +3339,7 @@ public class CommonEvaluator implements Evaluator {
 				isCompatiable = false;
 			else {
 				for (int i = leftPtrIndexes.size() - 1; i >= 1; i--) {
-					if (leftPtrIndexes.get(i) != rightPtrIndexes.get(i)) {
+					if (!(leftPtrIndexes.get(i).equals(rightPtrIndexes.get(i)))) {
 						isCompatiable = false;
 						break;
 					}
@@ -3334,8 +3350,9 @@ public class CommonEvaluator implements Evaluator {
 						.logError(expression.getSource(), state, process,
 								symbolicAnalyzer.stateToString(state), null,
 								ResultType.NO, ErrorKind.POINTER,
-								"Operands of pointer subtraction point to incompatiable obejcts");
+								"Operands of pointer subtraction point to different heap obejcts");
 		}
+		// Get array by dereferencing array pointer
 		eval = this.dereference(expression.left().getSource(), state, process,
 				arrayPtr, false);
 		state = eval.state;

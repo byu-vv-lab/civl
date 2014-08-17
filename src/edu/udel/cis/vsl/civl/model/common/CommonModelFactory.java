@@ -731,7 +731,7 @@ public class CommonModelFactory implements ModelFactory {
 			CIVLType rightType = right.getExpressionType();
 
 			// Types should be the same unless we're doing pointer arithmetic.
-			if (leftType.getDynamicType(universe).equals(rightType.getDynamicType(universe))) {
+			if (leftType.equals(rightType)) {
 				((CommonBinaryExpression) result).setExpressionType(leftType);
 			} else if (leftType instanceof CIVLPointerType
 					&& rightType instanceof CIVLPrimitiveType) {
@@ -741,6 +741,16 @@ public class CommonModelFactory implements ModelFactory {
 					&& rightType instanceof CIVLPrimitiveType) {
 				assert ((CIVLPrimitiveType) rightType).primitiveTypeKind() == PrimitiveTypeKind.INT;
 				((CommonBinaryExpression) result).setExpressionType(leftType);
+			} else if (leftType instanceof CIVLPointerType
+					&& rightType instanceof CIVLPointerType) {
+				// compatibility checking
+				if (((CIVLPointerType) leftType).baseType().equals(
+						((CIVLPointerType) rightType).baseType()))
+					((CommonBinaryExpression) result)
+							.setExpressionType(integerType());
+				else
+					throw new CIVLException(leftType + " and " + rightType
+							+ " are not pointers to compatiable types", source);
 			} else
 				throw new CIVLException("Incompatible types to +", source);
 			break;

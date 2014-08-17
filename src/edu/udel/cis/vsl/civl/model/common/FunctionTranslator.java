@@ -3755,10 +3755,10 @@ public class FunctionTranslator {
 			return modelFactory.binaryExpression(source, BINARY_OPERATOR.MINUS,
 					arg0, arg1);
 		} else {
-			Expression pointer, rightPtr, offset;
+			Expression pointer, secondPtr, offset;
 			boolean isSub = false;
 
-			rightPtr = null;
+			secondPtr = null;
 			offset = null;
 			if (isNumeric1) {
 				pointer = arrayToPointer(arg0);
@@ -3768,7 +3768,7 @@ public class FunctionTranslator {
 				offset = arg0;
 			} else {
 				pointer = arrayToPointer(arg0);
-				rightPtr = arrayToPointer(arg1);
+				secondPtr = arrayToPointer(arg1);
 				isSub = true;
 			}
 			if (!pointer.getExpressionType().isPointerType())
@@ -3776,12 +3776,12 @@ public class FunctionTranslator {
 						"Expected expression of pointer type",
 						pointer.getSource());
 			if (isSub) {
-				if (!rightPtr.getExpressionType().isPointerType())
+				if (!secondPtr.getExpressionType().isPointerType())
 					throw new CIVLInternalException(
 							"Expected expression of pointer type",
-							rightPtr.getSource());
+							secondPtr.getSource());
 				return modelFactory.binaryExpression(source,
-						BINARY_OPERATOR.POINTER_SUBTRACT, pointer, rightPtr);
+						BINARY_OPERATOR.POINTER_SUBTRACT, pointer, secondPtr);
 			} else {
 				if (!offset.getExpressionType().isIntegerType())
 					throw new CIVLInternalException(
