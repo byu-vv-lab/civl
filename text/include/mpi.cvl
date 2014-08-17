@@ -134,8 +134,7 @@ int MPI_Reduce(void* sendbuf, void* recvbuf, int count,
 	   operation. */
 	$bundle_unpack_apply(in.data, sendbuf, count, op);
 	$assert in.size <= size :
-	"Message of size %d exceeds the specified size %d." :
-	in.size : size;
+	"Message of size %d exceeds the specified size %d.", in.size, size;
       }
     }
     size = count * sizeofDatatype(datatype);
