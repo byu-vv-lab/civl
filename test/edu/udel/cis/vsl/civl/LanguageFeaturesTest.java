@@ -454,4 +454,19 @@ public class LanguageFeaturesTest {
 	public void civlParfor() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlParfor.cvl")));
 	}
+
+	@Test
+	public void pointerSub() {
+		assertTrue(ui.run("verify", filename("pointerSubtraction.cvl")));
+	}
+
+	@Test
+	public void pointerSubBad() {
+		assertFalse(ui.run("verify", filename("pointerSubtractionBad.cvl")));
+	}
+
+	@Test
+	public void pointerSubBad2() {
+		assertFalse(ui.run("verify", filename("pointerSubtractionBad2.cvl")));
+	}
 }
