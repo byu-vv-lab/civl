@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -14,7 +13,6 @@ import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;

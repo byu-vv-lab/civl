@@ -1,14 +1,12 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
 import java.awt.Component;
-import java.text.NumberFormat;
 import java.text.ParseException;
 
 import javax.swing.InputVerifier;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFormattedTextField.AbstractFormatter;
-import javax.swing.JFormattedTextField.AbstractFormatterFactory;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
@@ -47,6 +45,7 @@ public class FormattedTextFieldRenderer implements TableCellRenderer {
 
 	private JFormattedTextField jftf;
 	private String mode;
+	@SuppressWarnings("unused")
 	private FormattedTextFieldVerifier verifier;
 
 	public FormattedTextFieldRenderer() {

@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.gui.IF;
 
-import edu.udel.cis.vsl.civl.gui.common.NewRunConfigGUI;
 import edu.udel.cis.vsl.civl.gui.common.NewRunConfigGUITemporary;
 
 /**

@@ -18,6 +18,11 @@ import javax.swing.JTable;
  */
 public class RadioPanel extends JPanel {
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/**
 	 * The radio button for True.
 	 */
 	private JRadioButton rb_true;
