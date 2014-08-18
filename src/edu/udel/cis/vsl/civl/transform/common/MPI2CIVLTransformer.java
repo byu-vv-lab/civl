@@ -32,7 +32,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
 //TODO: translate exit(k) to return k;
@@ -215,10 +214,8 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 * @param astFactory
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
-	public MPI2CIVLTransformer(ASTFactory astFactory,
-			List<String> inputVariables, CIVLConfiguration config) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
-				config);
+	public MPI2CIVLTransformer(ASTFactory astFactory) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -258,38 +255,39 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 						Arrays.asList(lowerPart, upperPart)));
 	}
 
-	/**
-	 * Creates a bound assumption node in the form of:
-	 * <code>$assume 0 < variable && variable <= upperBound</code>.
-	 * 
-	 * @param variable
-	 *            The variable to be bounded.
-	 * @param upperBound
-	 *            The upper bound of the variable.
-	 * @return The node representing of the assumption on the bound of the
-	 *         variable.
-	 * @throws SyntaxException
-	 */
-	private AssumeNode upperBoundAssumption(String variable, String upperBound)
-			throws SyntaxException {
-		ExpressionNode variableExpression = this.identifierExpression(source,
-				variable);
-		ExpressionNode upperBoundExpression = this.identifierExpression(source,
-				upperBound);
-		ExpressionNode lowerBoundExpression = nodeFactory
-				.newIntegerConstantNode(source, "0");
-		ExpressionNode lowerPart, upperPart;
-
-		lowerPart = nodeFactory.newOperatorNode(source, Operator.LT,
-				Arrays.asList(lowerBoundExpression, variableExpression));
-		variableExpression = variableExpression.copy();
-		upperPart = nodeFactory.newOperatorNode(source, Operator.LTE,
-				Arrays.asList(variableExpression, upperBoundExpression));
-		return nodeFactory.newAssumeNode(
-				source,
-				nodeFactory.newOperatorNode(source, Operator.LAND,
-						Arrays.asList(lowerPart, upperPart)));
-	}
+	// /**
+	// * Creates a bound assumption node in the form of:
+	// * <code>$assume 0 < variable && variable <= upperBound</code>.
+	// *
+	// * @param variable
+	// * The variable to be bounded.
+	// * @param upperBound
+	// * The upper bound of the variable.
+	// * @return The node representing of the assumption on the bound of the
+	// * variable.
+	// * @throws SyntaxException
+	// */
+	// private AssumeNode upperBoundAssumption(String variable, String
+	// upperBound)
+	// throws SyntaxException {
+	// ExpressionNode variableExpression = this.identifierExpression(source,
+	// variable);
+	// ExpressionNode upperBoundExpression = this.identifierExpression(source,
+	// upperBound);
+	// ExpressionNode lowerBoundExpression = nodeFactory
+	// .newIntegerConstantNode(source, "0");
+	// ExpressionNode lowerPart, upperPart;
+	//
+	// lowerPart = nodeFactory.newOperatorNode(source, Operator.LT,
+	// Arrays.asList(lowerBoundExpression, variableExpression));
+	// variableExpression = variableExpression.copy();
+	// upperPart = nodeFactory.newOperatorNode(source, Operator.LTE,
+	// Arrays.asList(variableExpression, upperBoundExpression));
+	// return nodeFactory.newAssumeNode(
+	// source,
+	// nodeFactory.newOperatorNode(source, Operator.LAND,
+	// Arrays.asList(lowerPart, upperPart)));
+	// }
 
 	/**
 	 * Creates the declaration node for the variable <code>MPI_COMM_WORLD</code>
@@ -748,12 +746,12 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 * @throws SyntaxException
 	 */
 	private AssumeNode nprocsAssumption() throws SyntaxException {
-		if (this.inputVariableNames.contains(NPROCS))
-			return null;
-		if (this.inputVariableNames.contains(NPROCS_LOWER_BOUND))
+		// if (this.inputVariableNames.contains(NPROCS))
+		// return null;
+		// if (this.inputVariableNames.contains(NPROCS_LOWER_BOUND))
 			return this.boundAssumption(NPROCS_LOWER_BOUND, NPROCS,
 					NPROCS_UPPER_BOUND);
-		return upperBoundAssumption(NPROCS, NPROCS_UPPER_BOUND);
+//		return upperBoundAssumption(NPROCS, NPROCS_UPPER_BOUND);
 	}
 
 	/* ********************* Methods From BaseTransformer ****************** */
@@ -849,26 +847,26 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		// declaring $input int NPROCS;
 		nprocsVar = this.nprocsDeclaration();
 		// declaring $input int NPROCS_UPPER_BOUND;
-		if (!this.inputVariableNames.contains(NPROCS)
-				&& this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
+//		if (!this.inputVariableNames.contains(NPROCS)
+//				&& this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
 			nprocsUpperBoundVar = this.basicTypeVariableDeclaration(
 					BasicTypeKind.INT, NPROCS_UPPER_BOUND);
 			nprocsUpperBoundVar.getTypeNode().setInputQualified(true);
-		}
-		if (!this.inputVariableNames.contains(NPROCS)
-				&& this.inputVariableNames.contains(NPROCS_LOWER_BOUND)) {
+//		}
+//		if (!this.inputVariableNames.contains(NPROCS)
+//				&& this.inputVariableNames.contains(NPROCS_LOWER_BOUND)) {
 			// declaring $input int NPROCS_LOWER_BOUND;
 			nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
 					BasicTypeKind.INT, NPROCS_LOWER_BOUND);
 			nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
-		}
-		if (!this.inputVariableNames.contains(NPROCS)
-				&& !this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
-			throw new SyntaxException(
-					"Please specify the number of processes (e.g., -input__NPROCS=5)"
-							+ "or the upper bound of number of processes (e.g. -input__NPROCS_UPPER_BOUND=6)",
-					source);// TODO improve messages with pragma.
-		}
+//		}
+//		if (!this.inputVariableNames.contains(NPROCS)
+//				&& !this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
+//			throw new SyntaxException(
+//					"Please specify the number of processes (e.g., -input__NPROCS=5)"
+//							+ "or the upper bound of number of processes (e.g. -input__NPROCS_UPPER_BOUND=6)",
+//					source);// TODO improve messages with pragma.
+//		}
 		// assuming NPROCS_LOWER_BOUND < NPROCS && NPROCS <= NPROCS_UPPER_BOUND
 		nprocsAssumption = this.nprocsAssumption();
 		// declaring $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);

@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
-import java.util.List;
-
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
@@ -17,7 +15,6 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 /**
  * This is the base transformer of CIVL. Any transformer implemented in CIVL
@@ -31,14 +28,6 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 public abstract class CIVLBaseTransformer extends BaseTransformer {
 
 	/* **************************** Instant Fields ************************* */
-
-	/**
-	 * The list of variable names that appear in "-input" options specified by
-	 * users in CIVL's command line.
-	 */
-	protected List<String> inputVariableNames;
-
-	protected CIVLConfiguration config;
 
 	/* ****************************** Constructor ************************** */
 
@@ -56,31 +45,8 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 	 * 
 	 */
 	protected CIVLBaseTransformer(String code, String longName,
-			String shortDescription, ASTFactory astFactory,
-			List<String> inputVariables, CIVLConfiguration config) {
+			String shortDescription, ASTFactory astFactory) {
 		super(code, longName, shortDescription, astFactory);
-		this.inputVariableNames = inputVariables;
-		this.config = config;
-	}
-
-	/**
-	 * Creates a new instance of CIVLBaseTransformer.
-	 * 
-	 * @param code
-	 *            The code of the transformer.
-	 * @param longName
-	 *            The full name of the transformer.
-	 * @param shortDescription
-	 *            The description of the transformer.
-	 * @param astFactory
-	 *            The ASTFactory that will be used to create new AST nodes.
-	 * 
-	 */
-	protected CIVLBaseTransformer(String code, String longName,
-			String shortDescription, ASTFactory astFactory,
-			CIVLConfiguration config) {
-		super(code, longName, shortDescription, astFactory);
-		this.config = config;
 	}
 
 	/* ************************** Protected Methods ************************ */
@@ -100,15 +66,6 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 	}
 
 	/* *************************** Public Methods ************************* */
-
-	/**
-	 * Updates the list of names of input variables.
-	 * 
-	 * @param inputVars
-	 */
-	public void setInputVars(List<String> inputVars) {
-		this.inputVariableNames = inputVars;
-	}
 
 	protected Source getMainSource(ASTNode node) {
 		if (node.nodeKind() == NodeKind.FUNCTION_DEFINITION) {

@@ -40,7 +40,6 @@ import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.abc.token.IF.MacroExpansion;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 
 public class GeneralTransformer extends CIVLBaseTransformer {
@@ -60,10 +59,8 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 	private AssumeNode argcAssumption = null;
 	private Source mainSource;
 
-	public GeneralTransformer(ASTFactory astFactory,
-			List<String> inputVariables, CIVLConfiguration config) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
-				config);
+	public GeneralTransformer(ASTFactory astFactory) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 	}
 
 	@Override
@@ -88,8 +85,9 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 					processArgvRefs(functionNode.getBody());
 				}
 			}
-			if (config.svcomp())
-				recoverMacro(child, macroVars);
+			// TODO factor this out
+			// if (config.svcomp())
+			// recoverMacro(child, macroVars);
 		}
 		for (ExternalDefinitionNode inputVar : macroVars.values())
 			newExternalList.add(inputVar);
@@ -156,6 +154,7 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void recoverMacro(ASTNode node,
 			Map<String, VariableDeclarationNode> macros) {
 		String sourceFile = node.getSource().getFirstToken().getSourceFile()

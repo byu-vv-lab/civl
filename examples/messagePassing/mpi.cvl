@@ -68,7 +68,7 @@ int sizeofDatatype(MPI_Datatype datatype) {
   case MPI_CHAR:
     return sizeof(char);
   default:
-    $assert(0, "Unreachable");
+    $assert 0 : "Unreachable";
   }
 }
 

@@ -33,7 +33,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 //TODO: add arguments to pthread_exit();
 
@@ -97,9 +96,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	 * @param astFactory
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
-	public Pthread2CIVLTransformer(ASTFactory astFactory,
-			CIVLConfiguration config) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, config);
+	public Pthread2CIVLTransformer(ASTFactory astFactory) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -110,17 +108,18 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 			if (node == null)
 				continue;
 			if (node instanceof FunctionDefinitionNode) {
-				if (config.svcomp()) {
-					process_VERIFIER_function_calls((FunctionDefinitionNode) node);
-				}
+				// if (config.svcomp()) {
+				process_VERIFIER_function_calls((FunctionDefinitionNode) node);
+				// }
 				process_pthread_exits((FunctionDefinitionNode) node, funcList);
-			} else if (config.svcomp()
-					&& node instanceof FunctionDeclarationNode) {
+			} else if (/*
+						 * config.svcomp() &&
+						 */node instanceof FunctionDeclarationNode) {
 				process_VERIFIER_functions((FunctionDeclarationNode) node);
 			}
 		}
-		if (config.svcomp())
-			translateNode(root);
+		// if (config.svcomp())
+		translateNode(root);
 	}
 
 	private void process_VERIFIER_function_calls(FunctionDefinitionNode node)

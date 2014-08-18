@@ -27,7 +27,6 @@ import edu.udel.cis.vsl.abc.err.IF.ABCUnsupportedException;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.StringLiteral;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
 
 /**
@@ -188,11 +187,9 @@ public class IOTransformer extends CIVLBaseTransformer {
 	 * @param config
 	 *            The CIVL configuration.
 	 */
-	public IOTransformer(ASTFactory astFactory, List<String> inputVariables,
-			CIVLConfiguration config) {
+	public IOTransformer(ASTFactory astFactory) {
 		super(IOTransformer.CODE, IOTransformer.LONG_NAME,
-				IOTransformer.SHORT_DESCRIPTION, astFactory, inputVariables,
-				config);
+				IOTransformer.SHORT_DESCRIPTION, astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */

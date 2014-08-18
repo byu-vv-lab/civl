@@ -22,16 +22,12 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 public class Cuda2CIVLTransformer extends CIVLBaseTransformer {
 
 	protected Cuda2CIVLTransformer(String code, String longName,
-			String shortDescription, ASTFactory astFactory,
-			List<String> inputVariables, CIVLConfiguration config) {
-		super(code, longName, shortDescription, astFactory, inputVariables,
-				config);
-		// TODO Auto-generated constructor stub
+			String shortDescription, ASTFactory astFactory) {
+		super(code, longName, shortDescription, astFactory);
 	}
 
 	@Override

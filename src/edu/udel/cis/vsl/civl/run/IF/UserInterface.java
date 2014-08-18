@@ -216,6 +216,7 @@ public class UserInterface {
 		List<AST> ASTs = new ArrayList<>();
 		Set<String> checkedHeaderFiles = new HashSet<>();
 		Stack<String> headerFiles = new Stack<>();
+		String root = "text/include";
 
 		for (String header : preprocessor.headerFiles())
 			headerFiles.push(header);
@@ -223,20 +224,24 @@ public class UserInterface {
 			String header = headerFiles.pop();
 
 			checkedHeaderFiles.add(header);
-			if (header.equals("string.h")) {
-				ASTs.add(this.compileHeaderFile(preprocessor, "string.cvl"));
-			} else if (header.equals("civlc.cvh")) {
-				ASTs.add(this.compileHeaderFile(preprocessor, "civlc.cvl"));
-			} else if (header.equals("civlmpi.cvh")) {
-				ASTs.add(this.compileHeaderFile(preprocessor, "civlmpi.cvl"));
-			} else if (header.equals("mpi.h")) {
-				ASTs.add(this.compileHeaderFile(preprocessor, "mpi.cvl"));
-			} else if (header.equals("comm.cvh")) {
-				ASTs.add(this.compileHeaderFile(preprocessor, "comm.cvl"));
-			} else if (header.equals("concurrency.cvh")) {
-				ASTs.add(this
-						.compileHeaderFile(preprocessor, "concurrency.cvl"));
-			}
+			if (header.equals("string.h"))
+				ASTs.add(this.compileFile(preprocessor, new File(root,
+						"string.cvl")));
+			else if (header.equals("civlc.cvh"))
+				ASTs.add(this.compileFile(preprocessor, new File(root,
+						"civlc.cvl")));
+			else if (header.equals("civlmpi.cvh"))
+				ASTs.add(this.compileFile(preprocessor, new File(root,
+						"civlmpi.cvl")));
+			else if (header.equals("mpi.h"))
+				ASTs.add(this.compileFile(preprocessor, new File(root,
+						"mpi.cvl")));
+			else if (header.equals("comm.cvh"))
+				ASTs.add(this.compileFile(preprocessor, new File(root,
+						"comm.cvl")));
+			else if (header.equals("concurrency.cvh"))
+				ASTs.add(this.compileFile(preprocessor, new File(root,
+						"concurrency.cvl")));
 			for (String newHeader : preprocessor.headerFiles()) {
 				if (!headerFiles.contains(newHeader)
 						&& !checkedHeaderFiles.contains(newHeader))
@@ -246,13 +251,10 @@ public class UserInterface {
 		return ASTs;
 	}
 
-	private AST compileHeaderFile(Preprocessor preprocessor, String filename)
-			throws PreprocessorException, SyntaxException, ParseException {
-		String root = "text/include";
-		File file = new File(root, filename);
+	private AST compileFile(Preprocessor preprocessor, File file)
+			throws SyntaxException, ParseException, PreprocessorException {
 		CTokenSource tokens = preprocessor.outputTokenSource(file);
 
-		// TODO factor out this line
 		return frontEnd.getASTBuilder().getTranslationUnit(
 				frontEnd.getParser().parse(tokens));
 	}
@@ -262,10 +264,7 @@ public class UserInterface {
 			CIVLConfiguration civlConfig) throws PreprocessorException,
 			SyntaxException, ParseException {
 		File file = new File(filename);
-		CTokenSource tokens = preprocessor.outputTokenSource(file);
-		// TODO factor out this line
-		AST userAST = frontEnd.getASTBuilder().getTranslationUnit(
-				frontEnd.getParser().parse(tokens));
+		AST userAST =  this.compileFile(preprocessor, file);
 		List<String> inputVars = getInputVariables(config);
 		Program program;
 		ArrayList<AST> asts = new ArrayList<>();
@@ -375,6 +374,7 @@ public class UserInterface {
 		boolean isC = fileName.endsWith(".c");
 		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
 
+		new CIVLTransform();
 		if (headers.contains("stdio.h"))
 			hasStdio = true;
 		if (isC && (headers.contains("omp.h") || program.hasOmpPragma()))
@@ -386,16 +386,14 @@ public class UserInterface {
 		// always apply general transformation.
 		if (config.debugOrVerbose())
 			this.out.println("Apply general transformer...");
-		CIVLTransform.applyTransformer(program, CIVLTransform.GENERAL,
-				inputVars, astBuilder, config);
+		program.applyTransformer(CIVLTransform.GENERAL);
 		if (config.debugOrVerbose()) {
 			program.prettyPrint(out);
 		}
 		if (hasStdio) {
 			if (config.debugOrVerbose())
 				this.out.println("Apply IO transformer...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.IO,
-					inputVars, astBuilder, config);
+			program.applyTransformer(CIVLTransform.IO);
 			if (config.debugOrVerbose()) {
 				program.prettyPrint(out);
 			}
@@ -403,20 +401,17 @@ public class UserInterface {
 		if (hasOmp) {
 			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP simplifier...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-					inputVars, astBuilder, config);
+			program.applyTransformer(CIVLTransform.OMP_SIMPLIFY);
 			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP transformer...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.OPENMP,
-					inputVars, astBuilder, config);
+			program.applyTransformer(CIVLTransform.OPENMP);
 			if (config.debugOrVerbose())
 				program.prettyPrint(out);
 		}
 		if (hasPthread) {
 			if (config.debugOrVerbose())
 				this.out.println("Apply Pthread transformer...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.PTHREAD,
-					inputVars, astBuilder, config);
+			program.applyTransformer(CIVLTransform.PTHREAD);
 			if (config.debugOrVerbose()) {
 				program.prettyPrint(out);
 			}
@@ -424,8 +419,7 @@ public class UserInterface {
 		if (hasMpi) {
 			if (config.debugOrVerbose())
 				this.out.println("Apply MPI transformer...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.MPI,
-					inputVars, null, config);
+			program.applyTransformer(CIVLTransform.MPI);
 			if (config.debugOrVerbose()) {
 				program.prettyPrint(out);
 			}

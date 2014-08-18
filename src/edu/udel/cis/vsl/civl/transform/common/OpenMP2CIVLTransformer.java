@@ -44,7 +44,6 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
@@ -170,10 +169,8 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 	 * @param astFactory
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
-	public OpenMP2CIVLTransformer(ASTFactory astFactory,
-			List<String> inputVariables, CIVLConfiguration config) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory, inputVariables,
-				config);
+	public OpenMP2CIVLTransformer(ASTFactory astFactory) {
+		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -375,11 +372,11 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 		// declaring $input int THREAD_MAX;
 		threadMax = this.threadMaxDeclaration();
 
-		if (!this.inputVariableNames.contains(THREADMAX)) {
-			throw new SyntaxException(
-					"Please specify the number of processes (e.g., -inputTHREAD_MAX=5)",
-					source);
-		}
+		// if (!this.inputVariableNames.contains(THREADMAX)) {
+		// throw new SyntaxException(
+		// "Please specify the number of processes (e.g., -inputTHREAD_MAX=5)",
+		// source);
+		// }
 
 		replaceOMPPragmas(root, null, null, null, null);
 
