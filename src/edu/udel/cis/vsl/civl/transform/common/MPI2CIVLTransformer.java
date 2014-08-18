@@ -255,40 +255,6 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 						Arrays.asList(lowerPart, upperPart)));
 	}
 
-	// /**
-	// * Creates a bound assumption node in the form of:
-	// * <code>$assume 0 < variable && variable <= upperBound</code>.
-	// *
-	// * @param variable
-	// * The variable to be bounded.
-	// * @param upperBound
-	// * The upper bound of the variable.
-	// * @return The node representing of the assumption on the bound of the
-	// * variable.
-	// * @throws SyntaxException
-	// */
-	// private AssumeNode upperBoundAssumption(String variable, String
-	// upperBound)
-	// throws SyntaxException {
-	// ExpressionNode variableExpression = this.identifierExpression(source,
-	// variable);
-	// ExpressionNode upperBoundExpression = this.identifierExpression(source,
-	// upperBound);
-	// ExpressionNode lowerBoundExpression = nodeFactory
-	// .newIntegerConstantNode(source, "0");
-	// ExpressionNode lowerPart, upperPart;
-	//
-	// lowerPart = nodeFactory.newOperatorNode(source, Operator.LT,
-	// Arrays.asList(lowerBoundExpression, variableExpression));
-	// variableExpression = variableExpression.copy();
-	// upperPart = nodeFactory.newOperatorNode(source, Operator.LTE,
-	// Arrays.asList(variableExpression, upperBoundExpression));
-	// return nodeFactory.newAssumeNode(
-	// source,
-	// nodeFactory.newOperatorNode(source, Operator.LAND,
-	// Arrays.asList(lowerPart, upperPart)));
-	// }
-
 	/**
 	 * Creates the declaration node for the variable <code>MPI_COMM_WORLD</code>
 	 * , which is of <code>MPI_Comm</code> type and has an initializer to call
@@ -559,9 +525,12 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 			} else if (sourceFile.endsWith(".cvh")
 					|| sourceFile.equals("comm.cvl")
 					|| sourceFile.equals("civlmpi.cvl")
+					|| sourceFile.equals("mpi.cvl")
+					|| sourceFile.equals("civlc.cvl")
 					|| sourceFile.equals("concurrency.cvl")
 					|| sourceFile.equals("stdio.cvl")
-					|| sourceFile.equals("pthread.cvl"))
+					|| sourceFile.equals("pthread.cvl")
+					|| sourceFile.equals("string.cvl"))
 				includedNodes.add(child);
 			else if (sourceFile.equals("pthread-c.cvl")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {

@@ -125,7 +125,7 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			break;
 
 		default:
-			throw new CIVLInternalException("Unknown stdlib function: " + name,
+			throw new CIVLInternalException("Unknown string function: " + name,
 					call);
 		}
 		state = stateFactory.setLocation(state, pid, call.target());

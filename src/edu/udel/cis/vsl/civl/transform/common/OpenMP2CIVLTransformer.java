@@ -1307,7 +1307,14 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			root.removeChild(i);
 			if (sourceFile.equals("omp.cvl")) {
 				includedNodes.add(child);
-			} else if (sourceFile.equals("stdio.cvl")) {
+			} else if (sourceFile.equals("comm.cvl")
+					|| sourceFile.equals("civlmpi.cvl")
+					|| sourceFile.equals("mpi.cvl")
+					|| sourceFile.equals("civlc.cvl")
+					|| sourceFile.equals("concurrency.cvl")
+					|| sourceFile.equals("stdio.cvl")
+					|| sourceFile.equals("pthread.cvl")
+					|| sourceFile.equals("string.cvl")) {
 				includedNodes.add(child);
 			} else if (sourceFile.endsWith(".h") || sourceFile.endsWith(".cvh")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
