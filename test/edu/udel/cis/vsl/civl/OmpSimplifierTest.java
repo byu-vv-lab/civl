@@ -10,7 +10,6 @@ import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
 
 public class OmpSimplifierTest {
@@ -41,8 +40,6 @@ public class OmpSimplifierTest {
 	 */
 	private void check(String fileNameRoot) throws ABCException, IOException {
 		FrontEnd frontEnd = new FrontEnd();
-		CIVLConfiguration config = new CIVLConfiguration();
-		// AST ast;
 		File file = new File(rootDir, fileNameRoot + ".c");
 		File simplifiedFile = new File(new File(rootDir, "simple"),
 				fileNameRoot + ".c.s");
@@ -50,24 +47,12 @@ public class OmpSimplifierTest {
 		Program program, simplifiedProgram;
 
 		{ // Parse the program and apply the CIVL transformations
-
-			// ast = frontEnd.compile(file, Language.CIVL_C, systemIncludes,
-			// userIncludes);
-			// program = frontEnd.getProgramFactory(
-			// frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
-			// ast);
 			program = frontEnd.compileAndLink(new File[] { file },
 					Language.CIVL_C, systemIncludes, userIncludes);
-			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-					config);
+			program.applyTransformer(CIVLTransform.OMP_SIMPLIFY);
 		}
 
 		{ // Parse the simplified program
-			// ast = frontEnd.compile(simplifiedFile, Language.CIVL_C,
-			// systemIncludes, userIncludes);
-			// simplifiedProgram = frontEnd.getProgramFactory(
-			// frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
-			// ast);
 			simplifiedProgram = frontEnd.compileAndLink(
 					new File[] { simplifiedFile }, Language.CIVL_C,
 					systemIncludes, userIncludes);

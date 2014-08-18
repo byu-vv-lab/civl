@@ -13,7 +13,6 @@ import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
 
@@ -60,10 +59,8 @@ public class OmpTransformerTest {
 			IOException {
 		FrontEnd frontEnd = new FrontEnd();
 		Program program;
-		CIVLConfiguration config = new CIVLConfiguration();
 		File file = new File(root, filenameRoot + ".c");
 
-		config.setDebug(debug);
 		this.systemIncludes = new File[0];
 		this.userIncludes = new File[0];
 		program = frontEnd.compileAndLink(new File[] { file }, Language.CIVL_C,
@@ -74,7 +71,7 @@ public class OmpTransformerTest {
 			PrintStream beforeAST = new PrintStream("/tmp/before_AST");
 			frontEnd.printProgram(beforeAST, program, false, false);
 		}
-		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY);
+		program.applyTransformer(CIVLTransform.OMP_SIMPLIFY);
 		if (true) {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
 			program.getAST().prettyPrint(after, true);
@@ -83,7 +80,6 @@ public class OmpTransformerTest {
 			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program, true, false);
 		}
-
 		program.applyTransformer("prune");
 		if (debug) {
 			out.println("======== After applying Pruner ========");
@@ -94,7 +90,6 @@ public class OmpTransformerTest {
 			out.println("======== After applying Side Effect Remover ========");
 			frontEnd.printProgram(out, program, true, false);
 		}
-
 	}
 
 	/* **************************** Test Methods *************************** */
