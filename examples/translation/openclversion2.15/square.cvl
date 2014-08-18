@@ -31,7 +31,6 @@ typedef struct
   void * count;
   */
   void * param[3];
-  int mallocflag[numArgs];
   
 }args;
 

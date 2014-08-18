@@ -1,4 +1,5 @@
 
+//verify examples/translation/openclversion2.15/multiple.cvl
 
 #include "cl.cvl"
 #include <stdio.h>
@@ -10,8 +11,8 @@
 int numArgs = 2;
 int numKernels = 4;
 /*
-  This version of the kernel has a flag for each element in the param array
-  If the mallocflag is set to 1, it means that it will be freed by clReleaseKernel
+  args * argument	- Takes in the struct, which is changed for every program using a different kernel
+  int mallocflag[numArgs] - A flag for each element in the param array. If the mallocflag is set to 1, it means that it will be freed by clReleaseKernel
 */
 typedef struct
 {
@@ -49,7 +50,14 @@ void clReleaseKernel(cl_kernel kernel)
     }
   }
 }
-//Workfunc and clEnqueueNDRangeKernel are the same.
+/*
+  workfunc assigns local and global ids, before calling the kernel. 
+  Note: The function should be identical in all transformations except the calling of the kernel, which means that it cannot be in openCLshared.cvl
+  size_t local		- The size of the workgroups, used to calculate blocks
+  size_t global		- The total amount of work to be done
+  cl_kernel param	- Holds the data for local_id, global_id, and the workgroup
+  Use the print statement to get a better idea of what it means to split workgroups, local_ids, and global_ids
+*/
 void workfunc(size_t local, size_t global, cl_kernel param)
 {
   $proc procs[local];
@@ -73,6 +81,12 @@ void workfunc(size_t local, size_t global, cl_kernel param)
   }
 }
 
+/*
+  Splits up and spawns processes based on global and local, using block
+  cl_kernel kernel			- Holds all the arguments for the kernel, as well as local_id, global_id, and the workgroup
+  size_t global				- The total amount of work to be done
+  size_t local				- Number to split into workgroups by
+*/
 int clEnqueueNDRangeKernel(cl_kernel kernel, size_t global, size_t local)
 {
 
