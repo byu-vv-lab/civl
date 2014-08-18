@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.transform.common;
 
 import java.util.List;
 
-import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
@@ -14,8 +13,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
-import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
@@ -39,39 +38,9 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 	 */
 	protected List<String> inputVariableNames;
 
-	/**
-	 * The AST builder to be reused in the transformer to parse tokens. For
-	 * example, the OpenMP pragma transformer uses the AST builder to parse
-	 * expressions.
-	 */
-	protected ASTBuilder astBuilder;
-
 	protected CIVLConfiguration config;
 
 	/* ****************************** Constructor ************************** */
-
-	/**
-	 * Creates a new instance of CIVLBaseTransformer.
-	 * 
-	 * @param code
-	 *            The code of the transformer.
-	 * @param longName
-	 *            The full name of the transformer.
-	 * @param shortDescription
-	 *            The description of the transformer.
-	 * @param astFactory
-	 *            The ASTFactory that will be used to create new AST nodes.
-	 * 
-	 */
-	protected CIVLBaseTransformer(String code, String longName,
-			String shortDescription, ASTFactory astFactory,
-			List<String> inputVariables, ASTBuilder astBuilder,
-			CIVLConfiguration config) {
-		super(code, longName, shortDescription, astFactory);
-		this.inputVariableNames = inputVariables;
-		this.astBuilder = astBuilder;
-		this.config = config;
-	}
 
 	/**
 	 * Creates a new instance of CIVLBaseTransformer.
@@ -114,13 +83,6 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 		this.config = config;
 	}
 
-	public CIVLBaseTransformer(String code, String longName,
-			String shortDescription, ASTFactory astFactory,
-			ASTBuilder astBuilder, CIVLConfiguration config) {
-		this(code, longName, shortDescription, astFactory, config);
-		this.astBuilder = astBuilder;
-	}
-
 	/* ************************** Protected Methods ************************ */
 
 	/**
@@ -146,15 +108,6 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 	 */
 	public void setInputVars(List<String> inputVars) {
 		this.inputVariableNames = inputVars;
-	}
-
-	/**
-	 * Updates the AST builder.
-	 * 
-	 * @param astBuilder
-	 */
-	public void setASTBuilder(ASTBuilder astBuilder) {
-		this.astBuilder = astBuilder;
 	}
 
 	protected Source getMainSource(ASTNode node) {
@@ -185,12 +138,13 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 		return nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, name), type);
 	}
-	
+
 	protected VariableDeclarationNode variableDeclaration(Source source,
 			String name, TypeNode type, ExpressionNode init) {
 		return nodeFactory.newVariableDeclarationNode(source,
 				nodeFactory.newIdentifierNode(source, name), type, init);
 	}
+
 	protected TypeNode typeNode(Source source, Type type) {
 		switch (type.kind()) {
 		case VOID:

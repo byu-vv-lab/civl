@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
@@ -29,10 +28,9 @@ public class Cuda2CIVLTransformer extends CIVLBaseTransformer {
 
 	protected Cuda2CIVLTransformer(String code, String longName,
 			String shortDescription, ASTFactory astFactory,
-			List<String> inputVariables, ASTBuilder astBuilder,
-			CIVLConfiguration config) {
+			List<String> inputVariables, CIVLConfiguration config) {
 		super(code, longName, shortDescription, astFactory, inputVariables,
-				astBuilder, config);
+				config);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -140,7 +138,8 @@ public class Cuda2CIVLTransformer extends CIVLBaseTransformer {
 	protected List<BlockItemNode> extractSharedVariableDeclarations(
 			CompoundStatementNode statements) {
 		List<BlockItemNode> declarations = new ArrayList<BlockItemNode>();
-		for (@SuppressWarnings("unused") BlockItemNode item : statements) {
+		for (@SuppressWarnings("unused")
+		BlockItemNode item : statements) {
 			// TODO: if item is a VariableDeclarationNode and is qualified as a
 			// shared variable, add it to declarations, and remove from
 			// statements (remove())

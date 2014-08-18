@@ -59,7 +59,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
-import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
@@ -252,10 +251,10 @@ public class UserInterface {
 		String root = "text/include";
 		File file = new File(root, filename);
 		CTokenSource tokens = preprocessor.outputTokenSource(file);
-		CParser parser = frontEnd.getParser(tokens);
-		ASTBuilder builder = frontEnd.getASTBuilder(parser);
 
-		return builder.getTranslationUnit();
+		// TODO factor out this line
+		return frontEnd.getASTBuilder().getTranslationUnit(
+				frontEnd.getParser().parse(tokens));
 	}
 
 	private Program compileLinkAndTransform(Preprocessor preprocessor,
@@ -264,9 +263,9 @@ public class UserInterface {
 			SyntaxException, ParseException {
 		File file = new File(filename);
 		CTokenSource tokens = preprocessor.outputTokenSource(file);
-		CParser parser = frontEnd.getParser(tokens);
-		ASTBuilder builder = frontEnd.getASTBuilder(parser);
-		AST userAST = builder.getTranslationUnit();
+		// TODO factor out this line
+		AST userAST = frontEnd.getASTBuilder().getTranslationUnit(
+				frontEnd.getParser().parse(tokens));
 		List<String> inputVars = getInputVariables(config);
 		Program program;
 		ArrayList<AST> asts = new ArrayList<>();
@@ -282,7 +281,7 @@ public class UserInterface {
 		if (verbose || debug)
 			// shows absolutely everything
 			program.print(out);
-		applyTransformers(filename, preprocessor, builder, program, civlConfig,
+		applyTransformers(filename, preprocessor, null, program, civlConfig,
 				inputVars);
 		return program;
 	}
@@ -374,9 +373,8 @@ public class UserInterface {
 			List<String> inputVars) throws SyntaxException {
 		Set<String> headers = preprocessor.headerFiles();
 		boolean isC = fileName.endsWith(".c");
-		boolean hasCIVLPragma = false, hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
+		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
 
-		hasCIVLPragma = CIVLTransform.hasCIVLPragma(program.getAST());
 		if (headers.contains("stdio.h"))
 			hasStdio = true;
 		if (isC && (headers.contains("omp.h") || program.hasOmpPragma()))
@@ -393,15 +391,6 @@ public class UserInterface {
 		if (config.debugOrVerbose()) {
 			program.prettyPrint(out);
 		}
-		if (hasCIVLPragma) {
-			if (config.debugOrVerbose())
-				this.out.println("Apply CIVL pragma transformer...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.CIVL_PRAGMA,
-					inputVars, astBuilder, config);
-			if (config.debugOrVerbose()) {
-				program.prettyPrint(out);
-			}
-		}
 		if (hasStdio) {
 			if (config.debugOrVerbose())
 				this.out.println("Apply IO transformer...");
@@ -412,12 +401,6 @@ public class UserInterface {
 			}
 		}
 		if (hasOmp) {
-			if (config.debugOrVerbose())
-				this.out.println("Apply OpenMP parser...");
-			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
-					inputVars, astBuilder, config);
-			if (config.debugOrVerbose())
-				program.prettyPrint(out);
 			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP simplifier...");
 			CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,

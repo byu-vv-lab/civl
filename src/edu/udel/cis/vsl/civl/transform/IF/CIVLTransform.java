@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.transform.IF;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
@@ -16,11 +17,9 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.transform.common.CIVLBaseTransformer;
-import edu.udel.cis.vsl.civl.transform.common.CIVLPragmaTransformer;
 import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
 import edu.udel.cis.vsl.civl.transform.common.MPI2CIVLTransformer;
-import edu.udel.cis.vsl.civl.transform.common.OmpPragmaTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMP2CIVLTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPSimplifier;
 import edu.udel.cis.vsl.civl.transform.common.Pthread2CIVLTransformer;
@@ -42,12 +41,78 @@ public class CIVLTransform {
 	 */
 	public final static String GENERAL = GeneralTransformer.CODE;
 	public final static String IO = IOTransformer.CODE;
-	public final static String OMP_PRAGMA = OmpPragmaTransformer.CODE;
 	public final static String OMP_SIMPLIFY = OpenMPSimplifier.CODE;
 	public final static String MPI = MPI2CIVLTransformer.CODE;
 	public final static String OPENMP = OpenMP2CIVLTransformer.CODE;
 	public final static String PTHREAD = Pthread2CIVLTransformer.CODE;
-	public final static String CIVL_PRAGMA = CIVLPragmaTransformer.CODE;
+
+	public static void applyTransformer(Program program, String code)
+			throws SyntaxException {
+		applyTransformer(program, code, new CIVLConfiguration());
+	}
+
+	/**
+	 * Applies a transformer to a program.
+	 * 
+	 * @param program
+	 *            The program to be transformed.
+	 * @param code
+	 *            The code of a transformer, should be one of the following:<br>
+	 *            <ul>
+	 *            <li>"general": general transformer</li>
+	 *            <li>"io": IO transformer</li>
+	 *            <li>"mpi": MPI-to-CIVL transformer</li>
+	 *            <li>"omp": OpenMP pragma transformer</li>
+	 *            <li>"omp_simplify": OpenMP simplifier transformer</li>
+	 *            <li>"pthread": Pthread-to-CIVL transformer</li>
+	 *            </ul>
+	 * @param inputVars
+	 *            The list of variable names that appear in "-input" options
+	 *            specified by users in CIVL's command line.
+	 * @param astBuilder
+	 *            The AST builder to be reused in the transformer to parse
+	 *            tokens. For example, the OpenMP pragma transformer uses the
+	 *            AST builder to parse expressions.
+	 * @param debug
+	 *            The flag to turn on/off debugging. Useful for printing more
+	 *            information in debug mode.
+	 * @throws SyntaxException
+	 */
+	public static void applyTransformer(Program program, String code,
+			CIVLConfiguration config) throws SyntaxException {
+		CIVLBaseTransformer transformer;
+		ASTFactory astFactory = program.getAST().getASTFactory();
+
+		switch (code) {
+		case CIVLTransform.GENERAL:
+			transformer = new GeneralTransformer(astFactory,
+					new LinkedList<String>(), config);
+			break;
+		case CIVLTransform.IO:
+			transformer = new IOTransformer(astFactory,
+					new LinkedList<String>(), config);
+			break;
+		case CIVLTransform.MPI:
+			transformer = new MPI2CIVLTransformer(astFactory,
+					new LinkedList<String>(), config);
+			break;
+		case CIVLTransform.OMP_SIMPLIFY:
+			transformer = new OpenMPSimplifier(astFactory, config);
+			break;
+		case CIVLTransform.OPENMP:
+			transformer = new OpenMP2CIVLTransformer(astFactory,
+					new LinkedList<String>(), config);
+			break;
+		case CIVLTransform.PTHREAD:
+			transformer = new Pthread2CIVLTransformer(astFactory, config);
+			break;
+		default:
+			// try applying the transformer from ABC, might fail.
+			program.applyTransformer(code);
+			return;
+		}
+		program.apply(transformer);
+	}
 
 	/**
 	 * Applies a transformer to a program.
@@ -92,22 +157,15 @@ public class CIVLTransform {
 		case CIVLTransform.MPI:
 			transformer = new MPI2CIVLTransformer(astFactory, inputVars, config);
 			break;
-		case CIVLTransform.OMP_PRAGMA:
-			transformer = new OmpPragmaTransformer(astFactory, astBuilder,
-					config);
-			break;
 		case CIVLTransform.OMP_SIMPLIFY:
 			transformer = new OpenMPSimplifier(astFactory, config);
 			break;
 		case CIVLTransform.OPENMP:
-			transformer = new OpenMP2CIVLTransformer(astFactory, inputVars, config);
+			transformer = new OpenMP2CIVLTransformer(astFactory, inputVars,
+					config);
 			break;
 		case CIVLTransform.PTHREAD:
 			transformer = new Pthread2CIVLTransformer(astFactory, config);
-			break;
-		case CIVLTransform.CIVL_PRAGMA:
-			transformer = new CIVLPragmaTransformer(astFactory, astBuilder,
-					config);
 			break;
 		default:
 			// try applying the transformer from ABC, might fail.
@@ -160,22 +218,15 @@ public class CIVLTransform {
 			transformer = new MPI2CIVLTransformer(astFactory,
 					new ArrayList<String>(0), config);
 			break;
-		case CIVLTransform.OMP_PRAGMA:
-			transformer = new OmpPragmaTransformer(astFactory, astBuilder,
-					config);
-			break;
 		case CIVLTransform.OMP_SIMPLIFY:
 			transformer = new OpenMPSimplifier(astFactory, config);
 			break;
 		case CIVLTransform.OPENMP:
-			transformer = new OpenMP2CIVLTransformer(astFactory, new ArrayList<String>(0), config);
+			transformer = new OpenMP2CIVLTransformer(astFactory,
+					new ArrayList<String>(0), config);
 			break;
 		case CIVLTransform.PTHREAD:
 			transformer = new Pthread2CIVLTransformer(astFactory, config);
-			break;
-		case CIVLTransform.CIVL_PRAGMA:
-			transformer = new CIVLPragmaTransformer(astFactory, astBuilder,
-					config);
 			break;
 		default:
 			// try applying the transformer from ABC, might fail.

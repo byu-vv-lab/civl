@@ -10,14 +10,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
-import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
-import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
-import edu.udel.cis.vsl.abc.parse.IF.CParser;
-import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
@@ -67,38 +62,19 @@ public class OmpTransformerTest {
 		Program program;
 		CIVLConfiguration config = new CIVLConfiguration();
 		File file = new File(root, filenameRoot + ".c");
-		Preprocessor preprocessor;
-		CTokenSource tokens;
-		CParser parser;
-		ASTBuilder builder;
-		AST ast;
 
 		config.setDebug(debug);
 		this.systemIncludes = new File[0];
 		this.userIncludes = new File[0];
-		preprocessor = frontEnd.getPreprocessor(systemIncludes, userIncludes);
-		tokens = preprocessor.outputTokenSource(file);
-		parser = frontEnd.getParser(tokens);
-		builder = frontEnd.getASTBuilder(parser);
-		ast = builder.getTranslationUnit();
-		program = frontEnd.getProgramFactory(
-				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(ast);
-		if (debug)
-			frontEnd.printProgram(out, program, true, false);
-		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_PRAGMA,
-				builder, config);
-		if (debug) {
-			out.println("======== After applying OpenMP Pragma Transformer ========");
-			frontEnd.printProgram(out, program, true, false);
-		}
+		program = frontEnd.compileAndLink(new File[] { file }, Language.CIVL_C,
+				systemIncludes, userIncludes);
 		if (true) {
 			PrintStream before = new PrintStream("/tmp/before_simplify");
 			program.getAST().prettyPrint(before, true);
 			PrintStream beforeAST = new PrintStream("/tmp/before_AST");
 			frontEnd.printProgram(beforeAST, program, false, false);
 		}
-		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY,
-				builder, config);
+		CIVLTransform.applyTransformer(program, CIVLTransform.OMP_SIMPLIFY);
 		if (true) {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
 			program.getAST().prettyPrint(after, true);
@@ -107,14 +83,18 @@ public class OmpTransformerTest {
 			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program, true, false);
 		}
-		/*
-		 * program.applyTransformer("prune"); // if (debug) {
-		 * out.println("======== After applying Pruner ========");
-		 * frontEnd.printProgram(out, program, true); // }
-		 * program.applyTransformer("sef"); if (debug) {
-		 * out.println("======== After applying Side Effect Remover ========");
-		 * frontEnd.printProgram(out, program, true); }
-		 */
+
+		program.applyTransformer("prune");
+		if (debug) {
+			out.println("======== After applying Pruner ========");
+			frontEnd.printProgram(out, program, true, false);
+		}
+		program.applyTransformer("sef");
+		if (debug) {
+			out.println("======== After applying Side Effect Remover ========");
+			frontEnd.printProgram(out, program, true, false);
+		}
+
 	}
 
 	/* **************************** Test Methods *************************** */
