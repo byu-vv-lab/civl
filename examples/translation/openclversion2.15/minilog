@@ -26,6 +26,8 @@ Problems:
   
 Done:
 Change square.cvl to reflect new changes
+Fixed problem with empty space being used
+Grappled with invalid pointer dereference.
   
   
 ToDo:
@@ -43,3 +45,7 @@ Problems:
 at f31:24.4-30 "((  int*)(shared) ... ]".
   This kernel really doesn't play nice with CIVL
   heap object names are unique, but not in this program
+  
+
+  
+  
