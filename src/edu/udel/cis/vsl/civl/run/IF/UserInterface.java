@@ -278,8 +278,7 @@ public class UserInterface {
 		asts.toArray(TUs);
 		program = frontEnd.link(TUs, Language.CIVL_C);
 		if (verbose || debug)
-			// shows absolutely everything
-			program.print(out);
+			program.prettyPrint(out);
 		applyTransformers(filename, preprocessor, null, program, civlConfig,
 				inputVars);
 		return program;
@@ -413,38 +412,33 @@ public class UserInterface {
 				if (config.debugOrVerbose())
 					this.out.println("Apply Macro transformer for svcomp programs ...");
 				program.applyTransformer(CIVLTransform.MACRO);
-				if (config.debugOrVerbose()) {
+				if (config.debugOrVerbose())
 					program.prettyPrint(out);
-				}
 			}
 			if (config.debugOrVerbose())
 				this.out.println("Apply Pthread transformer...");
 			program.applyTransformer(CIVLTransform.PTHREAD);
-			if (config.debugOrVerbose()) {
+			if (config.debugOrVerbose())
 				program.prettyPrint(out);
-			}
 		}
 		if (hasMpi) {
 			if (config.debugOrVerbose())
 				this.out.println("Apply MPI transformer...");
 			program.applyTransformer(CIVLTransform.MPI);
-			if (config.debugOrVerbose()) {
+			if (config.debugOrVerbose())
 				program.prettyPrint(out);
-			}
 		}
 		// always apply pruner and side effect remover
 		if (config.debugOrVerbose())
 			this.out.println("Apply pruner...");
 		program.applyTransformer("prune");
-		if (config.debugOrVerbose()) {
+		if (config.debugOrVerbose())
 			program.prettyPrint(out);
-		}
 		if (config.debugOrVerbose())
 			this.out.println("Apply side-effect remover...");
 		program.applyTransformer("sef");
-		if (config.debugOrVerbose()) {
+		if (config.debugOrVerbose())
 			program.prettyPrint(out);
-		}
 	}
 
 	private File[] getUserIncludes(GMCConfiguration config) {
