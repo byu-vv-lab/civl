@@ -3,8 +3,6 @@ package edu.udel.cis.vsl.civl.model.common.type;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -37,19 +35,22 @@ public class CommonDomainType extends CommonType implements CIVLDomainType {
 	public SymbolicType getDynamicType(SymbolicUniverse universe) {
 		if (dynamicType != null)
 			return this.dynamicType;
-		if (this.dimension < 1)
-			throw new CIVLInternalException(
-					"no dynamic type for non-dimension $domain type: "
-							+ toString(), (CIVLSource) null);
-		else {
-			List<SymbolicType> rangeTypes = new ArrayList<>(this.dimension);
+		// if (this.dimension < 1)
+		// throw new CIVLInternalException(
+		// "no dynamic type for non-dimension $domain type: "
+		// + toString(), (CIVLSource) null);
+		// else
+		{
+			int size = dimension < 0 ? 0 : dimension;
+			List<SymbolicType> rangeTypes = new ArrayList<>(size);
 			SymbolicType symbolicRangeType = rangeType.getDynamicType(universe);
 
-			for (int i = 0; i < dimension; i++) {
+			for (int i = 0; i < size; i++) {
 				rangeTypes.add(symbolicRangeType);
 			}
-			dynamicType = universe.tupleType(
-					universe.stringObject(this.toString()), rangeTypes);
+			dynamicType = (SymbolicTupleType) universe.canonic(universe
+					.tupleType(universe.stringObject(this.toString()),
+							rangeTypes));
 			return dynamicType;
 		}
 	}
