@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.abc.transform.IF.Transformer;
 import edu.udel.cis.vsl.civl.transform.common.GeneralTransformer;
 import edu.udel.cis.vsl.civl.transform.common.IOTransformer;
 import edu.udel.cis.vsl.civl.transform.common.MPI2CIVLTransformer;
+import edu.udel.cis.vsl.civl.transform.common.MacroTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMP2CIVLTransformer;
 import edu.udel.cis.vsl.civl.transform.common.OpenMPSimplifier;
 import edu.udel.cis.vsl.civl.transform.common.Pthread2CIVLTransformer;
@@ -36,6 +37,7 @@ public class CIVLTransform {
 	 * you create a new transformer, following the same pattern as the others.
 	 */
 	public final static String GENERAL = GeneralTransformer.CODE;
+	public final static String MACRO = MacroTransformer.CODE;
 	public final static String IO = IOTransformer.CODE;
 	public final static String OMP_SIMPLIFY = OpenMPSimplifier.CODE;
 	public final static String MPI = MPI2CIVLTransformer.CODE;
@@ -55,6 +57,16 @@ public class CIVLTransform {
 				return new GeneralTransformer(astFactory);
 			}
 		});
+
+		Transform
+				.addTransform(new TransformRecord(MacroTransformer.CODE,
+						MacroTransformer.LONG_NAME,
+						MacroTransformer.SHORT_DESCRIPTION) {
+					@Override
+					public Transformer create(ASTFactory astFactory) {
+						return new MacroTransformer(astFactory);
+					}
+				});
 
 		Transform.addTransform(new TransformRecord(IOTransformer.CODE,
 				IOTransformer.LONG_NAME, IOTransformer.SHORT_DESCRIPTION) {

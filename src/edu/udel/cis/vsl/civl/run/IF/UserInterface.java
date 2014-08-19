@@ -264,7 +264,7 @@ public class UserInterface {
 			CIVLConfiguration civlConfig) throws PreprocessorException,
 			SyntaxException, ParseException {
 		File file = new File(filename);
-		AST userAST =  this.compileFile(preprocessor, file);
+		AST userAST = this.compileFile(preprocessor, file);
 		List<String> inputVars = getInputVariables(config);
 		Program program;
 		ArrayList<AST> asts = new ArrayList<>();
@@ -409,6 +409,14 @@ public class UserInterface {
 				program.prettyPrint(out);
 		}
 		if (hasPthread) {
+			if (config.svcomp()) {
+				if (config.debugOrVerbose())
+					this.out.println("Apply Macro transformer for svcomp programs ...");
+				program.applyTransformer(CIVLTransform.MACRO);
+				if (config.debugOrVerbose()) {
+					program.prettyPrint(out);
+				}
+			}
 			if (config.debugOrVerbose())
 				this.out.println("Apply Pthread transformer...");
 			program.applyTransformer(CIVLTransform.PTHREAD);
@@ -829,7 +837,7 @@ public class UserInterface {
 		boolean result = false;
 		String filename0, filename1;
 		Program program0, program1, compositeProgram;
-		Combiner combiner = Transform.newCompareCombiner();
+		Combiner combiner = Transform.compareCombiner();
 		Model model;
 		Verifier verifier;
 		boolean showShortFileName = showShortFileNameList(config);
@@ -858,6 +866,7 @@ public class UserInterface {
 		if (verbose || debug)
 			out.println("Generating composite program...");
 		combinedAST = combiner.combine(program0.getAST(), program1.getAST());
+		combinedAST.prettyPrint(out, false);
 		compositeProgram = frontEnd.getProgramFactory(
 				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
 				combinedAST);

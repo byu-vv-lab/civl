@@ -27,8 +27,6 @@ import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
  */
 public abstract class CIVLBaseTransformer extends BaseTransformer {
 
-	/* **************************** Instant Fields ************************* */
-
 	/* ****************************** Constructor ************************** */
 
 	/**
