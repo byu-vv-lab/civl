@@ -42,10 +42,10 @@ void clReleaseKernel(cl_kernel kernel)
 {
   for (int i = 0; i < numArgs; i++)
   {
-    //printf("I am argument %d with value %d\n", i, ((args*)kernel.arguments)->mallocflag[i]);
+    printf("I am argument %d with value %d\n", i, ((args*)kernel.arguments)->mallocflag[i]);
     if (((args*)kernel.arguments)->mallocflag[i] == 1)
     {
-      //printf("and I pass the flag check\n");
+      printf("and I pass the flag check\n");
       free(((args*)kernel.arguments)->param[i]);
     }
   }
@@ -67,13 +67,13 @@ void workfunc(size_t local, size_t global, cl_kernel param)
     int n = *(int*)(((args*)param.arguments)->param[0]);
     param.local_id = i % local;
     param.global_id = i;
-    //printf("My workgroup id is %d, my global id is %d, my local id is %d, and my method is %s\n", param.workgroup, param.global_id, param.local_id, param.method);
-    
-    
-    //if(strcmp(param.method, reduceChar) == 0)
-    //{
+    //printf("My workgroup id is %d, my global id is %d, my local id is %d\n", param.workgroup, param.global_id, param.local_id);
+    printf("workfunc var is %s,\n", reduceChar);
+    printf(" kernel method name is %s\n", param.method);
+    if(strcmp(param.method, reduceChar) == 0)
+    {
       procs[param.local_id] = $spawn add(param.workgroup, param.global_id, param.local_id, n, ((args*)param.arguments)->param[1]);
-    //}
+    }
   }
   for(int j = 0; j < local; j++)
   {
@@ -129,17 +129,17 @@ int clEnqueueNDRangeKernel(cl_kernel kernel, size_t global, size_t local)
 
 int main(int argc, char** argv)
 {
-  int global = numKernels;
-  int local = 2;
+  int global = 1;
+  int local = 1;
 
-  args * arguments;
-  arguments = (args*)malloc(sizeof(args) * numKernels);
+  args arguments[numKernels];
+  //arguments = (args*)malloc(sizeof(args) * numKernels);
   //Must have enough arguments for each kernel
-  
-  int star = 1;
-  
-  int * one = (int*)malloc(sizeof(int));
-  memcpy(one, &star, sizeof(int));
+  //try not on the heap
+
+  int one = 1;
+  int counter = 0;
+  //don't need to put on the heap
 
   //cl_kernel *kernels = (cl_kernel*)malloc(numKernels * sizeof(cl_kernel));
   cl_kernel kernels[numKernels];
@@ -147,9 +147,14 @@ int main(int argc, char** argv)
   //printf("%d, %d\n", star, *one);
   
   //For loop to create multiple kernels, the programmer must put the loop himself
+  char * strin = (char*)malloc(sizeof(char) * 4);
+  strin[0]='a';
+  strin[1]='d';
+  strin[2]='d';
+  strin[3]=0;
   for (int i = 0; i < numKernels; i++)
   {
-    kernels[i] = clCreateKernel(arguments+i, "add");
+    kernels[i] = clCreateKernel(arguments+i, strin);
     
 
   }
@@ -159,13 +164,13 @@ int main(int argc, char** argv)
 
     ((args*)kernels[j].arguments)->param[0] = (int*)malloc(sizeof(int));
     ((args*)kernels[j].arguments)->mallocflag[0] = 1;
-    memcpy(((args*)kernels[j].arguments)->param[0], &star, sizeof(int));
+    memcpy(((args*)kernels[j].arguments)->param[0], &one, sizeof(int));
     
     //param[0] is a __local variable, so it gets the flag put to 1 
     
     //printf("I am kernel of index %d, with a value of %d\n", j, ((args*)kernels[j].arguments)->param[0]);
     
-    ((args*)kernels[j].arguments)->param[1] = one;
+    ((args*)kernels[j].arguments)->param[1] = &counter;
     //This is a __global variable, so it does not get the flag changed in this iteration.
     //TODO: determine if global variables were freed by clReleaseKernel or the programmer.
   }
@@ -176,7 +181,7 @@ int main(int argc, char** argv)
   {
     clEnqueueNDRangeKernel(kernels[i], global, local);
   }
-  int ans = (int)((args*)kernels[0].arguments)->param[1];
+  int ans = *((int*)((args*)kernels[0].arguments)->param[1]);
   //memcpy(ans, &((args*)kernels[0].arguments)->param[1], sizeof(int));
   printf("There are %d kernels, and the final value is %d\n", numKernels, ans);
   
@@ -185,10 +190,6 @@ int main(int argc, char** argv)
     clReleaseKernel(kernels[k]);
   }
   
-  
-  
-  free(one);
-  free(arguments);
   return 0;
 }
 

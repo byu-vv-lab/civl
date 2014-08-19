@@ -11,6 +11,7 @@ void add(
   int input,
   int * counter)
   {
-  counter = counter + input;
+  *counter = *counter + input;
+  //printf("counter is %d, input is %d\n", *counter, input);
   
   }
