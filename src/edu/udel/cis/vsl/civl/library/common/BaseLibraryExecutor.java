@@ -30,6 +30,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
@@ -179,7 +180,15 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression firstElementPointer = argumentValues[0];
 
-		if (symbolicUtil.isUndefinedPointer(firstElementPointer)) {
+		if (firstElementPointer.operator() != SymbolicOperator.CONCRETE) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
+					"Attempt to free an unitialized pointer",
+					symbolicAnalyzer.stateToString(state), source);
+
+			this.errorLogger.reportError(err);
+			throw new UnsatisfiablePathConditionException();
+		} else if (symbolicUtil.isUndefinedPointer(firstElementPointer)) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
 					"Attempt to free a memory space that is already freed",

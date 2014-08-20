@@ -335,7 +335,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 						this.identifier);
 	}
 
-	ImmutableDynamicScope updateHeapAndPointers(
+	ImmutableDynamicScope updateHeapPointers(
 			Map<SymbolicExpression, SymbolicExpression> oldToNewExpression,
 			SymbolicUniverse universe) {
 		Collection<Variable> pointerVariableIter = lexicalScope

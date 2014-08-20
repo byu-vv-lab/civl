@@ -297,10 +297,10 @@ public class ImmutableStateFactory implements StateFactory {
 							.setVariable(theState, 0, dyscopeId, newHeap);
 				}
 			}
-			oldToNewExpressions = computeOldToNewHeapPointers(theState,
-					oldToNewHeapMemUnits);
+			computeOldToNewHeapPointers(theState, oldToNewHeapMemUnits,
+					oldToNewExpressions);
 			for (int i = 0; i < numDyscopes; i++)
-				newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
+				newScopes[i] = theState.getDyscope(i).updateHeapPointers(
 						oldToNewExpressions, universe);
 			theState = theState.setScopes(newScopes);
 			return theState;
@@ -800,7 +800,7 @@ public class ImmutableStateFactory implements StateFactory {
 		int length = ((IntegerNumber) universe.extractNumber(universe
 				.length(heapField))).intValue();
 		StringObject heapObjectName = universe.stringObject("Hop" + pid + "s"
-				+ dyscopeId + "o" + mallocId + "i" + length);
+				+ dyscopeId + "f" + mallocId + "o" + length);
 		SymbolicType heapObjectType = universe.arrayType(elementType,
 				elementCount);
 		SymbolicExpression heapObject = universe.symbolicConstant(
@@ -818,13 +818,14 @@ public class ImmutableStateFactory implements StateFactory {
 				mallocIndex);
 		int heapFieldLength = ((IntegerNumber) universe.extractNumber(universe
 				.length(heapField))).intValue();
-		Map<SymbolicExpression, SymbolicExpression> oldToNewHeapPointers = new HashMap<>(
+		Map<SymbolicExpression, SymbolicExpression> oldToNewHeapMemUnits = new HashMap<>(
 				heapFieldLength - index);
+		Map<SymbolicExpression, SymbolicExpression> oldToNewHeapPointers = new HashMap<>();
 		int numDyscopes = state.numDyscopes();
 		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
 		ImmutableState theState = (ImmutableState) state;
 
-		oldToNewHeapPointers.put(symbolicUtil.heapMemUnit(heapObjectPointer),
+		oldToNewHeapMemUnits.put(symbolicUtil.heapMemUnit(heapObjectPointer),
 				this.symbolicUtil.undefinedPointer());
 		heapField = universe.arrayWrite(heapField, universe.integer(index),
 				symbolicUtil.invalidHeapObject(((SymbolicArrayType) heapField
@@ -832,10 +833,10 @@ public class ImmutableStateFactory implements StateFactory {
 		heapValue = universe.tupleWrite(heapValue, mallocIndex, heapField);
 		theState = this.setVariable(theState, 0, dyscopeId, heapValue);
 		// computes all affected pointers' oldToNew map
-		oldToNewHeapPointers = this.computeOldToNewHeapPointers(theState,
+		this.computeOldToNewHeapPointers(theState, oldToNewHeapMemUnits,
 				oldToNewHeapPointers);
 		for (int i = 0; i < numDyscopes; i++)
-			newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
+			newScopes[i] = theState.getDyscope(i).updateHeapPointers(
 					oldToNewHeapPointers, universe);
 		theState = theState.setScopes(newScopes);
 		return theState;
@@ -1490,13 +1491,12 @@ public class ImmutableStateFactory implements StateFactory {
 		return false;
 	}
 
-	private Map<SymbolicExpression, SymbolicExpression> computeOldToNewHeapPointers(
-			State state,
-			Map<SymbolicExpression, SymbolicExpression> heapMemUnitsMap) {
+	private void computeOldToNewHeapPointers(State state,
+			Map<SymbolicExpression, SymbolicExpression> heapMemUnitsMap,
+			Map<SymbolicExpression, SymbolicExpression> oldToNewExpressions) {
 		if (heapMemUnitsMap.size() < 1)
-			return heapMemUnitsMap;
+			return;
 		else {
-			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapPointers = new HashMap<>();
 			int numDyscopes = state.numDyscopes();
 
 			for (int dyscopeID = 0; dyscopeID < numDyscopes; dyscopeID++) {
@@ -1505,10 +1505,9 @@ public class ImmutableStateFactory implements StateFactory {
 
 				for (int vid = 0; vid < numVars; vid++) {
 					computeNewHeapPointer(dyscope.getValue(vid),
-							heapMemUnitsMap, oldToNewHeapPointers);
+							heapMemUnitsMap, oldToNewExpressions);
 				}
 			}
-			return oldToNewHeapPointers;
 		}
 	}
 
