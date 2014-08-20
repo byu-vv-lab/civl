@@ -15,9 +15,10 @@
  *          make civl
  *****************************************/
 
-#include<civlc.h>
+#include<civlc.cvh>
 #include<stdio.h>
 #include<mpi.h>
+#include<civlmpi.cvh>
 
 $input int NPROCS;
 $input int NPROCSB;
