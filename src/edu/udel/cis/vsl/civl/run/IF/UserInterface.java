@@ -267,21 +267,25 @@ public class UserInterface {
 		AST userAST = this.compileFile(preprocessor, file);
 		List<String> inputVars = getInputVariables(config);
 		Program program;
+
+		program = this.link(preprocessor, userAST);
+		if (civlConfig.debugOrVerbose())
+			program.prettyPrint(out);
+		applyTransformers(filename, preprocessor, null, program, civlConfig,
+				inputVars);
+		return program;
+	}
+
+	private Program link(Preprocessor preprocessor, AST userAST)
+			throws PreprocessorException, SyntaxException, ParseException {
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
-		boolean debug = civlConfig.debug();
-		boolean verbose = civlConfig.verbose();
 
 		asts.addAll(this.asts2Link(preprocessor));
 		asts.add(userAST);
 		TUs = new AST[asts.size()];
 		asts.toArray(TUs);
-		program = frontEnd.link(TUs, Language.CIVL_C);
-		if (verbose || debug)
-			program.prettyPrint(out);
-		applyTransformers(filename, preprocessor, null, program, civlConfig,
-				inputVars);
-		return program;
+		return frontEnd.link(TUs, Language.CIVL_C);
 	}
 
 	private Pair<Model, Preprocessor> extractModel(PrintStream out,
@@ -860,7 +864,6 @@ public class UserInterface {
 		if (verbose || debug)
 			out.println("Generating composite program...");
 		combinedAST = combiner.combine(program0.getAST(), program1.getAST());
-		combinedAST.prettyPrint(out, false);
 		compositeProgram = frontEnd.getProgramFactory(
 				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
 				combinedAST);
