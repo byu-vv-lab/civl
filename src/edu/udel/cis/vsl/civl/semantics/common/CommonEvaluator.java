@@ -2775,11 +2775,26 @@ public class CommonEvaluator implements Evaluator {
 					state = eval.state;
 					charArray = eval.value;
 					try {
-						originalArray = (SymbolicSequence<?>) charArray
-								.argument(0);
+						// If it's an array in heap, the first argument is a
+						// symbolic constant stands for a heap object.
+						if (symbolicUtil.getVariableId(source, charPointer) == 0)
+							originalArray = (SymbolicSequence<?>) charArray
+									.argument(1);
+						else
+							originalArray = (SymbolicSequence<?>) charArray
+									.argument(0);
 					} catch (ClassCastException e) {
 						throw new CIVLUnimplementedFeatureException(
 								"non-concrete strings", source);
+					} catch (ArrayIndexOutOfBoundsException e) {
+						CIVLExecutionException err = new CIVLExecutionException(
+								ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
+								process,
+								"Reading undefined or uninitialized value from some pointer to heap: "
+										+ charArray.argument(0),
+								symbolicAnalyzer.stateToString(state), source);
+
+						errorLogger.reportError(err);
 					}
 					int_arrayIndex = symbolicUtil.extractInt(source,
 							((ArrayElementReference) ref).getIndex());
