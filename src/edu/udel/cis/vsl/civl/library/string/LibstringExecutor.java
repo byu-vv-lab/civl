@@ -25,7 +25,6 @@ import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
@@ -40,10 +39,6 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public class LibstringExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
-
-	private SymbolicConstant initialContentsFunction;
-
-	private SymbolicArrayType stringSymbolicType;
 
 	/* **************************** Constructors *************************** */
 
