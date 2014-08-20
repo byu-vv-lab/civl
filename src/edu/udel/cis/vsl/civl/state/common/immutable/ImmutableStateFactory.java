@@ -204,8 +204,9 @@ public class ImmutableStateFactory implements StateFactory {
 			int numDyscopes = theState.numDyscopes();
 			int numHeapFields = modelFactory.heapType().getNumMallocs();
 			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapMemUnits = new HashMap<>();
-			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapPointers = new HashMap<>();
-			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapObjectNames = new HashMap<>();
+			Map<SymbolicExpression, SymbolicExpression> oldToNewExpressions = new HashMap<>();
+			// Map<SymbolicExpression, SymbolicExpression>
+			// oldToNewHeapObjectNames = new HashMap<>();
 			int nameId = 0;
 			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
 
@@ -280,7 +281,7 @@ public class ImmutableStateFactory implements StateFactory {
 												universe.integer(objectId));
 
 								nameId = addOldToNewName(heapObject, nameId,
-										oldToNewHeapObjectNames);
+										oldToNewExpressions);
 							}
 						}
 						if (oldID2NewID.size() > 0)
@@ -296,12 +297,11 @@ public class ImmutableStateFactory implements StateFactory {
 							.setVariable(theState, 0, dyscopeId, newHeap);
 				}
 			}
-			oldToNewHeapPointers = computeOldToNewHeapPointers(theState,
+			oldToNewExpressions = computeOldToNewHeapPointers(theState,
 					oldToNewHeapMemUnits);
 			for (int i = 0; i < numDyscopes; i++)
-				newScopes[i] = theState.getDyscope(i)
-						.updateHeapAndPointers(oldToNewHeapPointers,
-								oldToNewHeapObjectNames, universe);
+				newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
+						oldToNewExpressions, universe);
 			theState = theState.setScopes(newScopes);
 			return theState;
 		}
@@ -836,9 +836,7 @@ public class ImmutableStateFactory implements StateFactory {
 				oldToNewHeapPointers);
 		for (int i = 0; i < numDyscopes; i++)
 			newScopes[i] = theState.getDyscope(i).updateHeapAndPointers(
-					oldToNewHeapPointers,
-					new HashMap<SymbolicExpression, SymbolicExpression>(),
-					universe);
+					oldToNewHeapPointers, universe);
 		theState = theState.setScopes(newScopes);
 		return theState;
 	}

@@ -336,22 +336,21 @@ public class ImmutableDynamicScope implements DynamicScope {
 	}
 
 	ImmutableDynamicScope updateHeapAndPointers(
-			Map<SymbolicExpression, SymbolicExpression> oldToNewPointers,
-			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapObjectNames,
+			Map<SymbolicExpression, SymbolicExpression> oldToNewExpression,
 			SymbolicUniverse universe) {
 		Collection<Variable> pointerVariableIter = lexicalScope
 				.variablesWithPointers();
 		SymbolicExpression[] newValues = null;
 
 		// update pointers
-		if (oldToNewPointers.size() > 0)
+		if (oldToNewExpression.size() > 0)
 			for (Variable variable : pointerVariableIter) {
 				int vid = variable.vid();
 				SymbolicExpression oldValue = variableValues[vid];
 
 				if (oldValue != null && !oldValue.isNull()) {
 					SymbolicExpression newValue = universe.substitute(oldValue,
-							oldToNewPointers);
+							oldToNewExpression);
 
 					if (oldValue != newValue) {
 						if (newValues == null)
@@ -360,22 +359,6 @@ public class ImmutableDynamicScope implements DynamicScope {
 					}
 				}
 			}
-		// rename heap objects
-		if (oldToNewHeapObjectNames.size() > 0) {
-			SymbolicExpression oldHeap = newValues == null ? variableValues[0]
-					: newValues[0];
-
-			if (!oldHeap.isNull()) {
-				SymbolicExpression newHeap = universe.substitute(oldHeap,
-						oldToNewHeapObjectNames);
-
-				if (oldHeap != newHeap) {
-					if (newValues == null)
-						newValues = copyValues();
-					newValues[0] = newHeap;
-				}
-			}
-		}
 		return newValues == null ? this : new ImmutableDynamicScope(
 				lexicalScope, this.parent, this.parentIdentifier, newValues,
 				reachers, this.identifier);
