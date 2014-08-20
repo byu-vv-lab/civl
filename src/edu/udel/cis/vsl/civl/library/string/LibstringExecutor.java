@@ -3,11 +3,10 @@
  */
 package edu.udel.cis.vsl.civl.library.string;
 
-import java.util.Arrays;
-
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
+import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
@@ -22,6 +21,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
@@ -30,7 +30,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
-
 
 /**
  * Executor for stdlib function calls.
@@ -41,9 +40,9 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public class LibstringExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
-	
+
 	private SymbolicConstant initialContentsFunction;
-	
+
 	private SymbolicArrayType stringSymbolicType;
 
 	/* **************************** Constructors *************************** */
@@ -132,7 +131,8 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
-
+	// TODO: this function assume the "lhspointer" which is argument[0] is a
+	// pointer to heap object element which needs being improved.
 	private State execute_strcpy(State state, int pid, String process,
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
@@ -193,119 +193,75 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 					argumentValues[0]);
 		return state;
 	}
-	
+
+	/**
+	 * <code>int strcmp(const char * s1, const char * s2)</code> Compare two
+	 * strings s1 and s2. Return 0 if s1 = s2. If s1 > s2, return a value
+	 * greater than 0 and if s1 < s2, return a value less than zero. <br>
+	 * Comparison:<br>
+	 * The comparison is determined by the sign of the difference between the
+	 * values of the first pair of characters (both interpreted as unsigned
+	 * char) that differ in the objects being compared.
+	 * 
+	 * @param state
+	 *            the current state
+	 * @param pid
+	 *            the PID of the process
+	 * @param process
+	 *            the information of the process
+	 * @param lhs
+	 *            the expression of the left-hand side variable
+	 * @param arguments
+	 *            the expressions of arguments
+	 * @param argumentValues
+	 *            the symbolic expressions of arguments
+	 * @param source
+	 *            the CIVL source of the statement
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State execute_strcmp(State state, int pid, String process,
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		Evaluation eval;
-		int startIndex1;
-		int startIndex2;
-		int output;
+		int output = 0;
+		NumericExpression result;
 		SymbolicExpression charPointer1 = argumentValues[0];
 		SymbolicExpression charPointer2 = argumentValues[1];
-		int numChars1;
-		int numChars2;
-		SymbolicSequence<?> originalArray1 = null;
-		SymbolicSequence<?> originalArray2 = null;
-		String s1 = "";
-		String s2 = "";
-		
-		if (charPointer1.operator() == SymbolicOperator.CONCRETE && charPointer2.operator() == SymbolicOperator.CONCRETE){
-			startIndex1 = symbolicUtil.getArrayIndex(source, charPointer1);
-			startIndex2 = symbolicUtil.getArrayIndex(source, charPointer2);
-		}
-		else{
-			stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
-					.arrayType(universe.characterType()));
-			initialContentsFunction = (SymbolicConstant) universe.canonic(universe
-					.symbolicConstant(universe.stringObject("contents"), universe
-							.functionType(Arrays.asList(stringSymbolicType, stringSymbolicType),
-									universe.integerType())));
-			SymbolicExpression outValue = universe.apply(initialContentsFunction, Arrays.asList(charPointer1, charPointer2));
-			state = primaryExecutor.assign(state, pid, process, lhs,
-					outValue);
-			
+		Pair<State, StringBuffer> strEval1 = null;
+		Pair<State, StringBuffer> strEval2 = null;
+		StringBuffer str1, str2;
+
+		// execute_strcmp can only process concrete string for now. For symbolic
+		// strings, it needs changes in Library Enabler.
+		try {
+			strEval1 = evaluator
+					.getString(source, state, process, charPointer1);
+			state = strEval1.left;
+			strEval2 = evaluator
+					.getString(source, state, process, charPointer2);
+			state = strEval2.left;
+		} catch (CIVLExecutionException e) {
+			errorLogger.reportError(new CIVLExecutionException(e.kind(), e
+					.certainty(), process, e.getMessage(), source));
+		} catch (CIVLUnimplementedFeatureException e) {
+			result = (NumericExpression) universe.symbolicConstant(
+					universe.stringObject("strcmp_result"),
+					universe.integerType());
+			if (lhs != null)
+				state = primaryExecutor
+						.assign(state, pid, process, lhs, result);
 			return state;
+		} catch (Exception e) {
+			throw new CIVLInternalException("Unknown error", source);
 		}
-		
-		if (charPointer1.type() instanceof SymbolicArrayType) {
-			originalArray1 = (SymbolicSequence<?>) charPointer1.argument(0);
-		} else {
-			SymbolicExpression arrayPointer1 = symbolicUtil.parentPointer(
-					source, charPointer1);
-			ArrayElementReference arrayRef1 = (ArrayElementReference) symbolicUtil
-					.getSymRef(charPointer1);
-			NumericExpression arrayIndex1 = arrayRef1.getIndex();
-			eval = evaluator.dereference(source, state, process, arrayPointer1,
-					false);
-			int numOfArgs;
-
-			state = eval.state;
-			numOfArgs = eval.value.numArguments();
-
-			for (int i = 0; i < numOfArgs; i++) {
-				if (eval.value.argument(i) instanceof SymbolicSequence<?>) {
-					originalArray1 = (SymbolicSequence<?>) eval.value
-							.argument(i);
-					break;
-				}
-			}
-			startIndex1 = symbolicUtil.extractInt(source, arrayIndex1);
-		}
-		numChars1 = originalArray1.size();
-		for (int i = 0; i < numChars1; i++) {
-			SymbolicExpression charExpr = originalArray1.get(i + startIndex1);
-			Character theChar = universe.extractCharacter(charExpr);
-			s1 = s1.concat(theChar.toString());
-
-			if (theChar == '\0')
-				break;
-		}
-		
-		if (charPointer2.type() instanceof SymbolicArrayType) {
-			originalArray2 = (SymbolicSequence<?>) charPointer2.argument(0);
-		} else {
-			SymbolicExpression arrayPointer2 = symbolicUtil.parentPointer(
-					source, charPointer2);
-			ArrayElementReference arrayRef2 = (ArrayElementReference) symbolicUtil
-					.getSymRef(charPointer2);
-			NumericExpression arrayIndex2 = arrayRef2.getIndex();
-			eval = evaluator.dereference(source, state, process, arrayPointer2,
-					false);
-			int numOfArgs;
-
-			state = eval.state;
-			numOfArgs = eval.value.numArguments();
-
-			for (int i = 0; i < numOfArgs; i++) {
-				if (eval.value.argument(i) instanceof SymbolicSequence<?>) {
-					originalArray2 = (SymbolicSequence<?>) eval.value
-							.argument(i);
-					break;
-				}
-			}
-			startIndex2 = symbolicUtil.extractInt(source, arrayIndex2);
-			
-		}
-		numChars2 = originalArray2.size();
-		for (int i = 0; i < numChars2; i++) {
-			SymbolicExpression charExpr = originalArray2.get(i + startIndex2);
-			Character theChar = universe.extractCharacter(charExpr);
-			s2 = s2.concat(theChar.toString());
-
-			if (theChar == '\0')
-				break;
-		}
-		
-		if(s1.equals(s2))
-			output = 0;
-		else
-			output = -1;
-		
+		assert (strEval1.right != null && strEval2.right != null) : "Evaluating String failed";
+		str1 = strEval1.right;
+		str2 = strEval2.right;
+		output = str1.toString().compareTo(str2.toString());
+		result = universe.integer(output);
 		if (lhs != null)
-			state = primaryExecutor.assign(state, pid, process, lhs,
-					universe.integer(output));
+			state = primaryExecutor.assign(state, pid, process, lhs, result);
 		return state;
 	}
 
