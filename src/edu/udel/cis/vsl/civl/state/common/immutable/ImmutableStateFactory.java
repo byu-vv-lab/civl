@@ -36,6 +36,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
@@ -1448,6 +1449,8 @@ public class ImmutableStateFactory implements StateFactory {
 					}
 				}
 			}
+		} else if (value.operator() != SymbolicOperator.CONCRETE) {
+			return;
 		} else if (symbolicUtil.isHeapPointer(value)) {
 			SymbolicExpression heapObjPtr = this.symbolicUtil
 					.heapMemUnit(value);
