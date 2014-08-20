@@ -158,11 +158,6 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void cAssert() throws ABCException {
-		assertFalse(ui.run("verify", filename("cAssert.cvl")));
-	}
-
-	@Test
 	public void cast() throws ABCException {
 		assertTrue(ui.run("verify", filename("cast.cvl")));
 	}
