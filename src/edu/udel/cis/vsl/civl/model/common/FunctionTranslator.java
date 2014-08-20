@@ -342,10 +342,13 @@ public class FunctionTranslator {
 		modelFactory.addConditionalExpressionQueue();
 		for (int i = 0; i < rootNode.numChildren(); i++) {
 			ASTNode node = rootNode.child(i);
-			Fragment fragment = translateASTNode(node, systemScope, null);
+			Fragment fragment;
 
-			if (fragment != null)
-				initialization = initialization.combineWith(fragment);
+			if (node != null) {
+				fragment = translateASTNode(node, systemScope, null);
+				if (fragment != null)
+					initialization = initialization.combineWith(fragment);
+			}
 		}
 		modelFactory.popConditionaExpressionStack();
 		if (modelBuilder.mainFunctionNode == null) {
@@ -2025,6 +2028,8 @@ public class FunctionTranslator {
 								+ functionName, nodeSource);
 					if (functionIdentifier.name().equals("$assert"))
 						libName = "civlc";
+					else if (functionIdentifier.name().equals("$equals"))
+						libName = "pointer";
 					else
 						libName = fileNameWithoutExtension(fileName);
 					result = modelFactory.systemFunction(nodeSource,

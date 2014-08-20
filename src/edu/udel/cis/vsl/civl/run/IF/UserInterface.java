@@ -51,7 +51,6 @@ import java.util.Set;
 import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
-import edu.udel.cis.vsl.abc.antlr2ast.IF.ASTBuilder;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
@@ -265,14 +264,12 @@ public class UserInterface {
 			SyntaxException, ParseException {
 		File file = new File(filename);
 		AST userAST = this.compileFile(preprocessor, file);
-		List<String> inputVars = getInputVariables(config);
 		Program program;
 
 		program = this.link(preprocessor, userAST);
 		if (civlConfig.debugOrVerbose())
 			program.prettyPrint(out);
-		applyTransformers(filename, preprocessor, null, program, civlConfig,
-				inputVars);
+		applyAllTransformers(filename, preprocessor, program, civlConfig);
 		return program;
 	}
 
@@ -342,6 +339,7 @@ public class UserInterface {
 		return null;
 	}
 
+	@SuppressWarnings("unused")
 	private List<String> getInputVariables(GMCConfiguration config) {
 		Collection<Option> options = config.getOptions();
 		List<String> inputVars = new ArrayList<>();
@@ -370,9 +368,17 @@ public class UserInterface {
 	 * @param program
 	 * @throws SyntaxException
 	 */
-	private void applyTransformers(String fileName, Preprocessor preprocessor,
-			ASTBuilder astBuilder, Program program, CIVLConfiguration config,
-			List<String> inputVars) throws SyntaxException {
+	private void applyAllTransformers(String fileName,
+			Preprocessor preprocessor, Program program, CIVLConfiguration config)
+			throws SyntaxException {
+		this.applyTranslationTransformers(fileName, preprocessor, program,
+				config);
+		this.applyDefaultTransformers(program, config);
+	}
+
+	private void applyTranslationTransformers(String fileName,
+			Preprocessor preprocessor, Program program, CIVLConfiguration config)
+			throws SyntaxException {
 		Set<String> headers = preprocessor.headerFiles();
 		boolean isC = fileName.endsWith(".c");
 		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
@@ -432,6 +438,10 @@ public class UserInterface {
 			if (config.debugOrVerbose())
 				program.prettyPrint(out);
 		}
+	}
+
+	private void applyDefaultTransformers(Program program,
+			CIVLConfiguration config) throws SyntaxException {
 		// always apply pruner and side effect remover
 		if (config.debugOrVerbose())
 			this.out.println("Apply pruner...");
@@ -848,7 +858,8 @@ public class UserInterface {
 		Preprocessor preprocessor0;
 		Preprocessor preprocessor1;
 		CIVLConfiguration civlConfig = new CIVLConfiguration(config);
-		AST combinedAST;
+		@SuppressWarnings("unused")
+		AST ast0, combinedAST, pointerAST;
 
 		checkFilenames(2, config);
 		filename0 = config.getFreeArg(1);
@@ -857,6 +868,17 @@ public class UserInterface {
 				this.getUserIncludes(config));
 		preprocessor1 = frontEnd.getPreprocessor(this.getSysIncludes(config),
 				this.getUserIncludes(config));
+		// ast0 = this.compileFile(preprocessor0, new File(filename0));
+		// if (!preprocessor0.headerFiles().contains("pointer.cvh")) {
+		// pointerAST = this.compileFile(preprocessor0, new File(
+		// "../abc/text/include/pointer.cvh"));
+		// ast0 = frontEnd.link(new AST[] { pointerAST, ast0 },
+		// Language.CIVL_C).getAST();
+		// program0 = this.link(preprocessor0, ast0);
+		// } else
+		// program0 = frontEnd.link(new AST[] { ast0 }, Language.CIVL_C);
+		// this.applyTranslationTransformers(filename0, preprocessor0, program0,
+		// civlConfig);
 		program0 = this.compileLinkAndTransform(preprocessor0, filename0,
 				config, civlConfig);
 		program1 = this.compileLinkAndTransform(preprocessor1, filename1,
@@ -867,6 +889,7 @@ public class UserInterface {
 		compositeProgram = frontEnd.getProgramFactory(
 				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
 				combinedAST);
+		// this.applyDefaultTransformers(compositeProgram, civlConfig);
 		if (showProgram || verbose || debug) {
 			compositeProgram.prettyPrint(out);
 		}
