@@ -133,8 +133,8 @@
 \newcommand{\cckey}{\$}
 \newcommand{\cc}[1]{\mbox{\texttt{\cckey{}#1}}}
 \newcommand{\cabstract}{\cc{abstract}}
-\newcommand{\carrayinit}{\cc{array{\U}init}}
 \newcommand{\ccontains}{\cc{contains}}
+\newcommand{\ccopy}{\cc{copy}}
 \newcommand{\cproc}{\cc{proc}}
 \newcommand{\cprocdefined}{\cc{proc{\U}defined}}
 \newcommand{\cprocNull}{\cc{proc{\U}null}}
@@ -191,6 +191,11 @@
 \newcommand{\cbarriercall}{\cc{barrier{\U}call}}
 \newcommand{\cbarrierdestroy}{\cc{barrier{\U}destroy}}
 
+\newcommand{\cseqinit}{\cc{seq{\U}init}}
+\newcommand{\cseqlen}{\cc{seq{\U}length}}
+\newcommand{\cseqinsert}{\cc{seq{\U}insert}}
+\newcommand{\cseqrm}{\cc{seq{\U}remove}}
+
 \newcommand{\cforall}{\cc{forall}}
 \newcommand{\cexists}{\cc{exists}}
 \newcommand{\cimplies}{\ct{=>}}
@@ -200,5 +205,5 @@
 \newcommand{\cdomainof}[1]{\cc{domain}\ct{(}#1\ct{)}}
 
 % version information
-\newcommand{\version}{v0.12}
-\newcommand{\versiondate}{2014-07-22}
+\newcommand{\version}{v0.13}
+\newcommand{\versiondate}{2014-08-22}

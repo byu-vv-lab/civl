@@ -245,7 +245,7 @@ in C.
 
 \subsection{The bundle type: \cbundle}
 
-CIVL-C includes a type named \cbundle. A bundle is basically a
+CIVL-C includes a type named \cbundle, declared in the CIVL-C standard header \texttt{bundle.cvh}. A bundle is basically a
 sequence of data, wrapped into an atomic package. A bundle is created
 using a function that specifies a region of memory. One can create a
 bundle from an array of integers, and another bundle from an array of
@@ -258,24 +258,8 @@ which to unpack the bundle; if that memory does not have the right
 type to receive the contents of the bundle, a runtime error is
 generated.
 
-\begin{figure}
-\begin{verbatim}
-/* Creates a bundle from the memory region specified by ptr and size,
- * copying the data into the new bundle */
-$bundle $bundle_pack(void *ptr, int size);
-
-/* Returns the size (number of bytes) of the bundle */
-int $bundle_size($bundle b);
-
-/* Copies the data out of the bundle into the region specified */
-void $bundle_unpack($bundle bundle, void *ptr);
-\end{verbatim}
-  \caption{The \emph{bundle} abstract data type}
-  \label{fig:bundle}
-\end{figure}
-
 The relevant functions for creating and manipulating bundles
-are given in Figure \ref{fig:bundle}.
+are given in Section \ref{subsec:bundleLibrary}.
 
 \subsection{The \cscope{} type}
 \label{sec:scopetype}
@@ -381,12 +365,8 @@ that a scope variable is defined before using it.
 
 \subsubsection{Checking if a dyscope is defined: \cscopedefined}
 
-The system function \cscopedefined{} has signature
-\begin{verbatim}
-  _Bool $scope_defined($scope s);
-\end{verbatim}
-It returns \emph{true} if the dynamic scope specified by \texttt{s} is
-defined, else it returns \emph{false}.
+The header \texttt{civlc.cvh} provides a function \cscopedefined{}, which checks if a given 
+value of \cscope{} type is defined, as described in Section \ref{subsubsec:scopedefined}.
 
 \subsubsection{The constant \chere}
 
@@ -428,13 +408,8 @@ will be reported.
 
 \subsubsection{Scope parent function \texorpdfstring{\cscopeparent}{\$scope\_parent}}
 
-The system function
-\begin{verbatim}
-  $scope $scope_parent($scope s);
-\end{verbatim}
-returns the parent dynamic scope of the dynamic scope referenced by
-\ct{s}.  If \ct{s} is the root dynamic scope, it returns the undefined
-value of type $\cscope$.
+The CIVL-C header \texttt{scope.cvh} provides the function \cscopeparent{} that computes the immediate
+parent of a dynamic scope, as described in Section \ref{subsec:scopeLibrary}.
 
 \subsubsection{Lowest Common Ancestor: \ct{+}}
 
@@ -647,14 +622,8 @@ transition system:
 
 \subsubsection{Nondeterministic choice of integer:
   \texorpdfstring{\cchooseint}{\$choose\_int}}
-
-The system function \cchooseint{} has the following signature:
-\begin{verbatim}
-  int $choose_int(int n);
-\end{verbatim}
-This function takes as input a positive integer \texttt{n} and
-nondeterministicaly returns an integer in the range
-$[0,\texttt{n}-1]$.
+The header \texttt{civlc.cvh} provides the function \cchooseint{} that returns an integer between 0 and the specified value
+in a nondeterministic way, as described in Section \ref{subsubsec:chooseint}.
 
 \subsection{Iteration using domains with \cfor}
 \label{sec:cfor}
@@ -688,56 +657,6 @@ An abstract function declares a function without a body, and it has the form
 It is required that the function should have a non-void return type and take at least one parameter.
 The return value of the function is evaluated symbolically using the actual arguments of the function call.
 
-\subsection{Utility functions}
-
-\subsubsection{Equality checking:  \texorpdfstring{\cequals}{\$equals}}
-
-The system function \cequals has the form
-\begin{verbatim}
-  _Bool $equals(void *x, void *y);
-\end{verbatim}
-
-This function takes two non-null pointers as input. If  the two objects that the pointers refer to have the same value, then the
-function returns \ctrue. Otherwise, it returns \cfalse.
-
-\subsubsection{Membership testing:  \texorpdfstring{\ccontains}{\$contains}}
-
-The system function \ccontains has the form
-\begin{verbatim}
-  _Bool $contains(void *ptr1, void *ptr2);
-\end{verbatim}
-
-This function takes two non-null pointers as input. If  the object that the pointer \texttt{ptr1} points to contains the object pointed to by \texttt{ptr2},  then the
-function returns \ctrue. Otherwise, it returns \cfalse. For example:
-
-\begin{verbatim}
- int a[10];
- struct foo {int x; double y} f;
- struct foo b[10];
-
- // ... initialize a, f and b
-\end{verbatim}
-
-Here are the results of several invocations of  \ccontains:
-
-\begin{itemize}
-\item \texttt{\ccontains(\&a, \&a[3])} returns  \ctrue, since  the array \texttt{a} contains the cell \texttt{a[3]};
-\item \texttt{\ccontains(\&a[2], \&a[3])} returns \cfalse;
-\item \texttt{\ccontains(\&a[2], \&a[2])} returns \ctrue, because the relation is relexive;
-\item  \texttt{\ccontains(\&f, \&f.y)} returns \ctrue, since the struct \texttt{f} contains its field \texttt{f.y};
-\item \texttt{\ccontains(\&b, \&b[2].x)} returns \ctrue.
-\end{itemize}
-
-
-\subsubsection{Copying an array:  \texorpdfstring{\carrayinit}{\$array\_init}}
-
-The system function \carrayinit has the form
-\begin{verbatim}
-  void $array_init(void *array, int length, void *elementValue);
-\end{verbatim}
-
-This function will initialize an array by assigning it an array value of given length and correct element type where every element has the given element value. 
-
 \chapter{Concurrency}
 \label{chap:concurrency}
 
@@ -760,28 +679,19 @@ two arguments refer to the same process.
 
 An object of type \cproc{} is initially undefined, so a use of that
 object would result in an error.  One can check whether a \cproc{}
-object is defined using the method \cprocdefined:
-\begin{verbatim}
-  _Bool $proc_defined($proc p);
-\end{verbatim}
-
-\subsection{Obtaining the null process reference: \cprocNull}
-
-This function takes a pointer to an object of \cproc{} type as a parameter:
-
-\begin{verbatim}
-  void $proc_null($proc *p);
-\end{verbatim}
-
-It updates the corresponding object with the default null value of the \cproc{} type.
-The null value of \cproc{} type is considered as defined, i.e., there will be no
-error to use an \cproc{} object with null value.
+object is defined using the function \cprocdefined, declared by the header \texttt{civlc.cvh}, as 
+described in Section \ref{subsubsec:procdefined}.
 
 \subsection{The \emph{self} process constant: \cself}
 
 This is a constant of type \cproc. It can be used wherever an argument
 of type \cproc{} is called for. It refers to the process that is
 evaluating the expression containing \cself.
+
+\subsection{The \emph{null} process constant: \cprocNull}
+
+This is a constant of type \cproc. It can be used wherever an argument
+of type \cproc{} is called for. It simply means that the object doesnt refer to any process.
 
 \subsection{Spawning a new process: \cspawn}
 
@@ -799,33 +709,14 @@ Typically the returned value is assigned to a variable, e.g.,
 If the invoked function \texttt{f} returns a value, that value is
 simply ignored.
 
-\subsection{Waiting for another process to terminate: \cwait}
+\subsection{Waiting for process(es) to terminate: \cwait\ and \cwaitall}
 
-The system function $\cwait$ has signature
-\begin{verbatim}
-  void $wait($proc p);
-\end{verbatim}
-When invoked, this function will not return until the process
-referenced by \ct{p} has terminated. Note that $p$ can be any
-expression of type \cproc{}, not just a variable.
-
-\subsection{Waiting for a number of processes to terminate: \cwaitall}
-
-The system function $\cwaitall$ has signature
-\begin{verbatim}
-  void $waitall($proc *procs, int numProcs);
-\end{verbatim}
-When invoked, this function will not return until all the \ct{numProcs} processes
-referenced by the memory specified by \ct{procs} have terminated.
+Once the system function \cwait(\cwaitall) provided by the CIVL-C standard header \texttt{civlc.cvh} 
+gets invoked, it will not return until the specified process(es) terminates(terminate), as described in Sections \ref{subsubsec:wait} and
+\ref{subsubsec:wait}.
 
 \subsection{Terminating a process immediately: \cexit}
-
-This function takes no arguments.  It causes the
-calling process to terminate immediately, regardless of the state of
-its call stack:
-\begin{verbatim}
-  void $exit(void);
-\end{verbatim}
+Once the function \cexit\, declared in the header \texttt{civlc.cvh}, is called, the calling process terminates immediately, as described in Section \ref{subsubsec:exit}.
 
 \section{Atomicity}
 
@@ -873,15 +764,15 @@ returns and control finally reaches the right curly brace at the end
 of the atom block (assuming the block is not contained in another atom
 block).
 
-\emph{Note:} \cwait\ statements are not allowed in \catom\ blocks.
+\emph{Note:} \cwait\ or \cwaitall\ calls are not allowed in \catom\ blocks.
 The rationale for this is that there is never a way to know for
-certain that another process has terminated (until \cwait\ has
-returned) so there is never a way to be certain the \cwait\ statement
+certain that another process has terminated (until \cwait\ or \cwaitall\ has
+returned) so there is never a way to be certain the \cwait\ or \cwaitall call
 will not block.  If one does occur in an \catom\ block, an error will
 be reported statically (if it can be detected statically) or
 dynamically (otherwise).  Note that it is not always possible to
 detect this statically because the \catom\ block may contain a
-function call, and the function may contain the \cwait\ statement.
+function call, and the function may contain \cwait\ or \cwaitall\ calls.
 
 \subsection{Atomic blocks: \catomic}
 
@@ -909,7 +800,7 @@ execute.  Eventually, if the original process becomes enabled due to
 the actions of other processes, it may be scheduled again, in which
 case it regains atomicity and continues where it left off.  For
 example, after executing the first loop, the process executing the
-following code will become blocked at the first \cwait\ statement:
+following code will become blocked at the first \cwait\ or \cwaitall\ call:
  \begin{verbatim}  
 $atomic{
   for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
@@ -919,7 +810,7 @@ $atomic{
 Other processes will then execute. Eventually, if the process being
 waited on terminates, the original process becomes enabled and may be
 scheduled, in which case it regain atomicity, increments \texttt{i}
-and proceeds to the next $\cwait$ statement.  This is in fact a common
+and proceeds to the next $\cwait$ or \cwaitall\ call.  This is in fact a common
 idiom for spawning and waiting on a set of processes.
 
 A process that enters an $\catomic$ block is said to be
@@ -1330,35 +1221,36 @@ are used primarily in functional equivalence checking.
 
 \subsection{Assertions: \cassert}
 
-The system function \cassert{} takes an argument of boolean type:
-\begin{verbatim}
-  void $assert (_Bool expr);
-\end{verbatim}
-During verification, the assertion is checked.  If it cannot be proved
-that it must hold, a violation is reported.
 
+An \emph{assert statement} has the either of the forms below
+\begin{verbatim}
+  $assert expr;
+  $assert expr : msg, msg_arg0, msg_arg1, ... ;
+\end{verbatim}
+
+It takes an boolean type expression and a number of optional expressions which are used to construct an error message.
 Note that CIVL-C boolean expressions have a richer syntax than C
 expressions, and may include universal or existential quantifiers
 (see below), and the boolean values  \ctrue{} and \cfalse{}.
 
-The assertion function may take additional optional arguments used to
-print a specific message if the assertion is violated.  These
+During verification, the assertion is checked.  If it cannot be proved
+that it must hold, a violation is reported. If additional arguments are present, then a specific message is prented as well if the assertion is violated.  These
 additional arguments are similar in form to those used in C's
 \texttt{printf} statement: a format string, followed by some number of
 arguments which are evaluated and substituted for successive codes in
 the format string.  For example,
 \begin{verbatim}
-  $assert(x<=B, "x-coordinate %f exceeds bound %f", x, B); 
+  $assert x<=B : "x-coordinate %f exceeds bound %f", x, B; 
 \end{verbatim}
 
-The C function \texttt{assert}, included in the standard library
-\texttt{assert.h}, is identical to \cassert.  Programmers are
-free to use either one.
+%The C function \texttt{assert}, included in the standard library
+%\texttt{assert.h}, is identical to \cassert.  Programmers are
+%free to use either one.
 
 
 \subsection{Assume statements: \cassume}
 
-As \emph{assume statement} has the form
+An \emph{assume statement} has the form
 \begin{verbatim}
   $assume expr;
 \end{verbatim}
@@ -1512,7 +1404,7 @@ deallocate objects in the specified scope.
 \section{Memory functions: \texttt{memcpy}}
 
 The function \texttt{memcpy} is defined in the standard C library
-\texttt{string.h} and works exactly the same in CIVL-C: it copies
+\texttt{string.h} and works exactly the same in CIVL: it copies
 data from the region pointed to by \ct{q} to that pointed to by
 \ct{p}.  The signature is
 
@@ -1523,28 +1415,9 @@ data from the region pointed to by \ct{q} to that pointed to by
 \section{Heaps, \cmalloc{} and \cfree}
 
 As mentioned above, each dynamic scope has an implicit heap on which
-objects can be allocated and deallocated dynamically.  To allocate an
-object, one first needs a reference to the dynamic scope to be used.
-The system function $\cmalloc$ is like C's \texttt{malloc}, but takes
-this extra scope argument:
-\begin{verbatim}
-  void * $malloc($scope scope, int size);
-\end{verbatim}
-The standard C function
-\begin{verbatim}
-  void * malloc(int size);
-\end{verbatim}
-declared in \texttt{stdlib.h}, is equivalent to \verb!$malloc($root, size)!.
-
-The system function \cfree{} is used to deallocate a heap object;
-it is just like C's \texttt{free}:
-\begin{verbatim}
-  void $free(void *p);
-\end{verbatim}
-An error is generated if the pointer is not one that was returned by
-\cmalloc, or if it was already freed.  The standard C function
-\texttt{free}, declared in \texttt{stdlib.h} is identical to \cfree.
-The two functions are interchangeable.
+objects can be allocated and deallocated dynamically.  The CIVL-C header
+\texttt{civlc.cvh} provides the functions \cmalloc{} and \cfree{} for allocating and dealocating
+memory, repectively, as described in Section \ref{subsubsec:mallocandfree}.
 
 % \section{Pointer types}
 
@@ -1693,12 +1566,290 @@ The two functions are interchangeable.
 
 \chapter{Libraries}
 
+\section{Standard CIVL-C headers}
+CIVL-C headers have the suffix \texttt{.cvh}. Here is the list of standard libraries provided by CIVL:
+\begin{itemize}
+\item \texttt{civlc} provides types and functions that are used frequently by CIVL-C programs; 
+\item \texttt{scope} provides utility functions related to dynamic scopes;
+\item \texttt{pointer} provides utility functions dealing with pointers;
+\item \texttt{seq} provides utility functions of sequences (realized as incomplete array in CIVL-C);
+\item \texttt{concurrency} provides concurrency utilities such as the barrier;
+\item \texttt{bundle} provides bundle types and methods;
+\item \texttt{comm} provides communicators and methods;
+\item \texttt{civlmpi} provides CIVL-C types for MPI.
+\end{itemize}
+
+\subsection{CIVL basics \texttt{civlc.cvh}}
+\label{subsec:civlcLibrary}
+The header \texttt{civlc.cvh} declares four types, three macros and  several functions. The types declared are \texttt{size\_t}, \texttt{\$proc},
+\texttt{\$scope} and \texttt{\$int\_iter}. The declared macros are \texttt{\$true}, \texttt{\$false} and \texttt{NULL}. The functions provided in this header
+will be described in the following.
+
+\subsubsection{The \cwait\ function}
+\label{subsubsec:wait}
+The \cwait\ function has signature
+\begin{verbatim}
+  void $wait($proc p);
+\end{verbatim}
+
+When invoked, this function will not return until the process
+referenced by \ct{p} has terminated. Note that $p$ can be any
+expression of type \cproc{}, not just a variable.
+
+\subsubsection{The \cwaitall\ function}
+\label{subsubsec:waitall}
+The $\cwaitall$ function has signature
+\begin{verbatim}
+  void $waitall($proc *procs, int numProcs);
+\end{verbatim}
+When invoked, this function will not return until all the \ct{numProcs} processes
+referenced by the memory specified by \ct{procs} have terminated.
+
+\subsubsection{The \cexit\ function}
+\label{subsubsec:exit}
+This function takes no arguments.  It causes the
+calling process to terminate immediately, regardless of the state of
+its call stack:
+\begin{verbatim}
+  void $exit(void);
+\end{verbatim}
+
+\subsubsection{The \cchooseint{} function}
+\label{subsubsec:chooseint}
+
+The function \cchooseint{} has the following signature:
+\begin{verbatim}
+  int $choose_int(int n);
+\end{verbatim}
+This function takes as input a positive integer \texttt{n} and
+nondeterministicaly returns an integer in the range
+$[0,\texttt{n}-1]$.
+
+\subsubsection{The \cscopedefined{} function}
+\label{subsubsec:scopedefined}
+
+The function \cscopedefined{} has signature
+\begin{verbatim}
+  _Bool $scope_defined($scope s);
+\end{verbatim}
+It returns \emph{true} if the dynamic scope specified by \texttt{s} is
+defined, else it returns \emph{false}.
+
+\subsubsection{The \cprocdefined{} function}
+\label{subsubsec:procdefined}
+
+The function \cprocdefined{} has signature
+\begin{verbatim}
+  _Bool $proc_defined($proc p);
+\end{verbatim}
+
+It returns \ctrue if and only if the given object of \cproc{} type is defined.
+
+
+\subsubsection{The heap-related functions: \cmalloc{} and \cfree}
+\label{subsubsec:mallocandfree}
+
+The memory allocation function $\cmalloc$ is like C's \texttt{malloc}, but takes
+an extra scope argument:
+\begin{verbatim}
+  void * $malloc($scope scope, int size);
+\end{verbatim}
+To allocate an object, one first needs a reference to the dynamic scope to be used.
+
+The function \cfree{} is used to deallocate a heap object;
+it is just like C's \texttt{free}:
+\begin{verbatim}
+  void $free(void *p);
+\end{verbatim}
+An error is generated if the pointer is not one that was returned by
+\cmalloc, or if it was already freed.
+
+\subsection{Scope utilities \texttt{scope.cvh}}
+\label{subsec:scopeLibrary}
+
+The header \texttt{scope.cvh} declares one function: \texttt{\$scope\_parent}, which has signature
+
+\begin{verbatim}
+  $scope $scope_parent($scope s);
+\end{verbatim}
+This function returns the parent dynamic scope of the dynamic scope referenced by
+\ct{s}.  If \ct{s} is the root dynamic scope, it returns the undefined
+value of type $\cscope$.
+
+\subsection{Pointer utilities \texttt{pointer.cvh}}
+\label{subsec:pointerLibrary}
+The header \texttt{pointer.cvh} declares functions taking pointers as the arguments for different purposes, including:
+\begin{itemize}
+\item function \cequals{} for equality checking;
+\item function \ccontains{} for membership testing;
+\item function \texttt{\$translate\_ptr} for pointer translation;
+\item function \ccopy{} for copying data through pointers.
+\end{itemize}
+
+\subsubsection{The \cequals{} function}
+
+The \cequals{} function has the signature
+\begin{verbatim}
+  _Bool $equals(void *x, void *y);
+\end{verbatim}
+
+This function takes two non-null pointers as input. If  the two objects that the pointers refer to have the same value, then the
+function returns \ctrue. Otherwise, it returns \cfalse.
+
+\subsubsection{The \ccontains{} function}
+
+The function \ccontains{} has the signature
+\begin{verbatim}
+  _Bool $contains(void *ptr1, void *ptr2);
+\end{verbatim}
+
+This function takes two non-null pointers as input. If  the object that the pointer \texttt{ptr1} points to contains the object pointed to by \texttt{ptr2},  then the
+function returns \ctrue. Otherwise, it returns \cfalse. For example, given 
+\begin{verbatim}
+ int a[10];
+ struct foo {int x; double y} f;
+ struct foo b[10];
+
+ // ... initialize a, f and b
+\end{verbatim}
+
+Here are the results of several invocations of  \ccontains:
+
+\begin{itemize}
+\item \texttt{\ccontains(\&a, \&a[3])} returns  \ctrue, since  the array \texttt{a} contains the cell \texttt{a[3]};
+\item \texttt{\ccontains(\&a[2], \&a[3])} returns \cfalse;
+\item \texttt{\ccontains(\&a[2], \&a[2])} returns \ctrue, because the relation is relexive;
+\item  \texttt{\ccontains(\&f, \&f.y)} returns \ctrue, since the struct \texttt{f} contains its field \texttt{f.y};
+\item \texttt{\ccontains(\&b, \&b[2].x)} returns \ctrue.
+\end{itemize}
+
+\subsubsection{The \texttt{\$translate\_ptr} function}
+The function \texttt{\$translate\_ptr} has the signature
+\begin{verbatim}
+  void * $translate_ptr(void *ptr, void *obj);
+\end{verbatim}
+
+This function translates a pointer into one object (\texttt{ptr}) to a pointer into a different object (\texttt{obj}) with similar structure. 
+
+For example:
+\begin{verbatim}
+  typedef struct node{
+    int x;
+    int y;
+  } node;
+  typedef struct point{
+    double a;
+    double b;
+    double c;
+  }point;
+  node nodes[3];
+  point points[5];
+  ... // initialize nodes and points
+  double *p = $translate_ptr(&(nodes[2].y), &points);
+  // after the translation, p = &(points[2].b);
+\end{verbatim}
+
+\subsubsection{The \ccopy{} function}
+
+The \ccopy{} function has the signature
+\begin{verbatim}
+  void $copy(void *ptr, void *value_ptr);
+\end{verbatim}
+
+It copies the value pointed to by \texttt{value\_ptr} to the memory 
+location specified by \texttt{ptr}. This function is different from \texttt{memcpy} only in the way that
+it can take pointers to (incomplete) array as the argument and copy the whole array to the other.
+
+\subsection{Sequence utilities \texttt{seq.cvh}}
+\label{subsec:seqLibrary}
+The header \texttt{seq.cvh} provides utility functions dealing with sequences. A sequence is realized as an incomplete array (i.e., an array with no extent specified) of any type \texttt{T}, which applies for all functions of \texttt{seq.cvh}. Functions declared in this header include:
+\begin{itemize}
+\item function \cseqinit{} for initializing sequences;
+\item function \cseqlen{} for computing the length of a sequence;
+\item function \cseqinsert{} for element insertion to a sequence;
+\item function \cseqrm{} for element removal of a sequence.
+\end{itemize}
+
+\subsubsection{The \cseqinit{} function}
+
+The \cseqinit{} function has the signature
+\begin{verbatim}
+  void $seq_init(void *seq, int count, void *value);
+\end{verbatim}
+
+Given a pointer to a sequence of type \texttt{T}, this function sets that sequence to be an array of length \texttt{count} in which every element has the same value, specified by the given pointer \texttt{value}. The parameter \texttt{seq} has the type pointer-to-incomplete-array-of-T, \texttt{count} has any integer type and must be nonnegative, and \texttt{value} has the type pointer-to-T.
+
+\subsubsection{The \cseqlen{} function}
+The \cseqlen{} function has the signature
+\begin{verbatim}
+  int $seq_length(void *seq);
+\end{verbatim}
+This function returns the length of the sequence pointed to by the pointer \texttt{seq}. The contract is that \texttt{seq} must be a pointer of a sequence of type \texttt{T}, i.e., \texttt{seq} should have the type pointer-to-incomplete-array-of-T.
+
+\subsubsection{The \cseqinsert{} function}
+The \cseqinsert{} function has the signature
+\begin{verbatim}
+  void $seq_insert(void *seq, int index, void *values, int count);
+\end{verbatim}
+
+Given a pointer to a sequence of type T, this function inserts \texttt{count} elements into the sequence starting at position
+ \texttt{index}. The subsequence elements of the original sequence are shifted up, and the final length of the array will be its original length
+plus \texttt{count}. The values to be inserted are taken from the region specified by \texttt{values}, which has type pointer-to-T.  
+
+It is required that \texttt{0<=index<=length}, where length is the orginal length of the seqence. If \texttt{index=length}, this function appends the elements to the end of the array. If \texttt{index=0}, this inserts the elements at the beginning of the sequence.  If \texttt{count=0}, this function is a no-op and \texttt{values} will never be evaluated (hence may be NULL).
+
+\subsubsection{The \cseqrm{} function}
+The \cseqrm{} function has the signature
+\begin{verbatim}
+  void $seq_remove(void *seq, int index, void *values, int count);
+\end{verbatim}
+
+This function removes \texttt{count} elements from the sequence of type T pointed to by \texttt{seq}, starting at position
+\texttt{index}. 
+
+If \texttt{values} is not NULL, the removed elements will be copied to the memory region beginning with \texttt{values}, which shoud have the type pointer-to-T. It is required that \texttt{0<=index<length} and \texttt{0<=count<=length-index}. If \texttt{count=0}, this function is a no-op.
+
+\subsection{Bundle type and functions \texttt{bundle.cvh}}
+\label{subsec:bundleLibrary}
+
+The header \texttt{bundle.cvh} declares four the type \cbundle and the following functions:
+
+%\begin{figure}
+\begin{verbatim}
+/* Returns the size of the given bundle b. */
+int $bundle_size($bundle b);
+
+/* Creates a bundle from the memory region specified by ptr and size,
+ * copying the data into the new bundle. */
+$bundle $bundle_pack(void *ptr, int size);
+
+/* Returns the size (number of bytes) of the bundle. */
+int $bundle_size($bundle b);
+
+/* Copies the data out of the bundle into the region specified. */
+void $bundle_unpack($bundle bundle, void *ptr);
+
+/* Unpacks the bundle and applies the specified operation on the content 
+ * of the bundle. For every binary operarion defined in operation, the 
+ * content of the bundle will be used as the left operand and buf will 
+ * be used as the right operand. The result of the operation is stored 
+ * in buf once is it is done. */
+void $bundle_unpack_apply($bundle data, void *buf, int size, $operation op);
+
+\end{verbatim}
+  %\caption{The \emph{bundle} abstract data type}
+%  \label{fig:bundle}
+%\end{figure}
+
+
+\section{C libraries}
+
 Each of the following libraries is at least partially implemented and can
 be included in a CIVL-C program:
 \begin{itemize}
 \item \ct{assert}
   \begin{itemize}
-  \item \verb!void assert(_Bool expr);!
+  \item \verb!void assert(_Bool expr);!\\This is equivalent to an \cassert{} statement without error messages.
   \end{itemize}
 \item \ct{math}
   \begin{itemize}
@@ -1709,13 +1860,17 @@ be included in a CIVL-C program:
 \item \ct{stdlib}
   \begin{itemize}
   \item \verb!size_t!
-  \item \verb!void * malloc(size_t size);!
-  \item \verb!void free(void * ptr);!
+  \item \verb!void * malloc(size_t size);!\\
+  This is equivalent to \verb!$malloc($root, size)!.
+  \item \verb!void free(void * ptr);!\\
+  This is identical to \verb!$free(ptr)!.
   \end{itemize}
 \item \ct{stdbool}
   \begin{itemize}
-  \item \verb!true!
-  \item \verb!false!
+  \item \verb!true!\\
+  This is equivalent to \ctrue.
+  \item \verb!false!\\
+  This is equivalent to \cfalse.
   \end{itemize}
 \item \ct{stddef}
   \begin{itemize}
