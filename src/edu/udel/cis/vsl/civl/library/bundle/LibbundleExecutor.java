@@ -342,6 +342,11 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
+		// checking if pointer is valid
+		if (pointer.operator() != SymbolicOperator.CONCRETE)
+			errorLogger.reportError(new CIVLExecutionException(
+					ErrorKind.POINTER, Certainty.CONCRETE, process,
+					"Reading from invalid pointer", source));
 		try {
 			eval_and_pointer = libevaluator.bundleUnpack(state, process,
 					(SymbolicExpression) bundle.argument(1), pointer, source);
@@ -425,6 +430,13 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		Evaluation eval = null;
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
+		// Checking if pointer is valid.
+		// Since this function will read from the given pointer, so the
+		// validation checking is necessary.
+		if (pointer.operator() != SymbolicOperator.CONCRETE)
+			errorLogger.reportError(new CIVLExecutionException(
+					ErrorKind.POINTER, Certainty.CONCRETE, process,
+					"Reading from invalid pointer", source));
 		// Obtain data form bundle
 		data = (SymbolicExpression) bundle.argument(1);
 		// Checking if data is null
