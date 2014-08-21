@@ -1,7 +1,10 @@
 #ifdef __MPI__
 #else
 #define __MPI__
-#include<civlc.cvh>
+#include <op.cvh>
+#ifndef __CIVLC__
+#define NULL ((void*)0)
+#endif
 typedef enum {
     MPIX_NO_OP = CIVL_NO_OP,
     MPI_MAX = CIVL_MAX, 
