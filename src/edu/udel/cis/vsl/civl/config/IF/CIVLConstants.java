@@ -149,6 +149,9 @@ public class CIVLConstants {
 	public final static Option showPathConditionO = Option.newScalarOption(
 			"showPathCondition", BOOLEAN,
 			"show the path condition of each state?", false);
+	
+	public final static Option ompNoSimplifyO = Option.newScalarOption("ompNoSimplify",
+			BOOLEAN, "don't simplify omp pragmas", false);
 
 	public final static String civlSystemFunction = "_CIVL_system";
 
@@ -188,6 +191,7 @@ public class CIVLConstants {
 		outputs.add(CIVLConstants.traceO);
 		outputs.add(CIVLConstants.userIncludePathO);
 		outputs.add(CIVLConstants.verboseO);
+		outputs.add(CIVLConstants.ompNoSimplifyO);
 		return outputs.toArray(new Option[numOpts]);
 	}
 }

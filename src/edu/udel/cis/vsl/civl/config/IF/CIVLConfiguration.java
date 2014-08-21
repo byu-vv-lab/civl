@@ -20,6 +20,7 @@ public class CIVLConfiguration {
 	private boolean verbose = false;
 	private boolean svcomp = false;
 	private boolean showProgram = false;
+	private boolean ompNoSimplify = false;
 	private String deadlock;
 	private PrintStream out;
 	private PrintStream err;
@@ -42,6 +43,7 @@ public class CIVLConfiguration {
 		this.deadlock = (String) config.getValue(CIVLConstants.deadlockO);
 		this.setShowProgram(config.isTrue(CIVLConstants.showProgramO));
 		this.showPathConditon = config.isTrue(CIVLConstants.showPathConditionO);
+		this.ompNoSimplify = config.isTrue(CIVLConstants.ompNoSimplifyO);
 	}
 
 	public CIVLConfiguration() {
@@ -194,6 +196,14 @@ public class CIVLConfiguration {
 
 	public void setShowPathConditon(boolean showPathConditon) {
 		this.showPathConditon = showPathConditon;
+	}
+	
+	public boolean ompNoSimplify() {
+		return ompNoSimplify;
+	}
+
+	public void setOmpNoSimplify(boolean ompNoSimplify) {
+		this.ompNoSimplify = ompNoSimplify;
 	}
 
 }

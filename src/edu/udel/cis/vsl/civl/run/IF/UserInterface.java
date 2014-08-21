@@ -36,6 +36,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.userIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.version;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompNoSimplifyO;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -135,7 +136,7 @@ public class UserInterface {
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO,
 				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
-				svcompO, showInputVarsO, showProgramO, showPathConditionO);
+				svcompO, showInputVarsO, showProgramO, showPathConditionO, ompNoSimplifyO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -408,9 +409,11 @@ public class UserInterface {
 			}
 		}
 		if (hasOmp) {
-			if (config.debugOrVerbose())
-				this.out.println("Apply OpenMP simplifier...");
-			program.applyTransformer(CIVLTransform.OMP_SIMPLIFY);
+			if(!config.ompNoSimplify()){
+				if (config.debugOrVerbose())
+					this.out.println("Apply OpenMP simplifier...");
+				program.applyTransformer(CIVLTransform.OMP_SIMPLIFY);
+			}
 			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP transformer...");
 			program.applyTransformer(CIVLTransform.OPENMP);
