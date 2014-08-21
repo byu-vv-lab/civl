@@ -32,6 +32,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -146,6 +147,11 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			SymbolicExpression pointer, NumericExpression offset,
 			boolean checkOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
+		if (pointer.operator() != SymbolicOperator.CONCRETE)
+			errorLogger.reportError(new CIVLExecutionException(
+					ErrorKind.POINTER, Certainty.CONCRETE, process,
+					"Attempt to read/write a invalid pointer type variable",
+					source));
 		return this.pointerAddWorker(state, process, pointer, offset,
 				checkOutput, source).left;
 	}
@@ -303,6 +309,8 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
+		// Since bundle unpack is called by executeBundleUnpack, it has no need
+		// to check pointer validation here.
 		dataSize = universe.length(data);
 		// If data size is zero, do nothing.
 		if (reasoner.isValid(universe.equals(dataSize, zero))) {

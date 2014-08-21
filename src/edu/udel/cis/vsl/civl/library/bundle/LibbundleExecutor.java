@@ -220,6 +220,11 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		int elementTypeIndex;
 
+		if (pointer.operator() != SymbolicOperator.CONCRETE)
+			errorLogger.reportError(new CIVLExecutionException(
+					ErrorKind.POINTER, Certainty.CONCRETE, process,
+					"Attempt to read/write a invalid pointer type variable",
+					arguments[1].getSource()));
 		if (pointer.type().typeKind() != SymbolicTypeKind.TUPLE) {
 			throw new CIVLUnimplementedFeatureException(
 					"string literals in message passing function calls,",
@@ -346,7 +351,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		if (pointer.operator() != SymbolicOperator.CONCRETE)
 			errorLogger.reportError(new CIVLExecutionException(
 					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Reading from invalid pointer", source));
+					"Attempt to read/write a invalid pointer type variable",
+					arguments[1].getSource()));
 		try {
 			eval_and_pointer = libevaluator.bundleUnpack(state, process,
 					(SymbolicExpression) bundle.argument(1), pointer, source);
@@ -431,12 +437,11 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
 		// Checking if pointer is valid.
-		// Since this function will read from the given pointer, so the
-		// validation checking is necessary.
 		if (pointer.operator() != SymbolicOperator.CONCRETE)
 			errorLogger.reportError(new CIVLExecutionException(
 					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Reading from invalid pointer", source));
+					"Attempt to read/write a invalid pointer type variable",
+					arguments[1].getSource()));
 		// Obtain data form bundle
 		data = (SymbolicExpression) bundle.argument(1);
 		// Checking if data is null
