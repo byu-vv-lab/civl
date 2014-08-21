@@ -20,13 +20,6 @@ typedef struct MPI_Comm {
   __MPI_Sys_status__ status;
 }MPI_Comm;
 
-typedef struct MPI_Status {
-  int MPI_SOURCE;
-  int MPI_TAG;
-  int MPI_ERROR;
-  int size;
-}MPI_Status;
-
 /* Definition of CMPI_Gcomm and MPI_Comm */
 struct __CMPI_Gcomm {
   $gcomm p2p; // point-to-point communication

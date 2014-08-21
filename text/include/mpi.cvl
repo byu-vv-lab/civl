@@ -9,13 +9,6 @@
 #include <string.h>
 
 /* Completed definition for mpi-common.h */
-struct MPI_Status{
-  int MPI_SOURCE;
-  int MPI_TAG;
-  int MPI_ERROR;
-  int size;
-};
-
 struct MPI_Request{
   int id;
 };
