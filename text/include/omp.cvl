@@ -10,6 +10,7 @@
 #include<pointer.cvh>
 #include<seq.cvh>
 #include<concurrency.cvh>
+#include<domain.cvh>
 
 /* *********************** Types *********************** */
 
@@ -19,11 +20,19 @@ typedef enum __OMP_var_status_{
   MODIFIED // local is occupied, writes have been made to it
 } $omp_var_status;
 
+typedef enum __OMP_worksharing_kind {
+  LOOP,
+  BARRIER,
+  SECTIONS,
+  SINGLE
+} $omp_worksharing_kind;
+
+/*
 typedef enum __OMP_loop_policy_{
   ROUND_ROBIN, // partition by round robin order
   RANDOM, // a random partition
   ALL // all possible partitions
-} $omp_loop_policy;
+} $omp_loop_policy;*/
 
 /* global shared object, containing a reference to a shared variable. 
  * A handle type.
@@ -348,7 +357,39 @@ void $omp_barrier_and_flush($omp_team team) {
  * The dimension of the domain returned equals the
  * dimension of the given domain loop_dom.
  */
-$domain $omp_arrive_loop($omp_team, $domain loop_dom, int policy);
+$domain $omp_arrive_loop($omp_team team, $domain loop_dom, 
+    $DecompositionStrategy strategy){
+  $omp_gteam gteam = team->gteam;
+  int tid = team->tid;
+  int numWorkrecords, nthreads = gteam->nthreads;
+  $domain_decomposition decomposition;
+  $domain result;
+  
+  $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+  numWorkrecords = $seq_length(&gteam->work[tid]);
+  for(int i = 0; i < numWorkrecords; i++){
+    $omp_work_record workrecord = gteam->work[tid][i];
+    
+    if(!workrecord.arrived)
+      return workrecord.subdomain;
+  }
+  decomposition = $domain_partition(loop_dom, strategy, nthreads);
+  for(int i = 0; i< nthreads; i++){
+    $omp_work_record workrecord;
+    
+    workrecord.kind = LOOP; 
+    workrecord.location = 0; // TODO: how to specify the location?
+    if(i != tid){
+      workrecord.arrived = $false;
+    }else{
+      workrecord.arrived = $true;
+      result = decomposition.subdomains[i];
+    }
+    workrecord.subdomain = decomposition.subdomains[i];
+    $seq_append(&gteam->work[i], &workrecord, 1);
+  }
+  return result;
+}
 
 /* called by a thread when it reaches an omp sections
  * construct, this function returns the subset of the

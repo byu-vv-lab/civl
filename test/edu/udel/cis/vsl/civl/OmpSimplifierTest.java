@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
@@ -46,6 +45,8 @@ public class OmpSimplifierTest {
 				fileNameRoot + ".c.s");
 
 		Program program, simplifiedProgram;
+		
+		new CIVLTransform();
 
 		{ // Parse the program and apply the CIVL transformations
 			program = frontEnd.compileAndLink(new File[] { file },
@@ -72,115 +73,115 @@ public class OmpSimplifierTest {
 
 	/* **************************** Test Methods *************************** */
 
-	@Ignore
+	
 	@Test
 	public void dotProduct_critical1() throws ABCException, IOException {
 		check("dotProduct_critical");
 	}
 
-	@Ignore
+	
 	@Test
 	public void nested() throws ABCException, IOException {
 		check("nested");
 	}
 
-	@Ignore
+	
 	@Test
 	public void dotProduct_critical() throws ABCException, IOException {
 		check("dotProduct_critical");
 	}
 
-	@Ignore
+	
 	@Test
 	public void dotProduct_orphan() throws ABCException, IOException {
 		check("dotProduct_orphan");
 	}
 
-	@Ignore
+	
 	@Test
 	public void dotProduct1() throws ABCException, IOException {
 		check("dotProduct1");
 	}
 
-	@Ignore
+	
 	@Test
 	public void matProduct1() throws ABCException, IOException {
 		check("matProduct1");
 	}
 
-	@Ignore
+	
 	@Test
 	public void matProduct2() throws ABCException, IOException {
 		check("matProduct2");
 	}
 
-	@Ignore
+	
 	@Test
 	public void raceCond1() throws ABCException, IOException {
 		check("raceCond1");
 	}
 
-	@Ignore
+	
 	@Test
 	public void raceCond2() throws ABCException, IOException {
 		check("raceCond2");
 	}
 
-	@Ignore
+	
 	@Test
 	public void vecAdd_deadlock() throws ABCException, IOException {
 		check("vecAdd_deadlock");
 	}
 
-	@Ignore
+	
 	@Test
 	public void vecAdd_fix() throws ABCException, IOException {
 		check("vecAdd_fix");
 	}
 
-	@Ignore
+	
 	@Test
 	public void fig310_mxv_omp() throws ABCException, IOException {
 		check("fig3.10-mxv-omp");
 	}
 
-	@Ignore
+	
 	@Test
 	public void fig498_threadprivate() throws ABCException, IOException {
 		check("fig4.98-threadprivate");
 	}
 
-	@Ignore
+	
 	@Test
 	public void parallelfor() throws ABCException, IOException {
 		check("parallelfor");
 	}
 
-	@Ignore
+	
 	@Test
 	public void dijkstra() throws ABCException, IOException {
 		check("dijkstra_openmp");
 	}
 
-	@Ignore
+	
 	@Test
 	public void fft() throws ABCException, IOException {
 		check("fft_openmp");
 	}
 
-	@Ignore
+	
 	@Test
 	public void md() throws ABCException, IOException {
 		check("md_openmp");
 	}
 
-	@Ignore
+	
 	@Test
 	public void poisson() throws ABCException, IOException {
 		check("poisson_openmp");
 	}
 
-	@Ignore
+	
 	@Test
 	public void quad() throws ABCException, IOException {
 		check("quad_openmp");
