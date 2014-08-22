@@ -111,6 +111,7 @@ import edu.udel.cis.vsl.sarl.IF.object.StringObject;
 import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicFunctionType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
@@ -990,6 +991,69 @@ public class CommonEvaluator implements Evaluator {
 				throw new CIVLExecutionException(ErrorKind.INVALID_CAST,
 						Certainty.CONCRETE, process,
 						"Cast from integer to boolean", arg.getSource());
+			return eval;
+		} else if (argType.isIntegerType() && castType.isCharType()) {
+			NumericExpression integerValue = (NumericExpression) value;
+			Number concreteValue = null;
+			Reasoner reasoner = universe.reasoner(state.getPathCondition());
+			CIVLSource source = expression.getSource();
+
+			// If integerValue is concrete and is inside the range [0, 255],
+			// return corresponding character by using java casting.
+			// Else if it's only outside of the range [0, 255], return abstract
+			// function.
+			if (integerValue.operator() == SymbolicOperator.CONCRETE) {
+				int int_value;
+
+				concreteValue = symbolicUtil.extractInt(source, integerValue);
+				assert (concreteValue != null) : "NumericExpression with concrete operator cannot provide concrete numeric value";
+				assert (!(concreteValue instanceof IntegerNumber)) : "A Number object which suppose has integer type cannot cast to IntegerNumber type";
+				int_value = concreteValue.intValue();
+				if (int_value < 0 || int_value > 255) {
+					throw new CIVLUnimplementedFeatureException(
+							"Converting integer whose value is larger than UCHAR_MAX or is less than UCHAR_MIN to char type\n");
+				} else
+					eval.value = universe.character((char) int_value);
+			} else {
+				SymbolicExpression func;
+				SymbolicFunctionType funcType;
+				BooleanExpression insideRangeClaim;
+				SymbolicExpression newCharValue;
+				ResultType retType;
+
+				insideRangeClaim = universe.and(
+						universe.lessThan(zero, integerValue),
+						universe.lessThan(integerValue, universe.integer(255)));
+				retType = reasoner.valid(insideRangeClaim).getResultType();
+				if (retType == ResultType.YES) {
+					// If not concrete, return abstract function.
+					funcType = universe.functionType(
+							Arrays.asList(universe.integerType()),
+							universe.characterType());
+					func = universe.canonic(universe.symbolicConstant(
+							universe.stringObject("int2char"), funcType));
+					newCharValue = universe.apply(func,
+							Arrays.asList(integerValue));
+					eval.value = newCharValue;
+				} else {
+					Certainty certain;
+
+					if (retType == ResultType.MAYBE)
+						certain = Certainty.MAYBE;
+					else
+						certain = Certainty.PROVEABLE;
+					CIVLExecutionException error = new CIVLExecutionException(
+							ErrorKind.INVALID_CAST,
+							certain,
+							process,
+							"Cast operation may involves casting a integer, whose value is larger than UCHAR_MAX or less than UCHAR_MIN, to char type object which is considered as unimplemented feature of CIVL",
+							this.symbolicAnalyzer.stateToString(state),
+							expression.getSource());
+
+					errorLogger.reportError(error);
+					throw new UnsatisfiablePathConditionException();
+				}
+			}
 			return eval;
 		}
 		try {
