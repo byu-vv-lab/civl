@@ -42,8 +42,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -213,21 +211,15 @@ public class UserInterface {
 	 * @throws PreprocessorException
 	 * @throws SyntaxException
 	 * @throws ParseException
-	 * @throws UnsupportedEncodingException
+	 * @throws IOException
 	 */
 	private List<AST> asts2Link(Preprocessor preprocessor)
 			throws PreprocessorException, SyntaxException, ParseException,
-			UnsupportedEncodingException {
+			IOException {
 		List<AST> ASTs = new ArrayList<>();
 		Set<String> checkedHeaderFiles = new HashSet<>();
 		Stack<String> headerFiles = new Stack<>();
-		// String root = "text/include";
-		// String root =
-		// URLDecoder.decode(ClassLoader.getSystemClassLoader().getResource(".").getPath(‌​),"UTF-8");
-		String root = ClassLoader.getSystemClassLoader().getResource(".")
-				.getPath();
 
-		root = URLDecoder.decode(root, "UTF-8");
 		for (String header : preprocessor.headerFiles())
 			headerFiles.push(header);
 		while (!headerFiles.isEmpty()) {
@@ -235,23 +227,17 @@ public class UserInterface {
 
 			checkedHeaderFiles.add(header);
 			if (header.equals("string.h"))
-				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"../text/include/string.cvl")));
+				ASTs.add(this.compileFile(preprocessor, "string.cvl"));
 			else if (header.equals("civlc.cvh"))
-				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"../text/include/civlc.cvl")));
+				ASTs.add(this.compileFile(preprocessor, "civlc.cvl"));
 			else if (header.equals("civlmpi.cvh"))
-				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"../text/include/civlmpi.cvl")));
+				ASTs.add(this.compileFile(preprocessor, "civlmpi.cvl"));
 			else if (header.equals("mpi.h"))
-				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"../text/include/mpi.cvl")));
+				ASTs.add(this.compileFile(preprocessor, "mpi.cvl"));
 			else if (header.equals("comm.cvh"))
-				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"../text/include/comm.cvl")));
+				ASTs.add(this.compileFile(preprocessor, "comm.cvl"));
 			else if (header.equals("concurrency.cvh"))
-				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"../text/include/concurrency.cvl")));
+				ASTs.add(this.compileFile(preprocessor, "concurrency.cvl"));
 			for (String newHeader : preprocessor.headerFiles()) {
 				if (!headerFiles.contains(newHeader)
 						&& !checkedHeaderFiles.contains(newHeader))
@@ -269,10 +255,19 @@ public class UserInterface {
 				frontEnd.getParser().parse(tokens));
 	}
 
+	private AST compileFile(Preprocessor preprocessor, String filename)
+			throws SyntaxException, ParseException, PreprocessorException,
+			IOException {
+		CTokenSource tokens = preprocessor.outputTokenSource(filename);
+
+		return frontEnd.getASTBuilder().getTranslationUnit(
+				frontEnd.getParser().parse(tokens));
+	}
+
 	private Program compileLinkAndTransform(Preprocessor preprocessor,
 			String filename, GMCConfiguration config,
 			CIVLConfiguration civlConfig) throws PreprocessorException,
-			SyntaxException, ParseException, UnsupportedEncodingException {
+			SyntaxException, ParseException, IOException {
 		File file = new File(filename);
 		AST userAST = this.compileFile(preprocessor, file);
 		Program program;
@@ -286,7 +281,7 @@ public class UserInterface {
 
 	private Program link(Preprocessor preprocessor, AST userAST)
 			throws PreprocessorException, SyntaxException, ParseException,
-			UnsupportedEncodingException {
+			IOException {
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
 
