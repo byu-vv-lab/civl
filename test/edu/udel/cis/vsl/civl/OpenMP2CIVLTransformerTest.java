@@ -25,8 +25,8 @@ public class OpenMP2CIVLTransformerTest {
 	/* **************************** Test Methods *************************** */
 
 	@Test
-	public void dotProduct() {
-		assertTrue(ui.run("parse", filename("dotProduct.c"), "-ompNoSimplify",
+	public void dotProduct1() {
+		assertTrue(ui.run("parse", filename("dotProduct1.c"), "-ompNoSimplify", 
 				"-inputTHREAD_MAX=4"));
 	}
 
