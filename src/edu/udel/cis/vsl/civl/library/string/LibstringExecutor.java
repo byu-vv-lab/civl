@@ -3,10 +3,14 @@
  */
 package edu.udel.cis.vsl.civl.library.string;
 
+import java.util.Arrays;
+
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
@@ -28,6 +32,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicFunctionType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
@@ -126,7 +131,7 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
-	// TODO: this function assume the "lhspointer" which is argument[0] is a
+	// TODO: this function assume the "lhsPointer" which is argument[0] is a
 	// pointer to heap object element which needs being improved.
 	private State execute_strcpy(State state, int pid, String process,
 			LHSExpression lhs, Expression[] arguments,
@@ -166,7 +171,11 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 					false);
 
 			state = eval.state;
-			originalArray = (SymbolicSequence<?>) eval.value.argument(0);
+			// TODO: change for using new getConcreteString
+			if (symbolicUtil.getVariableId(source, arrayPointer) == 0)
+				originalArray = (SymbolicSequence<?>) eval.value.argument(1);
+			else
+				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
 			startIndex = symbolicUtil.extractInt(source, arrayIndex);
 		}
 		numChars = originalArray.size();
@@ -227,34 +236,74 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		Pair<State, StringBuffer> strEval2 = null;
 		StringBuffer str1, str2;
 
-		// execute_strcmp can only process concrete string for now. For symbolic
-		// strings, it needs changes in Library Enabler.
-		try {
-			strEval1 = evaluator
-					.getString(source, state, process, charPointer1);
-			state = strEval1.left;
-			strEval2 = evaluator
-					.getString(source, state, process, charPointer2);
-			state = strEval2.left;
-		} catch (CIVLExecutionException e) {
-			errorLogger.reportError(new CIVLExecutionException(e.kind(), e
-					.certainty(), process, e.getMessage(), source));
-		} catch (CIVLUnimplementedFeatureException e) {
-			result = (NumericExpression) universe.symbolicConstant(
-					universe.stringObject("strcmp_result"),
-					universe.integerType());
-			if (lhs != null)
-				state = primaryExecutor
-						.assign(state, pid, process, lhs, result);
-			return state;
-		} catch (Exception e) {
-			throw new CIVLInternalException("Unknown error", source);
+		if ((charPointer1.operator() != SymbolicOperator.CONCRETE))
+			errorLogger.reportError(new CIVLExecutionException(
+					ErrorKind.POINTER, Certainty.CONCRETE, process,
+					"Attempt to read/write from an invalid pointer\n",
+					arguments[0].getSource()));
+		if ((charPointer2.operator() != SymbolicOperator.CONCRETE))
+			errorLogger.reportError(new CIVLExecutionException(
+					ErrorKind.POINTER, Certainty.CONCRETE, process,
+					"Attempt to read/write from an invalid pointer\n",
+					arguments[1].getSource()));
+		// If two pointers are same, return 0.
+		if (charPointer1.equals(charPointer2))
+			result = zero;
+		else {
+			try {
+				strEval1 = evaluator.getString(source, state, process,
+						charPointer1);
+				state = strEval1.left;
+				strEval2 = evaluator.getString(source, state, process,
+						charPointer2);
+				state = strEval2.left;
+			} catch (CIVLExecutionException e) {
+				errorLogger.reportError(new CIVLExecutionException(e.kind(), e
+						.certainty(), process, e.getMessage(), source));
+			} catch (CIVLUnimplementedFeatureException e) {
+				// If the string pointed by either pointer1 or pointer2 is
+				// non-concrete, try to compare two string objects, if
+				// different, return abstract function.
+				SymbolicExpression symResult;
+				SymbolicExpression strObj1, strObj2;
+				Evaluation eval;
+
+				eval = evaluator.dereference(arguments[0].getSource(), state,
+						process, charPointer1, true);
+				state = eval.state;
+				strObj1 = eval.value;
+				eval = evaluator.dereference(arguments[1].getSource(), state,
+						process, charPointer2, true);
+				state = eval.state;
+				strObj2 = eval.value;
+				if (strObj1.equals(strObj2))
+					symResult = zero;
+				else {
+					SymbolicFunctionType funcType;
+					SymbolicExpression func;
+
+					funcType = universe.functionType(
+							Arrays.asList(charPointer1.type(),
+									charPointer2.type()),
+							universe.integerType());
+					func = universe.canonic(universe.symbolicConstant(
+							universe.stringObject("strcmp"), funcType));
+					symResult = universe.apply(func,
+							Arrays.asList(charPointer1, charPointer2));
+				}
+				if (lhs != null)
+					state = primaryExecutor.assign(state, pid, process, lhs,
+							symResult);
+				return state;
+			} catch (Exception e) {
+				throw new CIVLInternalException("Unknown error", source);
+			}
+			assert (strEval1.right != null && strEval2.right != null) : "Evaluating String failed";
+			str1 = strEval1.right;
+			str2 = strEval2.right;
+			output = str1.toString().compareTo(str2.toString());
+			result = universe.integer(output);
 		}
-		assert (strEval1.right != null && strEval2.right != null) : "Evaluating String failed";
-		str1 = strEval1.right;
-		str2 = strEval2.right;
-		output = str1.toString().compareTo(str2.toString());
-		result = universe.integer(output);
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs, result);
 		return state;
