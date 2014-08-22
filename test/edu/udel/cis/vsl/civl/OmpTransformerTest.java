@@ -100,22 +100,25 @@ public class OmpTransformerTest {
 		assertTrue(ui.run("parse", filename("dotProduct_critical.c")));
 	}
 
-	@Ignore
-	@Test
+	@Ignore //real
+	@Test 
 	public void nested_run() throws ABCException, IOException {
 		assertTrue(ui.run("parse", filename("nested.c")));
 	}
 
+	@Ignore
 	@Test
 	public void dotProduct_critical1() throws ABCException, IOException {
 		check("dotProduct_critical", false);
 	}
 
+	@Ignore
 	@Test
 	public void nested() throws ABCException, IOException {
 		check("nested", false);
 	}
 
+	@Ignore
 	@Test
 	public void dotProduct_critical() throws ABCException, IOException {
 		check("dotProduct_critical", false);
@@ -126,26 +129,31 @@ public class OmpTransformerTest {
 		check("dotProduct_orphan", false);
 	}
 
+	@Ignore
 	@Test
 	public void dotProduct1() throws ABCException, IOException {
 		check("dotProduct1", false);
 	}
 
+	@Ignore
 	@Test
 	public void matProduct1() throws ABCException, IOException {
 		check("matProduct1", false);
 	}
 
+	@Ignore
 	@Test
 	public void matProduct2() throws ABCException, IOException {
 		check("matProduct2", false);
 	}
 
+	@Ignore
 	@Test
 	public void raceCond1() throws ABCException, IOException {
 		check("raceCond1", false);
 	}
 
+	@Ignore
 	@Test
 	public void raceCond2() throws ABCException, IOException {
 		check("raceCond2", false);
@@ -161,16 +169,19 @@ public class OmpTransformerTest {
 		check("vecAdd_fix", false);
 	}
 
+	@Ignore
 	@Test
 	public void fig310_mxv_omp() throws ABCException, IOException {
 		check("fig3.10-mxv-omp", false);
 	}
 
+	@Ignore
 	@Test
 	public void fig498_threadprivate() throws ABCException, IOException {
 		check("fig4.98-threadprivate", false);
 	}
 
+	@Ignore
 	@Test
 	public void parallelfor() throws ABCException, IOException {
 		check("parallelfor", false);
@@ -181,21 +192,25 @@ public class OmpTransformerTest {
 		check("dijkstra_openmp", false);
 	}
 
+	@Ignore
 	@Test
 	public void fft() throws ABCException, IOException {
 		check("fft_openmp", false);
 	}
 
+	@Ignore
 	@Test
 	public void md() throws ABCException, IOException {
 		check("md_openmp", false);
 	}
 
+	@Ignore
 	@Test
 	public void poisson() throws ABCException, IOException {
 		check("poisson_openmp", false);
 	}
 
+	@Ignore
 	@Test
 	public void quad() throws ABCException, IOException {
 		check("quad_openmp", false);
