@@ -13,6 +13,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.idO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.inputO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompNoSimplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.randomO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.saveStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.seedO;
@@ -36,12 +37,13 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.userIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.version;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompNoSimplifyO;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -136,7 +138,8 @@ public class UserInterface {
 				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO,
 				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
-				svcompO, showInputVarsO, showProgramO, showPathConditionO, ompNoSimplifyO);
+				svcompO, showInputVarsO, showProgramO, showPathConditionO,
+				ompNoSimplifyO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -210,14 +213,21 @@ public class UserInterface {
 	 * @throws PreprocessorException
 	 * @throws SyntaxException
 	 * @throws ParseException
+	 * @throws UnsupportedEncodingException
 	 */
 	private List<AST> asts2Link(Preprocessor preprocessor)
-			throws PreprocessorException, SyntaxException, ParseException {
+			throws PreprocessorException, SyntaxException, ParseException,
+			UnsupportedEncodingException {
 		List<AST> ASTs = new ArrayList<>();
 		Set<String> checkedHeaderFiles = new HashSet<>();
 		Stack<String> headerFiles = new Stack<>();
-		String root = "text/include";
+		// String root = "text/include";
+		// String root =
+		// URLDecoder.decode(ClassLoader.getSystemClassLoader().getResource(".").getPath(‌​),"UTF-8");
+		String root = ClassLoader.getSystemClassLoader().getResource(".")
+				.getPath();
 
+		root = URLDecoder.decode(root, "UTF-8");
 		for (String header : preprocessor.headerFiles())
 			headerFiles.push(header);
 		while (!headerFiles.isEmpty()) {
@@ -226,22 +236,22 @@ public class UserInterface {
 			checkedHeaderFiles.add(header);
 			if (header.equals("string.h"))
 				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"string.cvl")));
+						"../text/include/string.cvl")));
 			else if (header.equals("civlc.cvh"))
 				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"civlc.cvl")));
+						"../text/include/civlc.cvl")));
 			else if (header.equals("civlmpi.cvh"))
 				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"civlmpi.cvl")));
+						"../text/include/civlmpi.cvl")));
 			else if (header.equals("mpi.h"))
 				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"mpi.cvl")));
+						"../text/include/mpi.cvl")));
 			else if (header.equals("comm.cvh"))
 				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"comm.cvl")));
+						"../text/include/comm.cvl")));
 			else if (header.equals("concurrency.cvh"))
 				ASTs.add(this.compileFile(preprocessor, new File(root,
-						"concurrency.cvl")));
+						"../text/include/concurrency.cvl")));
 			for (String newHeader : preprocessor.headerFiles()) {
 				if (!headerFiles.contains(newHeader)
 						&& !checkedHeaderFiles.contains(newHeader))
@@ -262,7 +272,7 @@ public class UserInterface {
 	private Program compileLinkAndTransform(Preprocessor preprocessor,
 			String filename, GMCConfiguration config,
 			CIVLConfiguration civlConfig) throws PreprocessorException,
-			SyntaxException, ParseException {
+			SyntaxException, ParseException, UnsupportedEncodingException {
 		File file = new File(filename);
 		AST userAST = this.compileFile(preprocessor, file);
 		Program program;
@@ -275,7 +285,8 @@ public class UserInterface {
 	}
 
 	private Program link(Preprocessor preprocessor, AST userAST)
-			throws PreprocessorException, SyntaxException, ParseException {
+			throws PreprocessorException, SyntaxException, ParseException,
+			UnsupportedEncodingException {
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
 
@@ -409,7 +420,7 @@ public class UserInterface {
 			}
 		}
 		if (hasOmp) {
-			if(!config.ompNoSimplify()){
+			if (!config.ompNoSimplify()) {
 				if (config.debugOrVerbose())
 					this.out.println("Apply OpenMP simplifier...");
 				program.applyTransformer(CIVLTransform.OMP_SIMPLIFY);

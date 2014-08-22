@@ -17,13 +17,13 @@ import edu.udel.cis.vsl.gmc.Option;
  */
 public class CIVLConstants {
 	/** The version of this release of CIVL. */
-	public final static String version = "0.12";
+	public final static String version = "0.13";
 
 	/**
 	 * The date of this release of CIVL. Format: YYYY-MM-DD in accordance with
 	 * ISO 8601.
 	 */
-	public final static String date = "2014-07-22";
+	public final static String date = "2014-08-22";
 
 	/**
 	 * The prefix of the full name of the class of a library enabler/executor.
@@ -149,9 +149,9 @@ public class CIVLConstants {
 	public final static Option showPathConditionO = Option.newScalarOption(
 			"showPathCondition", BOOLEAN,
 			"show the path condition of each state?", false);
-	
-	public final static Option ompNoSimplifyO = Option.newScalarOption("ompNoSimplify",
-			BOOLEAN, "don't simplify omp pragmas", false);
+
+	public final static Option ompNoSimplifyO = Option.newScalarOption(
+			"ompNoSimplify", BOOLEAN, "don't simplify omp pragmas", false);
 
 	public final static String civlSystemFunction = "_CIVL_system";
 
@@ -165,7 +165,7 @@ public class CIVLConstants {
 		outputs.add(CIVLConstants.enablePrintfO);
 		outputs.add(CIVLConstants.errorBoundO);
 		outputs.add(CIVLConstants.guidedO);
-		//outputs.add(CIVLConstants.guiO);
+		// outputs.add(CIVLConstants.guiO);
 		outputs.add(CIVLConstants.idO);
 		outputs.add(CIVLConstants.maxdepthO);
 		outputs.add(CIVLConstants.minO);
