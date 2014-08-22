@@ -1,5 +1,0 @@
-// procedures that are thread private.
-
-int omp_get_thread_num() {
-  return __tid;
-}
