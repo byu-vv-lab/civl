@@ -1990,10 +1990,11 @@ public class FunctionTranslator {
 					CIVLType type = translateABCType(
 							modelFactory.sourceOf(decl), scope,
 							functionType.getParameterType(i));
-					CIVLSource source = modelFactory.sourceOf(decl
-							.getIdentifier());
+					CIVLSource source = modelFactory.sourceOf(decl);
+					String varName = decl.getName() == null ? "_arg" + i : decl
+							.getName();
 					Identifier variableName = modelFactory.identifier(source,
-							decl.getName());
+							varName);
 					Variable parameter = modelFactory.variable(source, type,
 							variableName, parameters.size() + 1);
 
