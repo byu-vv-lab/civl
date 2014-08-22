@@ -244,6 +244,7 @@ in C.
 
 
 \subsection{The bundle type: \cbundle}
+\label{subsec:bundleType}
 
 CIVL-C includes a type named \cbundle, declared in the CIVL-C standard header \texttt{bundle.cvh}. A bundle is basically a
 sequence of data, wrapped into an atomic package. A bundle is created
@@ -877,35 +878,8 @@ place, and an integer \emph{tag} which can be used by a process to
 discriminate among messages for reception.  This is very similar to
 MPI.
 
-\begin{figure}
-  \begin{small}
-\begin{verbatim}
-/* creates a new message, copying data from the specified buffer */ 
-$message $message_pack(int source, int dest, int tag, void *data, int size);
-
-/* returns the message source */ 
-int $message_source($message message);
-
-/* returns the message tag */
-int $message_tag($message message);
-
-/* returns the message destination */ 
-int $message_dest($message message);
-
-/* returns the message size */ 
-int $message_size($message message);
-
-/* transfers message data to buf, throwing exception if message
- * size exceeds specified size */ 
-void $message_unpack($message message, void *buf, int size);
-\end{verbatim}
-  \end{small}
-  \caption{The \emph{message} abstract data type}
-  \label{fig:message}
-\end{figure}
-
 The functions for creating, and extracting information from, messages
-are given in Figure \ref{fig:message}.
+are given in Section \ref{subsubsec:messaging}.
 
 \subsection{Communicators: \cgcomm{} and \ccomm}
 \label{sec:communicators}
@@ -959,63 +933,7 @@ that take this handle as an argument.
  % * processes will be viewed as occupying the same place.
  % * Only one call to $comm_create may occur for each gcomm-place pair.
 
-\begin{figure}
-  \begin{small}
-\begin{verbatim}
-/* Creates a new global communicator object and returns a handle to it.
- * The global communicator will have size communication places.  The
- * global communicator defines a communication "universe" and encompasses
- * message buffers and all other components of the state associated to
- * message-passing.  The new object will be allocated in the given scope. */
-$gcomm $gcomm_create($scope s, int size);
-
-void $gcomm_destroy($gcomm gcomm); // Destroys the gcomm
-
-_Bool $gcomm_defined($gcomm gcomm); // Is the gcomm object defined?
-
-/* Creates a new local communicator object and returns a handle to it.
- * The new communicator will be affiliated with the specified global
- * communicator. The new object will be allocated in the given scope. */
-$comm $comm_create($scope s, $gcomm gcomm, int place);
-
-void $comm_destroy($comm comm); // Destroys the comm
-
-_Bool $comm_defined($comm comm); // Is the comm object defined?
-
-/* Returns the size (number of places) in the global communicator associated
- * to the given comm. */
-int $comm_size($comm comm);
-
-/* Returns the place of the local communicator.  This is the same as the
- * place argument used to create the local communicator. */
-int $comm_place($comm comm);
-
-/* Adds the message to the appropriate message queue in the communication
- * universe specified by the comm.  The source of the message must equal
- * the place of the comm. */
-void $comm_enqueue($comm comm, $message message);
-
-/* Returns true iff a matching message exists in the communication universe
- * specified by the comm.  A message matches the arguments if the destination
- * of the message is the place of the comm, and the sources and tags match. */
-_Bool $comm_probe($comm comm, int source, int tag);
-
-/* Finds the first matching message and returns it without modifying
- * the communication universe.  If no matching message exists, returns a message
- * with source, dest, and tag all negative. */
-$message $comm_seek($comm comm, int source, int tag);
-
-/* Finds the first matching message, removes it from the communicator,
- * and returns the message */ 
-$message $comm_dequeue($comm comm, int source, int tag);
-\end{verbatim}
-  \end{small}
-  \caption{The \emph{communicator} interface specifies handle 
-    types $\cgcomm$ and $\ccomm$ and the functions above}
-  \label{fig:comm}
-\end{figure}
-
-The communicator interface is given in Figure \ref{fig:comm}.
+The communicator interface is given in Sections \ref{subsubsec:gcomm} and  \ref{subsubsec:comm}.
 
 Certain restrictions are enforced on some relations between the
 objects involved in a communication universe.
@@ -1077,7 +995,7 @@ any other process.
 \subsection{Barriers: \cgbarrier{} and \cbarrier}
 \label{sec:barriers}
 
-CIVL-C defines a \emph{global barrier} type $\cgbarrier$ and a
+The CIVL-C header \texttt{concurrency.cvh} defines a \emph{global barrier} type $\cgbarrier$ and a
 \emph{local barrier} type $\cbarrier$. They provide an implementation of 
 a barrier for concurrent programs.
 
@@ -1102,43 +1020,7 @@ Both types ($\cgbarrier$ and $\cbarrier$) are handle types. When declared
 with a call to the corresponding creation function, they create an
 object in the specified scope and return a handle to that object. The
 object can only be accessed through the specified system functions
-that take this handle as an argument.
-
-
-\begin{figure}
-  \begin{small}
-\begin{verbatim}
-/* Creates a new barrier object and returns a handle to it.
- * The barrier has the specified size.
- * The new object will be allocated in the given scope. */
-$gbarrier $gbarrier_create($scope scope, int size);
-
-/* Destroys the gbarrier */
-void $gbarrier_destroy($gbarrier barrier);
-
-/* Creates a new local barrier object and returns a handle to it.
- * The new barrier will be affiliated with the specified global
- * barrier.   This local barrier handle will be used as an
- * argument in most barrier functions.  The place must be in
- * [0,size-1] and specifies the place in the global barrier
- * that will be occupied by the local barrier.  
- * Only one call to $barrier_create may occur for each barrier-place pair.
- * The new object will be allocated in the given scope. */
-$barrier $barrier_create($scope scope, $gbarrier gbarrier, int place);
-
-/* Calls the barrier associated with this local barrier object.*/
-void $barrier_call($barrier barrier);
-
-/* Destroys the barrier. */
-void $barrier_destroy($barrier barrier);
-\end{verbatim}
-  \end{small}
-  \caption{The \emph{barrier} interface specifies handle 
-    types $\cgbarrier$ and $\cbarrier$ and the functions above}
-  \label{fig:barrier}
-\end{figure}
-
-The barrier interface is given in Fig.\ \ref{fig:barrier}.
+that take this handle as an argument. The barrier interface is presented in Section \ref{subsec:concurrencyLibrary}.
 
 \chapter{Specification}
 
@@ -1576,7 +1458,7 @@ CIVL-C headers have the suffix \texttt{.cvh}. Here is the list of standard libra
 \item \texttt{concurrency} provides concurrency utilities such as the barrier;
 \item \texttt{bundle} provides bundle types and methods;
 \item \texttt{comm} provides communicators and methods;
-\item \texttt{civlmpi} provides CIVL-C types for MPI.
+%\item \texttt{civlmpi} provides CIVL-C types for MPI.
 \end{itemize}
 
 \subsection{CIVL basics \texttt{civlc.cvh}}
@@ -1809,38 +1691,208 @@ This function removes \texttt{count} elements from the sequence of type T pointe
 
 If \texttt{values} is not NULL, the removed elements will be copied to the memory region beginning with \texttt{values}, which shoud have the type pointer-to-T. It is required that \texttt{0<=index<length} and \texttt{0<=count<=length-index}. If \texttt{count=0}, this function is a no-op.
 
+\subsection{Concurrency utilities \texttt{concurrency.cvh}}
+\label{subsec:concurrencyLibrary}
+
+The header \texttt{concurrency.cvh} declares two types,, \cgbarrier{} and \cbarrier{}, and several functions dealing with barriers, including:
+\begin{itemize}
+\item functions \cgbarriercreate{} and \cbarriercreate{} for creating a new global and local barrier, repectively;
+\item functions \cgbarrierdestroy{} and \cbarrierdestroy{} for destroying a global and local barriere, respectively;
+\item function \cbarriercall{} for a barrier synchronization request.
+\end{itemize}
+
+
+\subsubsection{The \cgbarriercreate{} and \cbarriercreate{} functions}
+The \cgbarriercreate{} function has the signature
+
+\begin{verbatim}
+  $gbarrier $gbarrier_create($scope scope, int size);
+\end{verbatim}
+
+It creates a new global object of the given \texttt{size}, puts it in the heap of the given dynamic \texttt{scope}, and returns a handle to the created \cgbarrier{} object.
+\\~\\
+The \cbarriercreate{} function has the signature
+
+\begin{verbatim}
+  $barrier $barrier_create($scope scope, $gbarrier gbarrier, int place);
+\end{verbatim}
+
+It creates a local barrier that joins the specified global barrier \texttt{gbarrier} with the id \texttt{place}. The new local barrier object is stored in the heap of the given dynamic \texttt{scope} , and a handle to that object is returned.
+
+\subsubsection{The  \cgbarrierdestroy{} and \cbarrierdestroy{} functions}
+
+The \cgbarrierdestroy{} and \cbarrierdestroy{}  functions has the signatures
+
+\begin{verbatim}
+  void $gbarrier_destroy($gbarrier barrier);
+  void $barrier_destroy($barrier barrier);
+\end{verbatim}
+
+These functions deallocated the heap memory regions occupied by the specified \cgbarrier{} or \cbarrier{} object. They should be invoked before the corresponding dynamic scope becomes unreachable. Otherwise, a memory leak error will be reported.
+
+\subsubsection{The  \cbarriercall{} function}
+
+The \cbarriercall{} function has the signature
+
+\begin{verbatim}
+  void $barrier_call($barrier barrier);
+\end{verbatim}
+
+When this funciton is called, the calling process will be blocked until all other processes associated with the same global barrier refered to by the given \texttt{barrier} have made the barrier call.
+
 \subsection{Bundle type and functions \texttt{bundle.cvh}}
 \label{subsec:bundleLibrary}
 
-The header \texttt{bundle.cvh} declares four the type \cbundle and the following functions:
+The header \texttt{bundle.cvh} defines the type \cbundle{} (see Section \ref{subsec:bundleType}) and several functions dealing with bundles:
+\begin{itemize}
+\item function \cbundlesize{} for computing the size of a bundle;
+\item function \cbundlepack{} for composing a bundle from some given data;
+\item function \cbundleunpack{} for extracting the data contained by a given bundle;
+\item function \cbundleunpackapply{} for extacting the data contained by a given bundle and apply some operation to them.
+\end{itemize}
 
-%\begin{figure}
+\subsubsection{The \cbundlesize{} function}
+
+The \cbundlesize{} function has the signature
 \begin{verbatim}
-/* Returns the size of the given bundle b. */
-int $bundle_size($bundle b);
-
-/* Creates a bundle from the memory region specified by ptr and size,
- * copying the data into the new bundle. */
-$bundle $bundle_pack(void *ptr, int size);
-
-/* Returns the size (number of bytes) of the bundle. */
-int $bundle_size($bundle b);
-
-/* Copies the data out of the bundle into the region specified. */
-void $bundle_unpack($bundle bundle, void *ptr);
-
-/* Unpacks the bundle and applies the specified operation on the content 
- * of the bundle. For every binary operarion defined in operation, the 
- * content of the bundle will be used as the left operand and buf will 
- * be used as the right operand. The result of the operation is stored 
- * in buf once is it is done. */
-void $bundle_unpack_apply($bundle data, void *buf, int size, $operation op);
-
+  int $bundle_size($bundle b);
 \end{verbatim}
-  %\caption{The \emph{bundle} abstract data type}
-%  \label{fig:bundle}
-%\end{figure}
 
+It takes a bundle and returns its size.
+
+\subsubsection{The \cbundlepack{} function}
+
+The \cbundlepack{} function has the signature
+\begin{verbatim}
+  $bundle $bundle_pack(void *ptr, int size);
+\end{verbatim}
+
+This function creates a bundle from the memory region specified by \texttt{ptr} and \texttt{size}, copying the data into the new bundle, and returns the new bundle.
+
+\subsubsection{The \cbundleunpack{} function}
+
+The \cbundleunpack{} function has the signature
+\begin{verbatim}
+  void $bundle_unpack($bundle bundle, void *ptr);
+\end{verbatim}
+
+Opposite to \cbundlepack, this function copies the data from the given \texttt{bundle} into the memory region specified by \texttt{ptr}. 
+
+\subsubsection{The \cbundleunpackapply{} function}
+
+The \cbundleunpackapply{} function has the signature
+\begin{verbatim}
+  void $bundle_unpack_apply($bundle data, void *buf, int size, $operation op);
+\end{verbatim}
+
+This function unpacks the bundle and applies the specified operation on the content of the bundle. For every binary operarion defined in operation, the  content of the bundle will be used as the left operand and buf will be used as the right operand. The result of the operation is stored in buf once is it is done.
+
+
+\subsection{Communicators \texttt{comm.cvh}}
+\label{subsec:commLibrary}
+
+The header \texttt{comm.cvh} declares three types, two macros and a number of functions for communication. The two maros are \texttt{\$COMM\_ANY\_SOURCE} and \texttt{\$COMM\_ANY\_TAG}. The three types declared are \cmessage, \cgcomm{} and \ccomm. 
+
+\subsubsection{Messaging functions}
+\label{subsubsec:messaging}
+
+The function \cmessagesize{} returns the size of a given message and has the signature
+
+\begin{verbatim}
+  int $message_size($message message);
+\end{verbatim}
+
+\noindent The function \cmessagesource{} returns the source of a given message and has the signature
+
+\begin{verbatim}
+  int $message_source($message message);
+\end{verbatim}
+
+\noindent The function \cmessagedest{} returns the destination of a given message and has the signature
+
+\begin{verbatim}
+  int $message_dest($message message);
+\end{verbatim}
+
+\noindent The function \cmessagetag{} returns the tag of a given message and has the signature
+
+\begin{verbatim}
+  int $message_tag($message message);
+\end{verbatim}
+
+\noindent The function \cmessagepack{} has the signature
+
+\begin{verbatim}
+  $message $message_pack(int source, int dest, int tag, void *data, int size);
+\end{verbatim}
+
+This function creates a new message of the specified \texttt{source}, \texttt{dest} and \texttt{tag}, copying data from the memory region specified \texttt{data} and \texttt{size}, and returns the newly created message object.
+\\~\\
+\noindent The function \cmessageunpack{} has the signature
+
+\begin{verbatim}
+  void $message_unpack($message message, void *buf, int size);
+\end{verbatim}
+
+This function transfers data from \texttt{message} the memory region specified by \texttt{buf} and \texttt{size}, reproting an error if the size of the message exceeds the specified \texttt{size}.
+
+\subsubsection{\cgcomm{} functions}
+\label{subsubsec:gcomm}
+
+\begin{verbatim}
+/* Creates a new global communicator object and returns a handle to it.
+ * The global communicator will have size communication places.  The
+ * global communicator defines a communication "universe" and encompasses
+ * message buffers and all other components of the state associated to
+ * message-passing.  The new object will be allocated in the given scope. */
+$gcomm $gcomm_create($scope s, int size);
+
+void $gcomm_destroy($gcomm gcomm); // Destroys the gcomm
+
+_Bool $gcomm_defined($gcomm gcomm); // Is the gcomm object defined?
+\end{verbatim}
+
+\subsubsection{\ccomm{} functions}
+\label{subsubsec:comm}
+
+\begin{verbatim}
+
+/* Creates a new local communicator object and returns a handle to it.
+ * The new communicator will be affiliated with the specified global
+ * communicator. The new object will be allocated in the given scope. */
+$comm $comm_create($scope s, $gcomm gcomm, int place);
+
+void $comm_destroy($comm comm); // Destroys the comm
+
+_Bool $comm_defined($comm comm); // Is the comm object defined?
+
+/* Returns the size (number of places) in the global communicator associated
+ * to the given comm. */
+int $comm_size($comm comm);
+
+/* Returns the place of the local communicator.  This is the same as the
+ * place argument used to create the local communicator. */
+int $comm_place($comm comm);
+
+/* Adds the message to the appropriate message queue in the communication
+ * universe specified by the comm.  The source of the message must equal
+ * the place of the comm. */
+void $comm_enqueue($comm comm, $message message);
+
+/* Returns true iff a matching message exists in the communication universe
+ * specified by the comm.  A message matches the arguments if the destination
+ * of the message is the place of the comm, and the sources and tags match. */
+_Bool $comm_probe($comm comm, int source, int tag);
+
+/* Finds the first matching message and returns it without modifying
+ * the communication universe.  If no matching message exists, returns a message
+ * with source, dest, and tag all negative. */
+$message $comm_seek($comm comm, int source, int tag);
+
+/* Finds the first matching message, removes it from the communicator,
+ * and returns the message */ 
+$message $comm_dequeue($comm comm, int source, int tag);
+\end{verbatim}
 
 \section{C libraries}
 
