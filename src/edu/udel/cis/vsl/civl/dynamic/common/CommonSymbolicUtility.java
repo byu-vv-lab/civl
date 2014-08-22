@@ -32,6 +32,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
@@ -434,8 +435,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public boolean isMallocPointer(CIVLSource source,
-			SymbolicExpression pointer) {
+	public boolean isMallocPointer(CIVLSource source, SymbolicExpression pointer) {
 		return heapAnalyzer.isHeapAtomicObjectPointer(source, pointer);
 	}
 
@@ -591,8 +591,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public SymbolicExpression rangeOfRectangularDomainAt(SymbolicExpression domain,
-			int index) {
+	public SymbolicExpression rangeOfRectangularDomainAt(
+			SymbolicExpression domain, int index) {
 		return universe.tupleRead(domain, universe.intObject(index));
 	}
 
@@ -634,6 +634,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				result = modelFactory.processType().getSizeof();
 			else if (type.isReal())
 				result = modelFactory.realType().getSizeof();
+			else if (type.typeKind() == SymbolicTypeKind.CHAR)
+				result = modelFactory.charType().getSizeof();
 			else if (type == modelFactory.scopeSymbolicType())
 				result = modelFactory.scopeType().getSizeof();
 			else if (type instanceof SymbolicCompleteArrayType) {
