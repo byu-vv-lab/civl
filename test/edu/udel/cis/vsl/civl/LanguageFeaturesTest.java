@@ -464,4 +464,24 @@ public class LanguageFeaturesTest {
 	public void pointerSubBad2() {
 		assertFalse(ui.run("verify", filename("pointerSubtractionBad2.cvl")));
 	}
+
+	@Test
+	public void stringTest() {
+		assertTrue(ui.run("verify", filename("stringTest.cvl")));
+	}
+
+	@Test
+	public void int2char() {
+		assertTrue(ui.run("verify", filename("int2char.cvl")));
+	}
+
+	@Test
+	public void int2charBad() {
+		assertFalse(ui.run("verify", filename("int2charBad.cvl")));
+	}
+
+	@Test
+	public void int2charBad2() {
+		assertFalse(ui.run("verify", filename("int2charBad2.cvl")));
+	}
 }
