@@ -38,6 +38,20 @@ int sizeofDatatype(MPI_Datatype datatype) {
     return sizeof(double);
   case MPI_CHAR:
     return sizeof(char);
+  case MPI_BYTE:
+    return sizeof(char); // char is always one byte ?
+  case MPI_SHORT:
+    return sizeof(short);
+  case MPI_LONG:
+    return sizeof(long);
+  case MPI_LONG_DOUBLE:
+    return sizeof(long double);
+  case MPI_LONG_LONG_INT:
+    return sizeof(long long int);
+  case MPI_LONG_LONG:
+    return sizeof(long long);
+  case MPI_UNSIGNED_LONG_LONG:
+    return sizeof(unsigned long long);
   default:
     $assert 0 : "Unreachable";
   }
