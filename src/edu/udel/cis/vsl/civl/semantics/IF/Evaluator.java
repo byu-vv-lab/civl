@@ -229,7 +229,7 @@ public interface Evaluator {
 	 * e.g. for <code>int a[2][2]</code>, passing pointer "a[0] + 1" will turn
 	 * out a new pointer "a[1]".
 	 * 
-	 * @link{edu.udel.cis.vsl.civl.semantics.IF.evaluatePointerAdd
+	 * {@link #evaluatePointerAdd}
 	 * 
 	 * 
 	 * @param state
@@ -336,7 +336,7 @@ public interface Evaluator {
 	Pair<State, StringBuffer> getString(CIVLSource source, State state,
 			String process, SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException;
-	
+
 	/**
 	 * Do a pointer addition operation on the given pointer with the given
 	 * offset. The given pointer will be casted to the deepest array element
