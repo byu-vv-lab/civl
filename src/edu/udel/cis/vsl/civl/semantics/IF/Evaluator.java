@@ -229,7 +229,7 @@ public interface Evaluator {
 	 * e.g. for <code>int a[2][2]</code>, passing pointer "a[0] + 1" will turn
 	 * out a new pointer "a[1]".
 	 * 
-	 * {@link #evaluatePointerAdd}
+	 * {@link #evaluatePointerAdd(State, String, SymbolicExpression, NumericExpresion, boolean, CIVLSource)}
 	 * 
 	 * 
 	 * @param state
