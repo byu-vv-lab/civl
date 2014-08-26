@@ -446,7 +446,10 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 * @param endPtr
 	 *            The pointer to the end position
 	 * @param arrayElementsSizes
-	 *            same as the same argument in @link{setDataBetween}
+	 *            same as the same argument in {@link #setDataBetween(State,
+	 *            String, SymbolicExpression, SymbolicExpression,
+	 *            SymbolicExpression, Map<Integer, NumericExpression>,
+	 *            CIVLSource)}
 	 * @param source
 	 *            The CIVL source of start pointer.
 	 * @return a sequence of data which is in form of an one dimensional array.
@@ -545,8 +548,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 *            The information of the process
 	 * @param array
 	 *            The array which is going to be flatten
-	 * @param arrayElementsSizes
-	 *            Same as the same argument in @link{setDataBetween}
 	 * @param civlsource
 	 *            The CIVL source the array or the pointer to the array
 	 * @return the flatten array
@@ -603,8 +604,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	 *            The array before casting
 	 * @param targetTypeArray
 	 *            The array has the type which is the target type of casting
-	 * @param arrayElementsSizes
-	 *            Same as the same argument in @link{setDataBetween}
 	 * @param source
 	 *            The CIVL source of the oldArray or the pointer to OldArray
 	 * @return casted array
@@ -664,8 +663,8 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 
 	/* ********************* Private Helper Functions ********************** */
 	/**
-	 * Helper function for @link{arrayFlattenList}. Recursively flatten the
-	 * given array. Only can be used on arrays have concrete lengths.
+	 * Recursively flatten the given array. Only can be used on arrays have
+	 * concrete lengths.
 	 */
 	private List<SymbolicExpression> arrayFlattenWorker(State state,
 			SymbolicExpression array, CIVLSource civlsource) {
@@ -710,8 +709,9 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	}
 
 	/**
-	 * Helper function for @link{arrayFlatten}. Used for dealing with arrays
-	 * have non-concrete lengths.
+	 * Helper function for
+	 * {@link #arrayFlatten(State, String, SymbolicExpression, CIVLSource)}.
+	 * Used for dealing with arrays have non-concrete lengths.
 	 */
 	private SymbolicExpression arrayLambdaFlatten(State state,
 			SymbolicExpression array,
@@ -755,8 +755,10 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	}
 
 	/**
-	 * Helper function for @link{arrayFlatten}. Returns true if and only if
-	 * there is at least one array (in nested arrays ) has non-concrete length.
+	 * Helper function for
+	 * {@link #arrayFlatten(State , String, SymbolicExpression , CIVLSource)}.
+	 * Returns true if and only if there is at least one array (in nested arrays
+	 * ) has non-concrete length.
 	 */
 	private boolean hasNonConcreteExtent(Reasoner reasoner,
 			SymbolicExpression array) {
