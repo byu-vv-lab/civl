@@ -1,6 +1,8 @@
 package edu.udel.cis.vsl.civl.semantics.common;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
@@ -1121,5 +1123,50 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			return ((CIVLStructOrUnionType) parentType).getField(index).type();
 		}
+	}
+
+	@Override
+	public Map<Integer, NumericExpression> arrayIndexesByPointer(State state,
+			CIVLSource source, SymbolicExpression pointer,
+			boolean isUsedBySubtraction) {
+		Map<Integer, NumericExpression> dimIndexes = new HashMap<>();
+		int dim = 0;
+		int vid = symbolicUtil.getVariableId(source, pointer);
+		ReferenceExpression ref;
+
+		// pointer = this.castToArrayElementReference(state, pointer, source);
+		ref = symbolicUtil.getSymRef(pointer);
+		while (ref.isArrayElementReference()) {
+			dimIndexes.put(dim, ((ArrayElementReference) ref).getIndex());
+			dim++;
+			pointer = symbolicUtil.parentPointer(source, pointer);
+			ref = symbolicUtil.getSymRef(pointer);
+			if (vid == 0 && !isUsedBySubtraction)
+				break;
+		}
+		return dimIndexes;
+	}
+
+	@Override
+	public SymbolicExpression castToArrayElementReference(State state,
+			SymbolicExpression pointer, CIVLSource source) {
+		CIVLType objType;
+		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
+		int sid, vid;
+
+		sid = symbolicUtil.getDyscopeId(source, pointer);
+		vid = symbolicUtil.getVariableId(source, pointer);
+		// If the pointer is pointing to an memory space, then no need to
+		// continue casting because there won't be any multi-dimensional array
+		// and "&a" and "a" when "a" is a pointer to a memory space is
+		// different.
+		if (vid == 0)
+			return pointer;
+		objType = typeOfObjByPointer(source, state, pointer);
+		while (objType.isArrayType()) {
+			ref = universe.arrayElementReference(ref, zero);
+			objType = ((CIVLArrayType) objType).elementType();
+		}
+		return symbolicUtil.makePointer(sid, vid, ref);
 	}
 }

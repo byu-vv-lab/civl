@@ -222,7 +222,15 @@ public interface Evaluator {
 	/**
 	 * Evaluates pointer addition. Pointer addition involves the addition of a
 	 * pointer expression and an integer. TODO: check if BinaryExpression
-	 * expression is necessary.
+	 * expression is necessary.<br>
+	 * Note: The given pointer for this function won't be casted to the deepest
+	 * array element reference which is the only difference from the other
+	 * function "evaluatePointerAdd". <br>
+	 * e.g. for <code>int a[2][2]</code>, passing pointer "a[0] + 1" will turn
+	 * out a new pointer "a[1]".
+	 * 
+	 * @link{edu.udel.cis.vsl.civl.semantics.IF.evaluatePointerAdd
+	 * 
 	 * 
 	 * @param state
 	 *            the pre-state
@@ -328,75 +336,30 @@ public interface Evaluator {
 	Pair<State, StringBuffer> getString(CIVLSource source, State state,
 			String process, SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException;
-
-	/* ************** Public Array Processing Helper Functions *************** */
+	
 	/**
-	 * Computes the array element indexes in an array element reference.<br>
-	 * Indexes are stored in a map whose keys indicate the dimension of the
-	 * array. Here 0 marks the deepest dimension and 1 marks the second deepest
-	 * dimension and so forth.
+	 * Do a pointer addition operation on the given pointer with the given
+	 * offset. The given pointer will be casted to the deepest array element
+	 * reference before the operation (e.g. for <code>int a[2][2];</code>, if
+	 * giving pointer &a, it will be casted to &a[0][0]).
 	 * 
 	 * @param state
 	 *            The current state
+	 * @param process
+	 *            The information of the process
+	 * @param ptr
+	 *            The pointer will be added by a offset
+	 * @param offset
+	 *            The numeric offset will be added to a pointer
 	 * @param source
-	 *            The CIVL source of the pointer
-	 * @param pointer
-	 *            The array element reference pointer
-	 * @param ignoreDiffBetweenHeapAndArray
-	 *            flag indicates if returning all indexes from a pointer to heap
-	 *            object. Since in CIVL, heap is represented as two dimensional
-	 *            array which may be lumped with nested array incorrectly. Set
-	 *            this flag to false, this function will ignore the difference
-	 *            between heap and nested arrays(which currently is just used by
-	 *            pointer subtraction).
-	 * @return
+	 *            The CIVLSource of the statement.
+	 * @return A pair of evaluation of the result of the operation and a map
+	 *         contains the array elements sizes information of the array
+	 *         pointed by the given pointer which helps saving computing time
+	 *         for caller functions.
 	 */
-	public Map<Integer, NumericExpression> arrayIndexesByPointer(State state,
-			CIVLSource source, SymbolicExpression pointer,
-			boolean ignoreDiffBetweenHeapAndArray);
-
-	/**
-	 * Computes extents of every dimension of an array.<br>
-	 * The extents informations are stored in a map whose keys indicate the
-	 * dimension of the array. Here 0 marks the outer most dimension, 1 marks
-	 * the second outer most dimension and so forth.
-	 * 
-	 * @param source
-	 *            The CIVL source of the array or the pointer to the array
-	 * @param array
-	 *            The target array.
-	 * @return The Map contains array extents information.
-	 */
-	public Map<Integer, NumericExpression> arrayExtents(CIVLSource source,
-			SymbolicExpression array);
-
-	/**
-	 * Computes the array capacity informations(@link{setDataBetween}) of the
-	 * given array. Array capacity informations are stored in a map whose keys
-	 * indicates each dimension of the array. Here, 0 marks the deepest
-	 * dimension, 1 marks the second deepest dimension and so forth.
-	 * 
-	 * @param array
-	 *            The target array
-	 * @param source
-	 *            The CIVL source of the array or the pointer to the array
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	public Map<Integer, NumericExpression> arrayCapacities(
-			SymbolicExpression array, CIVLSource source)
+	public Pair<Evaluation, Map<Integer, NumericExpression>> evaluatePointerAdd(
+			State state, String process, SymbolicExpression ptr,
+			NumericExpression offset, boolean ifCheckOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException;
-
-	/**
-	 * Get the most ancestor pointer of the given array element reference
-	 * pointer.
-	 * 
-	 * @param arrayPtr
-	 *            An array element reference pointer or a pointer to an array
-	 * @param source
-	 *            The CIVL source of the pointer
-	 * @return
-	 */
-	public SymbolicExpression arrayRootPtr(SymbolicExpression arrayPtr,
-			CIVLSource source);
 }

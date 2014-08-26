@@ -15,8 +15,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
@@ -26,13 +24,10 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
-import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
-import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -123,40 +118,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	}
 
 	/**
-	 * Computes the new pointer after adding an increment or decrement offset to
-	 * a pointer.
-	 * 
-	 * @author Ziqing Luo
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The information of the process
-	 * @param pointer
-	 *            The pointer before offset
-	 * @param offset
-	 *            The value of the offset
-	 * @param checkOutput
-	 *            If the object pointed by the pointer needs checking if it's an
-	 *            output variable
-	 * @param source
-	 *            The CIVL source of the pointer
-	 * @return the new pointer with offset
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	public Evaluation pointerAdd(State state, int pid, String process,
-			SymbolicExpression pointer, NumericExpression offset,
-			boolean checkOutput, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		if (pointer.operator() != SymbolicOperator.CONCRETE)
-			errorLogger.reportError(new CIVLExecutionException(
-					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Attempt to read/write a invalid pointer type variable",
-					source));
-		return this.pointerAddWorker(state, process, pointer, offset,
-				checkOutput, source).left;
-	}
-
-	/**
 	 * Get a sequence of data starting from a pointer.
 	 * 
 	 * @param state
@@ -192,7 +153,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		// and array information of the whole array. Array information can be
 		// reused later.
 		// Data stored from "pointer" to "pointer + (count - 1)"
-		ret = this.pointerAddWorker(state, process, startPtr,
+		ret = evaluator.evaluatePointerAdd(state, process, startPtr,
 				universe.subtract(count, one), false, source);
 		arrayElementsSizes = ret.right;
 		eval = ret.left;
@@ -248,7 +209,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
 		startPtr = pointer;
-		ret = this.pointerAddWorker(state, process, startPtr,
+		ret = evaluator.evaluatePointerAdd(state, process, startPtr,
 				universe.subtract(count, one), checkOutput, source);
 		getArrayElementsSizes = ret.right;
 		eval = ret.left;
@@ -320,8 +281,8 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		} else if (reasoner.isValid(universe.equals(dataSize, one))) {
 			// If data size is one, reading array to get the element
 			eval = new Evaluation(state, universe.arrayRead(data, zero));
-			pointer = this.castToArrayElementReference(state, pointer,
-					civlsource);
+			pointer = symbolicAnalyzer.castToArrayElementReference(state,
+					pointer, civlsource);
 			return new Pair<Evaluation, SymbolicExpression>(eval, pointer);
 		}
 		// If data size larger than one, return an array and the corresponding
@@ -390,11 +351,14 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		if (!(sidMatch && vidMatch))
 			throw new CIVLInternalException("Object unmatch exception\n",
 					source);
-		startPointer = this
-				.castToArrayElementReference(state, startPtr, source);
-		endPointer = this.castToArrayElementReference(state, endPtr, source);
-		startIndexes = this.arrayIndexesByPointer(state, source, startPointer);
-		endIndexes = this.arrayIndexesByPointer(state, source, endPointer);
+		startPointer = symbolicAnalyzer.castToArrayElementReference(state,
+				startPtr, source);
+		endPointer = symbolicAnalyzer.castToArrayElementReference(state,
+				endPtr, source);
+		startIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
+				startPointer, false);
+		endIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
+				endPointer, false);
 		while (!startPointer.equals(endPointer)) {
 			startPos = universe.add(
 					startPos,
@@ -513,17 +477,20 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			throw new CIVLInternalException("Object unmatch exception\n",
 					source);
 		// Cast pointers to the form of an array element reference
-		startPointer = this
-				.castToArrayElementReference(state, startPtr, source);
+		startPointer = symbolicAnalyzer.castToArrayElementReference(state,
+				startPtr, source);
 		endPointer = endPtr;
-		startIndexes = this.arrayIndexesByPointer(state, source, startPointer);
-		endIndexes = this.arrayIndexesByPointer(state, source, endPointer);
+		startIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
+				startPointer, false);
+		endIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
+				endPointer, false);
 		// If sizes of the two sets are not equal which means endPointer is
 		// still pointing to a array type component. Then we need cast it.
 		if (startIndexes.size() != endIndexes.size()) {
-			endPointer = this
-					.castToArrayElementReference(state, endPtr, source);
-			endIndexes = this.arrayIndexesByPointer(state, source, endPointer);
+			endPointer = symbolicAnalyzer.castToArrayElementReference(state,
+					endPtr, source);
+			endIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
+					endPointer, false);
 		}
 		while (!startPointer.equals(endPointer)) {
 			startPos = universe.add(
@@ -604,7 +571,8 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		// If the array has at least one dimension whose length is non-concrete,
 		// using array lambda to flatten it.
 		if (this.hasNonConcreteExtent(reasoner, array)) {
-			arrayElementsSizes = this.getArrayElementsSizes(array, civlsource);
+			arrayElementsSizes = symbolicUtil.getArrayElementsSizes(array,
+					civlsource);
 			return this.arrayLambdaFlatten(state, array, arrayElementsSizes,
 					civlsource);
 		}
@@ -807,273 +775,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	}
 
 	/**
-	 * Helper function for @link{pointerAdd}. Returns the new pointer after
-	 * adding an increment or decrement and the array capacities
-	 * information(@link{setDataBetween}) of the array pointed by the original
-	 * pointer. If the pointer addition operation can be done only on one
-	 * dimension (like for<code>int a[3][3];</code>, addition operation
-	 * "&a[0][0] + 2" can be done without known the whole array information),
-	 * the returned map container will be null.
-	 */
-	private Pair<Evaluation, Map<Integer, NumericExpression>> pointerAddWorker(
-			State state, String process, SymbolicExpression pointer,
-			NumericExpression offset, boolean checkOutput, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression arrayPtr;
-		SymbolicExpression parentPtr;
-		ReferenceExpression parentRef;
-		NumericExpression extent, index;
-		ReferenceExpression ref;
-		ReferenceExpression newRef;
-		BooleanExpression claim, over, equal, drown;
-		Evaluation eval;
-		int scopeId, vid;
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-
-		claim = universe.equals(offset, zero);
-		if (reasoner.isValid(claim))
-			return new Pair<>(new Evaluation(state, pointer), null);
-		scopeId = symbolicUtil.getDyscopeId(source, pointer);
-		vid = symbolicUtil.getVariableId(source, pointer);
-		pointer = this.castToArrayElementReference(state, pointer, source);
-		ref = symbolicUtil.getSymRef(pointer);
-		// Checking if the pointer addition will be out of bound at the current
-		// dimension.
-		if (ref.isArrayElementReference()) {
-			arrayPtr = symbolicUtil.parentPointer(source, pointer);
-			index = universe.integer(symbolicUtil
-					.getArrayIndex(source, pointer));
-			eval = evaluator.dereference(source, state, process, arrayPtr,
-					false);
-			state = eval.state;
-			if (!(eval.value.type() instanceof SymbolicCompleteArrayType))
-				throw new CIVLInternalException(
-						"Pointer addition on a pointer to incomplete array",
-						source);
-			extent = ((SymbolicCompleteArrayType) eval.value.type()).extent();
-			// beyond the bound
-			over = universe.lessThan(extent, universe.add(index, offset));
-			// lower than the bound
-			drown = universe.lessThan(universe.add(index, offset), zero);
-			equal = universe.equals(universe.add(index, offset), extent);
-			// out of bound condition:
-			// If index + offset > extent, out of bound.
-			// If index + offset < 0, out of bound.
-			// If index + offset == extent and the parent reference is an array
-			// element reference, out of bound.(e.g. int a[2], b[2][2]. &a[2] is
-			// a valid pointer, &b[0][2] should be cast to &b[1][0] unless it's
-			// a sequence of memory space)
-			if (reasoner.isValid(over)
-					|| reasoner.isValid(drown)
-					|| (reasoner.isValid(equal)
-							&& symbolicUtil.getSymRef(arrayPtr)
-									.isArrayElementReference() && vid != 0)) {
-				NumericExpression newIndex, remainder = index;
-				NumericExpression capacity = one;
-				SymbolicExpression arrayRootPtr;
-				List<NumericExpression> indexes = new LinkedList<>();
-				Map<Integer, NumericExpression> dimCapacities;
-				int dim = 1;
-
-				// Checking if the array is an allocated memory space
-				if (vid == 0)
-					throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
-							Certainty.PROVEABLE, process,
-							"Array out of bound\n", source);
-				// Computes remainder
-				arrayRootPtr = this.arrayRootPtr(arrayPtr, source);
-				eval = evaluator.dereference(source, state, process,
-						arrayRootPtr, false);
-				state = eval.state;
-				dimCapacities = this.getArrayElementsSizes(eval.value, source);
-				parentPtr = arrayPtr;
-				while (dimCapacities.containsKey(dim)) {
-					NumericExpression oldIndex = universe.integer(symbolicUtil
-							.getArrayIndex(source, parentPtr));
-
-					capacity = dimCapacities.get(dim);
-					remainder = universe.add(remainder,
-							universe.multiply(oldIndex, capacity));
-					dim++;
-					parentPtr = symbolicUtil.parentPointer(source, parentPtr);
-				}
-				remainder = universe.add(remainder, offset);
-				// computes new indexes
-				dim--;
-				while (dimCapacities.containsKey(dim)) {
-					capacity = dimCapacities.get(dim);
-					newIndex = universe.divide(remainder, capacity);
-					remainder = universe.modulo(remainder, capacity);
-					indexes.add(newIndex);
-					dim--;
-				}
-				claim = universe.equals(remainder, zero);
-				if (!reasoner.isValid(claim))
-					throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
-							Certainty.PROVEABLE, process,
-							"Array out of bound\n", source);
-				newRef = symbolicUtil.updateArrayElementReference(
-						(ArrayElementReference) ref, indexes);
-				eval = new Evaluation(state, symbolicUtil.makePointer(scopeId,
-						vid, newRef));
-				return new Pair<>(eval, dimCapacities);
-			} else {
-				// The (offset + index) < extent at the given dimension,
-				// return new pointer easily.
-				parentRef = symbolicUtil.getSymRef(arrayPtr);
-				newRef = universe.arrayElementReference(parentRef,
-						universe.add(index, offset));
-				eval = new Evaluation(state, symbolicUtil.makePointer(scopeId,
-						vid, newRef));
-				return new Pair<>(eval, null);
-			}
-		} else {
-			throw new CIVLExecutionException(ErrorKind.OUT_OF_BOUNDS,
-					Certainty.PROVEABLE, process, "Array out of bound\n",
-					source);
-		}
-	}
-
-	// TODO: need a better name
-	/**
-	 * Cast an pointer to the deepest array element reference pointer if the
-	 * pointed object is an array.
-	 * 
-	 * @author Ziqing Luo
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The information of the process
-	 * @param pointer
-	 *            The pointer needs being casted
-	 * @param source
-	 *            The CIVL source of the pointer
-	 * @return The casted pointer
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private SymbolicExpression castToArrayElementReference(State state,
-			SymbolicExpression pointer, CIVLSource source) {
-		CIVLType objType;
-		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
-		int sid, vid;
-
-		sid = symbolicUtil.getDyscopeId(source, pointer);
-		vid = symbolicUtil.getVariableId(source, pointer);
-		// If the pointer is pointing to an memory space, then no need to
-		// continue casting because there won't be any multi-dimensional array
-		// and "&a" and "a" when "a" is a pointer to a memory space is
-		// different.
-		if (vid == 0)
-			return pointer;
-		objType = symbolicAnalyzer.typeOfObjByPointer(source, state, pointer);
-		while (objType.isArrayType()) {
-			ref = universe.arrayElementReference(ref, zero);
-			objType = ((CIVLArrayType) objType).elementType();
-		}
-		return symbolicUtil.makePointer(sid, vid, ref);
-	}
-
-	/**
-	 * Computes extents of every dimension of an array.<br>
-	 * The extents informations are stored in a map whose keys indicate the
-	 * dimension of the array. Here 0 marks the outer most dimension, 1 marks
-	 * the second outer most dimension and so forth.
-	 * 
-	 * @param source
-	 *            The CIVL source of the array or the pointer to the array
-	 * @param array
-	 *            The target array.
-	 * @return The Map contains array extents information.
-	 */
-	private Map<Integer, NumericExpression> arrayExtents(CIVLSource source,
-			SymbolicExpression array) {
-		SymbolicExpression element = array;
-		SymbolicType type = array.type();
-		Map<Integer, NumericExpression> dimExtents = new HashMap<>();
-		int dim = 0;
-
-		if (!(type instanceof SymbolicArrayType))
-			throw new CIVLInternalException(
-					"Cannot get extents from an non-array object", source);
-		while (type instanceof SymbolicArrayType) {
-			dimExtents.put(dim, universe.length(element));
-			dim++;
-			element = universe.arrayRead(element, zero);
-			type = element.type();
-		}
-		return dimExtents;
-	}
-
-	/**
-	 * Computes the array element indexes in an array element reference.<br>
-	 * Indexes are stored in a map whose keys indicate the dimension of the
-	 * array. Here 0 marks the deepest dimension and 1 marks the second deepest
-	 * dimension and so forth.
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param source
-	 *            The CIVL source of the pointer
-	 * @param pointer
-	 *            The array element reference pointer
-	 * @return
-	 */
-	private Map<Integer, NumericExpression> arrayIndexesByPointer(State state,
-			CIVLSource source, SymbolicExpression pointer) {
-		Map<Integer, NumericExpression> dimIndexes = new HashMap<>();
-		int dim = 0;
-		int vid = symbolicUtil.getVariableId(source, pointer);
-		ReferenceExpression ref;
-
-		// pointer = this.castToArrayElementReference(state, pointer, source);
-		ref = symbolicUtil.getSymRef(pointer);
-		while (ref.isArrayElementReference()) {
-			dimIndexes.put(dim, ((ArrayElementReference) ref).getIndex());
-			dim++;
-			pointer = symbolicUtil.parentPointer(source, pointer);
-			ref = symbolicUtil.getSymRef(pointer);
-			if (vid == 0)
-				break;
-		}
-		return dimIndexes;
-	}
-
-	/**
-	 * Computes the array capacity informations(@link{setDataBetween}) of the
-	 * given array. Array capacity informations are stored in a map whose keys
-	 * indicates each dimension of the array. Here, 0 marks the deepest
-	 * dimension, 1 marks the second deepest dimension and so forth.
-	 * 
-	 * @param array
-	 *            The target array
-	 * @param source
-	 *            The CIVL source of the array or the pointer to the array
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Map<Integer, NumericExpression> getArrayElementsSizes(
-			SymbolicExpression array, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		NumericExpression capacity = one;
-		Map<Integer, NumericExpression> dimExtents;
-		Map<Integer, NumericExpression> dimCapacities = new HashMap<>();
-		int dim;
-		int extentIter;
-
-		dimExtents = this.arrayExtents(source, array);
-		extentIter = dimExtents.size() - 1;
-		dim = 1;
-		dimCapacities.put(0, capacity);
-		while (dimExtents.containsKey(extentIter - 1)) {
-			capacity = universe.multiply(capacity, dimExtents.get(extentIter));
-			dimCapacities.put(dim, capacity);
-			extentIter--;
-			dim++;
-		}
-		return dimCapacities;
-	}
-
-	/**
 	 * Computes the size of the given array. Here size means the number of
 	 * non-array elements that the given array can hold.
 	 * 
@@ -1089,31 +790,11 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		NumericExpression size = one;
 		int dim = 0;
 
-		dimExtents = this.arrayExtents(source, array);
+		dimExtents = symbolicUtil.arrayExtents(source, array);
 		while (dimExtents.containsKey(dim)) {
 			size = universe.multiply(size, dimExtents.get(dim));
 			dim++;
 		}
 		return size;
-	}
-
-	/**
-	 * Get the most ancestor pointer of the given array element reference
-	 * pointer.
-	 * 
-	 * @param arrayPtr
-	 *            An array element reference pointer or a pointer to an array
-	 * @param source
-	 *            The CIVL source of the pointer
-	 * @return
-	 */
-	private SymbolicExpression arrayRootPtr(SymbolicExpression arrayPtr,
-			CIVLSource source) {
-		SymbolicExpression arrayRootPtr = arrayPtr;
-
-		while (symbolicUtil.getSymRef(arrayRootPtr).isArrayElementReference())
-			arrayRootPtr = symbolicUtil.parentPointer(source, arrayRootPtr);
-
-		return arrayRootPtr;
 	}
 }

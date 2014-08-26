@@ -828,4 +828,58 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		}
 		return components;
 	}
+
+	@Override
+	public Map<Integer, NumericExpression> getArrayElementsSizes(
+			SymbolicExpression array, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		NumericExpression capacity = one;
+		Map<Integer, NumericExpression> dimExtents;
+		Map<Integer, NumericExpression> dimCapacities = new HashMap<>();
+		int dim;
+		int extentIter;
+
+		dimExtents = this.arrayExtents(source, array);
+		extentIter = dimExtents.size() - 1;
+		dim = 1;
+		dimCapacities.put(0, capacity);
+		while (dimExtents.containsKey(extentIter - 1)) {
+			capacity = universe.multiply(capacity, dimExtents.get(extentIter));
+			dimCapacities.put(dim, capacity);
+			extentIter--;
+			dim++;
+		}
+		return dimCapacities;
+	}
+
+	@Override
+	public Map<Integer, NumericExpression> arrayExtents(CIVLSource source,
+			SymbolicExpression array) {
+		SymbolicExpression element = array;
+		SymbolicType type = array.type();
+		Map<Integer, NumericExpression> dimExtents = new HashMap<>();
+		int dim = 0;
+
+		if (!(type instanceof SymbolicArrayType))
+			throw new CIVLInternalException(
+					"Cannot get extents from an non-array object", source);
+		while (type instanceof SymbolicArrayType) {
+			dimExtents.put(dim, universe.length(element));
+			dim++;
+			element = universe.arrayRead(element, zero);
+			type = element.type();
+		}
+		return dimExtents;
+	}
+
+	@Override
+	public SymbolicExpression arrayRootPtr(SymbolicExpression arrayPtr,
+			CIVLSource source) {
+		SymbolicExpression arrayRootPtr = arrayPtr;
+
+		while (getSymRef(arrayRootPtr).isArrayElementReference())
+			arrayRootPtr = parentPointer(source, arrayRootPtr);
+
+		return arrayRootPtr;
+	}
 }

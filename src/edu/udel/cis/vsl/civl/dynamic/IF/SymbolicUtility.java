@@ -1,9 +1,11 @@
 package edu.udel.cis.vsl.civl.dynamic.IF;
 
 import java.util.List;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -541,4 +543,49 @@ public interface SymbolicUtility {
 	 * @return The undefined pointer.
 	 */
 	SymbolicExpression undefinedPointer();
+
+	/**
+	 * Computes the array capacity informations(@link{setDataBetween}) of the
+	 * given array. Array capacity informations are stored in a map whose keys
+	 * indicates each dimension of the array. Here, 0 marks the deepest
+	 * dimension, 1 marks the second deepest dimension and so forth.
+	 * 
+	 * @param array
+	 *            The target array
+	 * @param source
+	 *            The CIVL source of the array or the pointer to the array
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	Map<Integer, NumericExpression> getArrayElementsSizes(
+			SymbolicExpression array, CIVLSource source)
+			throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Get the most ancestor pointer of the given array element reference
+	 * pointer.
+	 * 
+	 * @param arrayPtr
+	 *            An array element reference pointer or a pointer to an array
+	 * @param source
+	 *            The CIVL source of the pointer
+	 * @return
+	 */
+	SymbolicExpression arrayRootPtr(SymbolicExpression arrayPtr,
+			CIVLSource source);
+
+	/**
+	 * Computes extents of every dimension of an array.<br>
+	 * The extents informations are stored in a map whose keys indicate the
+	 * dimension of the array. Here 0 marks the outer most dimension, 1 marks
+	 * the second outer most dimension and so forth.
+	 * 
+	 * @param source
+	 *            The CIVL source of the array or the pointer to the array
+	 * @param array
+	 *            The target array.
+	 * @return The Map contains array extents information.
+	 */
+	Map<Integer, NumericExpression> arrayExtents(CIVLSource source,
+			SymbolicExpression array);
 }
