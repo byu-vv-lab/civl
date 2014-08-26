@@ -10,19 +10,19 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
-public class CommonDomainType extends CommonType implements CIVLDomainType {
+public class CommonRecDomainType extends CommonType implements CIVLDomainType {
 
 	private int dimension;
 	private CIVLType rangeType;
 	private SymbolicTupleType dynamicType = null;
 
-	public CommonDomainType(CIVLType rangeType, int dim,
+	public CommonRecDomainType(CIVLType rangeType, int dim,
 			SymbolicUniverse universe) {
 		this.dimension = dim;
 		this.rangeType = rangeType;
 	}
 
-	public CommonDomainType(SymbolicUniverse universe) {
+	public CommonRecDomainType(SymbolicUniverse universe) {
 		this.dimension = -1;
 	}
 

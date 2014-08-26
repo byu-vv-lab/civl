@@ -36,9 +36,9 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.NextInDomainStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
@@ -121,10 +121,8 @@ public class CommonExecutor implements Executor {
 
 	private CIVLConfiguration civlConfig;
 
-	private int parProcId = 0;
-
 	private SymbolicAnalyzer symbolicAnalyzer;
-	
+
 	/**
 	 * The set of characters that are used to construct a number in a format
 	 * string.
@@ -589,7 +587,8 @@ public class CommonExecutor implements Executor {
 			return executeStatementList(state, pid, (StatementList) statement,
 					null);
 		case CIVL_FOR_ENTER:
-			return executeCivlFor(state, pid, (CivlForEnterStatement) statement);
+			return executeNextInDomain(state, pid,
+					(NextInDomainStatement) statement);
 		case CIVL_PAR_FOR_ENTER:
 			return executeCivlParFor(state, pid,
 					(CivlParForEnterStatement) statement);
@@ -614,25 +613,25 @@ public class CommonExecutor implements Executor {
 		reasoner = universe.reasoner(state.getPathCondition());
 		valid = reasoner.valid(assertValue);
 		resultType = valid.getResultType();
-		if (resultType != ResultType.YES) {	
+		if (resultType != ResultType.YES) {
 			Expression[] explanation = assertStmt.getExplanation();
-			
-			if(explanation != null){
-				 if (civlConfig.enablePrintf()) {
-				 SymbolicExpression[] pArgumentValues = new  SymbolicExpression[explanation.length];
-				 
-				 
-				 for(int i = 0; i < explanation.length; i++){
-					 eval = this.evaluator.evaluate(state, pid, explanation[i]);
-					 state = eval.state;
-					 pArgumentValues[i] = eval.value;
-				 }
-				
-				 state = this.execute_printf(source, state, pid, process,
-				 null, explanation, pArgumentValues);
-				 }
+
+			if (explanation != null) {
+				if (civlConfig.enablePrintf()) {
+					SymbolicExpression[] pArgumentValues = new SymbolicExpression[explanation.length];
+
+					for (int i = 0; i < explanation.length; i++) {
+						eval = this.evaluator.evaluate(state, pid,
+								explanation[i]);
+						state = eval.state;
+						pArgumentValues[i] = eval.value;
+					}
+
+					state = this.execute_printf(source, state, pid, process,
+							null, explanation, pArgumentValues);
+				}
 			}
-			
+
 			// if (arguments.length > 1) {
 			// if (civlConfig.enablePrintf()) {
 			// Expression[] pArguments = Arrays.copyOfRange(arguments, 1,
@@ -668,9 +667,6 @@ public class CommonExecutor implements Executor {
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		IntegerNumber number_domSize;
-		List<NumericExpression> lows = new ArrayList<>(dim);
-		List<NumericExpression> steps = new ArrayList<>(dim);
-		List<NumericExpression> highs = new ArrayList<>(dim);
 		Expression parProcs = parFor.parProcsPointer();
 		VariableExpression parProcsVar = parFor.parProcsVar();
 		SymbolicExpression parProcsPointer;
@@ -680,16 +676,7 @@ public class CommonExecutor implements Executor {
 		state = eval.state;
 		eval = evaluator.evaluate(state, pid, parProcs);
 		state = eval.state;
-		for (int i = 0; i < dim; i++) {
-			SymbolicExpression rangeV = universe.tupleRead(domainV,
-					universe.intObject(i));
-			NumericExpression rangeSize = symbolicUtil.getRangeSize(rangeV);
-
-			domSizeV = universe.multiply(domSizeV, rangeSize);
-			lows.add(symbolicUtil.getRegRangeMin(rangeV));
-			steps.add(symbolicUtil.getRangeStep(rangeV));
-			highs.add(symbolicUtil.getRangeMax(rangeV));
-		}
+		domSizeV = symbolicUtil.getDomainSize(domainV);
 		state = this.assign(state, pid, process, domSize, domSizeV);
 		number_domSize = (IntegerNumber) reasoner.extractNumber(domSizeV);
 		if (number_domSize == null) {
@@ -711,114 +698,91 @@ public class CommonExecutor implements Executor {
 			eval = evaluator.evaluate(state, pid, initVal);
 			state = eval.state;
 			state = this.assign(state, pid, process, parProcsVar, eval.value);
-			this.parProcId = 0;
 			state = this.executeSpawns(state, pid, parProcs, parProcsPointer,
-					parFor.parProcFunction(), 0, dim, lows, steps, highs);
-			this.parProcId = 0;
+					parFor.parProcFunction(), dim, domainV);
 		}
 		state = stateFactory.setLocation(state, pid, parFor.target());
 		return state;
 	}
 
 	private State executeSpawns(State state, int pid, Expression parProcs,
-			SymbolicExpression parProcsPointer, CIVLFunction function, int id,
-			int dim, List<NumericExpression> values,
-			List<NumericExpression> steps, List<NumericExpression> highs)
+			SymbolicExpression parProcsPointer, CIVLFunction function, int dim,
+			SymbolicExpression domainValue)
 			throws UnsatisfiablePathConditionException {
-		NumericExpression current = values.get(id);
-		NumericExpression step = steps.get(id), high = highs.get(id);
-		Reasoner reasoner;
-		BooleanExpression claim;
-		ResultType result;
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
-		List<NumericExpression> myValues = new ArrayList<>(values);
+		List<SymbolicExpression> myValues;
+		int myProcId = 0;
+		CIVLSource source = parProcs.getSource();
+		boolean isInit = true;
 
-		for (int i = 0;; i++) {
-			if (i != 0)
-				current = universe.add(current, step);
-			reasoner = universe.reasoner(state.getPathCondition());
-			claim = universe.lessThanEquals(current, high);
-			result = reasoner.valid(claim).getResultType();
+		myValues = symbolicUtil.getDomainInit(domainValue);
+		do {
+			SymbolicExpression[] arguments = new SymbolicExpression[dim];
+			SymbolicExpression procPointer;
+			BinaryExpression pointerAdd = modelFactory.binaryExpression(
+					source,
+					BINARY_OPERATOR.POINTER_ADD,
+					parProcs,
+					modelFactory.integerLiteralExpression(source,
+							BigInteger.valueOf(myProcId)));
+			Evaluation eval;
+			int newPid;
 
-			if (result == ResultType.YES) {
-				myValues.set(id, current);
-				if (id == dim - 1) {
-					SymbolicExpression[] arguments = new SymbolicExpression[dim];
-					SymbolicExpression procPointer;
-					int myProcId = this.parProcId++;
-					int newPid;
-					CIVLSource source = parProcs.getSource();
-					BinaryExpression pointerAdd = modelFactory
-							.binaryExpression(source,
-									BINARY_OPERATOR.POINTER_ADD, parProcs,
-									modelFactory.integerLiteralExpression(
-											source,
-											BigInteger.valueOf(myProcId)));
-					Evaluation eval;
-
-					myValues.toArray(arguments);
-					newPid = state.numProcs();
-					state = stateFactory.addProcess(state, function, arguments,
-							pid);
-					eval = evaluator.pointerAdd(state, pid, process,
-							pointerAdd, parProcsPointer,
-							universe.integer(myProcId));
-					procPointer = eval.value;
-					state = eval.state;
-					state = this.assign(source, state, process, procPointer,
-							modelFactory.processValue(newPid));
-				} else {
-					state = executeSpawns(state, pid, parProcs,
-							parProcsPointer, function, id + 1, dim, myValues,
-							steps, highs);
-				}
-			} else if (result == ResultType.NO)
-				break;
-			else {
-
-			}
-
-		}
+			if (isInit)
+				isInit = false;
+			else
+				myValues = symbolicUtil.getNextInDomain(domainValue, myValues);
+			myValues.toArray(arguments);
+			newPid = state.numProcs();
+			state = stateFactory.addProcess(state, function, arguments, pid);
+			eval = evaluator.pointerAdd(state, pid, process, pointerAdd,
+					parProcsPointer, universe.integer(myProcId++));
+			procPointer = eval.value;
+			state = eval.state;
+			state = this.assign(source, state, process, procPointer,
+					modelFactory.processValue(newPid));
+		} while (symbolicUtil.domainHasNext(domainValue, myValues).isTrue());
 		return state;
 	}
 
-	private State executeCivlFor(State state, int pid,
-			CivlForEnterStatement forEnter)
+	private State executeNextInDomain(State state, int pid,
+			NextInDomainStatement nextInDomain)
 			throws UnsatisfiablePathConditionException {
-		List<VariableExpression> loopVars = forEnter.loopVariables();
-		Expression domain = forEnter.domain();
+		List<VariableExpression> loopVars = nextInDomain.loopVariables();
+		Expression domain = nextInDomain.domain();
 		SymbolicExpression domValue;
 		Evaluation eval = evaluator.evaluate(state, pid, domain);
 		int dim = loopVars.size();
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+		List<SymbolicExpression> varValues = new ArrayList<>(dim);
+		int dyscopeId = state.getDyscope(pid, loopVars.get(0).variable()
+				.scope());
+		boolean isAllNull = true;
 
 		domValue = eval.value;
 		state = eval.state;
-		for (int i = dim - 1; i >= 0; i--) {
+		for (int i = 0; i < dim; i++) {
 			VariableExpression var = loopVars.get(i);
-			SymbolicExpression varValue, newValue;
-			BooleanExpression inRange;
+			SymbolicExpression varValue = state.getVariableValue(dyscopeId, var
+					.variable().vid());
 
-			eval = evaluator.evaluate(state, pid, var);
-			varValue = eval.value;
-			state = eval.state;
-			newValue = symbolicUtil.incrementRegularRange(varValue,
-					symbolicUtil.rangeOfRectangularDomainAt(domValue, i));
-			inRange = symbolicUtil.isInRange(newValue, domValue, i);
-			if (!inRange.isFalse()) {
-				state = this.assign(state, pid, process, var, newValue);
-				break;
-			} else if (i == 0) {
-				state = this.assign(state, pid, process, var, newValue);
-			} else {
-				state = this.assign(state, pid, process, var,
-						symbolicUtil.getLowOfDomainAt(domValue, i));
-			}
+			if (!varValue.isNull())
+				isAllNull = false;
+			varValues.add(varValue);
 		}
-		state = stateFactory.setLocation(state, pid, forEnter.target());
+		if (isAllNull)
+			varValues = symbolicUtil.getDomainInit(domValue);
+		else
+			varValues = symbolicUtil.getNextInDomain(domValue, varValues);
+		for (int i = 0; i < dim; i++) {
+			VariableExpression var = loopVars.get(i);
+
+			state = this.assign(state, pid, process, var, varValues.get(i));
+		}
+		state = stateFactory.setLocation(state, pid, nextInDomain.target());
 		return state;
 	}
-	
+
 	@Override
 	public State execute_printf(CIVLSource source, State state, int pid,
 			String process, LHSExpression lhs, Expression[] arguments,
@@ -831,8 +795,8 @@ public class CommonExecutor implements Executor {
 		List<Format> formats;
 		List<Format> nonVoidFormats = new ArrayList<>();
 
-		concreteString = this.evaluator.getString(arguments[0].getSource(), state,
-				process, argumentValues[0]);
+		concreteString = this.evaluator.getString(arguments[0].getSource(),
+				state, process, argumentValues[0]);
 		formatBuffer = concreteString.right;
 		state = concreteString.left;
 		formats = this.splitFormat(arguments[0].getSource(), formatBuffer);
@@ -851,8 +815,9 @@ public class CommonExecutor implements Executor {
 				Format myFormat = nonVoidFormats.get(i - 1);
 
 				if (myFormat.type == ConversionType.STRING) {
-					concreteString = this.evaluator.getString(arguments[i].getSource(),
-							state, process, argumentValue);
+					concreteString = this.evaluator.getString(
+							arguments[i].getSource(), state, process,
+							argumentValue);
 					stringOfSymbolicExpression = concreteString.right;
 					state = concreteString.left;
 					printedContents.add(stringOfSymbolicExpression);
@@ -875,7 +840,7 @@ public class CommonExecutor implements Executor {
 				printedContents);
 		return state;
 	}
-	
+
 	/**
 	 * Parses the format string, according to C11 standards. For example,
 	 * <code>"This is process %d.\n"</code> will be parsed into a list of
@@ -916,8 +881,7 @@ public class CommonExecutor implements Executor {
 	 *         specifiers.
 	 */
 	@Override
-	public List<Format> splitFormat(CIVLSource source,
-			StringBuffer formatBuffer) {
+	public List<Format> splitFormat(CIVLSource source, StringBuffer formatBuffer) {
 		int count = formatBuffer.length();
 		List<Format> result = new ArrayList<>();
 		StringBuffer stringBuffer = new StringBuffer();
@@ -1083,7 +1047,7 @@ public class CommonExecutor implements Executor {
 			result.add(new Format(stringBuffer, ConversionType.VOID));
 		return result;
 	}
-	
+
 	/**
 	 * Prints to the standard output stream.
 	 * 
@@ -1113,7 +1077,6 @@ public class CommonExecutor implements Executor {
 			}
 		}
 	}
-	
 
 	/**
 	 * TODO

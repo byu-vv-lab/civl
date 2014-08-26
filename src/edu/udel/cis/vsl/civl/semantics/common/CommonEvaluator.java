@@ -36,8 +36,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.DomainInitializer;
-import edu.udel.cis.vsl.civl.model.IF.expression.DomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -51,6 +49,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
@@ -381,44 +380,60 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/* ************************** Private Methods ************************** */
-
-	/**
-	 * Computes the symbolic initial value of a variable.
-	 * 
-	 * @param state
-	 *            The state where the computation happens.
-	 * @param pid
-	 *            The PID of the process that triggers the computation.
-	 * @param variable
-	 *            The variable to be evaluated.
-	 * @param dynamicType
-	 *            The symbolic type of the variable.
-	 * @param dyscopeId
-	 *            The dynamic scope ID of the current state.
-	 * @return The symbolic initial value of the given variable
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private Evaluation computeInitialValue(State state, int pid,
-			Variable variable, SymbolicType dynamicType, int dyscopeId)
+	@SuppressWarnings("unused")
+	private boolean hasNonConcreteState(State state, int pid, CIVLType type)
 			throws UnsatisfiablePathConditionException {
-		CIVLType type = variable.type();
-		int vid = variable.vid();
-		SymbolicExpression result;
+		TypeKind kind = type.typeKind();
 
-		if (!variable.isInput() && variable.isStatic()) {
-			return initialValueOfType(state, pid, type);
-		} else if (!variable.isInput()
-				&& !variable.isBound()
-				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
-			result = nullExpression;
-		} else {// the case of an input variable or a variable of
-				// array/struct/union type.
-			StringObject name = universe.stringObject("X_s" + dyscopeId + "v"
-					+ vid);
+		switch (kind) {
+		case ARRAY:
+			return true;
+		case COMPLETE_ARRAY: {
+			CIVLCompleteArrayType arrayType = (CIVLCompleteArrayType) type;
+			Expression extent = arrayType.extent();
+			Reasoner reasoner = universe.reasoner(state.getPathCondition());
+			Evaluation eval = this.evaluate(state, pid, extent);
+			IntegerNumber extent_num;
 
-			result = universe.symbolicConstant(name, dynamicType);
+			state = eval.state;
+			extent_num = (IntegerNumber) reasoner
+					.extractNumber((NumericExpression) eval.value);
+			if (extent_num == null)
+				return true;
+			else
+				return this.hasNonConcreteState(state, pid,
+						arrayType.elementType());
 		}
-		return new Evaluation(state, result);
+		case BUNDLE:
+			return true;
+		case DOMAIN: {
+			// CIVLDomainType domainType = (CIVLDomainType) type;
+			//
+			// if (domainType.dimension() > 0)
+			// return false;
+			return false;
+		}
+		case ENUM:
+			return false;
+		case POINTER:
+			return false;
+		case PRIMITIVE:
+			return false;
+		case STRUCT_OR_UNION: {
+			CIVLStructOrUnionType strOrUnionType = (CIVLStructOrUnionType) type;
+			int numFields = strOrUnionType.numFields();
+
+			for (int i = 0; i < numFields; i++) {
+				CIVLType fieldType = strOrUnionType.getField(i).type();
+
+				if (this.hasNonConcreteState(state, pid, fieldType))
+					return true;
+			}
+			return false;
+		}
+		default:// FUNCTION/HEAP
+			return false;
+		}
 	}
 
 	/**
@@ -934,6 +949,9 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicType endType = typeEval.type;
 
 		state = typeEval.state;
+		if(argType.isDomainType() && castType.isDomainType()){
+			return new Evaluation(state, value);
+		}else
 		if (argType.isBoolType() && castType.isIntegerType()) {
 			if (value.isTrue())
 				eval.value = universe.integer(1);
@@ -1167,51 +1185,41 @@ public class CommonEvaluator implements Evaluator {
 		BooleanExpression result = universe.trueExpression();
 		SymbolicExpression domainValue;
 		Evaluation eval = this.evaluate(state, pid, domain);
+		List<SymbolicExpression> varValues = new ArrayList<>(dimension);
 
 		domainValue = eval.value;
 		state = eval.state;
 		for (int i = 0; i < dimension; i++) {
-			BooleanExpression part;
+			SymbolicExpression varValue;
 
 			eval = this.evaluate(state, pid, domainGuard.variableAt(i));
 			state = eval.state;
-			part = symbolicUtil.isInRange(eval.value, domainValue, i);
-			if (!part.isTrue())
-				result = universe.and(result, part);
+			varValue = eval.value;
+			varValues.add(varValue);
 		}
+		result = symbolicUtil.domainHasNext(domainValue, varValues);
 		return new Evaluation(state, result);
 	}
 
-	private Evaluation evaluateDomainInitializer(State state, int pid,
-			DomainInitializer domainInit)
+	private Evaluation evaluateRecDomainLiteral(State state, int pid,
+			RecDomainLiteralExpression recDomain)
 			throws UnsatisfiablePathConditionException {
-		Expression domain = domainInit.domain();
-		int index = domainInit.index();
-		Evaluation eval = this.evaluate(state, pid, domain);
-		SymbolicExpression domainValue = eval.value;
-		SymbolicExpression initValue = symbolicUtil.initialValueOfRange(
-				symbolicUtil.rangeOfRectangularDomainAt(domainValue, index),
-				index, domainInit.dimension());
-
-		state = eval.state;
-		return new Evaluation(state, initValue);
-	}
-
-	private Evaluation evaluateDomainLiteral(State state, int pid,
-			DomainLiteralExpression domain)
-			throws UnsatisfiablePathConditionException {
-		int dim = domain.dimension();
+		int dim = recDomain.dimension();
 		List<SymbolicExpression> ranges = new ArrayList<>();
 		Evaluation eval;
 		SymbolicExpression domainV;
+		SymbolicTupleType domainType;
+		List<SymbolicType> rangeTypes = new LinkedList<>();
 
 		for (int i = 0; i < dim; i++) {
-			eval = evaluate(state, pid, domain.rangeAt(i));
+			eval = evaluate(state, pid, recDomain.rangeAt(i));
 			state = eval.state;
 			ranges.add(eval.value);
+			rangeTypes.add(eval.value.type());
 		}
-		domainV = universe.tuple((SymbolicTupleType) domain.getExpressionType()
-				.getDynamicType(universe), ranges);
+		domainType = (SymbolicTupleType) universe.canonic(universe.tupleType(
+				universe.stringObject("$rec_domain(" + dim + ")"), rangeTypes));
+		domainV = universe.tuple(domainType, ranges);
 		return new Evaluation(state, domainV);
 	}
 
@@ -1370,6 +1378,104 @@ public class CommonEvaluator implements Evaluator {
 
 		return computeInitialValue(typeEval.state, pid, variable,
 				typeEval.type, sid);
+	}
+
+	@SuppressWarnings("unused")
+	private Evaluation initialNullValue(State state, int pid, CIVLType type)
+			throws UnsatisfiablePathConditionException {
+		TypeKind kind = type.typeKind();
+		Evaluation eval;
+
+		switch (kind) {
+		case COMPLETE_ARRAY: {
+			CIVLCompleteArrayType arrayType = (CIVLCompleteArrayType) type;
+			CIVLType elementType = arrayType.elementType();
+			Expression extent = arrayType.extent();
+			SymbolicExpression extentValue, elementValue, arrayValue;
+			Reasoner reasoner;
+			int extentCount;
+			List<SymbolicExpression> eleValues = new LinkedList<>();
+
+			eval = this.evaluate(state, pid, extent);
+			state = eval.state;
+			extentValue = eval.value;
+			eval = this.initialNullValue(state, pid, elementType);
+			state = eval.state;
+			elementValue = eval.value;
+			reasoner = universe.reasoner(state.getPathCondition());
+			extentCount = ((IntegerNumber) reasoner
+					.extractNumber((NumericExpression) extentValue)).intValue();
+			for (int i = 0; i < extentCount; i++)
+				eleValues.add(elementValue);
+			arrayValue = universe.array(elementType.getDynamicType(universe),
+					eleValues);
+			return new Evaluation(state, arrayValue);
+		}
+		case DOMAIN:
+		case ENUM:
+		case POINTER:
+		case PRIMITIVE:
+		case HEAP:
+			return new Evaluation(state, universe.nullExpression());
+		case STRUCT_OR_UNION: {
+			CIVLStructOrUnionType strOrUnionType = (CIVLStructOrUnionType) type;
+			int numFields = strOrUnionType.numFields();
+			List<SymbolicExpression> fieldValues = new LinkedList<>();
+			SymbolicExpression strValue;
+
+			for (int i = 0; i < numFields; i++) {
+				eval = this.initialNullValue(state, pid, strOrUnionType
+						.getField(i).type());
+				fieldValues.add(eval.value);
+				state = eval.state;
+			}
+			strValue = universe
+					.tuple((SymbolicTupleType) strOrUnionType
+							.getDynamicType(universe), fieldValues);
+			return new Evaluation(state, strValue);
+		}
+		default:
+			throw new CIVLInternalException("Unreachable", (CIVLSource) null);
+		}
+	}
+
+	/**
+	 * Computes the symbolic initial value of a variable.
+	 * 
+	 * @param state
+	 *            The state where the computation happens.
+	 * @param pid
+	 *            The PID of the process that triggers the computation.
+	 * @param variable
+	 *            The variable to be evaluated.
+	 * @param dynamicType
+	 *            The symbolic type of the variable.
+	 * @param dyscopeId
+	 *            The dynamic scope ID of the current state.
+	 * @return The symbolic initial value of the given variable
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation computeInitialValue(State state, int pid,
+			Variable variable, SymbolicType dynamicType, int dyscopeId)
+			throws UnsatisfiablePathConditionException {
+		CIVLType type = variable.type();
+		int vid = variable.vid();
+		SymbolicExpression result;
+
+		if (!variable.isInput() && variable.isStatic()) {
+			return initialValueOfType(state, pid, type);
+		} else if (!variable.isInput()
+				&& !variable.isBound()
+				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
+			result = nullExpression;
+		} else {// the case of an input variable or a variable of
+				// array/struct/union type.
+			StringObject name = universe.stringObject("X_s" + dyscopeId + "v"
+					+ vid);
+
+			result = universe.symbolicConstant(name, dynamicType);
+		}
+		return new Evaluation(state, result);
 	}
 
 	/**
@@ -2235,6 +2341,8 @@ public class CommonEvaluator implements Evaluator {
 			result = new TypeEvaluation(state, this.heapType);
 		} else if (type instanceof CIVLEnumType) {
 			result = new TypeEvaluation(state, type.getDynamicType(universe));
+		} else if (type instanceof CIVLDomainType) {
+			result = new TypeEvaluation(state, type.getDynamicType(universe));
 		} else
 			throw new CIVLInternalException("Unreachable", source);
 		return result;
@@ -2697,13 +2805,9 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateDomainGuard(state, pid,
 					(DomainGuardExpression) expression);
 			break;
-		case DOMAIN_INIT:
-			result = evaluateDomainInitializer(state, pid,
-					(DomainInitializer) expression);
-			break;
-		case DOMAIN_LITERAL:
-			result = evaluateDomainLiteral(state, pid,
-					(DomainLiteralExpression) expression);
+		case REC_DOMAIN_LITERAL:
+			result = evaluateRecDomainLiteral(state, pid,
+					(RecDomainLiteralExpression) expression);
 			break;
 		case DOT:
 			result = evaluateDot(state, pid, process,

@@ -9,12 +9,12 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.NextInDomainStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonCivlForEnterStatement extends CommonStatement implements
-		CivlForEnterStatement {
+		NextInDomainStatement {
 
 	private Expression domain;
 
@@ -31,7 +31,7 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 	public Statement replaceWith(ConditionalExpression oldExpression,
 			Expression newExpression) {
 		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
-		CivlForEnterStatement newStatement = null;
+		NextInDomainStatement newStatement = null;
 
 		if (newGuard != null) {
 			newStatement = new CommonCivlForEnterStatement(this.getSource(),
@@ -86,7 +86,7 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 		int dim = this.loopVariables.size();
 		boolean first = true;
 
-		string.append("CIVL_FOR_ENTER: ");
+		string.append("NEXT ");
 		string.append("(");
 		for (int i = 0; i < dim; i++) {
 			if (first)
@@ -95,7 +95,7 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 				string.append(", ");
 			string.append(this.loopVariables.get(i));
 		}
-		string.append(") : ");
+		string.append(") in ");
 		string.append(domain);
 		return string.toString();
 	}

@@ -6,17 +6,17 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.expression.DomainLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
-public class CommonDomainLiteralExpression extends CommonExpression implements
-		DomainLiteralExpression {
+public class CommonRecDomainLiteralExpression extends CommonExpression implements
+		RecDomainLiteralExpression {
 
 	private Expression[] ranges;
 
-	public CommonDomainLiteralExpression(CIVLSource source,
+	public CommonRecDomainLiteralExpression(CIVLSource source,
 			List<Expression> ranges, CIVLType type) {
 		super(source);
 		this.ranges = new Expression[ranges.size()];
@@ -31,7 +31,7 @@ public class CommonDomainLiteralExpression extends CommonExpression implements
 
 	@Override
 	public ExpressionKind expressionKind() {
-		return ExpressionKind.DOMAIN_LITERAL;
+		return ExpressionKind.REC_DOMAIN_LITERAL;
 	}
 
 	@Override

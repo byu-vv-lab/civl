@@ -149,16 +149,15 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
@@ -597,16 +596,17 @@ public class FunctionTranslator {
 
 	private Fragment translateCivlForNode(Scope scope, CivlForNode civlForNode) {
 		DeclarationListNode loopInits = civlForNode.getVariables();
-		Fragment initFragment, enterFragment, enterGuardFragment, bodyFragment, exitFragment;
+		// Fragment initFragment;
+		Fragment nextInDomain, result;
 		List<VariableExpression> loopVariables;
+		ExpressionNode domainNode = civlForNode.getDomain();
 		Expression domain;
-		CivlForEnterStatement civlForEnter;
 		Triple<Scope, Fragment, List<VariableExpression>> initResults = this
 				.translateForLoopInitializerNode(scope, loopInits);
 		Location location;
 		CIVLSource source = modelFactory.sourceOf(civlForNode);
 		int dimension;
-		Pair<Fragment, Fragment> guards;
+		Expression domainGuard;
 
 		scope = initResults.first;
 		loopVariables = initResults.third;
@@ -614,7 +614,8 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(civlForNode), scope);
 		domain = this.translateExpressionNode(civlForNode.getDomain(), scope,
 				true);
-		dimension = ((CIVLDomainType) domain.getExpressionType()).dimension();
+		dimension = ((CIVLDomainType) domain.getExpressionType())
+				.dimension();
 		if (dimension != loopVariables.size()) {
 			throw new CIVLSyntaxException(
 					"The number of loop variables for $for does NOT match "
@@ -623,55 +624,18 @@ public class FunctionTranslator {
 							+ loopVariables.size() + "\n" + "dimension of "
 							+ domain + ": " + dimension, source);
 		}
-		initFragment = this.civlForInitializer(source, scope, loopVariables,
-				domain);
-		civlForEnter = modelFactory.civlForEnterStatement(
-				modelFactory.sourceOf(civlForNode), location, domain,
+		domainGuard = modelFactory.domainGuard(
+				modelFactory.sourceOf(domainNode), loopVariables, domain);
+		location = modelFactory.location(
+				modelFactory.sourceOfBeginning(civlForNode), scope);
+		nextInDomain = modelFactory.nextInDomain(
+				modelFactory.sourceOfBeginning(civlForNode), location, domain,
 				initResults.third);
-		enterFragment = new CommonFragment(civlForEnter);
-		guards = this.civlForGuard(source, scope, loopVariables, domain);
-		enterGuardFragment = guards.left;
-		exitFragment = guards.right;
-		bodyFragment = this
-				.translateStatementNode(scope, civlForNode.getBody());
-		bodyFragment = enterGuardFragment.combineWith(bodyFragment);
-		enterFragment = enterFragment.combineWith(bodyFragment);
-		enterFragment = enterFragment.combineWith(enterFragment);
-		enterFragment.setLastStatement(exitFragment.lastStatement());
-		initFragment = initFragment.combineWith(enterFragment);
-		return initFragment;
-	}
-
-	private Pair<Fragment, Fragment> civlForGuard(CIVLSource source,
-			Scope scope, List<VariableExpression> variables, Expression domain) {
-		Expression guard;
-		Statement noop;
-		Fragment trueBranch, falseBranch;
-		Location location = modelFactory.location(source, scope);
-
-		guard = modelFactory.domainGuard(source, variables, domain);
-		noop = modelFactory.loopBranchStatement(source, location, guard, true);
-		trueBranch = new CommonFragment(noop);
-		guard = modelFactory.unaryExpression(source, UNARY_OPERATOR.NOT, guard);
-		noop = modelFactory.loopBranchStatement(source, location, guard, false);
-		falseBranch = new CommonFragment(noop);
-		return new Pair<>(trueBranch, falseBranch);
-	}
-
-	private Fragment civlForInitializer(CIVLSource source, Scope scope,
-			List<VariableExpression> variables, Expression domain) {
-		Fragment init = new CommonFragment();
-		int size = variables.size();
-
-		for (int i = 0; i < size; i++) {
-			Location location = modelFactory.location(source, scope);
-			Statement assign = modelFactory.assignStatement(source, location,
-					variables.get(i),
-					modelFactory.domainInitializer(source, i, domain), true);
-
-			init = init.combineWith(new CommonFragment(assign));
-		}
-		return init;
+		result = this.composeLoopFragmentWorker(scope,
+				modelFactory.sourceOfBeginning(domainNode),
+				modelFactory.sourceOfEnd(domainNode), domainGuard,
+				nextInDomain, civlForNode.getBody(), null, true);
+		return result;
 	}
 
 	/**
@@ -840,37 +804,18 @@ public class FunctionTranslator {
 		return result;
 	}
 
-	/**
-	 * Helper method for translating for-loop and while-loop statement nodes
-	 * Translate a loop structure into a fragment of CIVL statements
-	 * 
-	 * @param loopScope
-	 *            The scope containing the loop body.
-	 * @param conditionNode
-	 *            The loop condition which is an expression node
-	 * @param loopBodyNode
-	 *            The body of the loop which is a statement node
-	 * @param incrementerNode
-	 *            The incrementer which is an expression node, null for while
-	 *            loop
-	 * @param isDoWhile
-	 *            True iff the loop is a do-while loop. Always false for for
-	 *            loop and while loop.
-	 * @return the fragment of the loop structure
-	 */
-	private Fragment composeLoopFragment(Scope loopScope,
-			ExpressionNode conditionNode, StatementNode loopBodyNode,
-			ExpressionNode incrementerNode, boolean isDoWhile) {
-		Expression condition;
+	private Fragment composeLoopFragmentWorker(Scope loopScope,
+			CIVLSource condStartSource, CIVLSource condEndSource,
+			Expression condition, Fragment bodyPrefix,
+			StatementNode loopBodyNode, Fragment incrementer, boolean isDoWhile) {
 		Set<Statement> continues, breaks;
-		Fragment beforeCondition, loopEntrance, loopBody, incrementer = null, loopExit, result;
+		Fragment beforeCondition, loopEntrance, loopBody, loopExit, result;
 		Location loopEntranceLocation, continueLocation;
 		Pair<Fragment, Expression> refineConditional;
 
 		modelFactory.setCurrentScope(loopScope);
-		condition = translateExpressionNode(conditionNode, loopScope, true);
 		refineConditional = modelFactory.refineConditionalExpression(loopScope,
-				condition, conditionNode);
+				condition, condStartSource, condStartSource);
 		beforeCondition = refineConditional.left;
 		condition = refineConditional.right;
 		try {
@@ -884,11 +829,10 @@ public class FunctionTranslator {
 							+ " type which cannot be converted to boolean type.",
 					condition.getSource());
 		}
-		loopEntranceLocation = modelFactory.location(
-				modelFactory.sourceOf(conditionNode.getSource()), loopScope);
+		loopEntranceLocation = modelFactory.location(condition.getSource(),
+				loopScope);
 		loopEntrance = new CommonFragment(loopEntranceLocation,
-				modelFactory.loopBranchStatement(
-						modelFactory.sourceOf(conditionNode.getSource()),
+				modelFactory.loopBranchStatement(condition.getSource(),
 						loopEntranceLocation, condition, true));
 		if (beforeCondition != null) {
 			loopEntrance = beforeCondition.combineWith(loopEntrance);
@@ -896,12 +840,12 @@ public class FunctionTranslator {
 		functionInfo.addContinueSet(new LinkedHashSet<Statement>());
 		functionInfo.addBreakSet(new LinkedHashSet<Statement>());
 		loopBody = translateStatementNode(loopScope, loopBodyNode);
+		if (bodyPrefix != null)
+			loopBody = bodyPrefix.combineWith(loopBody);
 		continues = functionInfo.popContinueStack();
 		// if there is no incrementer statement, continue statements will go to
 		// the loop entrance/exit location
-		if (incrementerNode != null) {
-			incrementer = translateExpressionStatementNode(loopScope,
-					incrementerNode);
+		if (incrementer != null) {
 			continueLocation = incrementer.startLocation();
 		} else
 			continueLocation = loopEntrance.startLocation();
@@ -938,14 +882,48 @@ public class FunctionTranslator {
 			StatementSet lastStatements = new StatementSet();
 
 			lastStatements.add(loopExit.lastStatement());
-			for (Statement s : breaks) {
+			for (Statement s : breaks)
 				lastStatements.add(s);
-			}
 			result.setLastStatement(lastStatements);
 		} else {
 			result.setLastStatement(loopExit.lastStatement());
 		}
 		return result;
+	}
+
+	/**
+	 * Helper method for translating for-loop and while-loop statement nodes
+	 * Translate a loop structure into a fragment of CIVL statements
+	 * 
+	 * @param loopScope
+	 *            The scope containing the loop body.
+	 * @param conditionNode
+	 *            The loop condition which is an expression node
+	 * @param loopBodyNode
+	 *            The body of the loop which is a statement node
+	 * @param incrementerNode
+	 *            The incrementer which is an expression node, null for while
+	 *            loop
+	 * @param isDoWhile
+	 *            True iff the loop is a do-while loop. Always false for for
+	 *            loop and while loop.
+	 * @return the fragment of the loop structure
+	 */
+	private Fragment composeLoopFragment(Scope loopScope,
+			ExpressionNode conditionNode, StatementNode loopBodyNode,
+			ExpressionNode incrementerNode, boolean isDoWhile) {
+		Expression condition;
+		Fragment incrementer = null;
+
+		modelFactory.setCurrentScope(loopScope);
+		condition = translateExpressionNode(conditionNode, loopScope, true);
+		if (incrementerNode != null)
+			incrementer = translateExpressionStatementNode(loopScope,
+					incrementerNode);
+		return this.composeLoopFragmentWorker(loopScope,
+				modelFactory.sourceOfBeginning(conditionNode),
+				modelFactory.sourceOfEnd(conditionNode), condition, null,
+				loopBodyNode, incrementer, isDoWhile);
 	}
 
 	// how to process individual block elements?
@@ -2139,7 +2117,9 @@ public class FunctionTranslator {
 		Location location = modelFactory.location(
 				modelFactory.sourceOfBeginning(ifNode), scope);
 		Pair<Fragment, Expression> refineConditional = modelFactory
-				.refineConditionalExpression(scope, expression, conditionNode);
+				.refineConditionalExpression(scope, expression,
+						modelFactory.sourceOfBeginning(conditionNode),
+						modelFactory.sourceOfEnd(conditionNode));
 
 		beforeCondition = refineConditional.left;
 		expression = refineConditional.right;
@@ -2697,7 +2677,8 @@ public class FunctionTranslator {
 			expressions.add(translateInitializerNode(compoundInit
 					.getSequenceChild(i).getRight(), scope, modelFactory
 					.rangeType()));
-		return modelFactory.domainLiteralExpression(source, expressions, type);
+		return modelFactory.recDomainLiteralExpression(source, expressions,
+				type);
 	}
 
 	private Expression translateLiteralObject(CIVLSource source, Scope scope,
@@ -2778,7 +2759,9 @@ public class FunctionTranslator {
 		Expression whenGuard = translateExpressionNode(whenNode.getGuard(),
 				scope, true);
 		Pair<Fragment, Expression> refineConditional = modelFactory
-				.refineConditionalExpression(scope, whenGuard, whenGuardNode);
+				.refineConditionalExpression(scope, whenGuard,
+						modelFactory.sourceOfBeginning(whenGuardNode),
+						modelFactory.sourceOfEnd(whenGuardNode));
 		Fragment beforeGuardFragment = refineConditional.left, result;
 
 		whenGuard = refineConditional.right;

@@ -143,4 +143,11 @@ public class LibraryTest {
 	public void bundleAndHeap() throws ABCException {
 		assertTrue(ui.run("verify", filename("civlc/bundleAndHeap.cvl")));
 	}
+
+	@Test
+	public void domainDecomp() throws ABCException {
+		assertTrue(ui.run("verify", "-inputn=4",
+				filename("civlc/domainDecomposition.cvl"),
+				"-enablePrintf=false"));
+	}
 }

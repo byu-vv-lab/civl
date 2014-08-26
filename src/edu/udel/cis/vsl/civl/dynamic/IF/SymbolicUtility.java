@@ -126,28 +126,16 @@ public interface SymbolicUtility {
 	int getDyscopeId(CIVLSource source, SymbolicExpression pointer);
 
 	/**
-	 * Computes the upper bound of a certain range.
+	 * Computes the upper bound of a regular range.
 	 * 
 	 * @param range
-	 *            The range.
-	 * @return The upper bound of the range.
+	 *            The regular range.
+	 * @return The upper bound of the regular range.
 	 */
-	NumericExpression getRangeMax(SymbolicExpression range);
+	NumericExpression getRegRangeMax(SymbolicExpression range);
 
 	/**
-	 * TODO get rid of this method, use tupleRead() + getLowOfRange() instead.
-	 * Computes the lower bound of the index-th range of a domain.
-	 * 
-	 * @param domain
-	 *            The given domain.
-	 * @param index
-	 *            The index of the range.
-	 * @return The lower bound of the index-th range of the domain.
-	 */
-	SymbolicExpression getLowOfDomainAt(SymbolicExpression domain, int index);
-
-	/**
-	 * Computes the lower bound of a certain regular range.
+	 * Computes the lower bound of a regular range.
 	 * 
 	 * @param regRange
 	 *            The regular range.
@@ -156,23 +144,23 @@ public interface SymbolicUtility {
 	NumericExpression getRegRangeMin(SymbolicExpression regRange);
 
 	/**
-	 * TODO Computes the step of a range.
+	 * Computes the step of a regular range.
 	 * 
 	 * @param range
-	 *            The range.
-	 * @return The step of the range.
+	 *            The regular range.
+	 * @return The step of the regular range.
 	 */
-	NumericExpression getRangeStep(SymbolicExpression range);
+	NumericExpression getRegRangeStep(SymbolicExpression range);
 
 	/**
-	 * TODO Computes the size of a range, that is the number of values covered
-	 * by the range.
+	 * Computes the size of a regular range, that is the number of values
+	 * covered by the range.
 	 * 
 	 * @param range
-	 *            The range.
-	 * @return The number of values covered by the range
+	 *            The regular range.
+	 * @return The number of values covered by the regular range
 	 */
-	NumericExpression getRangeSize(SymbolicExpression range);
+	NumericExpression getRegRangeSize(SymbolicExpression range);
 
 	/**
 	 * Given a pointer value, returns the symbolic reference component of that
@@ -306,7 +294,7 @@ public interface SymbolicUtility {
 	 *         certain domain.
 	 */
 	BooleanExpression isInRange(SymbolicExpression value,
-			SymbolicExpression domain, int index);
+			SymbolicExpression range);
 
 	/**
 	 * Is this heap object invalid?
@@ -543,6 +531,26 @@ public interface SymbolicUtility {
 	 * @return The undefined pointer.
 	 */
 	SymbolicExpression undefinedPointer();
+
+	List<SymbolicExpression> getNextInDomain(SymbolicExpression domValue,
+			List<SymbolicExpression> varValues);
+
+	BooleanExpression domainHasNext(SymbolicExpression domainValue,
+			List<SymbolicExpression> varValues);
+
+	List<SymbolicExpression> getDomainInit(SymbolicExpression domValue);
+	
+	/**
+	 * Computes the size of a domain, that is the number of elements contained
+	 * in the domain.
+	 * 
+	 * @param domain
+	 *            The domain.
+	 * @return The number of elements contained in the domain.
+	 */
+	NumericExpression getDomainSize(SymbolicExpression domain);
+
+	SymbolicType getDomainElementType(SymbolicExpression domain);
 
 	/**
 	 * Computes the array capacity informations(@link{setDataBetween}) of the

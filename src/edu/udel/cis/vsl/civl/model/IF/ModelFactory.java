@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
@@ -28,8 +27,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.DomainInitializer;
-import edu.udel.cis.vsl.civl.model.IF.expression.DomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -42,6 +39,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
@@ -57,7 +55,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
@@ -66,12 +63,12 @@ import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
@@ -1158,7 +1155,7 @@ public interface ModelFactory {
 	 *         expressions
 	 */
 	Pair<Fragment, Expression> refineConditionalExpression(Scope scope,
-			Expression expression, ExpressionNode expressionNode);
+			Expression expression, CIVLSource startSource, CIVLSource endSource);
 
 	/**
 	 * Translate away conditional expressions from a statement. First create a
@@ -1512,8 +1509,8 @@ public interface ModelFactory {
 	 */
 	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
 
-	CivlForEnterStatement civlForEnterStatement(CIVLSource source,
-			Location src, Expression dom, List<VariableExpression> variables);
+	Fragment nextInDomain(CIVLSource source, Location src, Expression dom,
+			List<VariableExpression> variables);
 
 	RegularRangeExpression regularRangeExpression(CIVLSource source,
 			Expression low, Expression high, Expression step);
@@ -1522,11 +1519,8 @@ public interface ModelFactory {
 
 	CIVLDomainType domainType(int dim);
 
-	DomainLiteralExpression domainLiteralExpression(CIVLSource source,
+	RecDomainLiteralExpression recDomainLiteralExpression(CIVLSource source,
 			List<Expression> ranges, CIVLType type);
-
-	DomainInitializer domainInitializer(CIVLSource source, int index,
-			Expression domain);
 
 	DomainGuardExpression domainGuard(CIVLSource source,
 			List<VariableExpression> vars, Expression domain);

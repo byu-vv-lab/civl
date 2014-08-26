@@ -442,12 +442,14 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void civlFor() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlfor.cvl")));
+		assertTrue(ui.run("verify", filename("civlfor.cvl"),
+				"-enablePrintf=false"));
 	}
 
 	@Test
 	public void civlParfor() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlParfor.cvl")));
+		assertTrue(ui.run("verify", filename("civlParfor.cvl"),
+				"-enablePrintf=false"));
 	}
 
 	@Test

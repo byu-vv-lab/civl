@@ -85,7 +85,8 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 		int dim = this.dimension();
 		boolean first = true;
 
-		string.append("(");
+		string.append(domain);
+		string.append(" has next for (");
 		for (int i = 0; i < dim; i++) {
 			if (first)
 				first = false;
@@ -93,8 +94,7 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 				string.append(", ");
 			string.append(variables[i]);
 		}
-		string.append(") in ");
-		string.append(domain);
+		string.append(")");
 		return string.toString();
 	}
 }

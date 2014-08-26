@@ -14,7 +14,8 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 public interface CIVLType {
 
 	public enum TypeKind {
-		ARRAY, COMPLETE_ARRAY, BUNDLE, DOMAIN, ENUM, POINTER, PRIMITIVE, STRUCT_OR_UNION, FUNCTION, HEAP
+		ARRAY, COMPLETE_ARRAY, BUNDLE, DOMAIN, ENUM, POINTER, 
+		PRIMITIVE, STRUCT_OR_UNION, FUNCTION, HEAP
 	}
 
 	TypeKind typeKind();

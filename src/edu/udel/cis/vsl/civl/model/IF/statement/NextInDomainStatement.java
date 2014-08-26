@@ -7,12 +7,12 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 
 /**
  * <p>
- * Represents the enter statement of a CIVL <code>$for</code>.
+ * Updates the loop variables with the next element of a domain.
  * </p>
  * 
  * @author Manchun Zheng (zmanchun)
  */
-public interface CivlForEnterStatement extends Statement {
+public interface NextInDomainStatement extends Statement {
 
 	/**
 	 * Returns the iteration domain expression, which is the expression

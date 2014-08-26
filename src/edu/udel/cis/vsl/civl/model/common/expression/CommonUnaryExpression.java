@@ -78,10 +78,10 @@ public class CommonUnaryExpression extends CommonExpression implements
 
 		switch (operator) {
 		case NEGATIVE:
-			op = "-" + operand;
+			op = "-(" + operand + ")";
 			break;
 		case NOT:
-			op = "!" + operand;
+			op = "!(" + operand + ")";
 			break;
 		case BIG_O:
 			op = "$O(" + operand + ")";
