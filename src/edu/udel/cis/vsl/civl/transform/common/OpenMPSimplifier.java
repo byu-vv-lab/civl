@@ -388,12 +388,17 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 				ExpressionNode left = relop.getArgument(0);
 				ExpressionNode right = relop.getArgument(1);
 
-				// variable must be either left or right, but not both
+				/*
+				 *  variable must be either left or right, but not both
+				 *  
+				 *  Currently these checks are based on the name of the variable.
+				 *  Perhaps it is better to use the symbol information, i.e., getEntity()
+				 */
 				int loopVariableCount = 0;
 				if (left instanceof IdentifierExpressionNode) {
 					IdentifierNode id = ((IdentifierExpressionNode) left)
 							.getIdentifier();
-					if (id.getEntity() == loopVariable.getEntity()) {
+					if (id.name().equals(loopVariable.name())) {
 						loopVariableCount++;
 					}
 				}
@@ -401,7 +406,7 @@ public class OpenMPSimplifier extends CIVLBaseTransformer {
 				if (right instanceof IdentifierExpressionNode) {
 					IdentifierNode id = ((IdentifierExpressionNode) right)
 							.getIdentifier();
-					if (id.getEntity() == loopVariable.getEntity()) {
+					if (id.name().equals(loopVariable.name())) {
 						loopVariableCount++;
 					}
 				}
