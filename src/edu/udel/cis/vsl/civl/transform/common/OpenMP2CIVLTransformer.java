@@ -39,6 +39,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.common.omp.CommonOmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.common.omp.CommonOmpParallelNode;
@@ -49,7 +50,6 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
@@ -540,13 +540,9 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				for(ASTNode child : sharedList.children()) {
 					VariableDeclarationNode localSharedVar;
 					VariableDeclarationNode statusSharedVar;
-					
-					
+						
 					IdentifierNode c = (IdentifierNode)child.child(0);
 					
-//					TypeNode privateType = ((VariableDeclarationNode) c
-//							.getEntity().getFirstDeclaration()).getTypeNode()
-//							.copy();
 					TypeNode privateType = ((VariableDeclarationNode) ((Variable) c
 							.getEntity()).getFirstDeclaration()).getTypeNode().copy();
 					IdentifierNode localSharedIdentifer = nodeFactory
@@ -556,9 +552,24 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 
 					localSharedVar = nodeFactory.newVariableDeclarationNode(
 							source, localSharedIdentifer, privateType);
-					statusSharedVar = nodeFactory.newVariableDeclarationNode(
-							source, statusSharedIdentifer, nodeFactory.newBasicTypeNode(
-									source, BasicTypeKind.INT));
+
+					TypeNode statusType = privateType.copy();
+					TypeNode baseStatusType = statusType;
+					while(statusType instanceof ArrayTypeNode && 
+							statusType.child(0) instanceof ArrayTypeNode){
+						statusType = (TypeNode) statusType.child(0);
+					}
+					if(statusType instanceof ArrayTypeNode){
+						statusType.setChild(0, nodeFactory.newBasicTypeNode(
+							source, BasicTypeKind.INT)); 
+						statusSharedVar = nodeFactory.newVariableDeclarationNode(
+								source, statusSharedIdentifer, baseStatusType);
+					} else {
+						statusSharedVar = nodeFactory.newVariableDeclarationNode(
+								source, statusSharedIdentifer, nodeFactory.newBasicTypeNode(
+										source, BasicTypeKind.INT));
+					}
+					
 					parForItems.add(localSharedVar);
 					parForItems.add(statusSharedVar);
 					
@@ -1176,13 +1187,12 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			}
 
 		} else if (node instanceof OperatorNode && sharedIDs != null
-				&& ((OperatorNode) node).getOperator().toString()
-						.equals("ASSIGN")) {
+				&& isAssignmentOperator(((OperatorNode) node).getOperator().toString())) {
 			ArrayList<OperatorNode> assignedToVars = new ArrayList<OperatorNode>();
 			assignedToVars.add((OperatorNode) node);
 			ASTNode rhs = node.child(1);
 			do{
-				if(rhs instanceof OperatorNode && ((OperatorNode) node.child(1)).getOperator().toString().equals("ASSIGN")){
+				if(rhs instanceof OperatorNode && isAssignmentOperator(((OperatorNode) node.child(1)).getOperator().toString())){
 					assignedToVars.add((OperatorNode) rhs);
 					rhs = rhs.child(1);
 				} else {
@@ -1192,13 +1202,14 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 
 			ExpressionStatementNode temp = containsSharedWrite(
 					assignedToVars, privateIDs, sharedIDs, reductionIDs,
-					firstPrivateIDs);
+					firstPrivateIDs, ((OperatorNode) node).getOperator());
 			if(temp == null){
 				replaceOMPPragmas(node.child(1), privateIDs, sharedIDs,
 						reductionIDs, firstPrivateIDs);
 			} else {
+				
 				OperatorNode initializer = (OperatorNode) temp.getExpression();
-				while(initializer.child(1) instanceof OperatorNode && initializer.getOperator().toString().equals("ASSIGN")){
+				while(initializer.child(1) instanceof OperatorNode && isAssignmentOperator(initializer.getOperator().toString())){
 					initializer = (OperatorNode) initializer.child(1);
 				}
 					replaceOMPPragmas(initializer, privateIDs, sharedIDs,
@@ -1214,6 +1225,15 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			}
 		}
 
+	}
+	
+	private boolean isAssignmentOperator(String operator){
+		if(operator.equals("ASSIGN")){
+			return true;
+		} else if(operator.equals("PLUSEQ")){
+			return true;
+		}
+		return false;
 	}
 
 	private VariableDeclarationNode addPrivateVariable(
@@ -1289,15 +1309,13 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			}
 			items.add(read((ExpressionNode)parentOfID.copy(), nodeName,
 					"tmp" + String.valueOf(tmpCount)));
-
-			
 		}
 
 		String origName = node.name();
 		ASTNode tempParent = parentOfID.parent();
 		int nodeIndex = parentOfID.childIndex();
 		tempParent.setChild(nodeIndex, this.identifierExpression(source, "tmp" + String.valueOf(tmpCount)));
-		//node.setName("tmp" + String.valueOf(tmpCount));
+
 		Triple<String, StatementNode, String> tempTriple = new Triple<>(
 				origName, parentStatement, "tmp" + String.valueOf(tmpCount));
 		sharedReplaced.add(tempTriple);
@@ -1313,7 +1331,11 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 	}
 
 	private ExpressionStatementNode containsSharedWrite(ArrayList<OperatorNode> assignedToVars,
-			SequenceNode<IdentifierExpressionNode> privateIDs, SequenceNode<IdentifierExpressionNode> sharedIDs, SequenceNode<IdentifierExpressionNode> reductionIDs, SequenceNode<IdentifierExpressionNode> firstPrivateIDs) throws SyntaxException, NoSuchElementException {
+			SequenceNode<IdentifierExpressionNode> privateIDs, 
+			SequenceNode<IdentifierExpressionNode> sharedIDs, 
+			SequenceNode<IdentifierExpressionNode> reductionIDs, 
+			SequenceNode<IdentifierExpressionNode> firstPrivateIDs,
+			Operator opType) throws SyntaxException, NoSuchElementException {
 
 		ArrayList<IdentifierNode> nodeID = new ArrayList<IdentifierNode>();
 		for(OperatorNode op : assignedToVars){
@@ -1364,8 +1386,38 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			OperatorNode currentOp = null;
 			for(int i = nodeID.size(); i > 0; i--){
 				if(i == nodeID.size()){
-					currentOp = nodeFactory.newOperatorNode(source, Operator.ASSIGN, 
-							Arrays.asList(this.identifierExpression(source, "tmp" + String.valueOf(tmpCount + count)), initializer));
+					if(opType.equals(Operator.ASSIGN)){
+						currentOp = nodeFactory.newOperatorNode(source, Operator.ASSIGN, 
+								Arrays.asList(this.identifierExpression(source, "tmp" + String.valueOf(tmpCount + count)), initializer));
+					} else {
+						currentOp = nodeFactory.newOperatorNode(source, opType, 
+								Arrays.asList(this.identifierExpression(source, "tmp" + String.valueOf(tmpCount + count)), initializer));
+						ASTNode parentOfID = null;
+						IdentifierNode idNode = (IdentifierNode)nodeID.get(0);
+						String nodeName = idNode.name();
+						idNode.setName(idNode.name() + "_local");
+						int k = nodesDeep;
+						if (k == 0) {
+							parentOfID = idNode.parent();
+							items.add(read((ExpressionNode) parentOfID.copy(), nodeName,
+									"tmp" + String.valueOf(tmpCount)));
+						} else {
+							parentOfID = idNode.parent();
+							while (k > 0) {
+								parentOfID = parentOfID.parent();
+								k--;
+							}
+
+							if(parentOfID instanceof OperatorNode){
+								checkArrayIndices((OperatorNode) parentOfID, privateIDs, sharedIDs, reductionIDs,
+										firstPrivateIDs);
+							}
+							items.add(read((ExpressionNode)parentOfID.copy(), nodeName,
+									"tmp" + String.valueOf(tmpCount)));
+							idNode.setName(nodeName);		
+						}
+					}
+
 				} else {
 					currentOp = nodeFactory.newOperatorNode(source, Operator.ASSIGN, 
 							Arrays.asList(this.identifierExpression(source, "tmp" + String.valueOf(tmpCount + count)), currentOp));
@@ -1376,17 +1428,18 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			items.add(assignmentOfTemp);
 		}
 		
-		
-		
 		for(IdentifierNode currentNodeID : nodeID){
 			for (ASTNode child : sharedIDs.children()) {
 				IdentifierNode c = ((IdentifierExpressionNode) child)
 						.getIdentifier();
-				if (c.name().equals(currentNodeID.name())) {
+				if (c.name().equals(currentNodeID.name()) ||
+						c.name().equals(currentNodeID.name() + "_local")) {
 
 					ASTNode parentOfID = null;
 					String nodeName = currentNodeID.name();
-					currentNodeID.setName(currentNodeID.name() + "_local");
+					if(!currentNodeID.name().equals(c.name() + "_local")){
+						currentNodeID.setName(currentNodeID.name() + "_local");
+					}
 					if (nodesDeep == 0) {
 						parentOfID = currentNodeID.parent();
 						items.add(write((ExpressionNode) parentOfID.copy(), nodeName));
