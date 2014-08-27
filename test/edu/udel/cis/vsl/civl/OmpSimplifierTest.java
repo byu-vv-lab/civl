@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -10,6 +12,7 @@ import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
 
 public class OmpSimplifierTest {
@@ -185,5 +188,45 @@ public class OmpSimplifierTest {
 	@Test
 	public void quad() throws ABCException, IOException {
 		check("quad_openmp");
+	}
+	
+	private static UserInterface ui = new UserInterface();
+
+	/* *************************** Helper Methods ************************** */
+
+	private static String filename(String name) {
+		return new File(rootDir, name).getPath();
+	}
+
+	/* **************************** Test Methods *************************** */
+
+	@Test
+	public void dotProduct1Verify() {
+		assertTrue(ui.run("verify", filename("dotProduct1.c"), "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("dotProduct1.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
+	}
+
+	@Test
+	public void dotProductCriticalVerify() {
+		assertTrue(ui.run("verify", filename("dotProduct_critical.c"), "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("dotProduct_critical.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
+	}
+
+	@Test
+	public void matProduct1Verify() {
+		assertTrue(ui.run("verify", filename("matProduct1.c"), "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("matProduct1.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
+	}
+
+	@Test
+	public void parallelforVerify() {
+		assertTrue(ui.run("verify", filename("parallelfor.c"), "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("parallelfor.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
+	}
+
+	@Test
+	public void raceCond1Verify() {
+		assertTrue(ui.run("verify", filename("raceCond1.c"), "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("raceCond1.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
 	}
 }
