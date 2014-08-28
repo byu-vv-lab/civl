@@ -351,14 +351,18 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		if (pointer.operator() != SymbolicOperator.CONCRETE)
 			errorLogger.reportError(new CIVLExecutionException(
 					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Attempt to read/write a invalid pointer type variable",
-					arguments[1].getSource()));
+					"Attempt to read/write an uninitialized variable by the pointer "
+							+ pointer, arguments[1].getSource()));
 		try {
 			eval_and_pointer = libevaluator.bundleUnpack(state, process,
 					(SymbolicExpression) bundle.argument(1), pointer, source);
 			eval = eval_and_pointer.left;
+			// bufPointer is the pointer to targetObj which may be the ancestor
+			// of the original pointer.
 			bufPointer = eval_and_pointer.right;
 			state = eval.state;
+			// targetObject is the object will be assigned to the output
+			// argument.
 			targetObject = eval.value;
 		} catch (CIVLInternalException | CIVLExecutionException e) {
 			CIVLExecutionException err = new CIVLExecutionException(
@@ -427,7 +431,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression assignPtr = null;
 		SymbolicExpression opRet = null; // result after applying one operation
 		NumericExpression count = (NumericExpression) argumentValues[2];
-		NumericExpression i;
+		NumericExpression i = zero;
 		NumericExpression operation = (NumericExpression) argumentValues[3];
 		BooleanExpression pathCondition = state.getPathCondition();
 		BooleanExpression claim;
@@ -466,6 +470,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			SymbolicType elementType;
 			SymbolicCompleteArrayType newArrayType;
 
+			// TODO: move civlOp to super class
+			// TODO: new name for civlOperation
 			arrayEleFunc = libevaluator.civlOperation(state, process,
 					(NumericExpression) universe.arrayRead(data, index),
 					(NumericExpression) universe.arrayRead(secOperand, index),
@@ -505,26 +511,15 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		} catch (SARLException e) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE, process,
-					"Operands of CIVL Operation", source);
-
-			errorLogger.reportError(err);
-
-		} catch (CIVLInternalException | CIVLExecutionException e) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE, process,
-					symbolicAnalyzer.symbolicExpressionToString(
-							arguments[1].getSource(), state, pointer), source);
-
-			errorLogger.reportError(err);
-		} catch (Exception e) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.INTERNAL, Certainty.PROVEABLE, process,
-					"$bundle_unpack_apply", source);
+					"Operands of CIVL Operation out of bound at index: "
+							+ symbolicAnalyzer.symbolicExpressionToString(
+									source, state, i),
+					symbolicAnalyzer.stateToString(state), source);
 
 			errorLogger.reportError(err);
 		}
-		assert (assignPtr != null);
-		assert (eval != null);
+		assert (assignPtr != null) : "Unknown bug in CIVL";
+		assert (eval != null) : "Unknown bug in CIVL";
 		state = primaryExecutor.assign(source, state, process, assignPtr,
 				eval.value);
 		return state;
