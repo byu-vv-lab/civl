@@ -198,14 +198,15 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		Map<Integer, NumericExpression> getArrayElementsSizes;
 		SymbolicExpression startPtr, endPtr;
 		Evaluation eval;
-		Pair<Evaluation, Map<Integer, NumericExpression>> ret;
+		// TODO : specification for explain every thing including arrayInfo
+		Pair<Evaluation, Map<Integer, NumericExpression>> eval_and_arrayInfo;
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
 		startPtr = pointer;
-		ret = evaluator.evaluatePointerAdd(state, process, startPtr,
-				universe.subtract(count, one), checkOutput, source);
-		getArrayElementsSizes = ret.right;
-		eval = ret.left;
+		eval_and_arrayInfo = evaluator.evaluatePointerAdd(state, process,
+				startPtr, universe.subtract(count, one), checkOutput, source);
+		getArrayElementsSizes = eval_and_arrayInfo.right;
+		eval = eval_and_arrayInfo.left;
 		endPtr = eval.value;
 		if (getArrayElementsSizes == null) {
 			getArrayElementsSizes = new HashMap<>();
