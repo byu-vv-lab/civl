@@ -949,10 +949,9 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicType endType = typeEval.type;
 
 		state = typeEval.state;
-		if(argType.isDomainType() && castType.isDomainType()){
+		if (argType.isDomainType() && castType.isDomainType()) {
 			return new Evaluation(state, value);
-		}else
-		if (argType.isBoolType() && castType.isIntegerType()) {
+		} else if (argType.isBoolType() && castType.isIntegerType()) {
 			if (value.isTrue())
 				eval.value = universe.integer(1);
 			else if (value.isFalse())
@@ -1466,14 +1465,20 @@ public class CommonEvaluator implements Evaluator {
 			return initialValueOfType(state, pid, type);
 		} else if (!variable.isInput()
 				&& !variable.isBound()
-				&& (type instanceof CIVLPrimitiveType || type instanceof CIVLPointerType)) {
+				&& (type instanceof CIVLPrimitiveType || type.isPointerType() || type
+						.isDomainType())) {
 			result = nullExpression;
 		} else {// the case of an input variable or a variable of
-				// array/struct/union type.
-			StringObject name = universe.stringObject("X_s" + dyscopeId + "v"
-					+ vid);
+			// array/struct/union type.
+			String name;
+			StringObject nameObj;
 
-			result = universe.symbolicConstant(name, dynamicType);
+			if (variable.scope().id() == 0 && variable.isInput())
+				name = "I" + vid;
+			else
+				name = "X_s" + dyscopeId + "v" + vid;
+			nameObj = universe.stringObject(name);
+			result = universe.symbolicConstant(nameObj, dynamicType);
 		}
 		return new Evaluation(state, result);
 	}

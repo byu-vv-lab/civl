@@ -363,6 +363,34 @@ public class ImmutableDynamicScope implements DynamicScope {
 				lexicalScope, this.parent, this.parentIdentifier, newValues,
 				reachers, this.identifier);
 	}
+	
+	ImmutableDynamicScope updateSymbolicConstants(
+			Map<SymbolicExpression, SymbolicExpression> oldToNewExpression,
+			SymbolicUniverse universe) {
+		SymbolicExpression[] newValues = null;
+
+		// update pointers
+		if (oldToNewExpression.size() > 0)
+			for (Variable variable : this.lexicalScope.variables()) {
+				int vid = variable.vid();
+				SymbolicExpression oldValue = variableValues[vid];
+
+				if (oldValue != null && !oldValue.isNull()) {
+					SymbolicExpression newValue = universe.substitute(oldValue,
+							oldToNewExpression);
+
+					if (oldValue != newValue) {
+						if (newValues == null)
+							newValues = copyValues();
+						newValues[vid] = newValue;
+					}
+				}
+			}
+		return newValues == null ? this : new ImmutableDynamicScope(
+				lexicalScope, this.parent, this.parentIdentifier, newValues,
+				reachers, this.identifier);
+	}
+	
 
 	/* ************************* Methods from Object *********************** */
 

@@ -81,6 +81,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 	private CIVLHeapType heapType;
 
+	private SymbolicTupleType dynamicHeapType;
+
 	private SymbolicTupleType procType;
 
 	private SymbolicTupleType scopeType;
@@ -96,6 +98,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		this.modelFactory = modelFactory;
 		this.symbolicUtil = symbolicUtil;
 		this.heapType = modelFactory.heapType();
+		this.dynamicHeapType = modelFactory.heapSymbolicType();
 		this.procType = this.modelFactory.processSymbolicType();
 		this.scopeType = this.modelFactory.scopeSymbolicType();
 		this.functionPointerType = modelFactory.functionPointerSymbolicType();
@@ -106,6 +109,51 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	}
 
 	/* ******************** Methods From SymbolicAnalyzer ****************** */
+
+	@Override
+	public Map<Integer, NumericExpression> arrayIndexesByPointer(State state,
+			CIVLSource source, SymbolicExpression pointer,
+			boolean isUsedBySubtraction) {
+		Map<Integer, NumericExpression> dimIndexes = new HashMap<>();
+		int dim = 0;
+		int vid = symbolicUtil.getVariableId(source, pointer);
+		ReferenceExpression ref;
+
+		// pointer = this.castToArrayElementReference(state, pointer, source);
+		ref = symbolicUtil.getSymRef(pointer);
+		while (ref.isArrayElementReference()) {
+			dimIndexes.put(dim, ((ArrayElementReference) ref).getIndex());
+			dim++;
+			pointer = symbolicUtil.parentPointer(source, pointer);
+			ref = symbolicUtil.getSymRef(pointer);
+			if (vid == 0 && !isUsedBySubtraction)
+				break;
+		}
+		return dimIndexes;
+	}
+
+	@Override
+	public SymbolicExpression castToArrayElementReference(State state,
+			SymbolicExpression pointer, CIVLSource source) {
+		CIVLType objType;
+		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
+		int sid, vid;
+
+		sid = symbolicUtil.getDyscopeId(source, pointer);
+		vid = symbolicUtil.getVariableId(source, pointer);
+		// If the pointer is pointing to an memory space, then no need to
+		// continue casting because there won't be any multi-dimensional array
+		// and "&a" and "a" when "a" is a pointer to a memory space is
+		// different.
+		if (vid == 0)
+			return pointer;
+		objType = typeOfObjByPointer(source, state, pointer);
+		while (objType.isArrayType()) {
+			ref = universe.arrayElementReference(ref, zero);
+			objType = ((CIVLArrayType) objType).elementType();
+		}
+		return symbolicUtil.makePointer(sid, vid, ref);
+	}
 
 	@Override
 	public SymbolicExpression getSubArray(SymbolicExpression array,
@@ -232,7 +280,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	public String symbolicExpressionToString(CIVLSource source, State state,
 			SymbolicExpression symbolicExpression) {
 		return this.symbolicExpressionToString(source, state,
-				symbolicExpression, false);
+				symbolicExpression, "", "| ");
 	}
 
 	@Override
@@ -282,7 +330,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				first = false;
 			else
 				buffer.append(opString);
-			buffer.append(symbolicExpressionToString(source, state, arg, first));
+			buffer.append(symbolicExpressionToString(source, state, arg, first,
+					"", ""));
 		}
 	}
 
@@ -345,7 +394,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			result.append(prefix + "| | " + variable.name() + " = ");
 			result.append(symbolicExpressionToString(variable.getSource(),
-					state, value));
+					state, value, prefix + "| | ", "| "));
 			result.append("\n");
 		}
 		return result;
@@ -668,6 +717,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		}
 	}
 
+	private String symbolicExpressionToString(CIVLSource source, State state,
+			SymbolicExpression symbolicExpression, String prefix,
+			String separate) {
+		return this.symbolicExpressionToString(source, state,
+				symbolicExpression, false, prefix, separate);
+	}
+
 	/**
 	 * <p>
 	 * Obtains the string representation of a symbolic expression, making
@@ -725,7 +781,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private String symbolicExpressionToString(CIVLSource source, State state,
-			SymbolicExpression symbolicExpression, boolean atomize) {
+			SymbolicExpression symbolicExpression, boolean atomize,
+			String prefix, String separate) {
 		StringBuffer result = new StringBuffer();
 		SymbolicType type = symbolicExpression.type();
 		SymbolicType charType = modelFactory.charType()
@@ -738,6 +795,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		} else if (type.equals(this.functionPointerType)) {
 			return functionPointerValueToString(source, state,
 					symbolicExpression);
+		} else if (type.equals(this.dynamicHeapType)) {
+			return heapValueToString(source, state, symbolicExpression, prefix,
+					separate);
 		} else if (symbolicExpression.operator() == SymbolicOperator.CONCRETE
 				&& type instanceof SymbolicArrayType
 				&& ((SymbolicArrayType) type).elementType().equals(charType)) {
@@ -846,7 +906,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 							result.append("<");
 							for (SymbolicExpression symbolicElement : symbolicCollection) {
 								result.append(symbolicExpressionToString(
-										source, state, symbolicElement, false));
+										source, state, symbolicElement, false,
+										"", ""));
 								result.append(",");
 							}
 							result.deleteCharAt(result.length() - 1);
@@ -884,7 +945,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 							result.append(", ");
 						result.append(count + ":=");
 						result.append(symbolicExpressionToString(source, state,
-								value, false));
+								value, false, "", ""));
 						// result.append(value.toStringBuffer(false));
 					}
 					count++;
@@ -907,7 +968,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 						result.append(count + ":=");
 						// result.append(value.toStringBuffer(false));
 						result.append(symbolicExpressionToString(source, state,
-								value, false));
+								value, false, "", ""));
 					}
 					count++;
 				}
@@ -1085,6 +1146,91 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		}
 	}
 
+	/**
+	 * Constructs the pretty presentation of a heap.
+	 * 
+	 * For example:
+	 * 
+	 * <pre>
+	 * | | | | __heap = 
+	 * | | | | | objects of malloc 0 by f0:14.2-53 "p1d = (double *) ... )":
+	 * | | | | | | 0: H0[0:=0]
+	 * | | | | | objects of malloc 1 by f0:15.2-56 "p2d = (double ** ... )":
+	 * | | | | | | 0: H1[0:=&<d0>heap<3,0>[0]]
+	 * | | | | | objects of malloc 2 by f0:16.2-58 "p3d = (double ** ... )":
+	 * | | | | | | 0: H2[0:=&<d0>heap<4,0>[0]]
+	 * | | | | | objects of malloc 3 by f0:19.4-58 "p2d[i] = (double ... )":
+	 * | | | | | | 0: H3[0:=0, 1:=1, 2:=2]
+	 * | | | | | objects of malloc 4 by f0:20.4-61 "p3d[i] = (double ... )":
+	 * | | | | | | 0: H4[0:=&<d0>heap<5,0>[0], 1:=&<d0>heap<5,1>[0], 2:=&<d0>heap<5,2>[0]]
+	 * | | | | | objects of malloc 5 by f0:23.6-63 "p3d[i][j] = ... )":
+	 * | | | | | | 0: H5[0:=0, 1:=1, 2:=2, 3:=3, 4:=4, 5:=5, 6:=6, 7:=7, 8:=8, 9:=9]
+	 * | | | | | | 1: H6[0:=10, 1:=11, 2:=12, 3:=13, 4:=14, 5:=15, 6:=16, 7:=17, 8:=18, 9:=19]
+	 * | | | | | | 2: H7[0:=20, 1:=21, 2:=22, 3:=23, 4:=24, 5:=25, 6:=26, 7:=27]
+	 * </pre>
+	 * 
+	 * @param source
+	 *            The source code element for error report.
+	 * @param state
+	 *            The current state.
+	 * @param heapValue
+	 *            The value of the heap to be printed.
+	 * @param prefix
+	 *            The prefix of the heap value in printing.
+	 * @param separate
+	 *            The separate string for sub-components of the heap.
+	 * @return The pretty presentation of a heap for printing.
+	 */
+	private String heapValueToString(CIVLSource source, State state,
+			SymbolicExpression heapValue, String prefix, String separate) {
+		StringBuffer result = new StringBuffer();
+		int numFields = modelFactory.heapType().getNumMallocs();
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		String fieldPrefix = prefix + separate;
+		String objectPrefix = fieldPrefix + separate;
+
+		if (heapValue.isNull()) {
+			return "NULL";
+		}
+		for (int i = 0; i < numFields; i++) {
+			SymbolicExpression heapField = universe.tupleRead(heapValue,
+					universe.intObject(i));
+			NumericExpression fieldLength = universe.length(heapField);
+			int length;
+			CIVLSource mallocSource;
+
+			if (fieldLength.isZero())
+				continue;
+			result.append("\n");
+			result.append(fieldPrefix);
+
+			result.append("objects of malloc ");
+			result.append(i);
+			mallocSource = this.heapType.getMalloc(i).getSource();
+			if (mallocSource != null) {
+				result.append(" at ");
+				result.append(mallocSource.getSummary());
+			}
+			result.append(":");
+			length = ((IntegerNumber) reasoner.extractNumber(fieldLength))
+					.intValue();
+			for (int j = 0; j < length; j++) {
+				SymbolicExpression heapObject = universe.arrayRead(heapField,
+						universe.integer(j));
+
+				result.append("\n");
+				result.append(objectPrefix);
+				result.append(j);
+				result.append(": ");
+				result.append(this.symbolicExpressionToString(source, state,
+						heapObject, "", ""));
+			}
+		}
+		if (result.length() == 0)
+			return "EMPTYP";
+		return result.toString();
+	}
+
 	private CIVLType typeOfObjByRef(CIVLType type, ReferenceExpression ref) {
 		if (ref.isIdentityReference())
 			return type;
@@ -1123,50 +1269,5 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			return ((CIVLStructOrUnionType) parentType).getField(index).type();
 		}
-	}
-
-	@Override
-	public Map<Integer, NumericExpression> arrayIndexesByPointer(State state,
-			CIVLSource source, SymbolicExpression pointer,
-			boolean isUsedBySubtraction) {
-		Map<Integer, NumericExpression> dimIndexes = new HashMap<>();
-		int dim = 0;
-		int vid = symbolicUtil.getVariableId(source, pointer);
-		ReferenceExpression ref;
-
-		// pointer = this.castToArrayElementReference(state, pointer, source);
-		ref = symbolicUtil.getSymRef(pointer);
-		while (ref.isArrayElementReference()) {
-			dimIndexes.put(dim, ((ArrayElementReference) ref).getIndex());
-			dim++;
-			pointer = symbolicUtil.parentPointer(source, pointer);
-			ref = symbolicUtil.getSymRef(pointer);
-			if (vid == 0 && !isUsedBySubtraction)
-				break;
-		}
-		return dimIndexes;
-	}
-
-	@Override
-	public SymbolicExpression castToArrayElementReference(State state,
-			SymbolicExpression pointer, CIVLSource source) {
-		CIVLType objType;
-		ReferenceExpression ref = symbolicUtil.getSymRef(pointer);
-		int sid, vid;
-
-		sid = symbolicUtil.getDyscopeId(source, pointer);
-		vid = symbolicUtil.getVariableId(source, pointer);
-		// If the pointer is pointing to an memory space, then no need to
-		// continue casting because there won't be any multi-dimensional array
-		// and "&a" and "a" when "a" is a pointer to a memory space is
-		// different.
-		if (vid == 0)
-			return pointer;
-		objType = typeOfObjByPointer(source, state, pointer);
-		while (objType.isArrayType()) {
-			ref = universe.arrayElementReference(ref, zero);
-			objType = ((CIVLArrayType) objType).elementType();
-		}
-		return symbolicUtil.makePointer(sid, vid, ref);
 	}
 }

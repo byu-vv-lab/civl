@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
@@ -46,6 +47,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	private Collection<Variable> procRefs = new HashSet<Variable>();
 	private Collection<Variable> scopeRefs = new HashSet<Variable>();
 	private Collection<Variable> pointerRefs = new HashSet<Variable>();
+	private Collection<Variable> varsNeedSymbolicConstant = new LinkedHashSet<Variable>();
 	private int id;
 	private CIVLFunction function;
 
@@ -319,6 +321,34 @@ public class CommonScope extends CommonSourceable implements Scope {
 		}
 	}
 
+	/**
+	 * Checks if a variables is of primitive type. If it is NOT, it gets added
+	 * to non-primitive variables.
+	 * 
+	 * @param variable
+	 *            The variable being checked.
+	 */
+	private void needsSymbolicConstant(Variable variable) {
+		boolean needsSymbolicConstant = this
+				.needsSymbolicConstantWorker(variable);
+
+		if (needsSymbolicConstant)
+			this.varsNeedSymbolicConstant.add(variable);
+	}
+
+	private boolean needsSymbolicConstantWorker(Variable variable) {
+		if (variable.vid() == 0 || variable.isInput() || variable.isBound())
+			return true;
+		else {
+			CIVLType type = variable.type();
+
+			if (type instanceof CIVLPrimitiveType || type.isPointerType()
+					|| type.isDomainType())
+				return false;
+		}
+		return true;
+	}
+
 	private boolean containsPointerType(CIVLType type) {
 		boolean containsPointerType = false;
 
@@ -527,10 +557,16 @@ public class CommonScope extends CommonSourceable implements Scope {
 			this.checkPointer(v);
 			this.checkScopeRef(v);
 			this.checkProcRef(v);
+			this.needsSymbolicConstant(v);
 		}
 		if (children != null)
 			for (Scope child : children)
 				child.complete();
+	}
+
+	@Override
+	public Collection<Variable> varsNeedSymbolicConstant() {
+		return this.varsNeedSymbolicConstant;
 	}
 
 }

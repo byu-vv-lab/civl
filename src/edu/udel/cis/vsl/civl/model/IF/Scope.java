@@ -143,6 +143,14 @@ public interface Scope extends Sourceable {
 	 *         types.
 	 */
 	Collection<Variable> variablesWithPointers();
+	
+	/**
+	 * A variable whose type is not a primitive type.
+	 * 
+	 * @return A collection of the variables in this scope containing pointer
+	 *         types.
+	 */
+	Collection<Variable> varsNeedSymbolicConstant();
 
 	/**
 	 * Print the scope and all children.

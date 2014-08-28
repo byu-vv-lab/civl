@@ -177,6 +177,7 @@ public class ImmutableStateFactory implements StateFactory {
 		theState = collectProcesses(theState);
 		theState = collectScopes(theState);
 		theState = collectHeaps(theState);
+		theState = collectSymbolicConstants(theState);
 		theState = flyweight(theState);
 		if (simplify) {
 			ImmutableState simplifiedState = theState.simplifiedState;
@@ -205,10 +206,11 @@ public class ImmutableStateFactory implements StateFactory {
 			int numDyscopes = theState.numDyscopes();
 			int numHeapFields = modelFactory.heapType().getNumMallocs();
 			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapMemUnits = new HashMap<>();
-			Map<SymbolicExpression, SymbolicExpression> oldToNewExpressions = new HashMap<>();
+			// Map<SymbolicExpression, SymbolicExpression> oldToNewExpressions =
+			// new HashMap<>();
 			// Map<SymbolicExpression, SymbolicExpression>
 			// oldToNewHeapObjectNames = new HashMap<>();
-			int nameId = 0;
+			// int nameId = 0;
 			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
 
 			for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
@@ -276,14 +278,16 @@ public class ImmutableStateFactory implements StateFactory {
 								newHeapField = universe.removeElementAt(
 										newHeapField, objectId - numRemoved);
 								numRemoved++;
-							} else {// rename remaining heap objects
-								SymbolicExpression heapObject = universe
-										.arrayRead(heapField,
-												universe.integer(objectId));
-
-								nameId = addOldToNewName(heapObject, nameId,
-										oldToNewExpressions);
 							}
+
+							// else {// rename remaining heap objects
+							// SymbolicExpression heapObject = universe
+							// .arrayRead(heapField,
+							// universe.integer(objectId));
+							//
+							// nameId = addOldToNewName(heapObject, nameId,
+							// oldToNewExpressions);
+							// }
 						}
 						if (oldID2NewID.size() > 0)
 							addOldToNewHeapMemUnits(oldID2NewID, heapPointer,
@@ -299,10 +303,10 @@ public class ImmutableStateFactory implements StateFactory {
 				}
 			}
 			computeOldToNewHeapPointers(theState, oldToNewHeapMemUnits,
-					oldToNewExpressions);
+					oldToNewHeapMemUnits);
 			for (int i = 0; i < numDyscopes; i++)
 				newScopes[i] = theState.getDyscope(i).updateHeapPointers(
-						oldToNewExpressions, universe);
+						oldToNewHeapMemUnits, universe);
 			theState = theState.setScopes(newScopes);
 			return theState;
 		}
@@ -415,7 +419,7 @@ public class ImmutableStateFactory implements StateFactory {
 		// TODO: how to initialize the arguments to system function?
 		state = addProcess(state, function, arguments, -1);
 		state = this.setVariable(state, atomicVar.vid(), 0,
-				modelFactory.processValue(-1));
+				modelFactory.undefinedProcessValue());
 		return canonic(state);
 	}
 
@@ -1594,10 +1598,71 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 	}
 
+	private ImmutableState collectSymbolicConstants(State state) {
+		ImmutableState theState = (ImmutableState) state;
+		int numDyscopes = theState.numDyscopes();
+		int nameId = 0;
+		Map<SymbolicExpression, SymbolicExpression> oldName2NewName = new HashMap<>();
+		int numHeapFields = this.modelFactory.heapType().getNumMallocs();
+
+		for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
+			ImmutableDynamicScope dyscope = theState.getDyscope(dyscopeId);
+			Collection<Variable> variables = dyscope.lexicalScope()
+					.varsNeedSymbolicConstant();
+
+			for (Variable variable : variables) {
+				int vid = variable.vid();
+				SymbolicExpression value = dyscope.getValue(vid);
+
+				// never renames input variables in the file scope
+				if (value.isNull() || (dyscopeId == 0 && variable.isInput()))
+					continue;
+				if (vid == 0) {// heap
+					for (int heapFieldId = 0; heapFieldId < numHeapFields; heapFieldId++) {
+						SymbolicExpression heapField = universe.tupleRead(
+								value, universe.intObject(heapFieldId));
+						int length = this.symbolicUtil.extractInt(null,
+								(NumericExpression) universe.length(heapField));
+
+						for (int heapObjId = 0; heapObjId < length; heapObjId++) {
+							SymbolicExpression heapObj = universe.arrayRead(
+									heapField, universe.integer(heapObjId));
+
+							nameId = this.addOldToNewName(heapObj, nameId,
+									oldName2NewName);
+						}
+					}
+				} else if (!variable.isInput()) {// normal variables
+					nameId = this.addOldToNewName(value, nameId,
+							oldName2NewName);
+				}
+			}
+		}
+		if (oldName2NewName.size() > 0) {
+			int numProcs = theState.numProcs();
+			ImmutableProcessState[] newProcesses = new ImmutableProcessState[numProcs];
+			for (int i = 0; i < numProcs; i++) {
+				newProcesses[i] = theState.getProcessState(i);
+			}
+			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
+			for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
+				ImmutableDynamicScope oldScope = theState.getDyscope(dyscopeId);
+
+				newScopes[dyscopeId] = oldScope.updateSymbolicConstants(
+						oldName2NewName, universe);
+			}
+			BooleanExpression newPathCondition = (BooleanExpression) universe
+					.substitute(theState.getPathCondition(), oldName2NewName);
+			theState = ImmutableState.newState(theState, newProcesses,
+					newScopes, newPathCondition);
+		}
+		return theState;
+	}
+
 	private int addOldToNewName(SymbolicExpression heapObject, int nameId,
 			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapObjectNames) {
 		SymbolicConstant oldConstant = null;
-		String prefix = "Ho";
+		String prefix = "V";
 
 		if (heapObject instanceof SymbolicConstant)
 			oldConstant = (SymbolicConstant) heapObject;
@@ -1608,12 +1673,17 @@ public class ImmutableStateFactory implements StateFactory {
 				oldConstant = (SymbolicConstant) arg0;
 		}
 		if (oldConstant != null) {
-			StringObject newNameString = universe.stringObject(prefix + nameId);
-			SymbolicConstant newName = universe.symbolicConstant(newNameString,
-					oldConstant.type());
+			String oldName = oldConstant.name().getString();
+			String newName = prefix + nameId;
 
-			oldToNewHeapObjectNames.put(oldConstant, newName);
-			return nameId + 1;
+			if (!oldName.equals(newName)) {
+				StringObject newNameString = universe.stringObject(newName);
+				SymbolicConstant newConstant = universe.symbolicConstant(
+						newNameString, oldConstant.type());
+
+				oldToNewHeapObjectNames.put(oldConstant, newConstant);
+				return nameId + 1;
+			}
 		}
 		return nameId;
 	}
