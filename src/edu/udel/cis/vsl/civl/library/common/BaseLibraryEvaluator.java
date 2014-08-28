@@ -102,6 +102,9 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 * Setting a sequence of data between two array element references. Returns
 	 * the settled new array and the pointer to that array.
 	 * 
+	 * Pre-condition: start pointer and end pointer should point to the same
+	 * object.
+	 * 
 	 * @param state
 	 *            The current state
 	 * @param process
@@ -134,7 +137,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 			Map<Integer, NumericExpression> arrayElementsSizes,
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression startPointer, endPointer;
-		SymbolicExpression leastCommonArray, oldLeastCommonArray;
+		SymbolicExpression flattenLeastCommonArray, leastCommonArray;
 		NumericExpression startPos = zero;
 		NumericExpression endPos = zero;
 		NumericExpression ptrInterval;
@@ -185,14 +188,16 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 				universe.add(ptrInterval, one)))) {
 			throw new CIVLInternalException("out of bound", source);
 		}
-		oldLeastCommonArray = evaluator.dereference(source, state, process,
-				startPointer, false).value;
+		eval = evaluator.dereference(source, state, process, startPointer,
+				false);
+		state = eval.state;
+		leastCommonArray = eval.value;
 		// If the result of dereferencing is not an array type, then the
 		// dataSize should only be one.
-		if (!(oldLeastCommonArray.type() instanceof SymbolicArrayType)) {
+		if (!(leastCommonArray.type() instanceof SymbolicArrayType)) {
 			if (!reasoner.isValid(universe.equals(dataSize, one)))
 				throw new CIVLInternalException("out of bound", source);
-			eval = new Evaluation(state, oldLeastCommonArray);
+			eval = new Evaluation(state, leastCommonArray);
 			return new Pair<>(eval, startPtr);
 		}
 		// Direct assignment conditions:
@@ -200,28 +205,29 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		// 2. Interval between pointers equals to data size.
 		// 3. The least common array capacity equals to data size.
 		if (reasoner.isValid(universe.equals(startPos, zero))) {
-			NumericExpression arrayCapacity = this.arraySize(
-					oldLeastCommonArray, source);
+			NumericExpression arrayCapacity = this.arraySize(leastCommonArray,
+					source);
 
 			claim = universe.and(
 					universe.equals(dataSize, universe.add(ptrInterval, one)),
 					universe.equals(dataSize, arrayCapacity));
 			if (reasoner.isValid(claim)) {
 				dataArray = arrayCasting(state, process, dataArray,
-						oldLeastCommonArray, source);
+						leastCommonArray, source);
 				eval = new Evaluation(state, dataArray);
 				return new Pair<Evaluation, SymbolicExpression>(eval,
 						startPointer);
 			}
 		}
-		leastCommonArray = arrayFlatten(state, process, oldLeastCommonArray,
-				source);
+		flattenLeastCommonArray = arrayFlatten(state, process,
+				leastCommonArray, source);
 		i = startPos;
 		j = zero;
 		claim = universe.lessThan(j, dataSize);
 		try {
 			while (reasoner.isValid(claim)) {
-				leastCommonArray = universe.arrayWrite(leastCommonArray, i,
+				flattenLeastCommonArray = universe.arrayWrite(
+						flattenLeastCommonArray, i,
 						universe.arrayRead(dataArray, j));
 				i = universe.add(i, one);
 				j = universe.add(j, one);
@@ -231,9 +237,9 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 			throw new CIVLInternalException("Out of bound\n", source);
 		}
 
-		leastCommonArray = arrayCasting(state, process, leastCommonArray,
-				oldLeastCommonArray, source);
-		eval = new Evaluation(state, leastCommonArray);
+		flattenLeastCommonArray = arrayCasting(state, process,
+				flattenLeastCommonArray, leastCommonArray, source);
+		eval = new Evaluation(state, flattenLeastCommonArray);
 		return new Pair<Evaluation, SymbolicExpression>(eval, startPointer);
 	}
 
