@@ -25,7 +25,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
@@ -63,7 +62,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 
 	/* ************************** Private Static Fields ********************** */
 
-	private static String EXIT = "exit";
+	// private static String EXIT = "exit";
 
 	/**
 	 * The name of the identifier of the MPI_Comm variable in the final CIVL
@@ -695,15 +694,16 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 				functionExpression.getIdentifier().setName(MPI_FINALIZE_NEW);
 				functionCall.setArguments(nodeFactory.newSequenceNode(source,
 						"ActualParameterList", Arrays.asList(addressOf)));
-			} else if (functionName.equals(EXIT)) {
-				int myIndex = functionCall.parent().childIndex();
-				ExpressionNode value = functionCall.getArgument(0).copy();
-				ReturnNode returnNode = nodeFactory
-						.newReturnNode(source, value);
-				ASTNode parent = functionCall.parent().parent();
-
-				parent.setChild(myIndex, returnNode);
 			}
+			// else if (functionName.equals(EXIT)) {
+			// int myIndex = functionCall.parent().childIndex();
+			// ExpressionNode value = functionCall.getArgument(0).copy();
+			// ReturnNode returnNode = nodeFactory
+			// .newReturnNode(source, value);
+			// ASTNode parent = functionCall.parent().parent();
+			//
+			// parent.setChild(myIndex, returnNode);
+			// }
 		}
 	}
 
@@ -718,9 +718,9 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		// if (this.inputVariableNames.contains(NPROCS))
 		// return null;
 		// if (this.inputVariableNames.contains(NPROCS_LOWER_BOUND))
-			return this.boundAssumption(NPROCS_LOWER_BOUND, NPROCS,
-					NPROCS_UPPER_BOUND);
-//		return upperBoundAssumption(NPROCS, NPROCS_UPPER_BOUND);
+		return this.boundAssumption(NPROCS_LOWER_BOUND, NPROCS,
+				NPROCS_UPPER_BOUND);
+		// return upperBoundAssumption(NPROCS, NPROCS_UPPER_BOUND);
 	}
 
 	/* ********************* Methods From BaseTransformer ****************** */
@@ -816,26 +816,27 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 		// declaring $input int NPROCS;
 		nprocsVar = this.nprocsDeclaration();
 		// declaring $input int NPROCS_UPPER_BOUND;
-//		if (!this.inputVariableNames.contains(NPROCS)
-//				&& this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
-			nprocsUpperBoundVar = this.basicTypeVariableDeclaration(
-					BasicTypeKind.INT, NPROCS_UPPER_BOUND);
-			nprocsUpperBoundVar.getTypeNode().setInputQualified(true);
-//		}
-//		if (!this.inputVariableNames.contains(NPROCS)
-//				&& this.inputVariableNames.contains(NPROCS_LOWER_BOUND)) {
-			// declaring $input int NPROCS_LOWER_BOUND;
-			nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
-					BasicTypeKind.INT, NPROCS_LOWER_BOUND);
-			nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
-//		}
-//		if (!this.inputVariableNames.contains(NPROCS)
-//				&& !this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
-//			throw new SyntaxException(
-//					"Please specify the number of processes (e.g., -input__NPROCS=5)"
-//							+ "or the upper bound of number of processes (e.g. -input__NPROCS_UPPER_BOUND=6)",
-//					source);// TODO improve messages with pragma.
-//		}
+		// if (!this.inputVariableNames.contains(NPROCS)
+		// && this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
+		nprocsUpperBoundVar = this.basicTypeVariableDeclaration(
+				BasicTypeKind.INT, NPROCS_UPPER_BOUND);
+		nprocsUpperBoundVar.getTypeNode().setInputQualified(true);
+		// }
+		// if (!this.inputVariableNames.contains(NPROCS)
+		// && this.inputVariableNames.contains(NPROCS_LOWER_BOUND)) {
+		// declaring $input int NPROCS_LOWER_BOUND;
+		nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
+				BasicTypeKind.INT, NPROCS_LOWER_BOUND);
+		nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
+		// }
+		// if (!this.inputVariableNames.contains(NPROCS)
+		// && !this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
+		// throw new SyntaxException(
+		// "Please specify the number of processes (e.g., -input__NPROCS=5)"
+		// +
+		// "or the upper bound of number of processes (e.g. -input__NPROCS_UPPER_BOUND=6)",
+		// source);// TODO improve messages with pragma.
+		// }
 		// assuming NPROCS_LOWER_BOUND < NPROCS && NPROCS <= NPROCS_UPPER_BOUND
 		nprocsAssumption = this.nprocsAssumption();
 		// declaring $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);
