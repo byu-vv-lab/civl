@@ -41,6 +41,53 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
+/**
+ * <p>
+ * Specification for bundle operations:<br>
+ * The specification of bundle pack/unpack is essentially the specification of
+ * get/set data from input/output arguments. Since CIVL implements multiple
+ * dimensional arrays as nested arrays, assigning a set of data to a multiple
+ * dimensional array will possibly involve several parts of different sub-arrays
+ * inside a nested array. So the following description will note some
+ * explanation of general cases for this get/set input/output arguments problem
+ * which is totally irrelevant to bundle pack/unpack.
+ * </p>
+ * 
+ * 
+ * $bundle $bundle_pack(void *ptr, int size):<br>
+ * <p>
+ * Putting the whole or part of the object pointed by the first argument into
+ * returned a bundle object.<br>
+ * the first argument "ptr" is a pointer to the object part of which is going to
+ * be assigned to the returned bundle type object. The second argument specifies
+ * the size of the object pointed by the first argument. Here size means the
+ * size of the data type times the the number of the elements of such data type
+ * which are consisted of the data object will be packed in bundle.<br>
+ * Note: For general cases, if some input argument, which happens to be a
+ * pointer, has a specified data type, it's unnecessary to give the size unless
+ * the function is just expecting part of the object pointed.
+ * </p>
+ * 
+ * void $bundle_unpack($bundle bundle, void *ptr):
+ * <p>
+ * Extracting the whole data from a given bundle and assigning it to another
+ * object pointed by the second argument. The pre-condition is the receiving
+ * object must be able to contain the whole data object.<br>
+ * The first argument is the bundle object which will be extracted. The second
+ * argument is a pointer to receiving object. The pre-condition mentioned above
+ * is defined as: If the receiving object has a compatible data type of itself
+ * or elements of it with the data itself or elements of the data inside the
+ * bundle and the size of the object (sometime it's just part of the object
+ * because of different positions pointed by the pointer) is greater than or
+ * equal to data in bundle, it's able to contain the whole data object. <br>
+ * Note: For general setting output arguments cases, this precondition should
+ * also hold. The only thing different is the data in bundle here can be data
+ * from anywhere(Obviously general cases are irrelevant with bundle stuff).<br>
+ * </p>
+ * 
+ * 
+ */
+
 public class LibbundleExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
 
@@ -312,9 +359,9 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 	/**
 	 * Copies the data out of the bundle into the region specified:
 	 * 
-	 * void $bundle_unpack($bundle bundle, void *ptr, int size); <br>
+	 * void $bundle_unpack($bundle bundle, void *ptr); <br>
 	 * 
-	 * Pre-Condition : The data in bundle is in the form of an unrolled one
+	 * Pre-Condition : The data in bundle is in the form of an falttened one
 	 * dimensional array.<br>
 	 * 
 	 * @see{executeBunldePack :post-condition.<br>
