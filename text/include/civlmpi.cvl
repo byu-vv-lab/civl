@@ -20,8 +20,9 @@ typedef struct MPI_Comm {
   __MPI_Sys_status__ status;
 }MPI_Comm;
 
-/* Definition of CMPI_Gcomm and MPI_Comm */
-struct __CMPI_Gcomm {
+/* Definition of CMPI_Gcomm (CMPI_Gcomm has a type of __CMPI_Gcomm) 
+   and MPI_Comm */
+struct CMPI_Gcomm {
   $gcomm p2p; // point-to-point communication
   $gcomm col; // collective communication
   $gbarrier gbarrier;
