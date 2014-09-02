@@ -171,11 +171,9 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 					false);
 
 			state = eval.state;
-			// TODO: change for using new getConcreteString
-			if (symbolicUtil.getVariableId(source, arrayPointer) == 0)
-				originalArray = (SymbolicSequence<?>) eval.value.argument(1);
-			else
-				originalArray = (SymbolicSequence<?>) eval.value.argument(0);
+			// TODO: implement getStringConcrete() as an underneath
+			// implementation of getString()
+			originalArray = (SymbolicSequence<?>) eval.value.argument(0);
 			startIndex = symbolicUtil.extractInt(source, arrayIndex);
 		}
 		numChars = originalArray.size();

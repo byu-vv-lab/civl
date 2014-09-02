@@ -3098,14 +3098,8 @@ public class CommonEvaluator implements Evaluator {
 					state = eval.state;
 					charArray = eval.value;
 					try {
-						// If it's an array in heap, the first argument is a
-						// symbolic constant stands for a heap object.
-						if (symbolicUtil.getVariableId(source, charPointer) == 0)
-							originalArray = (SymbolicSequence<?>) charArray
-									.argument(1);
-						else
-							originalArray = (SymbolicSequence<?>) charArray
-									.argument(0);
+						originalArray = (SymbolicSequence<?>) charArray
+								.argument(0);
 					} catch (ClassCastException e) {
 						throw new CIVLUnimplementedFeatureException(
 								"non-concrete strings", source);
