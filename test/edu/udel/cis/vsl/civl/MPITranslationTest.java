@@ -7,6 +7,7 @@ import java.io.File;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
 public class MPITranslationTest {
@@ -73,6 +74,30 @@ public class MPITranslationTest {
 	@Test
 	public void mpi_prime() {
 		assertTrue(ui.run("verify", filename("mpi_prime.c"),
+				"-input__NPROCS=4", "-enablePrintf=false"));
+	}
+	
+	@Test
+	public void mpi_scatter() throws ABCException {
+		assertTrue(ui.run("verify", filename("mpi_scatter.c"),
+				"-input__NPROCS=4", "-enablePrintf=false"));
+	}
+
+	@Test
+	public void mpi_gather() throws ABCException {
+		assertTrue(ui.run("verify", filename("mpi_gather.c"),
+				"-input__NPROCS=4", "-enablePrintf=false"));
+	}
+
+	@Test
+	public void mpi_gather_inPlace() throws ABCException {
+		assertTrue(ui.run("verify", filename("mpi_gather_inPlace.c"),
+				"-input__NPROCS=4", "-enablePrintf=false"));
+	}
+
+	@Test
+	public void mpi_scatter_inPlace() throws ABCException {
+		assertTrue(ui.run("verify", filename("mpi_scatter_inPlace.c"),
 				"-input__NPROCS=4", "-enablePrintf=false"));
 	}
 }
