@@ -79,7 +79,7 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   MPI_Recv(recvbuf, recvcount, recvtype, source, recvtag, comm, status);
   return 0;
 }
-
+/******************************** Collective ***********************************/
 /* Broadcasts a message from root to everyone else.
  * Need to use a differnt comm.
  */
@@ -145,8 +145,8 @@ int MPI_Allreduce(void* sendbuf, void* recvbuf, int count,
   MPI_Status status;
   
   $assert comm.status == __INIT :
-	  "MPI_Allreduce() cannot be invoked without "
-	  "MPI_Init() being called before.\n";
+  "MPI_Allreduce() cannot be invoked without "
+    "MPI_Init() being called before.\n";
   MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
   MPI_Bcast(recvbuf, count, datatype, root, comm);
   return 0;
@@ -155,5 +155,111 @@ int MPI_Allreduce(void* sendbuf, void* recvbuf, int count,
 int MPI_Barrier(MPI_Comm comm){
   $assert comm.status == __INIT : "MPI_Allreduce() cannot be invoked without MPI_Init() being called before.\n";
   $barrier_call(comm.barrier);
+  return 0;
 }
+
+/* 1. If comm is an intracommunicator, each process (includes root process) sends the content
+   of its send buffer to the root process. Root process receives the messages and stores 
+   them in rank order 
+   2. TODO: If comm is an intercommunicator, it's not supported yet */
+int MPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, 
+	       void* recvbuf, int recvcount, MPI_Datatype recvtype, 
+	       int root, MPI_Comm comm){
+  int rank, nprocs;
+  _Bool rootIgnore = $false;
+  MPI_Status status;
+
+  $assert comm.status == __INIT :
+  "MPI_Gather() cannot be invoked without "
+    "MPI_Init() being called before.\n";
+  // Check if sendcount and sendtype is equal to recvcount and 
+  // recvtype which is required by MPI standard.
+  $assert sendcount == recvcount :
+  "MPI_Gather() asks for equality "
+    "between 'sendcount' and 'recvcount'.";
+  $assert sendtype == recvtype :
+  "MPI_Gather() asks for equality "
+    "between 'sendtype' and 'recvtype'.";
+
+  rank = $comm_place(comm.col);
+  nprocs = $comm_size(comm.col);
+  if(sendbuf == MPI_IN_PLACE){// Sendbuf is ignored at root
+    $assert root == rank:
+    "Only root can replace 'sendbuf' with 'MPI_IN_PLACE'.";
+    rootIgnore = $true;
+  }
+  else
+    MPI_Send(sendbuf, sendcount, sendtype, root, GATHER_TAG, comm);
+  // sendbuf cannot be ignored
+  if(rank == root){
+    int real_recvcount;
+    int offset;
+    
+    for(int i=0; i<nprocs; i++){
+      // Since currently we don't support pointer addition 
+      // on non-array type obejcts, we don't need 
+      // to care about datatype extent.
+      offset = i * recvcount; 
+      //If optional ignorance not used or it's not at root iteration, then we do MPI_Send()
+      if(!rootIgnore || i != root) {
+	MPI_Recv(recvbuf + offset, recvcount, recvtype, i, GATHER_TAG, comm, &status);
+	MPI_Get_count(&status, recvtype, &real_recvcount);
+	$assert real_recvcount == recvcount :
+	"MPI_Gather() asks for equality between"
+	  " the amount of data sent and the "
+	  "amount of data received.";
+      }
+    }
+  }
+  return 0;
+}
+
+/* The inverse operation of MPI_Gather() */
+int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, 
+		void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+		MPI_Comm comm){
+  int rank, nprocs;
+  _Bool rootIgnore = $false;
+  MPI_Status status;
+
+  $assert comm.status == __INIT :
+  "MPI_Scatter() cannot be invoked without "
+    "MPI_Init() being called before.\n";
+  // Check if sendcount and sendtype is equal to recvcount and 
+  // recvtype which is required by MPI standard.
+  $assert sendcount == recvcount :
+  "MPI_Scatter() asks for equality "
+    "between 'sendcount' and 'recvcount'.";
+  $assert sendtype == recvtype :
+  "MPI_Scatter() asks for equality "
+    "between 'sendtype' and 'recvtype'.";
+
+  rank = $comm_place(comm.col);
+  nprocs = $comm_size(comm.col);
+  if(recvbuf == MPI_IN_PLACE){// Sendbuf is ignored at root
+    $assert root == rank:
+    "Only root can replace 'sendbuf' with 'MPI_IN_PLACE'.";
+    rootIgnore = $true;
+  }
+  if(rank == root){
+    int offset;
+
+    for(int i=0; i<nprocs; i++){
+      offset = i * sendcount;
+      if(!rootIgnore || i != root)
+	MPI_Send(sendbuf + offset, sendcount, sendtype, i, SCATTER_TAG, comm);
+    }
+  }
+  if(!rootIgnore){//Already checked that (rootIgnore == true)==>(root==rank)
+    int real_recvcount;
+    
+    MPI_Recv(recvbuf, recvcount, recvtype, root, SCATTER_TAG, comm, &status);
+    MPI_Get_count(&status, recvtype, &real_recvcount);
+    $assert real_recvcount == recvcount :
+    "MPI_Gather() asks for equality between"
+      " the amount of data sent and the "
+      "amount of data received.";
+  }
+}
+
 #endif
