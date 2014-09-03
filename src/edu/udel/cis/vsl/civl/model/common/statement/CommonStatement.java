@@ -236,7 +236,7 @@ public abstract class CommonStatement extends CommonSourceable implements
 	@Override
 	public String toStepString(AtomicKind atomicKind, int atomCount,
 			boolean atomicLockVarChanged) {
-		String result = "  " + this.source.id() + "->";
+		String result = "  " + (source == null ? "??" : source.id()) + "->";
 
 		if (this.target != null)
 			result += target.id() + ": ";

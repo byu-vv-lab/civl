@@ -663,6 +663,7 @@ public class CommonExecutor implements Executor {
 		Evaluation eval;
 		SymbolicExpression domainV;
 		NumericExpression domSizeV = universe.integer(1);
+		// TODO: why is dim -1 sometimes?
 		int dim = parFor.dimension();
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());

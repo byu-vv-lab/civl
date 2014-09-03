@@ -117,10 +117,11 @@ typedef struct OMP_team {
  * team is nthreads.
  */
 $omp_gteam $omp_gteam_create($scope scope, int nthreads) {
-  $omp_work_record empty[0];
+  $omp_work_record empty[];
   $omp_gteam result = ($omp_gteam)$malloc(scope, sizeof(struct OMP_gteam));
   _Bool f = $false;
 
+  $seq_init(&empty, 0, NULL);
   result->scope = scope;
   result->nthreads = nthreads;
   $seq_init(&result->init, nthreads, &f);

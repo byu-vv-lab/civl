@@ -73,7 +73,8 @@ public class CommonCallStatement extends CommonStatement implements
 	@Override
 	public CIVLFunction function() {
 		if (this.functionExpression.expressionKind() == ExpressionKind.FUNCTION_POINTER)
-			return ((FunctionIdentifierExpression) functionExpression).function();
+			return ((FunctionIdentifierExpression) functionExpression)
+					.function();
 		return null;
 	}
 
@@ -305,7 +306,7 @@ public class CommonCallStatement extends CommonStatement implements
 	public String toStepString(AtomicKind atomicKind, int atomCount,
 			boolean atomicLockVarChanged) {
 		String targetString;
-		String result = "  " + source().id() + "->";
+		String result = "  " + (source() == null ? "??" : source().id()) + "->";
 		CIVLFunction function = this.function();
 
 		if (this.isCall && function != null && function.isNormal()) {
