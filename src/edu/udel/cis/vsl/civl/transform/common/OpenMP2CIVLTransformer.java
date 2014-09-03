@@ -481,13 +481,9 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			
 
 			VariableDeclarationNode loopDomain;
-			loopDomain = nodeFactory.newVariableDeclarationNode(
-					source,
+			loopDomain = nodeFactory.newVariableDeclarationNode(source,
 					nodeFactory.newIdentifierNode(source, "dom"),
-					nodeFactory.newDomainTypeNode(source),
-					nodeFactory.newCastNode(source,
-							nodeFactory.newDomainTypeNode(source),
-							cln));
+					nodeFactory.newDomainTypeNode(source, nodeFactory.newIntegerConstantNode(source, "1")),cln);
 			items.add(loopDomain);
 
 			// Declaring $omp_gteam gteam = $omp_gteam_create($here, nthreads);
@@ -742,7 +738,8 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				initList.add(nodeFactory.newPairNode(source, (DesignationNode) null, (InitializerNode)this.identifierExpression(source, "r" + Integer.toString(k))));
 			}
 			CompoundInitializerNode temp = nodeFactory.newCompoundInitializerNode(source, initList);
-			CompoundLiteralNode cln = nodeFactory.newCompoundLiteralNode(source, nodeFactory.newDomainTypeNode(source, nodeFactory.newIntegerConstantNode(source, Integer.toString(rangeNumber))), temp);
+			CompoundLiteralNode cln = nodeFactory.newCompoundLiteralNode(source, nodeFactory.newDomainTypeNode(source), temp);
+			
 			if(body instanceof CompoundStatementNode){
 				children = body.children();
 			} else {
@@ -755,16 +752,23 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			
 			loopDomain = nodeFactory.newVariableDeclarationNode(source,
 					nodeFactory.newIdentifierNode(source, "loop_domain"),
-					nodeFactory.newDomainTypeNode(source), nodeFactory.newCastNode(source, nodeFactory.newDomainTypeNode(source), cln));
+					nodeFactory.newDomainTypeNode(source, nodeFactory
+							.newIntegerConstantNode(source, "1")), cln);
 			items.add(loopDomain);
+
+			//($domain(1))$omp_arrive_loop(team, loop_domain)
 			ExpressionNode ompArriveLoop = nodeFactory.newCastNode(source,
 					nodeFactory.newDomainTypeNode(source,
-							nodeFactory.newIntegerConstantNode(source, Integer.toString(collapseLevel))),
+							nodeFactory.newIntegerConstantNode(source, 
+									Integer.toString(collapseLevel))),
 					nodeFactory.newFunctionCallNode(source, this
 							.identifierExpression(source, "$omp_arrive_loop"),
 							Arrays.asList(this.identifierExpression(source,
-									TEAM), this.identifierExpression(source,
-									"loop_domain"), nodeFactory.newIntegerConstantNode(source, "0")), null));
+									TEAM), nodeFactory.newCastNode(source, 
+											nodeFactory.newDomainTypeNode(source), 
+											this.identifierExpression(source,
+									"loop_domain")), nodeFactory
+									.newIntegerConstantNode(source, "0")), null));
 
 			IntegerConstantNode domainLevel;
 			if (collapseLevel == 1) {
