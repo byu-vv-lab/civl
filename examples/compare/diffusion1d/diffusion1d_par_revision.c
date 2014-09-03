@@ -254,9 +254,8 @@ void write_plain(int time) {
 	count = nxl;
       }
       for (i = 0; i < count; i++) {
-	int firstIdx = firstForProc(source);
-	
-	u_output[firstIdx + i] = buf[i];
+	int firstIdx = firstForProc(source);	
+#pragma CIVL u_output[firstIdx + i] = buf[i];
       }
     }
   }
@@ -304,5 +303,5 @@ int main(int argc,char *argv[]) {
     free(buf);
   }
 
-  return 1;
+  return 0;
 }
