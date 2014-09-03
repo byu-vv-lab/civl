@@ -19,6 +19,12 @@ mpi_pi_send: mpi_pi_send.c
 mpi_prime: mpi_prime.c
 	$(VERIFY) -input__NPROCS=4 -enablePrintf=false mpi_prime.c
 
+mpi_gather: mpi_gather.c
+	$(VERIFY) -input__NPROCS=4 -enablePrintf=false mpi_gather.c
+
+mpi_scatter: mpi_gather.c
+	$(VERIFY) -input__NPROCS=4 -enablePrintf=false mpi_scatter.c
+
 clean: 
 	rm -f -r CIVLREP
 	rm -r -f *~
