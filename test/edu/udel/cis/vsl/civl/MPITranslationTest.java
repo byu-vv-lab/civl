@@ -79,25 +79,25 @@ public class MPITranslationTest {
 	
 	@Test
 	public void mpi_scatter() throws ABCException {
-		assertTrue(ui.run("verify", filename("mpi_scatter.c"),
+		assertTrue(ui.run("verify", filename("Gather_Scatter/mpi_scatter.c"),
 				"-input__NPROCS=4", "-enablePrintf=false"));
 	}
 
 	@Test
 	public void mpi_gather() throws ABCException {
-		assertTrue(ui.run("verify", filename("mpi_gather.c"),
+		assertTrue(ui.run("verify", filename("Gather_Scatter/mpi_gather.c"),
 				"-input__NPROCS=4", "-enablePrintf=false"));
 	}
 
 	@Test
-	public void mpi_gather_inPlace() throws ABCException {
-		assertTrue(ui.run("verify", filename("mpi_gather_inPlace.c"),
+	public void mpi_gatherv() throws ABCException {
+		assertTrue(ui.run("verify", filename("Gather_Scatter/mpi_gather_inPlace.c"),
 				"-input__NPROCS=4", "-enablePrintf=false"));
 	}
 
 	@Test
-	public void mpi_scatter_inPlace() throws ABCException {
-		assertTrue(ui.run("verify", filename("mpi_scatter_inPlace.c"),
+	public void mpi_scatterv() throws ABCException {
+		assertTrue(ui.run("verify", filename("Gather_Scatter/mpi_scatter_inPlace.c"),
 				"-input__NPROCS=4", "-enablePrintf=false"));
 	}
 }
