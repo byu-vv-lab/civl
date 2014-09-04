@@ -58,10 +58,15 @@ typedef struct {
   $proc tail;
 } proc_fifo_queue;
 
+/* pthread_barrierattr_t
+*/
 typedef struct { 
   int pshared;
 } pthread_barrierattr_t;
 
+/* pthread_barrier_t
+  A structure which contains a global barrier which each of the threads must key into.
+*/
 typedef struct {
   pthread_barrierattr_t attr;
   int numThrds;
@@ -69,18 +74,14 @@ typedef struct {
   $gbarrier barr;
 } pthread_barrier_t;
   
+/* pthread_spinlock_t
+  Very simple locking mechanism, spins until the lock is free.
+*/
 typedef struct {
   $proc owner;
   _Bool lock;
   int pshared;
 }pthread_spinlock_t;
-
-/*
-typedef struct {
-  int pshared;
-  clockid_t clock_id;
-}pthread_condattr_t;
-*/
 
 /* Implemented struct definitions */
 
@@ -143,10 +144,16 @@ typedef struct {
   pthread_mutexattr_t attr;
 } pthread_mutex_t;
 
+/* pthread_rwlockattr_t
+*/
 typedef struct {
   int pshared;
 } pthread_rwlockattr_t;
 
+/* pthread_rwlock_t struct definition
+  Description: Reader-writer lock. When a reader has the lock other readers may operate, but not the writer.
+  Only a single writer can operate at one time and locks out readers
+*/
 typedef struct {
   $proc rdowners[];
   int rdlocks[];
@@ -184,6 +191,10 @@ typedef struct {
   _Bool terminated;
 } pthread_t;
 
+/* __pthread_pool_t struct definition
+  Description: The pthread_pool_t is the pool where threads are stored in an array of pointers to threads
+  in order to access them after creation
+*/
 typedef struct {
   pthread_t** threads;
   int len;
