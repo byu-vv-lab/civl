@@ -267,11 +267,13 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		int elementTypeIndex;
 
-		if (pointer.operator() != SymbolicOperator.CONCRETE)
+		if (pointer.operator() != SymbolicOperator.CONCRETE) {
 			errorLogger.reportError(new CIVLExecutionException(
 					ErrorKind.POINTER, Certainty.CONCRETE, process,
 					"Attempt to read/write a invalid pointer type variable",
 					arguments[1].getSource()));
+			return state;
+		}
 		if (pointer.type().typeKind() != SymbolicTypeKind.TUPLE) {
 			throw new CIVLUnimplementedFeatureException(
 					"string literals in message passing function calls,",
@@ -323,9 +325,10 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					errorLogger.reportError(err);
 				} catch (Exception e) {
 					CIVLExecutionException err = new CIVLExecutionException(
-							ErrorKind.INTERNAL, Certainty.PROVEABLE, process,
+							ErrorKind.OTHER, Certainty.PROVEABLE, process,
 							"Bundle pack failed", source);
 					errorLogger.reportError(err);
+					return state;
 				}
 			} else {
 				eval = evaluator.dereference(source, state, process, pointer,
@@ -395,11 +398,13 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
 		// checking if pointer is valid
-		if (pointer.operator() != SymbolicOperator.CONCRETE)
+		if (pointer.operator() != SymbolicOperator.CONCRETE) {
 			errorLogger.reportError(new CIVLExecutionException(
 					ErrorKind.POINTER, Certainty.CONCRETE, process,
 					"Attempt to read/write an uninitialized variable by the pointer "
 							+ pointer, arguments[1].getSource()));
+			return state;
+		}
 		try {
 			eval_and_pointer = libevaluator.bundleUnpack(state, process,
 					(SymbolicExpression) bundle.argument(1), pointer, source);
@@ -420,6 +425,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					source);
 
 			errorLogger.reportError(err);
+			return state;
 		} catch (Exception e) {
 			// Out of bound exception will be throw inside the bundleUnpack
 			// function when an array write fails.
@@ -428,6 +434,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					"Bundle unpacking failed", source);
 
 			errorLogger.reportError(err);
+			return state;
 		}
 		// If it's assigned to an array or an object
 		if (bufPointer != null && targetObject != null)
@@ -488,11 +495,13 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
 		// Checking if pointer is valid.
-		if (pointer.operator() != SymbolicOperator.CONCRETE)
+		if (pointer.operator() != SymbolicOperator.CONCRETE) {
 			errorLogger.reportError(new CIVLExecutionException(
 					ErrorKind.POINTER, Certainty.CONCRETE, process,
 					"Attempt to read/write a invalid pointer type variable",
 					arguments[1].getSource()));
+			return state;
+		}
 		// Obtain data form bundle
 		data = (SymbolicExpression) bundle.argument(1);
 		// Checking if data is null
@@ -564,6 +573,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					symbolicAnalyzer.stateToString(state), source);
 
 			errorLogger.reportError(err);
+			return state;
 		}
 		assert (assignPtr != null) : "Unknown bug in CIVL";
 		assert (eval != null) : "Unknown bug in CIVL";
