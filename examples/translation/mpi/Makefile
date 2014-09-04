@@ -19,11 +19,17 @@ mpi_pi_send: mpi_pi_send.c
 mpi_prime: mpi_prime.c
 	$(VERIFY) -input__NPROCS=4 -enablePrintf=false mpi_prime.c
 
-mpi_gather: mpi_gather.c
-	$(VERIFY) -input__NPROCS=4 -enablePrintf=false mpi_gather.c
+mpi_gather: ${Gather_Scatter/mpi_gather.c}
+	$(VERIFY) -input__NPROCS=4 -enablePrintf=false Gather_Scatter/mpi_gather.c
 
-mpi_scatter: mpi_gather.c
-	$(VERIFY) -input__NPROCS=4 -enablePrintf=false mpi_scatter.c
+mpi_scatter: ${Gather_Scatter/mpi_scatter.c}
+	$(VERIFY) -input__NPROCS=4 -enablePrintf=false Gather_Scatter/mpi_scatter.c
+
+mpi_gatherv: ${Gather_Scatter/mpi_gatherv.c}
+	$(VERIFY) -input__NPROCS=4 -enablePrintf=false Gather_Scatter/mpi_gatherv.c
+
+mpi_scatterv: ${Gather_Scatter/mpi_scatterv.c}
+	$(VERIFY) -input__NPROCS=4 -enablePrintf=false Gather_Scatter/mpi_scatterv.c
 
 clean: 
 	rm -f -r CIVLREP
