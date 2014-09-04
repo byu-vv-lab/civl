@@ -11,6 +11,11 @@ Bugs of original MPI-C program( diffusion1d_par.c ):
 
 4. Missing "fclose()" in function "init()".
 
+5. Missing MPI_Finalize() when root process quits.
+
+6. When root process call "quit()" before broadcasting parameters to
+    other process,  other process will keep waiting for broadcasting forever.
+
 Defects of CIVL:
 
 1. CIVL cannot automatically handle system file closing work when the program quit before 
