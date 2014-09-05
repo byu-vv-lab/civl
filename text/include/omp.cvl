@@ -163,7 +163,7 @@ $omp_team $omp_team_create($scope scope, $omp_gteam gteam, int tid) {
   result->gteam = gteam;
   result->scope = scope;
   result->tid = tid;
-  $seq_init(result->shared, 0, NULL);
+  $seq_init(&result->shared, 0, NULL);
   result->barrier = $barrier_create(scope, gteam->gbarrier, tid);
   return result;
 }
