@@ -166,10 +166,10 @@ void init(char* infilename) {
     readdouble(infile, "k", &k);
     readint(infile, "nsteps", &nsteps);
     readint(infile, "wstep", &wstep);
-#pragma CIVL nx = NX;
-#pragma CIVL k = K;
-#pragma CIVL nsteps = NSTEPS;
-#pragma CIVL wstep = WSTEP;
+#pragma CIVL $assume nx == NX;
+#pragma CIVL $assume nsteps == NSTEPS;
+#pragma CIVL $assume wstep == WSTEP;
+#pragma CIVL $assume 0.0 < k && k < 0.5;
     printf("Diffusion1d with nx=%d, k=%f, nsteps=%d, wstep=%d nprocs=%d\n",
 	   nx, k, nsteps, wstep, nprocs);
   }
