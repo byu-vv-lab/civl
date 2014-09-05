@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
@@ -113,9 +114,16 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression elePointer = argumentValues[2];
 		CIVLSource arrayPtrSource = arguments[0].getSource();
 		CIVLSource elePtrSource = arguments[2].getSource();
-		CIVLArrayType arrayType = (CIVLArrayType) symbolicAnalyzer
+		CIVLType objTypePointedByFirstArg = symbolicAnalyzer
 				.typeOfObjByPointer(arrayPtrSource, state, arrayPtr);
+		CIVLArrayType arrayType;
 
+		if (objTypePointedByFirstArg.isArrayType()
+				&& !((CIVLArrayType) objTypePointedByFirstArg).isComplete())
+			arrayType = (CIVLArrayType) objTypePointedByFirstArg;
+		else
+			throw new CIVLSyntaxException("The first argument: " + arguments[0]
+					+ " should be a pointer an imcomplete array type");
 		if (count.isZero()) {
 			state = primaryExecutor.assign(source, state, process, arrayPtr,
 					universe.array(
@@ -371,8 +379,9 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			return state;
 		}
 		arrayEleType = ((CIVLArrayType) arrayType).elementType();
-		if(!symbolicUtil.isNullPointer(valuesPtr)){
-			valueType = symbolicAnalyzer.typeOfObjByPointer(valuesPtrSource, state, valuesPtr);
+		if (!symbolicUtil.isNullPointer(valuesPtr)) {
+			valueType = symbolicAnalyzer.typeOfObjByPointer(valuesPtrSource,
+					state, valuesPtr);
 			if (!arrayEleType.equals(valueType)) {
 				CIVLExecutionException err = new CIVLExecutionException(
 						ErrorKind.SEQUENCE,
@@ -383,11 +392,12 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 								+ " must be a pointer to incomplete array of type T, and"
 								+ " the third argument must be a pointer to type T. \n"
 								+ "actual type of the first argument: pointer to "
-								+ arrayEleType + "\n"
+								+ arrayEleType
+								+ "\n"
 								+ "actual type of the third argument: pointer to "
-								+ valueType, symbolicAnalyzer.stateToString(state),
-						source);
-	
+								+ valueType,
+						symbolicAnalyzer.stateToString(state), source);
+
 				this.errorLogger.reportError(err);
 				return state;
 			}
@@ -470,9 +480,9 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 				}
 			} else {
 				value = universe.arrayRead(arrayValue, index);
-				if(!symbolicUtil.isNullPointer(valuePtr)){
-					state = primaryExecutor.assign(valuesPtrSource, state, process,
-						valuePtr, value);
+				if (!symbolicUtil.isNullPointer(valuePtr)) {
+					state = primaryExecutor.assign(valuesPtrSource, state,
+							process, valuePtr, value);
 				}
 				arrayValue = universe.removeElementAt(arrayValue, indexInt);
 			}
