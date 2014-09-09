@@ -46,6 +46,25 @@ at f31:24.4-30 "((  int*)(shared) ... ]".
   This kernel really doesn't play nice with CIVL
   heap object names are unique, but not in this program
   
+  -------
+  
+Done:
+  Alter wiki for updating. Added pictures and code highlighting to page.
+  Made another example that demonstrates true multi cl_kernel instances and multiple __kernel methods.
+  
+  
+ToDo:
+  
 
+  
+ToDo Long term:
+  Possible implementation of clGetKernelWorkGroupInfo, if an example that needs it is used
+  Possible implementation of clGetDeviceInfo
+  Re-arrange code so that the group designation is actually possible
+
+Problems:
+  Found bug based off of strcmp and strcpy, various string operations
+  
+  
   
   
