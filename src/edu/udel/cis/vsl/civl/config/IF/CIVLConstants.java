@@ -156,7 +156,7 @@ public class CIVLConstants {
 	public final static String civlSystemFunction = "_CIVL_system";
 
 	public static Option[] getAllOptions() {
-		int numOpts = 31;
+		int numOpts = 32;
 		List<Option> outputs = new LinkedList<Option>();
 
 		outputs.add(CIVLConstants.deadlockO);

@@ -1,8 +1,10 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
 import java.io.File;
-import java.util.HashMap;
+
 import javax.swing.tree.DefaultMutableTreeNode;
+
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 
 /**
  * This class is the container that hold all of the relevant data about a run
@@ -27,11 +29,6 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 	 * The command type for this <code>RunConfig</code>.
 	 */
 	private CIVL_Command command;
-	
-	/**
-	 * A hash map that stores each option with its value;
-	 */
-	private HashMap<String, Object> optValMap;
 
 	/**
 	 * The selected target <code>CIVL</code> file.
@@ -52,9 +49,16 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 	 * Marks whether the current runConfiguration should be deleted or not.
 	 */
 	private boolean toDelete;
+	
+	/**
+	 * An array that stores all of the Option values
+	 */
+	private Object[] values;
 
 	public RunConfigDataNode(CIVL_Command command) {
 		super();
+		int size = CIVLConstants.getAllOptions().length;
+		this.setValues(new Object[size]);
 		this.command = command;
 		this.setToSave(false);
 	}
@@ -91,14 +95,6 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 		this.toSave = toSave;
 	}
 
-	public HashMap<String, Object> getOptValMap() {
-		return optValMap;
-	}
-
-	public void setOptValMap(HashMap<String, Object> optValMap) {
-		this.optValMap = optValMap;
-	}
-
 	public CIVL_Input[] getInputs() {
 		return inputs;
 	}
@@ -113,5 +109,13 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 
 	public void setToDelete(boolean toDelete) {
 		this.toDelete = toDelete;
+	}
+
+	public Object[] getValues() {
+		return values;
+	}
+
+	public void setValues(Object[] values) {
+		this.values = values;
 	}
 }

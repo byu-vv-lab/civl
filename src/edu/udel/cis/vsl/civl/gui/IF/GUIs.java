@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.gui.IF;
 
+import edu.udel.cis.vsl.civl.gui.common.GUI_revamp;
 import edu.udel.cis.vsl.civl.gui.common.NewRunConfigGUITemporary;
 
 /**
@@ -12,6 +13,7 @@ public class GUIs {
 	// TODO: add methods for creating a new instance of CIVL GUI.
 	public static void startGUI() {
 		//new NewRunConfigGUI();
-		new NewRunConfigGUITemporary();
+		//new NewRunConfigGUITemporary();
+		new GUI_revamp();
 	}
 }

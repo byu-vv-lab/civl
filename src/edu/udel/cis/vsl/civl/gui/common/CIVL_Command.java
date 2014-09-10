@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
-import javax.swing.JPanel;
-
 import edu.udel.cis.vsl.gmc.Option;
 
 /**
@@ -32,18 +30,13 @@ public class CIVL_Command {
 	 * <code>CIVL_Command</code>, otherwise false.
 	 */
 	private boolean allowInputs;
-	
-	//TODO: change to some custom class possibly
-	private JPanel view;
-	//private JTabbedPane view;
 
 	public CIVL_Command(String name, String description,
-			Option[] allowedOptions, boolean allowInputs, JPanel view) {
+			Option[] allowedOptions, boolean allowInputs) {
 		this.name = name;
 		this.description = description;
 		this.allowedOptions = allowedOptions;
 		this.allowInputs = allowInputs;
-		this.view = view;
 	}
 
 	/**
@@ -80,15 +73,6 @@ public class CIVL_Command {
 	 */
 	public boolean isAllowInputs() {
 		return allowInputs;
-	}
-
-	/**
-	 * Gets the JTabbedPane view that will be displayed in the CIVL GUI.
-	 * 
-	 * @return
-	 */
-	public JPanel getView() { 
-		return view;
 	}
 
 }
