@@ -4,7 +4,7 @@
 */
 
 #include <stdio.h>
-#include <cuda.h>
+#include "cuda.h"
 
 #define N 8
 #define NBLOCKS 4
@@ -44,7 +44,7 @@ int main(void) {
   cudaMalloc(&dev_in, N * sizeof(int));
   cudaMalloc(&dev_out, NBLOCKS * sizeof(int));
   
-  cudaMemcpy(dev_in, host, N * size(int),
+  cudaMemcpy(dev_in, host, N * sizeof(int),
          cudaMemcpyHostToDevice);
   sum<<<NBLOCKS, NTHREADS, NTHREADS * sizeof(int)>>>(
          dev_in, dev_out);

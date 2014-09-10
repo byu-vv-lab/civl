@@ -6,6 +6,8 @@
 #else
 #define __CUDA_TYPES__
 
+#include <civlc.cvh>
+
 /* used to represent the size of three dimensional grids
  */
 typedef struct {
@@ -110,8 +112,8 @@ typedef enum {
 /* type used to represent an instance of a Cuda kernel
  */
 typedef struct {
-    $proc process;        // the actual process executing this kernel
-    _kernelStatus status; // the kernel status
+  $proc process;        // the actual process executing this kernel
+  _kernelStatus status; // the kernel status
 } _kernelInstance;
 
 /* a type that wraps a kernel instance for insertion into a list

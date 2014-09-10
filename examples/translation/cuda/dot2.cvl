@@ -15,7 +15,7 @@
  * 
  */
 
-#include "civlc.cvh"
+#include <civlc.cvh>
 #include "cuda.cvh"
 #include <stdio.h>
 

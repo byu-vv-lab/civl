@@ -1,6 +1,4 @@
-#include <stdio.h>
-
-__global void simple() {
+__global__ void simple() {
 }
 
 int main ( void ) {
