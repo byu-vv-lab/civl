@@ -59,23 +59,23 @@ public class GUI_revamp extends JFrame {
 	 * The currently selected run configuration.
 	 */
 	private RunConfigDataNode currConfig;
-	
+
 	/**
 	 * The currently enabled <code>CIVLCommand</code>.
 	 */
 	private CIVL_Command currCommand;
-	
+
 	/**
 	 * The list of all <code>CIVLCommand</code>s.
 	 */
 	private CIVL_Command[] commands;
-	
+
 	/**
 	 * The action that defines how options are default back to their default
 	 * values.
 	 */
 	private Action defaultize;
-	
+
 	/**
 	 * The number of un-named <code>runConfigurationDataNodes</code>.
 	 */
@@ -130,6 +130,21 @@ public class GUI_revamp extends JFrame {
 		}
 	}
 
+	private TreePath findObject(RunConfigDataNode rcdn) {
+		JTree jt_commands = (JTree) getComponentByName("jt_commands");
+		@SuppressWarnings("rawtypes")
+		java.util.Enumeration nodes = ((DefaultMutableTreeNode) jt_commands.getModel().getRoot())
+				.preorderEnumeration();
+		while (nodes.hasMoreElements()) {
+			RunConfigDataNode node = (RunConfigDataNode) nodes
+					.nextElement();
+			if (node.getName() == rcdn.getName()) {
+				return new TreePath(node.getPath());
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Adds the specified <code>Component</code> to the componentMap.
 	 * 
@@ -142,6 +157,25 @@ public class GUI_revamp extends JFrame {
 		else
 			// TODO: change this to a thrown exception
 			System.out.println("component must have a name");
+	}
+
+	/**
+	 * Gets the <code>CIVL_Command</code> associated with the input String,
+	 * which represents a command name.
+	 * 
+	 * @param comName
+	 *            The name of a command as a String
+	 * @return The <code>CIVL_Command</code> with that name.
+	 */
+	public CIVL_Command getCommand(String comName) {
+		CIVL_Command com = null;
+		for (int i = 0; i < commands.length; i++) {
+			if (commands[i].getName() == comName) {
+				com = commands[i];
+				break;
+			}
+		}
+		return com;
 	}
 
 	/**
@@ -166,12 +200,7 @@ public class GUI_revamp extends JFrame {
 					currConfig.getValues()[i], "Default" });
 			new ButtonColumn(tbl_optionTable, defaultize, 2);
 		}
-		// for (int i = 0; i < currConfig.getOptValMap().size(); i++) {
-		// System.out.println(currConfig.getOptValMap().values());
-		// }
 	}
-
-	// }
 
 	/**
 	 * Draws the view for the selected <code>runConfigDataNode</code>.
@@ -201,14 +230,17 @@ public class GUI_revamp extends JFrame {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				p_view.add(tp_commandView);
 				p_view.validate();
+
 			} else if (currCommand.getName() == "preprocess") {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				p_view.add(tp_commandView);
 				p_view.validate();
+
 			} else if (currCommand.getName() == "replay") {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				p_view.add(tp_commandView);
 				p_view.validate();
+
 			} else if (currCommand.getName() == "run") {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
@@ -216,6 +248,7 @@ public class GUI_revamp extends JFrame {
 				setOptions();
 				p_view.add(tp_commandView);
 				p_view.validate();
+
 			} else if (currCommand.getName() == "verify") {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
@@ -296,8 +329,8 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * Creates the container JPanel.
 	 */
-	//TODO:make tf_name actually change the name of the config
-	//TODO: have a unsaved changes pop up window like eclipse run configs
+	// TODO:make tf_name actually change the name of the config
+	// TODO: have a unsaved changes pop up window like eclipse run configsc
 	public void initContainer() {
 		JPanel p_container = new JPanel();
 		JPanel p_view = new JPanel();
@@ -535,22 +568,27 @@ public class GUI_revamp extends JFrame {
 		defaultize = new AbstractAction() {
 
 			public void actionPerformed(ActionEvent e) {
-				
-				  DefaultTableModel currOptModel = (DefaultTableModel) tbl_optionTable.getModel();
-				  
-				  int modelRow = tbl_optionTable.getSelectedRow();
-				  Object valToDefault = currOptModel.getValueAt(modelRow, 1); 
-				  Option optToDefault = (Option) currOptModel.getValueAt( modelRow, 0);
-				 
-				  if (valToDefault instanceof Boolean) { 
-					  Boolean defValue = (Boolean) optToDefault.defaultValue();
-				  
-				  // MAIN DEFAULT ACTION: 
-				  tbl_optionTable.setValueAt(defValue,modelRow, 1); }
-				  
-				  else currOptModel.setValueAt(optToDefault.defaultValue(),
-				  modelRow, 1); repaint(); 
-			}			
+
+				DefaultTableModel currOptModel = (DefaultTableModel) tbl_optionTable
+						.getModel();
+
+				int modelRow = tbl_optionTable.getSelectedRow();
+				Object valToDefault = currOptModel.getValueAt(modelRow, 1);
+				Option optToDefault = (Option) currOptModel.getValueAt(
+						modelRow, 0);
+
+				if (valToDefault instanceof Boolean) {
+					Boolean defValue = (Boolean) optToDefault.defaultValue();
+
+					// MAIN DEFAULT ACTION:
+					tbl_optionTable.setValueAt(defValue, modelRow, 1);
+				}
+
+				else
+					currOptModel.setValueAt(optToDefault.defaultValue(),
+							modelRow, 1);
+				repaint();
+			}
 		};
 
 		ActionListener apply = new ActionListener() {
@@ -569,7 +607,9 @@ public class GUI_revamp extends JFrame {
 		bt_apply.addActionListener(apply);
 
 		ActionListener newConfig = new ActionListener() {
+			@SuppressWarnings("unused")
 			public void actionPerformed(ActionEvent e) {
+				DefaultTreeModel treeModel = (DefaultTreeModel) jt_commands.getModel();
 				Object config = savedConfigs.get(tf_name.getText());
 				boolean dontCreate = false;
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
@@ -596,49 +636,31 @@ public class GUI_revamp extends JFrame {
 							newConfigsNum++;
 						}
 
-					}					
-					
+					}
+
 					newChild.setUserObject(newName);
 					currConfig = (RunConfigDataNode) newChild;
 					currConfig.setName(newName);
 					Option[] options = CIVLConstants.getAllOptions();
-					
-					for(int i = 0; i<currConfig.getValues().length; i++){
+
+					for (int i = 0; i < currConfig.getValues().length; i++) {
 						currConfig.getValues()[i] = options[i].defaultValue();
 					}
 
-					tf_name.setText(newName);
+					savedConfigs.put(currConfig.getName(), currConfig);
+
+					if (selected.getPathCount() != 1)
+						tf_name.setText(newName);
 
 					if (selected.getPathCount() == 2) {
 						((DefaultTreeModel) jt_commands.getModel())
 								.insertNodeInto(currConfig, selectedNode,
 										selectedNode.getChildCount());
 
-						/*
-						 * int configNum = selectedNode.getChildCount(); int row
-						 * = 0; int row_pa = 1; int row_pp = 2; int row_rp = 3;
-						 * int row_ru = 4; int row_vf = 5; if
-						 * (selectedCom.getName().equals("run")) { row = row_ru;
-						 * savedConfigs.put(currConfig.getName(), currConfig); }
-						 * else if (selectedCom.getName().equals("verify")) {
-						 * row = row_vf; savedConfigs.put(currConfig.getName(),
-						 * currConfig); } else if
-						 * (selectedCom.getName().equals("parse")) { row =
-						 * row_pa; savedConfigs.put(currConfig.getName(),
-						 * currConfig); } else if
-						 * (selectedCom.getName().equals("preprocess")) { row =
-						 * row_pp; savedConfigs.put(currConfig.getName(),
-						 * currConfig); } else if
-						 * (selectedCom.getName().equals("replay")) { row =
-						 * row_rp; savedConfigs.put(currConfig.getName(),
-						 * currConfig); }
-						 */
-
 						jt_commands.expandPath(selected);
-						// DefaultTreeModel dtm = (DefaultTreeModel)
-						// jt_commands.getModel();
-						// dtm.
-						// jt_commands.setSelectionRow(2);
+						TreePath path = findObject(currConfig);
+						jt_commands.setSelectionPath(path);
+						jt_commands.makeVisible(path);
 
 					}
 				}
@@ -905,24 +927,5 @@ public class GUI_revamp extends JFrame {
 		p_commands.setLayout(gl_p_commands);
 
 		getContentPane().setLayout(groupLayout);
-	}
-
-	/**
-	 * Gets the <code>CIVL_Command</code> associated with the input String,
-	 * which represents a command name.
-	 * 
-	 * @param comName
-	 *            The name of a command as a String
-	 * @return The <code>CIVL_Command</code> with that name.
-	 */
-	public CIVL_Command getCommand(String comName) {
-		CIVL_Command com = null;
-		for (int i = 0; i < commands.length; i++) {
-			if (commands[i].getName() == comName) {
-				com = commands[i];
-				break;
-			}
-		}
-		return com;
 	}
 }

@@ -1,47 +1,47 @@
-//package edu.udel.cis.vsl.civl.gui.common;
-//
-//import java.awt.CardLayout;
-//import java.awt.Component;
-//import java.awt.Font;
-//import java.awt.Window;
-//import java.awt.event.ActionEvent;
-//import java.awt.event.ActionListener;
-//import java.io.BufferedReader;
-//import java.io.File;
-//import java.io.FileNotFoundException;
-//import java.io.FileReader;
-//import java.io.IOException;
-//import java.util.ArrayList;
-//import java.util.HashMap;
-//import java.util.LinkedList;
-//
-//import javax.swing.AbstractAction;
-//import javax.swing.Action;
-//import javax.swing.ImageIcon;
-//import javax.swing.JButton;
-//import javax.swing.JFileChooser;
-//import javax.swing.JFrame;
-//import javax.swing.JLabel;
-//import javax.swing.JPanel;
-//import javax.swing.JScrollPane;
-//import javax.swing.JTabbedPane;
-//import javax.swing.JTable;
-//import javax.swing.JTextArea;
-//import javax.swing.JTextField;
-//import javax.swing.JTree;
-//import javax.swing.SwingUtilities;
-//import javax.swing.border.EtchedBorder;
-//import javax.swing.border.TitledBorder;
-//import javax.swing.event.TreeSelectionEvent;
-//import javax.swing.event.TreeSelectionListener;
-//import javax.swing.filechooser.FileNameExtensionFilter;
-//import javax.swing.table.DefaultTableModel;
-//import javax.swing.tree.DefaultMutableTreeNode;
-//import javax.swing.tree.DefaultTreeModel;
-//import javax.swing.tree.TreePath;
-//
-//import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
-//import edu.udel.cis.vsl.gmc.Option;
+package edu.udel.cis.vsl.civl.gui.common;
+
+import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
+import edu.udel.cis.vsl.gmc.Option;
 //
 ///**
 // * This class is the main frame for the CIVL GUI.
@@ -49,7 +49,8 @@
 // * @author Steven Noyes (noyes)
 // * 
 // */
-//public class NewRunConfigGUI extends JFrame {
+@SuppressWarnings({ "unused", "serial" })
+public class NewRunConfigGUI extends JFrame {
 //
 //	private static final long serialVersionUID = 5152675076717228871L;
 //
@@ -1134,4 +1135,4 @@
 //		revalidate();
 //		repaint();
 //	}
-//}
+}
