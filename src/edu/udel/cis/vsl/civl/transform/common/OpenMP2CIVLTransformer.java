@@ -418,7 +418,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 		externalList.addAll(result.first);
 		newRootNode = nodeFactory.newSequenceNode(null, "TranslationUnit",
 				externalList);
-		newAst = astFactory.newAST(newRootNode);
+		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 
 		return newAst;
 	}

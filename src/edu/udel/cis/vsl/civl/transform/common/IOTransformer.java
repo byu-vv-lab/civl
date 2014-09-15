@@ -660,7 +660,7 @@ public class IOTransformer extends CIVLBaseTransformer {
 			removeNodes(rootNode);
 			processFprintf(rootNode);
 		}
-		return astFactory.newAST(rootNode);
+		return astFactory.newAST(rootNode, unit.getSourceFiles());
 	}
 
 }

@@ -496,6 +496,6 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();
 		processRoot(root);
-		return astFactory.newAST(root);
+		return astFactory.newAST(root, ast.getSourceFiles());
 	}
 }

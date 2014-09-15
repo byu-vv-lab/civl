@@ -60,10 +60,12 @@ import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
+import edu.udel.cis.vsl.abc.parse.IF.ParseTree;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
+import edu.udel.cis.vsl.abc.token.IF.SourceFile;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.Combiner;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
@@ -98,6 +100,8 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  * 
  */
 public class UserInterface {
+
+	public final static boolean debug = false;
 
 	/* ************************* Instance fields *************************** */
 
@@ -199,9 +203,30 @@ public class UserInterface {
 				Models.newModelBuilder(universe));
 	}
 
+	private String getSystemImplementationName(File file) {
+		String name = file.getName();
+
+		switch (name) {
+		case "string.h":
+			return "string.cvl";
+		case "civlc.cvh":
+			return "civlc.cvl";
+		case "civlmpi.cvh":
+			return "civlmpi.cvl";
+		case "mpi.h":
+			return "mpi.cvl";
+		case "comm.cvh":
+			return "comm.cvl";
+		case "concurrency.cvh":
+			return "concurrency.cvl";
+		default:
+			return null;
+		}
+	}
+
 	/**
-	 * Gets default implementation of CIVL's libraries and compile them to ASTs,
-	 * greedily.
+	 * Find all system libraries that are needed by the given AST, and compile
+	 * them.
 	 * 
 	 * @param preprocessor
 	 *            the preprocessor for preprocessing tokens.
@@ -213,55 +238,60 @@ public class UserInterface {
 	 * @throws ParseException
 	 * @throws IOException
 	 */
-	private List<AST> asts2Link(Preprocessor preprocessor)
+	private List<AST> asts2Link(Preprocessor preprocessor, AST userAST)
 			throws PreprocessorException, SyntaxException, ParseException,
 			IOException {
-		List<AST> ASTs = new ArrayList<>();
-		Set<String> checkedHeaderFiles = new HashSet<>();
-		Stack<String> headerFiles = new Stack<>();
+		List<AST> result = new ArrayList<>();
+		Set<String> processedSystemFilenames = new HashSet<>();
+		Stack<AST> workList = new Stack<>();
 
-		for (String header : preprocessor.headerFiles())
-			headerFiles.push(header);
-		while (!headerFiles.isEmpty()) {
-			String header = headerFiles.pop();
+		workList.push(userAST);
+		while (!workList.isEmpty()) {
+			AST ast = workList.pop();
 
-			checkedHeaderFiles.add(header);
-			if (header.equals("string.h"))
-				ASTs.add(this.compileFile(preprocessor, "string.cvl"));
-			else if (header.equals("civlc.cvh"))
-				ASTs.add(this.compileFile(preprocessor, "civlc.cvl"));
-			else if (header.equals("civlmpi.cvh"))
-				ASTs.add(this.compileFile(preprocessor, "civlmpi.cvl"));
-			else if (header.equals("mpi.h"))
-				ASTs.add(this.compileFile(preprocessor, "mpi.cvl"));
-			else if (header.equals("comm.cvh"))
-				ASTs.add(this.compileFile(preprocessor, "comm.cvl"));
-			else if (header.equals("concurrency.cvh"))
-				ASTs.add(this.compileFile(preprocessor, "concurrency.cvl"));
-			for (String newHeader : preprocessor.headerFiles()) {
-				if (!headerFiles.contains(newHeader)
-						&& !checkedHeaderFiles.contains(newHeader))
-					headerFiles.push(newHeader);
+			for (SourceFile sourceFile : ast.getSourceFiles()) {
+				String systemFilename = getSystemImplementationName(sourceFile
+						.getFile());
+
+				if (systemFilename != null
+						&& processedSystemFilenames.add(systemFilename)) {
+					AST newAST = parseFile(preprocessor, systemFilename);
+
+					workList.add(newAST);
+					result.add(newAST);
+				}
 			}
 		}
-		return ASTs;
+		return result;
 	}
 
-	private AST compileFile(Preprocessor preprocessor, File file)
+	private AST parse(CTokenSource tokenSource) throws SyntaxException,
+			ParseException {
+		if (debug) {
+			out.println("Parsing " + tokenSource);
+			out.println();
+			out.flush();
+		}
+
+		ParseTree tree = frontEnd.getParser().parse(tokenSource);
+		AST ast = frontEnd.getASTBuilder().getTranslationUnit(tree);
+
+		return ast;
+	}
+
+	private AST parseFile(Preprocessor preprocessor, File file)
 			throws SyntaxException, ParseException, PreprocessorException {
 		CTokenSource tokens = preprocessor.outputTokenSource(file);
 
-		return frontEnd.getASTBuilder().getTranslationUnit(
-				frontEnd.getParser().parse(tokens));
+		return parse(tokens);
 	}
 
-	private AST compileFile(Preprocessor preprocessor, String filename)
+	private AST parseFile(Preprocessor preprocessor, String filename)
 			throws SyntaxException, ParseException, PreprocessorException,
 			IOException {
 		CTokenSource tokens = preprocessor.outputTokenSource(filename);
 
-		return frontEnd.getASTBuilder().getTranslationUnit(
-				frontEnd.getParser().parse(tokens));
+		return parse(tokens);
 	}
 
 	private Program compileLinkAndTransform(Preprocessor preprocessor,
@@ -269,7 +299,7 @@ public class UserInterface {
 			CIVLConfiguration civlConfig) throws PreprocessorException,
 			SyntaxException, ParseException, IOException {
 		File file = new File(filename);
-		AST userAST = this.compileFile(preprocessor, file);
+		AST userAST = parseFile(preprocessor, file);
 		Program program;
 
 		program = this.link(preprocessor, userAST);
@@ -285,10 +315,16 @@ public class UserInterface {
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
 
-		asts.addAll(this.asts2Link(preprocessor));
+		asts.addAll(this.asts2Link(preprocessor, userAST));
 		asts.add(userAST);
 		TUs = new AST[asts.size()];
 		asts.toArray(TUs);
+		if (debug) {
+			out.println("Linking: ");
+			for (AST ast : TUs)
+				out.println("  " + ast);
+			out.flush();
+		}
 		return frontEnd.link(TUs, Language.CIVL_C);
 	}
 
@@ -341,7 +377,7 @@ public class UserInterface {
 			return new Pair<>(model, preprocessor);
 		} catch (CIVLException ex) {
 			err.println(ex);
-			preprocessor.printShorterFileNameMap(err);
+			preprocessor.printSourceFiles(err);
 		}
 		return null;
 	}
@@ -386,10 +422,17 @@ public class UserInterface {
 	private void applyTranslationTransformers(String fileName,
 			Preprocessor preprocessor, Program program, CIVLConfiguration config)
 			throws SyntaxException {
-		Set<String> headers = preprocessor.headerFiles();
+		Set<String> headers = new HashSet<>();
 		boolean isC = fileName.endsWith(".c");
 		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
 
+		for (SourceFile sourceFile : program.getAST().getSourceFiles()) {
+			String filename = sourceFile.getName();
+
+			if (filename.endsWith(".h")) {
+				headers.add(filename);
+			}
+		}
 		new CIVLTransform();
 		if (headers.contains("stdio.h"))
 			hasStdio = true;
@@ -696,7 +739,7 @@ public class UserInterface {
 		if (modelResult == null)
 			return false;
 		if (showShortFileNameList(config))
-			modelResult.right.printShorterFileNameMap(out);
+			modelResult.right.printSourceFiles(out);
 		return true;
 	}
 
@@ -759,7 +802,7 @@ public class UserInterface {
 		printStats(out, universe);
 		replayer.printStats();
 		out.println();
-		preprocessor.printShorterFileNameMap(out);
+		preprocessor.printSourceFiles(out);
 		return result;
 	}
 
@@ -783,7 +826,7 @@ public class UserInterface {
 		model = modelAndPreprocessor.left;
 		preprocessor = modelAndPreprocessor.right;
 		if (showShortFileNameList(config))
-			preprocessor.printShorterFileNameMap(out);
+			preprocessor.printSourceFiles(out);
 		config.setScalarValue(showTransitionsO, true);
 		player = TracePlayer
 				.randomPlayer(config, model, out, err, preprocessor);
@@ -820,7 +863,7 @@ public class UserInterface {
 		model = modelAndPreprocessor.left;
 		preprocessor = modelAndPreprocessor.right;
 		if (showShortFileName)
-			preprocessor.printShorterFileNameMap(out);
+			preprocessor.printSourceFiles(out);
 		verifier = new Verifier(config, model, out, err, startTime,
 				showShortFileName, preprocessor);
 		try {
@@ -829,12 +872,12 @@ public class UserInterface {
 			verifier.terminateUpdater();
 			out.println();
 			out.println("Error: " + unimplemented.toString());
-			preprocessor.printShorterFileNameMap(out);
+			preprocessor.printSourceFiles(out);
 			return false;
 		} catch (CIVLSyntaxException syntax) {
 			verifier.terminateUpdater();
 			err.println(syntax);
-			preprocessor.printShorterFileNameMap(err);
+			preprocessor.printSourceFiles(err);
 			return false;
 		} catch (Exception e) {
 			verifier.terminateUpdater();
@@ -909,7 +952,7 @@ public class UserInterface {
 			if (inputVarNames.size() < 1)
 				out.println("No input variables are declared for either program.");
 			else {
-				out.println("This composited program has declared "
+				out.println("This composite program has declared "
 						+ inputVarNames.size() + " input variables:");
 				for (String name : inputVarNames) {
 					out.print(name + " ");
@@ -918,8 +961,8 @@ public class UserInterface {
 			}
 		}
 		if (showShortFileName) {
-			preprocessor0.printShorterFileNameMap(out);
-			preprocessor1.printShorterFileNameMap(out);
+			preprocessor0.printSourceFiles(out);
+			preprocessor1.printSourceFiles(out);
 		}
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");

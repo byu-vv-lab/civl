@@ -614,8 +614,7 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(civlForNode), scope);
 		domain = this.translateExpressionNode(civlForNode.getDomain(), scope,
 				true);
-		dimension = ((CIVLDomainType) domain.getExpressionType())
-				.dimension();
+		dimension = ((CIVLDomainType) domain.getExpressionType()).dimension();
 		if (dimension != loopVariables.size()) {
 			throw new CIVLSyntaxException(
 					"The number of loop variables for $for does NOT match "
@@ -1997,7 +1996,7 @@ public class FunctionTranslator {
 				} else {
 					Source declSource = node.getIdentifier().getSource();
 					CToken token = declSource.getFirstToken();
-					File file = token.getSourceFile();
+					File file = token.getSourceFile().getFile();
 					// fileName will be something like "stdlib.h" or "civlc.h"
 					String fileName = file.getName();
 					String libName;

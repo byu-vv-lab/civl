@@ -55,7 +55,7 @@ public class MacroTransformer extends CIVLBaseTransformer {
 		}
 		root = nodeFactory.newSequenceNode(root.getSource(), "TranslationUnit",
 				newExternalList);
-		newAst = astFactory.newAST(root);
+		newAst = astFactory.newAST(root, unit.getSourceFiles());
 		return newAst;
 	}
 
