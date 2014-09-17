@@ -34,33 +34,61 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 	 * The selected target <code>CIVL</code> file.
 	 */
 	private File selectedFile;
-	
+
 	/**
-	 * The list of inputs for this Run Configuration.
+	 * The list of input values for this Run Configuration.
 	 */
 	private CIVL_Input[] inputs;
-	
+
 	/**
-	 * Marks whether the current runConfiguration should be saved to an XML file or not.
+	 * Marks whether unsaved changes have been made to the RunConfigDataNode.
 	 */
-	private boolean toSave;
-	
-	/**
-	 * Marks whether the current runConfiguration should be deleted or not.
-	 */
-	private boolean toDelete;
-	
+	private boolean changed;
+
 	/**
 	 * An array that stores all of the Option values
 	 */
 	private Object[] values;
+
+	// Temporary Values of all fields that can be saved to their permanent
+	// counterparts.
+	public String temp_name;
+	public CIVL_Command temp_command;
+	public File temp_selectedFile;
+	public CIVL_Input[] temp_inputs;
+	public Object[] temp_values;
 
 	public RunConfigDataNode(CIVL_Command command) {
 		super();
 		int size = CIVLConstants.getAllOptions().length;
 		this.setValues(new Object[size]);
 		this.command = command;
-		this.setToSave(false);
+		this.setChanged(false);
+	}
+
+	/**
+	 * Saves the unsaved changes to the RunConfigDataNode, if desired.
+	 * 
+	 * @param saveConfig
+	 *            True if the changes are to be saved, false otherwise.
+	 */
+	public void saveChanges(boolean saveConfig) {
+		if (saveConfig) {
+			name = temp_name;
+			command = temp_command;
+			selectedFile = temp_selectedFile;
+			inputs = temp_inputs;
+			values = temp_values;
+			changed = false;
+		} else {
+			name = null;
+			command = null;
+			selectedFile = null;
+			inputs = null;
+			values = null;
+			changed = false;
+			System.out.println("Changes not saved to the config: " + name);
+		}
 	}
 
 	public File getSelectedFile() {
@@ -87,12 +115,12 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 		this.name = name;
 	}
 
-	public boolean isToSave() {
-		return toSave;
+	public boolean isChanged() {
+		return changed;
 	}
 
-	public void setToSave(boolean toSave) {
-		this.toSave = toSave;
+	public void setChanged(boolean changed) {
+		this.changed = changed;
 	}
 
 	public CIVL_Input[] getInputs() {
@@ -103,14 +131,6 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 		this.inputs = inputs;
 	}
 
-	public boolean isToDelete() {
-		return toDelete;
-	}
-
-	public void setToDelete(boolean toDelete) {
-		this.toDelete = toDelete;
-	}
-
 	public Object[] getValues() {
 		return values;
 	}
@@ -118,4 +138,5 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 	public void setValues(Object[] values) {
 		this.values = values;
 	}
+
 }

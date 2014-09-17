@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Enumeration;
 import java.util.HashMap;
 
 import javax.swing.AbstractAction;
@@ -96,6 +97,11 @@ public class GUI_revamp extends JFrame {
 		createComponentMap(this);
 		initLayouts();
 		initListeners();
+
+		for (int i = 0; i < 25; i++) {
+			System.out
+					.println("Make sure the GUI components svae their temp values to the RunConfigDataNode's temp fields and set up the pop up menu to tell the user if they want to commit changes if the current config is deselected");
+		}
 	}
 
 	/**
@@ -128,21 +134,6 @@ public class GUI_revamp extends JFrame {
 			System.out.println("Couldn't find " + name + " in map!");
 			return null;
 		}
-	}
-
-	private TreePath findObject(RunConfigDataNode rcdn) {
-		JTree jt_commands = (JTree) getComponentByName("jt_commands");
-		@SuppressWarnings("rawtypes")
-		java.util.Enumeration nodes = ((DefaultMutableTreeNode) jt_commands.getModel().getRoot())
-				.preorderEnumeration();
-		while (nodes.hasMoreElements()) {
-			RunConfigDataNode node = (RunConfigDataNode) nodes
-					.nextElement();
-			if (node.getName() == rcdn.getName()) {
-				return new TreePath(node.getPath());
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -179,14 +170,32 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Sets the options for the option table of the current run configuration.
+	 * Gets the TreePath of a specified DefaultMutableTreeNode.
 	 * 
-	 * @param command
-	 * @param action
+	 * @param root
+	 *            The root of the JTree
+	 * @param s
+	 *            The string representation
+	 * @return The TreePath of the desired DefaultMutableTreeNode
+	 */
+	// Found at:
+	// http://stackoverflow.com/questions/8210630/how-to-search-a-particular-node-in-jtree-and-make-that-node-expanded
+	private TreePath getTreePath(DefaultMutableTreeNode root, String s) {
+		@SuppressWarnings("unchecked")
+		Enumeration<DefaultMutableTreeNode> e = root.depthFirstEnumeration();
+		while (e.hasMoreElements()) {
+			DefaultMutableTreeNode node = e.nextElement();
+			if (node.toString().equalsIgnoreCase(s)) {
+				return new TreePath(node.getPath());
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Sets the options for the option table of the current run configuration.
 	 */
 	public void setOptions() {
-		// System.out.println(currConfig.getName() + " " +
-		// currConfig.getOptValMap().size());
 		CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
 		DefaultTableModel optionModel = (DefaultTableModel) tbl_optionTable
 				.getModel();
@@ -267,6 +276,9 @@ public class GUI_revamp extends JFrame {
 		}
 	}
 
+	/**
+	 * Initializes all of the CIVL_Commands that are currently supported.
+	 */
 	public void initCIVL_Commands() {
 		commands = new CIVL_Command[5];
 		Option[] options = CIVLConstants.getAllOptions();
@@ -329,7 +341,7 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * Creates the container JPanel.
 	 */
-	// TODO:make tf_name actually change the name of the config
+	// TODO: make tf_name actually change the name of the config
 	// TODO: have a unsaved changes pop up window like eclipse run configsc
 	public void initContainer() {
 		JPanel p_container = new JPanel();
@@ -480,6 +492,12 @@ public class GUI_revamp extends JFrame {
 		repaint();
 	}
 
+	/**
+	 * Creates all of the the tree nodes that will be used for the JTree,
+	 * jt_commands.
+	 * 
+	 * @return The node that will be the root of jt_commands
+	 */
 	public DefaultMutableTreeNode initNodes() {
 		DefaultMutableTreeNode top = new DefaultMutableTreeNode("commands");
 		DefaultMutableTreeNode parseNode = new DefaultMutableTreeNode("parse");
@@ -519,7 +537,7 @@ public class GUI_revamp extends JFrame {
 				TreePath selected = jt_commands.getSelectionPath();
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
-				if (selected.getPathCount() == 2) {
+				if (selected.getPathCount() == 2) {					
 					currConfig = null;
 					drawView();
 					tf_name.setText("");
@@ -531,12 +549,22 @@ public class GUI_revamp extends JFrame {
 
 				else if (selected.getPathCount() == 3) {
 					currConfig = (RunConfigDataNode) node;
+					
+					//TODO: find the correct spot in the file for this
+					if (currConfig.isChanged()) {
+						boolean saveConfig = false;
+						// POP-UP window here that sets saveConfig to true or
+						// false based on button click
+						currConfig.saveChanges(saveConfig);
+					}
+					
 					tf_name.setText(currConfig.getName());
 					drawView();
 				} else {
 					ta_header.setText(headerText + "  Choose a Command");
 					tf_name.setText("");
 				}
+								
 				revalidate();
 				repaint();
 			}
@@ -607,9 +635,10 @@ public class GUI_revamp extends JFrame {
 		bt_apply.addActionListener(apply);
 
 		ActionListener newConfig = new ActionListener() {
-			@SuppressWarnings("unused")
 			public void actionPerformed(ActionEvent e) {
-				DefaultTreeModel treeModel = (DefaultTreeModel) jt_commands.getModel();
+				Option[] options = CIVLConstants.getAllOptions();
+				DefaultTreeModel treeModel = (DefaultTreeModel) jt_commands
+						.getModel();
 				Object config = savedConfigs.get(tf_name.getText());
 				boolean dontCreate = false;
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
@@ -635,13 +664,11 @@ public class GUI_revamp extends JFrame {
 						if (selected.getPathCount() == 2) {
 							newConfigsNum++;
 						}
-
 					}
 
 					newChild.setUserObject(newName);
 					currConfig = (RunConfigDataNode) newChild;
 					currConfig.setName(newName);
-					Option[] options = CIVLConstants.getAllOptions();
 
 					for (int i = 0; i < currConfig.getValues().length; i++) {
 						currConfig.getValues()[i] = options[i].defaultValue();
@@ -657,10 +684,10 @@ public class GUI_revamp extends JFrame {
 								.insertNodeInto(currConfig, selectedNode,
 										selectedNode.getChildCount());
 
-						jt_commands.expandPath(selected);
-						TreePath path = findObject(currConfig);
-						jt_commands.setSelectionPath(path);
-						jt_commands.makeVisible(path);
+						TreePath currPath = getTreePath(
+								(DefaultMutableTreeNode) treeModel.getRoot(),
+								currConfig.toString());
+						jt_commands.setSelectionPath(currPath);
 
 					}
 				}
@@ -672,6 +699,15 @@ public class GUI_revamp extends JFrame {
 		bt_new.addActionListener(newConfig);
 	}
 
+	/**
+	 * Sets up the layouts that will be used in the GUI.
+	 * <p>
+	 * 
+	 * NOTE: The group layouts are automatically generated code from a GUI
+	 * builder, if any changes to the layouts is to be made it is advisable that
+	 * you re-create the layouts using the editor of your choice rather than
+	 * manually editing the code below.
+	 */
 	public void initLayouts() {
 		JPanel p_header = (JPanel) getComponentByName("p_header");
 		JPanel p_container = (JPanel) getComponentByName("p_container");
