@@ -219,6 +219,10 @@ public class UserInterface {
 			return "comm.cvl";
 		case "concurrency.cvh":
 			return "concurrency.cvl";
+		case "omp.h":
+			return "omp.cvl";
+		case "civlc-omp.cvh":
+			return "civlc-omp.cvl";
 		default:
 			return null;
 		}
