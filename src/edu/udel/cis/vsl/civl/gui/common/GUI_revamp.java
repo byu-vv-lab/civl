@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -49,12 +50,12 @@ public class GUI_revamp extends JFrame {
 	 * A Map of all of the saved configurations that the user has created. TODO:
 	 * possibly eliminate this as it may not be necessary.
 	 */
-	private HashMap<String, RunConfigDataNode> savedConfigs = new HashMap<String, RunConfigDataNode>();
+	private Map<String, RunConfigDataNode> savedConfigs = new HashMap<>();
 
 	/**
 	 * A map of all components in the GUI.
 	 */
-	private HashMap<String, Component> componentMap;
+	private Map<String, Component> componentMap;
 
 	/**
 	 * The currently selected run configuration.
@@ -65,7 +66,12 @@ public class GUI_revamp extends JFrame {
 	 * The currently enabled <code>CIVLCommand</code>.
 	 */
 	private CIVL_Command currCommand;
-
+	
+	/**
+	 * See the method {@link #addToMap(Component)}. 
+	 */
+	public int i;
+	
 	/**
 	 * The list of all <code>CIVLCommand</code>s.
 	 */
@@ -78,7 +84,7 @@ public class GUI_revamp extends JFrame {
 	private Action defaultize;
 
 	/**
-	 * The number of un-named <code>runConfigurationDataNodes</code>.
+	 * The number of un-named <code>RunConfigurationDataNode</code>.
 	 */
 	private int newConfigsNum;
 

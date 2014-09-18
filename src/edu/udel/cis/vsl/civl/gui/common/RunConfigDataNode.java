@@ -52,14 +52,15 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 
 	// Temporary Values of all fields that can be saved to their permanent
 	// counterparts.
+	//TODO: change to private
 	public String temp_name;
 	public CIVL_Command temp_command;
 	public File temp_selectedFile;
 	public CIVL_Input[] temp_inputs;
 	public Object[] temp_values;
-
+	//TODO: add documention to constructor
 	public RunConfigDataNode(CIVL_Command command) {
-		super();
+		//super();
 		int size = CIVLConstants.getAllOptions().length;
 		this.setValues(new Object[size]);
 		this.command = command;
@@ -81,11 +82,11 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 			values = temp_values;
 			changed = false;
 		} else {
-			name = null;
-			command = null;
-			selectedFile = null;
-			inputs = null;
-			values = null;
+			temp_name = null;
+			temp_command = null;
+			temp_selectedFile = null;
+			temp_inputs = null;
+			temp_values = null;
 			changed = false;
 			System.out.println("Changes not saved to the config: " + name);
 		}

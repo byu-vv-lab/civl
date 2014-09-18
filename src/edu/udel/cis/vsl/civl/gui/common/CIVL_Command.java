@@ -11,7 +11,7 @@ import edu.udel.cis.vsl.gmc.Option;
  */
 public class CIVL_Command {
 	/**
-	 * The name of the <code>CIVL_Command</code>.
+	 * The name of this {@link CIVL_Command}.
 	 */
 	private String name;
 
@@ -26,11 +26,19 @@ public class CIVL_Command {
 	private Option[] allowedOptions;
 
 	/**
-	 * A value that is true if inputs are need for this
+	 * A value that is true if inputs are needed for this
 	 * <code>CIVL_Command</code>, otherwise false.
 	 */
 	private boolean allowInputs;
-
+	
+	/**
+	 * Constructs a new CIVL_Command.
+	 * @param name 
+	 * @param description
+	 * @param allowedOptions
+	 * @param allowInputs
+	 */
+	//TODO: finish documentation
 	public CIVL_Command(String name, String description,
 			Option[] allowedOptions, boolean allowInputs) {
 		this.name = name;
