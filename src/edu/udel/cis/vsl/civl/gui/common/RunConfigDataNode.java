@@ -1,6 +1,10 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -14,7 +18,8 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
  * @author noyes
  * 
  */
-public class RunConfigDataNode extends DefaultMutableTreeNode {
+public class RunConfigDataNode extends DefaultMutableTreeNode implements
+		Serializable {
 	/**
 	 * 
 	 */
@@ -52,19 +57,43 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 
 	// Temporary Values of all fields that can be saved to their permanent
 	// counterparts.
-	//TODO: change to private
-	public String temp_name;
-	public CIVL_Command temp_command;
-	public File temp_selectedFile;
-	public CIVL_Input[] temp_inputs;
-	public Object[] temp_values;
-	//TODO: add documention to constructor
+	// TODO: change to private
+	transient public String temp_name;
+	transient public File temp_selectedFile;
+	transient public CIVL_Input[] temp_inputs;
+	transient public Object[] temp_values;
+
+	// TODO: add documention to constructor
 	public RunConfigDataNode(CIVL_Command command) {
-		//super();
+		// super();
 		int size = CIVLConstants.getAllOptions().length;
 		this.setValues(new Object[size]);
 		this.command = command;
 		this.setChanged(false);
+	}
+
+	/**
+	 * Checks if the RunConfigDataNode has unsaved data and returns true if it
+	 * does.
+	 * 
+	 * @return Whether or not there is unsaved data present in the
+	 *         RunConfigDataNode.
+	 */
+	public boolean checkForUnsavedData() {
+		boolean changedData = false;
+		if (name != temp_name)
+			changedData = true;
+
+		if (selectedFile != temp_selectedFile)
+			changedData = true;
+
+		if (inputs != temp_inputs)
+			changedData = true;
+
+		if (values != temp_values)
+			changedData = true;
+
+		return changedData;
 	}
 
 	/**
@@ -76,19 +105,36 @@ public class RunConfigDataNode extends DefaultMutableTreeNode {
 	public void saveChanges(boolean saveConfig) {
 		if (saveConfig) {
 			name = temp_name;
-			command = temp_command;
 			selectedFile = temp_selectedFile;
 			inputs = temp_inputs;
 			values = temp_values;
 			changed = false;
 		} else {
 			temp_name = null;
-			temp_command = null;
 			temp_selectedFile = null;
 			temp_inputs = null;
 			temp_values = null;
 			changed = false;
 			System.out.println("Changes not saved to the config: " + name);
+		}
+	}
+
+	/**
+	 * Serializes the RunConfigDataNode so that it can be accessed later.
+	 */
+	public void serialize() {
+		try {
+			// TODO: make this save in a user-specified location
+			FileOutputStream fileOut = new FileOutputStream(
+					"/CIVL/doc/RunConfigs");
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(this);
+			out.close();
+			fileOut.close();
+			System.out
+					.printf("Serialized data is saved in /CIVL/doc/RunConfigs");
+		} catch (IOException i) {
+			i.printStackTrace();
 		}
 	}
 

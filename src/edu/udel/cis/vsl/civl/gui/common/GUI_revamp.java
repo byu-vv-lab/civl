@@ -8,6 +8,8 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.File;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -66,12 +68,12 @@ public class GUI_revamp extends JFrame {
 	 * The currently enabled <code>CIVLCommand</code>.
 	 */
 	private CIVL_Command currCommand;
-	
+
 	/**
-	 * See the method {@link #addToMap(Component)}. 
+	 * See the method {@link #addToMap(Component)}.
 	 */
 	public int i;
-	
+
 	/**
 	 * The list of all <code>CIVLCommand</code>s.
 	 */
@@ -104,10 +106,6 @@ public class GUI_revamp extends JFrame {
 		initLayouts();
 		initListeners();
 
-		for (int i = 0; i < 25; i++) {
-			System.out
-					.println("Make sure the GUI components svae their temp values to the RunConfigDataNode's temp fields and set up the pop up menu to tell the user if they want to commit changes if the current config is deselected");
-		}
 	}
 
 	/**
@@ -348,7 +346,7 @@ public class GUI_revamp extends JFrame {
 	 * Creates the container JPanel.
 	 */
 	// TODO: make tf_name actually change the name of the config
-	// TODO: have a unsaved changes pop up window like eclipse run configsc
+	// TODO: have a unsaved changes pop up window like eclipse run configs
 	public void initContainer() {
 		JPanel p_container = new JPanel();
 		JPanel p_view = new JPanel();
@@ -543,7 +541,7 @@ public class GUI_revamp extends JFrame {
 				TreePath selected = jt_commands.getSelectionPath();
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
-				if (selected.getPathCount() == 2) {					
+				if (selected.getPathCount() == 2) {
 					currConfig = null;
 					drawView();
 					tf_name.setText("");
@@ -555,26 +553,44 @@ public class GUI_revamp extends JFrame {
 
 				else if (selected.getPathCount() == 3) {
 					currConfig = (RunConfigDataNode) node;
-					
-					//TODO: find the correct spot in the file for this
+
+					// TODO: find the correct spot in the file for this
 					if (currConfig.isChanged()) {
 						boolean saveConfig = false;
 						// POP-UP window here that sets saveConfig to true or
 						// false based on button click
 						currConfig.saveChanges(saveConfig);
 					}
-					
+
 					tf_name.setText(currConfig.getName());
 					drawView();
 				} else {
 					ta_header.setText(headerText + "  Choose a Command");
 					tf_name.setText("");
 				}
-								
+
 				revalidate();
 				repaint();
 			}
 		});
+		
+		//TODO: add popup when selected config is deselected.
+		jt_commands.addFocusListener(new FocusListener() {
+
+			@Override
+			public void focusGained(FocusEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		// svn://cisc475-6.cis.udel.edu/Alsim
 
 		ActionListener browseFile = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -624,20 +640,20 @@ public class GUI_revamp extends JFrame {
 				repaint();
 			}
 		};
-
+		/*
+		 * ActionListener apply = new ActionListener() { public void
+		 * actionPerformed(ActionEvent e) { if (currConfig != null) {
+		 * DefaultTableModel model = (DefaultTableModel) tbl_optionTable
+		 * .getModel(); Object[] vals = currConfig.getValues(); for (int i = 0;
+		 * i < currCommand.getAllowedOptions().length; i++) { Object value =
+		 * model.getValueAt(i, 1); vals[i] = value; } } } };
+		 */
 		ActionListener apply = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (currConfig != null) {
-					DefaultTableModel model = (DefaultTableModel) tbl_optionTable
-							.getModel();
-					Object[] vals = currConfig.getValues();
-					for (int i = 0; i < currCommand.getAllowedOptions().length; i++) {
-						Object value = model.getValueAt(i, 1);
-						vals[i] = value;
-					}
-				}
+				currConfig.saveChanges(true);
 			}
 		};
+
 		bt_apply.addActionListener(apply);
 
 		ActionListener newConfig = new ActionListener() {
@@ -701,8 +717,27 @@ public class GUI_revamp extends JFrame {
 
 			}
 		};
-
 		bt_new.addActionListener(newConfig);
+
+		tf_name.addFocusListener(new FocusListener() {
+
+			@Override
+			public void focusGained(FocusEvent e) {
+
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				if (currConfig != null) {
+					currConfig.setName(tf_name.getText());
+					currConfig.setUserObject(currConfig.getName());
+					System.out.println(currConfig.getName());
+					revalidate();
+					repaint();
+				}
+			}
+
+		});
 	}
 
 	/**
