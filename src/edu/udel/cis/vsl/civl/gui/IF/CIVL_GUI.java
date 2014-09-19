@@ -226,6 +226,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 			}
 		});
 		// Create the view of the tree and set its preferred size
+		stateTree.setFocusable(false);
 		rightView = new JScrollPane(stateTree);
 		rightView.setPreferredSize(new Dimension(500, 500));
 		return rightView;
