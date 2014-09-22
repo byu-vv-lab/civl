@@ -1,5 +1,5 @@
 
-#include <omp.cvh>
+#include <omp.h>
 #include <civlc-omp.cvh>
 
 // implementations of functions in omp.h go here...
