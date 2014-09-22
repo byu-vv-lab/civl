@@ -8,7 +8,7 @@ int MPI_Comm_rank(MPI_Comm comm, int* rank) {
   // this only works for MPI_COMM_WORLD.
   // for multiple communicators, you will need 
   // a map (array) from PID to rank for each comm
-  *rank = comm->place;
+  *rank = $comm_place(comm);
   return 0;
 }
 

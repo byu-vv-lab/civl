@@ -7,29 +7,42 @@
 
 /* *********************** Types *********************** */
 
-typedef enum __OMP_var_status_ {
+/* The status of a shared variable (or component of a shared
+ * variable).  For each shared variable, there is a "local view",
+ * for each thread, which is a copy of the shared variable in
+ * the thread scope.  There is also the shared variable proper.
+ * The local copy may be either empty or full.  Flush operations
+ * copy data between the local and shared copies, and modify
+ * the empty/full bit.  */
+typedef enum $omp_var_status {
   EMPTY, // local is empty
   FULL, // local is occupied, no writes to it have been made
   MODIFIED // local is occupied, writes have been made to it
 } $omp_var_status;
 
-typedef enum __OMP_worksharing_kind {
+/* An enumerated type specifying the different kinds of OpenMP
+ * "worksharing" constructs. */
+typedef enum $omp_worksharing_kind {
   LOOP,
   BARRIER,
   SECTIONS,
   SINGLE
 } $omp_worksharing_kind;
 
-/*
-typedef enum __OMP_loop_policy_{
-  ROUND_ROBIN, // partition by round robin order
+/* An enumerated type used to specify how threads are distributed
+ * among members of a thread team at OpenMP "for" loops.  The model
+ * checker can explore all possible partitions (very expensive), or
+ * use just one particular partition, or something inbetween.
+ * */
+typedef enum $omp_loop_policy {
+  ROUND_ROBIN, // deterministic partition by round robin order
   RANDOM, // a random partition
   ALL // all possible partitions
 } $omp_loop_policy;
-*/
+
 
 /* global shared object, containing a reference to a shared variable. 
- * A handle type. */
+ * A handle type. WHY NO *? */
 typedef struct OMP_gshared $omp_gshared;
 
 /* local view of a shared object, belonging to a single
@@ -148,12 +161,11 @@ void $omp_barrier($omp_team team);
  * constructs. */
 void $omp_barrier_and_flush($omp_team team);
 
-// To be continued: needs a way to specify non-rectangular 
-// domains.
 /* called by a thread when it reaches an omp for loop,
  * this function returns the subset of the loop domain
  * specifying the iterations that this thread will execute,
- * according to the given policy.
+ * according to the given policy.  In general, this
+ * function is nondeterministic.
  * The dimension of the domain returned equals the
  * dimension of the given domain loop_dom.
  */

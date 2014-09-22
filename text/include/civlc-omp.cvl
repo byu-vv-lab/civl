@@ -7,22 +7,28 @@
 #include<concurrency.cvh>
 #include<domain.cvh>
 
+/* Completes the definition of struct OMP_gshared given in civlc-omp.cvh.
+ */
 struct OMP_gshared {
   _Bool init[]; // which threads have joined
   void * original; // pointer to original variable
 };
 
+/* Completes the definition of struct OMP_shared given in civlc-omp.cvh.
+ */
 struct OMP_shared {
   $omp_gshared gshared;
-  // The thread id
+  /* The thread id */
   int tid;
-  // Pointer to the local copy of the shared variable.
-  // This provides the thread's "private view" of the variable.
+  /* Pointer to the local copy of the shared variable.
+   * This provides the thread's "private view" of the variable. */
   void * local;
-  // Pointer to the local status variable
+  /* Pointer to the local status variable */
   void * status;
 };
 
+/* Completes the definition of struct OMP_work_record
+ * given in civlc-omp.cvh. */
 struct OMP_work_record {
   int kind; // loop, barrier, sections, or single
   int location; // location in model of construct
