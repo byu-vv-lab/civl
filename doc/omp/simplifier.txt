@@ -27,6 +27,14 @@ Systematic analysis of constructs
  - "omp sections"
  - "omp section"
 
+Treatment of omp_* calls
+ - when simplifying a construct to remove parallelism
+   - replace omp_get_thread_num() with "0"
+   - replace omp_get_num_threads() with "1"
+   - how should other calls be handled?
+     - conservatively we can prevent simplification if other calls
+       are present
+
 Clauses
  - "if", "num_threads" 
    - these can be ignored, we check unconditional independence of workshares
