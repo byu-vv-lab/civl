@@ -252,7 +252,7 @@ void $omp_barrier_and_flush($omp_team team) {
 }
 
 $domain $omp_arrive_loop($omp_team team, $domain loop_dom, 
-    $DecompositionStrategy strategy){
+    $domain_strategy strategy){
   $omp_gteam gteam = team->gteam;
   int tid = team->tid;
   int numWorkrecords, nthreads = gteam->nthreads;

@@ -3,6 +3,7 @@
 #ifndef __CIVLC_OMP__
 #define __CIVLC_OMP__
 
+#include <civlc.cvh>
 #include <domain.cvh>
 
 /* *********************** Types *********************** */
@@ -29,21 +30,9 @@ typedef enum $omp_worksharing_kind {
   SINGLE
 } $omp_worksharing_kind;
 
-/* An enumerated type used to specify how threads are distributed
- * among members of a thread team at OpenMP "for" loops.  The model
- * checker can explore all possible partitions (very expensive), or
- * use just one particular partition, or something inbetween.
- * */
-typedef enum $omp_loop_policy {
-  ROUND_ROBIN, // deterministic partition by round robin order
-  RANDOM, // a random partition
-  ALL // all possible partitions
-} $omp_loop_policy;
-
-
 /* global shared object, containing a reference to a shared variable. 
- * A handle type. WHY NO *? */
-typedef struct OMP_gshared $omp_gshared;
+ * A handle type. */
+typedef struct OMP_gshared * $omp_gshared;
 
 /* local view of a shared object, belonging to a single
  * thread, with reference to the global object, and
@@ -170,7 +159,7 @@ void $omp_barrier_and_flush($omp_team team);
  * dimension of the given domain loop_dom.
  */
 $domain $omp_arrive_loop($omp_team team, $domain loop_dom, 
-    $DecompositionStrategy strategy);
+    $domain_strategy strategy);
 
 /* called by a thread when it reaches an omp sections
  * construct, this function returns the subset of the
