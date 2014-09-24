@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CompoundLiteralNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
@@ -154,12 +155,6 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 	 */
 	private static String TID = "_tid";
 
-	private int tmpCount = 0;
-
-	private ArrayList<Triple<String, StatementNode, String>> sharedReplaced = new ArrayList<Triple<String, StatementNode, String>>();
-
-	private ArrayList<String> criticalNames = new ArrayList<String>();
-
 	/* **************************** Instant Fields ************************* */
 
 	/**
@@ -167,6 +162,22 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 	 * some source file. All new nodes share the same source.
 	 */
 	private Source source;
+	
+	/**
+	 * Variable that is increment for naming of temp variables that are created
+	 */
+	private int tmpCount = 0;
+
+	/**
+	 * If the same variable is replaced in the same expression then use the 
+	 * temp name of the first one
+	 */
+	private ArrayList<Triple<String, StatementNode, String>> sharedReplaced = new ArrayList<Triple<String, StatementNode, String>>();
+
+	/**
+	 * For each critical section encountered, create a new critical variable
+	 */
+	private ArrayList<String> criticalNames = new ArrayList<String>();
 
 	/* ****************************** Constructor ************************** */
 	/**
@@ -227,7 +238,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 	 * <code>$omp_team_create()</code>. That is:
 	 * <code>$omp_team team = $omp_team_create($here, gteam, _tid)</code> .
 	 * 
-	 * @return The declaration node of the variable <code>_gws</code>.
+	 * @return The declaration node of the variable <code>team</code>.
 	 */
 	private VariableDeclarationNode teamDeclaration() {
 		TypeNode teamType;
@@ -246,6 +257,13 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				teamCreate);
 	}
 
+	/**
+	 * Creates the declaration node for the variable <code>gshared</code>, 
+	 * which is of <code>$omp_gshared</code> type and has an initializer to 
+	 * call <code>$omp_gshared_create()</code>. That is: <code>$omp_gshared 
+	 * x_gshared = $omp_gshared_create($omp_gteam, void *original)</code> .
+	 * @return The declaration node of the variable <code>x_gshared</code>.
+	 */
 	private VariableDeclarationNode gsharedDeclaration(String variable) {
 		TypeNode gsharedType;
 		ExpressionNode gsharedCreate;
@@ -264,6 +282,14 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				gsharedType, gsharedCreate);
 	}
 
+	/**
+	 * Creates the declaration node for the variable <code>shared</code>, 
+	 * which is of <code>$omp_shared</code> type and has an initializer to 
+	 * call <code>$omp_shared_create()</code>. That is: <code>$omp_shared 
+	 * x_shared = $omp_shared_create($omp_team team, $omp_gshared gshared, 
+	 * void *local, void *status)</code> .
+	 * @return The declaration node of the variable <code>x_shared</code>.
+	 */
 	private VariableDeclarationNode sharedDeclaration(String variable) {
 		TypeNode sharedType;
 		ExpressionNode sharedCreate;
@@ -288,6 +314,13 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				sharedType, sharedCreate);
 	}
 
+	/**
+	 * Creates the function call node for <code>destroy</code>, which is of 
+	 * void type. That is: <code>$omp_(g)team_destroy($omp_(g)team (g)team)
+	 * </code> . This can be used to destroy gteam or team depending in the 
+	 * type parameter 
+	 * @return The function call node of <code>$omp_(g)team_destroy</code>.
+	 */
 	private ExpressionStatementNode destroy(String type, String object) {
 		ExpressionNode function = this.identifierExpression(source, "$omp_"
 				+ type + "_destroy");
@@ -297,6 +330,13 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 						.identifierExpression(source, object)), null));
 	}
 
+	/**
+	 * Creates the function call node for <code>barrier_and_flush</code>, 
+	 * which is of void type. That is: 
+	 * <code>$omp_barrier_and_flush($omp_team team) </code> . This is used
+	 * as a barrier and a flush on all shared objects owned by the team
+	 * @return The function call node of <code>$omp_barrier_and_flush</code>.
+	 */
 	private ExpressionStatementNode barrierAndFlush(String object) {
 		ExpressionNode function = this.identifierExpression(source,
 				"$omp_barrier_and_flush");
@@ -306,7 +346,15 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 						.identifierExpression(source, object)), null));
 	}
 
-	private ExpressionStatementNode write(ExpressionNode variable, String sharedName) {
+	/**
+	 * Creates the function call node for <code>write</code>, 
+	 * which is of void type. That is: <code> $omp_write($omp_shared shared, 
+	 * void *ref, void *value)</code> . This is used to write to shared 
+	 * variables.
+	 * @return The function call node of <code>$omp_write</code>.
+	 */
+	private ExpressionStatementNode write(ExpressionNode variable, 
+			String sharedName) {
 		ExpressionNode function = this.identifierExpression(source,
 				"$omp_write");
 		ExpressionNode addressOfVar = nodeFactory.newOperatorNode(source,
@@ -314,7 +362,8 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				Arrays.asList(variable));
 		ExpressionNode addressOfTmp = nodeFactory.newOperatorNode(source,
 				Operator.ADDRESSOF,
-				Arrays.asList(this.identifierExpression(source, "tmp"+ String.valueOf(tmpCount))));
+				Arrays.asList(this.identifierExpression(source, "tmp"+ 
+				String.valueOf(tmpCount))));
 		return nodeFactory
 				.newExpressionStatementNode(nodeFactory.newFunctionCallNode(
 						source, function, Arrays.asList(
@@ -323,6 +372,12 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 								addressOfTmp), null));
 	}
 
+	/**
+	 * Creates the function call node for <code>read</code>, 
+	 * which is of void type. That is: <code> $omp_read($omp_shared shared, 
+	 * void *result, void *ref)</code> . This is used to read shared variables.
+	 * @return The function call node of <code>$omp_read</code>.
+	 */
 	private ExpressionStatementNode read(ExpressionNode parent, String sharedName,
 			String tmpName) {
 		ExpressionNode function = this
@@ -341,6 +396,13 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 								addressOfTmp), null));
 	}
 
+	/**
+	 * Creates the function call node for <code>apply_assoc</code>, which is of
+	 *  void type. That is: <code> $omp_apply_assoc($omp_shared shared, 
+	 *  $operation op, void *local)</code> . This is used to apply associated 
+	 *  operators.
+	 * @return The function call node of <code>$omp_apply_assoc</code>.
+	 */
 	private ExpressionStatementNode applyAssoc(String variable, String operation) {
 		ExpressionNode function = this.identifierExpression(source,
 				"$omp_apply_assoc");
@@ -362,8 +424,13 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 	/* ********************* Methods From BaseTransformer ****************** */
 
 	/**
+	 * Transform an AST of a OpenMP program in C into an equivalent AST of
+	 * CIVL-C program.<br>
 	 * 
-	 * 
+	 * @param ast
+	 *            The AST of the original OpenMP program in C.
+	 * @return An AST of CIVL-C program equivalent to the original OpenMP program.
+	 * @throws SyntaxException
 	 */
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
@@ -375,7 +442,8 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> mainParameters = new ArrayList<>();
 		int count;
-		Triple<List<ExternalDefinitionNode>, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> result;
+		Triple<List<ExternalDefinitionNode>, List<ExternalDefinitionNode>, 
+		List<VariableDeclarationNode>> result;
 
 		this.source = root.getSource();
 		assert this.astFactory == ast.getASTFactory();
@@ -385,12 +453,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 		// declaring $input int THREAD_MAX;
 		threadMax = this.threadMaxDeclaration();
 
-		// if (!this.inputVariableNames.contains(THREADMAX)) {
-		// throw new SyntaxException(
-		// "Please specify the number of processes (e.g., -inputTHREAD_MAX=5)",
-		// source);
-		// }
-
+		//Recursive call to replace all omp code
 		replaceOMPPragmas(root, null, null, null, null);
 
 		result = this.program(root);
@@ -408,6 +471,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 		for (int i = 0; i < count; i++) {
 			externalList.add(mainParameters.get(i));
 		}
+		//Add threadMax declaration
 		externalList.add(threadMax);
 		for (String name : criticalNames) {
 			externalList.add(nodeFactory.newVariableDeclarationNode(source,
@@ -446,7 +510,6 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			// int _nthreads = 1+$choose_int(THREAD_MAX);
 			VariableDeclarationNode nthreads;
 			ExpressionNode add;
-
 			add = nodeFactory.newOperatorNode(source, Operator.PLUS, Arrays
 					.asList(nodeFactory.newIntegerConstantNode(source, "1"),
 							nodeFactory.newFunctionCallNode(source,
@@ -454,13 +517,13 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 											"$choose_int"), Arrays.asList(this
 											.identifierExpression(source,
 													THREADMAX)), null)));
-
 			nthreads = nodeFactory.newVariableDeclarationNode(source,
 					nodeFactory.newIdentifierNode(source, "_nthreads"),
 					nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT),
 					add);
 			items.add(nthreads);
 
+			//$range thread_range = 0 .. nthreads-1;
 			VariableDeclarationNode threadRange;
 			threadRange = nodeFactory.newVariableDeclarationNode(source,
 					nodeFactory.newIdentifierNode(source, "thread_range"),
@@ -474,12 +537,12 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 													source, "1")))));
 			items.add(threadRange);
 			
+			//$domain(1) dom = ($domain){thread_range};
 			List<PairNode<DesignationNode, InitializerNode>> initList = new ArrayList<PairNode<DesignationNode, InitializerNode>>();
 			initList.add(nodeFactory.newPairNode(source, (DesignationNode) null, (InitializerNode)this.identifierExpression(source, "thread_range")));
 			CompoundInitializerNode temp = nodeFactory.newCompoundInitializerNode(source, initList);
 			CompoundLiteralNode cln = nodeFactory.newCompoundLiteralNode(source, nodeFactory.newDomainTypeNode(source), temp);
 			
-
 			VariableDeclarationNode loopDomain;
 			loopDomain = nodeFactory.newVariableDeclarationNode(source,
 					nodeFactory.newIdentifierNode(source, "dom"),
@@ -490,11 +553,14 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			gteamVar = this.gteamDeclaration();
 			items.add(gteamVar);
 
+			//Get list of shared, private, and firstPrivate variables from the
+			//OmpParallelNode
 			sharedList = ((CommonOmpParallelNode) node).sharedList();
 			privateList = ((CommonOmpParallelNode) node).privateList();
 			firstPrivateList = ((CommonOmpParallelNode) node)
 					.firstprivateList();
 
+			//Get list of reduction variables from the OmpParallelNode
 			OmpSymbolReductionNode reductionNode = null;
 			ompReductionNode = ((CommonOmpParallelNode) node).reductionList();
 			if (ompReductionNode != null) {
@@ -519,8 +585,9 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				}
 			}
 			CivlForNode cfn;
+			
+			//Create the ForLoopInitializerNode for the CIVLForNode
 			ForLoopInitializerNode initializerNode;
-
 			initializerNode = nodeFactory.newForLoopInitializerNode(source,
 					Arrays.asList(nodeFactory.newVariableDeclarationNode(
 							source, nodeFactory.newIdentifierNode(source,
@@ -532,6 +599,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			// $omp_team team = $omp_team_create($here, gteam, _tid);
 			parForItems.add(teamDeclaration());
 			
+			//Create local and status variables for each shared variable
 			if(sharedList != null){
 				for(ASTNode child : sharedList.children()) {
 					VariableDeclarationNode localSharedVar;
@@ -615,6 +683,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				}
 			}
 
+			//Add all children to the $par_for body
 			int i = 0;
 			for (ASTNode child : children) {
 				node.removeChild(i);
@@ -643,10 +712,12 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			parForBody = nodeFactory.newCompoundStatementNode(source,
 					parForItems);
 
+			//Create $par_for loop
 			cfn = nodeFactory.newCivlForNode(source, true,
 					(DeclarationListNode) initializerNode,
 					this.identifierExpression(source, "dom"), parForBody, null);
 
+			//Add $par_for to the body
 			items.add(cfn);
 
 			// $omp_shared_destroy(x_gshared);
@@ -663,13 +734,18 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			// $omp_gteam_destroy(gteam);
 			items.add(destroy("gteam", "gteam"));
 
+			//Create the CompoundStatementNode of that replaces the 
+			//OmpParallelNode
 			pragmaBody = nodeFactory.newCompoundStatementNode(source, items);
 
+			//Insert the CompoundStatementNode where the OmpParallelNode used 
+			//to be
 			int index = node.childIndex();
 			ASTNode parent = node.parent();
 			parent.setChild(index, pragmaBody);
 			children = pragmaBody.children();
 
+			//Visit all the child to check for omp code
 			for (ASTNode child : children) {
 				replaceOMPPragmas(child, privateList, sharedList,
 						reductionList, firstPrivateList);
@@ -690,11 +766,12 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			ArrayList<Pair<ASTNode, ASTNode>> ranges = new ArrayList<Pair<ASTNode, ASTNode>>();
 			ArrayList<IdentifierNode> loopVariables = new ArrayList<IdentifierNode>();
 			SequenceNode<IdentifierExpressionNode> firstPrivateList;
-
 			ForLoopNode currentLoop = null;
 			OperatorNode initializer;
 			OperatorNode condition;
 			OmpSymbolReductionNode reductionNode = null;
+			
+			//Get the list of reduction variables in the OmpForNode
 			ompReductionNode = ((CommonOmpForNode) node).reductionList();
 			if (ompReductionNode != null) {
 				node.removeChild(6);
@@ -704,6 +781,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 						.child(0);
 			}
 
+			//Get the lost of first privates varaibles in the OmpForNode
 			firstPrivateList = ((CommonOmpForNode) node).firstprivateList();
 
 			for (int i = 0; i < collapseLevel; i++) {
@@ -722,7 +800,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				loopVariables.add((IdentifierNode) initializer.child(0)
 						.child(0));
 			}
-
+			//For each of the ranges create a range variable
 			int rangeNumber = 0;
 			for(Pair<ASTNode, ASTNode> pair: ranges){
 				VariableDeclarationNode threadRange;
@@ -733,6 +811,8 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				items.add(threadRange);
 				rangeNumber++;
 			}
+			
+			//Create the right hand side of the domain variable declaration
 			List<PairNode<DesignationNode, InitializerNode>> initList = new ArrayList<PairNode<DesignationNode, InitializerNode>>();;
 			for(int k=1; k<rangeNumber+1; k++){
 				initList.add(nodeFactory.newPairNode(source, (DesignationNode) null, (InitializerNode)this.identifierExpression(source, "r" + Integer.toString(k))));
@@ -740,16 +820,18 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			CompoundInitializerNode temp = nodeFactory.newCompoundInitializerNode(source, initList);
 			CompoundLiteralNode cln = nodeFactory.newCompoundLiteralNode(source, nodeFactory.newDomainTypeNode(source), temp);
 			
+			//If there is only 1 child then make that the children
+			//Else get the list from the OmpForNode body
 			if(body instanceof CompoundStatementNode){
 				children = body.children();
 			} else {
 				ArrayList<ASTNode> tempList = new ArrayList<ASTNode>();
 				tempList.add(body);
-				Iterable<ASTNode> tempIt = tempList;
-				children = (Iterable<ASTNode>) tempIt;
-				
+				Iterable<ASTNode> tempIterable = tempList;
+				children = (Iterable<ASTNode>) tempIterable;	
 			}
 			
+			//Create loop_domain variable
 			loopDomain = nodeFactory.newVariableDeclarationNode(source,
 					nodeFactory.newIdentifierNode(source, "loop_domain"),
 					nodeFactory.newDomainTypeNode(source, nodeFactory
@@ -770,6 +852,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 									"loop_domain")), nodeFactory
 									.newIntegerConstantNode(source, "0")), null));
 
+			//Get corret level "n" for domain(n)
 			IntegerConstantNode domainLevel;
 			if (collapseLevel == 1) {
 				domainLevel = nodeFactory.newIntegerConstantNode(source, "1");
@@ -778,13 +861,13 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 						String.valueOf(collapseLevel));
 			}
 
+			//Add $domain(1) my_iters = ($domain(1))$omp_arrive_loop(team, 
+			//loop_domain);
 			VariableDeclarationNode myIters;
-
 			myIters = nodeFactory.newVariableDeclarationNode(source,
 					nodeFactory.newIdentifierNode(source, "my_iters"),
 					nodeFactory.newDomainTypeNode(source, domainLevel),
 					ompArriveLoop);
-
 			items.add(myIters);
 
 			// Add firstprivate variable declarations
@@ -819,7 +902,9 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 
 			initializerNode = nodeFactory.newForLoopInitializerNode(source,
 					declarations);
-
+			
+			//Get the body of the OmpForNode and go down for loop children if
+			//there is a collapse clause
 			for (int i = 0; i < collapseLevel; i++) {
 				if (i == 0) {
 					currentLoop = (ForLoopNode) node.child(7);
@@ -828,6 +913,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				}
 			}
 
+			//Remove children from original for body and add to new for loop
 			int i = 0;
 			for (ASTNode child : children) {
 				if(body instanceof CompoundStatementNode){
@@ -845,6 +931,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			StatementNode forBody;
 			forBody = nodeFactory.newCompoundStatementNode(source, forItems);
 
+			//Create $for node with the original for body as its body
 			cfn = nodeFactory.newCivlForNode(
 					source,
 					false,
@@ -852,9 +939,9 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 					nodeFactory.newIdentifierExpressionNode(source,
 							nodeFactory.newIdentifierNode(source, "my_iters")),
 					forBody, null);
-
 			items.add(cfn);
 
+			//Apply association operator to all reduction variables
 			if (reductionList != null) {
 				for (ASTNode child : reductionList.children()) {
 					String name = ((IdentifierNode) child.child(0)).name();
@@ -868,12 +955,14 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				items.add(barrierAndFlush(TEAM));
 			}
 
+			//Insert the CompoundStatementNode where the OmpForNode used to be
 			pragmaBody = nodeFactory.newCompoundStatementNode(source, items);
 			children = pragmaBody.children();
 			int index = node.childIndex();
 			ASTNode parent = node.parent();
 			parent.setChild(index, pragmaBody);
 
+			//Visit all of the children to check for omp code
 			for (ASTNode child : children) {
 				replaceOMPPragmas(child, privateIDs, sharedIDs, reductionIDs,
 						firstPrivateIDs);
@@ -883,7 +972,10 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 			String syncKind = ((OmpSyncNode) node).ompSyncNodeKind().toString();
 			CompoundStatementNode body;
 			LinkedList<BlockItemNode> items = new LinkedList<>();
+			//Check the synckind
 			if (syncKind.equals("MASTER")) {
+				//Replace omp master with a check if _tid==0 and insert the omp
+				//master body into that
 				List<ExpressionNode> operands = new ArrayList<ExpressionNode>();
 				operands.add(nodeFactory.newIdentifierExpressionNode(source,
 						nodeFactory.newIdentifierNode(source, "_tid")));
@@ -898,15 +990,19 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				IfNode ifStatement = nodeFactory.newIfNode(source, nodeFactory
 						.newOperatorNode(source, Operator.EQUALS, operands),
 						body);
+				//Replace omp master with the new if statement
 				int index = node.childIndex();
 				ASTNode parent = node.parent();
 				parent.setChild(index, ifStatement);
 			} else if (syncKind.equals("BARRIER")) {
+				//Replace omp barrier with $omp_barrier_and_flush
 				ExpressionStatementNode barrierAndFlush = barrierAndFlush(TEAM);
 				int index = node.childIndex();
 				ASTNode parent = node.parent();
 				parent.setChild(index, barrierAndFlush);
 			} else if (syncKind.equals("CRITICAL")) {
+				//For an omp critical, check if there is a name for the critical
+				//If there is a name, get the name. Else, give it noname
 				IdentifierNode criticalIDName = ((OmpSyncNode) node).criticalName();
 				String criticalName = null;
 				if(criticalIDName != null){
@@ -916,6 +1012,7 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 					criticalName = "_critical_noname";
 				}
 				
+				//Create expression and body of when node
 				ExpressionNode notCritical = nodeFactory.newOperatorNode(
 						source, Operator.NOT, Arrays.asList(this
 								.identifierExpression(source, criticalName)));
@@ -929,14 +1026,18 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 														.newBooleanConstantNode(
 																source, true))));
 
+				//Create and add when node
+				//$when (!_critical_a) _critical_a=$true;
 				items.add(nodeFactory.newWhenNode(source, notCritical,
 						criticalTrue));
+				//Put critical section body in the when body.
 				int i = 0;
 				for (ASTNode child : node.children()) {
 					node.removeChild(i);
 					items.add((BlockItemNode) child);
 					i++;
 				}
+				//Make the critical variable false now
 				ExpressionStatementNode criticalFalse = nodeFactory
 						.newExpressionStatementNode(nodeFactory
 								.newOperatorNode(
@@ -950,6 +1051,8 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 																source, false))));
 				items.add(criticalFalse);
 
+				//Add body to the CompoundstatementNode and replace the omp
+				//critical node with the CompoundStatementNode
 				body = nodeFactory.newCompoundStatementNode(source, items);
 				criticalNames.add(criticalName);
 				int index = node.childIndex();
@@ -1130,6 +1233,52 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 				}
 
 			}
+		} else if(node instanceof FunctionCallNode){ 
+			ASTNode parent = node.parent();
+			boolean nestedFunctionCall = false;
+			boolean replaced = replaceOmpFunction((FunctionCallNode) node);
+			if(!replaced){
+				while(!(parent instanceof ExpressionStatementNode)){
+					if(parent instanceof FunctionCallNode){
+						nestedFunctionCall = true;
+					}
+					if(parent.parent() != null){
+						parent = parent.parent();
+					} else {
+						break;
+					}
+				}
+				if(nestedFunctionCall){
+
+					Type currentType = ((FunctionCallNode) node).getType();
+					BasicTypeKind baseTypeKind = ((StandardBasicType) currentType)
+							.getBasicTypeKind();
+					CompoundStatementNode body;
+					LinkedList<BlockItemNode> items = new LinkedList<>();
+					ASTNode nodeDirectParent = node.parent();
+					int index = node.childIndex();
+					nodeDirectParent.setChild(index, this.identifierExpression(source, "tempFuncCall"));
+					VariableDeclarationNode tempNode = nodeFactory
+							.newVariableDeclarationNode(source, nodeFactory
+									.newIdentifierNode(source, "tempFuncCall"),
+									nodeFactory.newBasicTypeNode(source,
+											baseTypeKind), (InitializerNode) node);
+					items.add(tempNode);
+					nodeDirectParent = parent.parent();
+					index = parent.childIndex();
+					nodeDirectParent.removeChild(index);
+					items.add((BlockItemNode) parent);
+
+					body = nodeFactory.newCompoundStatementNode(source, items);
+					nodeDirectParent.setChild(index, body);
+
+				}
+
+				for (ASTNode child : node.children()) {
+					replaceOMPPragmas(child, privateIDs, sharedIDs,
+							reductionIDs, firstPrivateIDs);
+				}
+			}
 		} else if (node instanceof IdentifierNode) {
 			if (privateIDs != null) {
 				for (ASTNode child : privateIDs.children()) {
@@ -1231,6 +1380,32 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 
 	}
 	
+	private boolean replaceOmpFunction(FunctionCallNode node){
+		ExpressionNode function = node.getFunction();
+		String functionName = null;
+		if(function instanceof IdentifierExpressionNode){
+			functionName = ((IdentifierExpressionNode) function).getIdentifier().name();
+		}
+		ASTNode replacementNode = null;
+		switch(functionName){
+			case "omp_get_num_threads": 
+				replacementNode = this.identifierExpression(source, NTHREADS);
+				break;
+			case "omp_get_thread_num":
+				replacementNode = this.identifierExpression(source, TID);
+				break;
+		}
+		
+		if(replacementNode != null){
+			ASTNode parent = node.parent();
+			int index = node.childIndex();
+			parent.setChild(index, replacementNode);
+			return true;
+		}
+
+		return false;
+	}
+
 	private boolean isAssignmentOperator(String operator){
 		if(operator.equals("ASSIGN")){
 			return true;
@@ -1493,7 +1668,20 @@ public class OpenMP2CIVLTransformer extends CIVLBaseTransformer {
 		}
 	}
 
-	private Triple<List<ExternalDefinitionNode>, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> program(
+	/**
+	 * 
+	 * Adds appropriate headers to the program
+	 * 
+	 * 
+	 * @param root
+	 *            The root node of the AST of the original OpenMP program.
+	 * @return The function definition node of OpenMP, the list of AST
+	 *         nodes that are parsed from header files and will be moved up to
+	 *         the higher scope (i.e., the file scope of the final AST), and the
+	 *         list of variable declaration nodes.
+	 */
+	private Triple<List<ExternalDefinitionNode>, List<ExternalDefinitionNode>, 
+	List<VariableDeclarationNode>> program(
 			SequenceNode<ExternalDefinitionNode> root) {
 		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> vars = new ArrayList<>();
