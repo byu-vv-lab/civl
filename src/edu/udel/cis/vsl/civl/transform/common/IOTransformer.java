@@ -450,7 +450,7 @@ public class IOTransformer extends CIVLBaseTransformer {
 
 			argument.parent().removeChild(argument.childIndex());
 		}
-		functionCall.setChild(1, nodeFactory.newSequenceNode(source,
+		functionCall.setArguments(nodeFactory.newSequenceNode(source,
 				"ActualParameterList", arguments));
 	}
 
