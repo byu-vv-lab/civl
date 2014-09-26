@@ -57,12 +57,6 @@ public class PthreadTest {
 				"-svcomp", "-inputNUM=6"));
 	}
 
-	@Test
-	public void fib_bench_longer_true() throws ABCException {
-		assertTrue(ui.run("verify", filename("fib_bench_longer_true.c"),
-				"-svcomp", "-inputNUM=6"));
-	}
-
 	@Ignore
 	@Test
 	public void fib_bench_longest_false() throws ABCException {

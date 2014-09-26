@@ -32,14 +32,6 @@ public class MessagePassingTest {
 		assertFalse(ui.run("verify", filename("hybrid.cvl"), "-inputNPROCS=2"));
 	}
 
-	// takes too long: about 90s
-	@Ignore
-	@Test
-	public void hybridMin() {
-		assertFalse(ui.run("verify", filename("hybrid.cvl"), "-inputNPROCS=2",
-				"-min"));
-	}
-
 	@Test
 	public void mpiPthreads() {
 		assertFalse(ui.run("verify", filename("mpi-pthreads.cvl")));
@@ -65,13 +57,6 @@ public class MessagePassingTest {
 	@Test
 	public void ring2() {
 		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));
-	}
-
-	@Test
-	public void diffusion1d() {
-		assertTrue(ui.run("verify", filename("diffusion1d.cvl"),
-				"-inputNPROCSB=3", "-inputNSTEPSB=3", "-inputNXB=6",
-				"-enablePrintf=false"));
 	}
 
 	@Test
