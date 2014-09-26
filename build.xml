@@ -28,8 +28,9 @@
 
 	<!-- Junit and JaCoCo Coverage  -->
 
-	<property name="test.src.dir" location="${basedir}/test" />
-	<property name="test.bin.dir" location="${basedir}/bin-test" />
+	<property name="test.src.dir" location="${basedir}/test/regress" />
+	<property name="test.bin.root.dir" location="${basedir}/bin-test" />
+	<property name="test.bin.dir" location="${test.bin.root.dir}/regress" />
 	<property name="junit.dir" location="${basedir}/junit" />
 	<property name="junit.data.dir" location="${junit.dir}/data" />
 	<property name="junit.reports.dir" location="${junit.dir}/reports" />
@@ -130,7 +131,7 @@
 				<include name="TEST-*.xml" />
 			</fileset>
 			<report format="frames" todir="${junit.reports.dir}">
-				<param name="TITLE" expression="JUnit Report for CIVL ${revision}" />
+				<param name="TITLE" expression="JUnit Report for CIVL ${revision} Regression Suite" />
 			</report>
 		</junitreport>
 	</target>
@@ -140,7 +141,7 @@
 			<executiondata>
 				<file file="jacoco.exec" />
 			</executiondata>
-			<structure name="Test Coverage Report for CIVL ${revision}">
+			<structure name="Test Coverage Report for CIVL ${revision} Regression Suite">
 				<classfiles>
 					<fileset dir="${bin.dir}" />
 				</classfiles>
@@ -178,7 +179,7 @@
 
 	<target name="clean" description="Delete all generated files.">
 		<delete dir="${bin.dir}" />
-		<delete dir="${test.bin.dir}" />
+		<delete dir="${test.bin.root.dir}" />
 		<delete dir="${junit.dir}" />
 		<delete dir="${javadoc.dir}" />
 		<delete dir="${coverage.dir}" />
