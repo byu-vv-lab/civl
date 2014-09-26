@@ -1,8 +1,10 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
@@ -55,21 +57,32 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 */
 	private Object[] values;
 
+	/**
+	 * Is this RunConfigDataNode brand new?(true) Has it been modified in any
+	 * way?(false)
+	 */
+	private boolean brandNew;
+
+	/**
+	 * The directory to which the RunConfigDataNode is serialized to.
+	 */
+	private String serializeDestination;
+
 	// Temporary Values of all fields that can be saved to their permanent
 	// counterparts.
 	// TODO: change to private
-	transient public String temp_name;
-	transient public File temp_selectedFile;
-	transient public CIVL_Input[] temp_inputs;
-	transient public Object[] temp_values;
+	transient private String temp_name;
+	transient private File temp_selectedFile;
+	transient private CIVL_Input[] temp_inputs;
+	transient private Object[] temp_values;
 
-	// TODO: add documention to constructor
+	// TODO: add documentation to constructor
 	public RunConfigDataNode(CIVL_Command command) {
-		// super();
 		int size = CIVLConstants.getAllOptions().length;
 		this.setValues(new Object[size]);
 		this.command = command;
 		this.setChanged(false);
+		this.brandNew = true;
 	}
 
 	/**
@@ -104,10 +117,17 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 */
 	public void saveChanges(boolean saveConfig) {
 		if (saveConfig) {
-			name = temp_name;
-			selectedFile = temp_selectedFile;
-			inputs = temp_inputs;
-			values = temp_values;
+			if (temp_name != null){
+				name = temp_name;
+				this.setUserObject(name);
+			}
+			if (temp_selectedFile != null)
+				selectedFile = temp_selectedFile;
+			if (temp_inputs != null)
+				inputs = temp_inputs;
+			if (temp_values != null)
+				values = temp_values;
+
 			changed = false;
 		} else {
 			temp_name = null;
@@ -126,15 +146,40 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		try {
 			// TODO: make this save in a user-specified location
 			FileOutputStream fileOut = new FileOutputStream(
-					"/CIVL/doc/RunConfigs");
+					serializeDestination + "/" + name);
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 			out.writeObject(this);
 			out.close();
 			fileOut.close();
-			System.out
-					.printf("Serialized data is saved in /CIVL/doc/RunConfigs");
+			System.out.printf("Serialized data is saved in "
+					+ serializeDestination);
 		} catch (IOException i) {
 			i.printStackTrace();
+		}
+	}
+
+	public RunConfigDataNode deserialize() {
+		RunConfigDataNode config = null;
+
+		try {
+			FileInputStream fileIn = new FileInputStream(serializeDestination
+					+ "/" + name);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			config = (RunConfigDataNode) in.readObject();
+			in.close();
+			fileIn.close();
+			System.out.println("Deserialized RunConfig...");
+			System.out.println("Name: " + config.name);
+			System.out.println("File: " + config.selectedFile);
+			System.out.println("Command: " + config.command.getName());
+			return config;
+		} catch (IOException i) {
+			i.printStackTrace();
+			return null;
+		} catch (ClassNotFoundException c) {
+			System.out.println("RunConfigDataNode class not found");
+			c.printStackTrace();
+			return null;
 		}
 	}
 
@@ -184,6 +229,61 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 
 	public void setValues(Object[] values) {
 		this.values = values;
+	}
+
+	public boolean isBrandNew() {
+		return brandNew;
+	}
+
+	public void setBrandNew(boolean brandNew) {
+		this.brandNew = brandNew;
+
+	}
+
+	// Getters/Setters for temporary fields
+
+	public String getTemp_name() {
+		return temp_name;
+	}
+
+	public void setTemp_name(String temp_name) {
+		changed = true;
+		this.temp_name = temp_name;
+	}
+
+	public File getTemp_selectedFile() {		
+		return temp_selectedFile;
+	}
+
+	public void setTemp_selectedFile(File temp_selectedFile) {
+		changed = true;
+		this.temp_selectedFile = temp_selectedFile;
+	}
+
+	public CIVL_Input[] getTemp_inputs() {
+		return temp_inputs;
+	}
+
+	public void setTemp_inputs(CIVL_Input[] temp_inputs) {
+		changed = true;
+		this.temp_inputs = temp_inputs;
+	}
+
+	public Object[] getTemp_values() {
+		return temp_values;
+	}
+
+	public void setTemp_values(Object[] temp_values) {
+		changed = true;
+		this.temp_values = temp_values;
+	}
+
+	public String getSerializeDestination() {
+		return serializeDestination;
+	}
+
+	public void setSerializeDestination(String serializeDestination) {
+		this.serializeDestination = serializeDestination;
 	}
 
 }

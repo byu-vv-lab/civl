@@ -31,7 +31,6 @@ public class BooleanCellEditor extends AbstractCellEditor implements
 			boolean isSelected, int row, int column) {
 		Boolean selectedVal = (Boolean) value;
 		component.updateData(selectedVal, true, table);
-
 		return component;
 	}
 

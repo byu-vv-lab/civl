@@ -1,8 +1,14 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
+import javax.swing.event.EventListenerList;
 import javax.swing.table.*;
+
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+
 import javax.swing.*;
 
 import edu.udel.cis.vsl.gmc.Option;
@@ -17,7 +23,7 @@ import edu.udel.cis.vsl.gmc.Option;
  * @author noyes
  * 
  */
-public class CIVLTable extends JTable {
+public class CIVLTable extends JTable implements MouseListener{
 	/**
 	 * 
 	 */
@@ -60,6 +66,11 @@ public class CIVLTable extends JTable {
 	 * The renderer for option values.
 	 */
 	private OptionCellRenderer option_render;
+	
+	/**
+	 * The list of EventListeners
+	 */
+	protected EventListenerList listenerList = new EventListenerList();
 
 	/**
 	 * This custom class renders option values as option.name() in uneditable
@@ -89,6 +100,7 @@ public class CIVLTable extends JTable {
 		text_edit = new FormattedTextFieldEditor();
 		this.editableCols = editableCols;
 		this.tableType = tableType;
+		this.addMouseListener(this);
 	}
 
 	/**
@@ -181,7 +193,15 @@ public class CIVLTable extends JTable {
 
 		return found;
 	}
-
+	
+	/**
+	 * Sets the toolTip text that describes each option.
+	 * 
+	 * @param e
+	 * 		The mouse event.
+	 * 
+	 * @return The Tool Tip Text for the desired cell.
+	 */
 	public String getToolTipText(MouseEvent e) {
 		String tip = null;
 		java.awt.Point p = e.getPoint();
@@ -189,9 +209,7 @@ public class CIVLTable extends JTable {
 		int colIndex = columnAtPoint(p);
 
 		try {
-			// comment row, exclude heading
 			if (colIndex == 0 && tableType == "option") {
-				// tip = getValueAt(rowIndex, colIndex).toString();
 				tip = ((Option) getValueAt(rowIndex, colIndex)).description();
 
 			}
@@ -201,4 +219,56 @@ public class CIVLTable extends JTable {
 
 		return tip;
 	}
+	
+	public void addSaveTableListener(SaveTableListener listener) {
+		listenerList.add(SaveTableListener.class, listener);
+	}
+
+	public void removeSaveTableListener(SaveTableListener listener) {
+		listenerList.remove(SaveTableListener.class, listener);
+	}
+	
+	void fireSaveTableEvent(SaveTableEvent evt) {
+		Object[] listeners = listenerList.getListenerList();
+		for (int i = 0; i < listeners.length; i = i + 2) {
+			if (listeners[i] == SaveTableListener.class) {
+				((SaveTableListener) listeners[i + 1]).SaveTableTriggered(evt);
+			}
+		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		java.awt.Point p = e.getPoint();
+		int colIndex = columnAtPoint(p);
+		try {
+			if (colIndex == 1 && tableType == "option") {
+				fireSaveTableEvent(new SaveTableEvent(this));
+				System.out.println("fire table save");
+			}
+			else if (colIndex == 2 && tableType == "input") {
+				//save input code of some kind
+			}
+		} catch (RuntimeException e1) {
+			// catch null pointer exception if mouse is over an empty line
+		}
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+	}
+	
 }

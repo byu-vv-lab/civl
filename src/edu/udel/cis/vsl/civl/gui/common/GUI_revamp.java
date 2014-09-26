@@ -8,9 +8,8 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +23,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -33,6 +33,8 @@ import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -44,28 +46,34 @@ import javax.swing.tree.TreePath;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.gmc.Option;
 
+/**
+ * The GUI that is responsible for creating and running CIVL run configurations.
+ * 
+ * @author noyes
+ * 
+ */
 public class GUI_revamp extends JFrame {
 
 	private static final long serialVersionUID = 5152675076717228871L;
 
 	/**
-	 * A Map of all of the saved configurations that the user has created. TODO:
-	 * possibly eliminate this as it may not be necessary.
+	 * A Map of all of the saved {@link RunConfigDataNode} that the user has
+	 * created. The string represents the name of the configuration.
 	 */
 	private Map<String, RunConfigDataNode> savedConfigs = new HashMap<>();
 
 	/**
-	 * A map of all components in the GUI.
+	 * A map of all {@link Component} in the GUI.
 	 */
 	private Map<String, Component> componentMap;
 
 	/**
-	 * The currently selected run configuration.
+	 * The currently selected {@link RunConfigDataNode}.
 	 */
 	private RunConfigDataNode currConfig;
 
 	/**
-	 * The currently enabled <code>CIVLCommand</code>.
+	 * The currently enabled {@link CIVL_Command}.
 	 */
 	private CIVL_Command currCommand;
 
@@ -75,7 +83,7 @@ public class GUI_revamp extends JFrame {
 	public int i;
 
 	/**
-	 * The list of all <code>CIVLCommand</code>s.
+	 * The list of all {@link CIVLCommand}.
 	 */
 	private CIVL_Command[] commands;
 
@@ -86,9 +94,13 @@ public class GUI_revamp extends JFrame {
 	private Action defaultize;
 
 	/**
-	 * The number of un-named <code>RunConfigurationDataNode</code>.
+	 * The number of un-named {@link RunConfigDataNode}.
 	 */
 	private int newConfigsNum;
+	
+	private static String serializePath;
+
+	protected RunConfigDataNode cachedConfig;
 
 	public GUI_revamp() {
 		setVisible(true);
@@ -96,20 +108,62 @@ public class GUI_revamp extends JFrame {
 		setSize(1200, 700);
 		componentMap = new HashMap<String, Component>();
 		newConfigsNum = 0;
+		
+		String currDirect = null;
+		try {
+			currDirect = new File(".").getCanonicalPath();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		setSerializePath(currDirect + "/doc/RunConfigs");
 
 		initCIVL_Commands();
+		loadSavedConfigsMap();
 		initCommandsPanel();
 		initContainer();
 		initHeader();
 		initExecute();
 		createComponentMap(this);
 		initLayouts();
-		initListeners();
+		initListeners(this);
 
+	}
+	
+	public void setSerializePath(String path){
+		serializePath = path;
+	}
+
+	public void loadSavedConfigsMap() {
+		// deserialize()
+		//RunConfigDataNode config = null;
+		final File folder = new File(serializePath);
+		listFilesForFolder(folder);
 	}
 
 	/**
-	 * Creates the component map, which contains all components in the GUI.
+	 * Gets all of the files in a specific folder
+	 * 
+	 * @param folder
+	 *            the folder to load files from
+	 */
+	public void listFilesForFolder(final File folder) {
+		for (final File fileEntry : folder.listFiles()) {
+			if (fileEntry.isDirectory()) {
+				listFilesForFolder(fileEntry);
+			} else {
+				//if(fileEntry.exstension != ".ser"){
+				RunConfigDataNode temp = new RunConfigDataNode(new CIVL_Command("", "", null, false));
+				temp.setName(fileEntry.getName());
+				temp.setSerializeDestination(serializePath);
+				savedConfigs.put(fileEntry.getName(), temp.deserialize());
+				//}
+			}
+		}
+	}
+
+	/**
+	 * Creates the component map, which contains all {@link Component} in the
+	 * GUI.
 	 */
 	private void createComponentMap(Component parent) {
 		Component[] components = ((Container) parent).getComponents();
@@ -125,11 +179,11 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Allows the user to get a specific component by name.
+	 * Allows the user to get a specific {@link Component} by name.
 	 * 
 	 * @param name
-	 *            The name of the component
-	 * @return The desired component
+	 *            The name of the {@link Component}
+	 * @return The desired {@link Component}
 	 */
 	public Component getComponentByName(String name) {
 		if (componentMap.containsKey(name)) {
@@ -141,10 +195,10 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Adds the specified <code>Component</code> to the componentMap.
+	 * Adds the specified {@link Component} to the componentMap.
 	 * 
 	 * @param comp
-	 *            The <code>Component</code> to be added.
+	 *            The {@link Component} to be added.
 	 */
 	public void addToMap(Component comp) {
 		if (comp.getName() != null && comp.getName() != "")
@@ -155,12 +209,12 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Gets the <code>CIVL_Command</code> associated with the input String,
-	 * which represents a command name.
+	 * Gets the {@link CIVL_Command} associated with the input String, which
+	 * represents a command name.
 	 * 
 	 * @param comName
 	 *            The name of a command as a String
-	 * @return The <code>CIVL_Command</code> with that name.
+	 * @return The {@link CIVL_Command} with that name.
 	 */
 	public CIVL_Command getCommand(String comName) {
 		CIVL_Command com = null;
@@ -174,13 +228,14 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Gets the TreePath of a specified DefaultMutableTreeNode.
+	 * Gets the {@link TreePath} of a specified {@link DefaultMutableTreeNode}.
 	 * 
 	 * @param root
-	 *            The root of the JTree
+	 *            The root of the {@link JTree}.
 	 * @param s
-	 *            The string representation
-	 * @return The TreePath of the desired DefaultMutableTreeNode
+	 *            The string representation.
+	 * @return The {@link TreePath} of the desired
+	 *         {@link DefaultMutableTreeNode}.
 	 */
 	// Found at:
 	// http://stackoverflow.com/questions/8210630/how-to-search-a-particular-node-in-jtree-and-make-that-node-expanded
@@ -216,7 +271,7 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Draws the view for the selected <code>runConfigDataNode</code>.
+	 * Draws the view for the selected {@link RunConfigDataNode}.
 	 */
 	public void drawView() {
 		JPanel p_view = (JPanel) getComponentByName("p_view");
@@ -281,7 +336,7 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Initializes all of the CIVL_Commands that are currently supported.
+	 * Initializes all of the {@link CIVL_Command} that are currently supported.
 	 */
 	public void initCIVL_Commands() {
 		commands = new CIVL_Command[5];
@@ -307,7 +362,7 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Creates the command JPanel.
+	 * Creates the command {@link JPanel}.
 	 */
 	public void initCommandsPanel() {
 		JPanel p_commands = new JPanel();
@@ -343,7 +398,7 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Creates the container JPanel.
+	 * Creates the container {@link JPanel}.
 	 */
 	// TODO: make tf_name actually change the name of the config
 	// TODO: have a unsaved changes pop up window like eclipse run configs
@@ -448,7 +503,7 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Creates the execute JPanel.
+	 * Creates the execute {@link JPanel}.
 	 */
 	public void initExecute() {
 		JPanel p_execute = new JPanel();
@@ -468,7 +523,7 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Creates the header JPanel.
+	 * Creates the header {@link JPanel}.
 	 */
 	public void initHeader() {
 		JPanel p_header = new JPanel();
@@ -497,8 +552,8 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Creates all of the the tree nodes that will be used for the JTree,
-	 * jt_commands.
+	 * Creates all of the the {@link DefaultMutableTreeNode} that will be used
+	 * for the {@link JTree}, jt_commands.
 	 * 
 	 * @return The node that will be the root of jt_commands
 	 */
@@ -521,18 +576,19 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Creates the listeners for the various components in the GUI.
+	 * Creates the listeners for the various {@link Component} in the GUI.
 	 */
 	@SuppressWarnings("serial")
-	public void initListeners() {
+	public void initListeners(final GUI_revamp gui) {
 		final JTree jt_commands = (JTree) getComponentByName("jt_commands");
 		final JTextArea ta_header = (JTextArea) getComponentByName("ta_header");
 		final JButton bt_new = (JButton) getComponentByName("bt_new");
+		final JButton bt_run = (JButton) getComponentByName("bt_run");
 		final JButton bt_apply = (JButton) getComponentByName("bt_apply");
 		final JButton bt_browseFile = (JButton) getComponentByName("bt_browseFile");
 		final JTextField tf_name = (JTextField) getComponentByName("tf_name");
 		final JTextField tf_chooseFile = (JTextField) getComponentByName("tf_chooseFile");
-		final JTable tbl_optionTable = (JTable) getComponentByName("tbl_optionTable");
+		final CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
 
 		jt_commands.setExpandsSelectedPaths(true);
 		jt_commands.addTreeSelectionListener(new TreeSelectionListener() {
@@ -542,6 +598,28 @@ public class GUI_revamp extends JFrame {
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
 				if (selected.getPathCount() == 2) {
+					if (currConfig != null && !currConfig.isBrandNew()) {
+						if (currConfig.isChanged()) {
+							boolean saveConfig;
+							int response = JOptionPane
+									.showConfirmDialog(
+											gui,
+											"There are unsaved changes in the current "
+													+ "Run Configuration, do you want to save changes?",
+											"Save Changes?",
+											JOptionPane.YES_NO_OPTION);
+
+							if (response == 1)
+								saveConfig = false;
+
+							else {
+								saveConfig = true;
+							}
+
+							currConfig.saveChanges(saveConfig);
+						}
+					}
+					cachedConfig = currConfig;
 					currConfig = null;
 					drawView();
 					tf_name.setText("");
@@ -552,16 +630,30 @@ public class GUI_revamp extends JFrame {
 				}
 
 				else if (selected.getPathCount() == 3) {
-					currConfig = (RunConfigDataNode) node;
+					if (currConfig != null && !currConfig.isBrandNew()) {
+						if (currConfig.isChanged()) {
+							boolean saveConfig;
+							int response = JOptionPane
+									.showConfirmDialog(
+											gui,
+											"There are unsaved changes in the current "
+													+ "Run Configuration, do you want to save changes?",
+											"Save Changes?",
+											JOptionPane.YES_NO_OPTION);
 
-					// TODO: find the correct spot in the file for this
-					if (currConfig.isChanged()) {
-						boolean saveConfig = false;
-						// POP-UP window here that sets saveConfig to true or
-						// false based on button click
-						currConfig.saveChanges(saveConfig);
+							if (response == 1)
+								saveConfig = false;
+
+							else {
+								saveConfig = true;
+							}
+
+							currConfig.saveChanges(saveConfig);
+						}
 					}
-
+					cachedConfig = currConfig;
+					currConfig = (RunConfigDataNode) node;
+					currConfig.setBrandNew(false);
 					tf_name.setText(currConfig.getName());
 					drawView();
 				} else {
@@ -573,24 +665,6 @@ public class GUI_revamp extends JFrame {
 				repaint();
 			}
 		});
-		
-		//TODO: add popup when selected config is deselected.
-		jt_commands.addFocusListener(new FocusListener() {
-
-			@Override
-			public void focusGained(FocusEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void focusLost(FocusEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		// svn://cisc475-6.cis.udel.edu/Alsim
 
 		ActionListener browseFile = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -640,21 +714,26 @@ public class GUI_revamp extends JFrame {
 				repaint();
 			}
 		};
-		/*
-		 * ActionListener apply = new ActionListener() { public void
-		 * actionPerformed(ActionEvent e) { if (currConfig != null) {
-		 * DefaultTableModel model = (DefaultTableModel) tbl_optionTable
-		 * .getModel(); Object[] vals = currConfig.getValues(); for (int i = 0;
-		 * i < currCommand.getAllowedOptions().length; i++) { Object value =
-		 * model.getValueAt(i, 1); vals[i] = value; } } } };
-		 */
+
 		ActionListener apply = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				currConfig.saveChanges(true);
+				currConfig.setUserObject(currConfig.getName());
+				revalidate();
+				repaint();
+				currConfig.serialize();
 			}
 		};
 
 		bt_apply.addActionListener(apply);
+
+		ActionListener run = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				currConfig.deserialize();
+			}
+		};
+
+		bt_run.addActionListener(run);
 
 		ActionListener newConfig = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -691,6 +770,8 @@ public class GUI_revamp extends JFrame {
 					newChild.setUserObject(newName);
 					currConfig = (RunConfigDataNode) newChild;
 					currConfig.setName(newName);
+					((RunConfigDataNode) currConfig)
+							.setSerializeDestination(serializePath);
 
 					for (int i = 0; i < currConfig.getValues().length; i++) {
 						currConfig.getValues()[i] = options[i].defaultValue();
@@ -719,25 +800,57 @@ public class GUI_revamp extends JFrame {
 		};
 		bt_new.addActionListener(newConfig);
 
-		tf_name.addFocusListener(new FocusListener() {
+		// TODO: make it so when the user goes from tf_name
+		/*
+		 * tf_name.addFocusListener(new FocusListener() {
+		 * 
+		 * @Override public void focusGained(FocusEvent e) {
+		 * 
+		 * }
+		 * 
+		 * @Override public void focusLost(FocusEvent e) { if (currConfig !=
+		 * null) { currConfig.setTemp_name(tf_name.getText()); //
+		 * currConfig.setUserObject(currConfig.getName()); } }
+		 * 
+		 * });
+		 */
+
+		tf_name.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
-			public void focusGained(FocusEvent e) {
-
+			public void insertUpdate(DocumentEvent e) {
+				currConfig.setTemp_name(tf_name.getText());
 			}
 
 			@Override
-			public void focusLost(FocusEvent e) {
-				if (currConfig != null) {
-					currConfig.setName(tf_name.getText());
-					currConfig.setUserObject(currConfig.getName());
-					System.out.println(currConfig.getName());
-					revalidate();
-					repaint();
-				}
+			public void removeUpdate(DocumentEvent e) {
+				if (currConfig == null)
+					cachedConfig.setTemp_name(tf_name.getText());
+				else
+					currConfig.setTemp_name(tf_name.getText());
 			}
 
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				currConfig.setTemp_name(tf_name.getText());
+			}
 		});
+
+		tbl_optionTable.addSaveTableListener(new SaveTableListener() {
+			DefaultTableModel optionModel = (DefaultTableModel) tbl_optionTable
+					.getModel();
+
+			@Override
+			public void SaveTableTriggered(SaveTableEvent evt) {
+				System.out.println("save table event caught");
+				Object[] temp_values = new Object[optionModel.getRowCount()];
+				for (int i = 0; i < optionModel.getRowCount(); i++) {
+					temp_values[i] = optionModel.getValueAt(i, 1);
+				}
+				currConfig.setTemp_values(temp_values);
+			}
+		});
+
 	}
 
 	/**

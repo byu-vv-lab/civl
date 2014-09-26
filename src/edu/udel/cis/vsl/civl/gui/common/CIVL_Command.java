@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
+import java.io.Serializable;
+
 import edu.udel.cis.vsl.gmc.Option;
 
 /**
@@ -9,7 +11,12 @@ import edu.udel.cis.vsl.gmc.Option;
  * @author noyes
  * 
  */
-public class CIVL_Command {
+public class CIVL_Command implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5086253399276183984L;
+
 	/**
 	 * The name of this {@link CIVL_Command}.
 	 */

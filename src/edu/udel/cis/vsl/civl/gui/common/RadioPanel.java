@@ -16,7 +16,7 @@ import javax.swing.JTable;
  * @author noyes
  * 
  */
-public class RadioPanel extends JPanel {
+public class RadioPanel extends JPanel {	
 	/**
 	 * 
 	 */
@@ -52,6 +52,7 @@ public class RadioPanel extends JPanel {
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
 					selectedVal = true;
+					
 				}
 			}
 		});
