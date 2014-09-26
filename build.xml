@@ -68,7 +68,6 @@
 			<zipfileset includes="**/*.class" src="${sarl.jar}" />
 			<fileset dir="${basedir}/images" />
 			<fileset dir="${basedir}/text/include" />
-			<fileset dir="${basedir}/lib" />
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Main-Class" value="${main-class}" />
