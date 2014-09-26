@@ -25,7 +25,7 @@ public class OmpHelpersTest {
 	/* **************************** Test Methods *************************** */
 
 	@Test
-	public void adder() {
+	public void omp_helpers1() {
 		assertTrue(ui.run("run", filename("omp_helpers1.cvl")));
 	}
 }
