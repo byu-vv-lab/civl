@@ -18,6 +18,12 @@ import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
 
 public class OmpTransformerTest {
 
+	// TODO: Kluge to get static code to execute. Needed to set up transformers.
+	// find a better way.
+	static {
+		new CIVLTransform();
+	}
+
 	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"), "omp");
