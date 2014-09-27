@@ -9,6 +9,7 @@ import java.io.PrintStream;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
+import edu.udel.cis.vsl.abc.ast.IF.DifferenceObject;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
@@ -46,11 +47,11 @@ public class OmpSimplifierTest {
 		File file = new File(rootDir, fileNameRoot + ".c");
 		File simplifiedFile = new File(new File(rootDir, "simple"),
 				fileNameRoot + ".c.s");
-
 		Program program, simplifiedProgram;
-		
-		new CIVLTransform();
+		DifferenceObject diff;
 
+		// kluge...
+		new CIVLTransform();
 		{ // Parse the program and apply the CIVL transformations
 			program = frontEnd.compileAndLink(new File[] { file },
 					Language.CIVL_C, systemIncludes, userIncludes);
@@ -62,134 +63,117 @@ public class OmpSimplifierTest {
 					new File[] { simplifiedFile }, Language.CIVL_C,
 					systemIncludes, userIncludes);
 		}
-
-		if (!program.getAST().getRootNode()
-				.equiv(simplifiedProgram.getAST().getRootNode())) {
+		diff = program.getAST().getRootNode()
+				.diff(simplifiedProgram.getAST().getRootNode());
+		if (diff != null) {
 			out.println("For " + fileNameRoot
 					+ " expected simplified version to be:");
-			frontEnd.printProgram(out, simplifiedProgram, false, false);
+			simplifiedProgram.getAST().prettyPrint(out, true);
 			out.println("Computed simplified version was:");
 			program.getAST().prettyPrint(out, true);
-			assert false;
+			out.println("Difference is: ");
+			diff.print(out);
+			assertTrue(false);
 		}
 	}
 
 	/* **************************** Test Methods *************************** */
 
-	
 	@Test
 	public void dotProduct_critical1() throws ABCException, IOException {
 		check("dotProduct_critical");
 	}
 
-	
 	@Test
 	public void nested() throws ABCException, IOException {
 		check("nested");
 	}
 
-	
 	@Test
 	public void dotProduct_critical() throws ABCException, IOException {
 		check("dotProduct_critical");
 	}
 
-	
 	@Test
 	public void dotProduct_orphan() throws ABCException, IOException {
 		check("dotProduct_orphan");
 	}
 
-	
 	@Test
 	public void dotProduct1() throws ABCException, IOException {
 		check("dotProduct1");
 	}
 
-	
 	@Test
 	public void matProduct1() throws ABCException, IOException {
 		check("matProduct1");
 	}
 
-	
 	@Test
 	public void matProduct2() throws ABCException, IOException {
 		check("matProduct2");
 	}
 
-	
 	@Test
 	public void raceCond1() throws ABCException, IOException {
 		check("raceCond1");
 	}
 
-	
 	@Test
 	public void raceCond2() throws ABCException, IOException {
 		check("raceCond2");
 	}
 
-	
 	@Test
 	public void vecAdd_deadlock() throws ABCException, IOException {
 		check("vecAdd_deadlock");
 	}
 
-	
 	@Test
 	public void vecAdd_fix() throws ABCException, IOException {
 		check("vecAdd_fix");
 	}
 
-	
 	@Test
 	public void fig310_mxv_omp() throws ABCException, IOException {
 		check("fig3.10-mxv-omp");
 	}
 
-	
 	@Test
 	public void fig498_threadprivate() throws ABCException, IOException {
 		check("fig4.98-threadprivate");
 	}
 
-	
 	@Test
 	public void parallelfor() throws ABCException, IOException {
 		check("parallelfor");
 	}
 
-	
 	@Test
 	public void dijkstra() throws ABCException, IOException {
 		check("dijkstra_openmp");
 	}
 
-	
 	@Test
 	public void fft() throws ABCException, IOException {
 		check("fft_openmp");
 	}
 
-	
 	@Test
 	public void md() throws ABCException, IOException {
 		check("md_openmp");
 	}
 
-	
 	@Test
 	public void poisson() throws ABCException, IOException {
 		check("poisson_openmp");
 	}
 
-	
 	@Test
 	public void quad() throws ABCException, IOException {
 		check("quad_openmp");
 	}
-	
+
 	private static UserInterface ui = new UserInterface();
 
 	/* *************************** Helper Methods ************************** */
@@ -202,31 +186,41 @@ public class OmpSimplifierTest {
 
 	@Test
 	public void dotProduct1Verify() {
-		assertTrue(ui.run("verify", filename("dotProduct1.c"), "-inputTHREAD_MAX=4"));
-		assertTrue(ui.run("verify", filename("dotProduct1.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("dotProduct1.c"),
+				"-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("dotProduct1.c"),
+				"-ompNoSimplify", "-inputTHREAD_MAX=4"));
 	}
 
 	@Test
 	public void dotProductCriticalVerify() {
-		assertTrue(ui.run("verify", filename("dotProduct_critical.c"), "-inputTHREAD_MAX=4"));
-		assertTrue(ui.run("verify", filename("dotProduct_critical.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("dotProduct_critical.c"),
+				"-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("dotProduct_critical.c"),
+				"-ompNoSimplify", "-inputTHREAD_MAX=4"));
 	}
 
 	@Test
 	public void matProduct1Verify() {
-		assertTrue(ui.run("verify", filename("matProduct1.c"), "-inputTHREAD_MAX=4"));
-		assertTrue(ui.run("verify", filename("matProduct1.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("matProduct1.c"),
+				"-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("matProduct1.c"),
+				"-ompNoSimplify", "-inputTHREAD_MAX=4"));
 	}
 
 	@Test
 	public void parallelforVerify() {
-		assertTrue(ui.run("verify", filename("parallelfor.c"), "-inputTHREAD_MAX=4"));
-		assertTrue(ui.run("verify", filename("parallelfor.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("parallelfor.c"),
+				"-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("parallelfor.c"),
+				"-ompNoSimplify", "-inputTHREAD_MAX=4"));
 	}
 
 	@Test
 	public void raceCond1Verify() {
-		assertTrue(ui.run("verify", filename("raceCond1.c"), "-inputTHREAD_MAX=4"));
-		assertTrue(ui.run("verify", filename("raceCond1.c"), "-ompNoSimplify", "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("raceCond1.c"),
+				"-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("verify", filename("raceCond1.c"), "-ompNoSimplify",
+				"-inputTHREAD_MAX=4"));
 	}
 }

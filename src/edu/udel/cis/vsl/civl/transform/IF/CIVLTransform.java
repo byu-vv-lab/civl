@@ -43,76 +43,73 @@ public class CIVLTransform {
 	public final static String MPI = MPI2CIVLTransformer.CODE;
 	public final static String OPENMP = OpenMP2CIVLTransformer.CODE;
 	public final static String PTHREAD = Pthread2CIVLTransformer.CODE;
+	public static boolean loaded = false;
 
 	/**
 	 * Registers EACH CIVL transformer to ABC Transform interface, so that
 	 * <code>program.applyTransformer(code)</code> will work for.
 	 */
 	static {
-		Transform.addTransform(new TransformRecord(GeneralTransformer.CODE,
-				GeneralTransformer.LONG_NAME,
-				GeneralTransformer.SHORT_DESCRIPTION) {
-			@Override
-			public Transformer create(ASTFactory astFactory) {
-				return new GeneralTransformer(astFactory);
-			}
-		});
-
-		Transform
-				.addTransform(new TransformRecord(MacroTransformer.CODE,
-						MacroTransformer.LONG_NAME,
-						MacroTransformer.SHORT_DESCRIPTION) {
-					@Override
-					public Transformer create(ASTFactory astFactory) {
-						return new MacroTransformer(astFactory);
-					}
-				});
-
-		Transform.addTransform(new TransformRecord(IOTransformer.CODE,
-				IOTransformer.LONG_NAME, IOTransformer.SHORT_DESCRIPTION) {
-			@Override
-			public Transformer create(ASTFactory astFactory) {
-				return new IOTransformer(astFactory);
-			}
-		});
-
-		Transform
-				.addTransform(new TransformRecord(OpenMPSimplifier.CODE,
-						OpenMPSimplifier.LONG_NAME,
-						OpenMPSimplifier.SHORT_DESCRIPTION) {
-					@Override
-					public Transformer create(ASTFactory astFactory) {
-						return new OpenMPSimplifier(astFactory);
-					}
-				});
-
-		Transform.addTransform(new TransformRecord(OpenMP2CIVLTransformer.CODE,
-				OpenMP2CIVLTransformer.LONG_NAME,
-				OpenMP2CIVLTransformer.SHORT_DESCRIPTION) {
-			@Override
-			public Transformer create(ASTFactory astFactory) {
-				return new OpenMP2CIVLTransformer(astFactory);
-			}
-		});
-
-		Transform.addTransform(new TransformRecord(MPI2CIVLTransformer.CODE,
-				MPI2CIVLTransformer.LONG_NAME,
-				MPI2CIVLTransformer.SHORT_DESCRIPTION) {
-			@Override
-			public Transformer create(ASTFactory astFactory) {
-				return new MPI2CIVLTransformer(astFactory);
-			}
-		});
-
-		Transform.addTransform(new TransformRecord(
-				Pthread2CIVLTransformer.CODE,
-				Pthread2CIVLTransformer.LONG_NAME,
-				Pthread2CIVLTransformer.SHORT_DESCRIPTION) {
-			@Override
-			public Transformer create(ASTFactory astFactory) {
-				return new Pthread2CIVLTransformer(astFactory);
-			}
-		});
+		if (!loaded) {
+			loaded = true;
+			Transform.addTransform(new TransformRecord(GeneralTransformer.CODE,
+					GeneralTransformer.LONG_NAME,
+					GeneralTransformer.SHORT_DESCRIPTION) {
+				@Override
+				public Transformer create(ASTFactory astFactory) {
+					return new GeneralTransformer(astFactory);
+				}
+			});
+			Transform.addTransform(new TransformRecord(MacroTransformer.CODE,
+					MacroTransformer.LONG_NAME,
+					MacroTransformer.SHORT_DESCRIPTION) {
+				@Override
+				public Transformer create(ASTFactory astFactory) {
+					return new MacroTransformer(astFactory);
+				}
+			});
+			Transform.addTransform(new TransformRecord(IOTransformer.CODE,
+					IOTransformer.LONG_NAME, IOTransformer.SHORT_DESCRIPTION) {
+				@Override
+				public Transformer create(ASTFactory astFactory) {
+					return new IOTransformer(astFactory);
+				}
+			});
+			Transform.addTransform(new TransformRecord(OpenMPSimplifier.CODE,
+					OpenMPSimplifier.LONG_NAME,
+					OpenMPSimplifier.SHORT_DESCRIPTION) {
+				@Override
+				public Transformer create(ASTFactory astFactory) {
+					return new OpenMPSimplifier(astFactory);
+				}
+			});
+			Transform.addTransform(new TransformRecord(
+					OpenMP2CIVLTransformer.CODE,
+					OpenMP2CIVLTransformer.LONG_NAME,
+					OpenMP2CIVLTransformer.SHORT_DESCRIPTION) {
+				@Override
+				public Transformer create(ASTFactory astFactory) {
+					return new OpenMP2CIVLTransformer(astFactory);
+				}
+			});
+			Transform.addTransform(new TransformRecord(
+					MPI2CIVLTransformer.CODE, MPI2CIVLTransformer.LONG_NAME,
+					MPI2CIVLTransformer.SHORT_DESCRIPTION) {
+				@Override
+				public Transformer create(ASTFactory astFactory) {
+					return new MPI2CIVLTransformer(astFactory);
+				}
+			});
+			Transform.addTransform(new TransformRecord(
+					Pthread2CIVLTransformer.CODE,
+					Pthread2CIVLTransformer.LONG_NAME,
+					Pthread2CIVLTransformer.SHORT_DESCRIPTION) {
+				@Override
+				public Transformer create(ASTFactory astFactory) {
+					return new Pthread2CIVLTransformer(astFactory);
+				}
+			});
+		}
 	}
 
 	public static boolean hasFunctionCalls(AST ast, List<String> functions) {
