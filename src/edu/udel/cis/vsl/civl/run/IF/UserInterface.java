@@ -71,7 +71,6 @@ import edu.udel.cis.vsl.abc.transform.IF.Combiner;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
-import edu.udel.cis.vsl.civl.gui.IF.GUIs;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -163,12 +162,13 @@ public class UserInterface {
 		String result = filename;
 		char sep = File.separatorChar;
 		int lastSep = filename.lastIndexOf(sep);
+		int lastDot;
+
 		if (lastSep >= 0)
 			result = result.substring(lastSep + 1);
-		int lastDot = result.lastIndexOf('.');
+		lastDot = result.lastIndexOf('.');
 		if (lastDot >= 0)
 			result = result.substring(0, lastDot);
-
 		return result;
 	}
 
@@ -1045,8 +1045,6 @@ public class UserInterface {
 				return runParse(config);
 			case "preprocess":
 				return runPreprocess(config);
-			case "gui":
-				return runGui();
 			default:
 				throw new CommandLineException("Unknown command: " + command);
 			}
@@ -1068,11 +1066,6 @@ public class UserInterface {
 		}
 		err.flush();
 		return false;
-	}
-
-	private boolean runGui() {
-		GUIs.startGUI();
-		return true;
 	}
 
 	/**
@@ -1116,24 +1109,5 @@ public class UserInterface {
 
 		return run(args);
 	}
-
-	// private Set<String> getHeaderFiles(AST ast) {
-	// Set<String> headerFiles = new HashSet<>();
-	//
-	// getHeaderFiles(ast.getRootNode(), headerFiles);
-	// return headerFiles;
-	// }
-	//
-	// private void getHeaderFiles(ASTNode node, Set<String> result) {
-	// String mySource = node.getSource().getFirstToken().getSourceFile()
-	// .getName();
-	//
-	// if (!result.contains(mySource))
-	// result.add(mySource);
-	// for (ASTNode child : node.children()) {
-	// if (child != null)
-	// getHeaderFiles(child, result);
-	// }
-	// }
 
 }

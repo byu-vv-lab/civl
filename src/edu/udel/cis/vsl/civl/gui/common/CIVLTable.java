@@ -1,15 +1,14 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
-import javax.swing.event.EventListenerList;
-import javax.swing.table.*;
-
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.event.EventListenerList;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 
 import edu.udel.cis.vsl.gmc.Option;
 
