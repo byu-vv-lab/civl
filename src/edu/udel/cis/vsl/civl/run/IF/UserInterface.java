@@ -200,6 +200,25 @@ public class UserInterface {
 					+ config.getFreeArg(numExpected + 1));
 	}
 
+	/**
+	 * Extracts the CIVL model for a given CIVL/C program.
+	 * 
+	 * @param out
+	 *            The output stream for printing messages.
+	 * @param config
+	 *            The command line configuration.
+	 * @param filename
+	 *            The filename of the input program, which is provided by the
+	 *            user in the command line.
+	 * @param universe
+	 *            The symbolic universe to be used.
+	 * @return The CIVL model and the preprocessor of the given program which
+	 *         contains source code information for diagnosis like included
+	 *         header files, file short names, etc.
+	 * @throws ABCException
+	 * @throws IOException
+	 * @throws CommandLineException
+	 */
 	private Pair<Model, Preprocessor> extractModel(PrintStream out,
 			GMCConfiguration config, String filename, SymbolicUniverse universe)
 			throws ABCException, IOException, CommandLineException {
@@ -207,6 +226,15 @@ public class UserInterface {
 				Models.newModelBuilder(universe));
 	}
 
+	/**
+	 * Finds out the file name of the system implementation of a header file,
+	 * which stands for a certain system library, such as civlc.cvh, mpi.h,
+	 * omp.h, stdio.h, etc.
+	 * 
+	 * @param file
+	 * @return The file name of the system implementation of the given header
+	 *         file, or null if there is no implementation of the header file.
+	 */
 	private String getSystemImplementationName(File file) {
 		String name = file.getName();
 
@@ -233,20 +261,22 @@ public class UserInterface {
 	}
 
 	/**
-	 * Find all system libraries that are needed by the given AST, and compile
-	 * them.
+	 * Finds all system libraries that are needed by the given AST, and compiles
+	 * them into ASTs.
 	 * 
 	 * @param preprocessor
 	 *            the preprocessor for preprocessing tokens.
-	 * @param config
-	 *            the command line
-	 * @return
+	 * @param userAST
+	 *            the AST of the input program, which is considered as the
+	 *            "user" code, compared to libraries.
+	 * @return The list of ASTs each of which corresponds to the implementation
+	 *         of a library used by the input AST.
 	 * @throws PreprocessorException
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 * @throws IOException
 	 */
-	private List<AST> asts2Link(Preprocessor preprocessor, AST userAST)
+	private List<AST> systemImplASTs(Preprocessor preprocessor, AST userAST)
 			throws PreprocessorException, SyntaxException, ParseException,
 			IOException {
 		List<AST> result = new ArrayList<>();
@@ -273,20 +303,43 @@ public class UserInterface {
 		return result;
 	}
 
+	/**
+	 * Parses a given token source into an AST.
+	 * 
+	 * @param tokenSource
+	 *            The token source to be parsed.
+	 * @return The AST which is the result of parsing the given token source.
+	 * @throws SyntaxException
+	 * @throws ParseException
+	 */
 	private AST parse(CTokenSource tokenSource) throws SyntaxException,
 			ParseException {
+		ParseTree tree;
+		AST ast;
+
 		if (debug) {
 			out.println("Parsing " + tokenSource);
 			out.println();
 			out.flush();
 		}
-
-		ParseTree tree = frontEnd.getParser().parse(tokenSource);
-		AST ast = frontEnd.getASTBuilder().getTranslationUnit(tree);
-
+		tree = frontEnd.getParser().parse(tokenSource);
+		ast = frontEnd.getASTBuilder().getTranslationUnit(tree);
 		return ast;
 	}
 
+	/**
+	 * Parses a given file into an AST.
+	 * 
+	 * @param preprocessor
+	 *            The preprocessor that will extracts token source from the
+	 *            given file.
+	 * @param file
+	 *            The file to be parsed.
+	 * @return The AST which is the result of parsing the given file.
+	 * @throws SyntaxException
+	 * @throws ParseException
+	 * @throws PreprocessorException
+	 */
 	private AST parseFile(Preprocessor preprocessor, File file)
 			throws SyntaxException, ParseException, PreprocessorException {
 		CTokenSource tokens = preprocessor.outputTokenSource(file);
@@ -294,6 +347,19 @@ public class UserInterface {
 		return parse(tokens);
 	}
 
+	/**
+	 * Parses a given file into an AST.
+	 * 
+	 * @param preprocessor
+	 *            The preprocessor that will extracts token source from the
+	 *            given file.
+	 * @param filename
+	 *            The name of the file that is to be parsed.
+	 * @return The AST which is the result of parsing the given file.
+	 * @throws SyntaxException
+	 * @throws ParseException
+	 * @throws PreprocessorException
+	 */
 	private AST parseFile(Preprocessor preprocessor, String filename)
 			throws SyntaxException, ParseException, PreprocessorException,
 			IOException {
@@ -302,6 +368,28 @@ public class UserInterface {
 		return parse(tokens);
 	}
 
+	/**
+	 * Compiles, links, and applies appropriate transformers (general, io, mpi,
+	 * omp, etc) an input program.
+	 * 
+	 * @param preprocessor
+	 *            The preprocessor to be used for preprocessing all files
+	 *            involved in the input program, including all files of the
+	 *            input program, all system implementation of libraries used by
+	 *            the input program, etc.
+	 * @param filename
+	 *            The file name of the input program.
+	 * @param config
+	 *            The command line configuration.
+	 * @param civlConfig
+	 *            The CIVL configuration corresponding to the command line
+	 *            configuration.
+	 * @return The program after compiling, linking and transformations.
+	 * @throws PreprocessorException
+	 * @throws SyntaxException
+	 * @throws ParseException
+	 * @throws IOException
+	 */
 	private Program compileLinkAndTransform(Preprocessor preprocessor,
 			String filename, GMCConfiguration config,
 			CIVLConfiguration civlConfig) throws PreprocessorException,
@@ -313,17 +401,33 @@ public class UserInterface {
 		program = this.link(preprocessor, userAST);
 		if (civlConfig.debugOrVerbose())
 			program.prettyPrint(out);
-		applyAllTransformers(filename, preprocessor, program, civlConfig);
+		applyAllTransformers(filename, program, civlConfig);
 		return program;
 	}
 
+	/**
+	 * Links an AST with the system implementations of libraries used in the
+	 * AST.
+	 * 
+	 * @param preprocessor
+	 *            The preprocessor to be used for preprocessing all system
+	 *            implementation of libraries used by the given AST.
+	 * @param userAST
+	 *            The AST to be linked.
+	 * @return The program which is the result of linking the given AST and the
+	 *         ASTs of system implementation of libraries used.
+	 * @throws PreprocessorException
+	 * @throws SyntaxException
+	 * @throws ParseException
+	 * @throws IOException
+	 */
 	private Program link(Preprocessor preprocessor, AST userAST)
 			throws PreprocessorException, SyntaxException, ParseException,
 			IOException {
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
 
-		asts.addAll(this.asts2Link(preprocessor, userAST));
+		asts.addAll(this.systemImplASTs(preprocessor, userAST));
 		asts.add(userAST);
 		TUs = new AST[asts.size()];
 		asts.toArray(TUs);
@@ -336,6 +440,25 @@ public class UserInterface {
 		return frontEnd.link(TUs, Language.CIVL_C);
 	}
 
+	/**
+	 * Extracts the CIVL model for a given CIVL/C program.
+	 * 
+	 * @param out
+	 *            The output stream for printing messages.
+	 * @param config
+	 *            The command line configuration.
+	 * @param filename
+	 *            The filename of the input program, which is provided by the
+	 *            user in the command line.
+	 * @param modelBuilder
+	 *            The model builder to used for building CIVL model.
+	 * @return The CIVL model and the preprocessor of the given program which
+	 *         contains source code information for diagnosis like included
+	 *         header files, file short names, etc.
+	 * @throws ABCException
+	 * @throws IOException
+	 * @throws CommandLineException
+	 */
 	private Pair<Model, Preprocessor> extractModel(PrintStream out,
 			GMCConfiguration config, String filename, ModelBuilder modelBuilder)
 			throws ABCException, IOException, CommandLineException {
@@ -390,6 +513,15 @@ public class UserInterface {
 		return null;
 	}
 
+	/**
+	 * Computes the list of input variables specified in a given command line
+	 * configuration.
+	 * 
+	 * @param config
+	 *            The given command line configuration.
+	 * @return The list of input variable names specified in the given command
+	 *         line configuration.
+	 */
 	@SuppressWarnings("unused")
 	private List<String> getInputVariables(GMCConfiguration config) {
 		Collection<Option> options = config.getOptions();
@@ -416,20 +548,42 @@ public class UserInterface {
 	 * Apply transformers of the program.
 	 * 
 	 * @param fileName
+	 *            The file name of the input program.
 	 * @param program
+	 *            The result of compiling and linking the input program.
 	 * @throws SyntaxException
 	 */
-	private void applyAllTransformers(String fileName,
-			Preprocessor preprocessor, Program program, CIVLConfiguration config)
-			throws SyntaxException {
-		this.applyTranslationTransformers(fileName, preprocessor, program,
-				config);
+	private void applyAllTransformers(String fileName, Program program,
+			CIVLConfiguration config) throws SyntaxException {
+		this.applyTranslationTransformers(fileName, program, config);
 		this.applyDefaultTransformers(program, config);
 	}
 
-	private void applyTranslationTransformers(String fileName,
-			Preprocessor preprocessor, Program program, CIVLConfiguration config)
-			throws SyntaxException {
+	/**
+	 * Applies CIVL-specific transformers (such as general, mpi, omp, io, etc)
+	 * to a given program. The transformers to be applied are selected by
+	 * analyzing the program. Currently, the rules are as follows.
+	 * <ul>
+	 * <li>
+	 * io: stdio.h is present;</li>
+	 * <li>
+	 * omp: omp.h is present or there is some OpenMP pragma;</li>
+	 * <li>
+	 * mpi: mpi.h is present;</li>
+	 * <li>
+	 * pthread: pthread.h is present.</li>
+	 * </ul>
+	 * 
+	 * @param fileName
+	 *            The file name of the source program.
+	 * @param program
+	 *            The result of compiling and linking the source program.
+	 * @param config
+	 *            The CIVL configuration.
+	 * @throws SyntaxException
+	 */
+	private void applyTranslationTransformers(String fileName, Program program,
+			CIVLConfiguration config) throws SyntaxException {
 		// ASTFactory astFactory = program.getAST().getASTFactory();
 		Set<String> headers = new HashSet<>();
 		boolean isC = fileName.endsWith(".c");
@@ -500,6 +654,17 @@ public class UserInterface {
 		}
 	}
 
+	/**
+	 * Applies default transformers (pruner and side-effect remover) of the
+	 * given program.
+	 * 
+	 * @param program
+	 *            The result of compiling, linking and applying CIVL-specific
+	 *            transformers to the input program.
+	 * @param config
+	 *            The CIVL configuration.
+	 * @throws SyntaxException
+	 */
 	private void applyDefaultTransformers(Program program,
 			CIVLConfiguration config) throws SyntaxException {
 		// always apply pruner and side effect remover
