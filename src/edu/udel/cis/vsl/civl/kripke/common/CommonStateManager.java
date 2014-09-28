@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.TraceStepIF;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
  * @author Timothy K. Zirkel (zirkel)
@@ -86,9 +87,11 @@ public class CommonStateManager implements StateManager {
 	private CIVLErrorLogger errorLogger;
 
 	/**
-	 *  The symbolic analyzer to be used.
+	 * The symbolic analyzer to be used.
 	 */
 	private SymbolicAnalyzer symbolicAnalyzer;
+
+	private BooleanExpression falseExpr;
 
 	/* ***************************** Constructor *************************** */
 
@@ -115,6 +118,7 @@ public class CommonStateManager implements StateManager {
 		this.config = config;
 		this.errorLogger = errorLogger;
 		this.symbolicAnalyzer = symbolicAnalyzer;
+		this.falseExpr = symbolicAnalyzer.getUniverse().falseExpression();
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -192,7 +196,8 @@ public class CommonStateManager implements StateManager {
 				// out if it has been seen before.
 				CIVLExecutionException err = new CIVLExecutionException(
 						stex.kind(), stex.certainty(), process, stex.message(),
-						symbolicAnalyzer.stateToString(stex.state()), stex.source());
+						symbolicAnalyzer.stateToString(stex.state()),
+						stex.source());
 
 				errorLogger.reportError(err);
 			}
@@ -208,7 +213,8 @@ public class CommonStateManager implements StateManager {
 			} catch (CIVLStateException stex) {
 				CIVLExecutionException err = new CIVLExecutionException(
 						stex.kind(), stex.certainty(), process, stex.message(),
-						symbolicAnalyzer.stateToString(stex.state()), stex.source());
+						symbolicAnalyzer.stateToString(stex.state()),
+						stex.source());
 
 				errorLogger.reportError(err);
 			}
@@ -445,8 +451,10 @@ public class CommonStateManager implements StateManager {
 			// problem is the interface requires an actual State
 			// be returned. There is no concept of executing a
 			// transition and getting null or an exception.
-			// since the error has been logged, just stutter:
-			result = new NullTraceStep(state);
+			// since the error has been logged, just return
+			// some state with false path condition, so there
+			// will be no next state...
+			result = new NullTraceStep(state.setPathCondition(falseExpr));
 		}
 		return result;
 	}

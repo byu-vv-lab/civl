@@ -111,6 +111,11 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	/* ******************** Methods From SymbolicAnalyzer ****************** */
 
 	@Override
+	public SymbolicUniverse getUniverse() {
+		return universe;
+	}
+
+	@Override
 	public Map<Integer, NumericExpression> arrayIndexesByPointer(State state,
 			CIVLSource source, SymbolicExpression pointer,
 			boolean isUsedBySubtraction) {

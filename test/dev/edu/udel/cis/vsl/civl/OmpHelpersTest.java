@@ -28,4 +28,9 @@ public class OmpHelpersTest {
 	public void omp_helpers1() {
 		assertTrue(ui.run("run", filename("omp_helpers1.cvl")));
 	}
+	
+	@Test
+	public void exp1() {
+		assertTrue(ui.run("run", filename("div0.cvl")));
+	}
 }

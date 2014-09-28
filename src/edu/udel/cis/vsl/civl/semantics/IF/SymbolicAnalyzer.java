@@ -6,6 +6,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -174,4 +175,11 @@ public interface SymbolicAnalyzer {
 	 */
 	SymbolicExpression castToArrayElementReference(State state,
 			SymbolicExpression pointer, CIVLSource source);
+
+	/**
+	 * Gets the symbolic universe used by this symbolic analyzer.
+	 * 
+	 * @return the symbolic universe
+	 */
+	SymbolicUniverse getUniverse();
 }
