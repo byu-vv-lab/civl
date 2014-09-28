@@ -63,12 +63,13 @@ import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
@@ -1509,21 +1510,53 @@ public interface ModelFactory {
 	 */
 	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
 
+	/**
+	 * TODO: what the heck does "nextInDomain" mean ?! This returns a new
+	 * fragment containing a CivlForStatement. Someone really need to look at
+	 * this and figure out a better name for it.
+	 * 
+	 * @param source
+	 * @param src
+	 * @param dom
+	 * @param variables
+	 * @return
+	 */
 	Fragment nextInDomain(CIVLSource source, Location src, Expression dom,
-			List<VariableExpression> variables);
+			List<VariableExpression> variables, VariableExpression counter);
 
 	RegularRangeExpression regularRangeExpression(CIVLSource source,
 			Expression low, Expression high, Expression step);
 
 	CIVLType rangeType();
 
-	CIVLDomainType domainType(int dim);
+	/**
+	 * This returns the universal domain type (<code>$domain</code>). It
+	 * includes all the complete domain types (<code>$domain(n)</code>).
+	 * 
+	 * @return the universal domain type
+	 */
+	CIVLDomainType domainType(CIVLType rangeType);
+
+	CIVLCompleteDomainType completeDomainType(CIVLType rangeType, int dim);
 
 	RecDomainLiteralExpression recDomainLiteralExpression(CIVLSource source,
 			List<Expression> ranges, CIVLType type);
 
+	/**
+	 * Returns a domain guard expression which is boolean expression whose
+	 * arguments consists of loop variables in a civl for loop and the original
+	 * domain associate to the loop. It evaluates it to true if and only if the
+	 * values of those variables are such that at least one more iteration
+	 * exists.
+	 * 
+	 * @param source
+	 * @param vars
+	 * @param domain
+	 * @return
+	 */
 	DomainGuardExpression domainGuard(CIVLSource source,
-			List<VariableExpression> vars, Expression domain);
+			List<VariableExpression> vars, VariableExpression counter,
+			Expression domain);
 
 	VariableExpression domSizeVariable(CIVLSource source, Scope scope);
 
@@ -1544,4 +1577,11 @@ public interface ModelFactory {
 	 * @return
 	 */
 	SymbolicExpression undefinedValue(SymbolicType type);
+
+	/**
+	 * Get the name of the counter variable for the for loop on a literal domain
+	 * 
+	 * @return the identifier wrapping the name of the variable
+	 */
+	Identifier getLiteralDomCounterIdentifier(CIVLSource source, int count);
 }

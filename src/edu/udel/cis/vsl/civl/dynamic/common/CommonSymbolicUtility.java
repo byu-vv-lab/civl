@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.dynamic.common;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -365,6 +367,22 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		return (ReferenceExpression) result;
 	}
 
+	/**
+	 * Checks if the given value in a range has a subsequence. e.g. range: from
+	 * 0 to 10 step 2. Given a value 8 and it has a subsequence 10.
+	 * 
+	 * @param range
+	 * @param value
+	 * @return
+	 */
+	private BooleanExpression rangeHasNext(SymbolicExpression range,
+			SymbolicExpression value) {
+		NumericExpression step = this.getRegRangeStep(range);
+		SymbolicExpression next = universe.add((NumericExpression) value, step);
+
+		return this.isInRange(next, range);
+	}
+
 	@Override
 	public SymbolicExpression setSymRef(SymbolicExpression pointer,
 			ReferenceExpression symRef) {
@@ -587,7 +605,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	@Override
 	public SymbolicExpression rangeOfRectangularDomainAt(
 			SymbolicExpression domain, int index) {
-		return universe.tupleRead(domain, universe.intObject(index));
+		return universe.arrayRead(universe.tupleRead(domain, twoObj),
+				universe.integer(index));
 	}
 
 	@Override
@@ -824,196 +843,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public List<SymbolicExpression> getNextInDomain(
-			SymbolicExpression domValue, List<SymbolicExpression> varValues) {
-		if (this.isRecDomain(domValue)) {
-			int dim = ((SymbolicTupleType) domValue.type()).sequence()
-					.numTypes();
-			SymbolicExpression newValues[] = new SymbolicExpression[dim];
-
-			for (int i = dim - 1; i >= 0; i--) {
-				SymbolicExpression range = universe.tupleRead(domValue,
-						universe.intObject(i));
-				SymbolicExpression current = varValues.get(i);
-				BooleanExpression rangeHasNext = this.rangeHasNext(range,
-						current);
-
-				if (rangeHasNext.isTrue()) {
-					newValues[i] = universe.add((NumericExpression) current,
-							this.getRegRangeStep(range));
-					for (int j = i - 1; j >= 0; j--) {
-						newValues[j] = varValues.get(j);
-					}
-					break;
-				} else {
-					newValues[i] = this.getRangeMin(range);
-				}
-			}
-			return Arrays.asList(newValues);
-		} else {
-			List<SymbolicType> varTypes = new LinkedList<>();
-			SymbolicExpression tuple;
-			int numElements = ((IntegerNumber) universe
-					.reasoner(this.trueValue).extractNumber(
-							universe.length(domValue))).intValue();
-			int dim = ((SymbolicTupleType) universe.arrayRead(domValue, zero)
-					.type()).sequence().numTypes();
-
-			for (int i = 0; i < dim; i++)
-				varTypes.add(varValues.get(i).type());
-			tuple = universe.tuple(universe.tupleType(
-					universe.stringObject("$dom_element(" + dim + ")"),
-					varTypes), varValues);
-			for (int i = 0; i < numElements; i++) {
-				SymbolicExpression currentElement = universe.arrayRead(
-						domValue, universe.integer(i));
-
-				if (currentElement.equals(tuple)) {
-					if (i < numElements - 1) {
-						SymbolicExpression nextEle = universe.arrayRead(
-								domValue, universe.integer(i + 1));
-						List<SymbolicExpression> newVarValues = new ArrayList<>(
-								dim);
-
-						for (int j = 0; j < dim; j++)
-							newVarValues.add(universe.tupleRead(nextEle,
-									universe.intObject(j)));
-						return newVarValues;
-					}
-				}
-			}
-			return null;
-		}
-	}
-
-	@Override
-	public BooleanExpression domainHasNext(SymbolicExpression domainValue,
-			List<SymbolicExpression> varValues) {
-		if (this.isRecDomain(domainValue)) {
-			BooleanExpression hasNext = universe.falseExpression();
-			int dim = ((SymbolicTupleType) domainValue.type()).sequence()
-					.numTypes();
-
-			for (int i = 0; i < dim; i++) {
-				BooleanExpression rangIHasNext = this.rangeHasNext(
-						universe.tupleRead(domainValue, universe.intObject(i)),
-						varValues.get(i));
-
-				hasNext = universe.or(hasNext, rangIHasNext);
-			}
-			return hasNext;
-		} else {
-			List<SymbolicType> varTypes = new LinkedList<>();
-			SymbolicExpression tuple;
-			int numElements = ((IntegerNumber) universe
-					.reasoner(this.trueValue).extractNumber(
-							universe.length(domainValue))).intValue();
-			int dim = ((SymbolicTupleType) universe
-					.arrayRead(domainValue, zero).type()).sequence().numTypes();
-
-			for (int i = 0; i < dim; i++)
-				varTypes.add(varValues.get(i).type());
-			tuple = universe.tuple(
-					universe.tupleType(
-							universe.stringObject("$dom_element("
-									+ varTypes.size() + ")"), varTypes),
-					varValues);
-			for (int i = 0; i < numElements; i++) {
-				SymbolicExpression currentElement = universe.arrayRead(
-						domainValue, universe.integer(i));
-
-				if (currentElement.equals(tuple))
-					return universe.bool(i < numElements - 1);
-			}
-			return universe.falseExpression();
-		}
-	}
-
-	private BooleanExpression rangeHasNext(SymbolicExpression range,
-			SymbolicExpression value) {
-		NumericExpression step = this.getRegRangeStep(range);
-		SymbolicExpression next = universe.add((NumericExpression) value, step);
-
-		return this.isInRange(next, range);
-	}
-
-	@Override
-	public List<SymbolicExpression> getDomainInit(SymbolicExpression domValue) {
-		if (this.isRecDomain(domValue)) {
-			int dim = ((SymbolicTupleType) domValue.type()).sequence()
-					.numTypes();
-			List<SymbolicExpression> varValues = new ArrayList<>(dim);
-
-			for (int i = 0; i < dim; i++)
-				varValues.add(this.getRangeMin(universe.tupleRead(domValue,
-						universe.intObject(i))));
-			return varValues;
-		} else {
-			if (universe.length(domValue).isZero())
-				return null;
-			else {
-				SymbolicExpression tuple = universe.arrayRead(domValue, zero);
-				int dim = ((SymbolicTupleType) tuple.type()).sequence()
-						.numTypes();
-				List<SymbolicExpression> varValues = new ArrayList<>(dim);
-
-				for (int i = 0; i < dim; i++)
-					varValues.add(universe.tupleRead(tuple,
-							universe.intObject(i)));
-				return varValues;
-			}
-		}
-	}
-
-	private boolean isRecDomain(SymbolicExpression domValue) {
-		SymbolicType type = domValue.type();
-
-		if (type instanceof SymbolicTupleType) {
-			SymbolicTupleType domType = (SymbolicTupleType) type;
-
-			if (domType.name().getString().startsWith("$rec_domain"))
-				return true;
-		}
-		return false;
-	}
-
-	@Override
-	public NumericExpression getDomainSize(SymbolicExpression domain) {
-		if (this.isRecDomain(domain)) {
-			NumericExpression size = universe.oneInt();
-			int dim = ((SymbolicTupleType) domain.type()).sequence().numTypes();
-
-			for (int i = 0; i < dim; i++) {
-				SymbolicExpression range = universe.tupleRead(domain,
-						universe.intObject(i));
-
-				size = universe.multiply(size, this.getRegRangeSize(range));
-			}
-			return size;
-		} else
-			return universe.length(domain);
-	}
-
-	@Override
-	public SymbolicType getDomainElementType(SymbolicExpression domain) {
-		SymbolicType type = domain.type();
-
-		if (type instanceof SymbolicArrayType)
-			return ((SymbolicArrayType) type).elementType();
-		else {
-			SymbolicTupleType domType = (SymbolicTupleType) type;
-			int dim = domType.sequence().numTypes();
-			List<SymbolicType> eleTypes = new LinkedList<>();
-
-			for (int i = 0; i < dim; i++)
-				eleTypes.add(universe.integerType());
-			return universe.tupleType(
-					universe.stringObject("$dom_element(" + dim + ")"),
-					eleTypes);
-		}
-	}
-
-	@Override
 	public Map<Integer, NumericExpression> getArrayElementsSizes(
 			SymbolicExpression array, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
@@ -1065,5 +894,372 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			arrayRootPtr = parentPointer(source, arrayRootPtr);
 
 		return arrayRootPtr;
+	}
+
+	/* ************************ Domain Operations **************************** */
+	@Override
+	public Iterator<List<SymbolicExpression>> getDomainIterator(
+			SymbolicExpression domain) {
+		Iterator<List<SymbolicExpression>> domIterator;
+		SymbolicExpression domainUnionField = universe
+				.tupleRead(domain, twoObj);
+		NumericExpression dim = (NumericExpression) universe.tupleRead(domain,
+				zeroObj);
+		final int concreteDim = ((IntegerNumber) universe.extractNumber(dim))
+				.intValue();
+
+		if (isRecDomain(domain)) {
+			final SymbolicExpression recDomainField = universe.unionExtract(
+					zeroObj, domainUnionField);
+			final List<SymbolicExpression> domStartPos = this
+					.getDomainInit(domain);
+
+			// anonymous class of iterator
+			domIterator = new Iterator<List<SymbolicExpression>>() {
+				private List<SymbolicExpression> startPos = domStartPos;
+				private List<SymbolicExpression> currentPos = null;
+				private SymbolicExpression recDom = recDomainField;
+				private int dim = concreteDim;
+
+				@Override
+				public boolean hasNext() {
+					BooleanExpression hasNext = universe.falseExpression();
+
+					if (this.currentPos == null) {
+						if (startPos == null)
+							return false;
+						else
+							return true;
+					} else {
+						for (int i = 0; i < this.dim; i++) {
+							SymbolicExpression range = universe.arrayRead(
+									this.recDom, universe.integer(i));
+							BooleanExpression rangeIHasNext = rangeHasNext(
+									range, currentPos.get(i));
+
+							hasNext = universe.or(hasNext, rangeIHasNext);
+						}
+						return universe.extractBoolean(hasNext);
+					}
+				}
+
+				@Override
+				public List<SymbolicExpression> next() {
+					if (this.currentPos == null)
+						return (this.currentPos = this.startPos);
+					else {
+						this.currentPos = getNextInRecDomain(this.recDom,
+								this.currentPos, this.dim);
+						return this.currentPos;
+					}
+				}
+
+				@Override
+				public void remove() {
+					throw new CIVLInternalException(
+							"Remove elements in domain is not support yet",
+							(CIVLSource) null);
+				}
+			};
+		} else if (this.isLiteralDomain(domain)) {
+			final SymbolicExpression literalDomainField = universe
+					.unionExtract(oneObj, domainUnionField);
+
+			// anonymous class of iterator
+			domIterator = new Iterator<List<SymbolicExpression>>() {
+				private int currentPos = -1;
+				private SymbolicExpression literalDom = literalDomainField;
+				private int literalDomainSize = ((IntegerNumber) universe
+						.extractNumber(universe.length(literalDom))).intValue();
+				private int dim = concreteDim;
+
+				@Override
+				public boolean hasNext() {
+					return ((literalDomainSize > (currentPos + 1) && (currentPos + 1) >= 0));
+				}
+
+				@Override
+				public List<SymbolicExpression> next() {
+					SymbolicExpression element;
+					List<SymbolicExpression> literalElement = new LinkedList<>();
+
+					this.currentPos++;
+					element = getEleInLiteralDomain(this.literalDom,
+							this.currentPos);
+					for (int i = 0; i < this.dim; i++) {
+						literalElement.add(universe.arrayRead(element,
+								universe.integer(i)));
+					}
+					return literalElement;
+				}
+
+				@Override
+				public void remove() {
+					throw new CIVLInternalException(
+							"Remove elements in domain is not support yet",
+							(CIVLSource) null);
+				}
+			};
+		} else {
+			throw new CIVLInternalException(
+					"$domain type other than rectangular domain or literal domain is not supported",
+					(CIVLSource) null);
+		}
+
+		return domIterator;
+	}
+
+	@Override
+	public List<SymbolicExpression> getDomainInit(SymbolicExpression domValue) {
+		SymbolicExpression domainUnionField = universe.tupleRead(domValue,
+				twoObj);
+		NumericExpression dim = (NumericExpression) universe.tupleRead(
+				domValue, zeroObj);
+		int concreteDim = ((IntegerNumber) universe.extractNumber(dim))
+				.intValue();
+		List<SymbolicExpression> varValues = new ArrayList<>(concreteDim);
+
+		if (this.isRecDomain(domValue)) {
+			SymbolicExpression recDomainField = universe.unionExtract(zeroObj,
+					domainUnionField);
+			SymbolicExpression range;
+
+			if (universe.length(recDomainField).isZero())
+				return null;
+			for (int i = 0; i < concreteDim; i++) {
+				range = universe.arrayRead(recDomainField, universe.integer(i));
+
+				varValues.add(this.getRangeMin(range));
+			}
+			return varValues;
+		} else {
+			SymbolicExpression literalDomainField = universe.unionExtract(
+					oneObj, domainUnionField);
+
+			if (universe.length(literalDomainField).isZero())
+				return null;
+			else {
+				SymbolicExpression firstElement = universe.arrayRead(
+						literalDomainField, zero);
+
+				for (int i = 0; i < concreteDim; i++)
+					varValues.add(universe.arrayRead(firstElement,
+							universe.integer(i)));
+				return varValues;
+			}
+		}
+	}
+
+	@Override
+	public boolean isRecDomain(SymbolicExpression domValue) {
+		// Domain type is a tuple type{dim, field, union{...}}
+		SymbolicType type = domValue.type();
+		NumericExpression unionField; // Indicates weather rectangular or
+										// literal
+		int concreteUnionField;
+
+		assert (type instanceof SymbolicTupleType);
+		// The following 2 casts should be safe as long as domValue has $domian
+		// type.
+		unionField = (NumericExpression) universe.tupleRead(domValue, oneObj);
+		concreteUnionField = ((IntegerNumber) universe
+				.extractNumber(unionField)).intValue();
+		if (concreteUnionField == 0)
+			return true;
+		return false;
+	}
+
+	@Override
+	public boolean isLiteralDomain(SymbolicExpression domValue) {
+		// Domain type is a tuple type{dim, field, union{...}}
+		SymbolicType type = domValue.type();
+		NumericExpression unionField; // Indicates weather rectangular or
+										// literal
+		int concreteUnionField;
+
+		assert (type instanceof SymbolicTupleType);
+		// The following 2 casts should be safe as long as domValue has $domian
+		// type.
+		unionField = (NumericExpression) universe.tupleRead(domValue, oneObj);
+		concreteUnionField = ((IntegerNumber) universe
+				.extractNumber(unionField)).intValue();
+		if (concreteUnionField == 1)
+			return true;
+		return false;
+	}
+
+	@Override
+	public NumericExpression getDomainSize(SymbolicExpression domain) {
+		SymbolicExpression domainUnionField; // union{rec,literal}
+
+		domainUnionField = universe.tupleRead(domain, twoObj);
+		if (this.isRecDomain(domain)) {
+			SymbolicExpression recDomainField; // array of ranges
+			NumericExpression size = universe.oneInt();// Init size
+			NumericExpression dim = (NumericExpression) universe.tupleRead(
+					domain, zeroObj);
+			int concreteDim;
+
+			concreteDim = ((IntegerNumber) universe.extractNumber(dim))
+					.intValue();
+			recDomainField = universe.unionExtract(zeroObj, domainUnionField);
+			for (int i = 0; i < concreteDim; i++) {
+				SymbolicExpression range = universe.arrayRead(recDomainField,
+						universe.integer(i));
+
+				size = universe.multiply(size, this.getRegRangeSize(range));
+			}
+			return size;
+		} else if (this.isLiteralDomain(domain)) {
+			// literal domain is an array of array of integers. Also can be
+			// explained as array of elements(elements are arrays of integers).
+			SymbolicExpression literalDomainField = universe.unionExtract(
+					oneObj, domainUnionField);
+
+			return universe.length(literalDomainField);
+		} else
+			throw new CIVLInternalException(
+					"The argument: 'domain' of the function getDomainSize() is incorrect",
+					(CIVLSource) null);
+	}
+
+	@Override
+	public SymbolicType getDomainElementType(SymbolicExpression domain) {
+		NumericExpression dim;
+		SymbolicArrayType domainElementType;
+
+		dim = (NumericExpression) universe.tupleRead(domain, zeroObj);
+		domainElementType = universe.arrayType(universe.integerType(), dim);
+		return domainElementType;
+	}
+
+	@Override
+	public boolean recDomainHasNext(SymbolicExpression recDomainUnion,
+			int concreteDim, List<SymbolicExpression> domElement) {
+		boolean hasNext = false;
+		SymbolicExpression range;
+
+		for (int i = 0; i < concreteDim; i++) {
+			boolean rangeHasNext = false;
+
+			range = universe.arrayRead(recDomainUnion, universe.integer(i));
+			rangeHasNext = rangeHasNext(range, domElement.get(i)).isTrue();
+			hasNext = (rangeHasNext | hasNext);
+		}
+
+		return hasNext;
+	}
+
+	@Override
+	public int literalDomainSearcher(SymbolicExpression literalDomain,
+			List<SymbolicExpression> literalDomElement, int dim) {
+		NumericExpression literalDomLength = universe.length(literalDomain);
+		int concreteLength;
+
+		concreteLength = ((IntegerNumber) universe
+				.extractNumber(literalDomLength)).intValue();
+		for (int i = 0; i < concreteLength; i++) {
+			SymbolicExpression symElement = universe.arrayRead(literalDomain,
+					universe.integer(i));
+
+			for (int j = 0; j < dim; j++) {
+				SymbolicExpression elementComp = universe.arrayRead(symElement,
+						universe.integer(j));
+
+				if (elementComp.equals(literalDomElement.get(j)))
+					if (j == dim - 1) {
+						return i;
+					} else
+						continue;
+				else
+					break;
+			}
+		}
+		return -1;
+	}
+
+	public List<SymbolicExpression> getNextInRecDomain(
+			SymbolicExpression recDom, List<SymbolicExpression> varValues,
+			int concreteDim) {
+		SymbolicExpression recDomainField = recDom;
+		SymbolicExpression range;
+		SymbolicExpression newValues[] = new SymbolicExpression[concreteDim];
+
+		for (int i = concreteDim - 1; i >= 0; i--) {
+			SymbolicExpression current = varValues.get(i);
+			BooleanExpression rangeHasNext;
+
+			range = universe.arrayRead(recDomainField, universe.integer(i));
+			rangeHasNext = rangeHasNext(range, current);
+			if (rangeHasNext.isTrue()) {
+				newValues[i] = universe.add((NumericExpression) current,
+						this.getRegRangeStep(range));
+				for (int j = i - 1; j >= 0; j--) {
+					newValues[j] = varValues.get(j);
+				}
+				break;
+			} else {
+				 newValues[i] = this.getRangeMin(range);
+			}
+		}
+		return Arrays.asList(newValues);
+	}
+
+	@Override
+	public boolean isEmptyDomain(SymbolicExpression domain, int dim,
+			CIVLSource source) {
+		SymbolicExpression domUnion = universe.tupleRead(domain, twoObj);
+
+		if (this.isLiteralDomain(domain)) {
+			SymbolicExpression literalDom = universe.unionExtract(oneObj,
+					domUnion);
+			NumericExpression domLength = universe.length(literalDom);
+
+			// array length can never be negative and here it also should always
+			// be concrete.
+			if (domLength.isZero())
+				return true;
+			else
+				return false;
+		} else if (this.isRecDomain(domain)) {
+			SymbolicExpression recDom = universe
+					.unionExtract(zeroObj, domUnion);
+
+			for (int i = 0; i < dim; i++) {
+				SymbolicExpression range = universe.arrayRead(recDom,
+						universe.integer(i));
+
+				if (!this.getRegRangeSize(range).isZero())
+					return false;
+			}
+			return true;
+		} else
+			throw new CIVLInternalException(
+					"A domain object is neither a rectangular domain nor a literal domain",
+					source);
+	}
+
+	/* ********************** Domain private helpers ************************** */
+	/**
+	 * Get the element in literal domain pointed by the given index.
+	 * 
+	 * @param domValue
+	 *            The symbolic expression of the domain
+	 * @param index
+	 *            The index points to the position of the returned element
+	 * @return The element in literal domain pointed by the given index
+	 */
+	private SymbolicExpression getEleInLiteralDomain(
+			SymbolicExpression literalDom, int index) {
+		SymbolicExpression element;
+
+		try {
+			element = universe.arrayRead(literalDom, universe.integer(index));
+		} catch (SARLException e) {
+			throw new CIVLInternalException("read literal domain out of bound",
+					(CIVLSource) null);
+		}
+
+		return element;
 	}
 }

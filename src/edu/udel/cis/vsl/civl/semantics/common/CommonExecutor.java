@@ -4,10 +4,11 @@
 package edu.udel.cis.vsl.civl.semantics.common;
 
 import java.io.PrintStream;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -24,8 +25,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
-import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
@@ -74,6 +73,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
+import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 /**
@@ -123,6 +123,12 @@ public class CommonExecutor implements Executor {
 
 	private SymbolicAnalyzer symbolicAnalyzer;
 
+	private IntObject zeroObj;
+
+	private IntObject oneObj;
+
+	private IntObject twoObj;
+
 	/**
 	 * The set of characters that are used to construct a number in a format
 	 * string.
@@ -164,6 +170,9 @@ public class CommonExecutor implements Executor {
 		this.loader = loader;
 		this.symbolicUtil = evaluator.symbolicUtility();
 		this.errorLogger = errorLogger;
+		this.zeroObj = universe.intObject(0);
+		this.oneObj = universe.intObject(1);
+		this.twoObj = universe.intObject(2);
 		numbers = new HashSet<Character>(10);
 		for (int i = 0; i < 10; i++) {
 			numbers.add(Character.forDigit(i, 10));
@@ -661,8 +670,8 @@ public class CommonExecutor implements Executor {
 		Expression domain = parFor.domain();
 		VariableExpression domSize = parFor.domSizeVar();
 		Evaluation eval;
-		SymbolicExpression domainV;
-		NumericExpression domSizeV = universe.integer(1);
+		SymbolicExpression domainValue;
+		NumericExpression domSizeValue = universe.integer(1);
 		// TODO: why is dim -1 sometimes?
 		int dim = parFor.dimension();
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
@@ -673,13 +682,13 @@ public class CommonExecutor implements Executor {
 		SymbolicExpression parProcsPointer;
 
 		eval = evaluator.evaluate(state, pid, domain);
-		domainV = eval.value;
+		domainValue = eval.value;
 		state = eval.state;
 		eval = evaluator.evaluate(state, pid, parProcs);
 		state = eval.state;
-		domSizeV = symbolicUtil.getDomainSize(domainV);
-		state = this.assign(state, pid, process, domSize, domSizeV);
-		number_domSize = (IntegerNumber) reasoner.extractNumber(domSizeV);
+		domSizeValue = symbolicUtil.getDomainSize(domainValue);
+		state = this.assign(state, pid, process, domSize, domSizeValue);
+		number_domSize = (IntegerNumber) reasoner.extractNumber(domSizeValue);
 		if (number_domSize == null) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
@@ -700,68 +709,105 @@ public class CommonExecutor implements Executor {
 			state = eval.state;
 			state = this.assign(state, pid, process, parProcsVar, eval.value);
 			state = this.executeSpawns(state, pid, parProcs, parProcsPointer,
-					parFor.parProcFunction(), dim, domainV);
+					parFor.parProcFunction(), dim, domainValue);
 		}
+		// TODO:Why set location here ?
 		state = stateFactory.setLocation(state, pid, parFor.target());
 		return state;
 	}
 
+	/**
+	 * Spawns new processes as a part of the execution of $parfor. For EVERY
+	 * ELEMENT in domain, it will spawn a process to execute it.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param parProcs
+	 *            The expression of the pointer to the first element of
+	 *            processes array.
+	 * @param parProcsPointer
+	 *            The symbolic expression of the pointer to the first element of
+	 *            processes array.
+	 * @param function
+	 *            The function will be spawned
+	 * @param dim
+	 *            The dimension number of the domain.
+	 * @param domainValue
+	 *            The symbolic expression of the domain object.
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State executeSpawns(State state, int pid, Expression parProcs,
 			SymbolicExpression parProcsPointer, CIVLFunction function, int dim,
 			SymbolicExpression domainValue)
 			throws UnsatisfiablePathConditionException {
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
-		List<SymbolicExpression> myValues;
-		int myProcId = 0;
+		List<SymbolicExpression> myValues = null;
+		int procPtrOffset = 0;
 		CIVLSource source = parProcs.getSource();
-		boolean isInit = true;
+		Iterator<List<SymbolicExpression>> domainIter;
 
-		myValues = symbolicUtil.getDomainInit(domainValue);
-		do {
+		// Here we assume this operation contains all iterations in the domain.
+		// All iterations means that it iterates from the least element to the
+		// greatest element in the given domain.
+		domainIter = symbolicUtil.getDomainIterator(domainValue);
+		while (domainIter.hasNext()) {
 			SymbolicExpression[] arguments = new SymbolicExpression[dim];
 			SymbolicExpression procPointer;
-			BinaryExpression pointerAdd = modelFactory.binaryExpression(
-					source,
-					BINARY_OPERATOR.POINTER_ADD,
-					parProcs,
-					modelFactory.integerLiteralExpression(source,
-							BigInteger.valueOf(myProcId)));
 			Evaluation eval;
 			int newPid;
 
-			if (isInit)
-				isInit = false;
-			else
-				myValues = symbolicUtil.getNextInDomain(domainValue, myValues);
+			myValues = domainIter.next();
 			myValues.toArray(arguments);
 			newPid = state.numProcs();
 			state = stateFactory.addProcess(state, function, arguments, pid);
-			eval = evaluator.pointerAdd(state, pid, process, pointerAdd,
-					parProcsPointer, universe.integer(myProcId++));
+			eval = evaluator.evaluatePointerAdd(state, process,
+					parProcsPointer, universe.integer(procPtrOffset++), false,
+					source).left; // no need for checking output
 			procPointer = eval.value;
 			state = eval.state;
 			state = this.assign(source, state, process, procPointer,
 					modelFactory.processValue(newPid));
-		} while (symbolicUtil.domainHasNext(domainValue, myValues).isTrue());
+		}
 		return state;
 	}
 
+	/**
+	 * Giving a domain and a element of the domain, returns the subsequence of
+	 * the element in domain. <br>
+	 * Pre-condition: it's guaranteed by a nextInDomain condition checking sthat
+	 * the element has a subsequence in the domain.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param nextInDomain
+	 *            The nextInDomain statement.
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State executeNextInDomain(State state, int pid,
 			NextInDomainStatement nextInDomain)
 			throws UnsatisfiablePathConditionException {
 		List<VariableExpression> loopVars = nextInDomain.loopVariables();
 		Expression domain = nextInDomain.domain();
+		CIVLSource source = nextInDomain.getSource();
 		SymbolicExpression domValue;
 		Evaluation eval = evaluator.evaluate(state, pid, domain);
 		int dim = loopVars.size();
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
-		List<SymbolicExpression> varValues = new ArrayList<>(dim);
+		List<SymbolicExpression> varValues = new LinkedList<>();
+		List<SymbolicExpression> nextEleValues = new LinkedList<>();
 		int dyscopeId = state.getDyscope(pid, loopVars.get(0).variable()
 				.scope());
 		boolean isAllNull = true;
 
 		domValue = eval.value;
 		state = eval.state;
+		// Evaluates the element given by the statement
 		for (int i = 0; i < dim; i++) {
 			VariableExpression var = loopVars.get(i);
 			SymbolicExpression varValue = state.getVariableValue(dyscopeId, var
@@ -771,15 +817,93 @@ public class CommonExecutor implements Executor {
 				isAllNull = false;
 			varValues.add(varValue);
 		}
-		if (isAllNull)
-			varValues = symbolicUtil.getDomainInit(domValue);
-		else
-			varValues = symbolicUtil.getNextInDomain(domValue, varValues);
+		// Check if it's literal domain or rectangular domain
+		try {
+			if (symbolicUtil.isLiteralDomain(domValue)) {
+				SymbolicExpression literalDomain;
+				SymbolicExpression nextElement = null;
+				SymbolicExpression counterValue;
+				int counter = -1; // The concrete literal counter value
+				VariableExpression literalCounterExpr;
+
+				literalDomain = universe.unionExtract(oneObj,
+						universe.tupleRead(domValue, twoObj));
+				literalCounterExpr = nextInDomain.getLiteralDomCounter();
+				counterValue = state.valueOf(pid,
+						literalCounterExpr.variable());
+				// Evaluate the value of the counter variable. Here we can
+				// initialize it as 0 or search the specific value from the
+				// given domain element if the variable is uninitialized.If it
+				// does initialization already, read the value from this
+				// variable.
+				if (counterValue.isNull() || counterValue == null) {
+					// If the counter is not initialized
+					if (isAllNull)
+						counter = 0;
+					else
+						counter = symbolicUtil.literalDomainSearcher(
+								literalDomain, varValues, dim);
+				} else
+					counter = ((IntegerNumber) universe
+							.extractNumber((NumericExpression)counterValue)).intValue();
+
+				if (counter == -1)
+					throw new CIVLExecutionException(ErrorKind.OTHER,
+							Certainty.CONCRETE, process,
+							"Loop variables are not belong to the domain",
+							source);
+				// it's guaranteed that this iteration will have a
+				// subsequence.
+				if (counter < ((IntegerNumber) universe
+						.extractNumber((NumericExpression) universe
+								.length(literalDomain))).intValue())
+					nextElement = universe.arrayRead(literalDomain,
+							universe.integer(counter));
+				else
+					throw new CIVLInternalException(
+							"Domain iteration out of bound", source);
+				// increase the counter
+				counter++;
+				state = this.assign(state, pid, process, literalCounterExpr,
+						universe.integer(counter));
+				// Put domain element into a list
+				for (int i = 0; i < dim; i++)
+					nextEleValues.add(universe.arrayRead(nextElement,
+							universe.integer(i)));
+				// This function is guaranteed have a next element, so it doesnt
+				// need to consider the loop end situation
+			} else if (symbolicUtil.isRecDomain(domValue)) {
+				// If it's rectangular domain, just use the value to get the
+				// next element
+				SymbolicExpression recDomUnion = universe.tupleRead(domValue,
+						twoObj);
+				SymbolicExpression recDom = universe.unionExtract(zeroObj,
+						recDomUnion);
+
+				if (!isAllNull)
+					nextEleValues = symbolicUtil.getNextInRecDomain(recDom,
+							varValues, dim);
+				else
+					nextEleValues = symbolicUtil.getDomainInit(domValue);
+			} else
+				throw new CIVLExecutionException(
+						ErrorKind.OTHER,
+						Certainty.CONCRETE,
+						process,
+						"The domian object is neither a literal domain nor a rectangular domain",
+						source);
+		} catch (SARLException | ClassCastException e) {
+			throw new CIVLInternalException(
+					"Interanl errors happened in executeNextInDomain()", source);
+		}
+		// Set domain element components one by one.(Domain element is an array
+		// of integers of length 'dim')
 		for (int i = 0; i < dim; i++) {
 			VariableExpression var = loopVars.get(i);
 
-			state = this.assign(state, pid, process, var, varValues.get(i));
+			state = this.assign(state, pid, process, var, nextEleValues.get(i));
 		}
+		// TODO: why set location here ?
 		state = stateFactory.setLocation(state, pid, nextInDomain.target());
 		return state;
 	}
@@ -1275,5 +1399,4 @@ public class CommonExecutor implements Executor {
 	public CIVLErrorLogger errorLogger() {
 		return this.errorLogger;
 	}
-
 }

@@ -14,8 +14,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 public interface CIVLType {
 
 	public enum TypeKind {
-		ARRAY, COMPLETE_ARRAY, BUNDLE, DOMAIN, ENUM, POINTER, 
-		PRIMITIVE, STRUCT_OR_UNION, FUNCTION, HEAP
+		ARRAY, COMPLETE_ARRAY, BUNDLE, DOMAIN, ENUM, POINTER, PRIMITIVE, STRUCT_OR_UNION, FUNCTION, HEAP
 	}
 
 	TypeKind typeKind();
@@ -59,8 +58,16 @@ public interface CIVLType {
 	SymbolicType getDynamicType(SymbolicUniverse universe);
 
 	/**
+	 * 
 	 * All dynamic types occurring in a model are indexed. This returns the
-	 * index of the dynamic type corresponding to this type.
+	 * index of the dynamic type corresponding to this type. CIVL associates a
+	 * single dynamic type to every CIVL type and does this once at compile
+	 * time. All the dynamic types which occur as dynamic types of CIVL types
+	 * are numbered from 0. This is used in particular to construct the bundle
+	 * type which is the union of all of the dynamic types. This field is the
+	 * dynamic type index to this one and it's initially be minus one and can be
+	 * set later by calling {@link #setDynamicTypeIndex(int)} and the getter is
+	 * this method.
 	 * 
 	 * @return the dynamic type index
 	 */

@@ -11,7 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonCivlParForEnterStatement extends CommonStatement implements
@@ -94,7 +94,8 @@ public class CommonCivlParForEnterStatement extends CommonStatement implements
 
 	@Override
 	public int dimension() {
-		return ((CIVLDomainType) this.domain.getExpressionType()).dimension();
+		return ((CIVLCompleteDomainType) this.domain.getExpressionType())
+				.getDimension();
 	}
 
 	@Override

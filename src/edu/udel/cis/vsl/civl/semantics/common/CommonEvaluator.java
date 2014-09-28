@@ -65,6 +65,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.WaitGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
@@ -234,6 +235,11 @@ public class CommonEvaluator implements Evaluator {
 	private IntObject zeroObj;
 
 	/**
+	 * The symbolic int object of 2.
+	 */
+	private IntObject twoObj;
+
+	/**
 	 * The symbolic numeric expression of 0 of integer type.
 	 */
 	private NumericExpression zero;
@@ -337,6 +343,7 @@ public class CommonEvaluator implements Evaluator {
 		bundleType = modelFactory.bundleSymbolicType();
 		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
 		oneObj = (IntObject) universe.canonic(universe.intObject(1));
+		twoObj = (IntObject) universe.canonic(universe.intObject(2));
 		identityReference = (ReferenceExpression) universe.canonic(universe
 				.identityReference());
 		zero = (NumericExpression) universe.canonic(universe.integer(0));
@@ -1176,30 +1183,131 @@ public class CommonEvaluator implements Evaluator {
 		return result;
 	}
 
-	private Evaluation evaluateDomainGuard(State state, int pid,
+	/**
+	 * Evaluating if there is a subsequence of the given domain element inn the
+	 * given domain.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param domainGuard
+	 *            The expression the domainGuard statement including the
+	 *            information of a domain element ,a domain object and the
+	 *            dimension of the domain.
+	 * @return The evaluation warps a state and the boolean value.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	// TODO: is it should be called guard ?<br>
+	private Evaluation evaluateDomainCondition(State state, int pid,
 			DomainGuardExpression domainGuard)
 			throws UnsatisfiablePathConditionException {
 		Expression domain = domainGuard.domain();
 		int dimension = domainGuard.dimension();
-		BooleanExpression result = universe.trueExpression();
+		// Collection for storing given domain element.
+		List<SymbolicExpression> domElement = new LinkedList<>();
 		SymbolicExpression domainValue;
+		// The value of the domain union.
+		SymbolicExpression domainUnion;
 		Evaluation eval = this.evaluate(state, pid, domain);
-		List<SymbolicExpression> varValues = new ArrayList<>(dimension);
+		// Result, if there is a subsequence.
+		boolean hasNext = false;
+		// Flag indicating the given domain element only contains NULLs.
+		boolean isAllNull = true;
 
-		domainValue = eval.value;
 		state = eval.state;
+		domainValue = eval.value;
+		domainUnion = universe.tupleRead(domainValue, twoObj);
+		// Evaluating the value of the given element.
 		for (int i = 0; i < dimension; i++) {
-			SymbolicExpression varValue;
-
 			eval = this.evaluate(state, pid, domainGuard.variableAt(i));
 			state = eval.state;
-			varValue = eval.value;
-			varValues.add(varValue);
+			domElement.add(eval.value);
+			if (!eval.value.isNull())
+				isAllNull = false;
 		}
-		result = symbolicUtil.domainHasNext(domainValue, varValues);
-		return new Evaluation(state, result);
+		// If the domain object is a rectangular domain
+		if (symbolicUtil.isRecDomain(domainValue)) {
+			SymbolicExpression recDom = universe.unionExtract(zeroObj,
+					domainUnion);
+
+			if (isAllNull)
+				hasNext = !symbolicUtil.isEmptyDomain(domainValue, dimension,
+						domain.getSource());
+			hasNext = symbolicUtil.recDomainHasNext(recDom, dimension,
+					domElement);
+			eval.state = state;
+			// TODO:rectangular domain always has concrete ranges so that the
+			// result
+			// is always concrete ?
+			eval.value = universe.bool(hasNext);
+		} else if (symbolicUtil.isLiteralDomain(domainValue)) {
+			VariableExpression literalDomCounterExpr;
+
+			// TODO: is there a domain that contains none elements ?
+			if (isAllNull)
+				hasNext = !symbolicUtil.isEmptyDomain(domainValue, dimension,
+						domain.getSource());
+			else {
+				NumericExpression literalCounter;
+				NumericExpression domainSize = symbolicUtil
+						.getDomainSize(domainValue);
+				int counter, size;
+
+				// Compare the literal domain counter and the size of the
+				// domain.
+				literalDomCounterExpr = domainGuard.getLiteralDomCounter();
+				eval = this.evaluate(state, pid, literalDomCounterExpr);
+				state = eval.state;
+				literalCounter = (NumericExpression) eval.value;
+				counter = ((IntegerNumber) universe
+						.extractNumber(literalCounter)).intValue();
+				size = ((IntegerNumber) universe.extractNumber(domainSize))
+						.intValue();
+				hasNext = counter < size;
+			}
+		} else
+			throw new CIVLInternalException(
+					"A domain object is neither a rectangular domain nor a literal domain",
+					domainGuard.getSource());
+		eval.state = state;
+		eval.value = universe.bool(hasNext);
+		return eval;
+
+		/************** old *******************/
+		// Expression domain = domainGuard.domain();
+		// int dimension = domainGuard.dimension();
+		// BooleanExpression result = universe.trueExpression();
+		// SymbolicExpression domainValue;
+		// Evaluation eval = this.evaluate(state, pid, domain);
+		// List<SymbolicExpression> varValues = new ArrayList<>(dimension);
+		//
+		// domainValue = eval.value;
+		// state = eval.state;
+		// for (int i = 0; i < dimension; i++) {
+		// SymbolicExpression varValue;
+		//
+		// eval = this.evaluate(state, pid, domainGuard.variableAt(i));
+		// state = eval.state;
+		// varValue = eval.value;
+		// varValues.add(varValue);
+		// }
+		// result = symbolicUtil.domainHasNext(domainValue, varValues);
+		// return new Evaluation(state, result);
 	}
 
+	/**
+	 * Evaluate the value of a rectangular domain object.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param recDomain
+	 *            The expression of the rectangular domain
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Evaluation evaluateRecDomainLiteral(State state, int pid,
 			RecDomainLiteralExpression recDomain)
 			throws UnsatisfiablePathConditionException {
@@ -1207,18 +1315,39 @@ public class CommonEvaluator implements Evaluator {
 		List<SymbolicExpression> ranges = new ArrayList<>();
 		Evaluation eval;
 		SymbolicExpression domainV;
-		SymbolicTupleType domainType;
-		List<SymbolicType> rangeTypes = new LinkedList<>();
+		SymbolicType domainType;
+		// For a rectangular domain, its range types are all the same.
+		// because rectangular domain is an array of ranges
+		SymbolicType rangeType;
+		List<SymbolicExpression> domValueComponents = new LinkedList<>();
+		// ranges should be in form of an array inside a domain.
+		SymbolicExpression rangesArray;
+		CIVLDomainType civlDomType;
+		CIVLType civlRangeType;
 
 		for (int i = 0; i < dim; i++) {
 			eval = evaluate(state, pid, recDomain.rangeAt(i));
 			state = eval.state;
 			ranges.add(eval.value);
-			rangeTypes.add(eval.value.type());
 		}
-		domainType = (SymbolicTupleType) universe.canonic(universe.tupleType(
-				universe.stringObject("$rec_domain(" + dim + ")"), rangeTypes));
-		domainV = universe.tuple(domainType, ranges);
+		rangeType = ranges.get(0).type();
+		civlRangeType = modelFactory.rangeType();
+		civlDomType = modelFactory.domainType(civlRangeType);
+		domainType = civlDomType.getDynamicType(universe);
+		assert domainType instanceof SymbolicTupleType : "Dynamic $domain type is not a tuple type";
+		assert rangeType instanceof SymbolicTupleType : "Dynamic $range type is not a tuple type";
+		// Adding components
+		domValueComponents.add(universe.integer(dim));
+		// Union field index which indicates it's a rectangular domain.
+		domValueComponents.add(zero);
+		rangesArray = universe.array(rangeType, ranges);
+		domValueComponents.add(universe.unionInject(
+				civlDomType.getDynamicSubTypesUnion(universe), zeroObj,
+				rangesArray));
+		// The cast is guaranteed
+		// TODO: when is the appropriate time to call universe.canonic() ?
+		domainV = universe.canonic(universe.tuple(
+				(SymbolicTupleType) domainType, domValueComponents));
 		return new Evaluation(state, domainV);
 	}
 
@@ -2417,6 +2546,7 @@ public class CommonEvaluator implements Evaluator {
 		}
 	}
 
+	// TODO: add doc here
 	private Evaluation initialValueOfType(State state, int pid, CIVLType type)
 			throws UnsatisfiablePathConditionException {
 		TypeKind kind = type.typeKind();
@@ -2451,16 +2581,28 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case DOMAIN: {
 			CIVLDomainType domainType = (CIVLDomainType) type;
-			int dim = domainType.dimension();
-			List<SymbolicExpression> ranges = new ArrayList<>(dim);
+			SymbolicExpression initDomainValue;
+			int dim;
+			SymbolicType integerType = universe.integerType();
+			SymbolicTupleType tupleType = universe.tupleType(universe
+					.stringObject("domain"), Arrays.asList(integerType,
+					integerType,
+					universe.arrayType(universe.arrayType(integerType))));
+			List<SymbolicExpression> tupleComponents = new LinkedList<>();
 
-			eval = this.initialValueOfType(state, pid, domainType.rangeType());
-			for (int i = 0; i < dim; i++) {
-				ranges.add(eval.value);
+			tupleComponents.add(one);
+			tupleComponents.add(one);
+			tupleComponents.add(universe.emptyArray(universe
+					.arrayType(integerType)));
+			if (domainType.isComplete()) {
+				CIVLCompleteDomainType compDomainType = (CIVLCompleteDomainType) domainType;
+
+				dim = compDomainType.getDimension();
+				tupleComponents.set(0, universe.integer(dim));
+
 			}
-			eval.value = universe.tuple(
-					(SymbolicTupleType) domainType.getDynamicType(universe),
-					ranges);
+			initDomainValue = universe.tuple(tupleType, tupleComponents);
+			eval = new Evaluation(state, initDomainValue);
 			break;
 		}
 		case ENUM: {
@@ -2807,7 +2949,7 @@ public class CommonEvaluator implements Evaluator {
 					(DerivativeCallExpression) expression);
 			break;
 		case DOMAIN_GUARD:
-			result = evaluateDomainGuard(state, pid,
+			result = evaluateDomainCondition(state, pid,
 					(DomainGuardExpression) expression);
 			break;
 		case REC_DOMAIN_LITERAL:

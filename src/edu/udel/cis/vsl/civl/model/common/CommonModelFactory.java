@@ -84,13 +84,14 @@ import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLRegularRangeType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -154,12 +155,13 @@ import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.type.CommonArrayType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonBundleType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonCompleteArrayType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonCompleteDomainType;
+import edu.udel.cis.vsl.civl.model.common.type.CommonDomainType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonEnumType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonFunctionType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonHeapType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPrimitiveType;
-import edu.udel.cis.vsl.civl.model.common.type.CommonRecDomainType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonRegularRangeType;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructOrUnionField;
 import edu.udel.cis.vsl.civl.model.common.type.CommonStructOrUnionType;
@@ -433,7 +435,9 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private Scope systemScope;
 
-	private CIVLRegularRangeType rangeType;
+	private CIVLRegularRangeType rangeType = null;
+
+	private CIVLDomainType domainType = null;
 
 	private FunctionIdentifierExpression waitallFuncPointer;
 
@@ -2470,9 +2474,10 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public Fragment nextInDomain(CIVLSource source, Location src,
-			Expression dom, List<VariableExpression> variables) {
+			Expression dom, List<VariableExpression> variables,
+			VariableExpression counter) {
 		NextInDomainStatement statement = new CommonCivlForEnterStatement(
-				source, src, dom, variables);
+				source, src, dom, variables, counter);
 
 		return new CommonFragment(statement);
 	}
@@ -2492,11 +2497,11 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public CIVLDomainType domainType(int dim) {
-		CIVLDomainType domainType = new CommonRecDomainType(this.rangeType,
-				dim, universe);
-
-		return domainType;
+	public CIVLDomainType domainType(CIVLType rangeType) {
+		if (this.domainType == null) {
+			this.domainType = new CommonDomainType(rangeType);
+		}
+		return this.domainType;
 	}
 
 	@Override
@@ -2507,9 +2512,10 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public DomainGuardExpression domainGuard(CIVLSource source,
-			List<VariableExpression> vars, Expression domain) {
+			List<VariableExpression> vars, VariableExpression counter,
+			Expression domain) {
 		return new CommonDomainGuardExpression(source, this.booleanType,
-				domain, vars);
+				domain, vars, counter);
 	}
 
 	@Override
@@ -2522,6 +2528,12 @@ public class CommonModelFactory implements ModelFactory {
 
 		scope.addVariable(variable);
 		return this.variableExpression(source, variable);
+	}
+
+	@Override
+	public Identifier getLiteralDomCounterIdentifier(CIVLSource source,
+			int count) {
+		return identifier(source, "__LiteralDomain_counter" + count + "__");
 	}
 
 	@Override
@@ -2581,5 +2593,10 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CIVLType getSystemType(String name) {
 		return systemTypes.get(name);
+	}
+
+	@Override
+	public CIVLCompleteDomainType completeDomainType(CIVLType rangeType, int dim) {
+		return new CommonCompleteDomainType(rangeType, dim);
 	}
 }

@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.dynamic.IF;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -532,25 +533,132 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression undefinedPointer();
 
-	List<SymbolicExpression> getNextInDomain(SymbolicExpression domValue,
-			List<SymbolicExpression> varValues);
+	/* ****************** Domain Operation section ********************* */
 
-	BooleanExpression domainHasNext(SymbolicExpression domainValue,
-			List<SymbolicExpression> varValues);
+	/**
+	 * Returns true if and only if the domain is more precisely a rectangular
+	 * domain.
+	 * 
+	 * @param domain
+	 *            The symbolic expression of a domain object
+	 * @return
+	 */
+	boolean isRecDomain(SymbolicExpression domain);
 
+	/**
+	 * Returns true if and only if the domain is more precisely a literal
+	 * domain.
+	 * 
+	 * @param domain
+	 *            The symbolic expression of a domain object
+	 * @return
+	 */
+	boolean isLiteralDomain(SymbolicExpression domain);
+
+	/**
+	 * Get the first element of a domain. Return null if domain is empty.
+	 * 
+	 * @param domValue
+	 *            The domain object which will contribute a first element.
+	 * @return
+	 */
 	List<SymbolicExpression> getDomainInit(SymbolicExpression domValue);
-	
+
 	/**
 	 * Computes the size of a domain, that is the number of elements contained
 	 * in the domain.
 	 * 
 	 * @param domain
-	 *            The domain.
+	 *            The symbolic expression of domain.
 	 * @return The number of elements contained in the domain.
 	 */
 	NumericExpression getDomainSize(SymbolicExpression domain);
 
+	/**
+	 * Get the type of elements of domain which are also elements of literal
+	 * domain object. For an N dimensional domain, the element type should be an
+	 * array of integers of length of N.<code>int array[N]</code>
+	 * 
+	 * @param domain
+	 *            The symbolic expression of a domain object
+	 * @return domain element type
+	 * 
+	 */
 	SymbolicType getDomainElementType(SymbolicExpression domain);
+
+	/**
+	 * Return a iterator for a domain object. (This function can be applied on
+	 * all domain types)
+	 * 
+	 * @param domain
+	 *            The symbolic expression of the domain object.
+	 * @return
+	 */
+	Iterator<List<SymbolicExpression>> getDomainIterator(
+			SymbolicExpression domain);
+
+	/**
+	 * Get the subsequence of the given element of the domain.
+	 * 
+	 * @param domValue
+	 *            The symbolic expression of the rectangular domain field.
+	 * @param varValues
+	 *            The given current domain element.
+	 * @param concreteDim
+	 *            The dimension of domain.
+	 * @return
+	 */
+	List<SymbolicExpression> getNextInRecDomain(SymbolicExpression recDomUnion,
+			List<SymbolicExpression> varValues, int concreteDim);
+
+	/**
+	 * Check if the given domain element has a subsequence in the given
+	 * rectangular domain.
+	 * 
+	 * @param recDomainUnion
+	 *            The rectangular domain union object.
+	 * @param concreteDim
+	 *            The number of the dimension of the domain
+	 * @param domElement
+	 *            The element of the domain
+	 * @return
+	 */
+	boolean recDomainHasNext(SymbolicExpression recDomainUnion,
+			int concreteDim, List<SymbolicExpression> domElement);
+
+	/**
+	 * Iterating a literal domain to match a given domain element. Returns the
+	 * index of the element.
+	 * 
+	 * @param literalDomain
+	 *            The symbolic expression of the literal domain union field
+	 * @param literalDomElement
+	 *            The given element will be matched
+	 * @param dim
+	 *            The dimension of the literal domain
+	 * @return the index of the element in the domain or -1 which means the
+	 *         given element is not a member of the domain.
+	 */
+	int literalDomainSearcher(SymbolicExpression literalDomain,
+			List<SymbolicExpression> literalDomElement, int dim);
+
+	/**
+	 * Returns true if and only if the given domain is empty which means there
+	 * is no elements in the domain.
+	 * 
+	 * @param domain
+	 *            The symbolic expression of the domain object.
+	 * @param dim
+	 *            The concrete number of dimension of the domain. It's only
+	 *            significant when the domain is a rectangular domain.
+	 * @param source
+	 *            The CIVL source of the statement involves this empty checking
+	 *            operation.
+	 * @return
+	 */
+	boolean isEmptyDomain(SymbolicExpression domain, int dim, CIVLSource source);
+
+	/* ****************** End of Domain Operation section ********************* */
 
 	/**
 	 * Computes the array capacity informations(@link{setDataBetween}) of the

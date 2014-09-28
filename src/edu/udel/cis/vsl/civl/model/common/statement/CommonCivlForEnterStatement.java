@@ -20,11 +20,15 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 
 	private List<VariableExpression> loopVariables;
 
+	private VariableExpression literalDomCounter;
+
 	public CommonCivlForEnterStatement(CIVLSource civlSource, Location source,
-			Expression dom, List<VariableExpression> variables) {
+			Expression dom, List<VariableExpression> variables,
+			VariableExpression counter) {
 		super(civlSource, source);
 		this.domain = dom;
 		this.setLoopVariables(variables);
+		this.literalDomCounter = counter;
 	}
 
 	@Override
@@ -35,7 +39,8 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonCivlForEnterStatement(this.getSource(),
-					this.source(), this.domain, this.loopVariables);
+					this.source(), this.domain, this.loopVariables,
+					this.literalDomCounter);
 			newStatement.setGuard(newGuard);
 		} else {
 			Expression newDomain = domain.replaceWith(oldExpression,
@@ -44,7 +49,7 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 			if (newDomain != null) {
 				newStatement = new CommonCivlForEnterStatement(
 						this.getSource(), this.source(), newDomain,
-						this.loopVariables);
+						this.loopVariables, this.literalDomCounter);
 				newStatement.setGuard(this.guard());
 			}
 		}
@@ -98,5 +103,10 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 		string.append(") in ");
 		string.append(domain);
 		return string.toString();
+	}
+
+	@Override
+	public VariableExpression getLiteralDomCounter() {
+		return this.literalDomCounter;
 	}
 }

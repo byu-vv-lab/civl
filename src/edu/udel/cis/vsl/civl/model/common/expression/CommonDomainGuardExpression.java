@@ -9,7 +9,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -20,13 +20,17 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 
 	private Expression domain;
 
+	private VariableExpression literalDomCounter;
+
 	public CommonDomainGuardExpression(CIVLSource source, CIVLType type,
-			Expression dom, List<VariableExpression> vars) {
+			Expression dom, List<VariableExpression> vars,
+			VariableExpression counter) {
 		super(source);
 		this.variables = new VariableExpression[vars.size()];
 		vars.toArray(this.variables);
 		this.expressionType = type;
 		this.domain = dom;
+		this.literalDomCounter = counter;
 	}
 
 	@Override
@@ -71,7 +75,10 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 
 	@Override
 	public int dimension() {
-		return ((CIVLDomainType) this.domain.getExpressionType()).dimension();
+		// Since this is in a domain for loop so it's guaranteed to be a
+		// complete domain type. That's why this cast is safe.
+		return ((CIVLCompleteDomainType) this.domain.getExpressionType())
+				.getDimension();
 	}
 
 	@Override
@@ -96,5 +103,10 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 		}
 		string.append(")");
 		return string.toString();
+	}
+
+	@Override
+	public VariableExpression getLiteralDomCounter() {
+		return this.literalDomCounter;
 	}
 }

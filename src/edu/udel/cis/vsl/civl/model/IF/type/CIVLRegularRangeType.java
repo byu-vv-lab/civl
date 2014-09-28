@@ -1,5 +1,5 @@
 package edu.udel.cis.vsl.civl.model.IF.type;
 
-public interface CIVLRegularRangeType extends CIVLStructOrUnionType {
 
+public interface CIVLRegularRangeType extends CIVLStructOrUnionType {
 }

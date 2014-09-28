@@ -154,10 +154,10 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType.PrimitiveTypeKind;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
@@ -205,6 +205,11 @@ public class FunctionTranslator {
 	private int atomicCount = 0;
 
 	private int atomCount = 0;
+
+	/**
+	 * Counter for the variable of a counter for $for loop on literal domains.
+	 */
+	private int literalDomForCounterCount = 0;
 
 	/**
 	 * Store temporary information of the function being processed
@@ -601,20 +606,31 @@ public class FunctionTranslator {
 		List<VariableExpression> loopVariables;
 		ExpressionNode domainNode = civlForNode.getDomain();
 		Expression domain;
+		Expression domainGuard;
+		Variable literalDomCounter;
+		VariableExpression literalDomCounterExpr;
 		Triple<Scope, Fragment, List<VariableExpression>> initResults = this
 				.translateForLoopInitializerNode(scope, loopInits);
 		Location location;
 		CIVLSource source = modelFactory.sourceOf(civlForNode);
 		int dimension;
-		Expression domainGuard;
 
 		scope = initResults.first;
+		// Create a loop counter variable for the for loop.
+		literalDomCounter = modelFactory.variable(source, modelFactory
+				.integerType(), modelFactory.getLiteralDomCounterIdentifier(
+				source, this.literalDomForCounterCount), scope.numVariables());
+		literalDomCounterExpr = modelFactory.variableExpression(source,
+				literalDomCounter);
+		this.literalDomForCounterCount++;
+		scope.addVariable(literalDomCounter);
 		loopVariables = initResults.third;
 		location = modelFactory.location(
 				modelFactory.sourceOfBeginning(civlForNode), scope);
 		domain = this.translateExpressionNode(civlForNode.getDomain(), scope,
 				true);
-		dimension = ((CIVLDomainType) domain.getExpressionType()).dimension();
+		dimension = ((CIVLCompleteDomainType) domain.getExpressionType())
+				.getDimension();
 		if (dimension != loopVariables.size()) {
 			throw new CIVLSyntaxException(
 					"The number of loop variables for $for does NOT match "
@@ -624,12 +640,13 @@ public class FunctionTranslator {
 							+ domain + ": " + dimension, source);
 		}
 		domainGuard = modelFactory.domainGuard(
-				modelFactory.sourceOf(domainNode), loopVariables, domain);
+				modelFactory.sourceOf(domainNode), loopVariables,
+				literalDomCounterExpr, domain);
 		location = modelFactory.location(
 				modelFactory.sourceOfBeginning(civlForNode), scope);
 		nextInDomain = modelFactory.nextInDomain(
 				modelFactory.sourceOfBeginning(civlForNode), location, domain,
-				initResults.third);
+				initResults.third, literalDomCounterExpr);
 		result = this.composeLoopFragmentWorker(scope,
 				modelFactory.sourceOfBeginning(domainNode),
 				modelFactory.sourceOfEnd(domainNode), domainGuard,
@@ -2646,6 +2663,8 @@ public class FunctionTranslator {
 
 	private Expression translateCompoundLiteralNode(
 			CompoundLiteralNode compoundNode, Scope scope) {
+		// TODO: check this. Make sure that users don't need to specify the
+		// dimension when using compound literal statement for DomainType.
 		CIVLType type = translateABCType(
 				modelFactory.sourceOf(compoundNode.getTypeNode()), scope,
 				compoundNode.getType());
@@ -2664,13 +2683,14 @@ public class FunctionTranslator {
 			return this.translateLiteralObject(source, scope,
 					compoundInit.getLiteralObject(), type);
 		} else {
-			CIVLDomainType domainType = (CIVLDomainType) type;
-			int dim = domainType.dimension();
+			int dimension;
 
-			if (dim < 1)
+			if (!(type instanceof CIVLCompleteDomainType))
 				throw new CIVLSyntaxException(
 						"It is illegal to define a $domain literal without the dimension specified.",
 						source);
+			dimension = ((CIVLCompleteDomainType) type).getDimension();
+			assert size == dimension;
 		}
 		for (int i = 0; i < size; i++)
 			expressions.add(translateInitializerNode(compoundInit
@@ -4302,7 +4322,11 @@ public class FunctionTranslator {
 
 	private CIVLType translateABCDomainType(CIVLSource source, Scope scope,
 			DomainType domainType) {
-		return modelFactory.domainType(domainType.getDimension());
+		if (domainType.hasDimension())
+			return modelFactory.completeDomainType(modelFactory.rangeType(),
+					domainType.getDimension());
+		else
+			return modelFactory.domainType(modelFactory.rangeType());
 	}
 
 	/**

@@ -28,4 +28,12 @@ public interface NextInDomainStatement extends Statement {
 	 * @return the list of loop variables
 	 */
 	List<VariableExpression> loopVariables();
+
+	/**
+	 * Returns a counter variable used for iterating on a literal domain step by
+	 * step.
+	 * 
+	 * @return the variable expression of the counter
+	 */
+	VariableExpression getLiteralDomCounter();
 }
