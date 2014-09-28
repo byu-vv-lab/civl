@@ -14,7 +14,8 @@ import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
-import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
+import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
+import edu.udel.cis.vsl.civl.transform.IF.Transforms;
 
 public class OmpSimplifierTest {
 
@@ -44,18 +45,18 @@ public class OmpSimplifierTest {
 	 */
 	private void check(String fileNameRoot) throws ABCException, IOException {
 		FrontEnd frontEnd = new FrontEnd();
+		TransformerFactory transformerFactory = Transforms
+				.newTransformerFactory(frontEnd.getASTFactory());
 		File file = new File(rootDir, fileNameRoot + ".c");
 		File simplifiedFile = new File(new File(rootDir, "simple"),
 				fileNameRoot + ".c.s");
 		Program program, simplifiedProgram;
 		DifferenceObject diff;
 
-		// kluge...
-		new CIVLTransform();
 		{ // Parse the program and apply the CIVL transformations
 			program = frontEnd.compileAndLink(new File[] { file },
 					Language.CIVL_C, systemIncludes, userIncludes);
-			program.applyTransformer(CIVLTransform.OMP_SIMPLIFY);
+			program.apply(transformerFactory.getOpenMPSimplifier());
 		}
 
 		{ // Parse the simplified program

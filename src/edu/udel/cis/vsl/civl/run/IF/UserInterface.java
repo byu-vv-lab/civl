@@ -81,7 +81,8 @@ import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.Models;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
-import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
+import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
+import edu.udel.cis.vsl.civl.transform.IF.Transforms;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
@@ -128,6 +129,9 @@ public class UserInterface {
 	 * The ABC front end.
 	 */
 	private FrontEnd frontEnd = new FrontEnd();
+
+	private TransformerFactory transformerFactory = Transforms
+			.newTransformerFactory(frontEnd.getASTFactory());
 
 	/* ************************** Constructors ***************************** */
 
@@ -351,7 +355,7 @@ public class UserInterface {
 					config, civlConfig);
 			if (civlConfig.showProgram() && !civlConfig.debugOrVerbose())
 				program.prettyPrint(out);
-			hasFscanf = CIVLTransform.hasFunctionCalls(program.getAST(),
+			hasFscanf = TransformerFactory.hasFunctionCalls(program.getAST(),
 					Arrays.asList("scanf", "fscanf"));
 			if (config.isTrue(showInputVarsO) || verbose || debug) {
 				List<String> inputVarNames = inputVariableNames(program
@@ -426,6 +430,7 @@ public class UserInterface {
 	private void applyTranslationTransformers(String fileName,
 			Preprocessor preprocessor, Program program, CIVLConfiguration config)
 			throws SyntaxException {
+		// ASTFactory astFactory = program.getAST().getASTFactory();
 		Set<String> headers = new HashSet<>();
 		boolean isC = fileName.endsWith(".c");
 		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
@@ -437,7 +442,6 @@ public class UserInterface {
 				headers.add(filename);
 			}
 		}
-		new CIVLTransform();
 		if (headers.contains("stdio.h"))
 			hasStdio = true;
 		if (isC && (headers.contains("omp.h") || program.hasOmpPragma()))
@@ -449,14 +453,14 @@ public class UserInterface {
 		// always apply general transformation.
 		if (config.debugOrVerbose())
 			this.out.println("Apply general transformer...");
-		program.applyTransformer(CIVLTransform.GENERAL);
+		program.apply(transformerFactory.getGeneralTransformer());
 		if (config.debugOrVerbose()) {
 			program.prettyPrint(out);
 		}
 		if (hasStdio) {
 			if (config.debugOrVerbose())
 				this.out.println("Apply IO transformer...");
-			program.applyTransformer(CIVLTransform.IO);
+			program.apply(transformerFactory.getIOTransformer());
 			if (config.debugOrVerbose()) {
 				program.prettyPrint(out);
 			}
@@ -465,11 +469,11 @@ public class UserInterface {
 			if (!config.ompNoSimplify()) {
 				if (config.debugOrVerbose())
 					this.out.println("Apply OpenMP simplifier...");
-				program.applyTransformer(CIVLTransform.OMP_SIMPLIFY);
+				program.apply(transformerFactory.getOpenMPSimplifier());
 			}
 			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP transformer...");
-			program.applyTransformer(CIVLTransform.OPENMP);
+			program.apply(transformerFactory.getOpenMP2CIVLTransformer());
 			if (config.debugOrVerbose())
 				program.prettyPrint(out);
 		}
@@ -477,20 +481,20 @@ public class UserInterface {
 			if (config.svcomp()) {
 				if (config.debugOrVerbose())
 					this.out.println("Apply Macro transformer for svcomp programs ...");
-				program.applyTransformer(CIVLTransform.MACRO);
+				program.apply(transformerFactory.getMacroTransformer());
 				if (config.debugOrVerbose())
 					program.prettyPrint(out);
 			}
 			if (config.debugOrVerbose())
 				this.out.println("Apply Pthread transformer...");
-			program.applyTransformer(CIVLTransform.PTHREAD);
+			program.apply(transformerFactory.getPthread2CIVLTransformer());
 			if (config.debugOrVerbose())
 				program.prettyPrint(out);
 		}
 		if (hasMpi) {
 			if (config.debugOrVerbose())
 				this.out.println("Apply MPI transformer...");
-			program.applyTransformer(CIVLTransform.MPI);
+			program.apply(transformerFactory.getMPI2CIVLTransformer());
 			if (config.debugOrVerbose())
 				program.prettyPrint(out);
 		}

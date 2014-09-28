@@ -14,15 +14,10 @@ import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
-import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
+import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
+import edu.udel.cis.vsl.civl.transform.IF.Transforms;
 
 public class OmpTransformerTest {
-
-	// TODO: Kluge to get static code to execute. Needed to set up transformers.
-	// find a better way.
-	static {
-		new CIVLTransform();
-	}
 
 	/* *************************** Static Fields *************************** */
 
@@ -64,6 +59,8 @@ public class OmpTransformerTest {
 	private void check(String filenameRoot, boolean debug) throws ABCException,
 			IOException {
 		FrontEnd frontEnd = new FrontEnd();
+		TransformerFactory transformerFactory = Transforms
+				.newTransformerFactory(frontEnd.getASTFactory());
 		Program program;
 		File file = new File(root, filenameRoot + ".c");
 
@@ -77,7 +74,7 @@ public class OmpTransformerTest {
 			PrintStream beforeAST = new PrintStream("/tmp/before_AST");
 			frontEnd.printProgram(beforeAST, program, false, false);
 		}
-		program.applyTransformer(CIVLTransform.OMP_SIMPLIFY);
+		program.apply(transformerFactory.getOpenMPSimplifier());
 		if (true) {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
 			program.getAST().prettyPrint(after, true);

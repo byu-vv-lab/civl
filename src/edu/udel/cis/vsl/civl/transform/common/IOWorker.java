@@ -27,7 +27,7 @@ import edu.udel.cis.vsl.abc.err.IF.ABCUnsupportedException;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.StringLiteral;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
+import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
 
 /**
  * The IO transformer transforms<br>
@@ -534,7 +534,7 @@ public class IOWorker extends BaseWorker {
 	 * @return
 	 */
 	private boolean isTransformationNeeded(AST unit) {
-		boolean hasScanf = CIVLTransform.hasFunctionCalls(unit,
+		boolean hasScanf = TransformerFactory.hasFunctionCalls(unit,
 				Arrays.asList(SCANF, FSCANF));
 		boolean hasStderr;
 
