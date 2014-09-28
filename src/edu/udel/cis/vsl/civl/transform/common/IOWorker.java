@@ -40,23 +40,7 @@ import edu.udel.cis.vsl.civl.transform.IF.CIVLTransform;
  * @author zmanchun
  * 
  */
-public class IOTransformer extends CIVLBaseTransformer {
-
-	/* ************************** Public Static Fields *********************** */
-	/**
-	 * The code (short name) of this transformer.
-	 */
-	public final static String CODE = "io";
-
-	/**
-	 * The long name of the transformer.
-	 */
-	public final static String LONG_NAME = "IOTransformer";
-
-	/**
-	 * The description of this transformer.
-	 */
-	public final static String SHORT_DESCRIPTION = "transforms C program with IO to CIVL-C";
+public class IOWorker extends BaseWorker {
 
 	/* ************************** Private Static Fields ********************** */
 	/**
@@ -187,9 +171,8 @@ public class IOTransformer extends CIVLBaseTransformer {
 	 * @param config
 	 *            The CIVL configuration.
 	 */
-	public IOTransformer(ASTFactory astFactory) {
-		super(IOTransformer.CODE, IOTransformer.LONG_NAME,
-				IOTransformer.SHORT_DESCRIPTION, astFactory);
+	public IOWorker(ASTFactory astFactory) {
+		super(astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */

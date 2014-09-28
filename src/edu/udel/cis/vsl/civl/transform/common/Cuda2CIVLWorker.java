@@ -23,11 +23,10 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
-public class Cuda2CIVLTransformer extends CIVLBaseTransformer {
+public class Cuda2CIVLWorker extends BaseWorker {
 
-	protected Cuda2CIVLTransformer(String code, String longName,
-			String shortDescription, ASTFactory astFactory) {
-		super(code, longName, shortDescription, astFactory);
+	public Cuda2CIVLWorker(ASTFactory astFactory) {
+		super(astFactory);
 	}
 
 	@Override

@@ -38,11 +38,7 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 
-public class GeneralTransformer extends CIVLBaseTransformer {
-
-	public final static String CODE = "general";
-	public final static String LONG_NAME = "GeneralTransformer";
-	public final static String SHORT_DESCRIPTION = "transforms general features of C programs to CIVL-C";
+public class GeneralWorker extends BaseWorker {
 
 	private final static String MALLOC = "malloc";
 	private final static String MY_ROOT_SCOPE = "CIVL_root";
@@ -55,8 +51,8 @@ public class GeneralTransformer extends CIVLBaseTransformer {
 	private AssumeNode argcAssumption = null;
 	private Source mainSource;
 
-	public GeneralTransformer(ASTFactory astFactory) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
+	public GeneralWorker(ASTFactory astFactory) {
+		super(astFactory);
 	}
 
 	@Override

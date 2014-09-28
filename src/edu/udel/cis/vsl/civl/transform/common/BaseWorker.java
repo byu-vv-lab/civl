@@ -1,11 +1,11 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
-// TODO: deprecating this in favor or TransformerWorker
-
+import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.NodeFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
@@ -16,40 +16,30 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.token.IF.Source;
-import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
+import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
 /**
- * This is the base transformer of CIVL. Any transformer implemented in CIVL
- * should extend this class. This class extends BaseTransformer (from ABC) and
- * provides extra instance fields and common methods to be used by any
- * particular transformers.
+ * Object used to perform one transformation task. It is instantiated to carry
+ * out one invocation of {@link CIVLBaseTransformer#transform(AST)}.
  * 
- * @author Manchun Zheng
- * 
+ * @author siegel
  */
-public abstract class CIVLBaseTransformer extends BaseTransformer {
+public abstract class BaseWorker {
+
+	protected ASTFactory astFactory;
+
+	protected NodeFactory nodeFactory;
 
 	/* ****************************** Constructor ************************** */
 
-	/**
-	 * Creates a new instance of CIVLBaseTransformer.
-	 * 
-	 * @param code
-	 *            The code of the transformer.
-	 * @param longName
-	 *            The full name of the transformer.
-	 * @param shortDescription
-	 *            The description of the transformer.
-	 * @param astFactory
-	 *            The ASTFactory that will be used to create new AST nodes.
-	 * 
-	 */
-	protected CIVLBaseTransformer(String code, String longName,
-			String shortDescription, ASTFactory astFactory) {
-		super(code, longName, shortDescription, astFactory);
+	protected BaseWorker(ASTFactory astFactory) {
+		this.astFactory = astFactory;
+		this.nodeFactory = astFactory.getNodeFactory();
 	}
 
 	/* ************************** Protected Methods ************************ */
+
+	protected abstract AST transform(AST ast) throws SyntaxException;
 
 	/**
 	 * Creates an identifier expression node with a given name.
@@ -64,8 +54,6 @@ public abstract class CIVLBaseTransformer extends BaseTransformer {
 		return nodeFactory.newIdentifierExpressionNode(source,
 				nodeFactory.newIdentifierNode(source, name));
 	}
-
-	/* *************************** Public Methods ************************* */
 
 	protected Source getMainSource(ASTNode node) {
 		if (node.nodeKind() == NodeKind.FUNCTION_DEFINITION) {

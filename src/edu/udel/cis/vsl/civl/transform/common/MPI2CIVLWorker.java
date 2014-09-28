@@ -42,23 +42,7 @@ import edu.udel.cis.vsl.civl.util.IF.Triple;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class MPI2CIVLTransformer extends CIVLBaseTransformer {
-
-	/* ************************** Public Static Fields *********************** */
-	/**
-	 * The code (short name) of this transformer.
-	 */
-	public final static String CODE = "mpi";
-
-	/**
-	 * The long name of the transformer.
-	 */
-	public final static String LONG_NAME = "MPITransformer";
-
-	/**
-	 * The description of this transformer.
-	 */
-	public final static String SHORT_DESCRIPTION = "transforms C/MPI program to CIVL-C";
+public class MPI2CIVLWorker extends BaseWorker {
 
 	/* ************************** Private Static Fields ********************** */
 
@@ -198,7 +182,7 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 */
 	private static String PROC_TYPE = "$proc";
 
-	/* **************************** Instant Fields ************************* */
+	/* **************************** Instance Fields ************************* */
 
 	/**
 	 * There are new nodes created by the transformer, other than parsing from
@@ -213,8 +197,8 @@ public class MPI2CIVLTransformer extends CIVLBaseTransformer {
 	 * @param astFactory
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
-	public MPI2CIVLTransformer(ASTFactory astFactory) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
+	public MPI2CIVLWorker(ASTFactory astFactory) {
+		super(astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */

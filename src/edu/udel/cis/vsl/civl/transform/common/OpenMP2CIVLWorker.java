@@ -54,7 +54,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
-public class OpenMP2CIVLWorker extends TransformerWorker {
+public class OpenMP2CIVLWorker extends BaseWorker {
 
 	/* ************************** Private Static Fields ********************** */
 
@@ -419,7 +419,7 @@ public class OpenMP2CIVLWorker extends TransformerWorker {
 	 * @throws SyntaxException
 	 */
 	@Override
-	protected AST transform(AST ast) throws SyntaxException {
+	public AST transform(AST ast) throws SyntaxException {
 		SequenceNode<ExternalDefinitionNode> root = ast.getRootNode();
 		AST newAst;
 		List<ExternalDefinitionNode> externalList;

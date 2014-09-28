@@ -23,14 +23,10 @@ import edu.udel.cis.vsl.abc.token.IF.MacroExpansion;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
-public class MacroTransformer extends CIVLBaseTransformer {
+public class MacroWorker extends BaseWorker {
 
-	public final static String CODE = "macro";
-	public final static String LONG_NAME = "MacroTransformer";
-	public final static String SHORT_DESCRIPTION = "recovers macros from C programs to CIVL-C";
-
-	public MacroTransformer(ASTFactory astFactory) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
+	public MacroWorker(ASTFactory astFactory) {
+		super(astFactory);
 	}
 
 	@Override

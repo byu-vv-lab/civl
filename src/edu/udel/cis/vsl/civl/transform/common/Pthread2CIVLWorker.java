@@ -36,7 +36,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
 //TODO: add arguments to pthread_exit();
 
-public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
+public class Pthread2CIVLWorker extends BaseWorker {
 
 	private final static String PTHREAD_CREATE = "pthread_create";
 
@@ -62,23 +62,7 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 
 	private int numberOfNondetCall = 0;
 
-	/* ************************** Public Static Fields *********************** */
-	/**
-	 * The code (short name) of this transformer.
-	 */
-	public final static String CODE = "pthread";
-
-	/**
-	 * The long name of the transformer.
-	 */
-	public final static String LONG_NAME = "PthreadTransformer";
-
-	/**
-	 * The description of this transformer.
-	 */
-	public final static String SHORT_DESCRIPTION = "transforms C/Pthread program to CIVL-C";
-
-	/* **************************** Instant Fields ************************* */
+	/* **************************** Instance Fields ************************* */
 
 	/**
 	 * There are new nodes created by the transformer, other than parsing from
@@ -96,8 +80,8 @@ public class Pthread2CIVLTransformer extends CIVLBaseTransformer {
 	 * @param astFactory
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
-	public Pthread2CIVLTransformer(ASTFactory astFactory) {
-		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
+	public Pthread2CIVLWorker(ASTFactory astFactory) {
+		super(astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */

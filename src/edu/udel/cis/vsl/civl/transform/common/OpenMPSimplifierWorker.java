@@ -62,7 +62,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
  * @author dwyer
  * 
  */
-public class OpenMPSimplifierWorker extends TransformerWorker {
+public class OpenMPSimplifierWorker extends BaseWorker {
 
 	private AttributeKey dependenceKey;
 
