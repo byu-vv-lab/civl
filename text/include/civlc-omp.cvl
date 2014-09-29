@@ -171,9 +171,9 @@ void $omp_read($omp_shared shared, void *result, void *ref) {
   int status = *status_ref;
 
   if(status == EMPTY){
-    void *local = $translate_ptr(ref, shared->local);
+    void *global = $translate_ptr(ref, shared->gshared->original);
  
-    $copy(local, ref); // copy shared to local
+    $copy(ref, global); // copy shared to local
     *status_ref = FULL; // set status to FULL
   }
   // read local
