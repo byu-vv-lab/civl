@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
@@ -12,7 +12,7 @@ public class OmpHelpersTest {
 
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"), "omp");
+	private static File rootDir = new File(new File("examples"), "library/omp");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -25,10 +25,20 @@ public class OmpHelpersTest {
 	/* **************************** Test Methods *************************** */
 
 	@Test
-	public void omp_helpers1() {
-		assertTrue(ui.run("run", filename("omp_helpers1.cvl")));
+	public void teams() {
+		assertTrue(ui.run("run", filename("teams.cvl")));
 	}
 	
+	@Test
+	public void shared() {
+		assertTrue(ui.run("run", filename("shared.cvl")));
+	}
+	
+	@Test
+	public void read() {
+		assertTrue(ui.run("run", filename("read.cvl")));
+	}
+
 	@Test
 	public void exp1() {
 		assertTrue(ui.run("run", filename("div0.cvl")));
