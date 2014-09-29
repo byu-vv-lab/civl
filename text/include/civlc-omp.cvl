@@ -132,7 +132,7 @@ $omp_gshared $omp_gshared_create($omp_gteam gteam,
     ($omp_gshared)$malloc(gteam->scope, sizeof(struct OMP_gshared));
   _Bool f = $false;
  
-  $seq_init(result->init, gteam->nthreads, &f);
+  $seq_init(&result->init, gteam->nthreads, &f);
   result->original = original;
   //result->status = status;
   return result;
