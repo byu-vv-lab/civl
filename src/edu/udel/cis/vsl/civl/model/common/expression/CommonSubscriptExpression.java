@@ -76,7 +76,7 @@ public class CommonSubscriptExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		return array + "[" + index + "]";
+		return "(" + array + ")[" + index + "]";
 	}
 
 	@Override

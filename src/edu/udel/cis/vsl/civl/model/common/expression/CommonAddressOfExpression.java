@@ -42,7 +42,7 @@ public class CommonAddressOfExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		return "&" + operand;
+		return "&(" + operand + ")";
 	}
 
 	@Override

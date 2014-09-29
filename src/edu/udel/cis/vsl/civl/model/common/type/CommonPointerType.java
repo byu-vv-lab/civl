@@ -35,7 +35,7 @@ public class CommonPointerType extends CommonType implements CIVLPointerType {
 
 	@Override
 	public String toString() {
-		return baseType + "*";
+		return "(" + baseType  + ")*";
 	}
 
 	@Override

@@ -577,7 +577,7 @@ public interface SymbolicUtility {
 	/**
 	 * Get the type of elements of domain which are also elements of literal
 	 * domain object. For an N dimensional domain, the element type should be an
-	 * array of integers of length of N.<code>int array[N]</code>
+	 * array of integers of length of N, i.e. <code>int [N]</code>.
 	 * 
 	 * @param domain
 	 *            The symbolic expression of a domain object

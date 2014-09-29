@@ -123,7 +123,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			arrayType = (CIVLArrayType) objTypePointedByFirstArg;
 		else
 			throw new CIVLSyntaxException("The first argument: " + arguments[0]
-					+ " should be a pointer an imcomplete array type");
+					+ " should be a pointer to an imcomplete array"
+					+ arguments[0].getSource());
 		if (count.isZero()) {
 			state = primaryExecutor.assign(source, state, process, arrayPtr,
 					universe.array(

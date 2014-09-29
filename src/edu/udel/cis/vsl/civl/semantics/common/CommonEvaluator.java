@@ -474,8 +474,8 @@ public class CommonEvaluator implements Evaluator {
 
 			errorLogger.reportError(se);
 			throw new UnsatisfiablePathConditionException();
-		} else if (symbolicUtil.isNullPointer(pointer)) {// null pointer
-															// dereference
+		} else if (symbolicUtil.isNullPointer(pointer)) {
+			// null pointer dereference
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
 					"Attempt to deference a null pointer",
@@ -524,7 +524,7 @@ public class CommonEvaluator implements Evaluator {
 								process,
 								symbolicAnalyzer.stateToString(state),
 								ErrorKind.DEREFERENCE,
-								"Illegal pointer dereference "
+								"Illegal pointer dereference: " + e.getMessage()
 										+ source.getSummary());
 						throw new UnsatisfiablePathConditionException();
 					}
@@ -1184,7 +1184,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluating if there is a subsequence of the given domain element inn the
+	 * Evaluating if there is a subsequence of the given domain element in the
 	 * given domain.
 	 * 
 	 * @param state
@@ -1192,7 +1192,7 @@ public class CommonEvaluator implements Evaluator {
 	 * @param pid
 	 *            The PID of the process
 	 * @param domainGuard
-	 *            The expression the domainGuard statement including the
+	 *            The expression domainGuard statement includes the
 	 *            information of a domain element ,a domain object and the
 	 *            dimension of the domain.
 	 * @return The evaluation warps a state and the boolean value.

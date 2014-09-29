@@ -63,7 +63,7 @@ public class CommonDotExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		return structOrUnion.toString() + "." + fieldIndex;
+		return "(" + structOrUnion.toString() + ")." + fieldIndex;
 	}
 
 	@Override
