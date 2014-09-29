@@ -17,7 +17,9 @@ import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
@@ -154,11 +156,12 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			}
 
 			if (allIndependent) {
-				// Remove the nested workshares - since they are all independent
-				// (i.e., single)
+				/*
+				 * Remove the nested omp constructs, e.g., workshares, calls to omp_*
+				 */
 				children = node.children();
 				for (ASTNode child : children) {
-					removeOmpWorkshare(child);
+					removeOmpConstruct(child);
 				}
 
 				// Remove "statement" node from "omp parallel" node
@@ -188,7 +191,11 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		}
 	}
 
-	private void removeOmpWorkshare(ASTNode node) {
+	/*
+	 * This method assumes that all of the OMP workshares that are encountered can be safely removed
+	 * or transformed into non-OMP equivalents.
+	 */
+	private void removeOmpConstruct(ASTNode node) {
 		if (node instanceof OmpWorksharingNode) {
 			// Remove "statement" node from "omp workshare" node
 			StatementNode stmt = ((OmpStatementNode) node).statementNode();
@@ -201,11 +208,41 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			int parentIndex = getChildIndex(parent, node);
 			assert parentIndex != -1;
 			parent.setChild(parentIndex, stmt);
+			
+		} else if (node instanceof FunctionCallNode &&
+				   ((FunctionCallNode) node).getFunction() instanceof IdentifierExpressionNode &&
+				   ((IdentifierExpressionNode) ((FunctionCallNode) node).getFunction()).getIdentifier().name().startsWith("omp_")) {
+			/*
+			 * Replace 
+			 */
+			String ompFunctionName = ((IdentifierExpressionNode) ((FunctionCallNode) node).getFunction()).getIdentifier().name();
+			IntegerConstantNode replacement = null;
+			if (ompFunctionName.equals("omp_get_thread_num")) {
+				try {
+					replacement = nodeFactory.newIntegerConstantNode(node.getSource(), "0");
+				} catch (SyntaxException e) {
+					e.printStackTrace();
+				}
+			} else if (ompFunctionName.equals("omp_get_num_threads")) {
+				try {
+					replacement = nodeFactory.newIntegerConstantNode(node.getSource(), "1");
+				} catch (SyntaxException e) {
+					e.printStackTrace();
+				}
+			} else {
+				assert false : "Unsupported omp function call "+ompFunctionName+" cannot be replaced by OpenMP simplifier";
+			}
+
+			// Link "replacement" into the omp call's parent
+			ASTNode parent = node.parent();
+			int parentIndex = getChildIndex(parent, node);
+			assert parentIndex != -1;
+			parent.setChild(parentIndex, replacement);
 
 		} else if (node != null) {
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				removeOmpWorkshare(child);
+				removeOmpConstruct(child);
 			}
 		}
 	}
