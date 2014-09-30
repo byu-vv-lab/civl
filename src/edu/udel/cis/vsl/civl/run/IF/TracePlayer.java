@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
@@ -92,8 +93,9 @@ public class TracePlayer extends Player {
 		// TODO check here
 		// stateManager.setShowStates(false);
 		// stateManager.setShowSavedStates(false);
-		//civlConfig.setShowStates(false);
-		civlConfig.setShowSavedStates(false);
+		// civlConfig.setShowStates(false);
+		civlConfig.setShowSavedStates(config
+				.isTrue(CIVLConstants.showSavedStatesO));
 		civlConfig.setShowTransitions(true);
 		civlConfig.setVerbose(false);
 		log.setSearcher(null);

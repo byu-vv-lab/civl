@@ -100,7 +100,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("the function " + name
-					+ " of library pointer", call.getSource());
+					+ " of library pointer.cvh", call.getSource());
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
 		return state;

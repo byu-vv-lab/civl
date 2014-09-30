@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
@@ -93,6 +94,10 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			state = executeSeqInsert(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
+		// case "$seq_append":
+		// state = executeSeqAppend(state, pid, process, arguments,
+		// argumentValues, call.getSource());
+		// break;
 		case "$seq_length":
 			state = executeSeqLength(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
@@ -101,10 +106,30 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			state = executeSeqRemove(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
+		default:
+			throw new CIVLUnimplementedFeatureException("the function " + name
+					+ " of library seq.cvh", call.getSource());
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
 		return state;
 	}
+
+	// /**
+	// *
+	// * @param state
+	// * @param pid
+	// * @param process
+	// * @param arguments
+	// * @param argumentValues
+	// * @param source
+	// * @return
+	// */
+	// private State executeSeqAppend(State state, int pid, String process,
+	// Expression[] arguments, SymbolicExpression[] argumentValues,
+	// CIVLSource source) {
+	// // TODO Auto-generated method stub
+	// return null;
+	// }
 
 	private State executeSeqInit(State state, int pid, String process,
 			Expression[] arguments, SymbolicExpression[] argumentValues,

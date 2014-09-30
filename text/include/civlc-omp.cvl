@@ -113,11 +113,11 @@ $omp_team $omp_team_create($scope scope, $omp_gteam gteam, int tid) {
 
 /* destroys the local team object */
 void $omp_team_destroy($omp_team team) {
-  int numShared = $seq_length(&team->shared);
+  /*int numShared = $seq_length(&team->shared);
 
   for(int i = 0; i < numShared; i++){
     $free(team->shared[i]);
-  }
+    }*/
   $free(team->barrier);
   $free(team);
 }
@@ -151,6 +151,7 @@ $omp_shared $omp_shared_create($omp_team team,
     ($omp_shared)$malloc(team->scope, sizeof(struct OMP_shared));
   void *statusRefs[];
   int numStatusRefs;
+  int sharedLength;
 
   $assert !gshared->init[team->tid] :
   "Thread %d has already created its local copy for %p.\n", 
@@ -166,7 +167,9 @@ $omp_shared $omp_shared_create($omp_team team,
   numStatusRefs = $seq_length(&statusRefs);
   for(int i = 0; i < numStatusRefs; i++)
     *((int*)(statusRefs[i])) = FULL;
-  $seq_append(&team->shared, &result, 1);
+  sharedLength = $seq_length(&team->shared);
+  $seq_insert(&team->shared, sharedLength, &result, 1);
+  //$seq_append(&team->shared, &result, 1);
   return result;
 }
 
@@ -223,17 +226,17 @@ void $omp_flush($omp_shared shared, void *ref) {
   for(int i = 0; i < numRefs; i++){
     void *leaf = refs[i];
     int *leaf_status = (int *)$translate_ptr(leaf, shared->status);
-    void *leaf_local = (int *)$translate_ptr(leaf, shared->local);
+    //void *leaf_local = (int *)$translate_ptr(leaf, shared->local);
     void *leaf_shared = (int *)$translate_ptr(leaf, gshared->original);
     
     switch(*leaf_status){
       case EMPTY:
         break;
       case MODIFIED:
-        $copy(leaf_shared, leaf_local);
+        $copy(leaf_shared, leaf);
       case FULL:
         *leaf_status = EMPTY;
-        $set_default(leaf_local);
+        $set_default(leaf);
         break;
     }
   }

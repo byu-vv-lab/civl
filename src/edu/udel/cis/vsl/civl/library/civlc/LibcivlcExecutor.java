@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -156,6 +157,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		case "$waitall":
 			return executeWaitAll(state, pid, arguments, argumentValues,
 					call.getSource(), call.target());
+		case "$set_default":
+			state = executeSetDefault(state, pid, process, arguments,
+					argumentValues, call.getSource());
+			break;
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					call);
@@ -165,6 +170,49 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
+
+	/**
+	 * <pre>
+	 * updates the leaf nodes of a status variable to the default value 0
+	 * 
+	 * void $set_default(void *status);
+	 * </pre>
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeSetDefault(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		// TODO Auto-generated method stub
+		CIVLType objectTypeByPointer = symbolicAnalyzer.typeOfObjByPointer(
+				arguments[0].getSource(), state, argumentValues[0]);
+		SymbolicExpression value;
+
+		// TODO assert objectTypeByPointer.isScalarType()
+		if (objectTypeByPointer.isBoolType())
+			value = this.falseValue;
+		else if (objectTypeByPointer.isIntegerType())
+			value = this.zero;
+		else if (objectTypeByPointer.isRealType())
+			value = universe.rational(0);
+		else if (objectTypeByPointer.isCharType())
+			value = universe.character((char) 0);
+		else if (objectTypeByPointer.isPointerType())
+			value = symbolicUtil.nullPointer();
+		else
+			throw new CIVLUnimplementedFeatureException("Argument of "
+					+ objectTypeByPointer + " type for $set_default()", source);
+		state = this.primaryExecutor.assign(source, state, process,
+				argumentValues[0], value);
+		return state;
+	}
 
 	/**
 	 * $exit terminates the calling process.
@@ -500,7 +548,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The number of processes for $waitall "
 							+ "needs a concrete value.",
-							symbolicAnalyzer.stateToString(state), arguments[1].getSource());
+					symbolicAnalyzer.stateToString(state),
+					arguments[1].getSource());
 
 			this.errorLogger.reportError(err);
 		} else {

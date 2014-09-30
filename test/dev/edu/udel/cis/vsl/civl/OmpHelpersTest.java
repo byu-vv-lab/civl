@@ -45,6 +45,15 @@ public class OmpHelpersTest {
 		assertTrue(ui.run("run", filename("write.cvl")));
 	}
 
+	@Test
+	public void barrierFlush() {
+		// assertTrue(ui.run("run", filename("barrierFlush.cvl"),
+		// "-showSavedStates"));
+		assertTrue(ui.run("run", filename("barrierFlush.cvl")));
+		// ui.run("run", filename("barrierFlush.cvl"));
+		// ui.run("replay", "-gui", filename("barrierFlush.cvl"));
+	}
+
 	@Ignore
 	@Test
 	public void exp1() {
