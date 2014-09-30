@@ -3,29 +3,24 @@
 #include<stdio.h>
 
 void main(){
-  int data = 123;
+  int sum = 0;
   $omp_gteam gteam = $omp_gteam_create($here, 3);
-  $omp_gshared gshared = $omp_gshared_create(gteam, &data);  
+  $omp_gshared gshared = $omp_gshared_create(gteam, &sum);  
 
   void thread(int tid) {
-    int data_local;
-    int data_status;
+    int sum_local;
+    int sum_status;
     int private;
 
     $omp_team team = $omp_team_create($here, gteam, tid);
-    $omp_shared shared = $omp_shared_create(team, gshared, &data_local, &data_status);
+    $omp_shared shared = $omp_shared_create(team, gshared, &sum_local, &sum_status);
     printf("Hello from thread %d\n", tid);
-    $omp_read(shared, &private, &data_local);
-    $assert private == 123;    
-    if(tid == 0){
-      // data = 456;
-      int tmp = 456;
-
-      $omp_write(shared, &data_local, &tmp);
-    }
+    // sum = sum + tid;
+    sum_local = sum_local + tid;
+    $omp_apply_assoc(shared, _SUM, &sum_local);
     $omp_barrier_and_flush(team);
-    $omp_read(shared, &private, &data_local);
-    $assert private == 456;
+    $omp_read(shared, &private, &sum_local);
+    $assert private == 3;
     $omp_shared_destroy(shared);
     $omp_team_destroy(team);
   }
@@ -33,7 +28,7 @@ void main(){
   $parfor (int i: ($domain){ 0 .. 2 }) {
     thread(i);
   }
-  $assert data == 456;
+  $assert sum == 6;
   $omp_gshared_destroy(gshared);
   $omp_gteam_destroy(gteam);
 }

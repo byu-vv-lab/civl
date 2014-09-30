@@ -25,6 +25,7 @@ void main(){
   $parfor (int i: ($domain){ 0 .. 2 }) {
     thread(i);
   }
+  $assert data == 123;
   $omp_gshared_destroy(gshared);
   $omp_gteam_destroy(gteam);
 }

@@ -215,6 +215,7 @@ void $omp_flush($omp_shared shared, void *ref) {
   // being flushed...
   // also, it should be ok to flush a memory unit if you are not
   // the owner but you also have no reads or writes to that variable
+  // TODO: assert there is at most one thread for which this memory unit has status MODIFIED;
   $omp_gshared gshared = shared->gshared;
   int tid = shared->tid;
   void *refs[];

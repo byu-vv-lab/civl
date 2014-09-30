@@ -53,6 +53,11 @@ public class OmpHelpersTest {
 		// ui.run("run", filename("barrierFlush.cvl"));
 		// ui.run("replay", "-gui", filename("barrierFlush.cvl"));
 	}
+	
+	@Test
+	public void reduction() {
+		assertTrue(ui.run("run", filename("reduction.cvl")));
+	}
 
 	@Ignore
 	@Test
