@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,6 +21,7 @@ import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -361,5 +363,9 @@ public interface Evaluator {
 	public Pair<Evaluation, Map<Integer, NumericExpression>> evaluatePointerAdd(
 			State state, String process, SymbolicExpression ptr,
 			NumericExpression offset, boolean ifCheckOutput, CIVLSource source)
+			throws UnsatisfiablePathConditionException;
+
+	List<ReferenceExpression> leafNodeReferencesOfType(CIVLSource source,
+			State state, int pid, CIVLType type)
 			throws UnsatisfiablePathConditionException;
 }

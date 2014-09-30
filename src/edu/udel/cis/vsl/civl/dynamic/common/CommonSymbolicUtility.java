@@ -555,7 +555,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			NumericExpression length, SymbolicExpression value) {
 		Reasoner reasoner = universe.reasoner(context);
 		IntegerNumber length_number = (IntegerNumber) reasoner
-				.extractNumber((NumericExpression) length);
+				.extractNumber(length);
 
 		if (length_number != null) {
 			int length_int = length_number.intValue();
@@ -1199,7 +1199,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				}
 				break;
 			} else {
-				 newValues[i] = this.getRangeMin(range);
+				newValues[i] = this.getRangeMin(range);
 			}
 		}
 		return Arrays.asList(newValues);

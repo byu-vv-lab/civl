@@ -1,5 +1,8 @@
 package edu.udel.cis.vsl.civl.library.pointer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
@@ -7,6 +10,7 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -90,8 +94,57 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			state = executeTranslatePointer(state, pid, process, lhs,
 					arguments, argumentValues, call.getSource());
 			break;
+		case "$leaf_node_ptrs":
+			state = executeLeafNodePointers(state, pid, process, arguments,
+					argumentValues, call.getSource());
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException("the function " + name
+					+ " of library pointer", call.getSource());
 		}
 		state = stateFactory.setLocation(state, pid, call.target());
+		return state;
+	}
+
+	/**
+	 * Copies the references to the leaf nodes of obj to the given array
+	 * <p>
+	 * obj:pointer to type T' whose leaf node types are all type T <br>
+	 * array: pointer to array of pointer to type T
+	 * 
+	 * void $leaf_node_ptrs(void *array, void *obj);
+	 * 
+	 * incomplete array type not supporte at this point
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeLeafNodePointers(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		// TODO check null or invalid pointers.
+		CIVLType objectType = symbolicAnalyzer.typeOfObjByPointer(
+				arguments[1].getSource(), state, argumentValues[1]);
+		List<ReferenceExpression> leafs = this.evaluator
+				.leafNodeReferencesOfType(arguments[1].getSource(), state, pid,
+						objectType);
+		List<SymbolicExpression> leafPointers = new ArrayList<>();
+		SymbolicExpression objectPointer = argumentValues[1];
+		SymbolicExpression result;
+
+		for (ReferenceExpression ref : leafs) {
+			leafPointers.add(this.symbolicUtil.setSymRef(objectPointer, ref));
+		}
+		result = universe.array(modelFactory.pointerSymbolicType(),
+				leafPointers);
+		state = this.primaryExecutor.assign(source, state, process,
+				argumentValues[0], result);
 		return state;
 	}
 

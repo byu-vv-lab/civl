@@ -94,7 +94,8 @@ void $omp_gshared_destroy($omp_gshared gshared);
 /* creates a local shared object, returning handle to it.  
  * The local copy of the shared object is initialized
  * by copying the values from the original variable referenced to
- * by the gshared object. The created shared object is appended
+ * by the gshared object. The status variable is initialized to FULL.
+ * The created shared object is appended
  * to the shared queue of the $omp_team object. */
 $omp_shared $omp_shared_create($omp_team team,
    $omp_gshared gshared, void *local, void *status);

@@ -103,6 +103,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.NumberFactory;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
@@ -524,8 +525,8 @@ public class CommonEvaluator implements Evaluator {
 								process,
 								symbolicAnalyzer.stateToString(state),
 								ErrorKind.DEREFERENCE,
-								"Illegal pointer dereference: " + e.getMessage()
-										+ source.getSummary());
+								"Illegal pointer dereference: "
+										+ e.getMessage() + source.getSummary());
 						throw new UnsatisfiablePathConditionException();
 					}
 					return new Evaluation(state, deref);
@@ -1192,9 +1193,9 @@ public class CommonEvaluator implements Evaluator {
 	 * @param pid
 	 *            The PID of the process
 	 * @param domainGuard
-	 *            The expression domainGuard statement includes the
-	 *            information of a domain element ,a domain object and the
-	 *            dimension of the domain.
+	 *            The expression domainGuard statement includes the information
+	 *            of a domain element ,a domain object and the dimension of the
+	 *            domain.
 	 * @return The evaluation warps a state and the boolean value.
 	 * @throws UnsatisfiablePathConditionException
 	 */
@@ -3779,5 +3780,87 @@ public class CommonEvaluator implements Evaluator {
 				.castToArrayElementReference(state, ptr, source);
 		return this.pointerAddWorker(state, process, newPtr, offset,
 				ifCheckOutput, source);
+	}
+
+	@Override
+	public List<ReferenceExpression> leafNodeReferencesOfType(
+			CIVLSource source, State state, int pid, CIVLType type) throws UnsatisfiablePathConditionException {
+		return this.leafNodeReferencesOfType(source, state, pid, type,
+				universe.identityReference());
+	}
+
+	private List<ReferenceExpression> leafNodeReferencesOfType(
+			CIVLSource source, State state, int pid, CIVLType type,
+			ReferenceExpression parent)
+			throws UnsatisfiablePathConditionException {
+		List<ReferenceExpression> result = new ArrayList<>();
+		TypeKind typeKind = type.typeKind();
+
+		switch (typeKind) {
+		case ARRAY:
+			throw new CIVLUnimplementedFeatureException(
+					"sub-references of incomplete arrays", source);
+
+		case COMPLETE_ARRAY: {
+			CIVLCompleteArrayType arrayType = (CIVLCompleteArrayType) type;
+			Expression extent = arrayType.extent();
+			Evaluation eval = this.evaluate(state, pid, extent);
+			NumericExpression extentValue = (NumericExpression) eval.value;
+			CIVLType eleType = arrayType.elementType();
+
+			state = eval.state;
+
+			Reasoner reasoner = universe.reasoner(state.getPathCondition());
+			IntegerNumber length_number = (IntegerNumber) reasoner
+					.extractNumber(extentValue);
+
+			if (length_number != null) {
+				int length_int = length_number.intValue();
+
+				for (int i = 0; i < length_int; i++) {
+					ArrayElementReference arrayEle = universe
+							.arrayElementReference(parent, universe.integer(i));
+
+					result.addAll(this.leafNodeReferencesOfType(source, state,
+							pid, eleType, arrayEle));
+				}
+			} else
+				throw new CIVLUnimplementedFeatureException(
+						"sub-references of arrays with non-concrete extent",
+						source);
+			break;
+		}
+		case DOMAIN:
+		case ENUM:
+		case POINTER:
+		case BUNDLE:
+		case PRIMITIVE:
+			if (type.isVoidType())
+				throw new CIVLUnimplementedFeatureException(
+						"sub-references of void type", source);
+			result.add(parent);
+			break;
+		case STRUCT_OR_UNION: {
+			CIVLStructOrUnionType structOrUnion = (CIVLStructOrUnionType) type;
+			int numFields = structOrUnion.numFields();
+
+			if (structOrUnion.isUnionType())
+				throw new CIVLUnimplementedFeatureException(
+						"sub-references of union type", source);
+			for (int i = 0; i < numFields; i++) {
+				CIVLType filedType = structOrUnion.getField(i).type();
+				TupleComponentReference tupleComp = universe
+						.tupleComponentReference(parent, universe.intObject(i));
+
+				result.addAll(this.leafNodeReferencesOfType(source, state, pid,
+						filedType, tupleComp));
+			}
+			break;
+		}
+		default:
+			throw new CIVLUnimplementedFeatureException("sub-references of "
+					+ typeKind, source);
+		}
+		return result;
 	}
 }
