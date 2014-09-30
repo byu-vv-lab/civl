@@ -490,7 +490,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		BooleanExpression pathCondition = state.getPathCondition();
 		BooleanExpression claim;
 		Reasoner reasoner = universe.reasoner(pathCondition);
-		CIVLOperation CIVL_Op;
+		CIVLOperator CIVL_Op;
 		Evaluation eval = null;
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
@@ -509,7 +509,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			return state;
 		// In executor, operation must be concrete.
 		// Translate operation
-		CIVL_Op = CIVLOperation.values()[((IntegerNumber) reasoner
+		CIVL_Op = CIVLOperator.values()[((IntegerNumber) reasoner
 				.extractNumber(operation)).intValue()];
 		// Get the second operand from pointer
 
@@ -528,7 +528,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 
 			// TODO: move civlOp to super class
 			// TODO: new name for civlOperation
-			arrayEleFunc = libevaluator.civlOperation(state, process,
+			arrayEleFunc = this.applyCIVLOperator(state, process,
 					(NumericExpression) universe.arrayRead(data, index),
 					(NumericExpression) universe.arrayRead(secOperand, index),
 					CIVL_Op, source);
@@ -552,7 +552,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			while (reasoner.isValid(claim)) {
 				dataElement = universe.arrayRead(data, i);
 				secOperandElement = universe.arrayRead(secOperand, i);
-				opRet = libevaluator.civlOperation(state, process, dataElement,
+				opRet = this.applyCIVLOperator(state, process, dataElement,
 						secOperandElement, CIVL_Op, source);
 				secOperand = universe.arrayWrite(secOperand, i, opRet);
 				i = universe.add(i, one);

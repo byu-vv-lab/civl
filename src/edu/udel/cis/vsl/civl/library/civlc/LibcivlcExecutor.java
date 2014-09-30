@@ -161,6 +161,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = executeSetDefault(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$apply":
+			state = executeApply(state, pid, process, arguments,
+					argumentValues, call.getSource());
+			break;
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					call);
@@ -170,6 +174,47 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
+
+	/**
+	 * <pre>
+	 * applies the operation op on obj1 and obj2 and stores the result 
+	 * void $apply(void *obj1, $operation op, void *obj2, void *result);
+	 * </pre>
+	 * 
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeApply(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		// TODO Auto-generated method stub
+		SymbolicExpression obj1, obj2, result;
+		Evaluation eval;
+		int operator;
+
+		eval = this.evaluator.dereference(arguments[0].getSource(), state,
+				process, argumentValues[0], false);
+		state = eval.state;
+		obj1 = eval.value;
+		eval = this.evaluator.dereference(arguments[2].getSource(), state,
+				process, argumentValues[2], false);
+		state = eval.state;
+		obj2 = eval.value;
+		operator = this.symbolicUtil.extractInt(arguments[1].getSource(),
+				(NumericExpression) argumentValues[1]);
+		result = this.applyCIVLOperator(state, process, obj1, obj2,
+				this.translateOperator(operator), source);
+		state = this.primaryExecutor.assign(source, state, process,
+				argumentValues[3], result);
+		return state;
+	}
 
 	/**
 	 * <pre>
@@ -584,4 +629,5 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		}
 		return state;
 	}
+
 }

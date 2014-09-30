@@ -5,12 +5,8 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
@@ -20,8 +16,6 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
-import edu.udel.cis.vsl.sarl.IF.SARLException;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -35,80 +29,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 	}
 
 	/* ************************* Public Function *************************** */
-	/**
-	 * Completing an operation (which is included in CIVLOperation enumerator).
-	 * 
-	 * @author Ziqing Luo
-	 * @param arg0
-	 *            The new data got from the bundle
-	 * @param arg1
-	 *            The data has already been received previously
-	 * @param op
-	 *            The CIVL Operation
-	 * @return
-	 */
-	public SymbolicExpression civlOperation(State state, String process,
-			SymbolicExpression arg0, SymbolicExpression arg1, CIVLOperation op,
-			CIVLSource civlsource) {
-		BooleanExpression claim;
-
-		/*
-		 * For MAX and MIN operation, if CIVL cannot figure out a concrete
-		 * result, make a abstract function for it.
-		 */
-		try {
-			switch (op) {
-			// TODO: consider using heuristic to switch to abstract
-			// functions if these expressions get too big (max,min):
-			case CIVL_MAX:
-				claim = universe.lessThan((NumericExpression) arg1,
-						(NumericExpression) arg0);
-				return universe.cond(claim, arg0, arg1);
-			case CIVL_MIN:
-				claim = universe.lessThan((NumericExpression) arg0,
-						(NumericExpression) arg1);
-				return universe.cond(claim, arg0, arg1);
-			case CIVL_SUM:
-				return universe.add((NumericExpression) arg0,
-						(NumericExpression) arg1);
-			case CIVL_PROD:
-				return universe.multiply((NumericExpression) arg0,
-						(NumericExpression) arg1);
-			case CIVL_LAND:
-				return universe.and((BooleanExpression) arg0,
-						(BooleanExpression) arg1);
-			case CIVL_LOR:
-				return universe.or((BooleanExpression) arg0,
-						(BooleanExpression) arg1);
-			case CIVL_LXOR:
-				BooleanExpression notNewData = universe
-						.not((BooleanExpression) arg0);
-				BooleanExpression notPrevData = universe
-						.not((BooleanExpression) arg1);
-
-				return universe.or(
-						universe.and(notNewData, (BooleanExpression) arg1),
-						universe.and((BooleanExpression) arg0, notPrevData));
-			case CIVL_BAND:
-			case CIVL_BOR:
-			case CIVL_BXOR:
-			case CIVL_MINLOC:
-			case CIVL_MAXLOC:
-			case CIVL_REPLACE:
-			default:
-				throw new CIVLUnimplementedFeatureException("CIVLOperation: "
-						+ op.name());
-			}
-		} catch (ClassCastException e) {
-			throw new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.PROVEABLE, process,
-					"Invalid operands type for CIVL Operation: " + op.name(),
-					civlsource);
-		} catch (SARLException e) {
-			throw new CIVLInternalException("CIVL Operation " + op
-					+ " exception", civlsource);
-		}
-	}
 
 	/**
 	 * Get a sequence of data starting from a pointer.
