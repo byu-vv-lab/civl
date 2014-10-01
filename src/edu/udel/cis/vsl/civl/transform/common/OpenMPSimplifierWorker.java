@@ -400,6 +400,22 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			if (condition instanceof OperatorNode) {
 				OperatorNode relop = (OperatorNode) condition;
 
+				/*
+				 * The initial bound of the iteration space is established by an assignment statement.
+				 * We need to convert that assignment into an appropriate inequality to appropriately
+				 * constrain the loop variable values.   The code assumes that the polarity of the loop
+				 * exit condition and the increment operator are compatible, i.e., a "<" or "<=" test is
+				 * coupled with an "++" and a ">" or ">=" with a "--"; this condition is not checked here.
+				 * We reverse the polarity of the loop exit condition to establish the boundary condition
+				 * associated with the initialization and make that condition non-strict to account for the
+				 * equality implicit in the assignment.
+				 * 
+				 * This results in the following types of behavior:
+				 *      for (int i=0; i<N; i++)      generates "i>=0" as an "initial" bound
+				 *      for (int i=0; i<=N-1; i++)   generates "i>=0" as an "initial" bound
+				 *      for (int i=N-1; i>=0; i++)   generates "i<=N-1" as an "initial" bound
+				 *      for (int i=N-1; i>-1; i++)   generates "i<=N-1" as an "initial" bound
+				 */
 				List<ExpressionNode> arguments = new LinkedList<ExpressionNode>();
 				ExpressionNode lvNode = nodeFactory
 						.newIdentifierExpressionNode(ompFor.getSource(),
@@ -409,11 +425,14 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 				Operator op = relop.getOperator();
 				if (op == Operator.LT || op == Operator.LTE) {
-					boundingConditions.add(nodeFactory.newOperatorNode(
-							ompFor.getSource(), Operator.GTE, arguments));
+					OperatorNode newBoundExpr = nodeFactory.newOperatorNode(
+							ompFor.getSource(), Operator.GTE, arguments);
+					boundingConditions.add(newBoundExpr);
+
 				} else if (op == Operator.GT || op == Operator.GTE) {
-					boundingConditions.add(nodeFactory.newOperatorNode(
-							ompFor.getSource(), Operator.LTE, arguments));
+					OperatorNode newBoundExpr = nodeFactory.newOperatorNode(
+							ompFor.getSource(), Operator.LTE, arguments);
+					boundingConditions.add(newBoundExpr);		
 				} else {
 					assert false : "OpenMP Canonical Loop Form violated (condition must be one of >, >=, <, or <=) :"
 							+ relop;
