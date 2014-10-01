@@ -11,16 +11,17 @@ void main(){
     int sum_local;
     int sum_status;
     int private;
+    int _sum = 0;
 
     $omp_team team = $omp_team_create($here, gteam, tid);
     $omp_shared shared = $omp_shared_create(team, gshared, &sum_local, &sum_status);
     printf("Hello from thread %d\n", tid);
-    // sum = sum + tid;
-    sum_local = sum_local + tid;
-    $omp_apply_assoc(shared, _SUM, &sum_local);
+    //(reduction) sum = sum + tid;
+    _sum = _sum + tid+1;
+    $omp_apply_assoc(shared, _SUM, &_sum);
     $omp_barrier_and_flush(team);
     $omp_read(shared, &private, &sum_local);
-    $assert private == 3;
+    $assert private == 6;
     $omp_shared_destroy(shared);
     $omp_team_destroy(team);
   }

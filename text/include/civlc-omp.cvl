@@ -7,6 +7,12 @@
 #include<concurrency.cvh>
 #include<domain.cvh>
 
+/** Important notes:
+ * 1. none of those variables that comprise a shared object should ever 
+ *    be accessed directly. All access must happen through $omp_read/write, 
+ *    including the local views, status, and shared view.
+ */
+
 /* Completes the definition of struct OMP_gshared given in civlc-omp.cvh.
  */
 struct OMP_gshared {
@@ -200,6 +206,7 @@ void $omp_write($omp_shared shared, void *ref, void *value) {
   *status_ref = MODIFIED;
 }
 
+/* Only applicable to scalar type? */
 void $omp_apply_assoc($omp_shared shared,
                       $operation op,
                       void *local){
