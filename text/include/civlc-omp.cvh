@@ -6,6 +6,12 @@
 #include <civlc.cvh>
 #include <domain.cvh>
 
+/** Important notes:
+ * 1. none of those variables that comprise a shared object should ever 
+ *    be accessed directly. All access must happen through $omp_read/write, 
+ *    including the local views, status, and shared view.
+ */
+
 /* *********************** Types *********************** */
 
 /* The status of a shared variable (or component of a shared
