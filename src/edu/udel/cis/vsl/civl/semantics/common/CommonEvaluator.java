@@ -3491,6 +3491,7 @@ public class CommonEvaluator implements Evaluator {
 				memoryUnitsOfExpression(state, pid, arg, memoryUnits);
 			}
 			break;
+		case DOMAIN_GUARD:
 		case WAIT_GUARD:
 			break;
 		case QUANTIFIER:

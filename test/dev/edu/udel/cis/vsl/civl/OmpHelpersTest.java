@@ -58,6 +58,11 @@ public class OmpHelpersTest {
 	public void reduction() {
 		assertTrue(ui.run("run", filename("reduction.cvl")));
 	}
+	
+	@Test
+	public void sections() {
+		assertTrue(ui.run("run", filename("sections.cvl")));
+	}
 
 	@Ignore
 	@Test
