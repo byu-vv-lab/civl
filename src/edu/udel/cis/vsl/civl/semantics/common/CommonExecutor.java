@@ -829,8 +829,8 @@ public class CommonExecutor implements Executor {
 				literalDomain = universe.unionExtract(oneObj,
 						universe.tupleRead(domValue, twoObj));
 				literalCounterExpr = nextInDomain.getLiteralDomCounter();
-				counterValue = state.valueOf(pid,
-						literalCounterExpr.variable());
+				counterValue = state
+						.valueOf(pid, literalCounterExpr.variable());
 				// Evaluate the value of the counter variable. Here we can
 				// initialize it as 0 or search the specific value from the
 				// given domain element if the variable is uninitialized.If it
@@ -845,7 +845,8 @@ public class CommonExecutor implements Executor {
 								literalDomain, varValues, dim);
 				} else
 					counter = ((IntegerNumber) universe
-							.extractNumber((NumericExpression)counterValue)).intValue();
+							.extractNumber((NumericExpression) counterValue))
+							.intValue();
 
 				if (counter == -1)
 					throw new CIVLExecutionException(ErrorKind.OTHER,
@@ -1282,16 +1283,10 @@ public class CommonExecutor implements Executor {
 					result = stateFactory.setVariable(state, vid, sid,
 							newVariableValue);
 				} catch (SARLException e) {
-					errorLogger.logSimpleError(
-							source,
-							state,
-							process,
+					errorLogger.logSimpleError(source, state, process,
 							symbolicAnalyzer.stateToString(state),
 							ErrorKind.DEREFERENCE,
-							"Invalid pointer dereference: "
-									+ symbolicAnalyzer
-											.symbolicExpressionToString(source,
-													state, pointer));
+							"Invalid assignment: " + e.getMessage());
 					throw new UnsatisfiablePathConditionException();
 				}
 			}

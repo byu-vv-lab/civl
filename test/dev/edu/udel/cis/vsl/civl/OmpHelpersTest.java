@@ -53,15 +53,25 @@ public class OmpHelpersTest {
 		// ui.run("run", filename("barrierFlush.cvl"));
 		// ui.run("replay", "-gui", filename("barrierFlush.cvl"));
 	}
-	
+
 	@Test
 	public void reduction() {
 		assertTrue(ui.run("run", filename("reduction.cvl")));
 	}
-	
+
 	@Test
 	public void sections() {
 		assertTrue(ui.run("run", filename("sections.cvl")));
+	}
+
+	@Test
+	public void single() {
+		assertTrue(ui.run("run", filename("single.cvl")));
+	}
+	
+	@Test
+	public void ompfor() {
+		assertTrue(ui.run("run", filename("for.cvl")));
 	}
 
 	@Ignore
