@@ -2575,7 +2575,7 @@ public class CommonEvaluator implements Evaluator {
 			state = eval.state;
 			extent = (NumericExpression) eval.value;
 			eval.value = symbolicUtil.newArray(state.getPathCondition(),
-					extent, elementValue);
+					elementType.getDynamicType(universe), extent, elementValue);
 			break;
 		}
 		case BUNDLE:
@@ -3146,7 +3146,8 @@ public class CommonEvaluator implements Evaluator {
 					arrayType.elementType());
 			state = eval.state;
 			element = eval.value;
-			eval.value = symbolicUtil.newArray(state.getPathCondition(), size,
+			eval.value = symbolicUtil.newArray(state.getPathCondition(),
+					arrayType.elementType().getDynamicType(universe), size,
 					element);
 			break;
 		}
@@ -3785,7 +3786,8 @@ public class CommonEvaluator implements Evaluator {
 
 	@Override
 	public List<ReferenceExpression> leafNodeReferencesOfType(
-			CIVLSource source, State state, int pid, CIVLType type) throws UnsatisfiablePathConditionException {
+			CIVLSource source, State state, int pid, CIVLType type)
+			throws UnsatisfiablePathConditionException {
 		return this.leafNodeReferencesOfType(source, state, pid, type,
 				universe.identityReference());
 	}

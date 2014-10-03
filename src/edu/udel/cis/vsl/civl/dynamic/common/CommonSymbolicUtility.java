@@ -552,7 +552,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 	@Override
 	public SymbolicExpression newArray(BooleanExpression context,
-			NumericExpression length, SymbolicExpression value) {
+			SymbolicType elementValueType, NumericExpression length,
+			SymbolicExpression eleValue) {
 		Reasoner reasoner = universe.reasoner(context);
 		IntegerNumber length_number = (IntegerNumber) reasoner
 				.extractNumber(length);
@@ -562,20 +563,19 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			List<SymbolicExpression> values = new ArrayList<>(length_int);
 
 			for (int i = 0; i < length_int; i++)
-				values.add(value);
-			return universe.array(value.type(), values);
+				values.add(eleValue);
+			return universe.array(elementValueType, values);
 		} else {
 			NumericSymbolicConstant index = (NumericSymbolicConstant) universe
 					.symbolicConstant(universe.stringObject("i"),
 							universe.integerType());
-			SymbolicExpression arrayEleFunction = universe.lambda(index, value);
+			SymbolicExpression arrayEleFunction = universe.lambda(index, eleValue);
 			SymbolicCompleteArrayType arrayValueType = universe.arrayType(
-					value.type(), length);
+					elementValueType, length);
 
 			return universe.arrayLambda(arrayValueType, arrayEleFunction);
 		}
 	}
-
 	@Override
 	public SymbolicExpression nullPointer() {
 		return this.nullPointer;
@@ -714,7 +714,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	/* *************************** Private Methods ************************* */
-
+	
 	/**
 	 * Are the two given references disjoint?
 	 * 

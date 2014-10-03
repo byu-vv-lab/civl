@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.library.omp;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -30,15 +29,6 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 public class LibompExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
-
-	private CIVLType ompLoopInfoType;
-
-	private SymbolicType dynamicOmpLoopInfoType;
-
-	private CIVLType ompSectionsInfoType;
-
-	private SymbolicType dynamicOmpSectionsInfoType;
-
 	public LibompExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
 			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
@@ -47,13 +37,6 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 		super(name, primaryExecutor, modelFactory, symbolicUtil,
 				symbolicAnalyzer, civlConfig, libExecutorLoader,
 				libEvaluatorLoader);
-		ompLoopInfoType = model.function("$omp_ws_arrive_loop").functionType()
-				.returnType();
-		dynamicOmpLoopInfoType = ompLoopInfoType.getDynamicType(universe);
-		ompSectionsInfoType = model.function("$omp_ws_arrive_sections")
-				.functionType().returnType();
-		dynamicOmpSectionsInfoType = ompSectionsInfoType
-				.getDynamicType(universe);
 	}
 
 	@Override
@@ -84,10 +67,6 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 			state = eval.state;
 		}
 		switch (functionName) {
-		case "$omp_gteam_create":
-			state = execute_gteam_create(source, state, pid, process, lhs,
-					arguments, argumentValues);
-			break;
 		case "$omp_gteam_destroy":
 		case "$omp_team_destroy":
 		case "$omp_gshared_destroy":
@@ -490,155 +469,6 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 
 		state = primaryExecutor.malloc(source, state, pid, process, lhs,
 				arguments[0], scope, teamType, teamObject);
-		return state;
-	}
-
-	/**
-	 * <p>
-	 * Executes <code>$omp_gteam_create($scope scope, int nthreads)</code> which
-	 * creates new global team object, allocating object in heap in specified
-	 * scope. Number of threads that will be in the team is nthreads.
-	 * </p>
-	 * 
-	 * A global team object represents a team of threads executing in a parallel
-	 * region and is a handle type. This is where all the state needed to
-	 * correctly execute a parallel region will be stored. This includes all the
-	 * shared object data, and a worksharing queue for every thread.
-	 * 
-	 * <pre>
-	 * typedef struct __OMP_gteam__ {
-	 *   // number of threads in team
-	 *   int nthreads;
-	 *   // work queues. Length nthreads. For each thread, a FIFO queue of work records
-	 *   OMP_work_record work[][];
-	 *   // number of shared variables
-	 *   int nshared;
-	 *   // the shared object data. Length nshared.
-	 *   $omp_gshared shared[];
-	 * } * $omp_gteam;
-	 * </pre>
-	 * 
-	 * @param source
-	 *            the source code information of the call statement for error
-	 *            report
-	 * @param state
-	 *            the pre-state
-	 * @param pid
-	 *            the PID of the process that triggers this computation
-	 * @param process
-	 *            the process information for error report
-	 * @param lhs
-	 *            the left-hand-side expression of the call statement
-	 * @param arguments
-	 *            the static representation of the arguments of the call
-	 *            statement
-	 * @param argumentValues
-	 *            the values of the arguments of the call statement
-	 * @return the new state after the system function is invoked
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State execute_gteam_create(CIVLSource source, State state, int pid,
-			String process, LHSExpression lhs, Expression[] arguments,
-			SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		CIVLType gteamType = modelFactory.getSystemType(Model.OMP_GTEAM_TYPE), workRecordType = modelFactory
-				.getSystemType(Model.OMP_WORK_RECORD_TYPE);
-		SymbolicExpression scope = argumentValues[0];
-		NumericExpression nthreads = (NumericExpression) argumentValues[1];
-		SymbolicExpression workRecords, nshared = this.zero, sharedObjects = universe
-				.array(modelFactory.getSystemType(Model.OMP_GSHARED_TYPE)
-						.getDynamicType(universe),
-						new LinkedList<SymbolicExpression>());
-		SymbolicExpression gteamObject;
-
-		workRecords = symbolicUtil.newArray(state.getPathCondition(), nthreads,
-				universe.array(workRecordType.getDynamicType(universe),
-						new LinkedList<SymbolicExpression>()));
-		gteamObject = universe.tuple(
-				(SymbolicTupleType) gteamType.getDynamicType(universe),
-				Arrays.asList(nthreads, workRecords, nshared, sharedObjects));
-		state = primaryExecutor.malloc(source, state, pid, process, lhs,
-				arguments[0], scope, gteamType, gteamObject);
-		return state;
-	}
-
-	/**
-	 * <p>
-	 * Executes <code>$omp_gws_create($scope scope, int nthreads)</code> which
-	 * creates new global work-sharing state object, returning handle to it.
-	 * nthreads is the number of threads in the parallel region. There is one of
-	 * these per parallel region, created upon entering the region.
-	 * </p>
-	 * 
-	 * Here is the definition of $omp_gws:
-	 * 
-	 * <pre>
-	 * typedef struct __omp_gws__ {
-	 *   int nthreads;
-	 *   _Bool isInit[];
-	 *   CIVL_omp_loop_info loops[];
-	 *   CIVL_omp_sections_info sections[];
-	 * } $omp_gws;
-	 * </pre>
-	 * 
-	 * @param source
-	 *            The source code element to be used for error report.
-	 * @param state
-	 *            The current state.
-	 * @param pid
-	 *            The ID of the process that the function call belongs to.
-	 * @param lhs
-	 *            The left hand side expression of the call, which is to be
-	 *            assigned with the returned value of the function call. If NULL
-	 *            then no assignment happens.
-	 * @param arguments
-	 *            The static representation of the arguments of the function
-	 *            call.
-	 * @param argumentValues
-	 *            The dynamic representation of the arguments of the function
-	 *            call.
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	@SuppressWarnings("unused")
-	private State executeGwsCreate(CIVLSource source, State state, int pid,
-			String process, LHSExpression lhs, Expression[] arguments,
-			SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		// the gws object to be created
-		SymbolicExpression gwsObj;
-		// the CIVL type of __omp_gws__
-		CIVLType gwsType = modelFactory.getSystemType(Model.OMP_GSHARED_TYPE);
-		// the representation of the CIVL type of __omp_gws__ in SARL
-		SymbolicType dynamicGwsType = gwsType.getDynamicType(universe);
-		// the value of the first argument, which is scope.
-		SymbolicExpression scope = argumentValues[0];
-		// the CIVL expression of the first argument of the function call
-		Expression scopeExpression = arguments[0];
-		// the value of the second argument, which is nthread.
-		NumericExpression nthreads = (NumericExpression) argumentValues[1];
-		// the second field isInit of the __omp_gws__ object to be created
-		SymbolicExpression isInit;
-		// the third field loops of the __omp_gws__ object to be created
-		SymbolicExpression loops = universe.array(this.dynamicOmpLoopInfoType,
-				new LinkedList<SymbolicExpression>());
-		// the last field sections of the __omp_gws__ object to be created
-		SymbolicExpression sections = universe.array(
-				this.dynamicOmpSectionsInfoType,
-				new LinkedList<SymbolicExpression>());
-
-		isInit = symbolicUtil.newArray(state.getPathCondition(), nthreads,
-				this.falseValue);
-		// creates the __omp_gws__ object as a tuple using the four elements in
-		// order specified above: nthreads, isInit, loops, sections.
-		gwsObj = universe.tuple((SymbolicTupleType) dynamicGwsType,
-				Arrays.asList(nthreads, isInit, loops, sections));
-		// malloc a memory unit in the heap of the given scope to store the
-		// newly created __omp_gws__ object, and assign lhs with the
-		// corresponding handle $omp_gws, which is in fact a pointer to the
-		// __omp_gws__ object.
-		state = primaryExecutor.malloc(source, state, pid, process, lhs,
-				scopeExpression, scope, gwsType, gwsObj);
 		return state;
 	}
 

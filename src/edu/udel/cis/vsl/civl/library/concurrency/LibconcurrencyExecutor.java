@@ -354,9 +354,10 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		CIVLType gbarrierType = modelFactory.getSystemType(Model.GBARRIER_TYPE);
 		BooleanExpression context = state.getPathCondition();
 
-		inBarrierArray = symbolicUtil
-				.newArray(context, nprocs, this.falseValue);
-		procMapArray = symbolicUtil.newArray(context, nprocs,
+		inBarrierArray = symbolicUtil.newArray(context, universe.booleanType(),
+				nprocs, this.falseValue);
+		procMapArray = symbolicUtil.newArray(context,
+				modelFactory.processSymbolicType(), nprocs,
 				modelFactory.nullProcessValue());
 		gbarrierObj = universe.tuple((SymbolicTupleType) gbarrierType
 				.getDynamicType(universe), Arrays.asList(nprocs, procMapArray,

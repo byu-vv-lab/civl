@@ -646,9 +646,11 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		assert dynamicQueueType instanceof SymbolicTupleType;
 		emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
 				Arrays.asList(queueLength, emptyMessages));
-		isInitArray = symbolicUtil.newArray(context, nprocs, isInit);
-		bufRow = symbolicUtil.newArray(context, nprocs, emptyQueue);
-		buf = symbolicUtil.newArray(context, nprocs, bufRow);
+		isInitArray = symbolicUtil.newArray(context, isInit.type(), nprocs,
+				isInit);
+		bufRow = symbolicUtil.newArray(context, emptyQueue.type(), nprocs,
+				emptyQueue);
+		buf = symbolicUtil.newArray(context, bufRow.type(), nprocs, bufRow);
 		gcomm = universe.tuple(
 				(SymbolicTupleType) gcommType.getDynamicType(universe),
 				Arrays.asList(nprocs, isInitArray, buf));
