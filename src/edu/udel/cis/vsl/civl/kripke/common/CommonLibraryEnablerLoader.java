@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 
@@ -22,6 +23,12 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 	 * The cache of known library enablers.
 	 */
 	private Map<String, LibraryEnabler> libraryEnablerCache = new LinkedHashMap<>();
+
+	private LibraryEvaluatorLoader libEvaluatorLoader;
+
+	public CommonLibraryEnablerLoader(LibraryEvaluatorLoader libEvaluatorLoader) {
+		this.libEvaluatorLoader = libEvaluatorLoader;
+	}
 
 	/* ********************* Methods from LibraryLoader ******************** */
 
@@ -45,11 +52,13 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 				Constructor<? extends LibraryEnabler> constructor = aClass
 						.getConstructor(String.class, Enabler.class,
 								Evaluator.class, ModelFactory.class,
-								SymbolicUtility.class, SymbolicAnalyzer.class);
+								SymbolicUtility.class, SymbolicAnalyzer.class,
+								LibraryEnablerLoader.class,
+								LibraryEvaluatorLoader.class);
 
-				result = constructor
-						.newInstance(name, primaryEnabler, evaluator,
-								modelFacotry, symbolicUtil, symbolicAnalyzer);
+				result = constructor.newInstance(name, primaryEnabler,
+						evaluator, modelFacotry, symbolicUtil,
+						symbolicAnalyzer, this, this.libEvaluatorLoader);
 			} catch (Exception e) {
 				throw new LibraryLoaderException(e.getMessage());
 			}

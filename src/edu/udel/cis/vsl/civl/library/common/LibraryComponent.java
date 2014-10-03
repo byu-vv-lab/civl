@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.library.common;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -137,6 +138,8 @@ public abstract class LibraryComponent {
 	protected BooleanExpression trueValue;
 	protected BooleanExpression falseValue;
 
+	protected LibraryEvaluatorLoader libEvaluatorLoader;
+
 	/**
 	 * Creates a new instance of a library.
 	 * 
@@ -148,7 +151,8 @@ public abstract class LibraryComponent {
 	 *            The symbolic analyzer to be used.
 	 */
 	protected LibraryComponent(String name, SymbolicUniverse universe,
-			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer) {
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
+			LibraryEvaluatorLoader libEvaluatorLoader) {
 		this.name = name;
 		this.universe = universe;
 		this.zero = universe.zeroInt();
@@ -163,6 +167,7 @@ public abstract class LibraryComponent {
 		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.trueValue = universe.trueExpression();
 		this.falseValue = universe.falseExpression();
+		this.libEvaluatorLoader = libEvaluatorLoader;
 	}
 
 	/**

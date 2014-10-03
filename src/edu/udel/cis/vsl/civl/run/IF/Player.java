@@ -127,7 +127,8 @@ public abstract class Player {
 				libraryEvaluatorLoader, symbolicUtil, symbolicAnalyzer,
 				errorLogger);
 		this.gui = (Boolean) config.getValueOrDefault(guiO);
-		this.libraryExecutorLoader = Semantics.newLibraryExecutorLoader();
+		this.libraryExecutorLoader = Semantics
+				.newLibraryExecutorLoader(this.libraryEvaluatorLoader);
 		this.executor = Semantics.newExecutor(modelFactory, stateFactory, log,
 				libraryExecutorLoader, evaluator, symbolicAnalyzer,
 				errorLogger, civlConfig);
@@ -135,7 +136,8 @@ public abstract class Player {
 		this.minimize = config.isTrue(minO);
 		this.maxdepth = (int) config.getValueOrDefault(maxdepthO);
 
-		this.libraryEnablerLoader = Kripkes.newLibraryEnablerLoader();
+		this.libraryEnablerLoader = Kripkes
+				.newLibraryEnablerLoader(this.libraryEvaluatorLoader);
 		enabler = Kripkes.newEnabler(stateFactory, evaluator, symbolicAnalyzer,
 				this.libraryEnablerLoader, errorLogger, civlConfig);
 		this.predicate = new StandardPredicate(log, universe,

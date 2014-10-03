@@ -31,8 +31,9 @@ public class Semantics {
 	 * 
 	 * @return The new library executor loader.
 	 */
-	public static LibraryExecutorLoader newLibraryExecutorLoader() {
-		return new CommonLibraryExecutorLoader();
+	public static LibraryExecutorLoader newLibraryExecutorLoader(
+			LibraryEvaluatorLoader libEvaluatorLoader) {
+		return new CommonLibraryExecutorLoader(libEvaluatorLoader);
 	}
 
 	/**

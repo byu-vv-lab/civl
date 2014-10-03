@@ -29,7 +29,9 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.Format;
 import edu.udel.cis.vsl.civl.semantics.IF.Format.ConversionType;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -230,9 +232,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 */
 	public LibstdioExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
+			LibraryExecutorLoader libExecutorLoader,
+			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, primaryExecutor, modelFactory, symbolicUtil,
-				symbolicAnalyzer, civlConfig);
+				symbolicAnalyzer, civlConfig, libExecutorLoader,
+				libEvaluatorLoader);
 		SymbolicType stringArrayType;
 
 		EOF = universe.canonic(universe.integer(-100));
@@ -265,7 +270,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		this.FILEtype = (CIVLStructOrUnionType) modelFactory
 				.getSystemType(Model.FILE_STREAM_TYPE);
 		this.libevaluator = new LibstdioEvaluator(name, evaluator,
-				modelFactory, symbolicUtil, symbolicAnalyzer);
+				modelFactory, symbolicUtil, symbolicAnalyzer, this.libEvaluatorLoader);
 	}
 
 	/* ************************** Private Methods ************************** */
@@ -432,12 +437,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				expressions[1].getSource(), argumentValues[1]);
 		state = eval.state;
 		filename = eval.value;
+
 		// fileNameStringPair = this.evaluator.getString(
 		// expressions[1].getSource(), state, process,
 		// argumentValues[1]);
 		// state = fileNameStringPair.left;
 		// fileNameString = fileNameStringPair.right.toString();
-
 		// does a file by that name already exist in the filesystem?
 		// assume all are concrete.
 		if (fileArray.operator() != SymbolicOperator.CONCRETE)

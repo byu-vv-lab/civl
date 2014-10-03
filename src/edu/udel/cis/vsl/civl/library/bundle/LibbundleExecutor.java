@@ -20,7 +20,9 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -97,11 +99,14 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 
 	public LibbundleExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
+			LibraryExecutorLoader libExecutorLoader,
+			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, primaryExecutor, modelFactory, symbolicUtil,
-				symbolicAnalyzer, civlConfig);
+				symbolicAnalyzer, civlConfig, libExecutorLoader,
+				libEvaluatorLoader);
 		libevaluator = new LibbundleEvaluator(name, evaluator, modelFactory,
-				symbolicUtil, symbolicAnalyzer);
+				symbolicUtil, symbolicAnalyzer, libEvaluatorLoader);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */

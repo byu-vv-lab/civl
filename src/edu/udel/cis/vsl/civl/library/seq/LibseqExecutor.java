@@ -24,7 +24,9 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -39,9 +41,12 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 
 	public LibseqExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig) {
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
+			LibraryExecutorLoader libExecutorLoader,
+			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, primaryExecutor, modelFactory, symbolicUtil,
-				symbolicAnalyzer, civlConfig);
+				symbolicAnalyzer, civlConfig, libExecutorLoader,
+				libEvaluatorLoader);
 	}
 
 	@Override
@@ -196,14 +201,15 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 				CIVLType arrayEleType = ((CIVLArrayType) arrayType)
 						.elementType();
 
-				if (!arrayEleType.equals(eleType)) {
+				if (!arrayEleType.isSuperTypeOf(eleType)) {
 					CIVLExecutionException err = new CIVLExecutionException(
 							ErrorKind.DEREFERENCE,
 							Certainty.PROVEABLE,
 							process,
 							"The element type of the array that the first argument "
-									+ "points to of $seq_init() must be the same as "
-									+ "the type of the object that the third argument points to.\n"
+									+ "points to of $seq_init() must be a super type"
+									+ " or the same type of the object that the third "
+									+ "argument points to.\n"
 									+ "actual element type of the given array: "
 									+ arrayEleType
 									+ "\n"

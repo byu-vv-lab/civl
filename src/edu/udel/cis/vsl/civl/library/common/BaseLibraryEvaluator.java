@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -72,8 +73,10 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 */
 	public BaseLibraryEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer) {
-		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer);
+			SymbolicAnalyzer symbolicAnalyzer,
+			LibraryEvaluatorLoader libEvaluatorLoader) {
+		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer,
+				libEvaluatorLoader);
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
 		this.modelFactory = modelFactory;

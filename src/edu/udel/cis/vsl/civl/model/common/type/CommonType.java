@@ -158,4 +158,8 @@ public abstract class CommonType implements CIVLType {
 		return false;
 	}
 
+	@Override
+	public boolean isSuperTypeOf(CIVLType subtype) {
+		return this.equals(subtype);
+	}
 }

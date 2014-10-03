@@ -9,12 +9,14 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
+import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
@@ -55,6 +57,8 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 	 */
 	protected StateFactory stateFactory;
 
+	protected LibraryEnablerLoader libEnablerLoader;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -71,8 +75,11 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 	 */
 	public BaseLibraryEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer) {
-		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer);
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
+			LibraryEnablerLoader libEnablerLoader,
+			LibraryEvaluatorLoader libEvaluatorLoader) {
+		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer,
+				libEvaluatorLoader);
 		this.primaryEnabler = primaryEnabler;
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();

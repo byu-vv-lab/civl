@@ -84,4 +84,14 @@ public class CommonArrayType extends CommonType implements CIVLArrayType {
 		return new CommonArrayType(newElementType);
 	}
 
+	@Override
+	public boolean isSuperTypeOf(CIVLType subtype) {
+		if (subtype instanceof CIVLArrayType) {
+			CIVLArrayType newSubtype = (CIVLArrayType) subtype;
+
+			return elementType.isSuperTypeOf(newSubtype.elementType());
+		}
+		return false;
+	}
+
 }

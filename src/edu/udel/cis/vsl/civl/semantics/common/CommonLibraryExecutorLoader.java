@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
@@ -22,6 +23,12 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 	 * The cache of known library executors.
 	 */
 	private Map<String, LibraryExecutor> libraryExecutorCache = new LinkedHashMap<>();
+
+	private LibraryEvaluatorLoader libEvaluatorLoader;
+
+	public CommonLibraryExecutorLoader(LibraryEvaluatorLoader libEvaluatorLoader) {
+		this.libEvaluatorLoader = libEvaluatorLoader;
+	}
 
 	/* ***************** Methods from LibraryExecutorLoader **************** */
 
@@ -45,11 +52,14 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 				Constructor<? extends LibraryExecutor> constructor = aClass
 						.getConstructor(String.class, Executor.class,
 								ModelFactory.class, SymbolicUtility.class,
-								SymbolicAnalyzer.class, CIVLConfiguration.class);
+								SymbolicAnalyzer.class,
+								CIVLConfiguration.class,
+								LibraryExecutorLoader.class,
+								LibraryEvaluatorLoader.class);
 
 				result = constructor.newInstance(name, primaryExecutor,
 						modelFacotry, symbolicUtil, symbolicAnalyzer,
-						civlConfig);
+						civlConfig, this, this.libEvaluatorLoader);
 			} catch (Exception e) {
 				throw new LibraryLoaderException(e.getMessage());
 			}

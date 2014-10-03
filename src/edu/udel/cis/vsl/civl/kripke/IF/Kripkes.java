@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.civl.kripke.common.PointeredEnabler;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 
@@ -17,7 +18,7 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
  * 
  */
 public class Kripkes {
-	
+
 	/**
 	 * Creates a new instance of enabler.
 	 * 
@@ -48,8 +49,9 @@ public class Kripkes {
 	 * 
 	 * @return The new library enabler loader created.
 	 */
-	public static LibraryEnablerLoader newLibraryEnablerLoader() {
-		return new CommonLibraryEnablerLoader();
+	public static LibraryEnablerLoader newLibraryEnablerLoader(
+			LibraryEvaluatorLoader libEvaluatorLoader) {
+		return new CommonLibraryEnablerLoader(libEvaluatorLoader);
 	}
 
 	/**

@@ -42,10 +42,11 @@ public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 				Constructor<? extends LibraryEvaluator> constructor = aClass
 						.getConstructor(String.class, Evaluator.class,
 								ModelFactory.class, SymbolicUtility.class,
-								SymbolicAnalyzer.class);
+								SymbolicAnalyzer.class,
+								LibraryEvaluatorLoader.class);
 
 				result = constructor.newInstance(name, primaryEvaluator,
-						modelFacotry, symbolicUtil, symbolicAnalyzer);
+						modelFacotry, symbolicUtil, symbolicAnalyzer, this);
 			} catch (Exception e) {
 				throw new LibraryLoaderException(e.getMessage());
 			}

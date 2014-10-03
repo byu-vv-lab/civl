@@ -181,4 +181,14 @@ public interface CIVLType {
 	boolean isDomainType();
 
 	CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe);
+
+	/**
+	 * Is this type the super type of the given sub-type? If subtype is the same
+	 * as this type, return true.
+	 * 
+	 * @param subtype
+	 *            The type to be tested if it is the sub-type of this type.
+	 * @return
+	 */
+	boolean isSuperTypeOf(CIVLType subtype);
 }

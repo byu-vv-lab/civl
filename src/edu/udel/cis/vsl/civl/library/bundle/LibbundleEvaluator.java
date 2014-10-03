@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -24,8 +25,10 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 
 	public LibbundleEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer) {
-		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer);
+			SymbolicAnalyzer symbolicAnalyzer,
+			LibraryEvaluatorLoader libEvaluatorLoader) {
+		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer,
+				libEvaluatorLoader);
 	}
 
 	/* ************************* Public Function *************************** */
