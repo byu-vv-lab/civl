@@ -7,7 +7,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.NextInDomainStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -18,13 +17,12 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 
 	private Expression domain;
 
-	private List<VariableExpression> loopVariables;
+	private List<Variable> loopVariables;
 
-	private VariableExpression literalDomCounter;
+	private Variable literalDomCounter;
 
 	public CommonCivlForEnterStatement(CIVLSource civlSource, Location source,
-			Expression dom, List<VariableExpression> variables,
-			VariableExpression counter) {
+			Expression dom, List<Variable> variables, Variable counter) {
 		super(civlSource, source);
 		this.domain = dom;
 		this.setLoopVariables(variables);
@@ -77,11 +75,11 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 	}
 
 	@Override
-	public List<VariableExpression> loopVariables() {
+	public List<Variable> loopVariables() {
 		return this.loopVariables;
 	}
 
-	public void setLoopVariables(List<VariableExpression> loopVariables) {
+	public void setLoopVariables(List<Variable> loopVariables) {
 		this.loopVariables = loopVariables;
 	}
 
@@ -106,7 +104,7 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 	}
 
 	@Override
-	public VariableExpression getLiteralDomCounter() {
+	public Variable getLiteralDomCounter() {
 		return this.literalDomCounter;
 	}
 }

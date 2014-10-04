@@ -663,6 +663,15 @@ public class CommonExecutor implements Executor {
 		return state;
 	}
 
+	/**
+	 * When the domain is empty, this is equivalent to a noop.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param parFor
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private State executeCivlParFor(State state, int pid,
 			CivlParForEnterStatement parFor)
 			throws UnsatisfiablePathConditionException {
@@ -671,6 +680,7 @@ public class CommonExecutor implements Executor {
 		VariableExpression domSize = parFor.domSizeVar();
 		Evaluation eval;
 		SymbolicExpression domainValue;
+		// TODO why initializes domSizeValue with 1?
 		NumericExpression domSizeValue = universe.integer(1);
 		// TODO: why is dim -1 sometimes?
 		int dim = parFor.dimension();
@@ -697,7 +707,8 @@ public class CommonExecutor implements Executor {
 					symbolicAnalyzer.stateToString(state), source);
 
 			this.errorLogger.reportError(err);
-		} else {
+		} else if (!number_domSize.isZero()) {
+			// only spawns processes when the domain is not empty.
 			InitialValueExpression initVal = modelFactory
 					.initialValueExpression(parProcs.getSource(),
 							parProcsVar.variable());
@@ -711,7 +722,6 @@ public class CommonExecutor implements Executor {
 			state = this.executeSpawns(state, pid, parProcs, parProcsPointer,
 					parFor.parProcFunction(), dim, domainValue);
 		}
-		// TODO:Why set location here ?
 		state = stateFactory.setLocation(state, pid, parFor.target());
 		return state;
 	}
@@ -792,7 +802,7 @@ public class CommonExecutor implements Executor {
 	private State executeNextInDomain(State state, int pid,
 			NextInDomainStatement nextInDomain)
 			throws UnsatisfiablePathConditionException {
-		List<VariableExpression> loopVars = nextInDomain.loopVariables();
+		List<Variable> loopVars = nextInDomain.loopVariables();
 		Expression domain = nextInDomain.domain();
 		CIVLSource source = nextInDomain.getSource();
 		SymbolicExpression domValue;
@@ -801,17 +811,13 @@ public class CommonExecutor implements Executor {
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 		List<SymbolicExpression> varValues = new LinkedList<>();
 		List<SymbolicExpression> nextEleValues = new LinkedList<>();
-		int dyscopeId = state.getDyscope(pid, loopVars.get(0).variable()
-				.scope());
 		boolean isAllNull = true;
 
 		domValue = eval.value;
 		state = eval.state;
 		// Evaluates the element given by the statement
 		for (int i = 0; i < dim; i++) {
-			VariableExpression var = loopVars.get(i);
-			SymbolicExpression varValue = state.getVariableValue(dyscopeId, var
-					.variable().vid());
+			SymbolicExpression varValue = state.valueOf(pid, loopVars.get(i));
 
 			if (!varValue.isNull())
 				isAllNull = false;
@@ -824,21 +830,21 @@ public class CommonExecutor implements Executor {
 				SymbolicExpression nextElement = null;
 				SymbolicExpression counterValue;
 				int counter = -1; // The concrete literal counter value
-				VariableExpression literalCounterExpr;
+				Variable literalCounterVar;
 
 				literalDomain = universe.unionExtract(oneObj,
 						universe.tupleRead(domValue, twoObj));
-				literalCounterExpr = nextInDomain.getLiteralDomCounter();
-				counterValue = state
-						.valueOf(pid, literalCounterExpr.variable());
+				literalCounterVar = nextInDomain.getLiteralDomCounter();
+				counterValue = state.valueOf(pid, literalCounterVar);
 				// Evaluate the value of the counter variable. Here we can
 				// initialize it as 0 or search the specific value from the
 				// given domain element if the variable is uninitialized.If it
 				// does initialization already, read the value from this
 				// variable.
+				// TODO why counterValue can be null (not SARL NULL)?
 				if (counterValue.isNull() || counterValue == null) {
 					// If the counter is not initialized
-					if (isAllNull)
+					if (isAllNull)// this is the first iteration
 						counter = 0;
 					else
 						counter = symbolicUtil.literalDomainSearcher(
@@ -865,7 +871,7 @@ public class CommonExecutor implements Executor {
 							"Domain iteration out of bound", source);
 				// increase the counter
 				counter++;
-				state = this.assign(state, pid, process, literalCounterExpr,
+				state = stateFactory.setVariable(state, literalCounterVar, pid,
 						universe.integer(counter));
 				// Put domain element into a list
 				for (int i = 0; i < dim; i++)
@@ -899,11 +905,9 @@ public class CommonExecutor implements Executor {
 		}
 		// Set domain element components one by one.(Domain element is an array
 		// of integers of length 'dim')
-		for (int i = 0; i < dim; i++) {
-			VariableExpression var = loopVars.get(i);
-
-			state = this.assign(state, pid, process, var, nextEleValues.get(i));
-		}
+		for (int i = 0; i < dim; i++)
+			state = stateFactory.setVariable(state, loopVars.get(i), pid,
+					nextEleValues.get(i));
 		// TODO: why set location here ?
 		state = stateFactory.setLocation(state, pid, nextInDomain.target());
 		return state;

@@ -546,7 +546,7 @@ public class FunctionTranslator {
 	private Fragment translateCivlParForNode(Scope scope,
 			CivlForNode civlForNode) {
 		DeclarationListNode loopInits = civlForNode.getVariables();
-		Triple<Scope, Fragment, List<VariableExpression>> initResults = this
+		Triple<Scope, Fragment, List<Variable>> initResults = this
 				.translateForLoopInitializerNode(scope, loopInits);
 		CIVLSource source = modelFactory.sourceOf(civlForNode);
 		CIVLSource parForBeginSource = modelFactory
@@ -562,7 +562,7 @@ public class FunctionTranslator {
 		CIVLSource procFuncSource = modelFactory.sourceOf(bodyNode);
 		CIVLSource procFuncStartSource = modelFactory
 				.sourceOfBeginning(bodyNode);
-		List<VariableExpression> loopVars = initResults.third;
+		List<Variable> loopVars = initResults.third;
 		int numOfLoopVars = loopVars.size();
 		List<Variable> procFuncParameters = new ArrayList<>(numOfLoopVars);
 		CIVLFunction procFunc;
@@ -574,7 +574,7 @@ public class FunctionTranslator {
 				civlForNode.getDomain(), scope, true);
 
 		for (int i = 0; i < numOfLoopVars; i++) {
-			Variable loopVar = loopVars.get(i).variable();
+			Variable loopVar = loopVars.get(i);
 			Variable parameter = modelFactory.variable(loopVar.getSource(),
 					loopVar.type(), loopVar.name(), i + 1);
 
@@ -601,15 +601,13 @@ public class FunctionTranslator {
 
 	private Fragment translateCivlForNode(Scope scope, CivlForNode civlForNode) {
 		DeclarationListNode loopInits = civlForNode.getVariables();
-		// Fragment initFragment;
 		Fragment nextInDomain, result;
-		List<VariableExpression> loopVariables;
+		List<Variable> loopVariables;
 		ExpressionNode domainNode = civlForNode.getDomain();
 		Expression domain;
 		Expression domainGuard;
 		Variable literalDomCounter;
-		VariableExpression literalDomCounterExpr;
-		Triple<Scope, Fragment, List<VariableExpression>> initResults = this
+		Triple<Scope, Fragment, List<Variable>> initResults = this
 				.translateForLoopInitializerNode(scope, loopInits);
 		Location location;
 		CIVLSource source = modelFactory.sourceOf(civlForNode);
@@ -620,8 +618,6 @@ public class FunctionTranslator {
 		literalDomCounter = modelFactory.variable(source, modelFactory
 				.integerType(), modelFactory.getLiteralDomCounterIdentifier(
 				source, this.literalDomForCounterCount), scope.numVariables());
-		literalDomCounterExpr = modelFactory.variableExpression(source,
-				literalDomCounter);
 		this.literalDomForCounterCount++;
 		scope.addVariable(literalDomCounter);
 		loopVariables = initResults.third;
@@ -641,16 +637,16 @@ public class FunctionTranslator {
 		}
 		domainGuard = modelFactory.domainGuard(
 				modelFactory.sourceOf(domainNode), loopVariables,
-				literalDomCounterExpr, domain);
+				literalDomCounter, domain);
 		location = modelFactory.location(
 				modelFactory.sourceOfBeginning(civlForNode), scope);
 		nextInDomain = modelFactory.nextInDomain(
 				modelFactory.sourceOfBeginning(civlForNode), location, domain,
-				initResults.third, literalDomCounterExpr);
+				initResults.third, literalDomCounter);
 		result = this.composeLoopFragmentWorker(scope,
 				modelFactory.sourceOfBeginning(domainNode),
 				modelFactory.sourceOfEnd(domainNode), domainGuard,
-				nextInDomain, civlForNode.getBody(), null, true);
+				nextInDomain, civlForNode.getBody(), null, false);
 		return result;
 	}
 
@@ -820,6 +816,27 @@ public class FunctionTranslator {
 		return result;
 	}
 
+	/**
+	 * Composes a loop fragment.
+	 * 
+	 * @param loopScope
+	 *            The scope of the loop
+	 * @param condStartSource
+	 *            The beginning source of the loop condition
+	 * @param condEndSource
+	 *            The ending source of the loop condition
+	 * @param condition
+	 *            The loop condition
+	 * @param bodyPrefix
+	 *            The fragment before entering the loop
+	 * @param loopBodyNode
+	 *            The body statement node of the loop
+	 * @param incrementer
+	 *            The incrementer fragment of the loop
+	 * @param isDoWhile
+	 *            If this is a do-while loop
+	 * @return
+	 */
 	private Fragment composeLoopFragmentWorker(Scope loopScope,
 			CIVLSource condStartSource, CIVLSource condEndSource,
 			Expression condition, Fragment bodyPrefix,
@@ -1770,7 +1787,7 @@ public class FunctionTranslator {
 		// If the initNode does not have a declaration, don't create a new
 		// scope.
 		if (initNode != null) {
-			Triple<Scope, Fragment, List<VariableExpression>> initData = translateForLoopInitializerNode(
+			Triple<Scope, Fragment, List<Variable>> initData = translateForLoopInitializerNode(
 					scope, initNode);
 
 			scope = initData.first;
@@ -1782,12 +1799,12 @@ public class FunctionTranslator {
 		return result;
 	}
 
-	private Triple<Scope, Fragment, List<VariableExpression>> translateForLoopInitializerNode(
+	private Triple<Scope, Fragment, List<Variable>> translateForLoopInitializerNode(
 			Scope scope, ForLoopInitializerNode initNode) {
 		Location location;
 		Fragment initFragment = new CommonFragment();
 		Scope newScope = scope;
-		List<VariableExpression> variables = new ArrayList<>();
+		List<Variable> variables = new ArrayList<>();
 
 		switch (initNode.nodeKind()) {
 		case EXPRESSION:
@@ -1809,8 +1826,7 @@ public class FunctionTranslator {
 						declaration, newScope);
 				Fragment fragment;
 
-				variables.add(modelFactory.variableExpression(
-						variable.getSource(), variable));
+				variables.add(variable);
 				location = modelFactory.location(
 						modelFactory.sourceOfBeginning(initNode), newScope);
 				fragment = translateVariableInitializationNode(declaration,

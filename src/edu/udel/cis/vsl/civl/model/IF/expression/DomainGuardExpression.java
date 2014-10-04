@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+
 /**
  * This is the guard to be checked for CIVL for loops ($for and $parfor). It has
  * the form of (i, j, k, ... : dom), where i, j, k ... are iteration variables
@@ -32,12 +34,12 @@ public interface DomainGuardExpression extends Expression {
 	 *            The index of the iteration variable to be returned.
 	 * @return The iteration variable of the given index.
 	 */
-	Expression variableAt(int index);
+	Variable variableAt(int index);
 
 	/**
 	 * The counter variable for iterating a literal domain step by step.
 	 * 
 	 * @return the variable expression of the counter.
 	 */
-	VariableExpression getLiteralDomCounter();
+	Variable getLiteralDomCounter();
 }

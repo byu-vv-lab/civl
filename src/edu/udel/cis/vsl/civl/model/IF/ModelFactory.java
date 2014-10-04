@@ -1522,7 +1522,7 @@ public interface ModelFactory {
 	 * @return
 	 */
 	Fragment nextInDomain(CIVLSource source, Location src, Expression dom,
-			List<VariableExpression> variables, VariableExpression counter);
+			List<Variable> variables, Variable counter);
 
 	RegularRangeExpression regularRangeExpression(CIVLSource source,
 			Expression low, Expression high, Expression step);
@@ -1554,9 +1554,8 @@ public interface ModelFactory {
 	 * @param domain
 	 * @return
 	 */
-	DomainGuardExpression domainGuard(CIVLSource source,
-			List<VariableExpression> vars, VariableExpression counter,
-			Expression domain);
+	DomainGuardExpression domainGuard(CIVLSource source, List<Variable> vars,
+			Variable counter, Expression domain);
 
 	VariableExpression domSizeVariable(CIVLSource source, Scope scope);
 

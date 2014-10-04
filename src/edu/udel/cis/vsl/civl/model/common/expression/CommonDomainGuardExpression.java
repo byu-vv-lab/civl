@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -8,7 +7,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -16,17 +14,16 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public class CommonDomainGuardExpression extends CommonExpression implements
 		DomainGuardExpression {
 
-	private VariableExpression[] variables;
+	private Variable[] variables;
 
 	private Expression domain;
 
-	private VariableExpression literalDomCounter;
+	private Variable literalDomCounter;
 
 	public CommonDomainGuardExpression(CIVLSource source, CIVLType type,
-			Expression dom, List<VariableExpression> vars,
-			VariableExpression counter) {
+			Expression dom, List<Variable> vars, Variable counter) {
 		super(source);
-		this.variables = new VariableExpression[vars.size()];
+		this.variables = new Variable[vars.size()];
 		vars.toArray(this.variables);
 		this.expressionType = type;
 		this.domain = dom;
@@ -40,32 +37,12 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope) {
-		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = domain.variableAddressedOf(scope);
-
-		if (operandResult != null)
-			variableSet.addAll(operandResult);
-		for (int i = 0; i < variables.length; i++) {
-			operandResult = variables[i].variableAddressedOf(scope);
-			if (operandResult != null)
-				variableSet.addAll(operandResult);
-		}
-		return variableSet;
+		return null;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf() {
-		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = domain.variableAddressedOf();
-
-		if (operandResult != null)
-			variableSet.addAll(operandResult);
-		for (int i = 0; i < variables.length; i++) {
-			operandResult = variables[i].variableAddressedOf();
-			if (operandResult != null)
-				variableSet.addAll(operandResult);
-		}
-		return variableSet;
+		return null;
 	}
 
 	@Override
@@ -82,7 +59,7 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Expression variableAt(int index) {
+	public Variable variableAt(int index) {
 		return this.variables[index];
 	}
 
@@ -106,7 +83,7 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 	}
 
 	@Override
-	public VariableExpression getLiteralDomCounter() {
+	public Variable getLiteralDomCounter() {
 		return this.literalDomCounter;
 	}
 }

@@ -631,7 +631,7 @@ public class ImmutableState implements State {
 		int staticId = scope.id();
 		int dyScopeId = getProcessState(pid).getDyscopeId();
 		DynamicScope dyScope = this.getDyscope(dyScopeId);
-	
+
 		while (dyScope.lexicalScope().id() != staticId) {
 			dyScopeId = this.getParentId(dyScopeId);
 			if (dyScopeId < 0)
@@ -648,7 +648,7 @@ public class ImmutableState implements State {
 		else
 			return canonicId + ":" + instanceId;
 	}
-	
+
 	@Override
 	public int numberOfReachers(int sid) {
 		return getDyscope(sid).numberOfReachers();
@@ -743,11 +743,6 @@ public class ImmutableState implements State {
 	@Override
 	public void setSeen(boolean seen) {
 		this.seen = seen;
-	}
-
-	@Override
-	public State setVariable(int vid, int scopeId, SymbolicExpression value) {
-		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 	@Override

@@ -3,7 +3,7 @@ package edu.udel.cis.vsl.civl.model.IF.statement;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * <p>
@@ -27,13 +27,14 @@ public interface NextInDomainStatement extends Statement {
 	 * 
 	 * @return the list of loop variables
 	 */
-	List<VariableExpression> loopVariables();
+	List<Variable> loopVariables();
 
 	/**
+	 * TODO: can it returns Variable instead?<br>
 	 * Returns a counter variable used for iterating on a literal domain step by
 	 * step.
 	 * 
 	 * @return the variable expression of the counter
 	 */
-	VariableExpression getLiteralDomCounter();
+	Variable getLiteralDomCounter();
 }

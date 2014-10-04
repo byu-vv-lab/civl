@@ -282,21 +282,6 @@ public interface State {
 	boolean reachableByProcess(int sid, int pid);
 
 	/**
-	 * Updates the value of a variable in this state. Returns a new state.
-	 * 
-	 * @param vid
-	 *            The ID of variable to be updated.
-	 * @param scopeID
-	 *            The dynamic scope ID of the dynamic scope containing the
-	 *            variable.
-	 * @param value
-	 *            The new value to be assigned to the variable.
-	 * @return A state that is the old state modified by updating the value of
-	 *         the variable.
-	 */
-	State setVariable(int vid, int scopeId, SymbolicExpression value);
-
-	/**
 	 * Returns the canonic ID of the state. Returns -1 when the state is not yet
 	 * canonicalized.
 	 * 

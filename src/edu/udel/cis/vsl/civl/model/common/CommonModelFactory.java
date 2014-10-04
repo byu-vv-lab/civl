@@ -2474,8 +2474,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public Fragment nextInDomain(CIVLSource source, Location src,
-			Expression dom, List<VariableExpression> variables,
-			VariableExpression counter) {
+			Expression dom, List<Variable> variables, Variable counter) {
 		NextInDomainStatement statement = new CommonCivlForEnterStatement(
 				source, src, dom, variables, counter);
 
@@ -2512,8 +2511,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public DomainGuardExpression domainGuard(CIVLSource source,
-			List<VariableExpression> vars, VariableExpression counter,
-			Expression domain) {
+			List<Variable> vars, Variable counter, Expression domain) {
 		return new CommonDomainGuardExpression(source, this.booleanType,
 				domain, vars, counter);
 	}

@@ -1199,8 +1199,7 @@ public class CommonEvaluator implements Evaluator {
 	 * @return The evaluation warps a state and the boolean value.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	// TODO: is it should be called guard ?<br>
-	private Evaluation evaluateDomainCondition(State state, int pid,
+	private Evaluation evaluateDomainGuard(State state, int pid,
 			DomainGuardExpression domainGuard)
 			throws UnsatisfiablePathConditionException {
 		Expression domain = domainGuard.domain();
@@ -1221,10 +1220,11 @@ public class CommonEvaluator implements Evaluator {
 		domainUnion = universe.tupleRead(domainValue, twoObj);
 		// Evaluating the value of the given element.
 		for (int i = 0; i < dimension; i++) {
-			eval = this.evaluate(state, pid, domainGuard.variableAt(i));
-			state = eval.state;
-			domElement.add(eval.value);
-			if (!eval.value.isNull())
+			SymbolicExpression varValue = state.valueOf(pid,
+					domainGuard.variableAt(i));
+
+			domElement.add(varValue);
+			if (!varValue.isNull())
 				isAllNull = false;
 		}
 		// If the domain object is a rectangular domain
@@ -1235,7 +1235,7 @@ public class CommonEvaluator implements Evaluator {
 			if (isAllNull)
 				hasNext = !symbolicUtil.isEmptyDomain(domainValue, dimension,
 						domain.getSource());
-			hasNext = symbolicUtil.recDomainHasNext(recDom, dimension,
+			else hasNext = symbolicUtil.recDomainHasNext(recDom, dimension,
 					domElement);
 			eval.state = state;
 			// TODO:rectangular domain always has concrete ranges so that the
@@ -1243,7 +1243,7 @@ public class CommonEvaluator implements Evaluator {
 			// is always concrete ?
 			eval.value = universe.bool(hasNext);
 		} else if (symbolicUtil.isLiteralDomain(domainValue)) {
-			VariableExpression literalDomCounterExpr;
+			Variable literalDomCounterVar;
 
 			// TODO: is there a domain that contains none elements ?
 			if (isAllNull)
@@ -1257,10 +1257,8 @@ public class CommonEvaluator implements Evaluator {
 
 				// Compare the literal domain counter and the size of the
 				// domain.
-				literalDomCounterExpr = domainGuard.getLiteralDomCounter();
-				eval = this.evaluate(state, pid, literalDomCounterExpr);
-				state = eval.state;
-				literalCounter = (NumericExpression) eval.value;
+				literalDomCounterVar = domainGuard.getLiteralDomCounter();
+				literalCounter = (NumericExpression) state.valueOf(pid, literalDomCounterVar);
 				counter = ((IntegerNumber) universe
 						.extractNumber(literalCounter)).intValue();
 				size = ((IntegerNumber) universe.extractNumber(domainSize))
@@ -1910,12 +1908,7 @@ public class CommonEvaluator implements Evaluator {
 				.getResultType();
 		if (validity == ResultType.NO)
 			negativeStep = true;
-		claim = universe.lessThan((NumericExpression) low,
-				(NumericExpression) high);
-		validity = universe.reasoner(state.getPathCondition()).valid(claim)
-				.getResultType();
-		if ((validity == ResultType.YES && negativeStep)
-				|| (validity == ResultType.NO && !negativeStep)) {
+		if (negativeStep) {
 			SymbolicExpression tmp = low;
 
 			low = high;
@@ -2950,7 +2943,7 @@ public class CommonEvaluator implements Evaluator {
 					(DerivativeCallExpression) expression);
 			break;
 		case DOMAIN_GUARD:
-			result = evaluateDomainCondition(state, pid,
+			result = evaluateDomainGuard(state, pid,
 					(DomainGuardExpression) expression);
 			break;
 		case REC_DOMAIN_LITERAL:
