@@ -40,5 +40,4 @@ public interface CIVLSource {
 	 */
 	String getSummary();
 
-//	void printShorterFileNameMap(PrintStream out);
 }

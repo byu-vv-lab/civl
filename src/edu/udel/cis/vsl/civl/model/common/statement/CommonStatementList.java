@@ -112,6 +112,9 @@ public class CommonStatementList implements StatementList {
 
 		if (!statements.isEmpty()) {
 			result = statements.get(0).getSource();
+
+			// TODO: FIX ME
+
 			if (result.getLocation() == "CIVL System object") {
 				if (statements.size() > 1) {
 					result = statements.get(1).getSource();
@@ -129,6 +132,8 @@ public class CommonStatementList implements StatementList {
 	public Expression guard() {
 		if (!statements.isEmpty()) {
 			Statement first = statements.get(0);
+
+			// TODO: FILE ME
 
 			if (first.getSource().getLocation() == "CIVL System object") {
 				if (statements.size() > 1) {
@@ -203,6 +208,8 @@ public class CommonStatementList implements StatementList {
 		if (!statements.isEmpty()) {
 			Statement first = statements.get(0);
 
+			// TODO: FIX ME
+
 			if (first.getSource().getLocation() == "CIVL System object") {
 				if (statements.size() > 1) {
 					return statements.get(1).source();
@@ -232,6 +239,8 @@ public class CommonStatementList implements StatementList {
 	public String toString() {
 		String result = "";
 		for (Statement s : statements) {
+			// TODO: how can you do == on Strings? FIX ME throughout
+
 			if (s.getSource().getLocation() == "CIVL System object")
 				result = "(" + s.toString() + ") ";
 			else

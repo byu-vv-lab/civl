@@ -486,4 +486,10 @@ public class LanguageFeaturesTest {
 	public void int2charBad2() {
 		assertFalse(ui.run("verify", filename("int2charBad2.cvl")));
 	}
+
+	@Test
+	public void include1() {
+		assertFalse(ui.run("verify", "-userIncludePath=" + rootDir.getPath(),
+				filename("include1.cvl")));
+	}
 }

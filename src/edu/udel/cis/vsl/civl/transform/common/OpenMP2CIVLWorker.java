@@ -49,6 +49,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
+import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
@@ -177,12 +178,18 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 *         <code>THREAD_MAX</code>.
 	 */
 	private VariableDeclarationNode threadMaxDeclaration() {
-		TypeNode nthreadsType = nodeFactory.newBasicTypeNode(source,
-				BasicTypeKind.INT);
+		final String place = "OpenMP2CIVLTransformer.threadMaxDeclaration";
+		TypeNode nthreadsType = nodeFactory.newBasicTypeNode(
+				newSource(place, CParser.INT, "int"), BasicTypeKind.INT);
+		IdentifierNode identifierNode = nodeFactory.newIdentifierNode(
+				newSource(place, CParser.IDENTIFIER, THREADMAX), THREADMAX);
 
 		nthreadsType.setInputQualified(true);
-		return nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, THREADMAX), nthreadsType);
+		return nodeFactory
+				.newVariableDeclarationNode(
+						newSource(place, CParser.DECLARATION, "int "
+								+ THREADMAX + ";"), identifierNode,
+						nthreadsType);
 	}
 
 	/**
