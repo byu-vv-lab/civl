@@ -15,8 +15,13 @@ import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
+import edu.udel.cis.vsl.abc.parse.IF.CParser;
+import edu.udel.cis.vsl.abc.parse.IF.OmpCParser;
+import edu.udel.cis.vsl.abc.token.IF.CToken;
+import edu.udel.cis.vsl.abc.token.IF.Formation;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 
 /**
  * Object used to perform one transformation task. It is instantiated to carry
@@ -30,16 +35,47 @@ public abstract class BaseWorker {
 
 	protected NodeFactory nodeFactory;
 
+	protected TokenFactory tokenFactory;
+
 	/* ****************************** Constructor ************************** */
 
 	protected BaseWorker(ASTFactory astFactory) {
 		this.astFactory = astFactory;
 		this.nodeFactory = astFactory.getNodeFactory();
+		this.tokenFactory = astFactory.getTokenFactory();
+
 	}
 
 	/* ************************** Protected Methods ************************ */
 
 	protected abstract AST transform(AST ast) throws SyntaxException;
+
+	/**
+	 * Creates a new {@link Source} object to associate to AST nodes that are
+	 * invented by this transformer worker.
+	 * 
+	 * @param sourceName
+	 *            the name that should be used as the "source" of this source;
+	 *            this is the name that will appear in place of the filename and
+	 *            line/column numbers for a standard source object. Examples
+	 *            might be "OmpTransformer"
+	 * @param tokenType
+	 *            the integer code for the type of the token used to represent
+	 *            the source; use one of the constants in {@link CParser} or
+	 *            {@link OmpCParser}, for example, such as
+	 *            {@link CParser#IDENTIFIER}.
+	 * @param text
+	 *            the text of the source. This is what will be printed in place
+	 *            of the actual excerpt from the file, in double quotes.
+	 * @return the new source object
+	 */
+	protected Source newSource(String sourceName, int tokenType, String text) {
+		Formation formation = tokenFactory.newSystemFormation(sourceName);
+		CToken token = tokenFactory.newCToken(tokenType, text, formation);
+		Source source = tokenFactory.newSource(token);
+
+		return source;
+	}
 
 	/**
 	 * Creates an identifier expression node with a given name.
