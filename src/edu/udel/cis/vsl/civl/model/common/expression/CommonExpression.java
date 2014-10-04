@@ -12,7 +12,9 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 
 /**
- * The parent of all expressions.
+ * A partial implementation of interface {@link Expression}. This is the root of
+ * the expression implementation hierarchy. All expression classes are
+ * sub-classes of this class.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
@@ -20,13 +22,37 @@ import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 public abstract class CommonExpression extends CommonSourceable implements
 		Expression {
 
+	// TODO: add field private SymbolicExpression constantValue
+	// with setters and getters. Initially null, this is
+	// used by expressions which have a constant value.
+	// it is an optimization.
+
+	/**
+	 * TODO: what is this? Why isn't it part of the constructor? Don't you know
+	 * the scope when you create the new expression? And do we need a setter for
+	 * this or can it be immutable?
+	 */
 	private Scope expressionScope = null;
+
+	/**
+	 * TODO: ditto. Don't you know this when you create the expression? Can it
+	 * change? Do we need a setter?
+	 * 
+	 */
 	protected CIVLType expressionType = null;
+
+	/**
+	 * TODO: what is this?
+	 */
 	protected boolean hasDerefs;
+
+	/**
+	 * TODO: what is this?
+	 */
 	protected boolean purelyLocal = false;
 
 	/**
-	 * @return true iff the expression has at least one dereferences
+	 * @return true iff the expression has at least one dereference
 	 */
 	public boolean hasDerefs() {
 		return hasDerefs;

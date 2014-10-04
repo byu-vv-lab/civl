@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 
@@ -35,6 +36,7 @@ public class OmpHelpersTest {
 		assertTrue(ui.run("run", filename("shared.cvl")));
 	}
 
+	// TODO: move this to another test. it has nothing to do with omp.
 	@Test
 	public void read() {
 		assertTrue(ui.run("run", filename("read.cvl")));
@@ -77,6 +79,6 @@ public class OmpHelpersTest {
 	@Ignore
 	@Test
 	public void exp1() {
-		assertTrue(ui.run("run", filename("div0.cvl")));
+		assertFalse(ui.run("run", filename("div0.cvl")));
 	}
 }
