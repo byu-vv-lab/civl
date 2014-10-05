@@ -165,7 +165,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
 	public OpenMP2CIVLWorker(ASTFactory astFactory) {
-		super(astFactory);
+		super("OpenMPtoCIVLTransformer", astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -174,22 +174,28 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 * Creates the declaration node for the input variable
 	 * <code>THREAD_MAX</code>.
 	 * 
+	 * @param range
+	 *            a source object specifying a specific range in the original
+	 *            source into which the new declaration is going to be inserted;
+	 *            the line numbers of this range will be included in output to
+	 *            give an idea of the location into which the generated text was
+	 *            inserted. It is probably somewhere near the beginning of the
+	 *            file.
+	 * 
 	 * @return The declaration node of the input variable
 	 *         <code>THREAD_MAX</code>.
 	 */
 	private VariableDeclarationNode threadMaxDeclaration() {
-		final String place = "OpenMP2CIVLTransformer.threadMaxDeclaration";
+		final String place = "threadMaxDeclaration";
 		TypeNode nthreadsType = nodeFactory.newBasicTypeNode(
-				newSource(place, CParser.INT, "int"), BasicTypeKind.INT);
+				newSource(place, CParser.INT), BasicTypeKind.INT);
 		IdentifierNode identifierNode = nodeFactory.newIdentifierNode(
-				newSource(place, CParser.IDENTIFIER, THREADMAX), THREADMAX);
+				newSource(place, CParser.IDENTIFIER), THREADMAX);
 
 		nthreadsType.setInputQualified(true);
-		return nodeFactory
-				.newVariableDeclarationNode(
-						newSource(place, CParser.DECLARATION, "int "
-								+ THREADMAX + ";"), identifierNode,
-						nthreadsType);
+		return nodeFactory.newVariableDeclarationNode(
+				newSource(place, CParser.DECLARATION), identifierNode,
+				nthreadsType);
 	}
 
 	/**
@@ -443,6 +449,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		ast.release();
 
 		// declaring $input int THREAD_MAX;
+
 		threadMax = this.threadMaxDeclaration();
 
 		// Recursive call to replace all omp code
@@ -474,8 +481,9 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		externalList.addAll(result.first);
 		newRootNode = nodeFactory.newSequenceNode(null, "TranslationUnit",
 				externalList);
+		// TODO: the following line is experimental. Check that it works:
+		completeSources(newRootNode);
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
-
 		return newAst;
 	}
 

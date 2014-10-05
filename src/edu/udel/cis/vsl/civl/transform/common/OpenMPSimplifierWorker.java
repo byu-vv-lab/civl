@@ -81,7 +81,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	private List<Entity> loopPrivateIDs;
 
 	public OpenMPSimplifierWorker(ASTFactory astFactory) {
-		super(astFactory);
+		super("OpenMPSimplifier", astFactory);
 	}
 
 	@Override
@@ -157,7 +157,8 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 			if (allIndependent) {
 				/*
-				 * Remove the nested omp constructs, e.g., workshares, calls to omp_*
+				 * Remove the nested omp constructs, e.g., workshares, calls to
+				 * omp_*
 				 */
 				children = node.children();
 				for (ASTNode child : children) {
@@ -192,8 +193,8 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	}
 
 	/*
-	 * This method assumes that all of the OMP workshares that are encountered can be safely removed
-	 * or transformed into non-OMP equivalents.
+	 * This method assumes that all of the OMP workshares that are encountered
+	 * can be safely removed or transformed into non-OMP equivalents.
 	 */
 	private void removeOmpConstruct(ASTNode node) {
 		if (node instanceof OmpWorksharingNode) {
@@ -208,29 +209,36 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			int parentIndex = getChildIndex(parent, node);
 			assert parentIndex != -1;
 			parent.setChild(parentIndex, stmt);
-			
-		} else if (node instanceof FunctionCallNode &&
-				   ((FunctionCallNode) node).getFunction() instanceof IdentifierExpressionNode &&
-				   ((IdentifierExpressionNode) ((FunctionCallNode) node).getFunction()).getIdentifier().name().startsWith("omp_")) {
+
+		} else if (node instanceof FunctionCallNode
+				&& ((FunctionCallNode) node).getFunction() instanceof IdentifierExpressionNode
+				&& ((IdentifierExpressionNode) ((FunctionCallNode) node)
+						.getFunction()).getIdentifier().name()
+						.startsWith("omp_")) {
 			/*
-			 * Replace 
+			 * Replace
 			 */
-			String ompFunctionName = ((IdentifierExpressionNode) ((FunctionCallNode) node).getFunction()).getIdentifier().name();
+			String ompFunctionName = ((IdentifierExpressionNode) ((FunctionCallNode) node)
+					.getFunction()).getIdentifier().name();
 			IntegerConstantNode replacement = null;
 			if (ompFunctionName.equals("omp_get_thread_num")) {
 				try {
-					replacement = nodeFactory.newIntegerConstantNode(node.getSource(), "0");
+					replacement = nodeFactory.newIntegerConstantNode(
+							node.getSource(), "0");
 				} catch (SyntaxException e) {
 					e.printStackTrace();
 				}
 			} else if (ompFunctionName.equals("omp_get_num_threads")) {
 				try {
-					replacement = nodeFactory.newIntegerConstantNode(node.getSource(), "1");
+					replacement = nodeFactory.newIntegerConstantNode(
+							node.getSource(), "1");
 				} catch (SyntaxException e) {
 					e.printStackTrace();
 				}
 			} else {
-				assert false : "Unsupported omp function call "+ompFunctionName+" cannot be replaced by OpenMP simplifier";
+				assert false : "Unsupported omp function call "
+						+ ompFunctionName
+						+ " cannot be replaced by OpenMP simplifier";
 			}
 
 			// Link "replacement" into the omp call's parent
@@ -401,20 +409,24 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				OperatorNode relop = (OperatorNode) condition;
 
 				/*
-				 * The initial bound of the iteration space is established by an assignment statement.
-				 * We need to convert that assignment into an appropriate inequality to appropriately
-				 * constrain the loop variable values.   The code assumes that the polarity of the loop
-				 * exit condition and the increment operator are compatible, i.e., a "<" or "<=" test is
-				 * coupled with an "++" and a ">" or ">=" with a "--"; this condition is not checked here.
-				 * We reverse the polarity of the loop exit condition to establish the boundary condition
-				 * associated with the initialization and make that condition non-strict to account for the
-				 * equality implicit in the assignment.
+				 * The initial bound of the iteration space is established by an
+				 * assignment statement. We need to convert that assignment into
+				 * an appropriate inequality to appropriately constrain the loop
+				 * variable values. The code assumes that the polarity of the
+				 * loop exit condition and the increment operator are
+				 * compatible, i.e., a "<" or "<=" test is coupled with an "++"
+				 * and a ">" or ">=" with a "--"; this condition is not checked
+				 * here. We reverse the polarity of the loop exit condition to
+				 * establish the boundary condition associated with the
+				 * initialization and make that condition non-strict to account
+				 * for the equality implicit in the assignment.
 				 * 
-				 * This results in the following types of behavior:
-				 *      for (int i=0; i<N; i++)      generates "i>=0" as an "initial" bound
-				 *      for (int i=0; i<=N-1; i++)   generates "i>=0" as an "initial" bound
-				 *      for (int i=N-1; i>=0; i++)   generates "i<=N-1" as an "initial" bound
-				 *      for (int i=N-1; i>-1; i++)   generates "i<=N-1" as an "initial" bound
+				 * This results in the following types of behavior: for (int
+				 * i=0; i<N; i++) generates "i>=0" as an "initial" bound for
+				 * (int i=0; i<=N-1; i++) generates "i>=0" as an "initial" bound
+				 * for (int i=N-1; i>=0; i++) generates "i<=N-1" as an "initial"
+				 * bound for (int i=N-1; i>-1; i++) generates "i<=N-1" as an
+				 * "initial" bound
 				 */
 				List<ExpressionNode> arguments = new LinkedList<ExpressionNode>();
 				ExpressionNode lvNode = nodeFactory
@@ -432,7 +444,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				} else if (op == Operator.GT || op == Operator.GTE) {
 					OperatorNode newBoundExpr = nodeFactory.newOperatorNode(
 							ompFor.getSource(), Operator.LTE, arguments);
-					boundingConditions.add(newBoundExpr);		
+					boundingConditions.add(newBoundExpr);
 				} else {
 					assert false : "OpenMP Canonical Loop Form violated (condition must be one of >, >=, <, or <=) :"
 							+ relop;

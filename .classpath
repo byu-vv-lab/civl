@@ -11,5 +11,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/SARL"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ABC"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/GMC"/>
+	<classpathentry kind="var" path="ANTLR"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -172,7 +172,7 @@ public class IOWorker extends BaseWorker {
 	 *            The CIVL configuration.
 	 */
 	public IOWorker(ASTFactory astFactory) {
-		super(astFactory);
+		super("IOTransformer", astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */

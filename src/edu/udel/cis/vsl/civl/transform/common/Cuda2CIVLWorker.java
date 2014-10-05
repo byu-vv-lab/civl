@@ -26,7 +26,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 public class Cuda2CIVLWorker extends BaseWorker {
 
 	public Cuda2CIVLWorker(ASTFactory astFactory) {
-		super(astFactory);
+		super("CUDAtoCIVLTransformer", astFactory);
 	}
 
 	@Override

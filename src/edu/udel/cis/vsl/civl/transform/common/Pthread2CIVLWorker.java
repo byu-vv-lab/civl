@@ -81,7 +81,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
 	public Pthread2CIVLWorker(ASTFactory astFactory) {
-		super(astFactory);
+		super("PthreadToCIVLTransformer", astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */

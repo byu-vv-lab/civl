@@ -52,7 +52,7 @@ public class GeneralWorker extends BaseWorker {
 	private Source mainSource;
 
 	public GeneralWorker(ASTFactory astFactory) {
-		super(astFactory);
+		super("GeneralTransformer", astFactory);
 	}
 
 	@Override

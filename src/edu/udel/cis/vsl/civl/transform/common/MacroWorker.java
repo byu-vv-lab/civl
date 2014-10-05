@@ -26,7 +26,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 public class MacroWorker extends BaseWorker {
 
 	public MacroWorker(ASTFactory astFactory) {
-		super(astFactory);
+		super("MacroTransformer", astFactory);
 	}
 
 	@Override

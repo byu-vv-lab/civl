@@ -198,7 +198,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
 	public MPI2CIVLWorker(ASTFactory astFactory) {
-		super(astFactory);
+		super("MPItoCIVLTransformer", astFactory);
 	}
 
 	/* *************************** Private Methods ************************* */
