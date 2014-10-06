@@ -1,15 +1,17 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
+import java.util.Enumeration;
 import java.util.StringTokenizer;
 
 import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
 /**
  * This class is used to remember the expansion state of nodes in a JTree
  */
 public class TreeUtil {
-	
+
 	// is path1 descendant of path2
 	public static boolean isDescendant(TreePath path1, TreePath path2) {
 		int count1 = path1.getPathCount();
@@ -25,10 +27,11 @@ public class TreeUtil {
 
 	/**
 	 * Get the expansion state of the node at a certain row in a JTree
+	 * 
 	 * @param tree
-	 * 			The JTree
+	 *            The JTree
 	 * @param row
-	 * 			The row in the tree
+	 *            The row in the tree
 	 * @return String
 	 */
 	public static String getExpansionState(JTree tree, int row) {
@@ -50,11 +53,11 @@ public class TreeUtil {
 	 * Restore the expansion state of a node in a JTree
 	 * 
 	 * @param tree
-	 * 			The JTree
+	 *            The JTree
 	 * @param row
-	 * 		The row in the tree
+	 *            The row in the tree
 	 * @param expansionState
-	 * 		The expansion state that you wish to restore
+	 *            The expansion state that you wish to restore
 	 */
 	public static void restoreExpanstionState(JTree tree, int row,
 			String expansionState) {
@@ -63,5 +66,17 @@ public class TreeUtil {
 			int token = row + Integer.parseInt(stok.nextToken());
 			tree.expandRow(token);
 		}
+	}
+
+	public static int containsNode(JTree tree, DefaultMutableTreeNode node) {
+		for (@SuppressWarnings("rawtypes")
+		Enumeration e = ((DefaultMutableTreeNode) tree.getModel()
+				.getRoot()).depthFirstEnumeration(); e.hasMoreElements();) {
+				DefaultMutableTreeNode current = (DefaultMutableTreeNode) e.nextElement();
+				if(current.hashCode() == node.hashCode()) {
+					return current.getLevel();
+				}
+		}
+		return -1;
 	}
 }

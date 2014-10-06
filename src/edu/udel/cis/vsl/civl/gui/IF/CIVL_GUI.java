@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.gui.IF;
 
 import java.awt.Dimension;
+import java.util.Enumeration;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -147,7 +148,8 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		DyscopeNode[] treeNodes = new DyscopeNode[dyscopes.length];
 		for (int i = 0; i < dyscopes.length; i++) {
 			treeNodes[i] = new DyscopeNode("d" + dyscopes[i].identifier()
-					+ " (static = " + dyscopes[i].lexicalScope().id() + ")");
+					+ " (static = " + dyscopes[i].lexicalScope().id() + ")",
+					dyscopes[i]);
 		}
 
 		// For each dyscope
@@ -358,18 +360,50 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				newTree.expandRow(i);
 			}
 		}
-		// If there was a tree previously drawn, draw the state with the same
-		// nodes expanded and collapsed as the oldTree
+		// Restore expansion states for newTree
 		else {
-			for (int i = 0; i < newTree.getRowCount(); i++) {
-				if (i < oldTree.getRowCount()) {
-					TreeUtil.restoreExpanstionState(newTree, i,
-							TreeUtil.getExpansionState(oldTree, i));
-				} else {
-					// We have reached nodes that were not in the oldTree
-					// These nodes will be collapsed by default, so break the
-					// loop over the nodes
-					break;
+			// Iterate over the newTree's nodes
+			for (@SuppressWarnings("unchecked")
+			Enumeration<DefaultMutableTreeNode> e = ((DefaultMutableTreeNode) newTree
+					.getModel().getRoot()).depthFirstEnumeration(); e
+					.hasMoreElements();) {
+
+				DefaultMutableTreeNode current = e.nextElement();
+				int indexInOldTree = TreeUtil.containsNode(oldTree, current);
+
+				// The oldTree contains the current node in newTree
+				if (indexInOldTree != -1) {
+					String expansionState = TreeUtil.getExpansionState(oldTree,
+							indexInOldTree);
+					TreeUtil.restoreExpanstionState(newTree,
+							current.getLevel(), expansionState);
+				}
+
+				// The oldTree doesn't contain the current node
+				// TODO: do this if oldTree contained the current node but has a
+				// new node
+				// as a child
+				else {
+					newTree.expandRow(current.getLevel());
+					if (current.getChildCount() > 0) {
+						DefaultMutableTreeNode lastChild = (DefaultMutableTreeNode) current.getLastChild();
+						DefaultMutableTreeNode parent = (DefaultMutableTreeNode) lastChild
+								.getParent();
+						while (parent != null) {
+							newTree.expandRow(parent.getLevel());
+							parent = (DefaultMutableTreeNode) parent
+									.getParent();
+						}
+					}
+					else {
+						DefaultMutableTreeNode parent = (DefaultMutableTreeNode) current
+								.getParent();
+						while (parent != null) {
+							newTree.expandRow(parent.getLevel());
+							parent = (DefaultMutableTreeNode) parent
+									.getParent();
+						}
+					}
 				}
 			}
 		}
