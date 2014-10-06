@@ -389,8 +389,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				.newExpressionStatementNode(nodeFactory.newFunctionCallNode(
 						source, function, Arrays.asList(
 								this.identifierExpression(source, sharedName
-										+ "_shared"), addressOfVar,
-								addressOfTmp), null));
+										+ "_shared"), addressOfTmp,
+								addressOfVar), null));
 	}
 
 	/**
@@ -1391,6 +1391,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					privateIDs, sharedIDs, reductionIDs, firstPrivateIDs,
 					((OperatorNode) node).getOperator());
 			if (temp == null) {
+				replaceOMPPragmas(node.child(0), privateIDs, sharedIDs,
+						reductionIDs, firstPrivateIDs);
 				replaceOMPPragmas(node.child(1), privateIDs, sharedIDs,
 						reductionIDs, firstPrivateIDs);
 			} else {
