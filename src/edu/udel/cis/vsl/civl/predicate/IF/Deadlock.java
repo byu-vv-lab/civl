@@ -180,7 +180,7 @@ public class Deadlock implements StatePredicateIF<State> {
 
 	private boolean allTerminated(State state) {
 		for (ProcessState p : state.getProcessStates()) {
-			if (!p.hasEmptyStack())
+			if (p != null && !p.hasEmptyStack())
 				return false;
 		}
 		return true;

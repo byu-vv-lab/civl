@@ -190,7 +190,8 @@ public class CommonStateManager implements StateManager {
 			int newCanonicId;
 
 			try {
-				state = stateFactory.canonic(state);
+				state = stateFactory.canonic(state, config.collectProcesses(),
+						config.collectScopes(), config.collectHeaps());
 			} catch (CIVLStateException stex) {
 				// TODO state never gets canonicalized and then gmc can't figure
 				// out if it has been seen before.
@@ -206,10 +207,13 @@ public class CommonStateManager implements StateManager {
 			if (newCanonicId > this.maxCanonicId)
 				this.maxCanonicId = newCanonicId;
 		} else {
-			state = stateFactory.collectProcesses(state);
+			if (config.collectProcesses())
+				state = stateFactory.collectProcesses(state);
 			try {
-				state = stateFactory.collectHeaps(oldState);
-				state = stateFactory.collectScopes(state);
+				if (config.collectHeaps())
+					state = stateFactory.collectHeaps(oldState);
+				if (config.collectScopes())
+					state = stateFactory.collectScopes(state);
 			} catch (CIVLStateException stex) {
 				CIVLExecutionException err = new CIVLExecutionException(
 						stex.kind(), stex.certainty(), process, stex.message(),

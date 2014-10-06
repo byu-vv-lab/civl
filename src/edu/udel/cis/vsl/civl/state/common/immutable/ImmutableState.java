@@ -395,7 +395,7 @@ public class ImmutableState implements State {
 		for (int i = 0; i < numProcs; i++) {
 			ImmutableProcessState processState = processStates[i];
 
-			if (!processState.isCanonic())
+			if (processState != null && !processState.isCanonic())
 				processStates[i] = canonic(processState, processMap);
 		}
 		for (int i = 0; i < numScopes; i++) {

@@ -25,6 +25,9 @@ public class CIVLConfiguration {
 	private PrintStream out;
 	private PrintStream err;
 	private boolean showPathConditon = false;
+	private boolean collectProcesses = true;
+	private boolean collectScopes = true;
+	private boolean collectHeaps = true;
 
 	public CIVLConfiguration(GMCConfiguration config) {
 		this.debug = config.isTrue(CIVLConstants.debugO);
@@ -44,10 +47,9 @@ public class CIVLConfiguration {
 		this.setShowProgram(config.isTrue(CIVLConstants.showProgramO));
 		this.showPathConditon = config.isTrue(CIVLConstants.showPathConditionO);
 		this.ompNoSimplify = config.isTrue(CIVLConstants.ompNoSimplifyO);
-	}
-
-	public CIVLConfiguration() {
-		// TODO Auto-generated constructor stub
+		this.collectProcesses = config.isTrue(CIVLConstants.collectProcessesO);
+		this.collectScopes = config.isTrue(CIVLConstants.collectScopesO);
+		this.setCollectHeaps(config.isTrue(CIVLConstants.collectHeapsO));
 	}
 
 	public void setOut(PrintStream out) {
@@ -178,6 +180,14 @@ public class CIVLConfiguration {
 		return deadlock;
 	}
 
+	public void setCollectProcesses(boolean collectProcesses) {
+		this.collectProcesses = collectProcesses;
+	}
+
+	public void setCollectScopes(boolean collectScopes) {
+		this.collectScopes = collectScopes;
+	}
+
 	public void setDeadlock(String deadlock) {
 		this.deadlock = deadlock;
 	}
@@ -197,7 +207,7 @@ public class CIVLConfiguration {
 	public void setShowPathConditon(boolean showPathConditon) {
 		this.showPathConditon = showPathConditon;
 	}
-	
+
 	public boolean ompNoSimplify() {
 		return ompNoSimplify;
 	}
@@ -206,4 +216,19 @@ public class CIVLConfiguration {
 		this.ompNoSimplify = ompNoSimplify;
 	}
 
+	public boolean collectProcesses() {
+		return this.collectProcesses;
+	}
+
+	public boolean collectScopes() {
+		return this.collectScopes;
+	}
+
+	public boolean collectHeaps() {
+		return collectHeaps;
+	}
+
+	public void setCollectHeaps(boolean collectHeaps) {
+		this.collectHeaps = collectHeaps;
+	}
 }

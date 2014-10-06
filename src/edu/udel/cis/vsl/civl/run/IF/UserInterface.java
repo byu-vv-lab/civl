@@ -1,6 +1,9 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.bar;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectHeapsO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectProcessesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectScopesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.date;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.deadlockO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.debugO;
@@ -144,7 +147,8 @@ public class UserInterface {
 				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
 				svcompO, showInputVarsO, showProgramO, showPathConditionO,
-				ompNoSimplifyO);
+				ompNoSimplifyO, collectProcessesO, collectScopesO,
+				collectHeapsO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -959,6 +963,9 @@ public class UserInterface {
 			universe.setShowProverQueries(true);
 		if (newConfig.isTrue(showQueriesO))
 			universe.setShowQueries(true);
+		newConfig.setScalarValue(collectScopesO, false);
+		newConfig.setScalarValue(collectProcessesO, false);
+		newConfig.setScalarValue(collectHeapsO, false);
 		modelResult = extractModel(out, newConfig, sourceFilename, universe);
 		if (modelResult == null)
 			return false;

@@ -171,13 +171,18 @@ public class ImmutableStateFactory implements StateFactory {
 	 * @throws CIVLStateException
 	 */
 	@Override
-	public ImmutableState canonic(State state) throws CIVLStateException {
+	public ImmutableState canonic(State state, boolean collectProcesses,
+			boolean collectScopes, boolean collectHeaps)
+			throws CIVLStateException {
 		ImmutableState theState = (ImmutableState) state;
 
-		theState = collectProcesses(theState);
-		theState = collectScopes(theState);
-		theState = collectHeaps(theState);
-		theState = collectSymbolicConstants(theState);
+		if (collectProcesses)
+			theState = collectProcesses(theState);
+		if (collectScopes)
+			theState = collectScopes(theState);
+		if (collectHeaps)
+			theState = collectHeaps(theState);
+		theState = collectSymbolicConstants(theState, collectHeaps);
 		theState = flyweight(theState);
 		if (simplify) {
 			ImmutableState simplifiedState = theState.simplifiedState;
@@ -420,7 +425,7 @@ public class ImmutableStateFactory implements StateFactory {
 		state = addProcess(state, function, arguments, -1);
 		state = this.setVariable(state, atomicVar.vid(), 0,
 				modelFactory.undefinedProcessValue());
-		return canonic(state);
+		return canonic(state, false, false, false);
 	}
 
 	@Override
@@ -1598,7 +1603,14 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 	}
 
-	private ImmutableState collectSymbolicConstants(State state) {
+	/**
+	 * Rename all symbolic constants of the state.
+	 * 
+	 * @param state
+	 * @return
+	 */
+	private ImmutableState collectSymbolicConstants(State state,
+			boolean collectHeaps) {
 		ImmutableState theState = (ImmutableState) state;
 		int numDyscopes = theState.numDyscopes();
 		int nameId = 0;
@@ -1618,20 +1630,25 @@ public class ImmutableStateFactory implements StateFactory {
 				if (value.isNull() || (dyscopeId == 0 && variable.isInput()))
 					continue;
 				if (vid == 0) {// heap
-					for (int heapFieldId = 0; heapFieldId < numHeapFields; heapFieldId++) {
-						SymbolicExpression heapField = universe.tupleRead(
-								value, universe.intObject(heapFieldId));
-						int length = this.symbolicUtil.extractInt(null,
-								(NumericExpression) universe.length(heapField));
+					if (collectHeaps)
+						// only rename heap objects when the option
+						// -collectHeaps is turned on
+						for (int heapFieldId = 0; heapFieldId < numHeapFields; heapFieldId++) {
+							SymbolicExpression heapField = universe.tupleRead(
+									value, universe.intObject(heapFieldId));
+							int length = this.symbolicUtil.extractInt(null,
+									(NumericExpression) universe
+											.length(heapField));
 
-						for (int heapObjId = 0; heapObjId < length; heapObjId++) {
-							SymbolicExpression heapObj = universe.arrayRead(
-									heapField, universe.integer(heapObjId));
+							for (int heapObjId = 0; heapObjId < length; heapObjId++) {
+								SymbolicExpression heapObj = universe
+										.arrayRead(heapField,
+												universe.integer(heapObjId));
 
-							nameId = this.addOldToNewName(heapObj, nameId,
-									oldName2NewName);
+								nameId = this.addOldToNewName(heapObj, nameId,
+										oldName2NewName);
+							}
 						}
-					}
 				} else if (!variable.isInput()) {// normal variables
 					nameId = this.addOldToNewName(value, nameId,
 							oldName2NewName);

@@ -152,7 +152,16 @@ public class CIVLConstants {
 
 	public final static Option ompNoSimplifyO = Option.newScalarOption(
 			"ompNoSimplify", BOOLEAN, "don't simplify omp pragmas", false);
-
+	
+	public final static Option collectProcessesO = Option.newScalarOption(
+			"collectProcesses", BOOLEAN, "collect processes?", true);
+	
+	public final static Option collectScopesO = Option.newScalarOption(
+			"collectScopes", BOOLEAN, "collect dyscopes?", true);
+	
+	public final static Option collectHeapsO = Option.newScalarOption(
+			"collectHeaps", BOOLEAN, "collect heaps?", true);
+	
 	public final static String civlSystemFunction = "_CIVL_system";
 
 	public static Option[] getAllOptions() {

@@ -60,9 +60,17 @@ public interface StateFactory {
 	 * 
 	 * @param state
 	 *            any non-null CIVL state
+	 * @param collectProcesses
+	 *            shall processes be collected?
+	 * @param collectScopes
+	 *            shall scopes be collected?
+	 * @param collectHeaps
+	 *            shall heaps be collected?
+	 * 
 	 * @return the canonical version of the given state
 	 */
-	State canonic(State state) throws CIVLStateException;
+	State canonic(State state, boolean collectProcesses, boolean collectScopes,
+			boolean collectHeaps) throws CIVLStateException;
 
 	/**
 	 * Returns the canonic, initial state for a CIVL Model.
