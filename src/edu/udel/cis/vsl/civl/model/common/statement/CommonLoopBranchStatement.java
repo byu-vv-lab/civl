@@ -37,9 +37,9 @@ public class CommonLoopBranchStatement extends CommonNoopStatement {
 	@Override
 	public String toString() {
 		if (isTrueBranch) {
-			return "LOOP_TRUE_BRANCH";
+			return "LOOP_BODY_ENTER";
 		} else
-			return "LOOP_FALSE_BRANCH";
+			return "LOOP_BODY_EXIT";
 	}
 
 }
