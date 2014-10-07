@@ -274,7 +274,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			ProcessState process = state.getProcessState(pid);
 
 			if (process == null)
-				result.append("| | process - (id=" + pid + "): null");
+				result.append("| | process - (id=" + pid + "): null\n");
 			else
 				result.append(process.toStringBuffer("| | "));
 		}
