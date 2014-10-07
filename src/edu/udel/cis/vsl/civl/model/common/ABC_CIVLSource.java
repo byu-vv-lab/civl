@@ -52,4 +52,9 @@ public class ABC_CIVLSource implements CIVLSource {
 		return abcSource;
 	}
 
+	@Override
+	public boolean isSystemSource() {
+		return false;
+	}
+
 }

@@ -40,4 +40,12 @@ public interface CIVLSource {
 	 */
 	String getSummary();
 
+	/**
+	 * Checks if this source is some system source not from input program.
+	 * 
+	 * @return true iff this source is some system source not from input
+	 *         program.
+	 */
+	boolean isSystemSource();
+
 }

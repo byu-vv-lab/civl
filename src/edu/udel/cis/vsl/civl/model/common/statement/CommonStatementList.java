@@ -114,9 +114,7 @@ public class CommonStatementList implements StatementList {
 		if (!statements.isEmpty()) {
 			result = statements.get(0).getSource();
 
-			// TODO: FIX ME
-
-			if (result.getLocation() == "CIVL System object") {
+			if (result.isSystemSource()) {
 				if (statements.size() > 1) {
 					result = statements.get(1).getSource();
 				}
@@ -134,9 +132,7 @@ public class CommonStatementList implements StatementList {
 		if (!statements.isEmpty()) {
 			Statement first = statements.get(0);
 
-			// TODO: FILE ME
-
-			if (first.getSource().getLocation() == "CIVL System object") {
+			if (first.getSource().isSystemSource()) {
 				if (statements.size() > 1) {
 					return statements.get(1).guard();
 				}
@@ -205,9 +201,7 @@ public class CommonStatementList implements StatementList {
 		if (!statements.isEmpty()) {
 			Statement first = statements.get(0);
 
-			// TODO: FIX ME
-
-			if (first.getSource().getLocation() == "CIVL System object") {
+			if (first.getSource().isSystemSource()) {
 				if (statements.size() > 1) {
 					return statements.get(1).source();
 				}
@@ -236,9 +230,8 @@ public class CommonStatementList implements StatementList {
 	public String toString() {
 		String result = "";
 		for (Statement s : statements) {
-			// TODO: how can you do == on Strings? FIX ME throughout
 
-			if (s.getSource().getLocation() == "CIVL System object")
+			if (s.getSource().isSystemSource())
 				result = "(" + s.toString() + ") ";
 			else
 				result = result + s.toString() + "; ";
@@ -250,13 +243,11 @@ public class CommonStatementList implements StatementList {
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -310,14 +301,10 @@ public class CommonStatementList implements StatementList {
 
 	@Override
 	public void setTargetTemp(Location target) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void calculateConstantValue(SymbolicUniverse universe) {
-		// TODO Auto-generated method stub
-		
 	}
 
 }
