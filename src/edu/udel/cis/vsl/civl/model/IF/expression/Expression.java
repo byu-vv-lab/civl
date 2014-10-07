@@ -44,7 +44,7 @@ public interface Expression extends Sourceable {
 	 */
 	CIVLType getExpressionType();
 
-	void setExpressionType(CIVLType type);
+//	void setExpressionType(CIVLType type);
 
 	/**
 	 * Returns the kind of this expression
@@ -53,12 +53,12 @@ public interface Expression extends Sourceable {
 	 */
 	ExpressionKind expressionKind();
 
-	/**
-	 * @param expressionScope
-	 *            The highest scope accessed by this expression. Null if no
-	 *            variables accessed.
-	 */
-	void setExpressionScope(Scope expressionScope);
+//	/**
+//	 * @param expressionScope
+//	 *            The highest scope accessed by this expression. Null if no
+//	 *            variables accessed.
+//	 */
+//	void setExpressionScope(Scope expressionScope);
 
 	/**
 	 * Calculate the existence of dereferences in this expression

@@ -8,6 +8,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -19,41 +20,51 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public class CommonBooleanLiteralExpression extends CommonExpression implements
 		BooleanLiteralExpression {
 
-	private boolean value;
+	/* ************************** Private Fields *************************** */
 
 	/**
-	 * A literal boolean value.
-	 * 
-	 * @param The
-	 *            value of this boolean literal.
+	 * The boolean value of this literal. Immutable.
 	 */
-	public CommonBooleanLiteralExpression(CIVLSource source, boolean value) {
-		super(source);
+	private boolean value;
+
+	/* **************************** Constructor **************************** */
+
+	/**
+	 * Creates a new boolean literal with the given value.
+	 * 
+	 * @param source
+	 *            The source information corresponding to this expression.
+	 * @param type
+	 *            The type of this expression.
+	 * @param value
+	 *            The value of this boolean literal.
+	 */
+	public CommonBooleanLiteralExpression(CIVLSource source, CIVLType type,
+			boolean value) {
+		// the expression scope is null because no variable is accessed by a
+		// boolean literal.
+		super(source, null, type);
 		this.value = value;
 	}
+
+	/* *************** Methods from BooleanLiteralExpression *************** */
 
 	/**
 	 * @return The value of this boolean literal.
 	 */
+	@Override
 	public boolean value() {
 		return value;
 	}
 
-	/**
-	 * @param The
-	 *            value of this boolean literal.
-	 */
-	public void setValue(boolean value) {
-		this.value = value;
-	}
+	/* ******************* Methods from LiteralExpression ****************** */
 
 	@Override
-	public String toString() {
-		if (value) {
-			return "true";
-		}
-		return "false";
+	public LiteralKind literalKind() {
+		return LiteralKind.BOOLEAN;
 	}
+
+	/* *************** Methods from Expression *************** */
 
 	@Override
 	public ExpressionKind expressionKind() {
@@ -70,8 +81,13 @@ public class CommonBooleanLiteralExpression extends CommonExpression implements
 		return null;
 	}
 
+	/* ************************ Methods from Object ************************ */
+
 	@Override
-	public LiteralKind literalKind() {
-		return LiteralKind.BOOLEAN;
+	public String toString() {
+		if (value) {
+			return "true";
+		}
+		return "false";
 	}
 }

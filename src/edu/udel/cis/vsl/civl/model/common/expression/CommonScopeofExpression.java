@@ -6,6 +6,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -19,8 +20,9 @@ public class CommonScopeofExpression extends CommonExpression implements
 
 	private LHSExpression argument;
 
-	public CommonScopeofExpression(CIVLSource source, LHSExpression expression) {
-		super(source);
+	public CommonScopeofExpression(CIVLSource source, CIVLType type,
+			LHSExpression expression) {
+		super(source, expression.expressionScope(), type);
 		this.argument = expression;
 	}
 
@@ -43,9 +45,9 @@ public class CommonScopeofExpression extends CommonExpression implements
 	public LHSExpression argument() {
 		return argument;
 	}
-	
+
 	@Override
-	public String toString(){
+	public String toString() {
 		return "$scopeof(" + argument + ")";
 	}
 

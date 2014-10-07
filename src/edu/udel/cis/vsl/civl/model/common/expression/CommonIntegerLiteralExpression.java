@@ -9,6 +9,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -28,8 +29,9 @@ public class CommonIntegerLiteralExpression extends CommonExpression implements
 	 * @param value
 	 *            The (arbitrary precision) value of the integer.
 	 */
-	public CommonIntegerLiteralExpression(CIVLSource source, BigInteger value) {
-		super(source);
+	public CommonIntegerLiteralExpression(CIVLSource source, CIVLType type,
+			BigInteger value) {
+		super(source, null, type);
 		this.value = value;
 	}
 

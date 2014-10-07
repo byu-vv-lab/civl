@@ -22,17 +22,4 @@ public interface CastExpression extends Expression {
 	 * @return The type to which the expression is cast.
 	 */
 	CIVLType getCastType();
-
-	/**
-	 * @param expression
-	 *            The expression being cast to a new type.
-	 */
-	void setExpression(Expression expression);
-
-	/**
-	 * @param type
-	 *            The type to which the expression is cast.
-	 */
-	void setCastType(CIVLType type);
-
 }

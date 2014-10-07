@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -29,8 +30,9 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 	 * @param value
 	 *            The (arbitrary precision) real value.
 	 */
-	public CommonRealLiteralExpression(CIVLSource source, BigDecimal value) {
-		super(source);
+	public CommonRealLiteralExpression(CIVLSource source, CIVLType type,
+			BigDecimal value) {
+		super(source, null, type);
 		this.value = value;
 	}
 
@@ -66,13 +68,11 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

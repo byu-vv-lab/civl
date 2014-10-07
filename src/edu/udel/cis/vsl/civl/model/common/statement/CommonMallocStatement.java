@@ -37,12 +37,13 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	private LHSExpression lhs;
 
-	public CommonMallocStatement(CIVLSource civlSource, Location source,
-			int mallocId, Expression heapPointerExpression,
-			CIVLType staticElementType, SymbolicType dynamicElementType,
+	public CommonMallocStatement(CIVLSource civlSource, Scope scope,
+			Location source, Expression guard, int mallocId,
+			Expression heapPointerExpression, CIVLType staticElementType,
+			SymbolicType dynamicElementType,
 			SymbolicArrayType dynamicObjectType, Expression sizeExpression,
 			SymbolicExpression undefinedObject, LHSExpression lhs) {
-		super(civlSource, source);
+		super(civlSource, scope, source, guard);
 		this.id = mallocId;
 		this.scopeExpression = heapPointerExpression;
 		this.staticElementType = staticElementType;
@@ -169,21 +170,20 @@ public class CommonMallocStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonMallocStatement(this.getSource(),
-					this.source(), this.id, this.scopeExpression,
-					staticElementType, dynamicElementType, dynamicObjectType,
-					this.sizeExpression, undefinedObject, lhs);
-			newStatement.setGuard(newGuard);
+					this.statementScope, this.source(), newGuard, this.id,
+					this.scopeExpression, staticElementType,
+					dynamicElementType, dynamicObjectType, this.sizeExpression,
+					undefinedObject, lhs);
 		} else {
 			Expression newSizeExpression = sizeExpression.replaceWith(
 					oldExpression, newExpression);
 
 			if (newSizeExpression != null) {
 				newStatement = new CommonMallocStatement(this.getSource(),
-						this.source(), id, this.scopeExpression,
-						staticElementType, dynamicElementType,
-						dynamicObjectType, newSizeExpression, undefinedObject,
-						lhs);
-				newStatement.setGuard(this.guard());
+						this.statementScope, this.source(), this.guard(), id,
+						this.scopeExpression, staticElementType,
+						dynamicElementType, dynamicObjectType,
+						newSizeExpression, undefinedObject, lhs);
 			}
 		}
 		return newStatement;

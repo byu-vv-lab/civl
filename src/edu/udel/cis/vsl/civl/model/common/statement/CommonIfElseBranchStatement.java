@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 
 /**
@@ -34,10 +35,11 @@ public class CommonIfElseBranchStatement extends CommonNoopStatement {
 	 *            true iff this is the if branching, else the else branching.
 	 */
 	public CommonIfElseBranchStatement(CIVLSource civlSource, Location source,
-			boolean isIf) {
-		super(civlSource, source);
+			Expression guard, boolean isIf) {
+		super(civlSource, source, guard);
 		this.noopKind = NoopKind.IF_ELSE;
 		this.isIfBranch = isIf;
+		this.statementScope = guard.expressionScope();
 	}
 
 	/* ************************ Methods from Object ************************ */

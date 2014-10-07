@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 
 /**
@@ -27,15 +28,16 @@ public class CommonGotoBranchStatement extends CommonNoopStatement {
 	/**
 	 * 
 	 * @param civlSource
-	 *            The CIVL source of this statement. More information in {@link CIVLSource}.
+	 *            The CIVL source of this statement. More information in
+	 *            {@link CIVLSource}.
 	 * @param source
 	 *            The source location of this goto statement
 	 * @param label
 	 *            The label name of this goto statement
 	 */
 	public CommonGotoBranchStatement(CIVLSource civlSource, Location source,
-			String label) {
-		super(civlSource, source);
+			Expression guard, String label) {
+		super(civlSource, source, guard);
 		this.labelName = label;
 		this.noopKind = NoopKind.GOTO;
 	}

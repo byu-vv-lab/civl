@@ -5,6 +5,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonHereOrRootExpression extends CommonExpression implements
@@ -12,8 +13,8 @@ public class CommonHereOrRootExpression extends CommonExpression implements
 
 	private boolean isRoot;
 
-	public CommonHereOrRootExpression(CIVLSource source, boolean isRoot) {
-		super(source);
+	public CommonHereOrRootExpression(CIVLSource source, CIVLType type, boolean isRoot) {
+		super(source, null, type);
 		this.isRoot = isRoot;
 	}
 

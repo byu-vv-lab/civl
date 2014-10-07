@@ -28,10 +28,10 @@ public class CommonCivlParForEnterStatement extends CommonStatement implements
 	private CIVLFunction parProcFunction;
 
 	public CommonCivlParForEnterStatement(CIVLSource source, Location start,
-			Expression domain, VariableExpression domSize,
+			Expression guard, Expression domain, VariableExpression domSize,
 			VariableExpression parProcsVar, Expression parProcs,
 			CIVLFunction parProcFunc) {
-		super(source, start);
+		super(source, domain.expressionScope(), start, guard);
 		this.domain = domain;
 		this.domSizeVar = domSize;
 		this.parProcsVar = parProcsVar;

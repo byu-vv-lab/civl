@@ -22,8 +22,9 @@ public class CommonDynamicTypeOfExpression extends CommonExpression implements
 
 	private CIVLType type;
 
-	public CommonDynamicTypeOfExpression(CIVLSource source, CIVLType type) {
-		super(source);
+	public CommonDynamicTypeOfExpression(CIVLSource source, CIVLType myType,
+			CIVLType type) {
+		super(source, null, myType);
 		this.type = type;
 	}
 

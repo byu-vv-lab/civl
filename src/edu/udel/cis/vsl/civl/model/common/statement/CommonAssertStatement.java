@@ -40,9 +40,10 @@ public class CommonAssertStatement extends CommonStatement implements
 	 *            The expression being added to the path condition.
 	 * @param
 	 */
-	public CommonAssertStatement(CIVLSource civlSource, Location source,
-			Expression condition, Expression[] explanation) {
-		super(civlSource, source);
+	public CommonAssertStatement(CIVLSource civlSource, Scope scope,
+			Location source, Expression guard, Expression condition,
+			Expression[] explanation) {
+		super(civlSource, scope, source, guard);
 		this.condition = condition;
 		this.explanation = explanation;
 	}
@@ -152,16 +153,16 @@ public class CommonAssertStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonAssertStatement(this.getSource(),
-					this.source(), this.condition, this.explanation);
-			newStatement.setGuard(newGuard);
+					this.statementScope, this.source(), newGuard,
+					this.condition, this.explanation);
 		} else {
 			Expression newExpressionField = condition.replaceWith(
 					oldExpression, newExpression);
 
 			if (newExpressionField != null) {
 				newStatement = new CommonAssertStatement(this.getSource(),
-						this.source(), newExpressionField, this.explanation);
-				newStatement.setGuard(this.guard());
+						this.statementScope, this.source(), this.guard(),
+						newExpressionField, this.explanation);
 			} else {
 				int numArgs = this.explanation.length;
 				Expression[] newExplanation = Arrays.copyOf(this.explanation,
@@ -174,9 +175,9 @@ public class CommonAssertStatement extends CommonStatement implements
 					if (newArg != null) {
 						newExplanation[i] = newArg;
 						newStatement = new CommonAssertStatement(
-								this.getSource(), this.source(),
-								this.condition, newExplanation);
-						newStatement.setGuard(this.guard());
+								this.getSource(), this.statementScope,
+								this.source(), this.guard(), this.condition,
+								newExplanation);
 						break;
 					}
 				}

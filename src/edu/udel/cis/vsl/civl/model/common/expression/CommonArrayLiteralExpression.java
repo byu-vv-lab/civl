@@ -16,20 +16,104 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public class CommonArrayLiteralExpression extends CommonExpression implements
 		ArrayLiteralExpression {
 
+	/* ************************** Private Fields *************************** */
+
+	/**
+	 * The elements of the array literal.
+	 */
 	private Expression[] elements;
 
-	public CommonArrayLiteralExpression(CIVLSource source, CIVLType arrayType,
-			List<Expression> elements) {
-		super(source);
+	/* **************************** Constructor **************************** */
+
+	/**
+	 * Create a new instance of an array literal expression.
+	 * 
+	 * @param source
+	 *            The source information corresponding to this array literal.
+	 * @param scope
+	 *            The highest scope that this array literal accessed through its
+	 *            elements.
+	 * @param arrayType
+	 *            The type of this array literal.
+	 * @param elements
+	 *            The elements of this array literal.
+	 */
+	public CommonArrayLiteralExpression(CIVLSource source, Scope scope,
+			CIVLArrayType arrayType, List<Expression> elements) {
+		super(source, scope, arrayType);
 		this.elements = new Expression[elements.size()];
 		elements.toArray(this.elements);
-		this.setExpressionType(arrayType);
 	}
+
+	/* *************** Methods from ArrayLiteralExpression ***************** */
+
+	@Override
+	public Expression[] elements() {
+		return this.elements;
+	}
+
+	@Override
+	public void setElements(Expression[] elements) {
+		this.elements = elements;
+	}
+
+	@Override
+	public CIVLArrayType arrayType() {
+		assert this.expressionType instanceof CIVLArrayType;
+		return (CIVLArrayType) this.expressionType;
+	}
+
+	@Override
+	public CIVLType elementType() {
+		return this.arrayType().elementType();
+	}
+
+	/* ****************** Methods from LiteralExpression ******************* */
+
+	@Override
+	public LiteralKind literalKind() {
+		return LiteralKind.ARRAY;
+	}
+
+	/* ********************* Methods from Expression *********************** */
 
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.ARRAY_LITERAL;
 	};
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> result = new HashSet<>();
+
+		if (elements != null) {
+			for (Expression element : elements) {
+				Set<Variable> elementResult = element
+						.variableAddressedOf(scope);
+
+				if (elementResult != null)
+					result.addAll(elementResult);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf() {
+		Set<Variable> result = new HashSet<>();
+
+		if (elements != null) {
+			for (Expression element : elements) {
+				Set<Variable> elementResult = element.variableAddressedOf();
+
+				if (elementResult != null)
+					result.addAll(elementResult);
+			}
+		}
+		return result;
+	}
+
+	/* ************************ Methods from Object ************************ */
 
 	@Override
 	public String toString() {
@@ -63,62 +147,4 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 		result.append("}");
 		return result.toString();
 	}
-
-	@Override
-	public Expression[] elements() {
-		return this.elements;
-	}
-
-	@Override
-	public void setElements(Expression[] elements) {
-		this.elements = elements;
-	}
-
-	@Override
-	public CIVLArrayType arrayType() {
-		assert this.expressionType instanceof CIVLArrayType;
-		return (CIVLArrayType) this.expressionType;
-	}
-
-	@Override
-	public CIVLType elementType() {
-		return this.arrayType().elementType();
-	}
-
-	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
-		Set<Variable> result = new HashSet<>();
-
-		if (elements != null) {
-			for (Expression element : elements) {
-				Set<Variable> elementResult = element
-						.variableAddressedOf(scope);
-
-				if (elementResult != null)
-					result.addAll(elementResult);
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public Set<Variable> variableAddressedOf() {
-		Set<Variable> result = new HashSet<>();
-
-		if (elements != null) {
-			for (Expression element : elements) {
-				Set<Variable> elementResult = element.variableAddressedOf();
-
-				if (elementResult != null)
-					result.addAll(elementResult);
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public LiteralKind literalKind() {
-		return LiteralKind.ARRAY;
-	}
-
 }

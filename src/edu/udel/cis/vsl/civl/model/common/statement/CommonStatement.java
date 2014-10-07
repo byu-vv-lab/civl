@@ -16,7 +16,6 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonBooleanLiteralExpression;
 
 /**
  * The parent of all statements.
@@ -41,12 +40,14 @@ public abstract class CommonStatement extends CommonSourceable implements
 	 * @param source
 	 *            The location that is the source of this statement.
 	 */
-	public CommonStatement(CIVLSource civlSource, Location source) {
+	public CommonStatement(CIVLSource civlSource, Scope scope, Location source,
+			Expression guard) {
 		super(civlSource);
 		this.source = source;
-		guard = new CommonBooleanLiteralExpression(civlSource, true);
+		this.guard = guard;
 		if (source != null)
 			source.addOutgoing(this);
+		this.statementScope = scope;
 	}
 
 	public CommonStatement() {
@@ -139,15 +140,15 @@ public abstract class CommonStatement extends CommonSourceable implements
 		return statementScope;
 	}
 
-	/**
-	 * @param statementScope
-	 *            The highest scope accessed by this statement. Null if no
-	 *            variables accessed.
-	 */
-	@Override
-	public void setStatementScope(Scope statementScope) {
-		this.statementScope = statementScope;
-	}
+	// /**
+	// * @param statementScope
+	// * The highest scope accessed by this statement. Null if no
+	// * variables accessed.
+	// */
+	// @Override
+	// public void setStatementScope(Scope statementScope) {
+	// this.statementScope = statementScope;
+	// }
 
 	/**
 	 * @param s0

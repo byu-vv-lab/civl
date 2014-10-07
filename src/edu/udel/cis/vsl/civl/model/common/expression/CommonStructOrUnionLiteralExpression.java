@@ -17,12 +17,11 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 
 	private Expression[] fields;
 
-	public CommonStructOrUnionLiteralExpression(CIVLSource source,
+	public CommonStructOrUnionLiteralExpression(CIVLSource source, Scope scope,
 			CIVLType type, List<Expression> fields) {
-		super(source);
+		super(source, scope, type);
 		this.fields = new Expression[fields.size()];
 		fields.toArray(this.fields);
-		this.setExpressionType(type);
 	}
 
 	@Override

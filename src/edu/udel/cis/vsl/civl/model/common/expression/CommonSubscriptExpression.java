@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -37,9 +38,9 @@ public class CommonSubscriptExpression extends CommonExpression implements
 	 * @param index
 	 *            An expression evaluating to an integer.
 	 */
-	public CommonSubscriptExpression(CIVLSource source, LHSExpression array,
-			Expression index) {
-		super(source);
+	public CommonSubscriptExpression(CIVLSource source, Scope scope,
+			CIVLType type, LHSExpression array, Expression index) {
+		super(source, scope, type);
 		this.array = array;
 		this.index = index;
 	}
@@ -135,21 +136,19 @@ public class CommonSubscriptExpression extends CommonExpression implements
 		Expression newIndex = index.replaceWith(oldExpression, newExpression);
 		CommonSubscriptExpression result = null;
 
-		if (newIndex != null) {
-			result = new CommonSubscriptExpression(this.getSource(), array,
+		if (newIndex != null)
+			result = new CommonSubscriptExpression(this.getSource(),
+					this.expressionScope(), this.expressionType, array,
 					newIndex);
-		} else {
+		else {
 			Expression newArray = array.replaceWith(oldExpression,
 					newExpression);
 
 			if (newArray != null)
 				result = new CommonSubscriptExpression(this.getSource(),
+						this.expressionScope(), this.expressionType,
 						(LHSExpression) newArray, index);
 		}
-
-		if (result != null)
-			result.setExpressionType(expressionType);
-
 		return result;
 	}
 

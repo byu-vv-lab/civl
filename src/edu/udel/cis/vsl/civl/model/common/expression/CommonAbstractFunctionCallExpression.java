@@ -10,36 +10,69 @@ import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
+/**
+ * This implements an abstract function call expression.
+ * 
+ * @author Manchun Zheng (zmanchun)
+ * 
+ */
 public class CommonAbstractFunctionCallExpression extends CommonExpression
 		implements AbstractFunctionCallExpression {
 
-	private AbstractFunction function;
-
-	private List<Expression> arguments;
+	/* ************************** Private Fields *************************** */
 
 	/**
-	 * An abstract function call.
+	 * The abstract function that this call expression invokes.
+	 */
+	private AbstractFunction function;
+
+	/**
+	 * The list of arguments of this call expression.
+	 */
+	private List<Expression> arguments;
+
+	/* **************************** Constructor **************************** */
+
+	/**
+	 * Creates a new instance of an abstract function call.
 	 * 
 	 * @param source
 	 *            The source information corresponding to this abstract function
 	 *            call.
+	 * @param scope
+	 *            The highest scope that this function call accessed through its
+	 *            arguments.
 	 * @param function
 	 *            The abstract function.
 	 * @param arguments
 	 *            Expressions for the arguments used in the abstract function
 	 *            call.
 	 */
-	public CommonAbstractFunctionCallExpression(CIVLSource source,
+	public CommonAbstractFunctionCallExpression(CIVLSource source, Scope scope,
 			AbstractFunction function, List<Expression> arguments) {
-		super(source);
+		super(source, scope, function.returnType());
 		this.function = function;
 		this.arguments = arguments;
 	}
+
+	/* ********************** Methods from Expression ********************** */
 
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.ABSTRACT_FUNCTION_CALL;
 	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf() {
+		return null;
+	}
+
+	/* ************* Methods from AbstractFunctionCallExpression *********** */
 
 	@Override
 	public AbstractFunction function() {
@@ -50,6 +83,8 @@ public class CommonAbstractFunctionCallExpression extends CommonExpression
 	public List<Expression> arguments() {
 		return arguments;
 	}
+
+	/* ************************ Methods from Object ************************ */
 
 	@Override
 	public String toString() {
@@ -64,15 +99,4 @@ public class CommonAbstractFunctionCallExpression extends CommonExpression
 		result += ")";
 		return result;
 	}
-
-	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
-		return null;
-	}
-
-	@Override
-	public Set<Variable> variableAddressedOf() {
-		return null;
-	}
-
 }

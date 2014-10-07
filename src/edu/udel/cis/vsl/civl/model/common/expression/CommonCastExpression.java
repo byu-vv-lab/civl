@@ -24,7 +24,6 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public class CommonCastExpression extends CommonExpression implements
 		CastExpression {
 
-	private CIVLType type;
 	private Expression expression;
 
 	/**
@@ -35,62 +34,25 @@ public class CommonCastExpression extends CommonExpression implements
 	 * @param expression
 	 *            The expression being cast to a new type.
 	 */
-	public CommonCastExpression(CIVLSource source, CIVLType type,
+	public CommonCastExpression(CIVLSource source, Scope scope, CIVLType type,
 			Expression expression) {
-		super(source);
-		this.type = type;
+		super(source, scope, type);
 		this.expression = expression;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.model.IF.expression.CastExpression#getExpression()
-	 */
 	@Override
 	public Expression getExpression() {
 		return expression;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.model.IF.expression.CastExpression#getCastType()
-	 */
 	@Override
 	public CIVLType getCastType() {
-		return type;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.model.IF.expression.CastExpression#setExpression
-	 * (edu.udel.cis.vsl.civl.model.IF.expression.Expression)
-	 */
-	@Override
-	public void setExpression(Expression expression) {
-		this.expression = expression;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.udel.cis.vsl.civl.model.IF.expression.CastExpression#setType(edu.
-	 * udel.cis.vsl.civl.model.IF.type.Type)
-	 */
-	@Override
-	public void setCastType(CIVLType type) {
-		this.type = type;
+		return this.expressionType;
 	}
 
 	@Override
 	public String toString() {
-		return "(" + type + ") " + expression;
+		return "(" + expressionType + ") " + expression;
 	}
 
 	@Override
@@ -137,15 +99,10 @@ public class CommonCastExpression extends CommonExpression implements
 		CommonCastExpression result = null;
 
 		if (newOperand != null) {
-			result = new CommonCastExpression(this.getSource(), this.type,
-					newOperand);
+			result = new CommonCastExpression(this.getSource(),
+					this.expressionScope(), this.expressionType, newOperand);
 		}
-
-		if (result != null)
-			result.setExpressionType(expressionType);
-
 		return result;
-
 	}
 
 	@Override

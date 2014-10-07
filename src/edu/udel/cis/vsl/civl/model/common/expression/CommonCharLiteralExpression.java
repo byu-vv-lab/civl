@@ -20,9 +20,8 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 	 */
 	public CommonCharLiteralExpression(CIVLSource source, CIVLType type,
 			char value) {
-		super(source);
+		super(source, null, type);
 		this.value = value;
-		this.expressionType = type;
 	}
 
 	@Override

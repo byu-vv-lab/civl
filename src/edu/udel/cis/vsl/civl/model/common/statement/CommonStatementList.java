@@ -196,10 +196,6 @@ public class CommonStatementList implements StatementList {
 	}
 
 	@Override
-	public void setStatementScope(Scope statementScope) {
-	}
-
-	@Override
 	public void setTarget(Location target) {
 	}
 

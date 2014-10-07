@@ -28,7 +28,9 @@ public class CommonVariableExpression extends CommonExpression implements
 	 *            The variable.
 	 */
 	public CommonVariableExpression(CIVLSource source, Variable variable) {
-		super(source);
+		// Don't need to worry about the expression scope of constants.
+		super(source, variable.isConst() ? null : variable.scope(), variable
+				.type());
 		this.variable = variable;
 	}
 

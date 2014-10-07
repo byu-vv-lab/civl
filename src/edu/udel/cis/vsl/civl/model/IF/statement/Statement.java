@@ -93,12 +93,6 @@ public interface Statement extends Sourceable {
 	 */
 	Scope statementScope();
 
-	/**
-	 * @param statementScope
-	 *            The highest scope accessed by this statement. Null if no
-	 *            variables accessed.
-	 */
-	void setStatementScope(Scope statementScope);
 
 	/**
 	 * return true iff the statement has at least one dereferences

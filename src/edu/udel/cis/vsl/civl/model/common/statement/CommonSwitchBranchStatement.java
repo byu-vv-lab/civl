@@ -34,24 +34,24 @@ public class CommonSwitchBranchStatement extends CommonNoopStatement {
 	 * @param label
 	 */
 	public CommonSwitchBranchStatement(CIVLSource civlSource, Location source,
-			Expression label) {
-		super(civlSource, source);
+			Expression guard, Expression label) {
+		super(civlSource, source, guard);
 		this.noopKind = NoopKind.SWITCH;
 		this.label = label;
+		this.statementScope = guard.expressionScope();
 	}
 
 	/**
 	 * Create a noop statement for the default case of a switch block. Each
 	 * parameter should be non-null. For cases other than default, use
-	 * {@link #CommonSwitchBranchStatement(CIVLSource, Location, Expression)}
+	 * {@link #CommonSwitchBranchStatement(CIVLSource, Location, Expression, Expression)}
 	 * 
 	 * @param civlSource
 	 * @param source
 	 */
-	public CommonSwitchBranchStatement(CIVLSource civlSource, Location source) {
-		super(civlSource, source);
-		this.noopKind = NoopKind.SWITCH;
-		this.label = null;
+	public CommonSwitchBranchStatement(CIVLSource civlSource, Location source,
+			Expression guard) {
+		this(civlSource, source, guard, null);
 	}
 
 	/* ************************ Methods from Object ************************ */

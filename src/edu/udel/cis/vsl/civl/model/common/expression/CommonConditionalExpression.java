@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -10,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -33,9 +35,10 @@ public class CommonConditionalExpression extends CommonExpression implements
 	 * @param falseBranch
 	 *            The expression returned if the branch evaluates to false.
 	 */
-	public CommonConditionalExpression(CIVLSource source, Expression condition,
-			Expression trueBranch, Expression falseBranch) {
-		super(source);
+	public CommonConditionalExpression(CIVLSource source, Scope scope,
+			CIVLType type, Expression condition, Expression trueBranch,
+			Expression falseBranch) {
+		super(source, scope, type);
 		this.condition = condition;
 		this.trueBranch = trueBranch;
 		this.falseBranch = falseBranch;
@@ -150,36 +153,58 @@ public class CommonConditionalExpression extends CommonExpression implements
 
 		if (newCondition != null) {
 			result = new CommonConditionalExpression(this.getSource(),
-					newCondition, trueBranch, falseBranch);
+					this.expressionScope(), this.expressionType, newCondition,
+					trueBranch, falseBranch);
 		} else {
 			newTrue = trueBranch.replaceWith(oldExpression, newExpression);
 
 			if (newTrue != null) {
 				result = new CommonConditionalExpression(this.getSource(),
-						condition, newTrue, falseBranch);
+						this.expressionScope(), this.expressionType, condition,
+						newTrue, falseBranch);
 			} else {
 				newFalse = falseBranch
 						.replaceWith(oldExpression, newExpression);
 
 				if (newFalse != null)
 					result = new CommonConditionalExpression(this.getSource(),
+							this.expressionScope(), this.expressionType,
 							condition, trueBranch, newFalse);
 			}
 		}
-
 		return result;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = condition.variableAddressedOf(scope);
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		operandResult = this.trueBranch.variableAddressedOf(scope);
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		operandResult = this.falseBranch.variableAddressedOf(scope);
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf() {
-		// TODO Auto-generated method stub
-		return null;
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = condition.variableAddressedOf();
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		operandResult = this.trueBranch.variableAddressedOf();
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		operandResult = this.falseBranch.variableAddressedOf();
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
 	}
 
 }

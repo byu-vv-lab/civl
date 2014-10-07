@@ -40,12 +40,13 @@ public class CommonAssignStatement extends CommonStatement implements
 	 * @param rhs
 	 *            The right hand side of the assignment.
 	 */
-	public CommonAssignStatement(CIVLSource civlSource, Location source,
-			LHSExpression lhs, Expression rhs) {
-		super(civlSource, source);
+	public CommonAssignStatement(CIVLSource civlSource, Scope scope,
+			Location source, Expression guard, LHSExpression lhs,
+			Expression rhs, boolean isInitialization) {
+		super(civlSource, scope, source, guard);
 		this.lhs = lhs;
 		this.rhs = rhs;
-		this.isInitialization = false;
+		this.isInitialization = isInitialization;
 	}
 
 	/**
@@ -62,24 +63,6 @@ public class CommonAssignStatement extends CommonStatement implements
 	@Override
 	public Expression rhs() {
 		return rhs;
-	}
-
-	/**
-	 * @param lhs
-	 *            The left hand side of the assignment.
-	 */
-	@Override
-	public void setLhs(LHSExpression lhs) {
-		this.lhs = lhs;
-	}
-
-	/**
-	 * @param rhs
-	 *            The right hand side of the assignment.
-	 */
-	@Override
-	public void setRhs(Expression rhs) {
-		this.rhs = rhs;
 	}
 
 	@Override
@@ -141,17 +124,15 @@ public class CommonAssignStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonAssignStatement(this.getSource(),
-					this.source(), lhs, this.rhs);
-			newStatement.setGuard(newGuard);
-			newStatement.setInitialization(this.isInitialization);
+					this.statementScope, this.source(), newGuard, lhs,
+					this.rhs, this.isInitialization);
 		} else {
 			Expression newRhs = rhs.replaceWith(oldExpression, newExpression);
 
 			if (newRhs != null) {
 				newStatement = new CommonAssignStatement(this.getSource(),
-						this.source(), lhs, newRhs);
-				newStatement.setGuard(this.guard());
-				newStatement.setInitialization(this.isInitialization);
+						this.statementScope, this.source(), this.guard(), lhs,
+						newRhs, this.isInitialization);
 			}
 		}
 		return newStatement;
@@ -160,11 +141,6 @@ public class CommonAssignStatement extends CommonStatement implements
 	@Override
 	public boolean isInitialization() {
 		return this.isInitialization;
-	}
-
-	@Override
-	public void setInitialization(boolean value) {
-		this.isInitialization = value;
 	}
 
 	@Override

@@ -8,6 +8,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -24,8 +25,8 @@ public class CommonSelfExpression extends CommonExpression implements
 	 * Self expression. Returns a reference to the process in which the
 	 * expression is evaluated.
 	 */
-	public CommonSelfExpression(CIVLSource source) {
-		super(source);
+	public CommonSelfExpression(CIVLSource source, CIVLType type) {
+		super(source, null, type);
 	}
 
 	@Override

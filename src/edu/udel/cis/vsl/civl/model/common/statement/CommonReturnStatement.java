@@ -38,8 +38,9 @@ public class CommonReturnStatement extends CommonStatement implements
 	 *            The expression being returned. Null if non-existent.
 	 */
 	public CommonReturnStatement(CIVLSource civlSource, Location source,
-			Expression expression, CIVLFunction function) {
-		super(civlSource, source);
+			Expression guard, Expression expression, CIVLFunction function) {
+		super(civlSource, expression != null ? expression.expressionScope()
+				: null, source, guard);
 		this.expression = expression;
 		this.function = function;
 	}
@@ -120,16 +121,15 @@ public class CommonReturnStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonReturnStatement(this.getSource(),
-					this.source(), this.expression, this.function);
-			newStatement.setGuard(newGuard);
+					this.source(), newGuard, this.expression, this.function);
 		} else if (expression != null) {
 			Expression newExpressionField = expression.replaceWith(
 					oldExpression, newExpression);
 
 			if (newExpressionField != null) {
 				newStatement = new CommonReturnStatement(this.getSource(),
-						this.source(), newExpressionField, this.function);
-				newStatement.setGuard(this.guard());
+						this.source(), this.guard(), newExpressionField,
+						this.function);
 			}
 		}
 		return newStatement;

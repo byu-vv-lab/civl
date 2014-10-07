@@ -15,11 +15,4 @@ public interface BooleanLiteralExpression extends LiteralExpression {
 	 * @return The value of this boolean literal.
 	 */
 	boolean value();
-
-	/**
-	 * @param value
-	 *            The value of this boolean literal.
-	 */
-	void setValue(boolean value);
-
 }

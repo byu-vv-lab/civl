@@ -28,41 +28,41 @@ public abstract class CommonExpression extends CommonSourceable implements
 	// it is an optimization.
 
 	/**
-	 * TODO: what is this? Why isn't it part of the constructor? Don't you know
-	 * the scope when you create the new expression? And do we need a setter for
-	 * this or can it be immutable?
+	 * The highest scope accessed by this expression. NULL if no variable is
+	 * accessed.
 	 */
 	private Scope expressionScope = null;
 
 	/**
-	 * TODO: ditto. Don't you know this when you create the expression? Can it
-	 * change? Do we need a setter?
+	 * The type of this expression.
 	 * 
 	 */
 	protected CIVLType expressionType = null;
 
 	/**
-	 * TODO: what is this?
+	 * Does this expression contains any dereference operation?
 	 */
 	protected boolean hasDerefs;
 
 	/**
-	 * TODO: what is this?
+	 * Is this expression purely local? An expression is purely local if ...
 	 */
 	protected boolean purelyLocal = false;
+
+	/**
+	 * The parent of all expressions.
+	 */
+	public CommonExpression(CIVLSource source, Scope scope, CIVLType type) {
+		super(source);
+		this.expressionScope = scope;
+		this.expressionType = type;
+	}
 
 	/**
 	 * @return true iff the expression has at least one dereference
 	 */
 	public boolean hasDerefs() {
 		return hasDerefs;
-	}
-
-	/**
-	 * The parent of all expressions.
-	 */
-	public CommonExpression(CIVLSource source) {
-		super(source);
 	}
 
 	/**
@@ -73,29 +73,29 @@ public abstract class CommonExpression extends CommonSourceable implements
 		return expressionScope;
 	}
 
-	/**
-	 * @param expressionScope
-	 *            The highest scope accessed by this expression. Null if no
-	 *            variables accessed.
-	 */
-	public void setExpressionScope(Scope expressionScope) {
-		this.expressionScope = expressionScope;
-	}
+	// /**
+	// * @param expressionScope
+	// * The highest scope accessed by this expression. Null if no
+	// * variables accessed.
+	// */
+	// public void setExpressionScope(Scope expressionScope) {
+	// this.expressionScope = expressionScope;
+	// }
 
 	@Override
 	public CIVLType getExpressionType() {
 		return expressionType;
 	}
 
-	/**
-	 * 
-	 * @param expressionType
-	 *            The type resulting from this expression.
-	 */
-	@Override
-	public void setExpressionType(CIVLType expressionType) {
-		this.expressionType = expressionType;
-	}
+	// /**
+	// *
+	// * @param expressionType
+	// * The type resulting from this expression.
+	// */
+	// @Override
+	// public void setExpressionType(CIVLType expressionType) {
+	// this.expressionType = expressionType;
+	// }
 
 	@Override
 	public void calculateDerefs() {

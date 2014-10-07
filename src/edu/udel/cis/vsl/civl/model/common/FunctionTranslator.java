@@ -162,7 +162,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
@@ -669,25 +668,12 @@ public class FunctionTranslator {
 
 		if (type.isArrayType()) {
 			CIVLSource source = array.getSource();
-			CIVLArrayType arrayType = (CIVLArrayType) type;
-			CIVLType elementType = arrayType.elementType();
 			Expression zero = modelFactory.integerLiteralExpression(source,
 					BigInteger.ZERO);
 			LHSExpression subscript = modelFactory.subscriptExpression(source,
 					(LHSExpression) array, zero);
-			Expression pointer = modelFactory.addressOfExpression(source,
-					subscript);
-			Scope scope = array.expressionScope();
 
-			zero.setExpressionScope(scope);
-			subscript.setExpressionScope(scope);
-			pointer.setExpressionScope(scope);
-			((CommonExpression) zero).setExpressionType(modelFactory
-					.integerType());
-			((CommonExpression) subscript).setExpressionType(elementType);
-			((CommonExpression) pointer).setExpressionType(modelFactory
-					.pointerType(elementType));
-			return pointer;
+			return modelFactory.addressOfExpression(source, subscript);
 		}
 		return array;
 	}
@@ -2328,7 +2314,8 @@ public class FunctionTranslator {
 						modelFactory.sourceOfBeginning(returnNode), scope);
 				location.setLeaveAtomic(true);
 				leaveAtom = new CommonAtomBranchStatement(location.getSource(),
-						location, false);
+						location, modelFactory.trueExpression(location
+								.getSource()), false);
 				atomicReleaseFragment.addNewStatement(leaveAtom);
 			}
 		}
@@ -2340,10 +2327,12 @@ public class FunctionTranslator {
 						modelFactory.sourceOfBeginning(returnNode), scope);
 				location.setLeaveAtomic(false);
 				leaveAtomic = new CommonAtomicLockAssignStatement(
-						location.getSource(), location, false,
+						location.getSource(), modelFactory
+								.atomicLockVariableExpression()
+								.expressionScope(), location, modelFactory.trueExpression(location.getSource()), false,
 						modelFactory.atomicLockVariableExpression(),
 						new CommonUndefinedProcessExpression(modelFactory
-								.systemSource()));
+								.systemSource(), modelFactory.processType()));
 				atomicReleaseFragment.addNewStatement(leaveAtomic);
 			}
 		}
@@ -2755,8 +2744,8 @@ public class FunctionTranslator {
 				expressions.add(this.translateLiteralObject(source, scope,
 						compound.get(i), types.get(i)));
 			if (myType == 0)
-				return modelFactory.arrayLiteralExpression(source, finalType,
-						expressions);
+				return modelFactory.arrayLiteralExpression(source,
+						(CIVLArrayType) finalType, expressions);
 			else
 				return modelFactory.structOrUnionLiteralExpression(source,
 						finalType, expressions);

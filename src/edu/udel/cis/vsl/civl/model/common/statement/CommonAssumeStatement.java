@@ -36,8 +36,8 @@ public class CommonAssumeStatement extends CommonStatement implements
 	 *            The expression being added to the path condition.
 	 */
 	public CommonAssumeStatement(CIVLSource civlSource, Location source,
-			Expression expression) {
-		super(civlSource, source);
+			Expression guard, Expression expression) {
+		super(civlSource, expression.expressionScope(), source, guard);
 		this.expression = expression;
 	}
 
@@ -103,7 +103,7 @@ public class CommonAssumeStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonAssumeStatement(this.getSource(),
-					this.source(), this.expression);
+					this.source(), this.guard(), this.expression);
 			newStatement.setGuard(newGuard);
 		} else {
 			Expression newExpressionField = expression.replaceWith(
@@ -111,8 +111,7 @@ public class CommonAssumeStatement extends CommonStatement implements
 
 			if (newExpressionField != null) {
 				newStatement = new CommonAssumeStatement(this.getSource(),
-						this.source(), newExpressionField);
-				newStatement.setGuard(this.guard());
+						this.source(), this.guard(), newExpressionField);
 			}
 		}
 		return newStatement;

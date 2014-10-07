@@ -46,10 +46,11 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 	 * @param expression
 	 *            The quantified expression.
 	 */
-	public CommonQuantifiedExpression(CIVLSource source, Quantifier quantifier,
-			Identifier boundVariableName, CIVLType boundVariableType,
-			Expression restriction, Expression expression) {
-		super(source);
+	public CommonQuantifiedExpression(CIVLSource source, Scope scope,
+			CIVLType type, Quantifier quantifier, Identifier boundVariableName,
+			CIVLType boundVariableType, Expression restriction,
+			Expression expression) {
+		super(source, scope, type);
 		this.quantifier = quantifier;
 		this.boundVariableName = boundVariableName;
 		this.boundVariableType = boundVariableType;
@@ -75,10 +76,11 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 	 * @param expression
 	 *            The quantified expression.
 	 */
-	public CommonQuantifiedExpression(CIVLSource source, Quantifier quantifier,
-			Identifier boundVariableName, CIVLType boundVariableType,
-			Expression lower, Expression upper, Expression expression) {
-		super(source);
+	public CommonQuantifiedExpression(CIVLSource source, Scope scope,
+			CIVLType type, Quantifier quantifier, Identifier boundVariableName,
+			CIVLType boundVariableType, Expression lower, Expression upper,
+			Expression expression) {
+		super(source, scope, type);
 		this.quantifier = quantifier;
 		this.boundVariableName = boundVariableName;
 		this.boundVariableType = boundVariableType;
@@ -188,21 +190,19 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 
 		if (newRestriction != null) {
 			result = new CommonQuantifiedExpression(this.getSource(),
-					quantifier, boundVariableName, boundVariableType,
-					newRestriction, expression);
+					this.expressionScope(), this.expressionType, quantifier,
+					boundVariableName, boundVariableType, newRestriction,
+					expression);
 		} else {
 			Expression newExpressionField = expression.replaceWith(
 					oldExpression, newExpression);
 
 			if (newExpressionField != null)
 				result = new CommonQuantifiedExpression(this.getSource(),
+						this.expressionScope(), this.expressionType,
 						quantifier, boundVariableName, boundVariableType,
 						restriction, newExpressionField);
 		}
-
-		if (result != null)
-			result.setExpressionType(expressionType);
-
 		return result;
 	}
 

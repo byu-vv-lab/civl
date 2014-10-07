@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonDereferenceExpression extends CommonExpression implements
@@ -18,8 +19,9 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 	private Expression pointer;
 
-	public CommonDereferenceExpression(CIVLSource source, Expression pointer) {
-		super(source);
+	public CommonDereferenceExpression(CIVLSource source, Scope scope,
+			CIVLType type, Expression pointer) {
+		super(source, scope, type);
 		this.pointer = pointer;
 	}
 
@@ -77,12 +79,8 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 		if (newPointer != null) {
 			result = new CommonDereferenceExpression(this.getSource(),
-					newPointer);
+					this.expressionScope(), this.expressionType, newPointer);
 		}
-
-		if (result != null)
-			result.setExpressionType(expressionType);
-
 		return result;
 	}
 

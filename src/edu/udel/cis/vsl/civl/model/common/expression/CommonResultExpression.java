@@ -25,7 +25,7 @@ public class CommonResultExpression extends CommonExpression implements
 	 * to refer to the returned value.
 	 */
 	public CommonResultExpression(CIVLSource source) {
-		super(source);
+		super(source, null, null);
 	}
 
 	public String toString() {

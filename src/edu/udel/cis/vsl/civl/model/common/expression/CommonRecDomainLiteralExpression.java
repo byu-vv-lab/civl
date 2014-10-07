@@ -6,22 +6,21 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
-public class CommonRecDomainLiteralExpression extends CommonExpression implements
-		RecDomainLiteralExpression {
+public class CommonRecDomainLiteralExpression extends CommonExpression
+		implements RecDomainLiteralExpression {
 
 	private Expression[] ranges;
 
 	public CommonRecDomainLiteralExpression(CIVLSource source,
 			List<Expression> ranges, CIVLType type) {
-		super(source);
+		super(source, null, type);
 		this.ranges = new Expression[ranges.size()];
 		ranges.toArray(this.ranges);
-		this.expressionType = type;
 	}
 
 	@Override

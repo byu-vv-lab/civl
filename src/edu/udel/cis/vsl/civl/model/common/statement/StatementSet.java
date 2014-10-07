@@ -99,11 +99,6 @@ public class StatementSet implements Statement {
 	}
 
 	@Override
-	public void setStatementScope(Scope statementScope) {
-
-	}
-
-	@Override
 	public boolean hasDerefs() {
 		return this.hasDerefs;
 	}

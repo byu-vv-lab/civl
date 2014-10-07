@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 
 /**
@@ -43,8 +44,8 @@ public class CommonAtomBranchStatement extends CommonNoopStatement {
 	 *            The atomic kind of this statement
 	 */
 	public CommonAtomBranchStatement(CIVLSource civlSource, Location source,
-			boolean isEntering) {
-		super(civlSource, source);
+			Expression guard, boolean isEntering) {
+		super(civlSource, source, guard);
 		this.noopKind = NoopKind.ATOMIC_ATOM;
 		this.enter = isEntering;
 	}

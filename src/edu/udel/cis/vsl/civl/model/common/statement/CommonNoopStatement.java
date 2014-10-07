@@ -31,8 +31,9 @@ public class CommonNoopStatement extends CommonStatement implements
 	 * @param source
 	 *            The source location for this noop.
 	 */
-	public CommonNoopStatement(CIVLSource civlSource, Location source) {
-		super(civlSource, source);
+	public CommonNoopStatement(CIVLSource civlSource, Location source,
+			Expression guard) {
+		super(civlSource, null, source, guard);
 		noopKind = NoopKind.NONE;
 	}
 
@@ -51,12 +52,9 @@ public class CommonNoopStatement extends CommonStatement implements
 		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
 		CommonNoopStatement newStatement = null;
 
-		if (newGuard != null) {
+		if (newGuard != null)
 			newStatement = new CommonNoopStatement(this.getSource(),
-					this.source());
-			newStatement.setGuard(newGuard);
-		}
-
+					this.source(), newGuard);
 		return newStatement;
 	}
 

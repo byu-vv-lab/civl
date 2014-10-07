@@ -13,7 +13,7 @@ public class CommonInitialValueExpression extends CommonExpression implements
 	private Variable variable;
 
 	public CommonInitialValueExpression(CIVLSource source, Variable variable) {
-		super(source);
+		super(source, null, variable.type());
 		this.variable = variable;
 	}
 

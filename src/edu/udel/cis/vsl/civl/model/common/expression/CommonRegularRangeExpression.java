@@ -17,13 +17,12 @@ public class CommonRegularRangeExpression extends CommonExpression implements
 	private Expression high;
 	private Expression step;
 
-	public CommonRegularRangeExpression(CIVLSource source, CIVLType type,
-			Expression low, Expression high, Expression step) {
-		super(source);
+	public CommonRegularRangeExpression(CIVLSource source, Scope scope,
+			CIVLType type, Expression low, Expression high, Expression step) {
+		super(source, scope, type);
 		this.low = low;
 		this.high = high;
 		this.step = step;
-		this.expressionType = type;
 	}
 
 	@Override
@@ -77,7 +76,7 @@ public class CommonRegularRangeExpression extends CommonExpression implements
 	public Expression getStep() {
 		return this.step;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuffer string = new StringBuffer();

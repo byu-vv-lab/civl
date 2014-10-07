@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -36,7 +37,9 @@ public class CommonDotExpression extends CommonExpression implements
 	 */
 	public CommonDotExpression(CIVLSource source, Expression struct,
 			int fieldIndex) {
-		super(source);
+		super(source, struct.expressionScope(), ((CIVLStructOrUnionType) struct
+				.getExpressionType()).getField(fieldIndex).type());
+		assert struct.getExpressionType() instanceof CIVLStructOrUnionType;
 		this.structOrUnion = struct;
 		this.fieldIndex = fieldIndex;
 	}
@@ -120,10 +123,6 @@ public class CommonDotExpression extends CommonExpression implements
 			result = new CommonDotExpression(this.getSource(), newStruct,
 					this.fieldIndex);
 		}
-
-		if (result != null)
-			result.setExpressionType(expressionType);
-
 		return result;
 	}
 

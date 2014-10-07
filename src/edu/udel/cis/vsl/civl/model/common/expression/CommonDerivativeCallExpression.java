@@ -4,6 +4,7 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -33,11 +34,11 @@ public class CommonDerivativeCallExpression extends
 	 *            Expressions for the arguments used in the abstract function
 	 *            call.
 	 */
-	public CommonDerivativeCallExpression(CIVLSource source,
+	public CommonDerivativeCallExpression(CIVLSource source, Scope scope,
 			AbstractFunction function,
 			List<Pair<Variable, IntegerLiteralExpression>> partials,
 			List<Expression> arguments) {
-		super(source, function, arguments);
+		super(source, scope, function, arguments);
 		this.partials = partials;
 	}
 
@@ -45,16 +46,16 @@ public class CommonDerivativeCallExpression extends
 	public List<Pair<Variable, IntegerLiteralExpression>> partials() {
 		return partials;
 	}
-	
+
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.DERIVATIVE;
 	}
-	
+
 	@Override
 	public String toString() {
 		String result = "$D[" + function().name().name();
-		
+
 		for (Pair<Variable, IntegerLiteralExpression> partial : partials) {
 			result += ", {";
 			result += partial.left.name().name();
@@ -64,7 +65,7 @@ public class CommonDerivativeCallExpression extends
 		}
 		result += "](";
 		for (int i = 0; i < arguments().size(); i++) {
-			if (i!=0) {
+			if (i != 0) {
 				result += ", ";
 			}
 			result += arguments().get(i);

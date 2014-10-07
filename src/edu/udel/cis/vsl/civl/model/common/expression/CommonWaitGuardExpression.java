@@ -40,9 +40,8 @@ public class CommonWaitGuardExpression extends CommonExpression implements
 	 */
 	public CommonWaitGuardExpression(CIVLSource source, Expression process,
 			CIVLType type) {
-		super(source);
+		super(source, null, type);
 		this.joinedProcess = process;
-		this.expressionType = type;
 	}
 
 	/* *********************** Methods from Expression ********************* */

@@ -6,6 +6,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 public class CommonSystemFunctionCallExpression extends CommonExpression
@@ -15,7 +16,7 @@ public class CommonSystemFunctionCallExpression extends CommonExpression
 
 	public CommonSystemFunctionCallExpression(CIVLSource source,
 			CallOrSpawnStatement callStatement) {
-		super(source);
+		super(source, callStatement.statementScope(), null);
 		this.callStatement = callStatement;
 	}
 
@@ -42,5 +43,10 @@ public class CommonSystemFunctionCallExpression extends CommonExpression
 	@Override
 	public String toString() {
 		return this.callStatement.toString();
+	}
+
+	@Override
+	public void setExpressionType(CIVLType returnType) {
+		this.expressionType = returnType;
 	}
 }

@@ -376,7 +376,7 @@ public interface ModelFactory {
 	 * @return The new array literal expression created.
 	 */
 	ArrayLiteralExpression arrayLiteralExpression(CIVLSource source,
-			CIVLType arrayType, List<Expression> elements);
+			CIVLArrayType arrayType, List<Expression> elements);
 
 	/**
 	 * A binary expression. One of {+,-,*,\,<,<=,==,!=,&&,||,%}
@@ -1583,4 +1583,6 @@ public interface ModelFactory {
 	 * @return the identifier wrapping the name of the variable
 	 */
 	Identifier getLiteralDomCounterIdentifier(CIVLSource source, int count);
+
+	Expression trueExpression(CIVLSource source);
 }

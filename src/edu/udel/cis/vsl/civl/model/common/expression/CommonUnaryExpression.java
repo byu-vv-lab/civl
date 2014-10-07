@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -35,9 +36,9 @@ public class CommonUnaryExpression extends CommonExpression implements
 	 * @param operand
 	 *            The left operand.
 	 */
-	public CommonUnaryExpression(CIVLSource source, UNARY_OPERATOR operator,
-			Expression operand) {
-		super(source);
+	public CommonUnaryExpression(CIVLSource source, CIVLType type,
+			UNARY_OPERATOR operator, Expression operand) {
+		super(source, operand.expressionScope(), type);
 		this.operator = operator;
 		this.operand = operand;
 	}
@@ -138,12 +139,9 @@ public class CommonUnaryExpression extends CommonExpression implements
 				newExpression);
 		CommonUnaryExpression result = null;
 
-		if (newOperand != null) {
-			result = new CommonUnaryExpression(this.getSource(), operator,
-					newOperand);
-		}
-		if (result != null)
-			result.setExpressionType(expressionType);
+		if (newOperand != null)
+			result = new CommonUnaryExpression(this.getSource(),
+					this.expressionType, operator, newOperand);
 
 		return result;
 	}

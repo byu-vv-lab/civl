@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -24,33 +25,59 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public class CommonBinaryExpression extends CommonExpression implements
 		BinaryExpression {
 
-	private BINARY_OPERATOR operator;
-	private Expression left;
-	private Expression right;
+	/* ************************** Private Fields *************************** */
 
 	/**
-	 * A binary operation.
+	 * The operator of this binary expression.
+	 * 
+	 * @see BINARY_OPERATOR
+	 */
+	private BINARY_OPERATOR operator;
+
+	/**
+	 * The left-hand-side operand.
+	 */
+	private Expression left;
+
+	/**
+	 * The right-hand-side operand.
+	 */
+	private Expression right;
+
+	/* **************************** Constructor **************************** */
+
+	/**
+	 * Create a new instance of a binary expression.
 	 * 
 	 * @param source
-	 *            The CIVL source
+	 *            The source information corresponding to this expression.
+	 * @param scope
+	 *            The highest scope that this expression accessed through its
+	 *            operands.
+	 * @param type
+	 *            The type of this expression.
 	 * @param operator
-	 *            The binary operator.
+	 *            The operator of this expression.
 	 * @param left
-	 *            The left operand.
+	 *            The left-hand-side operand.
 	 * @param right
-	 *            The right operand.
+	 *            The right-hand-side operand.
 	 */
-	public CommonBinaryExpression(CIVLSource source, BINARY_OPERATOR operator,
-			Expression left, Expression right) {
-		super(source);
+	public CommonBinaryExpression(CIVLSource source, Scope scope,
+			CIVLType type, BINARY_OPERATOR operator, Expression left,
+			Expression right) {
+		super(source, scope, type);
 		this.operator = operator;
 		this.left = left;
 		this.right = right;
 	}
 
+	/* ******************* Methods from BinaryExpression ******************* */
+	
 	/**
 	 * @return The binary operator
 	 */
+	@Override
 	public BINARY_OPERATOR operator() {
 		return operator;
 	}
@@ -58,6 +85,7 @@ public class CommonBinaryExpression extends CommonExpression implements
 	/**
 	 * @return The left operand.
 	 */
+	@Override
 	public Expression left() {
 		return left;
 	}
@@ -65,33 +93,107 @@ public class CommonBinaryExpression extends CommonExpression implements
 	/**
 	 * @return The right operand.
 	 */
+	@Override
 	public Expression right() {
 		return right;
 	}
 
-	/**
-	 * @param operator
-	 *            The binary operator.
-	 */
-	public void setOperator(BINARY_OPERATOR operator) {
-		this.operator = operator;
+	/* ********************** Methods from Expression ********************** */
+	
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.BINARY;
 	}
 
-	/**
-	 * @param left
-	 *            The left operand.
-	 */
-	public void setLeft(Expression left) {
-		this.left = left;
+	@Override
+	public void calculateDerefs() {
+		this.left.calculateDerefs();
+		this.right.calculateDerefs();
+		this.hasDerefs = this.left.hasDerefs() || this.right.hasDerefs();
 	}
 
-	/**
-	 * @param right
-	 *            The right operand.
-	 */
-	public void setRight(Expression right) {
-		this.right = right;
+	@Override
+	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
+		this.left.purelyLocalAnalysisOfVariables(funcScope);
+		this.right.purelyLocalAnalysisOfVariables(funcScope);
 	}
+
+	@Override
+	public void purelyLocalAnalysis() {
+		if (this.hasDerefs) {
+			this.purelyLocal = false;
+			return;
+		}
+		this.left.purelyLocalAnalysis();
+		this.right.purelyLocalAnalysis();
+		this.purelyLocal = this.left.isPurelyLocal()
+				&& this.right.isPurelyLocal();
+	}
+
+	@Override
+	public void replaceWith(ConditionalExpression oldExpression,
+			VariableExpression newExpression) {
+		if (left == oldExpression) {
+			left = newExpression;
+			return;
+		}
+
+		if (right == oldExpression) {
+			right = newExpression;
+			return;
+		}
+
+		left.replaceWith(oldExpression, newExpression);
+		right.replaceWith(oldExpression, newExpression);
+	}
+
+	@Override
+	public Expression replaceWith(ConditionalExpression oldExpression,
+			Expression newExpression) {
+		Expression newLeft = left.replaceWith(oldExpression, newExpression);
+		CommonBinaryExpression result = null;
+
+		if (newLeft != null) {
+			result = new CommonBinaryExpression(this.getSource(),
+					expressionScope(), expressionType, this.operator, newLeft, right);
+		} else {
+			Expression newRight = right.replaceWith(oldExpression,
+					newExpression);
+
+			if (newRight != null)
+				result = new CommonBinaryExpression(this.getSource(),
+						expressionScope(), expressionType, this.operator, left, newRight);
+		}
+		return result;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = left.variableAddressedOf(scope);
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		operandResult = right.variableAddressedOf(scope);
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf() {
+		Set<Variable> variableSet = new HashSet<>();
+		Set<Variable> operandResult = left.variableAddressedOf();
+
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		operandResult = right.variableAddressedOf();
+		if (operandResult != null)
+			variableSet.addAll(operandResult);
+		return variableSet;
+	}
+	
+	/* ********************** Methods from Expression ********************** */
 
 	@Override
 	public String toString() {
@@ -160,102 +262,5 @@ public class CommonBinaryExpression extends CommonExpression implements
 					this);
 		}
 		return "(" + left + op + right + ")";
-	}
-
-	@Override
-	public ExpressionKind expressionKind() {
-		return ExpressionKind.BINARY;
-	}
-
-	@Override
-	public void calculateDerefs() {
-		this.left.calculateDerefs();
-		this.right.calculateDerefs();
-		this.hasDerefs = this.left.hasDerefs() || this.right.hasDerefs();
-	}
-
-	@Override
-	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
-		this.left.purelyLocalAnalysisOfVariables(funcScope);
-		this.right.purelyLocalAnalysisOfVariables(funcScope);
-	}
-
-	@Override
-	public void purelyLocalAnalysis() {
-		if (this.hasDerefs) {
-			this.purelyLocal = false;
-			return;
-		}
-		this.left.purelyLocalAnalysis();
-		this.right.purelyLocalAnalysis();
-		this.purelyLocal = this.left.isPurelyLocal()
-				&& this.right.isPurelyLocal();
-	}
-
-	@Override
-	public void replaceWith(ConditionalExpression oldExpression,
-			VariableExpression newExpression) {
-		if (left == oldExpression) {
-			left = newExpression;
-			return;
-		}
-
-		if (right == oldExpression) {
-			right = newExpression;
-			return;
-		}
-
-		left.replaceWith(oldExpression, newExpression);
-		right.replaceWith(oldExpression, newExpression);
-	}
-
-	@Override
-	public Expression replaceWith(ConditionalExpression oldExpression,
-			Expression newExpression) {
-		Expression newLeft = left.replaceWith(oldExpression, newExpression);
-		CommonBinaryExpression result = null;
-
-		if (newLeft != null) {
-			result = new CommonBinaryExpression(this.getSource(),
-					this.operator, newLeft, right);
-		} else {
-			Expression newRight = right.replaceWith(oldExpression,
-					newExpression);
-
-			if (newRight != null)
-				result = new CommonBinaryExpression(this.getSource(),
-						this.operator, left, newRight);
-		}
-
-		if (result != null)
-			result.setExpressionType(expressionType);
-
-		return result;
-	}
-
-	@Override
-	public Set<Variable> variableAddressedOf(Scope scope) {
-		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = left.variableAddressedOf(scope);
-
-		if (operandResult != null)
-			variableSet.addAll(operandResult);
-		operandResult = right.variableAddressedOf(scope);
-		if (operandResult != null)
-			variableSet.addAll(operandResult);
-		return variableSet;
-	}
-
-	@Override
-	public Set<Variable> variableAddressedOf() {
-		Set<Variable> variableSet = new HashSet<>();
-		Set<Variable> operandResult = left.variableAddressedOf();
-
-		if (operandResult != null)
-			variableSet.addAll(operandResult);
-		operandResult = right.variableAddressedOf();
-		if (operandResult != null)
-			variableSet.addAll(operandResult);
-		return variableSet;
 	}
 }
