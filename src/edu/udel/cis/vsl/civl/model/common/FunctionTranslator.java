@@ -2329,10 +2329,12 @@ public class FunctionTranslator {
 				leaveAtomic = new CommonAtomicLockAssignStatement(
 						location.getSource(), modelFactory
 								.atomicLockVariableExpression()
-								.expressionScope(), location, modelFactory.trueExpression(location.getSource()), false,
-						modelFactory.atomicLockVariableExpression(),
+								.expressionScope(), location,
+						modelFactory.trueExpression(location.getSource()),
+						false, modelFactory.atomicLockVariableExpression(),
 						new CommonUndefinedProcessExpression(modelFactory
-								.systemSource(), modelFactory.processType()));
+								.systemSource(), modelFactory.processType(),
+								modelFactory.undefinedProcessValue()));
 				atomicReleaseFragment.addNewStatement(leaveAtomic);
 			}
 		}

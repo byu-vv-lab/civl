@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 public class CommonCivlParForEnterStatement extends CommonStatement implements
 		CivlParForEnterStatement {
@@ -101,5 +102,10 @@ public class CommonCivlParForEnterStatement extends CommonStatement implements
 	@Override
 	public VariableExpression parProcsVar() {
 		return this.parProcsVar;
+	}
+
+	@Override
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {
+		this.domain.calculateConstantValue(universe);
 	}
 }

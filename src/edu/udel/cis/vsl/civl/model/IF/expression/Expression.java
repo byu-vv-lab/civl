@@ -9,6 +9,8 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * The parent of all expressions.
@@ -19,14 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public interface Expression extends Sourceable {
 
 	public enum ExpressionKind {
-		ABSTRACT_FUNCTION_CALL, ADDRESS_OF, ARRAY_LITERAL, BINARY, 
-		BOOLEAN_LITERAL, BOUND_VARIABLE, CAST, CHAR_LITERAL, COND, 
-		DEREFERENCE, DERIVATIVE, DOMAIN_GUARD, DOT, DYNAMIC_TYPE_OF, FUNCTION_POINTER, 
-		FUNCTION_GUARD, INITIAL_VALUE, INTEGER_LITERAL, NULL_LITERAL, 
-		QUANTIFIER, REAL_LITERAL, REGULAR_RANGE, RESULT, SCOPEOF, SELF, SIZEOF_TYPE, 
-		SIZEOF_EXPRESSION, STRING_LITERAL, STRUCT_OR_UNION_LITERAL, SUBSCRIPT,
-		SYSTEM_GUARD, UNARY, UNDEFINED_PROC, VARIABLE, WAIT_GUARD, HERE_OR_ROOT, 
-		PROC_NULL, SYSTEM_FUNC_CALL, REC_DOMAIN_LITERAL
+		ABSTRACT_FUNCTION_CALL, ADDRESS_OF, ARRAY_LITERAL, BINARY, BOOLEAN_LITERAL, BOUND_VARIABLE, CAST, CHAR_LITERAL, COND, DEREFERENCE, DERIVATIVE, DOMAIN_GUARD, DOT, DYNAMIC_TYPE_OF, FUNCTION_POINTER, FUNCTION_GUARD, INITIAL_VALUE, INTEGER_LITERAL, NULL_LITERAL, QUANTIFIER, REAL_LITERAL, REGULAR_RANGE, RESULT, SCOPEOF, SELF, SIZEOF_TYPE, SIZEOF_EXPRESSION, STRING_LITERAL, STRUCT_OR_UNION_LITERAL, SUBSCRIPT, SYSTEM_GUARD, UNARY, UNDEFINED_PROC, VARIABLE, WAIT_GUARD, HERE_OR_ROOT, PROC_NULL, SYSTEM_FUNC_CALL, REC_DOMAIN_LITERAL
 	}
 
 	/**
@@ -44,21 +39,12 @@ public interface Expression extends Sourceable {
 	 */
 	CIVLType getExpressionType();
 
-//	void setExpressionType(CIVLType type);
-
 	/**
 	 * Returns the kind of this expression
 	 * 
 	 * @return The expression kind
 	 */
 	ExpressionKind expressionKind();
-
-//	/**
-//	 * @param expressionScope
-//	 *            The highest scope accessed by this expression. Null if no
-//	 *            variables accessed.
-//	 */
-//	void setExpressionScope(Scope expressionScope);
 
 	/**
 	 * Calculate the existence of dereferences in this expression
@@ -119,12 +105,28 @@ public interface Expression extends Sourceable {
 			Expression newExpression);
 
 	/**
-	 * Compute the set of variables that are addressed of in the expression.
-	 * e.g., &a + &b will returns {a, b}
+	 * Compute the set of variables visible from a certain scope that appear in
+	 * an address-of expression. e.g., <code>(&a + &b)</code> returns
+	 * <code>{a}</code> if <code>a</code> is in visible from the given scope
+	 * while <code>b</code> invisible from the given scope.
 	 * 
+	 * @param scope
+	 *            The scope to focus on.
 	 * @return
 	 */
 	Set<Variable> variableAddressedOf(Scope scope);
 
+	/**
+	 * Compute the set of variables that appear in an address-of expression.
+	 * e.g., <code>(&a + &b)</code> returns <code>{a, b}</code>.
+	 * 
+	 * @return
+	 */
 	Set<Variable> variableAddressedOf();
+
+	SymbolicExpression constantValue();
+
+	boolean hasConstantValue();
+
+	void calculateConstantValue(SymbolicUniverse universe);
 }

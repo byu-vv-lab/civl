@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -226,6 +227,12 @@ public class CommonMallocStatement extends CommonStatement implements
 	@Override
 	public StatementKind statementKind() {
 		return StatementKind.MALLOC;
+	}
+
+	@Override
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

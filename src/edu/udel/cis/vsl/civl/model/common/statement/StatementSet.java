@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * Sometimes it is useful for the model builder to return a set of statements.
@@ -210,6 +211,12 @@ public class StatementSet implements Statement {
 	public void setTargetTemp(Location target) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		for (Statement statement : this.statements)
+			statement.calculateConstantValue(universe);
 	}
 
 }

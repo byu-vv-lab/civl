@@ -2897,6 +2897,8 @@ public class CommonEvaluator implements Evaluator {
 		int processIdentifier = state.getProcessState(pid).identifier();
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
+		if(expression.hasConstantValue())
+			return new Evaluation(state, expression.constantValue());
 		switch (kind) {
 		case ABSTRACT_FUNCTION_CALL:
 			result = evaluateAbstractFunctionCall(state, pid,

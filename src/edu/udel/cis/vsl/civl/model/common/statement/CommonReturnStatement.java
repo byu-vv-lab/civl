@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * A return statement.
@@ -152,6 +153,11 @@ public class CommonReturnStatement extends CommonStatement implements
 	@Override
 	public StatementKind statementKind() {
 		return StatementKind.RETURN;
+	}
+
+	@Override
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {
+		this.expression.calculateConstantValue(universe);
 	}
 
 }

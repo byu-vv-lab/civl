@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,6 +13,8 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public class CommonArrayLiteralExpression extends CommonExpression implements
 		ArrayLiteralExpression {
@@ -146,5 +149,20 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 		}
 		result.append("}");
 		return result.toString();
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		List<SymbolicExpression> elementValues = new ArrayList<>();
+
+		for (Expression element : elements) {
+			SymbolicExpression elementValue = element.constantValue();
+
+			if (elementValue == null)
+				return;
+			elementValues.add(elementValue);
+		}
+		this.constantValue = universe.array(this.arrayType().elementType()
+				.getDynamicType(universe), elementValues);
 	}
 }

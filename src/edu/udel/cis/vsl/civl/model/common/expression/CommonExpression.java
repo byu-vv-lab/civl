@@ -10,6 +10,8 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A partial implementation of interface {@link Expression}. This is the root of
@@ -50,6 +52,11 @@ public abstract class CommonExpression extends CommonSourceable implements
 	protected boolean purelyLocal = false;
 
 	/**
+	 * The constant value of this expression. null by default.
+	 */
+	protected SymbolicExpression constantValue = null;
+
+	/**
 	 * The parent of all expressions.
 	 */
 	public CommonExpression(CIVLSource source, Scope scope, CIVLType type) {
@@ -58,44 +65,20 @@ public abstract class CommonExpression extends CommonSourceable implements
 		this.expressionType = type;
 	}
 
-	/**
-	 * @return true iff the expression has at least one dereference
-	 */
+	@Override
 	public boolean hasDerefs() {
 		return hasDerefs;
 	}
 
-	/**
-	 * @return The highest scope accessed by this expression. Null if no
-	 *         variables accessed.
-	 */
+	@Override
 	public Scope expressionScope() {
 		return expressionScope;
 	}
-
-	// /**
-	// * @param expressionScope
-	// * The highest scope accessed by this expression. Null if no
-	// * variables accessed.
-	// */
-	// public void setExpressionScope(Scope expressionScope) {
-	// this.expressionScope = expressionScope;
-	// }
 
 	@Override
 	public CIVLType getExpressionType() {
 		return expressionType;
 	}
-
-	// /**
-	// *
-	// * @param expressionType
-	// * The type resulting from this expression.
-	// */
-	// @Override
-	// public void setExpressionType(CIVLType expressionType) {
-	// this.expressionType = expressionType;
-	// }
 
 	@Override
 	public void calculateDerefs() {
@@ -104,7 +87,6 @@ public abstract class CommonExpression extends CommonSourceable implements
 
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
-
 	}
 
 	@Override
@@ -129,4 +111,17 @@ public abstract class CommonExpression extends CommonSourceable implements
 		return null;
 	}
 
+	@Override
+	public SymbolicExpression constantValue() {
+		return this.constantValue;
+	}
+
+	@Override
+	public boolean hasConstantValue() {
+		return this.constantValue != null;
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+	}
 }

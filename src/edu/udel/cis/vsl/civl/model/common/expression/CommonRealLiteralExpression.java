@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * A real literal.
@@ -79,5 +80,11 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 	@Override
 	public LiteralKind literalKind() {
 		return LiteralKind.REAL;
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		this.constantValue = universe.number(universe.numberObject(universe
+				.numberFactory().rational(value.toPlainString())));
 	}
 }

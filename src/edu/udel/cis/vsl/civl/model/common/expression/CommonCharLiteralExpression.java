@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 public class CommonCharLiteralExpression extends CommonExpression implements
 		CharLiteralExpression {
@@ -75,5 +76,10 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 	@Override
 	public LiteralKind literalKind() {
 		return LiteralKind.CHAR;
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		this.constantValue = universe.character(this.value);
 	}
 }

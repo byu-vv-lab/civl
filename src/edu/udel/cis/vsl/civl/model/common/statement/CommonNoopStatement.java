@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * A noop statement.
@@ -76,6 +77,10 @@ public class CommonNoopStatement extends CommonStatement implements
 	@Override
 	public StatementKind statementKind() {
 		return StatementKind.NOOP;
+	}
+
+	@Override
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {		
 	}
 
 }

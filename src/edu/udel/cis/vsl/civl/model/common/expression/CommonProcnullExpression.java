@@ -7,12 +7,15 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public class CommonProcnullExpression extends CommonExpression implements
 		ProcnullExpression {
 
-	public CommonProcnullExpression(CIVLSource source, CIVLType type) {
+	public CommonProcnullExpression(CIVLSource source, CIVLType type,
+			SymbolicExpression constantValue) {
 		super(source, null, type);
+		this.constantValue = constantValue;
 	}
 
 	@Override

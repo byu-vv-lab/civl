@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.NextInDomainStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 public class CommonCivlForEnterStatement extends CommonStatement implements
 		NextInDomainStatement {
@@ -105,5 +106,10 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 	@Override
 	public Variable getLiteralDomCounter() {
 		return this.literalDomCounter;
+	}
+
+	@Override
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {
+		this.domain.calculateConstantValue(universe);
 	}
 }

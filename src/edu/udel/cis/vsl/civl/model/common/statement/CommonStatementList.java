@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * A list of statements that are to be executed in one step of a transition.
@@ -311,6 +312,12 @@ public class CommonStatementList implements StatementList {
 	public void setTargetTemp(Location target) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

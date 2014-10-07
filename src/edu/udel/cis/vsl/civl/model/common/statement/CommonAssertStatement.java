@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * An assert statement that checks if a given boolean expression is satisfied.
@@ -226,5 +227,13 @@ public class CommonAssertStatement extends CommonStatement implements
 	@Override
 	public Expression[] getExplanation() {
 		return this.explanation;
+	}
+
+	@Override
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {
+		this.condition.calculateConstantValue(universe);
+		if (this.explanation != null)
+			for (Expression arg : this.explanation)
+				arg.calculateConstantValue(universe);
 	}
 }

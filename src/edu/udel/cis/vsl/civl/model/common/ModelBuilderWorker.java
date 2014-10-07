@@ -506,6 +506,14 @@ public class ModelBuilderWorker {
 		// TODO check scope/proc/pointers of variables.
 	}
 
+	private void calculateConstantValue() {
+		for (CIVLFunction f : model.functions()) {
+			for (Statement statement : f.statements()) {
+				statement.calculateConstantValue(this.universe);
+			}
+		}
+	}
+
 	/**
 	 * Perform static analysis, including: dereferences, purely local
 	 * statements, etc.
@@ -608,6 +616,7 @@ public class ModelBuilderWorker {
 		completeBundleType();
 		completeHeapType();
 		completeModel(system);
+		this.calculateConstantValue();
 		this.staticAnalysis();
 	}
 

@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * An assignment statement.
@@ -184,4 +185,8 @@ public class CommonAssignStatement extends CommonStatement implements
 		return StatementKind.ASSIGN;
 	}
 
+	@Override
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {
+		this.rhs.calculateConstantValue(universe);
+	}
 }

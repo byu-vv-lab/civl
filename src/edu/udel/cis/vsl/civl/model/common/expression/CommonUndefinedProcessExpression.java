@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.UndefinedProcessExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * Undefined process expression, i.e., a process expression with id -1. Used
@@ -25,8 +26,10 @@ public class CommonUndefinedProcessExpression extends CommonExpression
 	 * Self expression. Returns a reference to the process in which the
 	 * expression is evaluated.
 	 */
-	public CommonUndefinedProcessExpression(CIVLSource source, CIVLType type) {
+	public CommonUndefinedProcessExpression(CIVLSource source, CIVLType type,
+			SymbolicExpression constantValue) {
 		super(source, null, type);
+		this.constantValue = constantValue;
 	}
 
 	@Override
@@ -41,13 +44,11 @@ public class CommonUndefinedProcessExpression extends CommonExpression
 
 	@Override
 	public Set<Variable> variableAddressedOf(Scope scope) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Set<Variable> variableAddressedOf() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

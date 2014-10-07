@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * The parent of all statements.
@@ -194,4 +195,6 @@ public interface Statement extends Sourceable {
 
 	String toStepString(AtomicKind atomicKind, int atomCount,
 			boolean atomicLockVarChanged);
+
+	void calculateConstantValue(SymbolicUniverse universe);
 }

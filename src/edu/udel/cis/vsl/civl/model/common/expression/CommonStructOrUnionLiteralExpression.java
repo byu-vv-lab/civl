@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,6 +12,9 @@ import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 
 public class CommonStructOrUnionLiteralExpression extends CommonExpression
 		implements StructOrUnionLiteralExpression {
@@ -102,5 +106,19 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 	@Override
 	public LiteralKind literalKind() {
 		return LiteralKind.STRUCT_OR_UNION;
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		List<SymbolicExpression> fieldValues = new ArrayList<>();
+
+		for (Expression field : fields) {
+			SymbolicExpression fieldValue = field.constantValue();
+
+			if (fieldValue == null)
+				return;
+		}
+		constantValue = universe.tuple((SymbolicTupleType) this.expressionType
+				.getDynamicType(universe), fieldValues);
 	}
 }

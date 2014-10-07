@@ -195,8 +195,7 @@ public class CommonModelFactory implements ModelFactory {
 	 * 
 	 */
 	public enum TempVariableKind {
-		CONDITIONAL,
-		CHOOSE
+		CONDITIONAL, CHOOSE
 	}
 
 	/* *************************** Static Fields *************************** */
@@ -883,7 +882,8 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public HereOrRootExpression hereOrRootExpression(CIVLSource source,
 			boolean isRoot) {
-		return new CommonHereOrRootExpression(source, this.scopeType, isRoot);
+		return new CommonHereOrRootExpression(source, this.scopeType, isRoot,
+				isRoot ? this.scopeValue(this.systemScope.id()) : null);
 	}
 
 	@Override
@@ -980,7 +980,7 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public ProcnullExpression procnullExpression(CIVLSource source) {
-		return new CommonProcnullExpression(source, processType);
+		return new CommonProcnullExpression(source, processType, this.nullProcessValue);
 	}
 
 	@Override
@@ -1156,7 +1156,7 @@ public class CommonModelFactory implements ModelFactory {
 					this.trueExpression(end.getSource()), false,
 					this.atomicLockVariableExpression,
 					new CommonUndefinedProcessExpression(systemSource,
-							this.processType));
+							this.processType, this.undefinedProcessValue));
 		}
 		startFragment = new CommonFragment(enterAtomic);
 		endFragment = new CommonFragment(leaveAtomic);

@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * A function call or spawn. Either of the form f(x) or else v=f(x).
@@ -349,6 +350,12 @@ public class CommonCallStatement extends CommonStatement implements
 	@Override
 	public void setFunction(FunctionIdentifierExpression function) {
 		this.functionExpression = function;
+	}
+
+	@Override
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {
+		for (Expression arg : arguments)
+			arg.calculateConstantValue(universe);
 	}
 
 }

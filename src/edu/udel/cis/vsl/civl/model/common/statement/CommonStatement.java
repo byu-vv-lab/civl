@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * The parent of all statements.
@@ -276,5 +277,13 @@ public abstract class CommonStatement extends CommonSourceable implements
 		result += ";";
 		return result;
 	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		this.guard.calculateConstantValue(universe);
+
+	}
+	
+	protected abstract void calculateConstantValueWork(SymbolicUniverse universe);
 
 }

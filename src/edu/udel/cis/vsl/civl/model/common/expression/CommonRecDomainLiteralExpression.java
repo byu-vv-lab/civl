@@ -1,6 +1,8 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -8,8 +10,12 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 
 public class CommonRecDomainLiteralExpression extends CommonExpression
 		implements RecDomainLiteralExpression {
@@ -89,5 +95,33 @@ public class CommonRecDomainLiteralExpression extends CommonExpression
 		}
 		string.append("}");
 		return string.toString();
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		List<SymbolicExpression> rangeValues = new ArrayList<>();
+		List<SymbolicExpression> domValueComponents = new LinkedList<>();
+		SymbolicExpression rangesArray;
+		CIVLDomainType civlDomType = (CIVLDomainType) this.expressionType;
+
+		for (Expression range : ranges) {
+			SymbolicExpression rangeValue = range.constantValue();
+
+			if (rangeValue == null)
+				return;
+			rangeValues.add(rangeValue);
+		}
+		// Adding components
+		domValueComponents.add(universe.integer(this.dimension()));
+		// Union field index which indicates it's a rectangular domain.
+		domValueComponents.add(universe.zeroInt());
+		rangesArray = universe.array(rangeValues.get(0).type(), rangeValues);
+		domValueComponents.add(universe.unionInject(
+				civlDomType.getDynamicSubTypesUnion(universe),
+				universe.intObject(0), rangesArray));
+		// The cast is guaranteed
+		this.constantValue = universe.tuple(
+				(SymbolicTupleType) civlDomType.getDynamicType(universe),
+				domValueComponents);
 	}
 }

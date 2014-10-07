@@ -15,6 +15,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A unary operation.
@@ -166,4 +170,25 @@ public class CommonUnaryExpression extends CommonExpression implements
 		return variableSet;
 	}
 
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		SymbolicExpression operandValue = this.operand.constantValue();
+
+		if (operandValue == null)
+			return;
+		switch (operator) {
+		case NEGATIVE:
+			this.constantValue = universe
+					.minus((NumericExpression) operandValue);
+			break;
+		case NOT:
+			this.constantValue = universe.not((BooleanExpression) operandValue);
+			break;
+		case BIG_O:
+			break;
+		default:
+			throw new CIVLInternalException("Unknown unary operator: "
+					+ operator, this);
+		}
+	}
 }

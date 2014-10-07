@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -9,6 +10,12 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 
 public class CommonRegularRangeExpression extends CommonExpression implements
 		RegularRangeExpression {
@@ -87,6 +94,37 @@ public class CommonRegularRangeExpression extends CommonExpression implements
 		string.append("#");
 		string.append(step);
 		return string.toString();
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		SymbolicExpression lowValue = low.constantValue(), highValue = high
+				.constantValue(), stepValue = step.constantValue();
+		BooleanExpression claim;
+		ResultType validity;
+		boolean negativeStep = false;
+
+		if (lowValue == null || highValue == null || stepValue == null)
+			return;
+		claim = universe.equals(universe.zeroInt(), stepValue);
+		validity = universe.reasoner(universe.trueExpression()).valid(claim)
+				.getResultType();
+		if (validity == ResultType.YES)
+			return;
+		claim = universe.lessThan(universe.zeroInt(), (NumericExpression) step);
+		validity = universe.reasoner(universe.trueExpression()).valid(claim)
+				.getResultType();
+		if (validity == ResultType.NO)
+			negativeStep = true;
+		if (negativeStep) {
+			SymbolicExpression tmp = lowValue;
+
+			lowValue = highValue;
+			highValue = tmp;
+		}
+		constantValue = universe.tuple((SymbolicTupleType) this.expressionType
+				.getDynamicType(universe), Arrays.asList(lowValue, highValue,
+				stepValue));
 	}
 
 }

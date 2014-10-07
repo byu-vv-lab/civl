@@ -15,6 +15,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A binary operation.
@@ -73,7 +77,7 @@ public class CommonBinaryExpression extends CommonExpression implements
 	}
 
 	/* ******************* Methods from BinaryExpression ******************* */
-	
+
 	/**
 	 * @return The binary operator
 	 */
@@ -99,7 +103,7 @@ public class CommonBinaryExpression extends CommonExpression implements
 	}
 
 	/* ********************** Methods from Expression ********************** */
-	
+
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.BINARY;
@@ -155,14 +159,16 @@ public class CommonBinaryExpression extends CommonExpression implements
 
 		if (newLeft != null) {
 			result = new CommonBinaryExpression(this.getSource(),
-					expressionScope(), expressionType, this.operator, newLeft, right);
+					expressionScope(), expressionType, this.operator, newLeft,
+					right);
 		} else {
 			Expression newRight = right.replaceWith(oldExpression,
 					newExpression);
 
 			if (newRight != null)
 				result = new CommonBinaryExpression(this.getSource(),
-						expressionScope(), expressionType, this.operator, left, newRight);
+						expressionScope(), expressionType, this.operator, left,
+						newRight);
 		}
 		return result;
 	}
@@ -192,7 +198,7 @@ public class CommonBinaryExpression extends CommonExpression implements
 			variableSet.addAll(operandResult);
 		return variableSet;
 	}
-	
+
 	/* ********************** Methods from Expression ********************** */
 
 	@Override
@@ -262,5 +268,78 @@ public class CommonBinaryExpression extends CommonExpression implements
 					this);
 		}
 		return "(" + left + op + right + ")";
+	}
+
+	@Override
+	public void calculateConstantValue(SymbolicUniverse universe) {
+		SymbolicExpression leftValue = left.constantValue(), rightValue = right
+				.constantValue();
+
+		if (leftValue == null || rightValue == null)
+			return;
+		switch (operator) {
+		case BITAND:
+		case BITOR:
+		case BITXOR:
+			break;
+		case PLUS:
+			constantValue = universe.add((NumericExpression) leftValue,
+					(NumericExpression) rightValue);
+			break;
+		case MINUS:
+			constantValue = universe.subtract((NumericExpression) leftValue,
+					(NumericExpression) rightValue);
+			break;
+		case TIMES:
+			constantValue = universe.multiply((NumericExpression) leftValue,
+					(NumericExpression) rightValue);
+			break;
+		case DIVIDE:
+			constantValue = universe.divide((NumericExpression) leftValue,
+					(NumericExpression) rightValue);
+			break;
+		case LESS_THAN:
+			constantValue = universe.lessThan((NumericExpression) leftValue,
+					(NumericExpression) rightValue);
+			break;
+		case LESS_THAN_EQUAL:
+			constantValue = universe.lessThanEquals(
+					(NumericExpression) leftValue,
+					(NumericExpression) rightValue);
+			break;
+		case EQUAL:
+			constantValue = universe.equals((NumericExpression) leftValue,
+					(NumericExpression) rightValue);
+			break;
+		case NOT_EQUAL:
+			constantValue = universe.not(universe.equals(
+					(NumericExpression) leftValue,
+					(NumericExpression) rightValue));
+			break;
+		case AND:
+			constantValue = universe.and((BooleanExpression) leftValue,
+					(BooleanExpression) rightValue);
+			break;
+		case OR:
+			constantValue = universe.or((BooleanExpression) leftValue,
+					(BooleanExpression) rightValue);
+			break;
+		case IMPLIES:
+			constantValue = universe.implies((BooleanExpression) leftValue,
+					(BooleanExpression) rightValue);
+			break;
+		case MODULO:
+			constantValue = universe.modulo((NumericExpression) leftValue,
+					(NumericExpression) rightValue);
+			break;
+		case POINTER_ADD:
+		case POINTER_SUBTRACT:
+		case SHIFTLEFT:
+		case SHIFTRIGHT:
+			break;
+		default:
+			throw new CIVLInternalException("Unknown operator: " + operator,
+					this);
+		}
 	}
 }
