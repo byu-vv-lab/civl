@@ -69,5 +69,6 @@ public class MessagePassingTest {
 	public void wildcardBad() {
 		assertFalse(ui.run("verify", filename("wildcardBad.cvl"),
 				"-enablePrintf=false"));
+		ui.run("replay", filename("wildcardBad.cvl"));
 	}
 }
