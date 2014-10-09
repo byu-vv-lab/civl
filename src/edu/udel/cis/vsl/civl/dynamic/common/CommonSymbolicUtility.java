@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.util.IF.Singleton;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
@@ -346,8 +347,16 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		NumericExpression step = (NumericExpression) universe.tupleRead(range,
 				this.twoObj);
 		NumericExpression size = universe.subtract(high, low);
-		NumericExpression remainder = universe.modulo(size, step);
+		NumericExpression remainder;
+		BooleanExpression claim = universe.lessThan(step, zero);
+		ResultType resultType = universe.reasoner(this.trueValue).valid(claim)
+				.getResultType();
 
+		if (resultType == ResultType.YES) {
+			step = universe.minus(step);
+			size = universe.minus(size);
+		}
+		remainder = universe.modulo(size, step);
 		size = universe.subtract(size, remainder);
 		size = universe.divide(size, step);
 		size = universe.add(size, this.one);
@@ -569,13 +578,15 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			NumericSymbolicConstant index = (NumericSymbolicConstant) universe
 					.symbolicConstant(universe.stringObject("i"),
 							universe.integerType());
-			SymbolicExpression arrayEleFunction = universe.lambda(index, eleValue);
+			SymbolicExpression arrayEleFunction = universe.lambda(index,
+					eleValue);
 			SymbolicCompleteArrayType arrayValueType = universe.arrayType(
 					elementValueType, length);
 
 			return universe.arrayLambda(arrayValueType, arrayEleFunction);
 		}
 	}
+
 	@Override
 	public SymbolicExpression nullPointer() {
 		return this.nullPointer;
@@ -714,7 +725,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	/* *************************** Private Methods ************************* */
-	
+
 	/**
 	 * Are the two given references disjoint?
 	 * 

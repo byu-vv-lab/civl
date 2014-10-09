@@ -348,6 +348,8 @@ $domain $omp_arrive_loop($omp_team team, int location, $domain loop_dom,
     $omp_work_record workrecord;
     
     $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+    if(nthreads == 1)
+      return loop_dom;
     index = find_work_record(gteam, tid, location, &workrecord);
     if(index >= 0){//workrecord found
       arrive(gteam, tid, index, workrecord, LOOP, location);
@@ -380,6 +382,8 @@ $domain(1) $omp_arrive_sections($omp_team team, int location, int numSections){
     $omp_work_record workrecord;
 
     $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+    if(nthreads == 1)
+      return ($domain(1)) {0 .. numSections - 1 # 1};
     index = find_work_record(gteam, tid, location, &workrecord);
     if(index >= 0){//workrecord found
       arrive(gteam, tid, index, workrecord, SECTIONS, location);
@@ -414,6 +418,8 @@ $domain(1) $omp_arrive_sections($omp_team team, int location, int numSections){
     $omp_work_record workrecord;
 
     $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+    if(nthreads == 1)
+      return tid;
     index = find_work_record(gteam, tid, location, &workrecord);
     if(index >= 0){//workrecord found
       arrive(gteam, tid, index, workrecord, SINGLE, location);
