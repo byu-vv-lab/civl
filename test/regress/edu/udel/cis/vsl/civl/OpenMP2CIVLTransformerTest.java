@@ -26,7 +26,7 @@ public class OpenMP2CIVLTransformerTest {
 
 	@Test
 	public void dotProduct1() {
-		assertTrue(ui.run("parse", filename("dotProduct1.c"), "-ompNoSimplify", 
+		assertTrue(ui.run("parse", filename("dotProduct1.c"), "-ompNoSimplify",
 				"-inputTHREAD_MAX=4"));
 	}
 
@@ -52,5 +52,11 @@ public class OpenMP2CIVLTransformerTest {
 	public void raceCond1() {
 		assertTrue(ui.run("parse", filename("raceCond1.c"), "-ompNoSimplify",
 				"-inputTHREAD_MAX=4"));
+	}
+
+	@Test
+	public void canonicalForLoops() {
+		assertTrue(ui.run("verify", filename("canonicalForLoops.c"),
+				"-ompNoSimplify", "-inputTHREAD_MAX=2"));
 	}
 }
