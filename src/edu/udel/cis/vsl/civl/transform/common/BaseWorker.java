@@ -231,6 +231,11 @@ public abstract class BaseWorker {
 				nodeFactory.newIdentifierNode(source, name));
 	}
 
+	/**
+	 * TODO: javadocs
+	 * @param node
+	 * @return
+	 */
 	protected Source getMainSource(ASTNode node) {
 		if (node.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
 			FunctionDefinitionNode functionNode = (FunctionDefinitionNode) node;
