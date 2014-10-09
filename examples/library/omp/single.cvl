@@ -12,7 +12,7 @@ void main(){
     int data_status;
     $omp_team team = $omp_team_create($here, gteam, tid);
     $omp_shared shared = $omp_shared_create(team, gshared, &data_local, &data_status);
-    int owner = $omp_arrive_single(team);
+    int owner = $omp_arrive_single(team, 0);
 
     printf("Hello from thread %d\n", tid);
     if (owner == tid) {

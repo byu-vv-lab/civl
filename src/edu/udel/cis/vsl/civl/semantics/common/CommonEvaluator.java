@@ -388,6 +388,20 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/* ************************** Private Methods ************************** */
+	/**
+	 * Does the type contains some non-concrete state? e.g., int[N] where N is
+	 * an input variable contains the non-concrete state N if N can't be
+	 * simplified to a concrete value at the given state.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process that calls this method
+	 * @param type
+	 *            The type to be checked
+	 * @return true iff the type contains some non-concrete state.
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	@SuppressWarnings("unused")
 	private boolean hasNonConcreteState(State state, int pid, CIVLType type)
 			throws UnsatisfiablePathConditionException {
@@ -1235,8 +1249,9 @@ public class CommonEvaluator implements Evaluator {
 			if (isAllNull)
 				hasNext = !symbolicUtil.isEmptyDomain(domainValue, dimension,
 						domain.getSource());
-			else hasNext = symbolicUtil.recDomainHasNext(recDom, dimension,
-					domElement);
+			else
+				hasNext = symbolicUtil.recDomainHasNext(recDom, dimension,
+						domElement);
 			eval.state = state;
 			// TODO:rectangular domain always has concrete ranges so that the
 			// result
@@ -1258,7 +1273,8 @@ public class CommonEvaluator implements Evaluator {
 				// Compare the literal domain counter and the size of the
 				// domain.
 				literalDomCounterVar = domainGuard.getLiteralDomCounter();
-				literalCounter = (NumericExpression) state.valueOf(pid, literalDomCounterVar);
+				literalCounter = (NumericExpression) state.valueOf(pid,
+						literalDomCounterVar);
 				counter = ((IntegerNumber) universe
 						.extractNumber(literalCounter)).intValue();
 				size = ((IntegerNumber) universe.extractNumber(domainSize))
@@ -2897,7 +2913,7 @@ public class CommonEvaluator implements Evaluator {
 		int processIdentifier = state.getProcessState(pid).identifier();
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
-		if(expression.hasConstantValue())
+		if (expression.hasConstantValue())
 			return new Evaluation(state, expression.constantValue());
 		switch (kind) {
 		case ABSTRACT_FUNCTION_CALL:

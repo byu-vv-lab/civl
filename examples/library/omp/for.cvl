@@ -16,7 +16,7 @@ void main(){
     int data_status[N];
     $omp_team team = $omp_team_create($here, gteam, tid);
     $omp_shared shared = $omp_shared_create(team, gshared, &data_local, &data_status);
-    $domain(1) my_iters = ($domain(1))$omp_arrive_loop(team, loop_dom, ROUND_ROBIN);
+    $domain(1) my_iters = ($domain(1))$omp_arrive_loop(team, 0, loop_dom, ROUND_ROBIN);
 
     printf("Hello from thread %d\n", tid);
     $for (int i : my_iters) {

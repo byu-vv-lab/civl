@@ -47,6 +47,8 @@ struct OMP_gteam {
   _Bool init[];
   /* work queues.  Length nthreads. For each thread,
    * a FIFO queue of work records */
+  /* work queues. Width nthreads. For each worksharing region,
+   * one entry of size nthreads is added. */
   $omp_work_record work[][];
   /* the shared object data. */
   $omp_gshared shared[];
@@ -65,32 +67,25 @@ struct OMP_team {
 /* *********************** Functions *********************** */
 
 $omp_gteam $omp_gteam_create($scope scope, int nthreads) {
-  $omp_work_record empty[];
+  //$omp_work_record empty[];
   $omp_gteam result = ($omp_gteam)$malloc(scope, sizeof(struct OMP_gteam));
   _Bool f = $false;
 
-  $seq_init(&empty, 0, NULL);
+  //$seq_init(&empty, 0, NULL);
   result->scope = scope;
   result->nthreads = nthreads;
   $seq_init(&result->init, nthreads, &f);
-  $seq_init(&result->work, nthreads, &empty);
+  $seq_init(&result->work, 0, NULL);
   $seq_init(&result->shared, 0, NULL);
   result->gbarrier = $gbarrier_create(scope, nthreads);
   return result;
 }
 
 void $omp_gteam_destroy($omp_gteam gteam) {
-  int nthreads = gteam->nthreads;
-
-  //$assert $seq_length(&gteam->shared)==0 :
-  //"shared objects must be deallocated before freeing gteam";
-  for (int i=0; i<nthreads; i++) {
-    int numRecords = $seq_length(&gteam->work[i]);
-
-    $assert numRecords == 0 :
-            "Thread %d still has %d queued worksharing events",
-            i, numRecords;
-  }
+  int length = $seq_length(&gteam->work);
+  
+  $assert length == 0 : 
+    "There are still %d queued worksharing events.", length;
   $free(gteam->gbarrier);
   $free(gteam);
 }
@@ -265,52 +260,175 @@ void $omp_barrier_and_flush($omp_team team) {
   $barrier_call(team->barrier);
 }
 
-$domain $omp_arrive_loop($omp_team team, $domain loop_dom, 
-    $domain_strategy strategy){
-  $omp_gteam gteam = team->gteam;
-  int tid = team->tid;
-  int numWorkrecords, nthreads = gteam->nthreads;
-  $domain_decomposition decomposition;
-  $domain result;
+/**
+ * performs the checking of workrecords when the last thread arrives the workshared region,
+ * including:
+ * number of workrecords in the entry should be nthreads
+ * all workrecords are arrived
+ * all workrecords have the same location as specified
+ * all workrecords are of the same kind
+ */
+void $omp_check_workrecords($omp_gteam gteam, int location, $omp_worksharing_kind kind, int index){
+  int nthreads = gteam->nthreads;
+  int numWorkrecords;
   
-  $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
-  numWorkrecords = $seq_length(&gteam->work[tid]);
-  for(int i = 0; i < numWorkrecords; i++){
-    $omp_work_record workrecord = gteam->work[tid][i];
-    
-    if(!workrecord.arrived)
-      return workrecord.subdomain;
+  numWorkrecords = $seq_length(&gteam->work[index]);
+  $assert numWorkrecords == nthreads : "The %d-th workshared entry has length %d while the expected length should be %d.", index, numWorkrecords, nthreads;
+  for(int i = 0; i < nthreads; i++){
+    $omp_work_record workrecord = gteam->work[index][i];
+
+    $assert workrecord.arrived : 
+            "The workshared event of location %d for thread %d hasn't been arrived yet.",
+	    location, i;
+    $assert workrecord.location == location :
+            "Wrong workshared location of thread %d: expected %d, but saw %d.", 
+	    i, location, workrecord.location;
+    $assert workrecord.kind == kind : 
+            "Wrong workshared kind of thread %d: expected %d but saw %d", 
+            i, kind, workrecord.kind;
   }
-  decomposition = $domain_partition(loop_dom, strategy, nthreads);
-  for(int i = 0; i< nthreads; i++){
-    $omp_work_record workrecord;
-    int workLength;
+}
+
+/* finds the workrecord of the given location for a certain thread in a team,
+ * stores the workrecord in the buffer provided, 
+ * returns the index of the workrecod entry in the work queue
+ * or -1 if the workrecord is absent.
+ *
+ * gteam: the global team object
+ * tid: the id of the thread
+ * location: the location of the workrecord being searched for
+ * result: the buffer for store the workrecord found
+ */
+int find_work_record($omp_gteam gteam, int tid, int location, $omp_work_record *result){
+  int numEntires = $seq_length(&gteam->work);
+  
+  for(int i = 0; i < numEntires; i++){
+    $omp_work_record workrecord = gteam->work[i][tid];
     
-    workrecord.kind = LOOP; 
-    workrecord.location = 0; // TODO: how to specify the location?
-    if(i != tid){
-      workrecord.arrived = $false;
-    }else{
-      workrecord.arrived = $true;
-      result = decomposition.subdomains[i];
+    if(workrecord.location == location){
+      *result = workrecord;
+      return i;
     }
-    workrecord.subdomain = decomposition.subdomains[i];
-    workLength = $seq_length(&gteam->work[i]);
-    $seq_insert(&(gteam->work[i]), workLength, &workrecord, 1);
   }
-  return result;
+  return -1;
+}
+
+/* checks if all threads have arrived the workrecord at the given index */
+_Bool all_arrived($omp_gteam gteam, int index){
+  for(int tid = 0; tid < gteam->nthreads; tid++){
+    if(!gteam->work[index][tid].arrived)
+      return $false;
+  }
+  return $true;
+}
+
+void arrive($omp_gteam gteam, int tid, int index,
+$omp_work_record workrecord, $omp_worksharing_kind kind, int location){
+  $assert !workrecord.arrived : 
+          "The loop at location %d has been arrived before by thread %d!", 
+	  location, tid;
+  $assert workrecord.kind == kind : 
+	  "Wrong workshare kind of thread %d: expected LOOP", 
+	  tid;
+  (gteam->work[index][tid]).arrived = $true;
+  if(all_arrived(gteam, index)){//this is the last thread 
+    $assert index == 0 : "Inconsistent order or worksharing events.";
+    $omp_check_workrecords(gteam, location, kind, index);
+    $seq_remove(&gteam->work, index, NULL, 1);
+  }
+}
+
+$domain $omp_arrive_loop($omp_team team, int location, $domain loop_dom, 
+    $domain_strategy strategy){
+  $atomic{
+    $omp_gteam gteam = team->gteam;
+    int tid = team->tid;
+    int nthreads = gteam->nthreads;
+    int index;
+    $omp_work_record workrecord;
+    
+    $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+    index = find_work_record(gteam, tid, location, &workrecord);
+    if(index >= 0){//workrecord found
+      arrive(gteam, tid, index, workrecord, LOOP, location);
+      return workrecord.subdomain;
+    }else{//workrecord not found, this should be the first thread
+      $omp_work_record workrecords[nthreads];
+      $domain_decomposition decomposition;
+      int numEntries = $seq_length(&gteam->work);
+
+      decomposition = $domain_partition(loop_dom, strategy, nthreads);
+      for(int i = 0; i< nthreads; i++){    
+	workrecords[i].kind = LOOP; 
+	workrecords[i].location = location;
+	workrecords[i].arrived = (i == tid);
+	workrecords[i].subdomain = decomposition.subdomains[i];
+      }
+      $seq_insert(&gteam->work, numEntries, &workrecords, 1);
+      return workrecords[tid].subdomain;
+    }
+  }
 }
 
 /* TODO: need strategies? */
-$domain(1) $omp_arrive_sections($omp_team team, int numSections){
-  int low = team->tid, high = numSections - 1, step = team->gteam->nthreads;
-  $range range = low .. high # step;
-  $domain(1) dom = ($domain(1)) {range};
-  
-  return dom;
+$domain(1) $omp_arrive_sections($omp_team team, int location, int numSections){
+  $atomic{
+    $omp_gteam gteam = team->gteam;
+    int tid = team->tid;
+    int nthreads = gteam->nthreads;
+    int index;
+    $omp_work_record workrecord;
+
+    $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+    index = find_work_record(gteam, tid, location, &workrecord);
+    if(index >= 0){//workrecord found
+      arrive(gteam, tid, index, workrecord, SECTIONS, location);
+      return workrecord.subdomain;
+    }else{//workrecord not found, this should be the first thread
+      $omp_work_record workrecords[nthreads];
+      int numEntries = $seq_length(&gteam->work);
+
+      for(int i = 0; i < nthreads; i++){
+	int low = i, high = numSections - 1, step = nthreads;
+	$range range = low .. high # step;
+	$domain(1) dom = ($domain(1)) {range};
+
+	workrecords[i].kind = SECTIONS; 
+	workrecords[i].location = location;
+	workrecords[i].arrived = (i == tid);
+	workrecords[i].subdomain = dom;
+      }
+      $seq_insert(&gteam->work, numEntries, &workrecords, 1);
+      return workrecords[tid].subdomain;
+    }
+  }
 }
 
 /* TODO: need strategies? */
-int $omp_arrive_single($omp_team team){
-  return 0;
+ int $omp_arrive_single($omp_team team, int location){
+  $atomic{
+    $omp_gteam gteam = team->gteam;
+    int tid = team->tid;
+    int nthreads = gteam->nthreads;
+    int index;
+    $omp_work_record workrecord;
+
+    $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+    index = find_work_record(gteam, tid, location, &workrecord);
+    if(index >= 0){//workrecord found
+      arrive(gteam, tid, index, workrecord, SINGLE, location);
+    }else{//workrecord not found, this should be the first thread
+      $omp_work_record workrecords[nthreads];
+      int numEntries = $seq_length(&gteam->work);
+
+      for(int i = 0; i < nthreads; i++){
+	workrecords[i].kind = SINGLE; 
+	workrecords[i].location = location;
+	workrecords[i].arrived = (i == tid);
+      }
+      $seq_insert(&gteam->work, numEntries, &workrecords, 1);
+    }
+    return 0;
+  }
 }
+

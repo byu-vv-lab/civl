@@ -14,7 +14,7 @@ void main(){
     int data_status[numSections];
     $omp_team team = $omp_team_create($here, gteam, tid);
     $omp_shared shared = $omp_shared_create(team, gshared, &data_local, &data_status);
-    $domain(1) my_secs = $omp_arrive_sections(team, numSections);
+    $domain(1) my_secs = $omp_arrive_sections(team, 0, numSections);
 
     printf("Hello from thread %d\n", tid);
     $for (int i : my_secs) {

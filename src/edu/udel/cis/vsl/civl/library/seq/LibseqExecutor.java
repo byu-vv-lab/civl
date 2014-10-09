@@ -362,6 +362,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 		String functionName = isInsert ? "$seq_insert()" : "$seq_remove()";
 		boolean isOldArrayEmpty = false;
 		List<SymbolicExpression> elements = new LinkedList<>();
+		boolean removeToNull = false;
 
 		if (symbolicUtil.isNullPointer(arrayPtr)) {
 			CIVLExecutionException err = new CIVLExecutionException(
@@ -415,7 +416,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 		if (!symbolicUtil.isNullPointer(valuesPtr)) {
 			valueType = symbolicAnalyzer.typeOfObjByPointer(valuesPtrSource,
 					state, valuesPtr);
-			if (!arrayEleType.equals(valueType)) {
+			
+			if (!arrayEleType.isSuperTypeOf(valueType)) {
 				CIVLExecutionException err = new CIVLExecutionException(
 						ErrorKind.SEQUENCE,
 						Certainty.PROVEABLE,
@@ -483,12 +485,13 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			this.errorLogger.reportError(err);
 			return state;
 		}
+		removeToNull = !isInsert && symbolicUtil.isNullPointer(valuesPtr);
 		for (int i = 0; i < countInt; i++) {
 			SymbolicExpression value, valuePtr;
 
 			if (i == 0)
 				valuePtr = valuesPtr;
-			else {
+			else if(!removeToNull) {
 				BinaryExpression pointerAdd = modelFactory.binaryExpression(
 						source, BINARY_OPERATOR.POINTER_ADD, arguments[2],
 						modelFactory.integerLiteralExpression(source,
@@ -498,7 +501,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 						valuesPtr, universe.integer(i));
 				state = eval.state;
 				valuePtr = eval.value;
-			}
+			}else
+				valuePtr = valuesPtr;
 			if (isInsert) {
 				eval = evaluator.dereference(source, state, process, valuePtr,
 						false);

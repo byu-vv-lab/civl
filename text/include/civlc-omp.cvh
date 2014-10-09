@@ -165,7 +165,7 @@ void $omp_barrier_and_flush($omp_team team);
  * The dimension of the domain returned equals the
  * dimension of the given domain loop_dom.
  */
-$domain $omp_arrive_loop($omp_team team, $domain loop_dom, 
+$domain $omp_arrive_loop($omp_team team, int location, $domain loop_dom, 
     $domain_strategy strategy);
 
 /* called by a thread when it reaches an omp sections
@@ -173,11 +173,11 @@ $domain $omp_arrive_loop($omp_team team, $domain loop_dom,
  * integers 0..numSections-1 specifying the indexes of
  * the sections that this thread will execute. The sections
  * are numbered from 0 in increasing order. */
-$domain(1) $omp_arrive_sections($omp_team team, int numSections);
+$domain(1) $omp_arrive_sections($omp_team team, int location, int numSections);
 
 /* called by a thread when it reaches on omp single
  * construct, returns the thread ID of the thread that
  * will execute the single construct. */
-int $omp_arrive_single($omp_team team);
+int $omp_arrive_single($omp_team team, int location);
 
 #endif

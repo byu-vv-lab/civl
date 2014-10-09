@@ -21,7 +21,45 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public interface Expression extends Sourceable {
 
 	public enum ExpressionKind {
-		ABSTRACT_FUNCTION_CALL, ADDRESS_OF, ARRAY_LITERAL, BINARY, BOOLEAN_LITERAL, BOUND_VARIABLE, CAST, CHAR_LITERAL, COND, DEREFERENCE, DERIVATIVE, DOMAIN_GUARD, DOT, DYNAMIC_TYPE_OF, FUNCTION_POINTER, FUNCTION_GUARD, INITIAL_VALUE, INTEGER_LITERAL, NULL_LITERAL, QUANTIFIER, REAL_LITERAL, REGULAR_RANGE, RESULT, SCOPEOF, SELF, SIZEOF_TYPE, SIZEOF_EXPRESSION, STRING_LITERAL, STRUCT_OR_UNION_LITERAL, SUBSCRIPT, SYSTEM_GUARD, UNARY, UNDEFINED_PROC, VARIABLE, WAIT_GUARD, HERE_OR_ROOT, PROC_NULL, SYSTEM_FUNC_CALL, REC_DOMAIN_LITERAL
+		ABSTRACT_FUNCTION_CALL ,
+		ADDRESS_OF,
+		ARRAY_LITERAL,
+		BINARY,
+		BOOLEAN_LITERAL,
+		BOUND_VARIABLE,
+		CAST,
+		CHAR_LITERAL,
+		COND,
+		DEREFERENCE,
+		DERIVATIVE,
+		DOMAIN_GUARD,
+		DOT,
+		DYNAMIC_TYPE_OF,
+		FUNCTION_POINTER,
+		FUNCTION_GUARD,
+		INITIAL_VALUE,
+		INTEGER_LITERAL,
+		NULL_LITERAL,
+		QUANTIFIER,
+		REAL_LITERAL,
+		REGULAR_RANGE,
+		RESULT,
+		SCOPEOF,
+		SELF,
+		SIZEOF_TYPE,
+		SIZEOF_EXPRESSION,
+		STRING_LITERAL,
+		STRUCT_OR_UNION_LITERAL,
+		SUBSCRIPT,
+		SYSTEM_GUARD,
+		UNARY,
+		UNDEFINED_PROC,
+		VARIABLE,
+		WAIT_GUARD,
+		HERE_OR_ROOT,
+		PROC_NULL,
+		SYSTEM_FUNC_CALL,
+		REC_DOMAIN_LITERAL
 	}
 
 	/**
@@ -124,9 +162,28 @@ public interface Expression extends Sourceable {
 	 */
 	Set<Variable> variableAddressedOf();
 
+	/**
+	 * The immutable constant value of this expression. NULL if the expression
+	 * is not a constant.
+	 * 
+	 * @return the constant value of this expression. NULL if the expression is
+	 *         not a constant.
+	 */
 	SymbolicExpression constantValue();
 
+	/**
+	 * Checks if this expression has a constant value, i.e., constantValue() !=
+	 * NULL.
+	 * 
+	 * @return true iff this expression has a constant value.
+	 */
 	boolean hasConstantValue();
 
+	/**
+	 * Calculates the constant value of this expression.
+	 * 
+	 * @param universe
+	 *            The symbolic universe to be used.
+	 */
 	void calculateConstantValue(SymbolicUniverse universe);
 }
