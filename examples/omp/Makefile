@@ -1,5 +1,5 @@
 
-all: dotProduct1 dotProduct_critical dotProduct_orphan
+all: dotProduct1 dotProduct_critical dotProduct_orphan canonical-for
 
 dotProduct1: dotProduct1.cvl
 	civl verify dotProduct1.cvl
@@ -12,3 +12,6 @@ dotProduct_orphan: dotProduct_orphan.cvl
 
 fig3.10-mxv-omp: fig3.10-mxv-omp.cvl
 	civl verify fig3.10-mxv-omp.cvl
+
+canonical-for: canonicalForLoops.c
+	civl verify canonicalForLoops.c -ompNoSimplify -inputTHREAD_MAX=2 
