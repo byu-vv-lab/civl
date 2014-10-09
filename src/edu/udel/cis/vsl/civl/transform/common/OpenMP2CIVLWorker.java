@@ -52,7 +52,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
-import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
 public class OpenMP2CIVLWorker extends BaseWorker {
@@ -145,6 +145,21 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 * Variable that is increment for naming of temp variables that are created
 	 */
 	private int tmpCount = 0;
+
+	/**
+	 * Counter for locating $omp_arrive_loop functions
+	 */
+	private int ompArriveLoopCounter = 0;
+
+	/**
+	 * Counter for locating $omp_arrive_sections functions
+	 */
+	private int ompArriveSections = 0;
+
+	/**
+	 * Counter for locating $omp_arrive_single functions
+	 */
+	private int ompArriveSingle = 0;
 
 	/**
 	 * If the same variable is replaced in the same expression then use the temp
@@ -774,12 +789,11 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			VariableDeclarationNode loopDomain;
 			int collapseLevel = ((OmpForNode) node).collapse();
 			ASTNode body = null;
-			ArrayList<Pair<ASTNode, ASTNode>> ranges = new ArrayList<Pair<ASTNode, ASTNode>>();
+			ArrayList<Triple<ASTNode, ASTNode, ASTNode>> ranges = new ArrayList<>();
 			ArrayList<IdentifierNode> loopVariables = new ArrayList<IdentifierNode>();
 			SequenceNode<IdentifierExpressionNode> firstPrivateList;
 			ForLoopNode currentLoop = null;
-			OperatorNode initializer;
-			OperatorNode condition;
+			ForLoopInitializerNode initializer;
 			OmpSymbolReductionNode reductionNode = null;
 
 			// Get the list of reduction variables in the OmpForNode
@@ -796,6 +810,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			firstPrivateList = ((CommonOmpForNode) node).firstprivateList();
 
 			for (int i = 0; i < collapseLevel; i++) {
+				Triple<ASTNode, ASTNode, ASTNode> lo_hi_step;
+
 				if (i == 0) {
 					currentLoop = (ForLoopNode) node.child(7);
 					body = currentLoop.child(1);
@@ -803,25 +819,29 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					currentLoop = (ForLoopNode) currentLoop.getBody();
 					body = currentLoop.child(1);
 				}
-				initializer = (OperatorNode) currentLoop.child(3);
-				condition = (OperatorNode) currentLoop.getCondition();
-
-				ranges.add(new Pair<ASTNode, ASTNode>(initializer.child(1),
-						condition.child(1)));
+				initializer = currentLoop.getInitializer();
+				lo_hi_step = canonicalForLoopBounds(currentLoop);
+				ranges.add(new Triple<ASTNode, ASTNode, ASTNode>(
+						lo_hi_step.first, lo_hi_step.second, lo_hi_step.third));
+				// Initializer node only will be either IdentifierExpressionNode
+				// or DeclarationNode.
+				// The first child of the first child of both of them is
+				// identifier node.
 				loopVariables.add((IdentifierNode) initializer.child(0)
 						.child(0));
 			}
 			// For each of the ranges create a range variable
 			int rangeNumber = 0;
-			for (Pair<ASTNode, ASTNode> pair : ranges) {
+			for (Triple<ASTNode, ASTNode, ASTNode> triple : ranges) {
 				VariableDeclarationNode threadRange;
 				threadRange = nodeFactory.newVariableDeclarationNode(source,
 						nodeFactory.newIdentifierNode(source,
 								"r" + Integer.toString(rangeNumber + 1)),
 						nodeFactory.newRangeTypeNode(source), nodeFactory
 								.newRegularRangeNode(source,
-										(ExpressionNode) pair.left.copy(),
-										(ExpressionNode) pair.right.copy()));
+										(ExpressionNode) triple.first.copy(),
+										(ExpressionNode) triple.second.copy(),
+										(ExpressionNode) triple.third.copy()));
 				items.add(threadRange);
 				rangeNumber++;
 			}
@@ -861,7 +881,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					cln);
 			items.add(loopDomain);
 
-			// ($domain(1))$omp_arrive_loop(team, loop_domain)
+			// ($domain(1))$omp_arrive_loop(team, int, loop_domain, strategy)
 			ExpressionNode ompArriveLoop = nodeFactory.newCastNode(source,
 					nodeFactory.newDomainTypeNode(
 							source,
@@ -870,13 +890,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					nodeFactory.newFunctionCallNode(source, this
 							.identifierExpression(source, "$omp_arrive_loop"),
 							Arrays.asList(this.identifierExpression(source,
-									TEAM), nodeFactory.newCastNode(source,
-									nodeFactory.newDomainTypeNode(source), this
+									TEAM), nodeFactory.newIntegerConstantNode(
+									source, this.ompArriveLoopCounter + ""),
+									nodeFactory.newCastNode(source, nodeFactory
+											.newDomainTypeNode(source), this
 											.identifierExpression(source,
 													"loop_domain")),
 									nodeFactory.newIntegerConstantNode(source,
 											"0")), null));
-
+			this.ompArriveLoopCounter++;
 			// Get corret level "n" for domain(n)
 			IntegerConstantNode domainLevel;
 			if (collapseLevel == 1) {
@@ -1121,12 +1143,18 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				}
 
 				ExpressionNode ompArriveSections = nodeFactory
-						.newFunctionCallNode(source, this.identifierExpression(
-								source, "$omp_arrive_sections"), Arrays.asList(
-								this.identifierExpression(source, TEAM),
+						.newFunctionCallNode(
+								source,
 								this.identifierExpression(source,
-										String.valueOf(numberSections))), null);
-
+										"$omp_arrive_sections"),
+								Arrays.asList(this.identifierExpression(source,
+										TEAM), nodeFactory
+										.newIntegerConstantNode(source,
+												this.ompArriveSections + ""),
+										this.identifierExpression(source,
+												String.valueOf(numberSections))),
+								null);
+				this.ompArriveSections++;
 				VariableDeclarationNode my_secs;
 				my_secs = nodeFactory
 						.newVariableDeclarationNode(source, nodeFactory
@@ -1223,9 +1251,11 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 				ExpressionNode arriveSingle = nodeFactory
 						.newFunctionCallNode(source, this.identifierExpression(
-								source, "$omp_arrive_single"),
-								Arrays.asList(this.identifierExpression(source,
-										TEAM)), null);
+								source, "$omp_arrive_single"), Arrays.asList(
+								this.identifierExpression(source, TEAM),
+								nodeFactory.newIntegerConstantNode(source,
+										this.ompArriveSingle + "")), null);
+				this.ompArriveSingle++;
 				items.add(nodeFactory
 						.newVariableDeclarationNode(source, nodeFactory
 								.newIdentifierNode(source, "owner"),
@@ -1820,5 +1850,132 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			}
 		}
 		return new Triple<>(items, includedNodes, vars);
+	}
+
+	/**
+	 * Extracting initial value and termination bound from a Canonical
+	 * ForLoopNode
+	 * 
+	 * @param forloopNode
+	 *            The AST Node represents a canonical for loop. (Pre-condition:
+	 *            The for loop should be more strictly a canonical for loop.)
+	 * @return A triple of lower bound , higher bound and step
+	 * @throws SyntaxException
+	 */
+	private Triple<ASTNode, ASTNode, ASTNode> canonicalForLoopBounds(
+			ForLoopNode forloopNode) throws SyntaxException {
+		IdentifierNode loopVar;
+		ForLoopInitializerNode initializer;
+		IdentifierExpressionNode identExpr;
+		ExpressionNode conditioner;
+		ExpressionNode incrementor;
+		OperatorNode incNode;
+		ASTNode lo = null;
+		ASTNode hi = null;
+		ASTNode step = null;
+		ASTNode one = nodeFactory.newIntegerConstantNode((Source) null, "1");
+		ASTNode zero = nodeFactory.newIntegerConstantNode((Source) null, "0");
+		ASTNode newHi;
+		Operator incOp, stepSign;
+		boolean isNegativeIncrement = false;
+
+		initializer = forloopNode.getInitializer();
+		conditioner = forloopNode.getCondition();
+		incrementor = forloopNode.getIncrementer();
+		// Initializer can either be a OperatorNode or a DeclarationListNode
+		if (initializer instanceof OperatorNode) {
+			// OperatorNode means it's an assignment statement e.g. i = 0;
+			// So the initial value is child(1).
+			lo = initializer.child(1);
+			loopVar = ((IdentifierExpressionNode) initializer.child(0))
+					.getIdentifier();
+		} else if (initializer instanceof DeclarationListNode) {
+			VariableDeclarationNode varDecNode = (VariableDeclarationNode) initializer
+					.child(0);
+
+			// The initializer has a similar form as "int i = 0"
+			lo = varDecNode.getInitializer();
+			loopVar = (IdentifierNode) varDecNode.getIdentifier();
+		} else {
+			throw new CIVLSyntaxException("OpenMP for loop initializer");
+		}
+		// The bound value in conditioner can either be in the left side or
+		// right side of the operator(GT, LT, GTE, LTE).
+		if (conditioner instanceof OperatorNode) {
+			if (conditioner.child(0) instanceof IdentifierExpressionNode) {
+				identExpr = (IdentifierExpressionNode) conditioner.child(0);
+
+				if (identExpr.getIdentifier().getEntity()
+						.equals(loopVar.getEntity()))
+					hi = conditioner.child(1);
+			}
+			if (hi == null
+					&& conditioner.child(1) instanceof IdentifierExpressionNode) {
+				identExpr = (IdentifierExpressionNode) conditioner.child(1);
+
+				if (identExpr.getIdentifier().getEntity()
+						.equals(loopVar.getEntity()))
+					hi = conditioner.child(0);
+			}
+		}
+		if (hi == null)
+			throw new CIVLSyntaxException("OpenMP for loop conditioner");
+		// Incrementor has three basic forms. e.g. i++ (--), i+=1, i = i + 1.
+		// They are all operatorNodes.
+		assert incrementor instanceof OperatorNode;
+		incNode = (OperatorNode) incrementor;
+		incOp = incNode.getOperator();
+		if (incNode.getOperator() == Operator.ASSIGN) {
+			assert incrementor.child(1) instanceof OperatorNode : "OpenMP for loop incrementor";
+			incNode = (OperatorNode) incrementor.child(1);
+			incOp = incNode.getOperator();
+			if (incNode.child(0) instanceof IdentifierExpressionNode) {
+				if (((IdentifierExpressionNode) incNode.child(0))
+						.getIdentifier().getEntity()
+						.equals(loopVar.getEntity()))
+					step = incNode.child(1);
+			} else
+				step = incNode.child(0);
+
+		} else {
+			if (incNode.numChildren() == 1)
+				step = nodeFactory.newIntegerConstantNode(
+						incrementor.getSource(), "1");
+			else if (incNode.numChildren() == 2)
+				step = incNode.child(1);
+		}
+		if (incOp == Operator.POSTDECREMENT || incOp == Operator.MINUSEQ
+				|| incOp == Operator.MINUS) {
+			step = nodeFactory.newOperatorNode(incrementor.getSource(),
+					Operator.MINUS, Arrays.asList((ExpressionNode) zero.copy(),
+							(ExpressionNode) step.copy()));
+			isNegativeIncrement = true;
+		}
+		newHi = nodeFactory.newOperatorNode(
+				source,
+				Operator.PLUS,
+				Arrays.asList((ExpressionNode) lo.copy(),
+						(ExpressionNode) hi.copy()));
+		if (((OperatorNode) conditioner).getOperator() == Operator.LT
+				|| ((OperatorNode) conditioner).getOperator() == Operator.GT) {
+			if (isNegativeIncrement) {
+				stepSign = Operator.PLUS;
+			} else
+				stepSign = Operator.MINUS;
+			newHi = nodeFactory.newOperatorNode(source, stepSign, Arrays
+					.asList((ExpressionNode) hi.copy(),
+							(ExpressionNode) one.copy()));
+		} else
+			newHi = hi.copy();
+		// Since $range will always put the larger value at the right hand side
+		// of the "..", so if the operator of the incrementor is -- -= or -, we
+		// have to switch the high bound and the lower bound.
+		if (isNegativeIncrement) {
+			ASTNode temp = newHi;
+
+			newHi = lo;
+			lo = temp;
+		}
+		return new Triple<>(lo, newHi, step);
 	}
 }
