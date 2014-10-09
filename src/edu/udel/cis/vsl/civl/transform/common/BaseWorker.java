@@ -162,6 +162,18 @@ public abstract class BaseWorker {
 		return source;
 	}
 
+	/**
+	 * This method should be called after the transformer has completed its
+	 * transformation; it finds all source objects (in node and the descendants
+	 * of node) that were created by this transformer and adds more information
+	 * to them. The new information includes the pretty-print textual
+	 * representation of the content of that node (and its descendants), and the
+	 * precise point in original actual source code where the new content was
+	 * inserted.
+	 * 
+	 * @param node
+	 *            a node in the AST being transformed; typically, the root node
+	 */
 	protected void completeSources(ASTNode node) {
 		ASTNode postNode = nextRealNode(node);
 		ASTNode preNode = null;
