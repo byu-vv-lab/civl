@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A literal boolean value.
@@ -96,5 +97,10 @@ public class CommonBooleanLiteralExpression extends CommonExpression implements
 	public void calculateConstantValue(SymbolicUniverse universe) {
 		this.constantValue = value ? universe.trueExpression() : universe
 				.falseExpression();
+	}
+
+	@Override
+	public void setLiteralConstantValue(SymbolicExpression value) {
+		this.constantValue = value;
 	}
 }

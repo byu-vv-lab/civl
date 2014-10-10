@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+
 /**
  * The parent of all literal expressions.
  * 
@@ -15,4 +17,13 @@ public interface LiteralExpression extends Expression {
 	}
 
 	LiteralKind literalKind();
+
+	/**
+	 * Directly set a symbolic expression as value of this literal expression
+	 * 
+	 * @param value
+	 *            The symbolic expression of the constant value of this literal
+	 *            expression
+	 */
+	void setLiteralConstantValue(SymbolicExpression value);
 }

@@ -980,7 +980,8 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public ProcnullExpression procnullExpression(CIVLSource source) {
-		return new CommonProcnullExpression(source, processType, this.nullProcessValue);
+		return new CommonProcnullExpression(source, processType,
+				this.nullProcessValue);
 	}
 
 	@Override
@@ -2169,6 +2170,14 @@ public class CommonModelFactory implements ModelFactory {
 			CIVLSource source, CIVLType structType, List<Expression> fields) {
 		return new CommonStructOrUnionLiteralExpression(source,
 				joinScope(fields), structType, fields);
+	}
+
+	@Override
+	public StructOrUnionLiteralExpression structOrUnionLiteralExpression(
+			CIVLSource source, Scope exprScope, CIVLType structType,
+			SymbolicExpression constantValue) {
+		return new CommonStructOrUnionLiteralExpression(source, exprScope,
+				structType, constantValue);
 	}
 
 	@Override

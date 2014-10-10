@@ -124,4 +124,9 @@ public class CommonRecDomainLiteralExpression extends CommonExpression
 				(SymbolicTupleType) civlDomType.getDynamicType(universe),
 				domValueComponents);
 	}
+
+	@Override
+	public void setLiteralConstantValue(SymbolicExpression value) {
+		this.constantValue = value;
+	}
 }

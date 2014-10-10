@@ -28,6 +28,12 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 		fields.toArray(this.fields);
 	}
 
+	public CommonStructOrUnionLiteralExpression(CIVLSource source,
+			Scope exprScope, CIVLType type, SymbolicExpression constantValue) {
+		super(source, exprScope, type);
+		this.constantValue = constantValue;
+	}
+
 	@Override
 	public ExpressionKind expressionKind() {
 		return ExpressionKind.STRUCT_OR_UNION_LITERAL;
@@ -51,21 +57,25 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 
 	@Override
 	public String toString() {
-		String result = "{";
-		if (fields != null) {
-			CIVLStructOrUnionType structType = this.structOrUnionType();
-			String fieldName;
-			int i = 0;
 
-			for (Expression field : fields) {
-				fieldName = structType.getField(i).name().name();
-				i++;
-				result += " ." + fieldName + "=" + field + ", ";
+		if (this.constantValue == null) {
+			String result = "{";
+			if (fields != null) {
+				CIVLStructOrUnionType structType = this.structOrUnionType();
+				String fieldName;
+				int i = 0;
+
+				for (Expression field : fields) {
+					fieldName = structType.getField(i).name().name();
+					i++;
+					result += " ." + fieldName + "=" + field + ", ";
+				}
+				result = result.substring(0, result.length() - 2);
 			}
-			result = result.substring(0, result.length() - 2);
-		}
-		result += " }";
-		return result;
+			result += " }";
+			return result;
+		} else
+			return this.constantValue.toString();
 	}
 
 	@Override
@@ -120,5 +130,10 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 		}
 		constantValue = universe.tuple((SymbolicTupleType) this.expressionType
 				.getDynamicType(universe), fieldValues);
+	}
+
+	@Override
+	public void setLiteralConstantValue(SymbolicExpression value) {
+		this.constantValue = value;
 	}
 }

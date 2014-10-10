@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * An integer literal.
@@ -79,5 +80,10 @@ public class CommonIntegerLiteralExpression extends CommonExpression implements
 	@Override
 	public void calculateConstantValue(SymbolicUniverse universe) {
 		this.constantValue = universe.integer(value);
+	}
+
+	@Override
+	public void setLiteralConstantValue(SymbolicExpression value) {
+		this.constantValue = value;
 	}
 }

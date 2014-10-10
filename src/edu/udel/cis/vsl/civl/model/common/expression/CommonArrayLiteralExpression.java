@@ -165,4 +165,9 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 		this.constantValue = universe.array(this.arrayType().elementType()
 				.getDynamicType(universe), elementValues);
 	}
+
+	@Override
+	public void setLiteralConstantValue(SymbolicExpression value) {
+		this.constantValue = value;
+	}
 }

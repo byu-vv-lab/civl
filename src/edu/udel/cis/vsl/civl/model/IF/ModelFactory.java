@@ -663,6 +663,17 @@ public interface ModelFactory {
 			CIVLSource source, CIVLType type, List<Expression> fields);
 
 	/**
+	 * Create a new instance of struct or union literal expression
+	 * 
+	 * @param source
+	 * @param fields
+	 * @return
+	 */
+	StructOrUnionLiteralExpression structOrUnionLiteralExpression(
+			CIVLSource source, Scope exprScope, CIVLType type,
+			SymbolicExpression constantValue);
+
+	/**
 	 * An expression for an array index operation. e.g. a[i]
 	 * 
 	 * @param source
@@ -1539,6 +1550,14 @@ public interface ModelFactory {
 
 	CIVLCompleteDomainType completeDomainType(CIVLType rangeType, int dim);
 
+	/**
+	 * Create a rectangular domain expression
+	 * 
+	 * @param source
+	 * @param ranges
+	 * @param type
+	 * @return
+	 */
 	RecDomainLiteralExpression recDomainLiteralExpression(CIVLSource source,
 			List<Expression> ranges, CIVLType type);
 
