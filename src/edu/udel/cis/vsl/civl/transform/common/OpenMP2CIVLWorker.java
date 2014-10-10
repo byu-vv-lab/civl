@@ -1853,8 +1853,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	}
 
 	/**
-	 * Extracting initial value and termination bound from a Canonical
-	 * ForLoopNode
+	 * Extracting bounds and step for ranges from a Canonical ForLoopNode
 	 * 
 	 * @param forloopNode
 	 *            The AST Node represents a canonical for loop. (Pre-condition:
@@ -1882,11 +1881,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		initializer = forloopNode.getInitializer();
 		conditioner = forloopNode.getCondition();
 		incrementor = forloopNode.getIncrementer();
-		// Initializer can either be a OperatorNode or a DeclarationListNode
+		// Initializer can either be a OperatorNode or a DeclarationListNode:
+		// for(i = 0;...) or for(int i = 0; ...)
 		if (initializer instanceof OperatorNode) {
 			// OperatorNode means it's an assignment statement e.g. i = 0;
 			// So the initial value is child(1).
 			lo = initializer.child(1);
+			// Obtain the identifierNode of the loop variable which will be used
+			// to distinguish between a loop variable and a regular variable in
+			// termination and incrementor.
 			loopVar = ((IdentifierExpressionNode) initializer.child(0))
 					.getIdentifier();
 		} else if (initializer instanceof DeclarationListNode) {
@@ -1899,8 +1902,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		} else {
 			throw new CIVLSyntaxException("OpenMP for loop initializer");
 		}
-		// The bound value in conditioner can either be in the left side or
-		// right side of the operator(GT, LT, GTE, LTE).
+		// The bound value in conditioner can either be in the left hand side or
+		// right hand side of a comparison operator(GT, LT, GTE, LTE).
 		if (conditioner instanceof OperatorNode) {
 			if (conditioner.child(0) instanceof IdentifierExpressionNode) {
 				identExpr = (IdentifierExpressionNode) conditioner.child(0);
@@ -1920,8 +1923,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		}
 		if (hi == null)
 			throw new CIVLSyntaxException("OpenMP for loop conditioner");
-		// Incrementor has three basic forms. e.g. i++ (--), i+=1, i = i + 1.
-		// They are all operatorNodes.
+		// Incrementor has three basic forms. e.g. i++ (--), i+=1, i = i + 1,
+		// what in common is all of them are operatorNodes.
 		assert incrementor instanceof OperatorNode;
 		incNode = (OperatorNode) incrementor;
 		incOp = incNode.getOperator();
@@ -1944,6 +1947,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			else if (incNode.numChildren() == 2)
 				step = incNode.child(1);
 		}
+		// If the incrementor increase the loop variable or decrease it.
 		if (incOp == Operator.POSTDECREMENT || incOp == Operator.MINUSEQ
 				|| incOp == Operator.MINUS) {
 			step = nodeFactory.newOperatorNode(incrementor.getSource(),
@@ -1956,6 +1960,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				Operator.PLUS,
 				Arrays.asList((ExpressionNode) lo.copy(),
 						(ExpressionNode) hi.copy()));
+		// If the termination bound is open, change the bound by one. (Since
+		// canonical only accept integer loop variable, it's safe)
 		if (((OperatorNode) conditioner).getOperator() == Operator.LT
 				|| ((OperatorNode) conditioner).getOperator() == Operator.GT) {
 			if (isNegativeIncrement) {
