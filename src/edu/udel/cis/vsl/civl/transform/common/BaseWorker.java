@@ -233,6 +233,7 @@ public abstract class BaseWorker {
 
 	/**
 	 * TODO: javadocs
+	 * 
 	 * @param node
 	 * @return
 	 */
@@ -259,6 +260,14 @@ public abstract class BaseWorker {
 		return null;
 	}
 
+	/**
+	 * TODO javadocs
+	 * 
+	 * @param source
+	 * @param name
+	 * @param type
+	 * @return
+	 */
 	protected VariableDeclarationNode variableDeclaration(Source source,
 			String name, TypeNode type) {
 		return nodeFactory.newVariableDeclarationNode(source,
