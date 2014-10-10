@@ -338,6 +338,9 @@ $omp_work_record workrecord, $omp_worksharing_kind kind, int location){
   }
 }
 
+/* TODO: checks if loop_dom gets changed if the current thread is NOT the 
+ * first thread entering the loop.
+ */
 $domain $omp_arrive_loop($omp_team team, int location, $domain loop_dom, 
     $domain_strategy strategy){
   $atomic{
