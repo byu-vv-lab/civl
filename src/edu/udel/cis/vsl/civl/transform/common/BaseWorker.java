@@ -274,6 +274,15 @@ public abstract class BaseWorker {
 				nodeFactory.newIdentifierNode(source, name), type);
 	}
 
+	/**
+	 * TODO javadocs
+	 * 
+	 * @param source
+	 * @param name
+	 * @param type
+	 * @param init
+	 * @return
+	 */
 	protected VariableDeclarationNode variableDeclaration(Source source,
 			String name, TypeNode type, ExpressionNode init) {
 		return nodeFactory.newVariableDeclarationNode(source,
