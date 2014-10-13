@@ -33,7 +33,7 @@ struct OMP_work_record {
   int kind; // loop, barrier, sections, or single
   int location; // location in model of construct
   _Bool arrived; // has this thread arrived yet?
-  //$domain loop_domain; // full loop domain; null if not loop
+  $domain loop_domain; // full loop domain; null if not loop
   $domain subdomain; // tasks this thread must do
   // reduction operation?
 };
@@ -355,6 +355,12 @@ $domain $omp_arrive_loop($omp_team team, int location, $domain loop_dom,
       return loop_dom;
     index = find_work_record(gteam, tid, location, &workrecord);
     if(index >= 0){//workrecord found
+      $assert $equals(&gteam->work[index][0].loop_domain, &loop_dom) : 
+              "The loop domain at location %d is changed when thread %d arrives it. \n Expected %s but saw %s.",
+	      location, 
+	      tid, 
+	      gteam->work[index][0].loop_domain, 
+	      loop_dom;
       arrive(gteam, tid, index, workrecord, LOOP, location);
       return workrecord.subdomain;
     }else{//workrecord not found, this should be the first thread
@@ -363,6 +369,7 @@ $domain $omp_arrive_loop($omp_team team, int location, $domain loop_dom,
       int numEntries = $seq_length(&gteam->work);
 
       decomposition = $domain_partition(loop_dom, strategy, nthreads);
+      workrecords[0].loop_domain = loop_dom;
       for(int i = 0; i< nthreads; i++){    
 	workrecords[i].kind = LOOP; 
 	workrecords[i].location = location;

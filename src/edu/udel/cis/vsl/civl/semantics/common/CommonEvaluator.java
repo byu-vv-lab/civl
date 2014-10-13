@@ -2265,7 +2265,7 @@ public class CommonEvaluator implements Evaluator {
 			if (value == null || value.isNull()) {
 				CIVLExecutionException e = new CIVLExecutionException(
 						ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
-						process, "Attempt to read uninitialized variable",
+						process, "Attempt to read uninitialized variable " + expression,
 						this.symbolicAnalyzer.stateToString(state),
 						expression.getSource());
 
