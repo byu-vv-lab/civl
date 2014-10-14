@@ -31,6 +31,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
@@ -64,11 +65,6 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	/* **************************** Instance Fields ************************* */
 
-	/**
-	 * There are new nodes created by the transformer, other than parsing from
-	 * some source file. All new nodes share the same source.
-	 */
-	private Source source;
 	private ArrayList<String> funcList = new ArrayList<String>();
 
 	// private boolean isSvComp = true;
@@ -148,6 +144,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 			if (functionName.name().startsWith(VERIFIER_ATOMIC)) {
 				CompoundStatementNode tmp = ((FunctionDefinitionNode) node)
 						.getBody().copy();
+				Source source = tmp.getSource();
 				AtomicNode newAtomicBlock = nodeFactory.newAtomicStatementNode(
 						source, false, tmp);
 				CompoundStatementNode block = nodeFactory
@@ -182,13 +179,19 @@ public class Pthread2CIVLWorker extends BaseWorker {
 			FunctionTypeNode funcTypeNode = function.getTypeNode();
 			FunctionDeclarationNode abstractNode;
 
-			funcTypeNode = nodeFactory.newFunctionTypeNode(funcTypeNode
-					.getSource(), funcTypeNode.getReturnType().copy(),
-					nodeFactory.newSequenceNode(source, "Formal Parameters",
-							Arrays.asList(this.variableDeclaration(source,
-									"seed", nodeFactory.newBasicTypeNode(
-											source, BasicTypeKind.INT)))),
-					false);
+			funcTypeNode = nodeFactory
+					.newFunctionTypeNode(
+							funcTypeNode.getSource(),
+							funcTypeNode.getReturnType().copy(),
+							nodeFactory.newSequenceNode(this.newSource(
+									"formal parameter declarations of "
+											+ functionName.name(),
+									CParser.DECLARATION_LIST),
+									"Formal Parameters",
+									Arrays.asList(this.variableDeclaration(
+											"seed",
+											this.basicType(BasicTypeKind.INT)))),
+							false);
 			abstractNode = nodeFactory.newAbstractFunctionDefinitionNode(
 					function.getSource(), function.getIdentifier().copy(),
 					funcTypeNode, null, 0);
@@ -251,11 +254,13 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	}
 
 	private StatementNode assumeNode(ExpressionNode expression) {
-		return nodeFactory.newAssumeNode(source, expression);
+		return nodeFactory.newAssumeNode(
+				this.newSource("assumption", CParser.ASSUME), expression);
 	}
 
 	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
-		return nodeFactory.newAssertNode(source, expression, null);
+		return nodeFactory.newAssertNode(
+				this.newSource("assertion", CParser.ASSERT), expression, null);
 		// FunctionCallNode functionCall =
 		// nodeFactory.newFunctionCallNode(source,
 		// this.identifierExpression(mySource, ASSERT),
@@ -277,8 +282,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 * @return
 	 */
 	private StatementNode assertFalse(Source mySource) {
-		ExpressionNode falseExpression = nodeFactory.newBooleanConstantNode(
-				source, false);
+		ExpressionNode falseExpression = this.booleanConstant(false);
 
 		return assertNode(mySource, falseExpression);
 	}
@@ -290,42 +294,40 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 		if (name.equals("main")) {
 			process_pthread_exit(function, true);
-			ExpressionNode ZERO = nodeFactory.newIntegerConstantNode(source,
-					"0");
+			ExpressionNode ZERO = this.integerConstant(0);
+
 			function.getBody().addSequenceChild(
-					nodeFactory.newReturnNode(source, ZERO));
+					nodeFactory.newReturnNode(
+							this.newSource("return statement", CParser.RETURN),
+							ZERO));
 			freePoolBeforeMainReturn(function);
 			return;
 
 		}
 		if (this.isVoidPointer(returnType) && threadList.contains(name)) {
 			if (function.getTypeNode().getParameters().numChildren() == 0) {
-				function.getTypeNode()
-						.setParameters(
-								nodeFactory.newSequenceNode(
-										source,
-										"parameters",
-										Arrays.asList(nodeFactory.newVariableDeclarationNode(
-												source,
-												nodeFactory.newIdentifierNode(
-														source, "arg"),
-												nodeFactory.newPointerTypeNode(
-														source,
-														nodeFactory
-																.newVoidTypeNode(source))))));
+				function.getTypeNode().setParameters(
+						nodeFactory.newSequenceNode(this.newSource(
+								"parameter declaration of "
+										+ function.getName(),
+								CParser.DECLARATION_LIST), "parameters", Arrays
+								.asList(this.variableDeclaration("arg",
+										nodeFactory.newPointerTypeNode(this
+												.newSource("type void *",
+														CParser.TYPE), this
+												.voidType())))));
 			}
 			ExpressionNode nullNode = nodeFactory.newCastNode(
-					source,
-					nodeFactory.newPointerTypeNode(source,
-							nodeFactory.newVoidTypeNode(source)),
-					nodeFactory.newIntegerConstantNode(source, "0"));
-			ExpressionNode isMainArg = nodeFactory.newBooleanConstantNode(
-					source, false);
+					this.newSource("cast expression", CParser.CAST),
+					nodeFactory.newPointerTypeNode(
+							this.newSource("type void *", CParser.TYPE),
+							this.voidType()), this.integerConstant(0));
+			ExpressionNode isMainArg = this.booleanConstant(false);
 			FunctionCallNode newPthreadExit = nodeFactory.newFunctionCallNode(
-					source, nodeFactory.newIdentifierExpressionNode(source,
-							nodeFactory.newIdentifierNode(source,
-									PTHREAD_EXIT_NEW)), Arrays.asList(nullNode,
-							isMainArg), null);
+					this.newSource("function call " + PTHREAD_EXIT_NEW,
+							CParser.CALL), this
+							.identifierExpression(PTHREAD_EXIT_NEW), Arrays
+							.asList(nullNode, isMainArg), null);
 			StatementNode pthreadExit = nodeFactory
 					.newExpressionStatementNode(newPthreadExit);
 			function.getBody().addSequenceChild(pthreadExit);
@@ -357,27 +359,26 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					String nameString = name.getIdentifier().name();
 
 					if (nameString.equals(PTHREAD_EXIT)) {
-						ExpressionNode isMainArg = nodeFactory
-								.newBooleanConstantNode(source, isMain);
+						ExpressionNode isMainArg = this.booleanConstant(isMain);
 						ExpressionNode oldArg = funcCall.getArgument(0);
 						SequenceNode<ExpressionNode> newArgs;
 
 						name.getIdentifier().setName(PTHREAD_EXIT_NEW);
 						oldArg.parent().removeChild(oldArg.childIndex());
-						newArgs = nodeFactory.newSequenceNode(source,
+						newArgs = nodeFactory.newSequenceNode(
+								this.newSource("actual parameter list of "
+										+ nameString, CParser.ARGUMENT_LIST),
 								"Actual parameters",
 								Arrays.asList(oldArg, isMainArg));
 						funcCall.setArguments(newArgs);
 					}
 				}
 			} else if (child instanceof ReturnNode && !isMain) {
-				ExpressionNode isMainArg = nodeFactory.newBooleanConstantNode(
-						source, isMain);
+				ExpressionNode isMainArg = this.booleanConstant(isMain);
 				FunctionCallNode newPthreadExit = nodeFactory
-						.newFunctionCallNode(source, nodeFactory
-								.newIdentifierExpressionNode(source,
-										nodeFactory.newIdentifierNode(source,
-												PTHREAD_EXIT_NEW)), Arrays
+						.newFunctionCallNode(this.newSource("function call of "
+								+ PTHREAD_EXIT_NEW, CParser.CALL), this
+								.identifierExpression(PTHREAD_EXIT_NEW), Arrays
 								.asList(((ReturnNode) child).getExpression()
 										.copy(), isMainArg), null);
 				StatementNode pthreadExit = nodeFactory
@@ -423,12 +424,13 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	@SuppressWarnings("unused")
 	private ReturnNode returnNull() throws SyntaxException {
 		ExpressionNode nullNode = nodeFactory.newCastNode(
-				source,
-				nodeFactory.newPointerTypeNode(source,
-						nodeFactory.newVoidTypeNode(source)),
-				nodeFactory.newIntegerConstantNode(source, "0"));
+				this.newSource("cast expression", CParser.CAST),
+				nodeFactory.newPointerTypeNode(
+						this.newSource("type void *", CParser.TYPE),
+						this.voidType()), this.integerConstant(0));
 
-		return nodeFactory.newReturnNode(source, nullNode);
+		return nodeFactory.newReturnNode(
+				this.newSource("return statement", CParser.RETURN), nullNode);
 	}
 
 	private boolean isVoidPointer(TypeNode type) {
@@ -449,7 +451,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 			int index = node.childIndex();
 
 			parent.removeChild(index);
-			compound = nodeFactory.newCompoundStatementNode(source,
+			compound = nodeFactory.newCompoundStatementNode(node.getSource(),
 					Arrays.asList(freePoolCall, (ReturnNode) node));
 			parent.setChild(index, compound);
 		} else
@@ -459,12 +461,14 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	}
 
 	private StatementNode freePoolCall() {
-		ExpressionNode poolArg = nodeFactory.newOperatorNode(source,
+		ExpressionNode poolArg = nodeFactory.newOperatorNode(
+				this.newSource("address-of expression", CParser.EXPR),
 				Operator.ADDRESSOF,
-				Arrays.asList(identifierExpression(source, PTHREAD_POOL)));
-		FunctionCallNode funcCall = nodeFactory.newFunctionCallNode(source,
-				this.identifierExpression(source, PTHREAD_FREE_POOL),
-				Arrays.asList(poolArg), null);
+				Arrays.asList(identifierExpression(PTHREAD_POOL)));
+		FunctionCallNode funcCall = nodeFactory.newFunctionCallNode(this
+				.newSource("function call " + PTHREAD_FREE_POOL, CParser.CALL),
+				this.identifierExpression(PTHREAD_FREE_POOL), Arrays
+						.asList(poolArg), null);
 
 		return nodeFactory.newExpressionStatementNode(funcCall);
 	}
@@ -475,7 +479,6 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	public AST transform(AST ast) throws SyntaxException {
 		SequenceNode<ExternalDefinitionNode> root = ast.getRootNode();
 
-		this.source = getMainSource(root);
 		assert this.astFactory == ast.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();

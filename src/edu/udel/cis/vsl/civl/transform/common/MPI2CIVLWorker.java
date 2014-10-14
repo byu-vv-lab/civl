@@ -29,7 +29,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
-import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
@@ -182,14 +182,6 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 */
 	private static String PROC_TYPE = "$proc";
 
-	/* **************************** Instance Fields ************************* */
-
-	/**
-	 * There are new nodes created by the transformer, other than parsing from
-	 * some source file. All new nodes share the same source.
-	 */
-	private Source source;
-
 	/* ****************************** Constructor ************************** */
 	/**
 	 * Creates a new instance of MPITransformer.
@@ -219,23 +211,27 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 */
 	private AssumeNode boundAssumption(String lowerBound, String variable,
 			String upperBound) throws SyntaxException {
-		ExpressionNode variableExpression = this.identifierExpression(source,
-				variable);
-		ExpressionNode upperBoundExpression = this.identifierExpression(source,
-				upperBound);
-		ExpressionNode lowerBoundExpression = this.identifierExpression(source,
-				lowerBound);
+		ExpressionNode variableExpression = this.identifierExpression(variable);
+		ExpressionNode upperBoundExpression = this
+				.identifierExpression(upperBound);
+		ExpressionNode lowerBoundExpression = this
+				.identifierExpression(lowerBound);
 		ExpressionNode lowerPart, upperPart;
 
-		lowerPart = nodeFactory.newOperatorNode(source, Operator.LT,
-				Arrays.asList(lowerBoundExpression, variableExpression));
+		lowerPart = nodeFactory.newOperatorNode(this.newSource(
+				"lower bound of variable " + variable, CParser.EXPR),
+				Operator.LT, Arrays.asList(lowerBoundExpression,
+						variableExpression));
 		variableExpression = variableExpression.copy();
-		upperPart = nodeFactory.newOperatorNode(source, Operator.LTE,
-				Arrays.asList(variableExpression, upperBoundExpression));
-		return nodeFactory.newAssumeNode(
-				source,
-				nodeFactory.newOperatorNode(source, Operator.LAND,
-						Arrays.asList(lowerPart, upperPart)));
+		upperPart = nodeFactory.newOperatorNode(this.newSource(
+				"upper bound of variable " + variable, CParser.EXPR),
+				Operator.LTE, Arrays.asList(variableExpression,
+						upperBoundExpression));
+		return nodeFactory.newAssumeNode(this.newSource(
+				"assumption on the bound of variable " + variable,
+				CParser.ASSUME), nodeFactory.newOperatorNode(
+				this.newSource("logical and ", CParser.EXPR), Operator.LAND,
+				Arrays.asList(lowerPart, upperPart)));
 	}
 
 	/**
@@ -252,18 +248,18 @@ public class MPI2CIVLWorker extends BaseWorker {
 		List<ExpressionNode> commCreateArgs;
 		ExpressionNode commCreate;
 
-		commType = nodeFactory.newTypedefNameNode(
-				nodeFactory.newIdentifierNode(source, COMM_TYPE), null);
+		commType = nodeFactory.newTypedefNameNode(nodeFactory
+				.newIdentifierNode(
+						this.newSource("$comm type", CParser.IDENTIFIER),
+						COMM_TYPE), null);
 		commCreateArgs = new ArrayList<>(3);
-		commCreateArgs.add(nodeFactory.newHereNode(source));
-		commCreateArgs.add(this.identifierExpression(source, GCOMM_WORLD));
-		commCreateArgs.add(this.identifierExpression(source, MPI_RANK));
-		commCreate = nodeFactory.newFunctionCallNode(source,
-				this.identifierExpression(source, COMM_CREATE), commCreateArgs,
-				null);
-		return nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, COMM_WORLD), commType,
-				commCreate);
+		commCreateArgs.add(this.hereNode());
+		commCreateArgs.add(this.identifierExpression(GCOMM_WORLD));
+		commCreateArgs.add(this.identifierExpression(MPI_RANK));
+		commCreate = nodeFactory.newFunctionCallNode(
+				this.newSource("function call " + COMM_CREATE, CParser.CALL),
+				this.identifierExpression(COMM_CREATE), commCreateArgs, null);
+		return this.variableDeclaration(COMM_WORLD, commType, commCreate);
 	}
 
 	/**
@@ -281,11 +277,12 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 *         the specified communicator.
 	 */
 	private ExpressionStatementNode commDestroy(String destroy, String commName) {
-		ExpressionNode function = this.identifierExpression(source, destroy);
+		ExpressionNode function = this.identifierExpression(destroy);
 
 		return nodeFactory.newExpressionStatementNode(nodeFactory
-				.newFunctionCallNode(source, function, Arrays.asList(this
-						.identifierExpression(source, commName)), null));
+				.newFunctionCallNode(this.newSource("function call " + destroy,
+						CParser.CALL), function, Arrays.asList(this
+						.identifierExpression(commName)), null));
 	}
 
 	/**
@@ -300,16 +297,14 @@ public class MPI2CIVLWorker extends BaseWorker {
 		TypeNode gcommType;
 		ExpressionNode gcommCreate;
 
-		gcommType = nodeFactory.newTypedefNameNode(
-				nodeFactory.newIdentifierNode(source, GCOMM_TYPE), null);
+		gcommType = nodeFactory.newTypedefNameNode(this.identifier(GCOMM_TYPE),
+				null);
 		gcommCreate = nodeFactory.newFunctionCallNode(
-				source,
-				this.identifierExpression(source, GCOMM_CREATE),
-				Arrays.asList(nodeFactory.newHereNode(source),
-						this.identifierExpression(source, NPROCS)), null);
-		return nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, GCOMM_WORLD), gcommType,
-				gcommCreate);
+				this.newSource("function call " + GCOMM_CREATE, CParser.CALL),
+				this.identifierExpression(GCOMM_CREATE),
+				Arrays.asList(this.hereNode(),
+						this.identifierExpression(NPROCS)), null);
+		return this.variableDeclaration(GCOMM_WORLD, gcommType, gcommCreate);
 	}
 
 	/**
@@ -346,88 +341,91 @@ public class MPI2CIVLWorker extends BaseWorker {
 				GCOMM_WORLD);
 
 		// declaring $proc procs[NPROCS];
-		procsType = nodeFactory
-				.newArrayTypeNode(source,
-						nodeFactory.newTypedefNameNode(nodeFactory
-								.newIdentifierNode(source, PROC_TYPE), null),
-						this.identifierExpression(source, NPROCS));
-		procsVar = nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, PROCS), procsType);
+		procsType = nodeFactory.newArrayTypeNode(this.newSource(
+				"type array-of-$proc", CParser.TYPE), nodeFactory
+				.newTypedefNameNode(this.identifier(PROC_TYPE), null), this
+				.identifierExpression(NPROCS));
+		procsVar = this.variableDeclaration(PROCS, procsType);
 		items.add(procsVar);
 		// first for loop;
 		initializerNode = nodeFactory
-				.newForLoopInitializerNode(source,
-						Arrays.asList(nodeFactory.newVariableDeclarationNode(
-								source, nodeFactory.newIdentifierNode(source,
-										"i"), nodeFactory.newBasicTypeNode(
-										source, BasicTypeKind.INT), nodeFactory
-										.newIntegerConstantNode(source, "0"))));
+				.newForLoopInitializerNode(
+						newSource("for loop initializer",
+								CParser.INIT_DECLARATOR_LIST), Arrays
+								.asList(this.variableDeclaration("i",
+										this.basicType(BasicTypeKind.INT),
+										this.integerConstant(0))));
 		loopCondition = nodeFactory.newOperatorNode(
-				source,
+				this.newSource("less-than expression", CParser.EXPR),
 				Operator.LT,
-				Arrays.asList(this.identifierExpression(source, "i"),
-						this.identifierExpression(source, NPROCS)));
-		incrementer = nodeFactory.newOperatorNode(source,
+				Arrays.asList(this.identifierExpression("i"),
+						this.identifierExpression(NPROCS)));
+		incrementer = nodeFactory.newOperatorNode(
+				this.newSource("post increment", CParser.POST_INCREMENT),
 				Operator.POSTINCREMENT,
-				Arrays.asList(this.identifierExpression(source, "i")));
-		spawnProc = nodeFactory.newSpawnNode(source, nodeFactory
-				.newFunctionCallNode(source,
-						this.identifierExpression(source, MPI_PROCESS),
-						Arrays.asList(this.identifierExpression(source, "i")),
-						null));
+				Arrays.asList(this.identifierExpression("i")));
+		spawnProc = nodeFactory.newSpawnNode(this.newSource("process spawn "
+				+ MPI_PROCESS, CParser.SPAWN), nodeFactory.newFunctionCallNode(
+				this.newSource("function call " + MPI_PROCESS, CParser.CALL),
+				this.identifierExpression(MPI_PROCESS),
+				Arrays.asList(this.identifierExpression("i")), null));
 		leftHandSide = nodeFactory.newOperatorNode(
-				source,
+				this.newSource("subscript expression", CParser.SUB),
 				Operator.SUBSCRIPT,
-				Arrays.asList(this.identifierExpression(source, PROCS),
-						this.identifierExpression(source, "i")));
-		assign = nodeFactory.newExpressionStatementNode(nodeFactory
-				.newOperatorNode(source, Operator.ASSIGN,
-						Arrays.asList(leftHandSide, spawnProc)));
-		forLoop = nodeFactory.newForLoopNode(source, initializerNode,
+				Arrays.asList(this.identifierExpression(PROCS),
+						this.identifierExpression("i")));
+		assign = nodeFactory
+				.newExpressionStatementNode(nodeFactory.newOperatorNode(
+						this.newSource("assign expression", CParser.ASSIGN),
+						Operator.ASSIGN, Arrays.asList(leftHandSide, spawnProc)));
+		forLoop = nodeFactory.newForLoopNode(
+				this.newSource("for loop", CParser.FOR), initializerNode,
 				loopCondition, incrementer, assign, null);
 		items.add(forLoop);
 		// second for loop;
-		initializerNode = nodeFactory
-				.newForLoopInitializerNode(source,
-						Arrays.asList(nodeFactory.newVariableDeclarationNode(
-								source, nodeFactory.newIdentifierNode(source,
-										"i"), nodeFactory.newBasicTypeNode(
-										source, BasicTypeKind.INT), nodeFactory
-										.newIntegerConstantNode(source, "0"))));
+		initializerNode = nodeFactory.newForLoopInitializerNode(this.newSource(
+				"for loop initializer", CParser.INIT_DECLARATOR_LIST), Arrays
+				.asList(this.variableDeclaration("i",
+						this.basicType(BasicTypeKind.INT),
+						this.integerConstant(0))));
 		loopCondition = nodeFactory.newOperatorNode(
-				source,
+				this.newSource("less-than expression", CParser.EXPR),
 				Operator.LT,
-				Arrays.asList(this.identifierExpression(source, "i"),
-						this.identifierExpression(source, NPROCS)));
-		incrementer = nodeFactory.newOperatorNode(source,
-				Operator.POSTINCREMENT,
-				Arrays.asList(this.identifierExpression(source, "i")));
-		waitProc = nodeFactory
-				.newFunctionCallNode(source, this.identifierExpression(source,
-						WAIT),
-						Arrays.asList((ExpressionNode) nodeFactory
-								.newOperatorNode(source, Operator.SUBSCRIPT,
-										Arrays.asList(this
-												.identifierExpression(source,
-														PROCS), this
-												.identifierExpression(source,
-														"i")))), null);
-		forLoop = nodeFactory.newForLoopNode(source, initializerNode,
+				Arrays.asList(this.identifierExpression("i"),
+						this.identifierExpression(NPROCS)));
+		incrementer = nodeFactory.newOperatorNode(this.newSource(
+				"post increment expression", CParser.POST_INCREMENT),
+				Operator.POSTINCREMENT, Arrays.asList(this
+						.identifierExpression("i")));
+		waitProc = nodeFactory.newFunctionCallNode(this.newSource(
+				"function call" + WAIT, CParser.CALL), this
+				.identifierExpression(WAIT), Arrays
+				.asList((ExpressionNode) nodeFactory.newOperatorNode(
+						this.newSource("subscript expression", CParser.SUB),
+						Operator.SUBSCRIPT,
+						Arrays.asList(this.identifierExpression(PROCS),
+								this.identifierExpression("i")))), null);
+		forLoop = nodeFactory.newForLoopNode(
+				this.newSource("for loop", CParser.FOR), initializerNode,
 				loopCondition, incrementer,
 				nodeFactory.newExpressionStatementNode(waitProc), null);
 		items.add(forLoop);
 		// destroying GCOMM_WROLD;
 		items.add(gcommDestroy);
 		// constructing the function definition node.
-		mainBody = nodeFactory.newCompoundStatementNode(source, items);
-		formals = nodeFactory.newSequenceNode(source,
-				"FormalParameterDeclarations",
+		mainBody = nodeFactory.newCompoundStatementNode(
+				this.newSource("main body", CParser.COMPOUND_STATEMENT), items);
+		formals = nodeFactory.newSequenceNode(this.newSource(
+				"formal parameter of the declaration of the main function",
+				CParser.DECLARATION_LIST), "FormalParameterDeclarations",
 				new ArrayList<VariableDeclarationNode>());
-		mainType = nodeFactory.newFunctionTypeNode(source,
-				nodeFactory.newVoidTypeNode(source), formals, true);
-		mainFunction = nodeFactory.newFunctionDefinitionNode(source,
-				nodeFactory.newIdentifierNode(source, "main"), mainType, null,
-				mainBody);
+		mainType = nodeFactory.newFunctionTypeNode(
+				this.newSource("type of the main function", CParser.TYPE),
+				this.voidType(), formals, true);
+		mainFunction = nodeFactory.newFunctionDefinitionNode(
+				this.newSource("definition of the main function",
+						CParser.FUNCTION_DEFINITION), this.identifier("main"),
+				mainType, null, mainBody);
 		return mainFunction;
 	}
 
@@ -477,8 +475,9 @@ public class MPI2CIVLWorker extends BaseWorker {
 				COMM_WORLD);
 
 		callMain = nodeFactory.newExpressionStatementNode(nodeFactory
-				.newFunctionCallNode(source,
-						this.identifierExpression(source, MPI_MAIN),
+				.newFunctionCallNode(this.newSource(
+						"function call " + MPI_MAIN, CParser.CALL), this
+						.identifierExpression(MPI_MAIN),
 						new ArrayList<ExpressionNode>(), null));
 		// build MPI_Process() function:
 		items = new LinkedList<>();
@@ -577,18 +576,18 @@ public class MPI2CIVLWorker extends BaseWorker {
 		items.add(commDestroy);
 		mpiProcessBody = nodeFactory.newCompoundStatementNode(root.getSource(),
 				items);
-		formals = nodeFactory
-				.newSequenceNode(source, "FormalParameterDeclarations", Arrays
-						.asList(nodeFactory
-								.newVariableDeclarationNode(source, nodeFactory
-										.newIdentifierNode(source, MPI_RANK),
-										nodeFactory.newBasicTypeNode(source,
-												BasicTypeKind.INT))));
-		mpiProcessType = nodeFactory.newFunctionTypeNode(source,
-				nodeFactory.newVoidTypeNode(source), formals, true);
-		mpiProcess = nodeFactory.newFunctionDefinitionNode(source,
-				nodeFactory.newIdentifierNode(source, MPI_PROCESS),
-				mpiProcessType, null, mpiProcessBody);
+		formals = nodeFactory.newSequenceNode(this.newSource(
+				"formal parameters of function " + MPI_PROCESS,
+				CParser.DECLARATION_LIST), "FormalParameterDeclarations",
+				Arrays.asList(this.variableDeclaration(MPI_RANK,
+						this.basicType(BasicTypeKind.INT))));
+		mpiProcessType = nodeFactory
+				.newFunctionTypeNode(this.newSource("type of function "
+						+ MPI_PROCESS, CParser.TYPE), this.voidType(), formals,
+						true);
+		mpiProcess = nodeFactory.newFunctionDefinitionNode(this.newSource(
+				"definition of function", CParser.FUNCTION_DEFINITION), this
+				.identifier(MPI_PROCESS), mpiProcessType, null, mpiProcessBody);
 		return new Triple<>(mpiProcess, includedNodes, vars);
 	}
 
@@ -603,10 +602,9 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 */
 	private VariableDeclarationNode basicTypeVariableDeclaration(
 			BasicTypeKind type, String name) {
-		TypeNode typeNode = nodeFactory.newBasicTypeNode(source, type);
+		TypeNode typeNode = this.basicType(type);
 
-		return nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, name), typeNode);
+		return this.variableDeclaration(name, typeNode);
 	}
 
 	/**
@@ -615,12 +613,10 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * @return The declaration node of the input variable <code>NPROCS</code>.
 	 */
 	private VariableDeclarationNode nprocsDeclaration() {
-		TypeNode nprocsType = nodeFactory.newBasicTypeNode(source,
-				BasicTypeKind.INT);
+		TypeNode nprocsType = this.basicType(BasicTypeKind.INT);
 
 		nprocsType.setInputQualified(true);
-		return nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, NPROCS), nprocsType);
+		return this.variableDeclaration(NPROCS, nprocsType);
 	}
 
 	/**
@@ -663,20 +659,26 @@ public class MPI2CIVLWorker extends BaseWorker {
 			String functionName = functionExpression.getIdentifier().name();
 
 			if (functionName.equals(MPI_INIT)) {
-				ExpressionNode addressOf = nodeFactory.newOperatorNode(source,
-						Operator.ADDRESSOF, Arrays.asList(this
-								.identifierExpression(source, COMM_WORLD)));
+				ExpressionNode addressOf = nodeFactory.newOperatorNode(
+						this.newSource("address-of expression", CParser.EXPR),
+						Operator.ADDRESSOF,
+						Arrays.asList(this.identifierExpression(COMM_WORLD)));
 
 				functionExpression.getIdentifier().setName(MPI_INIT_NEW);
-				functionCall.setArguments(nodeFactory.newSequenceNode(source,
+				functionCall.setArguments(nodeFactory.newSequenceNode(
+						this.newSource("actual parameter list of "
+								+ MPI_INIT_NEW, CParser.ARGUMENT_LIST),
 						"ActualParameterList", Arrays.asList(addressOf)));
 			} else if (functionName.equals(MPI_FINALIZE)) {
-				ExpressionNode addressOf = nodeFactory.newOperatorNode(source,
-						Operator.ADDRESSOF, Arrays.asList(this
-								.identifierExpression(source, COMM_WORLD)));
+				ExpressionNode addressOf = nodeFactory.newOperatorNode(
+						this.newSource("address-of expression", CParser.EXPR),
+						Operator.ADDRESSOF,
+						Arrays.asList(this.identifierExpression(COMM_WORLD)));
 
 				functionExpression.getIdentifier().setName(MPI_FINALIZE_NEW);
-				functionCall.setArguments(nodeFactory.newSequenceNode(source,
+				functionCall.setArguments(nodeFactory.newSequenceNode(
+						this.newSource("actual parameter list of "
+								+ MPI_FINALIZE_NEW, CParser.ARGUMENT_LIST),
 						"ActualParameterList", Arrays.asList(addressOf)));
 			}
 			// else if (functionName.equals(EXIT)) {
@@ -791,7 +793,6 @@ public class MPI2CIVLWorker extends BaseWorker {
 		AssumeNode nprocsAssumption = null;
 		Triple<FunctionDefinitionNode, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> result;
 
-		this.source = getMainSource(root);// TODO needs a good source
 		assert this.astFactory == ast.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();

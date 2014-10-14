@@ -245,12 +245,14 @@ public class GeneralWorker extends BaseWorker {
 			String newArgcName = INPUT_PREFIX + argcName;
 			Source source = argv.getTypeNode().getSource();
 			TypeNode pointerOfPointerOfChar = nodeFactory.newPointerTypeNode(
-					source, nodeFactory.newPointerTypeNode(source, nodeFactory
-							.newBasicTypeNode(source, BasicTypeKind.CHAR)));
+					source,
+					nodeFactory.newPointerTypeNode(source,
+							this.basicType(BasicTypeKind.CHAR)));
 			CompoundStatementNode functionBody = mainFunction.getBody();
-			TypeNode arrayOfCharPointer = nodeFactory.newArrayTypeNode(source,
-					nodeFactory.newPointerTypeNode(source, nodeFactory
-							.newBasicTypeNode(source, BasicTypeKind.CHAR)),
+			TypeNode arrayOfCharPointer = nodeFactory.newArrayTypeNode(
+					source,
+					nodeFactory.newPointerTypeNode(source,
+							this.basicType(BasicTypeKind.CHAR)),
 					nodeFactory.newIntegerConstantNode(source, MAX_ARGC));
 			LoopNode forLoop;
 			ForLoopInitializerNode loopInit;
@@ -280,9 +282,10 @@ public class GeneralWorker extends BaseWorker {
 			_argv.getIdentifier().setName(_argvName);
 			_argv.setTypeNode(arrayOfCharPointer);
 			source = argv.getSource();
-			loopInit = nodeFactory.newForLoopInitializerNode(source, Arrays
-					.asList(this.variableDeclaration(source, "i", nodeFactory
-							.newBasicTypeNode(source, BasicTypeKind.INT),
+			loopInit = nodeFactory.newForLoopInitializerNode(
+					source,
+					Arrays.asList(this.variableDeclaration("i",
+							this.basicType(BasicTypeKind.INT),
 							nodeFactory.newIntegerConstantNode(source, "0"))));
 			condition = nodeFactory.newOperatorNode(source, Operator.LT, Arrays
 					.asList(this.identifierExpression(source, "i"), nodeFactory
@@ -373,9 +376,10 @@ public class GeneralWorker extends BaseWorker {
 			throws SyntaxException {
 		VariableDeclarationNode __argv = oldArgv.copy();
 		Source source = oldArgv.getSource();
-		TypeNode arrayOfString = nodeFactory.newArrayTypeNode(source,
-				nodeFactory.newArrayTypeNode(oldArgv.getSource(), nodeFactory
-						.newBasicTypeNode(source, BasicTypeKind.CHAR), null),
+		TypeNode arrayOfString = nodeFactory.newArrayTypeNode(
+				source,
+				nodeFactory.newArrayTypeNode(oldArgv.getSource(),
+						this.basicType(BasicTypeKind.CHAR), null),
 				nodeFactory.newIntegerConstantNode(source, MAX_ARGC));
 
 		__argv.getIdentifier().setName(argvNewName);

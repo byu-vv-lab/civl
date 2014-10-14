@@ -6,10 +6,8 @@ import java.io.PrintStream;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.NodeFactory;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
@@ -66,13 +64,12 @@ public abstract class BaseWorker {
 		this.astFactory = astFactory;
 		this.nodeFactory = astFactory.getNodeFactory();
 		this.tokenFactory = astFactory.getTokenFactory();
-
 	}
 
 	/* *************************** Private Methods ************************* */
 
 	/**
-	 * Determins whether the given node is a leaf node, i.e., a node with no
+	 * Determines whether the given node is a leaf node, i.e., a node with no
 	 * non-null children.
 	 * 
 	 * @param node
@@ -218,13 +215,44 @@ public abstract class BaseWorker {
 	}
 
 	/**
-	 * Creates an identifier expression node with a given name.
+	 * Creates an identifier node with a given name. The source information of
+	 * the new node is automatically constructed using the method
+	 * {@link #newSource(String, int)}.
 	 * 
+	 * @param name
+	 *            The name of the identifier.
+	 * @return the new identifier node.
+	 */
+	protected IdentifierNode identifier(String name) {
+		return nodeFactory.newIdentifierNode(
+				this.newSource("identifier " + name, CParser.IDENTIFIER), name);
+	}
+
+	/**
+	 * Creates an identifier expression node with a given name. The source
+	 * information of the new node is automatically constructed using the method
+	 * {@link #newSource(String, int)}.
+	 * 
+	 * @param name
+	 *            The name of the identifier.
+	 * @return the new identifier expression node.
+	 */
+	protected ExpressionNode identifierExpression(String name) {
+		Source source = this
+				.newSource("identifier " + name, CParser.IDENTIFIER);
+
+		return nodeFactory.newIdentifierExpressionNode(source,
+				nodeFactory.newIdentifierNode(source, name));
+	}
+
+	/**
+	 * Creates an identifier expression node with a given name.
+	 *
 	 * @param source
 	 *            The source information of the identifier.
 	 * @param name
 	 *            The name of the identifier.
-	 * @return
+	 * @return the new identifier expression node.
 	 */
 	protected ExpressionNode identifierExpression(Source source, String name) {
 		return nodeFactory.newIdentifierExpressionNode(source,
@@ -232,63 +260,175 @@ public abstract class BaseWorker {
 	}
 
 	/**
-	 * TODO: javadocs
+	 * Creates a variable declaration node with a given name of the specified
+	 * type. The sources are created automatically through the method
+	 * {@link #newSource(String, int)}.
 	 * 
-	 * @param node
-	 * @return
+	 * @param name
+	 *            The name of the variable
+	 * @param type
+	 *            The type of the variable
+	 * @return the new variable declaration node
 	 */
-	protected Source getMainSource(ASTNode node) {
-		if (node.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
-			FunctionDefinitionNode functionNode = (FunctionDefinitionNode) node;
-			IdentifierNode functionName = (IdentifierNode) functionNode
-					.child(0);
+	protected VariableDeclarationNode variableDeclaration(String name,
+			TypeNode type) {
+		return nodeFactory.newVariableDeclarationNode(this.newSource(
+				"variable declaration of " + name, CParser.DECLARATION), this
+				.identifier(name), type);
+	}
 
-			if (functionName.name().equals("main")) {
-				return node.getSource();
-			}
+	/**
+	 * Creates a variable declaration node with a given name of the specified
+	 * type and initializer. The sources are created automatically through the
+	 * method {@link #newSource(String, int)}.
+	 * 
+	 * @param name
+	 *            The name of the variable
+	 * @param type
+	 *            The type of the variable
+	 * @param init
+	 *            The initializer of the variable
+	 * @return the new variable declaration node.
+	 */
+	protected VariableDeclarationNode variableDeclaration(String name,
+			TypeNode type, ExpressionNode init) {
+		return nodeFactory.newVariableDeclarationNode(this.newSource(
+				"variable declaration of " + name, CParser.DECLARATION), this
+				.identifier(name), type, init);
+	}
+
+	/**
+	 * Creates a constant node of <code>$here</code>, the source of which is
+	 * generated automatically using {@link #newSource(String, int)}.
+	 * 
+	 * @return the new here node.
+	 */
+	protected ExpressionNode hereNode() {
+		return nodeFactory.newHereNode(this.newSource("constant $here",
+				CParser.HERE));
+	}
+
+	/**
+	 * Creates a type node of void type, the source of which is generated
+	 * automatically using {@link #newSource(String, int)}.
+	 * 
+	 * @return the new void type node.
+	 */
+	protected TypeNode voidType() {
+		return nodeFactory.newVoidTypeNode(this.newSource("type void",
+				CParser.VOID));
+	}
+
+	/**
+	 * Creates a type node of a certain basic type kind, the source of which is
+	 * generated automatically using {@link #newSource(String, int)}.
+	 * 
+	 * @param kind
+	 *            the specified basic type kind
+	 * @return the new basic type node.
+	 */
+	protected TypeNode basicType(BasicTypeKind kind) {
+		String name = "";
+
+		switch (kind) {
+		case BOOL:
+			name = "_Bool";
+			break;
+		case CHAR:
+			name = "char";
+			break;
+		case DOUBLE:
+		case DOUBLE_COMPLEX:
+			name = "double";
+			break;
+		case FLOAT:
+		case FLOAT_COMPLEX:
+			name = "float";
+			break;
+		case INT:
+			name = "int";
+			break;
+		case LONG:
+			name = "long";
+			break;
+		case LONG_DOUBLE:
+			name = "long double";
+			break;
+		case LONG_DOUBLE_COMPLEX:
+			name = "long double";
+			break;
+		case LONG_LONG:
+			name = "long long";
+			break;
+		case REAL:
+			name = "real";
+			break;
+		case SHORT:
+			name = "short";
+			break;
+		case SIGNED_CHAR:
+			name = "signed char";
+			break;
+		case UNSIGNED:
+			name = "unsigned";
+			break;
+		case UNSIGNED_CHAR:
+			name = "unsigned char";
+			break;
+		case UNSIGNED_LONG:
+			name = "unsigned long";
+			break;
+		case UNSIGNED_LONG_LONG:
+			name = "unsigned long long";
+			break;
+		case UNSIGNED_SHORT:
+			name = "unsigned short";
+		default:
 		}
-		for (ASTNode child : node.children()) {
-			if (child == null)
-				continue;
-			else {
-				Source childResult = getMainSource(child);
+		return this.nodeFactory.newBasicTypeNode(
+				this.newSource("type " + name, CParser.TYPE), kind);
+	}
 
-				if (childResult != null)
-					return childResult;
-			}
+	/**
+	 * Creates a type node of a given type, the source of which is generated
+	 * automatically using {@link #newSource(String, int)}.
+	 * 
+	 * @param type
+	 *            the specified type
+	 * @return the new type node.
+	 */
+	protected TypeNode typeNode(Type type) {
+		Source source = this.newSource("type " + type, CParser.TYPE);
+
+		switch (type.kind()) {
+		case VOID:
+			return nodeFactory.newVoidTypeNode(source);
+		case BASIC:
+			return nodeFactory.newBasicTypeNode(source,
+					((StandardBasicType) type).getBasicTypeKind());
+		case OTHER_INTEGER:
+			return nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT);
+		case ARRAY:
+			return nodeFactory.newArrayTypeNode(source,
+					this.typeNode(((ArrayType) type).getElementType()),
+					((ArrayType) type).getVariableSize().copy());
+		case POINTER:
+			return nodeFactory.newPointerTypeNode(source,
+					this.typeNode(((PointerType) type).referencedType()));
+		default:
 		}
 		return null;
 	}
 
 	/**
-	 * TODO javadocs
+	 * Creates a type node of a given type, with the given source.
 	 * 
 	 * @param source
-	 * @param name
+	 *            The source of the type node
 	 * @param type
-	 * @return
+	 *            the specified type
+	 * @return the new type node
 	 */
-	protected VariableDeclarationNode variableDeclaration(Source source,
-			String name, TypeNode type) {
-		return nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, name), type);
-	}
-
-	/**
-	 * TODO javadocs
-	 * 
-	 * @param source
-	 * @param name
-	 * @param type
-	 * @param init
-	 * @return
-	 */
-	protected VariableDeclarationNode variableDeclaration(Source source,
-			String name, TypeNode type, ExpressionNode init) {
-		return nodeFactory.newVariableDeclarationNode(source,
-				nodeFactory.newIdentifierNode(source, name), type, init);
-	}
-
 	protected TypeNode typeNode(Source source, Type type) {
 		switch (type.kind()) {
 		case VOID:
@@ -308,6 +448,37 @@ public abstract class BaseWorker {
 		default:
 		}
 		return null;
+	}
+
+	/**
+	 * Creates a boolean constant node (either <code>$true</code> or
+	 * <code>$false</code>), the source of which is generated automatically
+	 * using {@link #newSource(String, int)}.
+	 * 
+	 * @param value
+	 *            The value of the boolean constant
+	 * @return the new boolean constant node
+	 */
+	protected ExpressionNode booleanConstant(boolean value) {
+		String method = value ? "constant $true" : "constant $false";
+		int tokenType = value ? CParser.TRUE : CParser.FALSE;
+
+		return nodeFactory.newBooleanConstantNode(
+				this.newSource(method, tokenType), value);
+	}
+
+	/**
+	 * Creates an integer constant node of the specified value, the source of
+	 * which is generated automatically using {@link #newSource(String, int)}.
+	 * 
+	 * @param value
+	 *            The value of the integer constant
+	 * @return the new integer constant node
+	 */
+	protected ExpressionNode integerConstant(int value) throws SyntaxException {
+		return nodeFactory.newIntegerConstantNode(
+				this.newSource("constant " + value, CParser.INTEGER_CONSTANT),
+				Integer.toString(value));
 	}
 
 }
