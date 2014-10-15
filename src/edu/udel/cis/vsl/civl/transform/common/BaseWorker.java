@@ -1,8 +1,11 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -18,7 +21,12 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.parse.IF.OmpCParser;
+import edu.udel.cis.vsl.abc.parse.IF.ParseException;
+import edu.udel.cis.vsl.abc.parse.IF.ParseTree;
+import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
+import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
+import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
 import edu.udel.cis.vsl.abc.token.IF.Formation;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
@@ -131,6 +139,33 @@ public abstract class BaseWorker {
 	 *             process of transsformation
 	 */
 	protected abstract AST transform(AST ast) throws SyntaxException;
+
+	/**
+	 * parses a certain CIVL library (which resides in the folder text/include)
+	 * into an AST.
+	 * 
+	 * @param filename
+	 *            the file name of the library, e.g., civlc.cvh, civlc-omp.cvh,
+	 *            etc.
+	 * @return the AST of the given library.
+	 * @throws SyntaxException
+	 */
+	protected AST parseSystemLibrary(String filename) throws SyntaxException {
+		FrontEnd frontEnd = new FrontEnd();
+		Preprocessor preprocessor = frontEnd.getPreprocessor(
+				new File[] { new File(new File(".").getAbsoluteFile(),
+						"text/include") }, new File[0]);
+		CTokenSource tokenSource;
+		ParseTree tree;
+
+		try {
+			tokenSource = preprocessor.outputTokenSource(filename);
+			tree = frontEnd.getParser().parse(tokenSource);
+		} catch (PreprocessorException | IOException | ParseException e) {
+			return null;
+		}
+		return frontEnd.getASTBuilder().getTranslationUnit(tree);
+	}
 
 	/**
 	 * Creates a new {@link Source} object to associate to AST nodes that are
@@ -247,7 +282,7 @@ public abstract class BaseWorker {
 
 	/**
 	 * Creates an identifier expression node with a given name.
-	 *
+	 * 
 	 * @param source
 	 *            The source information of the identifier.
 	 * @param name
