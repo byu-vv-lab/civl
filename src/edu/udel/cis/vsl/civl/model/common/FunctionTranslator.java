@@ -933,15 +933,24 @@ public class FunctionTranslator {
 			ExpressionNode incrementerNode, boolean isDoWhile) {
 		Expression condition;
 		Fragment incrementer = null;
+		CIVLSource conditionStart, conditionEnd;
 
 		modelFactory.setCurrentScope(loopScope);
-		condition = translateExpressionNode(conditionNode, loopScope, true);
+		if (conditionNode == null) {
+			conditionStart = modelFactory.sourceOfBeginning(loopBodyNode);
+			conditionEnd = modelFactory.sourceOfBeginning(loopBodyNode);
+			condition = modelFactory.trueExpression(conditionStart);
+		} else {
+			conditionStart = modelFactory.sourceOfBeginning(conditionNode);
+			conditionEnd = modelFactory.sourceOfEnd(conditionNode);
+			condition = translateExpressionNode(conditionNode, loopScope, true);
+		}
 		if (incrementerNode != null)
 			incrementer = translateExpressionStatementNode(loopScope,
 					incrementerNode);
 		return this.composeLoopFragmentWorker(loopScope,
-				modelFactory.sourceOfBeginning(conditionNode),
-				modelFactory.sourceOfEnd(conditionNode), condition, null,
+				conditionStart,
+				conditionEnd, condition, null,
 				loopBodyNode, incrementer, isDoWhile);
 	}
 
