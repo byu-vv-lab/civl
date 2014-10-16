@@ -4,13 +4,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.NodeFactory;
+import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
@@ -29,6 +33,7 @@ import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
 import edu.udel.cis.vsl.abc.token.IF.Formation;
 import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.abc.token.IF.SourceFile;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.abc.token.IF.TransformFormation;
@@ -516,4 +521,55 @@ public abstract class BaseWorker {
 				Integer.toString(value));
 	}
 
+	/**
+	 * Combines two ASTs into one, assuming that there are no name conflicts.
+	 * 
+	 * @param first
+	 *            the first AST
+	 * @param second
+	 *            the second AST
+	 * @return
+	 * @throws SyntaxException
+	 */
+	protected AST combineASTs(AST first, AST second) throws SyntaxException {
+		SequenceNode<ExternalDefinitionNode> rootNode;
+		List<ExternalDefinitionNode> firstNodes = new ArrayList<>(), secondNodes = new ArrayList<>(), allNodes = new ArrayList<>();
+		List<SourceFile> sourceFiles = new ArrayList<>();
+
+		for (ExternalDefinitionNode child : first.getRootNode()) {
+			if (child != null)
+				firstNodes.add(child.copy());
+		}
+		for (ExternalDefinitionNode child : second.getRootNode()) {
+			// avoid identical nodes introduced by same "includes"
+			if (child != null && !this.existNode(firstNodes, child))
+				secondNodes.add(child.copy());
+		}
+		allNodes.addAll(firstNodes);
+		allNodes.addAll(secondNodes);
+		sourceFiles.addAll(first.getSourceFiles());
+		sourceFiles.addAll(second.getSourceFiles());
+		rootNode = this.nodeFactory.newSequenceNode(first.getRootNode()
+				.getSource(), "Translation Unit", allNodes);
+		return this.astFactory.newAST(rootNode, sourceFiles);
+	}
+
+	/**
+	 * Checks if a list of nodes contains an identical node of a given node.
+	 * 
+	 * @param nodes
+	 *            the list of nodes
+	 * @param theNode
+	 *            the specified node
+	 * @return true iff the list of nodes contains an identical node of the
+	 *         specified node.
+	 */
+	private boolean existNode(List<ExternalDefinitionNode> nodes,
+			ExternalDefinitionNode theNode) {
+		for (ASTNode node : nodes) {
+			if (node.diff(theNode) == null)
+				return true;
+		}
+		return false;
+	}
 }

@@ -516,6 +516,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		int count;
 		Triple<List<ExternalDefinitionNode>, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> result;
 		String criticalDeclaration = "criticalDeclarations";
+		AST civlcAST = this.parseSystemLibrary("civlc.cvh");
+		AST civlcOmpAST = this.parseSystemLibrary("civlc-omp.cvh");
 		
 		this.source = root.getSource();
 		assert this.astFactory == ast.getASTFactory();
@@ -564,6 +566,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		// TODO: the following line is experimental. Check that it works:
 		//completeSources(newRootNode);
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
+		newAst = this.combineASTs(civlcOmpAST, newAst);
+		newAst = this.combineASTs(civlcAST, newAst);
 		return newAst;
 	}
 
