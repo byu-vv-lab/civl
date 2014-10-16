@@ -14,6 +14,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guiO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guidedO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.idO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.inputO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.linkO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompNoSimplifyO;
@@ -50,6 +51,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
@@ -148,7 +150,7 @@ public class UserInterface {
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
 				svcompO, showInputVarsO, showProgramO, showPathConditionO,
 				ompNoSimplifyO, collectProcessesO, collectScopesO,
-				collectHeapsO);
+				collectHeapsO, linkO);
 
 		parser = new CommandLineParser(options);
 	}
@@ -401,8 +403,21 @@ public class UserInterface {
 		File file = new File(filename);
 		AST userAST = parseFile(preprocessor, file);
 		Program program;
+		Object linkedObj = config.getValue(linkO);
+		String linkedFileName = null;
+		List<AST> userASTs = new LinkedList<>();
 
-		program = this.link(preprocessor, userAST);
+		if (linkedObj != null) {
+			File linkedFile;
+			AST linkedAST;
+
+			linkedFileName = (String) linkedObj;
+			linkedFile = new File(linkedFileName);
+			linkedAST = parseFile(preprocessor, linkedFile);
+			userASTs.add(linkedAST);
+		}
+		userASTs.add(userAST);
+		program = this.link(preprocessor, userASTs, userAST);
 		if (civlConfig.debugOrVerbose())
 			program.prettyPrint(out);
 		applyAllTransformers(filename, program, civlConfig);
@@ -425,14 +440,14 @@ public class UserInterface {
 	 * @throws ParseException
 	 * @throws IOException
 	 */
-	private Program link(Preprocessor preprocessor, AST userAST)
-			throws PreprocessorException, SyntaxException, ParseException,
-			IOException {
+	private Program link(Preprocessor preprocessor, List<AST> userASTs,
+			AST userAST) throws PreprocessorException, SyntaxException,
+			ParseException, IOException {
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
 
 		asts.addAll(this.systemImplASTs(preprocessor, userAST));
-		asts.add(userAST);
+		asts.addAll(userASTs);
 		TUs = new AST[asts.size()];
 		asts.toArray(TUs);
 		if (debug) {
@@ -1146,9 +1161,8 @@ public class UserInterface {
 		}
 		if (verbose || debug)
 			out.println("Extracting CIVL model...");
-		model = modelBuilder.buildModel(config, compositeProgram,
-				"Composite of " + coreName(filename0) + " and "
-						+ coreName(filename1), debug, out);
+		model = modelBuilder.buildModel(config, compositeProgram, "Composite_"
+				+ coreName(filename0) + "_" + coreName(filename1), debug, out);
 		if (verbose || debug)
 			out.println(bar + " Model " + bar + "\n");
 		if (showModel || verbose || debug || parse) {
@@ -1215,6 +1229,8 @@ public class UserInterface {
 				return runVerify(config);
 			case "replay":
 				return runReplay(config);
+			case "compare-replay":
+				return runCompareRepaly(config);
 			case "run":
 				return runRun(config);
 			case "parse":
@@ -1242,6 +1258,78 @@ public class UserInterface {
 		}
 		err.flush();
 		return false;
+	}
+
+	private boolean runCompareRepaly(GMCConfiguration config)
+			throws CommandLineException, FileNotFoundException, IOException,
+			SyntaxException, PreprocessorException, ParseException,
+			MisguidedExecutionException {
+		String filename0 = config.getFreeArg(1);
+		String filename1 = config.getFreeArg(2);
+		String traceFilename;
+		File traceFile;
+		GMCConfiguration newConfig;
+		SymbolicUniverse universe = SARL.newStandardUniverse();
+
+		boolean guiMode = config.isTrue(guiO);
+		checkFilenames(2, config);
+		traceFilename = (String) config.getValue(traceO);
+		if (traceFilename == null) {
+			traceFilename = "Composite_" + coreName(filename0) + "_"
+					+ coreName(filename1) + "_" + config.getValueOrDefault(idO)
+					+ ".trace";
+			traceFile = new File(new File("CIVLREP"), traceFilename);
+		} else
+			traceFile = new File(traceFilename);
+		newConfig = parser.newConfig();
+		// get the original config and overwrite it with new options...
+		parser.parse(newConfig, traceFile); // gets free args verify filename
+		setToDefault(newConfig, Arrays.asList(showModelO, verboseO, debugO,
+				showStatesO, showSavedStatesO, showQueriesO,
+				showProverQueriesO, enablePrintfO, statelessPrintfO));
+		newConfig.setScalarValue(showTransitionsO, true);
+		newConfig.read(config);
+		if (newConfig.isTrue(showProverQueriesO))
+			universe.setShowProverQueries(true);
+		if (newConfig.isTrue(showQueriesO))
+			universe.setShowQueries(true);
+		newConfig.setScalarValue(collectScopesO, false);
+		newConfig.setScalarValue(collectProcessesO, false);
+		newConfig.setScalarValue(collectHeapsO, false);
+
+		CIVLConfiguration civlConfig = new CIVLConfiguration(newConfig);
+
+		Preprocessor preprocessor0 = frontEnd.getPreprocessor(
+				this.getSysIncludes(config), this.getUserIncludes(config));
+		Preprocessor preprocessor1 = frontEnd.getPreprocessor(
+				this.getSysIncludes(config), this.getUserIncludes(config));
+		Combiner combiner = Transform.compareCombiner();
+		Program program0 = this.compileLinkAndTransform(preprocessor0,
+				filename0, config, civlConfig);
+		Program program1 = this.compileLinkAndTransform(preprocessor1,
+				filename1, config, civlConfig);
+		AST combinedAST = combiner
+				.combine(program0.getAST(), program1.getAST());
+		Program compositeProgram = frontEnd.getProgramFactory(
+				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
+				combinedAST);
+		ModelBuilder modelBuilder = Models.newModelBuilder(universe);
+		Model model = modelBuilder.buildModel(config, compositeProgram,
+				"Composite_" + coreName(filename0) + "_" + coreName(filename1),
+				debug, out);
+		TracePlayer replayer = TracePlayer.guidedPlayer(newConfig, model,
+				traceFile, out, err, preprocessor0);
+		Trace<Transition, State> trace = replayer.run();
+		boolean result = trace.result();
+		if (guiMode) {
+			@SuppressWarnings("unused")
+			CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
+		}
+		printStats(out, universe);
+		replayer.printStats();
+		out.println();
+		preprocessor0.printSourceFiles(out);
+		return result;
 	}
 
 	/**
