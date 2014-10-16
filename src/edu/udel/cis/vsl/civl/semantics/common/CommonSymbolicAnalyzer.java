@@ -862,7 +862,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			}
 			case ARRAY_LAMBDA:
-				return symbolicExpression.toStringBufferLong().toString();
+				return "(" + arguments[0] + ")";
+//				return symbolicExpression.toStringBufferLong().toString();
 			case ARRAY_READ:
 				result.append(arguments[0].toStringBuffer(true));
 				result.append("[");
@@ -940,7 +941,10 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				int count = 0;
 				boolean first = true;
 
-				result.append(arguments[0].toStringBuffer(true));
+				if(arguments[0] instanceof SymbolicExpression)
+					result.append(this.symbolicExpressionToString(source, state, (SymbolicExpression) arguments[0], atomize, prefix, separate));
+				else
+					result.append(arguments[0].toStringBuffer(true));
 				result.append("[");
 				for (SymbolicExpression value : (SymbolicSequence<?>) arguments[1]) {
 					if (!value.isNull()) {
