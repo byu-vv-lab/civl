@@ -384,27 +384,31 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				// new node
 				// as a child
 				else {
-					System.out.println(current.toString());
 					newTree.expandRow(current.getLevel());
-					if (current.getChildCount() > 0) {
-						DefaultMutableTreeNode lastChild = (DefaultMutableTreeNode) current.getLastChild();
-						DefaultMutableTreeNode parent = (DefaultMutableTreeNode) lastChild
-								.getParent();
-						while (parent != null) {
-							newTree.expandRow(parent.getLevel());
-							parent = (DefaultMutableTreeNode) parent
-									.getParent();
-						}
+					int currentRow = current.getLevel();
+					int numChildren = current.getChildCount();
+					for(int i = currentRow; i < currentRow + numChildren; i++) {
+						newTree.expandRow(i);
 					}
-					else {
-						DefaultMutableTreeNode parent = (DefaultMutableTreeNode) current
-								.getParent();
-						while (parent != null) {
-							newTree.expandRow(parent.getLevel());
-							parent = (DefaultMutableTreeNode) parent
-									.getParent();
-						}
-					}
+//					if (current.getChildCount() > 0) {
+//						DefaultMutableTreeNode lastChild = (DefaultMutableTreeNode) current.getLastChild();
+//						DefaultMutableTreeNode parent = (DefaultMutableTreeNode) lastChild
+//								.getParent();
+//						while (parent != null) {
+//							newTree.expandRow(parent.getLevel());
+//							parent = (DefaultMutableTreeNode) parent
+//									.getParent();
+//						}
+//					}
+//					else {
+//						DefaultMutableTreeNode parent = (DefaultMutableTreeNode) current
+//								.getParent();
+//						while (parent != null) {
+//							newTree.expandRow(parent.getLevel());
+//							parent = (DefaultMutableTreeNode) parent
+//									.getParent();
+//						}
+//					}
 				}
 			}
 		}
