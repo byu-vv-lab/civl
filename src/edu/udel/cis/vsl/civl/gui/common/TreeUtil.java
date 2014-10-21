@@ -70,12 +70,29 @@ public class TreeUtil {
 
 	public static int containsNode(JTree tree, DefaultMutableTreeNode node) {
 		for (@SuppressWarnings("rawtypes")
-		Enumeration e = ((DefaultMutableTreeNode) tree.getModel()
-				.getRoot()).depthFirstEnumeration(); e.hasMoreElements();) {
-				DefaultMutableTreeNode current = (DefaultMutableTreeNode) e.nextElement();
-				if(current.hashCode() == node.hashCode()) {
-					return current.getLevel();
-				}
+		Enumeration e = ((DefaultMutableTreeNode) tree.getModel().getRoot())
+				.depthFirstEnumeration(); e.hasMoreElements();) {
+			DefaultMutableTreeNode current = (DefaultMutableTreeNode) e
+					.nextElement();
+			// The nodes are both the root (only one root node)
+			if (node instanceof GUINODE && current instanceof GUINODE) {
+				return current.getLevel();
+			}
+			// The nodes are DyscopeNodes
+			if (node instanceof DyscopeNode && current instanceof DyscopeNode
+					&& current.equals(node)) {
+				return current.getLevel();
+			}
+			// Variable Node
+			if (node.toString() == "Variables"
+					&& current.toString() == "Variables"
+					&& ((DyscopeNode)node.getParent()).equals(((DyscopeNode)current.getParent()))) {
+				return current.getLevel();
+			}
+			//Process States
+			if(node.toString() == "Process States" && current.toString() == "Process States") {
+				return current.getLevel();
+			}
 		}
 		return -1;
 	}

@@ -384,6 +384,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 				// new node
 				// as a child
 				else {
+					System.out.println(current.toString());
 					newTree.expandRow(current.getLevel());
 					if (current.getChildCount() > 0) {
 						DefaultMutableTreeNode lastChild = (DefaultMutableTreeNode) current.getLastChild();

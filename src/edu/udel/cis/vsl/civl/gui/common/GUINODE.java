@@ -62,5 +62,7 @@ public class GUINODE extends DefaultMutableTreeNode {
 	public boolean isCollapsed() {
 		return collapsed;
 	}
+	
+	
 
 }

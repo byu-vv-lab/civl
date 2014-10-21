@@ -36,7 +36,7 @@ public class DyscopeNode extends DefaultMutableTreeNode {
 	@Override
 	public boolean equals(Object other) {
 		if(other instanceof DyscopeNode) {
-			return getDyscope() == ((DyscopeNode)other).getDyscope();
+			return getDyscope().identifier() == ((DyscopeNode)other).getDyscope().identifier();
 		}
 		return false;
 	}
