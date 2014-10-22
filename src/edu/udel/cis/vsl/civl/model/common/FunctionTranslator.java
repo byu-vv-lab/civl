@@ -716,7 +716,8 @@ public class FunctionTranslator {
 				functionCallNode = ((SpawnNode) rhsNode).getCall();
 				isCall = false;
 			}
-			result = translateFunctionCall(scope, lhs, functionCallNode, isCall);
+			result = translateFunctionCall(scope, lhs, functionCallNode,
+					isCall, source);
 		} else {
 			Expression rhs;
 
@@ -750,7 +751,7 @@ public class FunctionTranslator {
 	 */
 	private CallOrSpawnStatement callOrSpawnStatement(Scope scope,
 			Location location, FunctionCallNode callNode, LHSExpression lhs,
-			List<Expression> arguments, boolean isCall) {
+			List<Expression> arguments, boolean isCall, CIVLSource source) {
 		ExpressionNode functionExpression = ((FunctionCallNode) callNode)
 				.getFunction();
 		CallOrSpawnStatement result;
@@ -767,24 +768,21 @@ public class FunctionTranslator {
 			switch (entity.getEntityKind()) {
 			case FUNCTION:
 				callee = (Function) entity;
-				result = modelFactory.callOrSpawnStatement(
-						modelFactory.sourceOf(callNode), location, isCall,
-						arguments, null);
+				result = modelFactory.callOrSpawnStatement(source, location,
+						isCall, arguments, null);
 				break;
 			case VARIABLE:
 				Expression function = this.translateExpressionNode(
 						functionExpression, scope, true);
 				callee = null;
-				result = modelFactory.callOrSpawnStatement(
-						modelFactory.sourceOf(callNode), location, isCall,
-						function, arguments, null);
+				result = modelFactory.callOrSpawnStatement(source, location,
+						isCall, function, arguments, null);
 				// added function guard expression since the function could be a
 				// system function which has an outstanding guard, only when it
 				// is a call statement
 				if (isCall)
 					result.setGuard(modelFactory.functionGuardExpression(
-							modelFactory.sourceOf(callNode), function,
-							arguments));
+							source, function, arguments));
 				break;
 			default:
 				throw new CIVLUnimplementedFeatureException(
@@ -948,10 +946,9 @@ public class FunctionTranslator {
 		if (incrementerNode != null)
 			incrementer = translateExpressionStatementNode(loopScope,
 					incrementerNode);
-		return this.composeLoopFragmentWorker(loopScope,
-				conditionStart,
-				conditionEnd, condition, null,
-				loopBodyNode, incrementer, isDoWhile);
+		return this.composeLoopFragmentWorker(loopScope, conditionStart,
+				conditionEnd, condition, null, loopBodyNode, incrementer,
+				isDoWhile);
 	}
 
 	// how to process individual block elements?
@@ -1747,7 +1744,8 @@ public class FunctionTranslator {
 			break;
 		case FUNCTION_CALL:
 			result = translateFunctionCallNode(scope,
-					(FunctionCallNode) expressionNode);
+					(FunctionCallNode) expressionNode,
+					modelFactory.sourceOf(expressionNode));
 			break;
 		case IDENTIFIER_EXPRESSION: {
 			Statement noopStatement = modelFactory.noopStatement(
@@ -1848,8 +1846,9 @@ public class FunctionTranslator {
 	 * @return the fragment containing the function call statement
 	 */
 	protected Statement translateFunctionCall(Scope scope, LHSExpression lhs,
-			FunctionCallNode functionCallNode, boolean isCall) {
-		CIVLSource source = modelFactory.sourceOfBeginning(functionCallNode);
+			FunctionCallNode functionCallNode, boolean isCall, CIVLSource source) {
+		// CIVLSource source =
+		// modelFactory.sourceOfBeginning(functionCallNode);TODO:Changed
 		ArrayList<Expression> arguments = new ArrayList<Expression>();
 		Location location;
 		CIVLFunction abstractFunction;
@@ -1901,7 +1900,7 @@ public class FunctionTranslator {
 		// arguments, isCall);
 		// }
 		return callOrSpawnStatement(scope, location, functionCallNode, lhs,
-				arguments, isCall);
+				arguments, isCall, source);
 	}
 
 	/**
@@ -1915,9 +1914,9 @@ public class FunctionTranslator {
 	 * @return the fragment containing the function call statement
 	 */
 	private Fragment translateFunctionCallNode(Scope scope,
-			FunctionCallNode functionCallNode) {
+			FunctionCallNode functionCallNode, CIVLSource source) {
 		Statement functionCall = translateFunctionCall(scope, null,
-				functionCallNode, true);
+				functionCallNode, true, source);
 
 		return new CommonFragment(functionCall);
 	}
@@ -2367,7 +2366,7 @@ public class FunctionTranslator {
 	 */
 	private Fragment translateSpawnNode(Scope scope, SpawnNode spawnNode) {
 		return new CommonFragment(translateFunctionCall(scope, null,
-				spawnNode.getCall(), false));
+				spawnNode.getCall(), false, modelFactory.sourceOf(spawnNode)));
 	}
 
 	/**
@@ -3444,7 +3443,7 @@ public class FunctionTranslator {
 			return result;
 		} else {
 			Statement functionCall = this.translateFunctionCall(scope, null,
-					callNode, true);
+					callNode, true, source);
 
 			if (functionCall instanceof CallOrSpawnStatement) {
 				CallOrSpawnStatement callStatement = (CallOrSpawnStatement) functionCall;
