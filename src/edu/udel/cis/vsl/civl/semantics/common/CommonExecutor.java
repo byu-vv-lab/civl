@@ -449,11 +449,11 @@ public class CommonExecutor implements Executor {
 							process,
 							"The lhs "
 									+ call.lhs()
-									+ " cannot be updated because the invocaion of"
-									+ " the function " + functionName
-									+ " returns without any expression.",
-							symbolicAnalyzer.stateToString(state),
-							call.getSource());
+									+ " Attempt to use the return value of function "
+									+ functionName
+									+ " when f has returned without a return value.",
+							symbolicAnalyzer.stateToString(state), call
+									.getSource());
 
 					this.errorLogger.reportError(err);
 				}
