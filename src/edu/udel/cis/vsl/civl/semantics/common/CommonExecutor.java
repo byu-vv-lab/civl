@@ -447,13 +447,13 @@ public class CommonExecutor implements Executor {
 							ErrorKind.OTHER,
 							Certainty.PROVEABLE,
 							process,
-							"The lhs "
-									+ call.lhs()
+							call.getSource()
+									+ " : "
 									+ " Attempt to use the return value of function "
-									+ functionName
-									+ " when f has returned without a return value.",
-							symbolicAnalyzer.stateToString(state), call
-									.getSource());
+									+ functionName + " when " + functionName
+									+ " has returned without a return value.",
+							symbolicAnalyzer.stateToString(state),
+							call.getSource());
 
 					this.errorLogger.reportError(err);
 				}
