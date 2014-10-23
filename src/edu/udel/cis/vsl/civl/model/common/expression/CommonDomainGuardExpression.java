@@ -75,7 +75,7 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 				first = false;
 			else
 				string.append(", ");
-			string.append(variables[i]);
+			string.append(variables[i].name().name());
 		}
 		string.append(")");
 		return string.toString();

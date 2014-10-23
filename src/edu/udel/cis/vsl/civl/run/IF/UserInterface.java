@@ -942,6 +942,7 @@ public class UserInterface {
 		return true;
 	}
 
+	//TODO what if there is input variables?
 	public boolean runReplay(GMCConfiguration config)
 			throws CommandLineException, FileNotFoundException, IOException,
 			ABCException, MisguidedExecutionException {

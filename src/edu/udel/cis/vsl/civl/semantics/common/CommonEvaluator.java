@@ -138,8 +138,7 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * An uninterpreted function used to evaluate "BigO" of an expression. It
 	 * takes as input one expression of real type and return a real type,
-	 * <code>real
-	 * $O(real x)</code>.
+	 * <code>real $O(real x)</code>.
 	 */
 	private SymbolicExpression bigOFunction;
 
@@ -1044,8 +1043,10 @@ public class CommonEvaluator implements Evaluator {
 				int int_value;
 
 				concreteValue = symbolicUtil.extractInt(source, integerValue);
-				assert (concreteValue != null) : "NumericExpression with concrete operator cannot provide concrete numeric value";
-				assert (!(concreteValue instanceof IntegerNumber)) : "A Number object which suppose has integer type cannot cast to IntegerNumber type";
+				assert (concreteValue != null) : "NumericExpression with concrete operator cannot "
+						+ "provide concrete numeric value";
+				assert (!(concreteValue instanceof IntegerNumber)) : "A Number object which suppose "
+						+ "has integer type cannot cast to IntegerNumber type";
 				int_value = concreteValue.intValue();
 				if (int_value < 0 || int_value > 255) {
 					throw new CIVLUnimplementedFeatureException(
@@ -1160,6 +1161,19 @@ public class CommonEvaluator implements Evaluator {
 				process, eval.value, true);
 	}
 
+	/**
+	 * Evaluates a derivative call expression.
+	 * 
+	 * @param state
+	 *            the pre-state
+	 * @param pid
+	 *            the PID of the process running this call
+	 * @param expression
+	 *            the derivative call expression to be evaluated
+	 * @return the evaluation with the properly updated state and the value of
+	 *         the derivative call expression.
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Evaluation evaluateDerivativeCall(State state, int pid,
 			DerivativeCallExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -1199,18 +1213,20 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluating if there is a subsequence of the given domain element in the
-	 * given domain.
+	 * Evaluates a domain guard expression, the value of which is true iff there
+	 * is a subsequent element of of the current one in the domain object. See
+	 * also {@link DomainGuardExpression}.
 	 * 
 	 * @param state
 	 *            The current state
 	 * @param pid
 	 *            The PID of the process
 	 * @param domainGuard
-	 *            The expression domainGuard statement includes the information
-	 *            of a domain element ,a domain object and the dimension of the
-	 *            domain.
-	 * @return The evaluation warps a state and the boolean value.
+	 *            The domain guard expression to be evaluated, which contains
+	 *            the information of the current domain element and the domain
+	 *            object.
+	 * @return the evaluation with the properly updated state and the value of
+	 *         the domain guard expression.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateDomainGuard(State state, int pid,
@@ -1312,7 +1328,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluate the value of a rectangular domain object.
+	 * Evaluates the value of a rectangular domain literal expression.
 	 * 
 	 * @param state
 	 *            The current state
@@ -1320,7 +1336,8 @@ public class CommonEvaluator implements Evaluator {
 	 *            The PID of the process
 	 * @param recDomain
 	 *            The expression of the rectangular domain
-	 * @return
+	 * @return The evaluation with the properly updated state and the value of
+	 *         the rectangular domain literal expression.
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateRecDomainLiteral(State state, int pid,
@@ -1367,18 +1384,18 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Evaluate a "dot" expression used to navigate to a field in a record,
-	 * "e.f".
+	 * Evaluates a "dot" expression used to navigate to a field in a record,
+	 * <code>e.f</code>.
 	 * 
 	 * @param state
 	 *            The state of the model
 	 * @param pid
-	 *            The pid of the process evaluating this expression
+	 *            The PID of the process evaluating this expression
 	 * @param expression
-	 *            The dot expression
-	 * @return The symbolic expression resulting from evaluating the expression
-	 *         together with the post-state which may incorporate side-effects
-	 *         resulting from the evaluation
+	 *            The dot expression to evaluated
+	 * @return The evaluation which contains the result of evaluating the
+	 *         expression together with the post-state which may incorporate
+	 *         side-effects resulting from the evaluation
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateDot(State state, int pid, String process,
@@ -1408,6 +1425,15 @@ public class CommonEvaluator implements Evaluator {
 		return eval;
 	}
 
+	/**
+	 * Evaluates a dynamic type of expression. TODO what's this for?
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param expression
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Evaluation evaluateDynamicTypeOf(State state, int pid,
 			DynamicTypeOfExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -1415,6 +1441,18 @@ public class CommonEvaluator implements Evaluator {
 				expression.getSource(), true);
 	}
 
+	/**
+	 * Evaluates a function guard expression. When the function is a system
+	 * function, the evaluation inquires the corresponding library for its
+	 * evaluation; otherwise, the result is always the true value.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param expression
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Evaluation evaluateFunctionGuard(State state, int pid,
 			String process, FunctionGuardExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -2265,7 +2303,8 @@ public class CommonEvaluator implements Evaluator {
 			if (value == null || value.isNull()) {
 				CIVLExecutionException e = new CIVLExecutionException(
 						ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
-						process, "Attempt to read uninitialized variable " + expression,
+						process, "Attempt to read uninitialized variable "
+								+ expression,
 						this.symbolicAnalyzer.stateToString(state),
 						expression.getSource());
 

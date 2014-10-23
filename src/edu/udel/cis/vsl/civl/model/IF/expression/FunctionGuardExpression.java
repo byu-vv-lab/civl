@@ -3,7 +3,7 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
 import java.util.List;
 
 /**
- * A function pointer guard expression is the guard expression of a function
+ * A function guard expression is the guard expression of a function
  * call with a function pointer. A compile time, the actual function is unknown,
  * and thus we need this expression, in case the function pointer points to a
  * system function.
