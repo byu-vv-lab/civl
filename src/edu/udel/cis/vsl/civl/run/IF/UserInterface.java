@@ -49,10 +49,12 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -70,6 +72,7 @@ import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
+import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.abc.token.IF.SourceFile;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.Combiner;
@@ -100,6 +103,11 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * Basic command line and API user interface for CIVL tools.
+ * 
+ * Modularization of the user interface:
+ * 
+ * <ui> <li>preprocess</li> <li>ast</li> <li>program</li> <li>model</li> <li>
+ * random run</li> <li>verify</li> <li>replay</li> </ui>
  * 
  * @author Stephen F. Siegel
  * 
@@ -137,6 +145,38 @@ public class UserInterface {
 
 	private TransformerFactory transformerFactory = Transforms
 			.newTransformerFactory(frontEnd.getASTFactory());
+
+	/* ************************** Static Code ***************************** */
+
+	// TODO civl verify help: options applicable to verify
+	// TODO maxdepth, saveStates,
+	// static {
+	// CIVLCommand.addShowOption(showModelO, verboseO, debugO, echoO,
+	// userIncludePathO, sysIncludePathO, svcompO, showInputVarsO,
+	// showProgramO, ompNoSimplifyO);
+	// CIVLCommand.addVerifyOrCompareOption(errorBoundO, verboseO, debugO,
+	// echoO, userIncludePathO, sysIncludePathO, showTransitionsO,
+	// showStatesO, showSavedStatesO, showQueriesO,
+	// showProverQueriesO, inputO, minO, maxdepthO, saveStatesO,
+	// simplifyO, solveO, enablePrintfO, showAmpleSetO,
+	// showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcompO,
+	// showProgramO, showPathConditionO, ompNoSimplifyO,
+	// collectProcessesO, collectScopesO, collectHeapsO);
+	// CIVLCommand.addReplayOption(showModelO, verboseO, debugO, echoO,
+	// showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
+	// showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,
+	// showAmpleSetWtStatesO, statelessPrintfO, guiO, showProgramO,
+	// showPathConditionO, ompNoSimplifyO, collectProcessesO,
+	// collectScopesO, collectHeapsO);
+	// CIVLCommand.addRunOption(errorBoundO, verboseO, randomO, guidedO,
+	// seedO, debugO, echoO, userIncludePathO, sysIncludePathO,
+	// showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
+	// showProverQueriesO, inputO, maxdepthO, simplifyO,
+	// enablePrintfO, showAmpleSetO, showAmpleSetWtStatesO,
+	// statelessPrintfO, deadlockO, svcompO, showProgramO,
+	// showPathConditionO, ompNoSimplifyO, collectProcessesO,
+	// collectScopesO, collectHeapsO);
+	// }
 
 	/* ************************** Constructors ***************************** */
 
@@ -282,7 +322,9 @@ public class UserInterface {
 	 * @throws ParseException
 	 * @throws IOException
 	 */
-	private List<AST> systemImplASTs(Preprocessor preprocessor, AST userAST)
+	private List<AST> systemImplASTs(Preprocessor preprocessor,
+			File[] systemIncludes, File[] userIncludes,
+			Map<String, Macro> macros, AST userAST)
 			throws PreprocessorException, SyntaxException, ParseException,
 			IOException {
 		List<AST> result = new ArrayList<>();
@@ -299,7 +341,8 @@ public class UserInterface {
 
 				if (systemFilename != null
 						&& processedSystemFilenames.add(systemFilename)) {
-					AST newAST = parseFile(preprocessor, systemFilename);
+					AST newAST = parseFile(preprocessor, systemIncludes,
+							userIncludes, macros, systemFilename);
 
 					workList.add(newAST);
 					result.add(newAST);
@@ -346,9 +389,11 @@ public class UserInterface {
 	 * @throws ParseException
 	 * @throws PreprocessorException
 	 */
-	private AST parseFile(Preprocessor preprocessor, File file)
+	private AST parseFile(Preprocessor preprocessor, File[] systemIncludes,
+			File[] userIncludes, Map<String, Macro> macros, File file)
 			throws SyntaxException, ParseException, PreprocessorException {
-		CTokenSource tokens = preprocessor.outputTokenSource(file);
+		CTokenSource tokens = preprocessor.outputTokenSource(systemIncludes,
+				userIncludes, macros, file);
 
 		return parse(tokens);
 	}
@@ -366,10 +411,12 @@ public class UserInterface {
 	 * @throws ParseException
 	 * @throws PreprocessorException
 	 */
-	private AST parseFile(Preprocessor preprocessor, String filename)
+	private AST parseFile(Preprocessor preprocessor, File[] systemIncludes,
+			File[] userIncludes, Map<String, Macro> macros, String filename)
 			throws SyntaxException, ParseException, PreprocessorException,
 			IOException {
-		CTokenSource tokens = preprocessor.outputTokenSource(filename);
+		CTokenSource tokens = preprocessor.outputTokenSource(systemIncludes,
+				userIncludes, macros, filename);
 
 		return parse(tokens);
 	}
@@ -397,11 +444,14 @@ public class UserInterface {
 	 * @throws IOException
 	 */
 	private Program compileLinkAndTransform(Preprocessor preprocessor,
-			String filename, GMCConfiguration config,
-			CIVLConfiguration civlConfig) throws PreprocessorException,
-			SyntaxException, ParseException, IOException {
+			File[] systemIncludes, File[] userIncludes,
+			Map<String, Macro> macros, String filename,
+			GMCConfiguration config, CIVLConfiguration civlConfig)
+			throws PreprocessorException, SyntaxException, ParseException,
+			IOException {
 		File file = new File(filename);
-		AST userAST = parseFile(preprocessor, file);
+		AST userAST = parseFile(preprocessor, systemIncludes, userIncludes,
+				macros, file);
 		Program program;
 		Object linkedObj = config.getValue(linkO);
 		String linkedFileName = null;
@@ -413,11 +463,13 @@ public class UserInterface {
 
 			linkedFileName = (String) linkedObj;
 			linkedFile = new File(linkedFileName);
-			linkedAST = parseFile(preprocessor, linkedFile);
+			linkedAST = parseFile(preprocessor, systemIncludes, userIncludes,
+					macros, linkedFile);
 			userASTs.add(linkedAST);
 		}
 		userASTs.add(userAST);
-		program = this.link(preprocessor, userASTs, userAST);
+		program = this.link(preprocessor, systemIncludes, userIncludes, macros,
+				userASTs, userAST);
 		if (civlConfig.debugOrVerbose())
 			program.prettyPrint(out);
 		applyAllTransformers(filename, program, civlConfig);
@@ -440,13 +492,15 @@ public class UserInterface {
 	 * @throws ParseException
 	 * @throws IOException
 	 */
-	private Program link(Preprocessor preprocessor, List<AST> userASTs,
+	private Program link(Preprocessor preprocessor, File[] systemIncludes,
+			File[] userIncludes, Map<String, Macro> macros, List<AST> userASTs,
 			AST userAST) throws PreprocessorException, SyntaxException,
 			ParseException, IOException {
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
 
-		asts.addAll(this.systemImplASTs(preprocessor, userAST));
+		asts.addAll(this.systemImplASTs(preprocessor, systemIncludes,
+				userIncludes, macros, userAST));
 		asts.addAll(userASTs);
 		TUs = new AST[asts.size()];
 		asts.toArray(TUs);
@@ -486,15 +540,15 @@ public class UserInterface {
 		boolean debug = civlConfig.debug();
 		boolean verbose = civlConfig.verbose();
 		boolean showModel = config.isTrue(showModelO);
-		Preprocessor preprocessor = frontEnd.getPreprocessor(
-				this.getSysIncludes(config), this.getUserIncludes(config));
+		Preprocessor preprocessor = frontEnd.getPreprocessor();
 		Model model;
 		boolean hasFscanf = false;
 		Program program;
 
 		try {
-			program = this.compileLinkAndTransform(preprocessor, filename,
-					config, civlConfig);
+			program = this.compileLinkAndTransform(preprocessor,
+					this.getSysIncludes(config), this.getUserIncludes(config),
+					new HashMap<String, Macro>(), filename, config, civlConfig);
 			if (civlConfig.showProgram() && !civlConfig.debugOrVerbose())
 				program.prettyPrint(out);
 			hasFscanf = TransformerFactory.hasFunctionCalls(program.getAST(),
@@ -767,10 +821,11 @@ public class UserInterface {
 	 */
 	private void preprocess(PrintStream out, GMCConfiguration config,
 			String filename) throws PreprocessorException {
-		Preprocessor preprocessor = frontEnd.getPreprocessor(
-				this.getSysIncludes(config), this.getUserIncludes(config));
+		Preprocessor preprocessor = frontEnd.getPreprocessor();
 
-		preprocessor.printOutput(out, new File(filename));
+		preprocessor.printOutput(this.getSysIncludes(config),
+				this.getUserIncludes(config), new HashMap<String, Macro>(),
+				out, new File(filename));
 	}
 
 	/**
@@ -942,7 +997,7 @@ public class UserInterface {
 		return true;
 	}
 
-	//TODO what if there is input variables?
+	// TODO what if there is input variables?
 	public boolean runReplay(GMCConfiguration config)
 			throws CommandLineException, FileNotFoundException, IOException,
 			ABCException, MisguidedExecutionException {
@@ -1112,10 +1167,8 @@ public class UserInterface {
 		checkFilenames(2, config);
 		filename0 = config.getFreeArg(1);
 		filename1 = config.getFreeArg(2);
-		preprocessor0 = frontEnd.getPreprocessor(this.getSysIncludes(config),
-				this.getUserIncludes(config));
-		preprocessor1 = frontEnd.getPreprocessor(this.getSysIncludes(config),
-				this.getUserIncludes(config));
+		preprocessor0 = frontEnd.getPreprocessor();
+		preprocessor1 = frontEnd.getPreprocessor();
 		// ast0 = this.compileFile(preprocessor0, new File(filename0));
 		// if (!preprocessor0.headerFiles().contains("pointer.cvh")) {
 		// pointerAST = this.compileFile(preprocessor0, new File(
@@ -1127,10 +1180,12 @@ public class UserInterface {
 		// program0 = frontEnd.link(new AST[] { ast0 }, Language.CIVL_C);
 		// this.applyTranslationTransformers(filename0, preprocessor0, program0,
 		// civlConfig);
-		program0 = this.compileLinkAndTransform(preprocessor0, filename0,
-				config, civlConfig);
-		program1 = this.compileLinkAndTransform(preprocessor1, filename1,
-				config, civlConfig);
+		program0 = this.compileLinkAndTransform(preprocessor0,
+				this.getSysIncludes(config), this.getUserIncludes(config),
+				new HashMap<String, Macro>(), filename0, config, civlConfig);
+		program1 = this.compileLinkAndTransform(preprocessor1,
+				this.getSysIncludes(config), this.getUserIncludes(config),
+				new HashMap<String, Macro>(), filename1, config, civlConfig);
 		if (verbose || debug)
 			out.println("Generating composite program...");
 		combinedAST = combiner.combine(program0.getAST(), program1.getAST());
@@ -1300,15 +1355,15 @@ public class UserInterface {
 
 		CIVLConfiguration civlConfig = new CIVLConfiguration(newConfig);
 
-		Preprocessor preprocessor0 = frontEnd.getPreprocessor(
-				this.getSysIncludes(config), this.getUserIncludes(config));
-		Preprocessor preprocessor1 = frontEnd.getPreprocessor(
-				this.getSysIncludes(config), this.getUserIncludes(config));
+		Preprocessor preprocessor0 = frontEnd.getPreprocessor();
+		Preprocessor preprocessor1 = frontEnd.getPreprocessor();
 		Combiner combiner = Transform.compareCombiner();
 		Program program0 = this.compileLinkAndTransform(preprocessor0,
-				filename0, config, civlConfig);
+				this.getSysIncludes(config), this.getUserIncludes(config),
+				new HashMap<String, Macro>(), filename0, config, civlConfig);
 		Program program1 = this.compileLinkAndTransform(preprocessor1,
-				filename1, config, civlConfig);
+				this.getSysIncludes(config), this.getUserIncludes(config),
+				new HashMap<String, Macro>(), filename1, config, civlConfig);
 		AST combinedAST = combiner
 				.combine(program0.getAST(), program1.getAST());
 		Program compositeProgram = frontEnd.getProgramFactory(
