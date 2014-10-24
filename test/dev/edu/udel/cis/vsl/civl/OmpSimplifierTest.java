@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
 
 import org.junit.Test;
 
@@ -13,6 +14,7 @@ import edu.udel.cis.vsl.abc.ast.IF.DifferenceObject;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
 import edu.udel.cis.vsl.civl.transform.IF.Transforms;
@@ -55,14 +57,15 @@ public class OmpSimplifierTest {
 
 		{ // Parse the program and apply the CIVL transformations
 			program = frontEnd.compileAndLink(new File[] { file },
-					Language.CIVL_C, systemIncludes, userIncludes);
+					Language.CIVL_C, systemIncludes, userIncludes,
+					new HashMap<String, Macro>());
 			program.apply(transformerFactory.getOpenMPSimplifier());
 		}
 
 		{ // Parse the simplified program
 			simplifiedProgram = frontEnd.compileAndLink(
 					new File[] { simplifiedFile }, Language.CIVL_C,
-					systemIncludes, userIncludes);
+					systemIncludes, userIncludes, new HashMap<String, Macro>());
 		}
 		diff = program.getAST().getRootNode()
 				.diff(simplifiedProgram.getAST().getRootNode());

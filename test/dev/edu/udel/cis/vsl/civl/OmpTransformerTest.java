@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -13,6 +14,7 @@ import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
 import edu.udel.cis.vsl.civl.transform.IF.Transforms;
@@ -67,7 +69,7 @@ public class OmpTransformerTest {
 		this.systemIncludes = new File[0];
 		this.userIncludes = new File[0];
 		program = frontEnd.compileAndLink(new File[] { file }, Language.CIVL_C,
-				systemIncludes, userIncludes);
+				systemIncludes, userIncludes, new HashMap<String, Macro>());
 		if (true) {
 			PrintStream before = new PrintStream("/tmp/before_simplify");
 			program.getAST().prettyPrint(before, true);
