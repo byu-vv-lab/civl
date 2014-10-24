@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
@@ -32,6 +33,7 @@ import edu.udel.cis.vsl.abc.preproc.IF.PreprocessorException;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
 import edu.udel.cis.vsl.abc.token.IF.Formation;
+import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SourceFile;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
@@ -157,14 +159,14 @@ public abstract class BaseWorker {
 	 */
 	protected AST parseSystemLibrary(String filename) throws SyntaxException {
 		FrontEnd frontEnd = new FrontEnd();
-		Preprocessor preprocessor = frontEnd.getPreprocessor(
-				new File[] { new File(new File(".").getAbsoluteFile(),
-						"text/include") }, new File[0]);
+		Preprocessor preprocessor = frontEnd.getPreprocessor();
 		CTokenSource tokenSource;
 		ParseTree tree;
 
 		try {
-			tokenSource = preprocessor.outputTokenSource(filename);
+			tokenSource = preprocessor.outputTokenSource(new File[] { new File(
+					new File(".").getAbsoluteFile(), "text/include") },
+					new File[0], new HashMap<String, Macro>(), filename);
 			tree = frontEnd.getParser().parse(tokenSource);
 		} catch (PreprocessorException | IOException | ParseException e) {
 			return null;
