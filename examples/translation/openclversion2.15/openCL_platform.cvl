@@ -127,6 +127,12 @@ typedef unsigned __int16        cl_half;
 typedef float                   cl_float;
 typedef double                  cl_double;
 */
+
+// TODO: most of these can be defined as symbolic constants:
+// e.g.:
+// $input $real CL_M_E;
+
+
 /* Macro names and corresponding values defined by OpenCL */
 #define CL_CHAR_BIT         8
 #define CL_SCHAR_MAX        127

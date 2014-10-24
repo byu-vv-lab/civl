@@ -21,6 +21,8 @@ typedef struct _cl_sampler *        cl_sampler;
 
 typedef struct __kernel;
 
+// TODO: can't we use "long" here?
+
 typedef unsigned int        cl_uint;
 typedef signed   int        cl_int;
 typedef signed   int        cl_long;
