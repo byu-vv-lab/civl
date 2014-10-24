@@ -220,7 +220,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			 */
 			String ompFunctionName = ((IdentifierExpressionNode) ((FunctionCallNode) node)
 					.getFunction()).getIdentifier().name();
-			IntegerConstantNode replacement = null;
+			ASTNode replacement = null;
 			if (ompFunctionName.equals("omp_get_thread_num")) {
 				try {
 					replacement = nodeFactory.newIntegerConstantNode(
@@ -228,13 +228,27 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				} catch (SyntaxException e) {
 					e.printStackTrace();
 				}
-			} else if (ompFunctionName.equals("omp_get_num_threads")) {
+			} else if (ompFunctionName.equals("omp_get_num_threads") ||
+			           ompFunctionName.equals("omp_get_max_threads") ||
+			           ompFunctionName.equals("omp_get_num_procs") ||
+			           ompFunctionName.equals("omp_get_thread_limit")) {
 				try {
 					replacement = nodeFactory.newIntegerConstantNode(
 							node.getSource(), "1");
 				} catch (SyntaxException e) {
 					e.printStackTrace();
 				}
+				
+			} else if (ompFunctionName.equals("omp_init_lock") || 
+					ompFunctionName.equals("omp_set_lock") || 
+					ompFunctionName.equals("omp_unset_lock") || 
+					ompFunctionName.equals("omp_set_num_threads")) {
+				// delete this node
+				replacement = nodeFactory.newNullStatementNode(node.getSource());
+				
+			} else if (ompFunctionName.equals("omp_get_wtime")) {
+				// this will be transformed by the OMP transformer
+
 			} else {
 				assert false : "Unsupported omp function call "
 						+ ompFunctionName
