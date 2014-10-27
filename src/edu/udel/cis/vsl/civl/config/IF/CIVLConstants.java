@@ -36,6 +36,23 @@ public class CIVLConstants {
 	 */
 	public final static String bar = "===================";
 
+	/**
+	 * The name of the directory into which CIVL will store the artifacts it
+	 * generates.
+	 */
+	public final static String CIVLREP = "CIVLREP";
+
+	/**
+	 * Number of seconds between printing of update messages.
+	 */
+	public final static int consoleUpdatePeriod = 15;
+
+	/**
+	 * Number of seconds between saving update messages to disk when in web app
+	 * mode.
+	 */
+	public final static int webUpdatePeriod = 1;
+
 	public final static Option debugO = Option.newScalarOption("debug",
 			BOOLEAN, "debug mode: print very detailed information", false);
 
@@ -165,6 +182,9 @@ public class CIVLConstants {
 	public final static Option linkO = Option.newScalarOption("link", STRING,
 			"link a source file with the target program", null);
 
+	public final static Option webO = Option.newScalarOption("web", BOOLEAN,
+			"write output for web app?", false);
+
 	public final static String civlSystemFunction = "_CIVL_system";
 
 	public static Option[] getAllOptions() {
@@ -204,6 +224,7 @@ public class CIVLConstants {
 		outputs.add(CIVLConstants.userIncludePathO);
 		outputs.add(CIVLConstants.verboseO);
 		outputs.add(CIVLConstants.ompNoSimplifyO);
+		outputs.add(CIVLConstants.webO);
 		return outputs.toArray(new Option[numOpts]);
 	}
 }

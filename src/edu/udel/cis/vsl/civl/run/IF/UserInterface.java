@@ -41,11 +41,15 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.userIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.version;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.webO;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -78,6 +82,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.Combiner;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -190,12 +195,25 @@ public class UserInterface {
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
 				svcompO, showInputVarsO, showProgramO, showPathConditionO,
 				ompNoSimplifyO, collectProcessesO, collectScopesO,
-				collectHeapsO, linkO);
+				collectHeapsO, linkO, webO);
 
 		parser = new CommandLineParser(options);
 	}
 
 	/* ************************* Private Methods *************************** */
+
+	private void ensureRepositoryExists() throws IOException {
+		File rep = new File(CIVLConstants.CIVLREP);
+
+		if (rep.exists()) {
+			if (!rep.isDirectory()) {
+				rep.delete();
+			}
+		}
+		if (!rep.exists()) {
+			rep.mkdir();
+		}
+	}
 
 	/**
 	 * Extracts from a string the "core" part of a filename by removing any
@@ -551,6 +569,24 @@ public class UserInterface {
 					new HashMap<String, Macro>(), filename, config, civlConfig);
 			if (civlConfig.showProgram() && !civlConfig.debugOrVerbose())
 				program.prettyPrint(out);
+			if (civlConfig.web()) {
+				File file = new File(CIVLConstants.CIVLREP, "transformed.cvl");
+
+				ensureRepositoryExists();
+				if (file.exists())
+					file.delete();
+				file.createNewFile();
+
+				FileOutputStream stream = new FileOutputStream(file);
+				FileChannel channel = stream.getChannel();
+				FileLock lock = channel.lock();
+				PrintStream printStream = new PrintStream(stream);
+
+				program.prettyPrint(printStream);
+				printStream.flush();
+				lock.release();
+				channel.close();
+			}
 			hasFscanf = TransformerFactory.hasFunctionCalls(program.getAST(),
 					Arrays.asList("scanf", "fscanf"));
 			if (config.isTrue(showInputVarsO) || verbose || debug) {
@@ -1019,7 +1055,7 @@ public class UserInterface {
 		if (traceFilename == null) {
 			traceFilename = coreName(sourceFilename) + "_"
 					+ config.getValueOrDefault(idO) + ".trace";
-			traceFile = new File(new File("CIVLREP"), traceFilename);
+			traceFile = new File(new File(CIVLConstants.CIVLREP), traceFilename);
 		} else
 			traceFile = new File(traceFilename);
 		newConfig = parser.newConfig();
@@ -1286,7 +1322,7 @@ public class UserInterface {
 			case "replay":
 				return runReplay(config);
 			case "compare-replay":
-				return runCompareRepaly(config);
+				return runCompareReplay(config);
 			case "run":
 				return runRun(config);
 			case "parse":
@@ -1316,7 +1352,7 @@ public class UserInterface {
 		return false;
 	}
 
-	private boolean runCompareRepaly(GMCConfiguration config)
+	private boolean runCompareReplay(GMCConfiguration config)
 			throws CommandLineException, FileNotFoundException, IOException,
 			SyntaxException, PreprocessorException, ParseException,
 			MisguidedExecutionException {
@@ -1334,7 +1370,7 @@ public class UserInterface {
 			traceFilename = "Composite_" + coreName(filename0) + "_"
 					+ coreName(filename1) + "_" + config.getValueOrDefault(idO)
 					+ ".trace";
-			traceFile = new File(new File("CIVLREP"), traceFilename);
+			traceFile = new File(new File(CIVLConstants.CIVLREP), traceFilename);
 		} else
 			traceFile = new File(traceFilename);
 		newConfig = parser.newConfig();

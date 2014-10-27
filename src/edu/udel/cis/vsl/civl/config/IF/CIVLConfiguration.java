@@ -28,6 +28,7 @@ public class CIVLConfiguration {
 	private boolean collectProcesses = true;
 	private boolean collectScopes = true;
 	private boolean collectHeaps = true;
+	private boolean web = false;
 
 	public CIVLConfiguration(GMCConfiguration config) {
 		this.debug = config.isTrue(CIVLConstants.debugO);
@@ -50,6 +51,7 @@ public class CIVLConfiguration {
 		this.collectProcesses = config.isTrue(CIVLConstants.collectProcessesO);
 		this.collectScopes = config.isTrue(CIVLConstants.collectScopesO);
 		this.setCollectHeaps(config.isTrue(CIVLConstants.collectHeapsO));
+		this.web = config.isTrue(CIVLConstants.webO);
 	}
 
 	public void setOut(PrintStream out) {
@@ -226,6 +228,10 @@ public class CIVLConfiguration {
 
 	public boolean collectHeaps() {
 		return collectHeaps;
+	}
+
+	public boolean web() {
+		return web;
 	}
 
 	public void setCollectHeaps(boolean collectHeaps) {

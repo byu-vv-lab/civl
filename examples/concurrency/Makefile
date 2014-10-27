@@ -12,10 +12,10 @@ adder: adder.cvl
 adderBad: adderBad.cvl
 	$(VERIFY) adderBad.cvl -inputB=4 -min
 	$(CIVL) replay adderBad.cvl
-	
+
 bank: bank.cvl
 	$(VERIFY) bank.cvl -inputNUM_ACCOUNTS=3
-	
+
 barrier: barrier.cvl
 	$(VERIFY) -inputB=4 barrier.cvl
 
@@ -39,7 +39,7 @@ blockAdderBad: blockAdderBad.cvl
 dining: dining.cvl
 	$(VERIFY) -inputB=4 dining.cvl
 
-diningBad: diningBad.cvl
+diningBad:
 	$(VERIFY) -inputB=4 diningBad.cvl -min
 	$(CIVL) replay diningBad.cvl
 

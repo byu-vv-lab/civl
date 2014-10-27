@@ -2,12 +2,20 @@ package edu.udel.cis.vsl.civl.run.IF;
 
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.log.IF.CIVLLogEntry;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
@@ -20,11 +28,6 @@ import edu.udel.cis.vsl.gmc.ExcessiveErrorException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 public class Verifier extends Player {
-
-	/**
-	 * Number of seconds between printing of update messages.
-	 */
-	public final static int updatePeriod = 15;
 
 	class SearchUpdater implements Printable {
 		@Override
@@ -46,7 +49,83 @@ public class Verifier extends Player {
 	}
 
 	/**
-	 * Runnable to be used to create a thread that every so man seconds tells
+	 * Updater for the web app. Instead of printing to the given stream, it
+	 * ignores that stream and instead creates a new file and prints the data to
+	 * that file.
+	 * 
+	 * @author siegel
+	 *
+	 */
+	class WebUpdater implements Printable {
+
+		/**
+		 * String used to form the name of the file that will be created. This
+		 * string will have the time step appended to it to create a unique
+		 * file.
+		 */
+		private String filenameRoot;
+
+		/**
+		 * The directory in which the new file will be created.
+		 */
+		private File directory;
+
+		/**
+		 * The number of times {@link #print(PrintStream)} has been called on
+		 * this updater.
+		 */
+		private int timeStep = 0;
+
+		public WebUpdater(File directory, String filenameRoot) {
+			this.directory = directory;
+			this.filenameRoot = filenameRoot;
+		}
+
+		private void fail(File file, String msg) {
+			throw new CIVLInternalException(msg + " " + file.getAbsolutePath(),
+					(CIVLSource) null);
+		}
+
+		@Override
+		public void print(PrintStream out) {
+			long time = (long) Math
+					.ceil((System.currentTimeMillis() - startTime) / 1000.0);
+			long megabytes = (long) (((double) Runtime.getRuntime()
+					.totalMemory()) / (double) 1048576.0);
+			File file;
+
+			timeStep++;
+			file = new File(directory, filenameRoot + "_" + timeStep + ".txt");
+			try {
+				if (file.exists())
+					file.delete();
+				file.createNewFile();
+
+				FileOutputStream stream = new FileOutputStream(file);
+				FileChannel channel = stream.getChannel();
+				FileLock lock = channel.lock();
+
+				out = new PrintStream(stream);
+				out.println("time " + time);
+				out.println("mem " + megabytes);
+				out.println("steps " + executor.getNumSteps());
+				out.println("trans " + searcher.numTransitions());
+				out.println("seen " + searcher.numStatesSeen());
+				out.println("saved " + stateManager.getNumStatesSaved());
+				out.println("prove "
+						+ modelFactory.universe().numProverValidCalls());
+				out.println();
+				out.flush();
+				lock.release();
+				channel.close();
+			} catch (IOException e) {
+				fail(file, "Could not write to file");
+			}
+		}
+	}
+
+	/**
+	 * Runnable to be used to create a thread that every so many seconds tells
 	 * the state manager to print an update message.
 	 * 
 	 * @author siegel
@@ -92,9 +171,14 @@ public class Verifier extends Player {
 	private volatile boolean alive = true;
 
 	/**
+	 * Number of seconds between printing updates.
+	 */
+	private int updatePeriod;
+
+	/**
 	 * The object used to print the update message.
 	 */
-	private Printable updater = new SearchUpdater();
+	private Printable updater;
 
 	/**
 	 * The update thread itself.
@@ -133,6 +217,13 @@ public class Verifier extends Player {
 			log.setMinimize(true);
 		if (config.getValue(maxdepthO) != null)
 			searcher.boundDepth(maxdepth);
+		if (config.isTrue(CIVLConstants.webO)) {
+			updatePeriod = CIVLConstants.webUpdatePeriod;
+			updater = new WebUpdater(new File(CIVLConstants.CIVLREP), "update");
+		} else {
+			updatePeriod = CIVLConstants.consoleUpdatePeriod;
+			updater = new SearchUpdater();
+		}
 		stateManager.setUpdater(updater);
 		this.shortFileNamesShown = shortFileNamesShown;
 	}
@@ -192,7 +283,8 @@ public class Verifier extends Player {
 			} catch (ExcessiveErrorException e) {
 				violationFound = true;
 				if (!shortFileNamesShown) {
-//					preprocessor.printShorterFileNameMap(civlConfig.out()); TODO
+					// preprocessor.printShorterFileNameMap(civlConfig.out());
+					// TODO
 					civlConfig.out().println();
 				}
 				civlConfig.out().println(
