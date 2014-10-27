@@ -106,16 +106,16 @@ public class Verifier extends Player {
 				PrintStream out = new PrintStream(stream);
 
 				out.println("{");
-				out.println("time : " + time + " ,");
-				out.println("mem : " + megabytes + " ,");
-				out.println("steps : " + executor.getNumSteps() + " ,");
-				out.println("trans : " + searcher.numTransitions() + " ,");
-				out.println("seen : " + searcher.numStatesSeen() + " ,");
-				out.println("saved : " + stateManager.getNumStatesSaved()
+				out.println("\"time\" : " + time + " ,");
+				out.println("\"mem\" : " + megabytes + " ,");
+				out.println("\"steps\" : " + executor.getNumSteps() + " ,");
+				out.println("\"trans\" : " + searcher.numTransitions() + " ,");
+				out.println("\"seen\" : " + searcher.numStatesSeen() + " ,");
+				out.println("\"saved\" : " + stateManager.getNumStatesSaved()
 						+ " ,");
-				out.println("prove : "
+				out.println("\"prove\" : "
 						+ modelFactory.universe().numProverValidCalls() + " ,");
-				out.println("isFinal : " + isFinal);
+				out.println("\"isFinal\" : " + isFinal);
 				out.println("}");
 				out.flush();
 				lock.release();
