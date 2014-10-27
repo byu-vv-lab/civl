@@ -115,8 +115,7 @@ public class Verifier extends Player {
 						+ " ,");
 				out.println("prove : "
 						+ modelFactory.universe().numProverValidCalls() + " ,");
-				if (isFinal)
-					out.println("isFinal : true");
+				out.println("isFinal : " + isFinal);
 				out.println("}");
 				out.flush();
 				lock.release();
