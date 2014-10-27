@@ -86,8 +86,7 @@ public class Verifier extends Player {
 					(CIVLSource) null);
 		}
 
-		@Override
-		public void print(PrintStream out) {
+		private void print(boolean isFinal) {
 			long time = (long) Math
 					.ceil((System.currentTimeMillis() - startTime) / 1000.0);
 			long megabytes = (long) (((double) Runtime.getRuntime()
@@ -104,23 +103,36 @@ public class Verifier extends Player {
 				FileOutputStream stream = new FileOutputStream(file);
 				FileChannel channel = stream.getChannel();
 				FileLock lock = channel.lock();
+				PrintStream out = new PrintStream(stream);
 
-				out = new PrintStream(stream);
-				out.println("time " + time);
-				out.println("mem " + megabytes);
-				out.println("steps " + executor.getNumSteps());
-				out.println("trans " + searcher.numTransitions());
-				out.println("seen " + searcher.numStatesSeen());
-				out.println("saved " + stateManager.getNumStatesSaved());
-				out.println("prove "
-						+ modelFactory.universe().numProverValidCalls());
-				out.println();
+				out.println("{");
+				out.println("time : " + time + " ,");
+				out.println("mem : " + megabytes + " ,");
+				out.println("steps : " + executor.getNumSteps() + " ,");
+				out.println("trans : " + searcher.numTransitions() + " ,");
+				out.println("seen : " + searcher.numStatesSeen() + " ,");
+				out.println("saved : " + stateManager.getNumStatesSaved()
+						+ " ,");
+				out.println("prove : "
+						+ modelFactory.universe().numProverValidCalls() + " ,");
+				if (isFinal)
+					out.println("isFinal : true");
+				out.println("}");
 				out.flush();
 				lock.release();
-				channel.close();
+				out.close();
 			} catch (IOException e) {
 				fail(file, "Could not write to file");
 			}
+		}
+
+		@Override
+		public void print(PrintStream out) {
+			print(false);
+		}
+
+		public void printFinal() {
+			print(true);
 		}
 	}
 
@@ -323,5 +335,9 @@ public class Verifier extends Player {
 		if (updateThread != null)
 			updateThread.interrupt();
 		updateThread = null;
+		if (civlConfig.web()) {
+			// last update with final stats needed for web page...
+			((WebUpdater) updater).printFinal();
+		}
 	}
 }
