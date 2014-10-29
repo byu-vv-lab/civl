@@ -3542,7 +3542,29 @@ public class CommonEvaluator implements Evaluator {
 				memoryUnitsOfExpression(state, pid, arg, memoryUnits);
 			}
 			break;
+		case REGULAR_RANGE: {
+			RegularRangeExpression rangeExpr = (RegularRangeExpression) expression;
+
+			memoryUnitsOfExpression(state, pid, rangeExpr.getLow(), memoryUnits);
+			memoryUnitsOfExpression(state, pid, rangeExpr.getHigh(),
+					memoryUnits);
+			memoryUnitsOfExpression(state, pid, rangeExpr.getStep(),
+					memoryUnits);
+		}
+			break;
+		case REC_DOMAIN_LITERAL: {
+			RecDomainLiteralExpression domain = (RecDomainLiteralExpression) expression;
+			int dim = domain.dimension();
+
+			for (int i = 0; i < dim; i++)
+				memoryUnitsOfExpression(state, pid, domain.rangeAt(i),
+						memoryUnits);
+		}
+			break;
 		case DOMAIN_GUARD:
+			memoryUnitsOfExpression(state, pid,
+					((DomainGuardExpression) expression).domain(), memoryUnits);
+			break;
 		case WAIT_GUARD:
 			break;
 		case QUANTIFIER:
@@ -3557,8 +3579,9 @@ public class CommonEvaluator implements Evaluator {
 		case FUNCTION_POINTER:
 			break;
 		default:
-			throw new CIVLUnimplementedFeatureException("Expression kind: "
-					+ kind, expression.getSource());
+			throw new CIVLUnimplementedFeatureException(
+					"Computing impact memory units of " + kind + " expressions",
+					expression.getSource());
 		}
 	}
 
