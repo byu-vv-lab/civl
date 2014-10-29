@@ -585,7 +585,7 @@ public class UserInterface {
 				program.prettyPrint(printStream);
 				printStream.flush();
 				lock.release();
-				channel.close();
+				printStream.close();
 			}
 			hasFscanf = TransformerFactory.hasFunctionCalls(program.getAST(),
 					Arrays.asList("scanf", "fscanf"));
