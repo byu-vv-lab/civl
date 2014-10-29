@@ -156,15 +156,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// This comes first because Variables should be listed
 		// before the current dyscopes children dyscopes
 		for (int i = 0; i < dyscopes.length; i++) {
-			DefaultMutableTreeNode variables = makeVariables(state, dyscopes[i]);
-			treeNodes[i].add(variables);
-		}
-
-		// For each dyscope
-		// This comes second so that the child dyscopes are listed under
-		// the current dyscopes variables
-		for (int i = 0; i < dyscopes.length; i++) {
-			arrangeChildDyscopes(state, i, treeNodes);
+			addVariables(state, dyscopes[i], treeNodes[i]);
 		}
 
 		// The process states of the state
@@ -177,8 +169,10 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 		// Node for the dyscopes of the state
 		DefaultMutableTreeNode dy = new DefaultMutableTreeNode("Dyscopes");
 
-		// Add the root dyscope to the dyscopes node
-		dy.add(treeNodes[0]);
+		// Add the dyscopes of the state to the dyscopes node
+		for (int i = 0; i < treeNodes.length; i++) {
+			dy.add(treeNodes[i]);
+		}
 
 		// Add the path condition to the root of the tree
 		top.add(new DefaultMutableTreeNode("Path Condition: "
@@ -243,12 +237,8 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 *            The given dynamic scope
 	 * @return TreeNode
 	 */
-	private DefaultMutableTreeNode makeVariables(State state,
-			DynamicScope dScope) {
+	private void addVariables(State state, DynamicScope dScope, DyscopeNode node) {
 		if (dScope.numberOfValues() > 0) {
-			// Create a Variables node and add it to the dyscope's node
-			DefaultMutableTreeNode variables = new DefaultMutableTreeNode(
-					"Variables");
 
 			// Keep track of which variable we're on with vid
 			int vid = 0;
@@ -263,59 +253,57 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 								+ symbolicAnalyzer.symbolicExpressionToString(
 										var.getSource(), state, s));
 				if (!(variableName == "__heap" && s.isNull())) {
-					variables.add(variableNode);
+					node.add(variableNode);
 				}
 				vid++;
 			}
-			return variables;
-		}
-		return null;
-	}
-
-	/**
-	 * Display the dyscopes nodes in a tree pattern that resembles their
-	 * parent/child relationship in the state
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param index
-	 *            The current index
-	 * @param treeNodes
-	 *            Array of dyscope nodes
-	 */
-	private void arrangeChildDyscopes(State state, int index,
-			DyscopeNode[] treeNodes) {
-		// If the dyscope isn't the root dyscope (ie parentID != -1) add
-		// it's node to the node corresponding to it's parent dyscope
-		int parentID = state.getParentId(index);
-		if (parentID != -1) {
-			DefaultMutableTreeNode children;
-
-			// If no children nodes have been added yet
-			if (treeNodes[parentID].getChildren() == null) {
-				children = new DefaultMutableTreeNode("Child Dyscopes");
-
-				// Set the children node as the parent's child dyscope node
-				treeNodes[parentID].setChildNode(children);
-
-				// Add the current node to the parent dyscopes children
-				// dyscopes node
-				treeNodes[parentID].getChildren().add(treeNodes[index]);
-
-				// Add the children dyscopes node to the parent node
-				treeNodes[parentID].add(treeNodes[parentID].getChildren());
-			}
-			// Children nodes have already been created
-			else {
-				// Set the children to be the child dyscope node
-				children = treeNodes[parentID].getChildren();
-
-				// Add the current node to the parent dyscopes children
-				// dyscopes node
-				treeNodes[parentID].getChildren().add(treeNodes[index]);
-			}
 		}
 	}
+
+	// /**
+	// * Display the dyscopes nodes in a tree pattern that resembles their
+	// * parent/child relationship in the state
+	// *
+	// * @param state
+	// * The current state
+	// * @param index
+	// * The current index
+	// * @param treeNodes
+	// * Array of dyscope nodes
+	// */
+	// private void arrangeChildDyscopes(State state, int index,
+	// DyscopeNode[] treeNodes) {
+	// // If the dyscope isn't the root dyscope (ie parentID != -1) add
+	// // it's node to the node corresponding to it's parent dyscope
+	// int parentID = state.getParentId(index);
+	// if (parentID != -1) {
+	// DefaultMutableTreeNode children;
+	//
+	// // If no children nodes have been added yet
+	// if (treeNodes[parentID].getChildren() == null) {
+	// children = new DefaultMutableTreeNode("Child Dyscopes");
+	//
+	// // Set the children node as the parent's child dyscope node
+	// treeNodes[parentID].setChildNode(children);
+	//
+	// // Add the current node to the parent dyscopes children
+	// // dyscopes node
+	// treeNodes[parentID].getChildren().add(treeNodes[index]);
+	//
+	// // Add the children dyscopes node to the parent node
+	// treeNodes[parentID].add(treeNodes[parentID].getChildren());
+	// }
+	// // Children nodes have already been created
+	// else {
+	// // Set the children to be the child dyscope node
+	// children = treeNodes[parentID].getChildren();
+	//
+	// // Add the current node to the parent dyscopes children
+	// // dyscopes node
+	// treeNodes[parentID].getChildren().add(treeNodes[index]);
+	// }
+	// }
+	// }
 
 	/**
 	 * Make the process state nodes for the given state
@@ -387,28 +375,31 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 					newTree.expandRow(current.getLevel());
 					int currentRow = current.getLevel();
 					int numChildren = current.getChildCount();
-					for(int i = currentRow; i < currentRow + numChildren; i++) {
+					for (int i = currentRow; i < currentRow + numChildren; i++) {
 						newTree.expandRow(i);
 					}
-//					if (current.getChildCount() > 0) {
-//						DefaultMutableTreeNode lastChild = (DefaultMutableTreeNode) current.getLastChild();
-//						DefaultMutableTreeNode parent = (DefaultMutableTreeNode) lastChild
-//								.getParent();
-//						while (parent != null) {
-//							newTree.expandRow(parent.getLevel());
-//							parent = (DefaultMutableTreeNode) parent
-//									.getParent();
-//						}
-//					}
-//					else {
-//						DefaultMutableTreeNode parent = (DefaultMutableTreeNode) current
-//								.getParent();
-//						while (parent != null) {
-//							newTree.expandRow(parent.getLevel());
-//							parent = (DefaultMutableTreeNode) parent
-//									.getParent();
-//						}
-//					}
+					// if (current.getChildCount() > 0) {
+					// DefaultMutableTreeNode lastChild =
+					// (DefaultMutableTreeNode) current.getLastChild();
+					// DefaultMutableTreeNode parent = (DefaultMutableTreeNode)
+					// lastChild
+					// .getParent();
+					// while (parent != null) {
+					// newTree.expandRow(parent.getLevel());
+					// parent = (DefaultMutableTreeNode) parent
+					// .getParent();
+					// }
+					// }
+					// else {
+					// DefaultMutableTreeNode parent = (DefaultMutableTreeNode)
+					// current
+					// .getParent();
+					// while (parent != null) {
+					// newTree.expandRow(parent.getLevel());
+					// parent = (DefaultMutableTreeNode) parent
+					// .getParent();
+					// }
+					// }
 				}
 			}
 		}
