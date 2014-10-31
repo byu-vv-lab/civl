@@ -39,35 +39,23 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.12 -------------------------
+-------------------------- Updates from v 0.13 -------------------------
 
-1. Made $assert a statement, instead of a function call. 
-   The syntax of $assert is described in Section 8.3.1, CIVL manual.
+1. New command line options added:
+   "-D": support macros defined in command line;
+   "-ast": print the AST of input program
+   "-preproc": print the result of preprocessing the input program
+2. Supported compiling and linking multiple programs for verification;
+3. New command line specification:
+       civl (show | verify | replay | run) [options] filename+
+    or civl (compare | replay) [common options] \
+       -spec [spec options] filename+ \
+       -impl [impl options] filename+
+    or civl gui
+    or civl help [command]
+    
+    For more information, type "civl help".
    
-2. Improvements of heaps: 
-     - canonicalization of heaps;
-     - garbage collection of heaps;
-     - detection of unreachable heap objects which are 
-       reported as memory leak problems.
-   
-3. New structure of CIVL-C standard libraries. The previous header civlc.h
-   is now divided into several CIVL-C header files: civlc.cvh, scope.cvh, 
-   pointer.cvh, seq.cvh, concurrency.cvh, bundle.cvh, comm.cvh, etc. 
-   See Section 10.1 of CIVL manual for more details. The old civlc.h
-   is still supported but users are recommended to include 
-   the .cvh headers from now on.
-   
-4. A pretty printing utility is provided for printing programs in the form of 
-   CIVL-C after all possible transformations (e.g., pruner, side-effect 
-   remover, mpi, etc). Use the command line option "-showProgram" for this feature.
-   
-5. New system function for bundles: $bundle_unpack_apply. 
-   See Section 10.1.6.4 of CIVL manual.
-   
-6. Bugs fixed:
-   better handling for parsing OpenMP pragmas;
-   error handling for dereferencing uninitialized pointers;
-   better handling for string library functions such as strcpy, strcmp, etc.
    
 ------------------------- Binary Installation -------------------------
 
