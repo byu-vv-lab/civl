@@ -332,9 +332,10 @@ public class UserInterface {
 		GMCConfiguration result = config1.clone();
 		Map<String, Object> inputs2 = config2.getMapValue(inputO);
 
-		for (Map.Entry<String, Object> entry : inputs2.entrySet()) {
-			result.putMapEntry(inputO, entry.getKey(), entry.getValue());
-		}
+		if (inputs2 != null)
+			for (Map.Entry<String, Object> entry : inputs2.entrySet()) {
+				result.putMapEntry(inputO, entry.getKey(), entry.getValue());
+			}
 		return result;
 	}
 
@@ -365,7 +366,7 @@ public class UserInterface {
 		} else {
 			CommandLine commandLine = CIVLCommandFactory.parseCommand(
 					definedOptions.values(), args);
-			
+
 			// TODO
 			// if (config.isTrue(echoO))
 			// printCommand(config);
