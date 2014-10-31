@@ -14,7 +14,8 @@ public class CudaTest {
 
 	private static UserInterface ui = new UserInterface();
 
-	private static File rootDir = new File(new File("examples"), "translation/cuda");
+	private static File rootDir = new File(new File("examples"),
+			"translation/cuda");
 
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
@@ -29,7 +30,7 @@ public class CudaTest {
 
 	@Test
 	public void dot() {
-		assertTrue(ui.run("verify", filename("dot.cvl"), "-inputN_BOUND=2",
-				"-inputTHREADS_PER_BLOCK=2"));
+		assertTrue(ui.run("verify", "-inputN_BOUND=2",
+				"-inputTHREADS_PER_BLOCK=2", filename("dot.cvl")));
 	}
 }

@@ -28,15 +28,15 @@ public class MessagePassingBigTest {
 
 	@Test
 	public void hybridMin() {
-		assertFalse(ui.run("verify", filename("hybrid.cvl"), "-inputNPROCS=2",
-				"-min"));
+		assertFalse(ui
+				.run("verify -inputNPROCS=2 -min", filename("hybrid.cvl")));
 	}
 
 	@Test
 	public void diffusion1d() {
-		assertTrue(ui.run("verify", filename("diffusion1d.cvl"),
-				"-inputNPROCSB=3", "-inputNSTEPSB=3", "-inputNXB=6",
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-inputNPROCSB=3", "-inputNSTEPSB=3",
+				"-inputNXB=6", "-enablePrintf=false",
+				filename("diffusion1d.cvl")));
 	}
 
 }

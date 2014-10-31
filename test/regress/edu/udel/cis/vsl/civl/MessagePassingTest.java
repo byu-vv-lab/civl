@@ -29,7 +29,7 @@ public class MessagePassingTest {
 
 	@Test
 	public void hybrid() {
-		assertFalse(ui.run("verify", filename("hybrid.cvl"), "-inputNPROCS=2"));
+		assertFalse(ui.run("verify", "-inputNPROCS=2", filename("hybrid.cvl")));
 	}
 
 	@Test
@@ -44,31 +44,31 @@ public class MessagePassingTest {
 
 	@Test
 	public void ring() {
-		assertTrue(ui.run("verify", filename("ring.cvl"),
-				"-inputNPROCS_BOUND=8", "-inputN_BOUND=4"));
+		assertTrue(ui.run("verify", "-inputNPROCS_BOUND=8", "-inputN_BOUND=4",
+				filename("ring.cvl")));
 	}
 
 	@Test
 	public void ring1() {
-		assertTrue(ui.run("verify", filename("ring1.cvl"), "-inputNPROCS=3"));
+		assertTrue(ui.run("verify", "-inputNPROCS=3", filename("ring1.cvl")));
 	}
 
 	@Ignore
 	@Test
 	public void ring2() {
-		assertTrue(ui.run("verify", filename("ring2.cvl"), "-inputNPROCS=3"));
+		assertTrue(ui.run("verify", "-inputNPROCS=3", filename("ring2.cvl")));
 	}
 
 	@Test
 	public void wildcard() {
-		assertTrue(ui.run("verify", filename("wildcard.cvl"), "-inputNPROCS=5",
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-inputNPROCS=5", "-enablePrintf=false",
+				filename("wildcard.cvl")));
 	}
 
 	@Test
 	public void wildcardBad() {
-		assertFalse(ui.run("verify", filename("wildcardBad.cvl"),
-				"-enablePrintf=false"));
+		assertFalse(ui.run("verify", "-enablePrintf=false",
+				filename("wildcardBad.cvl")));
 		ui.run("replay", filename("wildcardBad.cvl"));
 	}
 }

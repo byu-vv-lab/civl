@@ -93,6 +93,9 @@ public class CIVLConstants {
 	public final static Option seedO = Option.newScalarOption("seed", STRING,
 			"set the random seed; applies only to run", null);
 
+	public final static Option astO = Option.newScalarOption("ast",
+			BOOLEAN, "print the AST of the program", false);
+
 	public final static Option showAmpleSetO = Option.newScalarOption(
 			"showAmpleSet", BOOLEAN,
 			"print the ample set when it contains more than one processes",
@@ -159,6 +162,9 @@ public class CIVLConstants {
 			.newScalarOption("showInputs", BOOLEAN,
 					"show input variables of my program?", false);
 
+	public final static Option preprocO = Option.newScalarOption(
+			"preproc", BOOLEAN, "show the preprocessing result?", false);
+
 	public final static Option showProgramO = Option.newScalarOption(
 			"showProgram", BOOLEAN, "show my program after transformations?",
 			false);
@@ -181,6 +187,9 @@ public class CIVLConstants {
 
 	public final static Option linkO = Option.newScalarOption("link", STRING,
 			"link a source file with the target program", null);
+
+	public final static Option macroO = Option.newMapOption("D",
+			"macro definitions: <macro> or <macro>=<object>");
 
 	public final static Option webO = Option.newScalarOption("web", BOOLEAN,
 			"write output for web app?", false);

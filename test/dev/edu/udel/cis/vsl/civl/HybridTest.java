@@ -29,7 +29,8 @@ public class HybridTest {
 		// assertTrue(ui.run("verify",
 		// filename("mpi-pthread/mpithreads_both.c"),
 		// "-input__NPROCS=3", "-showInputs", "-enablePrintf=false"));
-		ui.run("parse", "-showProgram", filename("mpi-pthread/mpithreads_both.c"));
+		ui.run("show", "-showProgram",
+				filename("mpi-pthread/mpithreads_both.c"));
 		// ui.run("verify", filename("mpi-pthread/mpithreads_both.c"),
 		// "-input__NPROCS=3", "-showInputs", "-enablePrintf=false");
 		// ui.run("replay", filename("mpi-pthread/mpithreads_both.c"), "-gui");
@@ -37,8 +38,7 @@ public class HybridTest {
 
 	@Test
 	public void mpi_pthreads_pie_collective() throws ABCException {
-		assertTrue(ui.run("verify",
-				filename("mpi-pthread/mpi-pthreads-pie-collective.c"),
-				"-input__NPROCS=2", "-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-input__NPROCS=2", "-enablePrintf=false",
+				filename("mpi-pthread/mpi-pthreads-pie-collective.c")));
 	}
 }

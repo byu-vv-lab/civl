@@ -174,6 +174,7 @@ Primitives dealing with concurrency are introduced in Chapter
 
 \subsection{Standard types inherited from C}
 
+The \texttt{civlc.cvh} defines standard types inherited from C. 
 The boolean type is denoted \verb!_Bool!, as in C. Its values are $0$
 and $1$, which are also denoted by $\cfalse$ and $\ctrue$,
 respectively.
@@ -257,7 +258,7 @@ into a single data structure. Later, the contents of a bundle can be
 extracted with another function that specifies a region of memory into
 which to unpack the bundle; if that memory does not have the right
 type to receive the contents of the bundle, a runtime error is
-generated.
+generated. The bundle type and its functions are provided by the library \texttt{bundle.cvh}.
 
 The relevant functions for creating and manipulating bundles
 are given in Section \ref{subsec:bundleLibrary}.

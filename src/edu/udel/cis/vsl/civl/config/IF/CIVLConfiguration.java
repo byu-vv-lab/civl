@@ -7,11 +7,11 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 public class CIVLConfiguration {
 	private boolean debug = false;
 	private boolean enablePrintf = true;
-	// private int errorBound = 1;
-	// private boolean needsInputFileLength = false;
 	private boolean saveStates = true;
+	private boolean showAST = false;
 	private boolean showAmpleSet = false;
 	private boolean showAmpleSetWtStates = false;
+	private boolean showModel = false;
 	private boolean showSavedStates = false;
 	private boolean showStates = false;
 	private boolean showTransitions = false;
@@ -29,6 +29,8 @@ public class CIVLConfiguration {
 	private boolean collectScopes = true;
 	private boolean collectHeaps = true;
 	private boolean web = false;
+	private boolean showPreproc = false;
+	private boolean showInputVars = false;
 
 	public CIVLConfiguration(GMCConfiguration config) {
 		this.debug = config.isTrue(CIVLConstants.debugO);
@@ -52,6 +54,10 @@ public class CIVLConfiguration {
 		this.collectScopes = config.isTrue(CIVLConstants.collectScopesO);
 		this.setCollectHeaps(config.isTrue(CIVLConstants.collectHeapsO));
 		this.web = config.isTrue(CIVLConstants.webO);
+		this.setShowPreproc(config.isTrue(CIVLConstants.preprocO));
+		this.setShowAST(config.isTrue(CIVLConstants.astO));
+		this.setShowModel(config.isTrue(CIVLConstants.showModelO));
+		this.showInputVars = config.isTrue(CIVLConstants.showInputVarsO);
 	}
 
 	public void setOut(PrintStream out) {
@@ -236,5 +242,37 @@ public class CIVLConfiguration {
 
 	public void setCollectHeaps(boolean collectHeaps) {
 		this.collectHeaps = collectHeaps;
+	}
+
+	public boolean showPreproc() {
+		return showPreproc;
+	}
+
+	public void setShowPreproc(boolean showPreproc) {
+		this.showPreproc = showPreproc;
+	}
+
+	public boolean showAST() {
+		return showAST;
+	}
+
+	public void setShowAST(boolean showAST) {
+		this.showAST = showAST;
+	}
+
+	public boolean showModel() {
+		return showModel;
+	}
+
+	public void setShowModel(boolean showModel) {
+		this.showModel = showModel;
+	}
+
+	public boolean showInputVars() {
+		return showInputVars;
+	}
+
+	public void setShowInputVars(boolean showInputVars) {
+		this.showInputVars = showInputVars;
 	}
 }

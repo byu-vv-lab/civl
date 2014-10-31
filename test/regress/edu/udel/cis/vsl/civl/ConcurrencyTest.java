@@ -27,18 +27,18 @@ public class ConcurrencyTest {
 
 	@Test
 	public void adder() {
-		assertTrue(ui.run("verify", filename("adder.cvl"), "-inputB=5"));
+		assertTrue(ui.run("verify", "-inputB=5", filename("adder.cvl")));
 	}
 
 	@Test
 	public void adder2() {
-		assertTrue(ui.run("verify", filename("adder2.cvl"), "-inputN=4"));
+		assertTrue(ui.run("verify", "-inputN=4", filename("adder2.cvl")));
 	}
 
 	@Test
 	public void adderBad() {
-		assertFalse(ui.run("verify", filename("adderBad.cvl"), "-inputB=4",
-				"-min"));
+		assertFalse(ui.run("verify", "-inputB=4", "-min",
+				filename("adderBad.cvl")));
 		assertFalse(ui.run("replay", filename("adderBad.cvl")));
 	}
 
@@ -62,7 +62,7 @@ public class ConcurrencyTest {
 	public void barrierBad() {
 		assertFalse(ui.run("verify", "-min", "-inputB=4",
 				filename("barrierBad.cvl")));
-		assertFalse(ui.run("replay", filename("barrierBad.cvl"), "-id=0"));
+		assertFalse(ui.run("replay", "-id=0", filename("barrierBad.cvl")));
 	}
 
 	@Test
@@ -73,8 +73,8 @@ public class ConcurrencyTest {
 
 	@Test
 	public void blockAdderBad() {
-		assertFalse(ui.run("verify", "-inputB=6", "-inputW=3",
-				filename("blockAdderBad.cvl"), "-min"));
+		assertFalse(ui.run("verify", "-inputB=6", "-inputW=3", "-min",
+				filename("blockAdderBad.cvl")));
 		assertFalse(ui.run("replay", filename("blockAdderBad.cvl")));
 	}
 
@@ -85,8 +85,8 @@ public class ConcurrencyTest {
 
 	@Test
 	public void diningBad() {
-		assertFalse(ui.run("verify", "-inputB=4", filename("diningBad.cvl"),
-				"-min"));
+		assertFalse(ui.run("verify", "-inputB=4", "-min",
+				filename("diningBad.cvl")));
 		assertFalse(ui.run("replay", filename("diningBad.cvl")));
 	}
 

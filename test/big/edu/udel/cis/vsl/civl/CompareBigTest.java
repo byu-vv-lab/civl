@@ -30,8 +30,8 @@ public class CompareBigTest {
 		assertTrue(ui.run("compare", "-enablePrintf=false",
 				"-input__NPROCS_LOWER_BOUND=1", "-input__NPROCS_UPPER_BOUND=1",
 				"-inputNX=5", "-inputNSTEPSB=4", "-inputWSTEP=1",
-				"-inputK=0.3",
-				filename("diffusion1d/diffusion1d_spec_revision.c"),
+				"-inputK=0.3", "-spec",
+				filename("diffusion1d/diffusion1d_spec_revision.c"), "-impl",
 				filename("diffusion1d/diffusion1d_par_revision.c")));
 	}
 }

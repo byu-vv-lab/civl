@@ -63,6 +63,10 @@ public class IOWorker extends BaseWorker {
 	 */
 	private static String FSCANF = "fscanf";
 
+	private static String FFLUSH = "fflush";
+
+	private static String FFLUSH_NEW = "_fflush";
+
 	/**
 	 * The name of fopen function.
 	 */
@@ -347,6 +351,40 @@ public class IOWorker extends BaseWorker {
 		}
 	}
 
+	private void renameFflushCalls(ASTNode node) throws SyntaxException {
+		int numChildren = node.numChildren();
+
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = node.child(i);
+
+			if (child != null)
+				this.renameFflushCalls(node.child(i));
+		}
+		if (node instanceof FunctionCallNode) {
+			this.renameFflushCall((FunctionCallNode) node);
+		}
+	}
+
+	private void renameFflushCall(FunctionCallNode functionCall) {
+		if (functionCall.getFunction().expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+			IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
+					.getFunction();
+			String functionName = functionExpression.getIdentifier().name();
+			IdentifierNode functionNameIdentifer = functionExpression
+					.getIdentifier();
+
+			if (functionName.equals(FFLUSH)) {
+				SequenceNode<ExpressionNode> arguments = nodeFactory
+						.newSequenceNode(functionCall.getArgument(0)
+								.getSource(), "Actual Parameters",
+								new ArrayList<ExpressionNode>(0));
+
+				functionNameIdentifer.setName(FFLUSH_NEW);
+				functionCall.setArguments(arguments);
+			}
+		}
+	}
+
 	private void addFreeBeforeReturn(ASTNode node,
 			StatementNode functionCallStatement) {
 		int numChildren = node.numChildren();
@@ -391,6 +429,14 @@ public class IOWorker extends BaseWorker {
 			} else if (functionName.equals(FOPEN)) {
 				functionNameIdentifer.setName(FOPEN_NEW);
 				processFopen(functionCall);
+			} else if (functionName.equals(FFLUSH)) {
+				SequenceNode<ExpressionNode> arguments = nodeFactory
+						.newSequenceNode(functionCall.getArgument(0)
+								.getSource(), "Actual Parameters",
+								new ArrayList<ExpressionNode>(0));
+
+				functionNameIdentifer.setName(FFLUSH_NEW);
+				functionCall.setArguments(arguments);
 			}
 		}
 	}
@@ -629,15 +675,20 @@ public class IOWorker extends BaseWorker {
 
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
+		boolean hasFflush = TransformerFactory.hasFunctionCalls(unit,
+				Arrays.asList(FFLUSH));
 		boolean transformationNeeded = this.isTransformationNeeded(unit);
 		SequenceNode<ExternalDefinitionNode> rootNode = unit.getRootNode();
 
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
+
 		if (transformationNeeded) {
 			this.renameFunctionCalls(rootNode);
 			this.processFreeCall(rootNode);
+		} else if (hasFflush) {
+			this.renameFflushCalls(rootNode);
 		} else {
 			// remove nodes from stdio-c.cvl
 			removeNodes(rootNode);
@@ -645,5 +696,4 @@ public class IOWorker extends BaseWorker {
 		}
 		return astFactory.newAST(rootNode, unit.getSourceFiles());
 	}
-
 }

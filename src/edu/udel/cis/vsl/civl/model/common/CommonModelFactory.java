@@ -15,6 +15,7 @@ import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
@@ -1752,8 +1753,9 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public Model model(CIVLSource civlSource, CIVLFunction system) {
-		return new CommonModel(civlSource, this, system);
+	public Model model(CIVLSource civlSource, CIVLFunction system,
+			Program program) {
+		return new CommonModel(civlSource, this, system, program);
 	}
 
 	@Override

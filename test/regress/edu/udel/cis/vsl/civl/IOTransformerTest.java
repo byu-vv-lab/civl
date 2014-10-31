@@ -25,7 +25,7 @@ public class IOTransformerTest {
 
 	@Test
 	public void io() {
-		assertTrue(ui.run("verify", filename("io.cvl"), "-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-enablePrintf=false", filename("io.cvl")));
 	}
 
 	@Test

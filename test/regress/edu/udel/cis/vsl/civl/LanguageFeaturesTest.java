@@ -43,8 +43,8 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void arrayLiteral() throws ABCException {
-		assertTrue(ui.run("verify", filename("arrayLiteral.cvl"),
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("arrayLiteral.cvl")));
 	}
 
 	@Test
@@ -361,8 +361,8 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void functionPointer() throws ABCException {
-		assertTrue(ui.run("verify", filename("functionPointer.cvl"),
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("functionPointer.cvl")));
 	}
 
 	@Test
@@ -427,7 +427,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void comma() throws ABCException {
-		assertTrue(ui.run("verify", filename("comma.cvl"), "-inputn=5"));
+		assertTrue(ui.run("verify", "-inputn=5", filename("comma.cvl")));
 	}
 
 	@Test
@@ -437,19 +437,19 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void civlPragma() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlPragma.cvl"), "-inputNB=5"));
+		assertTrue(ui.run("verify", "-inputNB=5", filename("civlPragma.cvl")));
 	}
 
 	@Test
 	public void civlFor() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlfor.cvl"),
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("civlfor.cvl")));
 	}
 
 	@Test
 	public void civlParfor() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlParfor.cvl"),
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("civlParfor.cvl")));
 	}
 
 	@Test

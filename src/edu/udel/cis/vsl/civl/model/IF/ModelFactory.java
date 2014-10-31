@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
@@ -1299,7 +1300,7 @@ public interface ModelFactory {
 	 *            The designated outermost function, called "System."
 	 * @return A new model
 	 */
-	Model model(CIVLSource source, CIVLFunction system);
+	Model model(CIVLSource source, CIVLFunction system, Program program);
 
 	/* *********************************************************************
 	 * Other helper methods

@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -26,15 +27,27 @@ public class CompareTest {
 
 	@Test
 	public void sumN() {
-		assertTrue(ui.run("compare", "-inputN=10", filename("sumNspec.cvl"),
-				filename("sumNimpl.cvl")));
+		assertTrue(ui.run("compare", "-inputN=10", "-spec",
+				filename("sumNspec.cvl"), "-impl", filename("sumNimpl.cvl")));
 	}
 
 	@Test
 	public void adder() {
 		assertTrue(ui.run("compare", "-enablePrintf=false", "-inputNPROCSB=2",
-				"-inputNB=4", filename("adder/adder_par.cvl"),
-				filename("adder/adder_spec.cvl")));
+				"-inputNB=4", "-spec", filename("adder/adder_par.cvl"),
+				"-impl", filename("adder/adder_spec.cvl")));
+	}
+
+	@Test
+	public void max() {
+		assertFalse(ui.run("compare -inputB=4 -min -spec",
+				filename("max/max.cvl"), filename("max/max_seq.cvl"),
+				"-impl -inputNPROCS=2 -inputBLOCK_SIZE=2",
+				filename("max/max.cvl"), filename("max/max_par.cvl")));
+		assertFalse(ui.run("replay -inputB=4 -min -spec",
+				filename("max/max.cvl"), filename("max/max_seq.cvl"),
+				"-impl -inputNPROCS=2 -inputBLOCK_SIZE=2",
+				filename("max/max.cvl"), filename("max/max_par.cvl")));
 	}
 
 }

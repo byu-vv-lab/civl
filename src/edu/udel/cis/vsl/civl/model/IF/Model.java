@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -302,5 +303,7 @@ public interface Model extends Sourceable {
 	void setHasFscanf(boolean value);
 
 	boolean hasFscanf();
+
+	Program program();
 
 }

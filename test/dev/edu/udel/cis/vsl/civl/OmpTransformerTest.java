@@ -81,6 +81,7 @@ public class OmpTransformerTest {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
 			program.getAST().prettyPrint(after, true);
 		}
+		program.apply(transformerFactory.getOpenMP2CIVLTransformer());
 		if (debug) {
 			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program, true, false);
@@ -101,13 +102,13 @@ public class OmpTransformerTest {
 
 	@Test
 	public void dotProduct_critical1_run() throws ABCException, IOException {
-		assertTrue(ui.run("parse", filename("dotProduct_critical.c")));
+		assertTrue(ui.run("show", "-showModel", filename("dotProduct_critical.c")));
 	}
 
 	@Ignore
 	@Test
 	public void nested_run() throws ABCException, IOException {
-		assertTrue(ui.run("parse", filename("nested.c")));
+		assertTrue(ui.run("show", "-showModel", filename("nested.c")));
 	}
 
 	@Test

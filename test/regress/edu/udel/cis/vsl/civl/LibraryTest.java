@@ -37,8 +37,8 @@ public class LibraryTest {
 
 	@Test
 	public void printf() throws ABCException {
-		assertTrue(ui.run("verify", filename("stdio/printf.cvl"),
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("stdio/printf.cvl")));
 	}
 
 	@Test
@@ -48,9 +48,9 @@ public class LibraryTest {
 
 	@Test
 	public void communicatorFeatures() {
-		assertTrue(ui.run("verify", filename("civlc/communicatorFeatures.cvl"),
-				"-inputNPROCS_BOUND=2", "-inputN_BOUND=2",
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-inputNPROCS_BOUND=2", "-inputN_BOUND=2",
+				"-enablePrintf=false",
+				filename("civlc/communicatorFeatures.cvl")));
 	}
 
 	@Test
@@ -80,7 +80,7 @@ public class LibraryTest {
 
 	@Test
 	public void barrier() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/barrier.cvl"), "-inputB=5"));
+		assertTrue(ui.run("verify", "-inputB=5", filename("civlc/barrier.cvl")));
 	}
 
 	@Test
@@ -100,8 +100,8 @@ public class LibraryTest {
 
 	@Test
 	public void intIter() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/intIter.cvl"), "-inputB=5",
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-inputB=5", "-enablePrintf=false",
+				filename("civlc/intIter.cvl")));
 	}
 
 	@Test
@@ -146,8 +146,7 @@ public class LibraryTest {
 
 	@Test
 	public void domainDecomp() throws ABCException {
-		assertTrue(ui.run("verify", "-inputn=4",
-				filename("civlc/domainDecomposition.cvl"),
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-inputn=4", "-enablePrintf=false",
+				filename("civlc/domainDecomposition.cvl")));
 	}
 }

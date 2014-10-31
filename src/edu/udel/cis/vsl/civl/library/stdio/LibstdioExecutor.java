@@ -270,7 +270,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		this.FILEtype = (CIVLStructOrUnionType) modelFactory
 				.getSystemType(Model.FILE_STREAM_TYPE);
 		this.libevaluator = new LibstdioEvaluator(name, evaluator,
-				modelFactory, symbolicUtil, symbolicAnalyzer, this.libEvaluatorLoader);
+				modelFactory, symbolicUtil, symbolicAnalyzer,
+				this.libEvaluatorLoader);
 	}
 
 	/* ************************** Private Methods ************************** */
@@ -623,6 +624,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 					argumentValues);
 			break;
 		case "fflush":
+		case "_fflush":
 			break;
 		case "$filesystem_copy_output":
 			state = execute_filesystem_copy_output(source, state, pid, process,

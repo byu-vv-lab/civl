@@ -475,7 +475,7 @@ public class ModelBuilderWorker {
 	protected void completeModel(CIVLFunction system) {
 		boolean hasWaitall = false;
 
-		model = factory.model(system.getSource(), system);
+		model = factory.model(system.getSource(), system, this.program);
 		model.setMessageType(messageType);
 		model.setQueueType(queueType);
 		// model.setCommType(commType);

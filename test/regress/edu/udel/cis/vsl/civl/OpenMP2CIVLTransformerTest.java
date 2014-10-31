@@ -26,37 +26,37 @@ public class OpenMP2CIVLTransformerTest {
 
 	@Test
 	public void dotProduct1() {
-		assertTrue(ui.run("parse", filename("dotProduct1.c"), "-ompNoSimplify",
-				"-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("show -showMode", "-ompNoSimplify",
+				"-inputTHREAD_MAX=4", filename("dotProduct1.c")));
 	}
 
 	@Test
 	public void dotProductCritical() {
-		assertTrue(ui.run("parse", filename("dotProduct_critical.c"),
-				"-ompNoSimplify", "-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("show -showModel", "-ompNoSimplify",
+				"-inputTHREAD_MAX=4", filename("dotProduct_critical.c")));
 	}
 
 	@Test
 	public void matProduct1() {
-		assertTrue(ui.run("parse", filename("matProduct1.c"), "-ompNoSimplify",
-				"-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("show -showModel", "-ompNoSimplify",
+				"-inputTHREAD_MAX=4", filename("matProduct1.c")));
 	}
 
 	@Test
 	public void parallelfor() {
-		assertTrue(ui.run("parse", filename("parallelfor.c"), "-ompNoSimplify",
-				"-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("show -showModel", "-ompNoSimplify",
+				"-inputTHREAD_MAX=4", filename("parallelfor.c")));
 	}
 
 	@Test
 	public void raceCond1() {
-		assertTrue(ui.run("parse", filename("raceCond1.c"), "-ompNoSimplify",
-				"-inputTHREAD_MAX=4"));
+		assertTrue(ui.run("show -showModel", "-ompNoSimplify",
+				"-inputTHREAD_MAX=4", filename("raceCond1.c")));
 	}
 
 	@Test
 	public void canonicalForLoops() {
-		assertTrue(ui.run("verify", filename("canonicalForLoops.c"),
-				"-ompNoSimplify", "-inputTHREAD_MAX=2"));
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+				filename("canonicalForLoops.c")));
 	}
 }

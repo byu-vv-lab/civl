@@ -10,5 +10,7 @@
 #include<stdio-common.h>
 #include<stdio-c.cvl>
 
+void _fflush(void);
+
 #endif
 
