@@ -2,7 +2,7 @@
 # our server for all tests. If the environment of vsl is
 # changed, then this file need to be updated accordingly.
 root=/opt/vsl
-workspace=/home/svn/work
+workspace=/home/svn/work/trunk/latest
 hamcrest.jar=${root}/lib/hamcrest-core.jar
 jacoco.jar=${root}/src/jacoco/lib/jacocoant.jar
 junit.jar=${root}/lib/junit.jar
