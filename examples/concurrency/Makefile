@@ -7,14 +7,14 @@ all: adder adderBad bank barrier barrier2 \
 	spawn spawn2 spawnBad
 
 adder: adder.cvl
-	$(VERIFY) adder.cvl -inputB=5
+	$(VERIFY) -inputB=5 adder.cvl
 
 adderBad: adderBad.cvl
-	$(VERIFY) adderBad.cvl -inputB=4 -min
+	$(VERIFY) -inputB=4 -min adderBad.cvl
 	$(CIVL) replay adderBad.cvl
 
 bank: bank.cvl
-	$(VERIFY) bank.cvl -inputNUM_ACCOUNTS=3
+	$(VERIFY) -inputNUM_ACCOUNTS=3 bank.cvl
 
 barrier: barrier.cvl
 	$(VERIFY) -inputB=4 barrier.cvl
@@ -25,22 +25,22 @@ barrier2: barrier2.cvl
 # Two kinds of violations are found in the following:
 # a deadlock, and an assertion violation:
 barrierBad: barrierBad.cvl
-	$(VERIFY) -inputB=4 barrierBad.cvl -min
-	$(CIVL) replay barrierBad.cvl -id=0
-	$(CIVL) replay barrierBad.cvl -id=1
+	$(VERIFY) -inputB=4 -min barrierBad.cvl 
+	$(CIVL) replay -id=0 barrierBad.cvl 
+	$(CIVL) replay -id=1 barrierBad.cvl
 
 blockAdder: blockAdder.cvl
 	$(VERIFY) -inputB=6 -inputW=3 blockAdder.cvl
 
 blockAdderBad: blockAdderBad.cvl
-	$(VERIFY) -inputB=6 -inputW=3 blockAdderBad.cvl -min
+	$(VERIFY) -inputB=6 -inputW=3 -min blockAdderBad.cvl
 	$(CIVL) replay blockAdderBad.cvl
 
 dining: dining.cvl
 	$(VERIFY) -inputB=4 dining.cvl
 
 diningBad:
-	$(VERIFY) -inputB=4 diningBad.cvl -min
+	$(VERIFY) -inputB=4 -min diningBad.cvl
 	$(CIVL) replay diningBad.cvl
 
 locksBad: locksBad.cvl
@@ -53,13 +53,13 @@ locksGood: locksGood.cvl
 	$(VERIFY) locksGood.cvl
 	
 spawn: spawn.cvl
-	$(VERIFY) spawn.cvl -inputN=10
+	$(VERIFY) -inputN=10 spawn.cvl 
 	
 spawn2: spawn2.cvl
-	$(VERIFY) spawn2.cvl -inputN=10
+	$(VERIFY) -inputN=10 spawn2.cvl
 
 spawnBad: spawnBad.cvl
-	$(VERIFY) spawnBad.cvl -inputN=10
+	$(VERIFY) -inputN=10 spawnBad.cvl
 
 clean:
 	rm -rf CIVLREP *~

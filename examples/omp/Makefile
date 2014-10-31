@@ -14,4 +14,4 @@ fig3.10-mxv-omp: fig3.10-mxv-omp.cvl
 	civl verify fig3.10-mxv-omp.cvl
 
 canonical-for: canonicalForLoops.c
-	civl verify canonicalForLoops.c -ompNoSimplify -inputTHREAD_MAX=2 
+	civl verify -ompNoSimplify -inputTHREAD_MAX=2  canonicalForLoops.c

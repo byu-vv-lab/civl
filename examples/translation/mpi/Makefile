@@ -5,7 +5,7 @@ CC = cc
 all: adder_par ring1 mpithreads_mpi mpi_pi_send mpi_prime
 
 adder_par: adder_par.c
-	$(VERIFY) -input__NPROCS=2 adder_par.c -inputNB=4
+	$(VERIFY) -input__NPROCS=2 -inputNB=4 adder_par.c
 
 ring1: ring1.c
 	$(VERIFY) -input__NPROCS=5 ring1.c

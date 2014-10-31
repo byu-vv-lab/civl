@@ -29,10 +29,10 @@ laplace: laplace.cvl
 	$(VERIFY) laplace.cvl
 	
 matmat: matmat.cvl
-	$(VERIFY) matmat.cvl -inputBOUND=3
+	$(VERIFY) -inputBOUND=3 matmat.cvl
 
 matmatBad: matmatBad.cvl
-	$(VERIFY) -min matmatBad.cvl -inputBOUND=3
+	$(VERIFY) -min -inputBOUND=3 matmatBad.cvl
 	$(CIVL) replay matmatBad.cvl
 	
 mean: mean.cvl

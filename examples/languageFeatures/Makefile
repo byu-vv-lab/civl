@@ -29,10 +29,10 @@ atomicBlockedResume: atomicBlockedResume.cvl
 	$(VERIFY) atomicBlockedResume.cvl
 	
 atomicStatement: atomicStatement.cvl
-	$(VERIFY) atomicStatement.cvl -inputB=3
+	$(VERIFY) -inputB=3 atomicStatement.cvl
 	
 atomicWait: atomicWait.cvl
-	$(VERIFY) atomicWait.cvl -inputN=3 
+	$(VERIFY) -inputN=3  atomicWait.cvl
 	
 atomStatement: atomStatement.cvl
 	$(VERIFY) atomStatement.cvl
