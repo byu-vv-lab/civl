@@ -87,8 +87,8 @@ public class Verifier extends Player {
 		}
 
 		private void print(boolean isFinal) {
-			long time = (long) Math
-					.ceil((System.currentTimeMillis() - startTime) / 1000.0);
+			double time = Math
+					.ceil((System.currentTimeMillis() - startTime) / 100.0) / 10.0;
 			long megabytes = (long) (((double) Runtime.getRuntime()
 					.totalMemory()) / (double) 1048576.0);
 			File file;
@@ -115,6 +115,8 @@ public class Verifier extends Player {
 						+ " ,");
 				out.println("\"prove\" : "
 						+ modelFactory.universe().numProverValidCalls() + " ,");
+				out.println("\"counterexample\" : "
+						+ log.getMinimalCounterexampleSize() + ",");
 				out.println("\"isFinal\" : " + isFinal);
 				out.println("}");
 				out.flush();
@@ -279,17 +281,22 @@ public class Verifier extends Player {
 				while (true) {
 					boolean workRemains;
 
-					if (violationFound)
+					if (violationFound) {
+						// may throw ExcessiveErrorException...
 						workRemains = searcher.proceedToNewState() ? searcher
 								.search() : false;
-					else
+					} else {
+						// may throw ExcessiveErrorException...
 						workRemains = searcher.search(initialState);
+					}
 					if (!workRemains)
 						break;
-					// TODO get rid of using log
-					log.report(new CIVLLogEntry(config, predicate
-							.getViolation()));
 					violationFound = true;
+
+					CIVLLogEntry entry = new CIVLLogEntry(config,
+							predicate.getViolation());
+
+					log.report(entry); // may throw ExcessiveErrorException
 				}
 			} catch (ExcessiveErrorException e) {
 				violationFound = true;

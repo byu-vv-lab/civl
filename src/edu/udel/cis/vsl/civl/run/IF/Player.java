@@ -35,7 +35,6 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.States;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.EnablerIF;
-import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
@@ -58,8 +57,6 @@ public abstract class Player {
 	protected ModelFactory modelFactory;
 
 	protected StateFactory stateFactory;
-
-	protected ErrorLog log;
 
 	protected Evaluator evaluator;
 
@@ -95,7 +92,7 @@ public abstract class Player {
 
 	protected SymbolicAnalyzer symbolicAnalyzer;
 
-	protected CIVLErrorLogger errorLogger;
+	protected CIVLErrorLogger log;
 
 	protected CIVLConfiguration civlConfig;
 
@@ -114,9 +111,10 @@ public abstract class Player {
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
 		this.solve = (Boolean) config.getValueOrDefault(solveO);
-		this.log = new ErrorLog(new File("CIVLREP"), sessionName, out);
-		this.log.setErrorBound((int) config.getValueOrDefault(errorBoundO));
-		this.errorLogger = new CIVLErrorLogger(config, log, universe, solve);
+		this.log = new CIVLErrorLogger(new File("CIVLREP"),
+				sessionName, out, config, universe, solve);
+		this.log.setErrorBound((int) config
+				.getValueOrDefault(errorBoundO));
 		this.symbolicUtil = Dynamics.newSymbolicUtility(universe, modelFactory);
 		this.stateFactory = States.newImmutableStateFactory(modelFactory,
 				symbolicUtil, config);
@@ -125,13 +123,13 @@ public abstract class Player {
 				modelFactory, symbolicUtil);
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
 				libraryEvaluatorLoader, symbolicUtil, symbolicAnalyzer,
-				errorLogger);
+				log);
 		this.gui = (Boolean) config.getValueOrDefault(guiO);
 		this.libraryExecutorLoader = Semantics
 				.newLibraryExecutorLoader(this.libraryEvaluatorLoader);
-		this.executor = Semantics.newExecutor(modelFactory, stateFactory, log,
-				libraryExecutorLoader, evaluator, symbolicAnalyzer,
-				errorLogger, civlConfig);
+		this.executor = Semantics.newExecutor(modelFactory, stateFactory,
+				log, libraryExecutorLoader, evaluator,
+				symbolicAnalyzer, log, civlConfig);
 		this.random = config.isTrue(randomO);
 		this.minimize = config.isTrue(minO);
 		this.maxdepth = (int) config.getValueOrDefault(maxdepthO);
@@ -139,11 +137,11 @@ public abstract class Player {
 		this.libraryEnablerLoader = Kripkes
 				.newLibraryEnablerLoader(this.libraryEvaluatorLoader);
 		enabler = Kripkes.newEnabler(stateFactory, evaluator, symbolicAnalyzer,
-				this.libraryEnablerLoader, errorLogger, civlConfig);
+				this.libraryEnablerLoader, log, civlConfig);
 		this.predicate = new StandardPredicate(log, universe,
 				(Enabler) this.enabler, symbolicAnalyzer);
 		stateManager = Kripkes.newStateManager((Enabler) enabler, executor,
-				symbolicAnalyzer, errorLogger, civlConfig);
+				symbolicAnalyzer, log, civlConfig);
 	}
 
 	public void printResult() {

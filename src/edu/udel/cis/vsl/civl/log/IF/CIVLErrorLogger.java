@@ -1,6 +1,8 @@
 package edu.udel.cis.vsl.civl.log.IF;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
@@ -10,6 +12,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.gmc.ErrorLog;
+import edu.udel.cis.vsl.gmc.ExcessiveErrorException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.ModelResult;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -26,14 +29,9 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Manchun Zheng
  * 
  */
-public class CIVLErrorLogger {
+public class CIVLErrorLogger extends ErrorLog {
 
 	private GMCConfiguration config;
-
-	/**
-	 * The error logging facility.
-	 */
-	private ErrorLog log;
 
 	/**
 	 * The unique symbolic universe used in the system.
@@ -51,9 +49,9 @@ public class CIVLErrorLogger {
 	 */
 	private boolean solve = false;
 
-	public CIVLErrorLogger(GMCConfiguration config, ErrorLog log,
-			SymbolicUniverse universe, boolean solve) {
-		this.log = log;
+	public CIVLErrorLogger(File directory, String sessionName, PrintStream out,
+			GMCConfiguration config, SymbolicUniverse universe, boolean solve) {
+		super(directory, sessionName, out);
 		this.config = config;
 		this.universe = universe;
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
@@ -82,8 +80,6 @@ public class CIVLErrorLogger {
 	 * 
 	 * Returns the state obtained by adding the claim to the pc of the given
 	 * state.
-	 * 
-	 * TODO: move this to its own package, like log, make public
 	 * 
 	 */
 	public State logError(CIVLSource source, State state, String process,
@@ -148,10 +144,13 @@ public class CIVLErrorLogger {
 	 * 
 	 * @param err
 	 *            a CIVL execution exception
+	 * @throws ExcessiveErrorException
+	 *             if the number of errors reported has exceeded the specified
+	 *             bound
 	 */
 	public void reportError(CIVLExecutionException err) {
 		try {
-			log.report(new CIVLLogEntry(config, err));
+			report(new CIVLLogEntry(config, err));
 		} catch (FileNotFoundException e) {
 			throw new CIVLException(e.toString(), err.getSource());
 		}
