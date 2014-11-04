@@ -709,6 +709,20 @@ public class MPI2CIVLWorker extends BaseWorker {
 		// return upperBoundAssumption(NPROCS, NPROCS_UPPER_BOUND);
 	}
 
+	private VariableDeclarationNode get_NPROCS_declaration(ASTNode root) {
+		for (ASTNode node : root.children()) {
+			if (node != null
+					&& node.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
+				VariableDeclarationNode varNode = (VariableDeclarationNode) node;
+
+				if (varNode.getName().equals(NPROCS)) {
+					return varNode;
+				}
+			}
+		}
+		return null;
+	}
+
 	/* ********************* Methods From BaseTransformer ****************** */
 
 	/**
@@ -784,7 +798,6 @@ public class MPI2CIVLWorker extends BaseWorker {
 		FunctionDefinitionNode mpiProcess, mainFunction;
 		VariableDeclarationNode gcommWorld;
 		List<ExternalDefinitionNode> externalList;
-		VariableDeclarationNode nprocsVar;
 		VariableDeclarationNode nprocsUpperBoundVar = null, nprocsLowerBoundVar = null;
 		SequenceNode<ExternalDefinitionNode> newRootNode;
 		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
@@ -792,38 +805,45 @@ public class MPI2CIVLWorker extends BaseWorker {
 		int count;
 		AssumeNode nprocsAssumption = null;
 		Triple<FunctionDefinitionNode, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> result;
+		VariableDeclarationNode nprocsVar= this.get_NPROCS_declaration(root);
+		// boolean hasNPROCS = (nprocsVar != null);
 
 		assert this.astFactory == ast.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();
 		// change MPI_Init(...) to _MPI_Init();
 		preprocessASTNode(root);
-		// declaring $input int NPROCS;
-		nprocsVar = this.nprocsDeclaration();
-		// declaring $input int NPROCS_UPPER_BOUND;
-		// if (!this.inputVariableNames.contains(NPROCS)
-		// && this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
-		nprocsUpperBoundVar = this.basicTypeVariableDeclaration(
-				BasicTypeKind.INT, NPROCS_UPPER_BOUND);
-		nprocsUpperBoundVar.getTypeNode().setInputQualified(true);
-		// }
-		// if (!this.inputVariableNames.contains(NPROCS)
-		// && this.inputVariableNames.contains(NPROCS_LOWER_BOUND)) {
-		// declaring $input int NPROCS_LOWER_BOUND;
-		nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
-				BasicTypeKind.INT, NPROCS_LOWER_BOUND);
-		nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
-		// }
-		// if (!this.inputVariableNames.contains(NPROCS)
-		// && !this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
-		// throw new SyntaxException(
-		// "Please specify the number of processes (e.g., -input__NPROCS=5)"
-		// +
-		// "or the upper bound of number of processes (e.g. -input__NPROCS_UPPER_BOUND=6)",
-		// source);// TODO improve messages with pragma.
-		// }
-		// assuming NPROCS_LOWER_BOUND < NPROCS && NPROCS <= NPROCS_UPPER_BOUND
-		nprocsAssumption = this.nprocsAssumption();
+		if (nprocsVar == null) {
+			// declaring $input int NPROCS;
+			nprocsVar = this.nprocsDeclaration();
+			// declaring $input int NPROCS_UPPER_BOUND;
+			// if (!this.inputVariableNames.contains(NPROCS)
+			// && this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
+			nprocsUpperBoundVar = this.basicTypeVariableDeclaration(
+					BasicTypeKind.INT, NPROCS_UPPER_BOUND);
+			nprocsUpperBoundVar.getTypeNode().setInputQualified(true);
+			// }
+			// if (!this.inputVariableNames.contains(NPROCS)
+			// && this.inputVariableNames.contains(NPROCS_LOWER_BOUND)) {
+			// declaring $input int NPROCS_LOWER_BOUND;
+			nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
+					BasicTypeKind.INT, NPROCS_LOWER_BOUND);
+			nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
+			// }
+			// if (!this.inputVariableNames.contains(NPROCS)
+			// && !this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
+			// throw new SyntaxException(
+			// "Please specify the number of processes (e.g., -input__NPROCS=5)"
+			// +
+			// "or the upper bound of number of processes (e.g. -input__NPROCS_UPPER_BOUND=6)",
+			// source);// TODO improve messages with pragma.
+			// }
+			// assuming NPROCS_LOWER_BOUND < NPROCS && NPROCS <=
+			// NPROCS_UPPER_BOUND
+			nprocsAssumption = this.nprocsAssumption();
+		}else{
+			nprocsVar.parent().removeChild(nprocsVar.childIndex());
+		}
 		// declaring $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);
 		gcommWorld = this.gcommDeclaration();
 		result = this.mpiProcess(root);
