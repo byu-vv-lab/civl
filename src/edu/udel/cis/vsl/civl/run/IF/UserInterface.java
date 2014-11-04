@@ -97,7 +97,6 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.gmc.MisguidedExecutionException;
 import edu.udel.cis.vsl.gmc.Option;
 import edu.udel.cis.vsl.gmc.Trace;
-import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
@@ -484,16 +483,16 @@ public class UserInterface {
 
 	private boolean runVerify(ModelTranslator modelTranslator)
 			throws CommandLineException, ABCException, IOException {
-		SymbolicUniverse universe = SARL.newStandardUniverse();
+		// SymbolicUniverse universe = SARL.newStandardUniverse();
 		boolean result;
 		Model model;
 		Verifier verifier;
 		boolean showShortFileName = showShortFileNameList(modelTranslator.cmdConfig);
 
 		if (modelTranslator.cmdConfig.isTrue(showProverQueriesO))
-			universe.setShowProverQueries(true);
+			modelTranslator.universe.setShowProverQueries(true);
 		if (modelTranslator.cmdConfig.isTrue(showQueriesO))
-			universe.setShowQueries(true);
+			modelTranslator.universe.setShowQueries(true);
 		// checkFilenames(1, modelTranslator.cmdConfig);
 		model = modelTranslator.translate();
 		if (modelTranslator.config.web())
@@ -520,7 +519,7 @@ public class UserInterface {
 				verifier.terminateUpdater();
 				throw e;
 			}
-			printStats(out, universe);
+			printStats(out, modelTranslator.universe);
 			verifier.printStats();
 			out.println();
 			verifier.printResult();
