@@ -108,12 +108,12 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name used for renaming the main function of the original MPI program.
 	 */
-	private static String MPI_MAIN = "__main";
+	private static String MPI_MAIN = "_main";
 
 	/**
 	 * The name of the parameter of a MPI procedure.
 	 */
-	private static String MPI_RANK = "__rank";
+	private static String MPI_RANK = "_rank";
 
 	/**
 	 * The name of the function MPI_Init in the original MPI program.
@@ -141,7 +141,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the variable representing the status of an MPI process, which
 	 * is modified by MPI_Init() and MPI_Finalized().
 	 */
-	private static String MPI_STATUS = "__my_status";
+	private static String MPI_STATUS = "_my_status";
 
 	/**
 	 * The name of the MPI procedure in the final CIVL-C program.
@@ -152,25 +152,25 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the input variable denoting the number of MPI processes in
 	 * the final CIVL-C program.
 	 */
-	private static String NPROCS = "__NPROCS";
+	private static String NPROCS = "_NPROCS";
 
 	/**
 	 * The name of the input variable denoting the upper bound of the number of
 	 * MPI processes in the final CIVL-C program.
 	 */
-	private static String NPROCS_UPPER_BOUND = "__NPROCS_UPPER_BOUND";
+	private static String NPROCS_UPPER_BOUND = "_NPROCS_UPPER_BOUND";
 
 	/**
 	 * The name of the input variable denoting the lower bound of the number of
 	 * MPI processes in the final CIVL-C program.
 	 */
-	private static String NPROCS_LOWER_BOUND = "__NPROCS_LOWER_BOUND";
+	private static String NPROCS_LOWER_BOUND = "_NPROCS_LOWER_BOUND";
 
 	/**
 	 * The name of the variable used to declare the array of references to all
 	 * MPI processes in the final CIVL-C program.
 	 */
-	private static String PROCS = "__procs";
+	private static String PROCS = "_procs";
 
 	/**
 	 * The name of the function $wait() in the final CIVL-C program.
