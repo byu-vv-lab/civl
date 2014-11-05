@@ -1656,7 +1656,7 @@ public class CommonEvaluator implements Evaluator {
 			StringObject nameObj;
 
 			if (variable.scope().id() == 0 && variable.isInput())
-				name = "I" + vid;
+				name = "X" + vid;
 			else
 				name = "X_s" + dyscopeId + "v" + vid;
 			nameObj = universe.stringObject(name);

@@ -848,6 +848,12 @@ public class FunctionTranslator {
 		}
 		loopEntranceLocation = modelFactory.location(condition.getSource(),
 				loopScope);
+		// the loop entrance location is the same as the loop exit location
+		loopExit = new CommonFragment(modelFactory.loopBranchStatement(
+				condition.getSource(), loopEntranceLocation, modelFactory
+						.unaryExpression(condition.getSource(),
+								UNARY_OPERATOR.NOT, condition), false));
+		// incrementer comes after the loop body
 		loopEntrance = new CommonFragment(loopEntranceLocation,
 				modelFactory.loopBranchStatement(condition.getSource(),
 						loopEntranceLocation, condition, true));
@@ -870,12 +876,6 @@ public class FunctionTranslator {
 			s.setTarget(continueLocation);
 		}
 		// loopEntrance.startLocation().setLoopPossible(true);
-		// the loop entrance location is the same as the loop exit location
-		loopExit = new CommonFragment(modelFactory.loopBranchStatement(
-				condition.getSource(), loopEntranceLocation, modelFactory
-						.unaryExpression(condition.getSource(),
-								UNARY_OPERATOR.NOT, condition), false));
-		// incrementer comes after the loop body
 		if (incrementer != null)
 			loopBody = loopBody.combineWith(incrementer);
 		// loop entrance comes before the loop body, P.S. loopExit is "combined"
