@@ -709,17 +709,44 @@ public class MPI2CIVLWorker extends BaseWorker {
 		// return upperBoundAssumption(NPROCS, NPROCS_UPPER_BOUND);
 	}
 
-	private VariableDeclarationNode get_NPROCS_declaration(ASTNode root) {
+	// private VariableDeclarationNode get_NPROCS_declaration(ASTNode root) {
+	// for (ASTNode node : root.children()) {
+	// if (node != null
+	// && node.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
+	// VariableDeclarationNode varNode = (VariableDeclarationNode) node;
+	//
+	// if (varNode.getName().equals(NPROCS)) {
+	// return varNode;
+	// }
+	// }
+	// }
+	// return null;
+	// }
+
+	private VariableDeclarationNode getVariabledeclaration(ASTNode root,
+			String name) {
 		for (ASTNode node : root.children()) {
 			if (node != null
 					&& node.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 				VariableDeclarationNode varNode = (VariableDeclarationNode) node;
 
-				if (varNode.getName().equals(NPROCS)) {
+				if (varNode.getName().equals(name)) {
 					return varNode;
 				}
 			}
 		}
+		// while (root.iterator().hasNext()) {
+		// ExternalDefinitionNode node = root.iterator().next();
+		//
+		// if (node != null
+		// && node.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
+		// VariableDeclarationNode varNode = (VariableDeclarationNode) node;
+		//
+		// if (varNode.getName().equals(name)) {
+		// return varNode;
+		// }
+		// }
+		// }
 		return null;
 	}
 
@@ -798,16 +825,20 @@ public class MPI2CIVLWorker extends BaseWorker {
 		FunctionDefinitionNode mpiProcess, mainFunction;
 		VariableDeclarationNode gcommWorld;
 		List<ExternalDefinitionNode> externalList;
-		VariableDeclarationNode nprocsUpperBoundVar = null, nprocsLowerBoundVar = null;
 		SequenceNode<ExternalDefinitionNode> newRootNode;
 		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> mainParameters = new ArrayList<>();
 		int count;
 		AssumeNode nprocsAssumption = null;
 		Triple<FunctionDefinitionNode, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> result;
-		VariableDeclarationNode nprocsVar= this.get_NPROCS_declaration(root);
-		// boolean hasNPROCS = (nprocsVar != null);
+		VariableDeclarationNode nprocsVar = this.getVariabledeclaration(root,
+				NPROCS);
+		VariableDeclarationNode nprocsUpperBoundVar = this
+				.getVariabledeclaration(root, NPROCS_UPPER_BOUND);
+		VariableDeclarationNode nprocsLowerBoundVar = this
+				.getVariabledeclaration(root, NPROCS_LOWER_BOUND);
 
+		// boolean hasNPROCS = (nprocsVar != null);
 		assert this.astFactory == ast.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();
@@ -819,16 +850,26 @@ public class MPI2CIVLWorker extends BaseWorker {
 			// declaring $input int NPROCS_UPPER_BOUND;
 			// if (!this.inputVariableNames.contains(NPROCS)
 			// && this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
-			nprocsUpperBoundVar = this.basicTypeVariableDeclaration(
-					BasicTypeKind.INT, NPROCS_UPPER_BOUND);
-			nprocsUpperBoundVar.getTypeNode().setInputQualified(true);
+			if (nprocsUpperBoundVar == null) {
+				nprocsUpperBoundVar = this.basicTypeVariableDeclaration(
+						BasicTypeKind.INT, NPROCS_UPPER_BOUND);
+				nprocsUpperBoundVar.getTypeNode().setInputQualified(true);
+			} else {
+				nprocsUpperBoundVar.parent().removeChild(
+						nprocsUpperBoundVar.childIndex());
+			}
 			// }
 			// if (!this.inputVariableNames.contains(NPROCS)
 			// && this.inputVariableNames.contains(NPROCS_LOWER_BOUND)) {
 			// declaring $input int NPROCS_LOWER_BOUND;
-			nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
-					BasicTypeKind.INT, NPROCS_LOWER_BOUND);
-			nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
+			if (nprocsLowerBoundVar == null) {
+				nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
+						BasicTypeKind.INT, NPROCS_LOWER_BOUND);
+				nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
+			} else {
+				nprocsLowerBoundVar.parent().removeChild(
+						nprocsLowerBoundVar.childIndex());
+			}
 			// }
 			// if (!this.inputVariableNames.contains(NPROCS)
 			// && !this.inputVariableNames.contains(NPROCS_UPPER_BOUND)) {
@@ -841,7 +882,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 			// assuming NPROCS_LOWER_BOUND < NPROCS && NPROCS <=
 			// NPROCS_UPPER_BOUND
 			nprocsAssumption = this.nprocsAssumption();
-		}else{
+		} else {
 			nprocsVar.parent().removeChild(nprocsVar.childIndex());
 		}
 		// declaring $gcomm GCOMM_WORLD = $gcomm_create($here, NPROCS);
