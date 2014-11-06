@@ -418,7 +418,7 @@ public class ModelTranslator {
 		AST ast;
 
 		if (config.debugOrVerbose()) {
-			out.println("Parsing " + tokenSource);
+			out.println("Generating AST for " + tokenSource);
 			out.println();
 			out.flush();
 		}
