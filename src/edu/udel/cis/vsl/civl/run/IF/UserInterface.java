@@ -34,6 +34,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showProverQueriesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showQueriesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showSavedStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showStatesO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTimeO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
@@ -160,13 +161,13 @@ public class UserInterface {
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
 				svcompO, showInputVarsO, showProgramO, showPathConditionO,
 				ompNoSimplifyO, collectProcessesO, collectScopesO,
-				collectHeapsO, linkO, webO, macroO, preprocO, astO);
+				collectHeapsO, linkO, webO, macroO, preprocO, astO, showTimeO);
 
 		for (Option option : options)
 			definedOptions.put(option.name(), option);
 		CIVLCommand.addShowOption(showModelO, verboseO, debugO, echoO,
 				userIncludePathO, sysIncludePathO, svcompO, showInputVarsO,
-				showProgramO, ompNoSimplifyO, macroO, preprocO, astO);
+				showProgramO, ompNoSimplifyO, macroO, preprocO, astO, showTimeO);
 		CIVLCommand.addVerifyOrCompareOption(errorBoundO, verboseO, debugO,
 				echoO, userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
@@ -175,7 +176,7 @@ public class UserInterface {
 				showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcompO,
 				showProgramO, showPathConditionO, ompNoSimplifyO,
 				collectProcessesO, collectScopesO, collectHeapsO, macroO,
-				preprocO, astO);
+				preprocO, astO, showTimeO);
 		CIVLCommand.addReplayOption(showModelO, verboseO, debugO, echoO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,

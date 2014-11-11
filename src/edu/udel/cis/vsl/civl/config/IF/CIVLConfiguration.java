@@ -31,6 +31,7 @@ public class CIVLConfiguration {
 	private boolean web = false;
 	private boolean showPreproc = false;
 	private boolean showInputVars = false;
+	private boolean showTime = false;
 
 	public CIVLConfiguration(GMCConfiguration config) {
 		this.debug = config.isTrue(CIVLConstants.debugO);
@@ -58,6 +59,7 @@ public class CIVLConfiguration {
 		this.setShowAST(config.isTrue(CIVLConstants.astO));
 		this.setShowModel(config.isTrue(CIVLConstants.showModelO));
 		this.showInputVars = config.isTrue(CIVLConstants.showInputVarsO);
+		this.showTime = config.isTrue(CIVLConstants.showTimeO);
 	}
 
 	public void setOut(PrintStream out) {
@@ -274,5 +276,13 @@ public class CIVLConfiguration {
 
 	public void setShowInputVars(boolean showInputVars) {
 		this.showInputVars = showInputVars;
+	}
+
+	public boolean showTime() {
+		return showTime;
+	}
+
+	public void setShowTime(boolean showTime) {
+		this.showTime = showTime;
 	}
 }

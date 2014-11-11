@@ -134,6 +134,7 @@ OPTION_NAME
     | '-showQueries'
     | '-showSavedStates'
     | '-showStates'
+    | '-showTime'
     | '-showTransitions'
     | '-simplify'
     | '-solve'

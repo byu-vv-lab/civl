@@ -93,8 +93,8 @@ public class CIVLConstants {
 	public final static Option seedO = Option.newScalarOption("seed", STRING,
 			"set the random seed; applies only to run", null);
 
-	public final static Option astO = Option.newScalarOption("ast",
-			BOOLEAN, "print the AST of the program", false);
+	public final static Option astO = Option.newScalarOption("ast", BOOLEAN,
+			"print the AST of the program", false);
 
 	public final static Option showAmpleSetO = Option.newScalarOption(
 			"showAmpleSet", BOOLEAN,
@@ -123,6 +123,9 @@ public class CIVLConstants {
 
 	public final static Option showStatesO = Option.newScalarOption(
 			"showStates", BOOLEAN, "print all states", false);
+
+	public final static Option showTimeO = Option.newScalarOption("showTime",
+			BOOLEAN, "print timings", false);
 
 	public final static Option showTransitionsO = Option.newScalarOption(
 			"showTransitions", BOOLEAN, "print transitions", false);
@@ -162,8 +165,8 @@ public class CIVLConstants {
 			.newScalarOption("showInputs", BOOLEAN,
 					"show input variables of my program?", false);
 
-	public final static Option preprocO = Option.newScalarOption(
-			"preproc", BOOLEAN, "show the preprocessing result?", false);
+	public final static Option preprocO = Option.newScalarOption("preproc",
+			BOOLEAN, "show the preprocessing result?", false);
 
 	public final static Option showProgramO = Option.newScalarOption(
 			"showProgram", BOOLEAN, "show my program after transformations?",
@@ -234,6 +237,7 @@ public class CIVLConstants {
 		outputs.add(CIVLConstants.verboseO);
 		outputs.add(CIVLConstants.ompNoSimplifyO);
 		outputs.add(CIVLConstants.webO);
+		outputs.add(CIVLConstants.showTimeO);
 		return outputs.toArray(new Option[numOpts]);
 	}
 }
