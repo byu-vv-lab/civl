@@ -165,9 +165,11 @@ public class UserInterface {
 
 		for (Option option : options)
 			definedOptions.put(option.name(), option);
-		CIVLCommand.addShowOption(showModelO, verboseO, debugO, echoO,
-				userIncludePathO, sysIncludePathO, svcompO, showInputVarsO,
-				showProgramO, ompNoSimplifyO, macroO, preprocO, astO, showTimeO);
+		CIVLCommand
+				.addShowOption(showModelO, verboseO, debugO, echoO,
+						userIncludePathO, sysIncludePathO, svcompO,
+						showInputVarsO, showProgramO, ompNoSimplifyO, macroO,
+						preprocO, astO, showTimeO);
 		CIVLCommand.addVerifyOrCompareOption(errorBoundO, verboseO, debugO,
 				echoO, userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
@@ -464,10 +466,9 @@ public class UserInterface {
 
 		model = modelTranslator.translate();
 		if (model != null) {
-
 			if (showShortFileNameList(modelTranslator.cmdConfig))
 				modelTranslator.preprocessor.printSourceFiles(out);
-			modelTranslator.cmdConfig.setScalarValue(showTransitionsO, true);
+			// modelTranslator.cmdConfig.setScalarValue(showTransitionsO, true);
 			player = TracePlayer.randomPlayer(modelTranslator.cmdConfig, model,
 					out, err, modelTranslator.preprocessor);
 			out.println("\nRunning random simulation with seed "

@@ -96,7 +96,8 @@ public class TracePlayer extends Player {
 		// civlConfig.setShowStates(false);
 		civlConfig.setShowSavedStates(config
 				.isTrue(CIVLConstants.showSavedStatesO));
-		civlConfig.setShowTransitions(true);
+		if (config.getValue(CIVLConstants.showTransitionsO) == null)
+			civlConfig.setShowTransitions(true);
 		civlConfig.setVerbose(false);
 		log.setSearcher(null);
 		replayer = new Replayer<State, Transition>(stateManager, out);
@@ -126,7 +127,7 @@ public class TracePlayer extends Player {
 		try {
 			State initialState = stateFactory.initialState(model);
 			Trace<Transition, State> trace = replayer.play(initialState,
-					chooser)[0];
+					chooser, this.civlConfig.showTransitions())[0];
 			boolean violation = trace.violation();
 
 			violation = violation || log.numErrors() > 0;
