@@ -92,7 +92,7 @@ public class CommonVariableExpression extends CommonExpression implements
 	public Variable variableWritten(Scope scope) {
 		Scope vScope = variable.scope();
 
-		if (variable.isConst())
+		if (variable.isConst() || variable.isInput())
 			return null;
 		if (scope.equals(vScope) || scope.isDescendantOf(vScope))
 			return variable;
@@ -101,7 +101,7 @@ public class CommonVariableExpression extends CommonExpression implements
 
 	@Override
 	public Variable variableWritten() {
-		if (variable.isConst())
+		if (variable.isConst() || variable.isInput())
 			return null;
 		return variable;
 	}
