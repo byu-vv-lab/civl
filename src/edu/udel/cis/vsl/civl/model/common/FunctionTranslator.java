@@ -490,8 +490,12 @@ public class FunctionTranslator {
 					(CompoundStatementNode) statementNode);
 			break;
 		case EXPRESSION:
-			result = translateExpressionStatementNode(scope,
-					((ExpressionStatementNode) statementNode).getExpression());
+			if (((ExpressionStatementNode) statementNode).getExpression() == null)
+				result = new CommonFragment();
+			else
+				result = translateExpressionStatementNode(scope,
+						((ExpressionStatementNode) statementNode)
+								.getExpression());
 			break;
 		// case FOR:
 		// result = translateForLoopNode(scope, (ForLoopNode) statementNode);

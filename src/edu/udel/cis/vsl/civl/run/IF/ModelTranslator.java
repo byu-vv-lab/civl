@@ -96,26 +96,26 @@ public class ModelTranslator {
 		List<AST> asts = null;
 		Program program = null;
 		long startTime, endTime;
-		double totalTime;
+		long totalTime;
 
 		startTime = System.currentTimeMillis();
 		tokenSources = this.preprocess();
 		endTime = System.currentTimeMillis();
 		if (config.showTime()) {
-			totalTime = (endTime - startTime) / 1000;
+			totalTime = (endTime - startTime);// / 1000;
 			out.println(totalTime
-					+ "s:\tSUMARRY ANTLR preprocessor parsing to form preproc tree for "
+					+ "ms:\tSUMARRY ANTLR preprocessor parsing to form preproc tree for "
 					+ tokenSources.length + " translation units");
 		}
 		if (tokenSources != null) {
-			startTime = System.currentTimeMillis();
+			// startTime = System.currentTimeMillis();
 			asts = this.parseTokens(tokenSources);
-			endTime = System.currentTimeMillis();
-			if (config.showTime()) {
-				totalTime = (endTime - startTime) / 1000;
-				out.println(totalTime + "s:\tSUMARRY parsing "
-						+ tokenSources.length + " preproc trees into ASTs");
-			}
+			// endTime = System.currentTimeMillis();
+			// if (config.showTime()) {
+			// totalTime = (endTime - startTime) / 1000;
+			// out.println(totalTime + "s:\tSUMARRY parsing "
+			// + tokenSources.length + " preproc trees into ASTs");
+			// }
 		}
 		if (asts != null) {
 			program = this.link(asts);
@@ -126,8 +126,8 @@ public class ModelTranslator {
 				return null;
 			endTime = System.currentTimeMillis();
 			if (config.showTime()) {
-				totalTime = (endTime - startTime) / 1000;
-				out.println(totalTime + "s:\tSUMARRY applying transformers");
+				totalTime = (endTime - startTime) ;/// 1000;
+				out.println(totalTime + "ms:\tSUMARRY applying transformers");
 			}
 			if (config.debugOrVerbose() || config.showAST()) {
 				out.println(bar
@@ -175,12 +175,12 @@ public class ModelTranslator {
 		long startTime = System.currentTimeMillis();
 		Program program = this.buildProgram();
 		long endTime = System.currentTimeMillis();
-		double totalTime;
+		long totalTime;
 
 		if (config.showTime()) {
-			totalTime = (endTime - startTime) / 1000;
+			totalTime = (endTime - startTime) ;/// 1000;
 			out.println(totalTime
-					+ "s: total time for building the whole program");
+					+ "ms: total time for building the whole program");
 		}
 		if (program != null) {
 			Model model;
@@ -189,9 +189,9 @@ public class ModelTranslator {
 			model = this.buildModel(program);
 			endTime = System.currentTimeMillis();
 			if (config.showTime()) {
-				totalTime = (endTime - startTime) / 1000;
+				totalTime = (endTime - startTime);// / 1000;
 				out.println(totalTime
-						+ "s: CIVL model builder builds model from program");
+						+ "ms: CIVL model builder builds model from program");
 			}
 			return model;
 		}
@@ -436,14 +436,14 @@ public class ModelTranslator {
 		}
 		try {
 			long startTime, endTime;
-			double totalTime;
+			long totalTime;
 
 			startTime = System.currentTimeMillis();
 			program = frontEnd.link(TUs, Language.CIVL_C);
 			endTime = System.currentTimeMillis();
 			if (config.showTime()) {
-				totalTime = (endTime - startTime) / 1000;
-				out.println(totalTime + "s:\tSUMARRY linking " + TUs.length
+				totalTime = (endTime - startTime);// / 1000;
+				out.println(totalTime + "ms:\tSUMARRY linking " + TUs.length
 						+ " ASTs");
 			}
 		} catch (SyntaxException e) {
@@ -471,7 +471,7 @@ public class ModelTranslator {
 		AST ast;
 		long startTime;
 		long endTime;
-		double totalTime;
+		long totalTime;
 
 		if (config.debugOrVerbose()) {
 			out.println("Generating AST for " + tokenSource);
@@ -482,18 +482,18 @@ public class ModelTranslator {
 		tree = frontEnd.getParser().parse(tokenSource);
 		endTime = System.currentTimeMillis();
 		if (config.showTime()) {
-			totalTime = (endTime - startTime) / 1000;
+			totalTime = (endTime - startTime);// / 1000;
 			out.println(totalTime
-					+ "s:\t\tANTLR parsing to form ANTLR tree for TU "
+					+ "ms:\t\tANTLR parsing to form ANTLR tree for TU "
 					+ tokenSource);
 		}
 		startTime = System.currentTimeMillis();
 		ast = frontEnd.getASTBuilder().getTranslationUnit(tree);
 		endTime = System.currentTimeMillis();
 		if (config.showTime()) {
-			totalTime = (endTime - startTime) / 1000;
+			totalTime = (endTime - startTime);// / 1000;
 			out.println(totalTime
-					+ "s:\t\tconverting ANTLR tree to AST for TU "
+					+ "ms:\t\tconverting ANTLR tree to AST for TU "
 					+ tokenSource);
 		}
 		return ast;

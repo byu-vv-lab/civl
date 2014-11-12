@@ -351,36 +351,37 @@ public class IOWorker extends BaseWorker {
 		}
 	}
 
-	private void renameFflushCalls(ASTNode node) throws SyntaxException {
+	private void removeFflushCalls(ASTNode node) throws SyntaxException {
 		int numChildren = node.numChildren();
 
 		for (int i = 0; i < numChildren; i++) {
 			ASTNode child = node.child(i);
 
 			if (child != null)
-				this.renameFflushCalls(node.child(i));
+				this.removeFflushCalls(node.child(i));
 		}
 		if (node instanceof FunctionCallNode) {
-			this.renameFflushCall((FunctionCallNode) node);
+			this.removeFflushCall((FunctionCallNode) node);
 		}
 	}
 
-	private void renameFflushCall(FunctionCallNode functionCall) {
+	private void removeFflushCall(FunctionCallNode functionCall) {
 		if (functionCall.getFunction().expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
 			IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
 					.getFunction();
 			String functionName = functionExpression.getIdentifier().name();
-			IdentifierNode functionNameIdentifer = functionExpression
-					.getIdentifier();
+//			IdentifierNode functionNameIdentifer = functionExpression
+//					.getIdentifier();
 
 			if (functionName.equals(FFLUSH)) {
-				SequenceNode<ExpressionNode> arguments = nodeFactory
-						.newSequenceNode(functionCall.getArgument(0)
-								.getSource(), "Actual Parameters",
-								new ArrayList<ExpressionNode>(0));
-
-				functionNameIdentifer.setName(FFLUSH_NEW);
-				functionCall.setArguments(arguments);
+				functionCall.parent().removeChild(functionCall.childIndex());
+//				SequenceNode<ExpressionNode> arguments = nodeFactory
+//						.newSequenceNode(functionCall.getArgument(0)
+//								.getSource(), "Actual Parameters",
+//								new ArrayList<ExpressionNode>(0));
+//
+//				functionNameIdentifer.setName(FFLUSH_NEW);
+//				functionCall.setArguments(arguments);
 			}
 		}
 	}
@@ -675,20 +676,20 @@ public class IOWorker extends BaseWorker {
 
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
-		boolean hasFflush = TransformerFactory.hasFunctionCalls(unit,
-				Arrays.asList(FFLUSH));
+		// boolean hasFflush = TransformerFactory.hasFunctionCalls(unit,
+		// Arrays.asList(FFLUSH));
 		boolean transformationNeeded = this.isTransformationNeeded(unit);
 		SequenceNode<ExternalDefinitionNode> rootNode = unit.getRootNode();
 
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
-
+		removeFflushCalls(rootNode);
 		if (transformationNeeded) {
 			this.renameFunctionCalls(rootNode);
 			this.processFreeCall(rootNode);
-		} else if (hasFflush) {
-			this.renameFflushCalls(rootNode);
+//		} else if (hasFflush) {
+//			this.renameFflushCalls(rootNode);
 		} else {
 			// remove nodes from stdio-c.cvl
 			removeNodes(rootNode);
