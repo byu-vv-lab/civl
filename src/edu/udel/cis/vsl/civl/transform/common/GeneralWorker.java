@@ -95,6 +95,7 @@ public class GeneralWorker extends BaseWorker {
 		}
 		root = nodeFactory.newSequenceNode(root.getSource(), "TranslationUnit",
 				newExternalList);
+		this.completeSources(root);
 		newAst = astFactory.newAST(root, unit.getSourceFiles());
 		return newAst;
 	}

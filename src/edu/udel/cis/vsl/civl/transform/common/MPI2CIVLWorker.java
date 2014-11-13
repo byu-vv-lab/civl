@@ -921,6 +921,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 		externalList.add(mainFunction);
 		newRootNode = nodeFactory.newSequenceNode(null, "TranslationUnit",
 				externalList);
+		this.completeSources(newRootNode);
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 		return newAst;
 	}

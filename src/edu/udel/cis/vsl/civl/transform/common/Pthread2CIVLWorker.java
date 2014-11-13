@@ -483,6 +483,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();
 		processRoot(root);
+		this.completeSources(root);
 		return astFactory.newAST(root, ast.getSourceFiles());
 	}
 }

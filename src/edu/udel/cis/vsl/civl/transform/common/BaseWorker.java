@@ -1,9 +1,7 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -184,6 +182,9 @@ public abstract class BaseWorker {
 	 *            typically, the name of the method that created the new
 	 *            context. This will appear in error message to help isolate the
 	 *            source of the new content.
+	 * @param text
+	 *            the text to be shown for the source which should be some
+	 *            informative message about the source
 	 * @param tokenType
 	 *            the integer code for the type of the token used to represent
 	 *            the source; use one of the constants in {@link CParser} or
@@ -234,13 +235,10 @@ public abstract class BaseWorker {
 									.getSource().getLastToken();
 							CToken postToken = postNode == null ? null
 									: postNode.getSource().getFirstToken();
-							ByteArrayOutputStream bastream = new ByteArrayOutputStream();
-							PrintStream stream = new PrintStream(bastream);
-							String text;
-
-							node.prettyPrint(stream);
-							text = stream.toString();
-							stream.close();
+							String text = node.prettyRepresentation().toString();
+							
+							if(text.length() > 20)
+								text = text.substring(0, 18) + "...";
 							tf.setPreToken(preToken);
 							tf.setPostToken(postToken);
 							firstToken.setText(text);
@@ -334,6 +332,9 @@ public abstract class BaseWorker {
 	 */
 	protected VariableDeclarationNode variableDeclaration(String name,
 			TypeNode type, ExpressionNode init) {
+		// String text = type.prettyRepresentation() + " " + name;
+		// if (init != null)
+		// text = text + " = " + init.prettyRepresentation();
 		return nodeFactory.newVariableDeclarationNode(this.newSource(
 				"variable declaration of " + name, CParser.DECLARATION), this
 				.identifier(name), type, init);
