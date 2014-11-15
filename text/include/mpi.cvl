@@ -102,9 +102,10 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
 }
 
 /* Reduces values on all processes to a single value */
-int MPI_Reduce(void* sendbuf, void* recvbuf, int count,
+int MPI_Reduce(const void* sendbuf, void* recvbuf, int count,
 	       MPI_Datatype datatype, MPI_Op op, int root,
 	       MPI_Comm comm) {
+#include <stdio.h>
   int rank;
 
   $assert comm.status == __INIT :
@@ -117,28 +118,27 @@ int MPI_Reduce(void* sendbuf, void* recvbuf, int count,
     int nprocs = $comm_size(comm.col);
     int size;
 
+    size = count * sizeofDatatype(datatype);
     for (int i = 0; i<nprocs; i++) {
-      if(i == root) continue;
+      if(i == root)
+	memcpy(recvbuf, sendbuf, size);
       else{
 	$message in = $comm_dequeue(comm.col, i, REDUCE_TAG);
-	size = count * sizeofDatatype(datatype);
 
 	/* the third argument "count" indicates the number of cells needs doing the
 	   operation. */
-	$bundle_unpack_apply(in.data, sendbuf, count, op);
+	$bundle_unpack_apply(in.data, recvbuf, count, op);
 	$assert in.size <= size :
 	"Message of size %d exceeds the specified size %d.", in.size, size;
       }
     }
-    size = count * sizeofDatatype(datatype);
-    memcpy(recvbuf, sendbuf, size);
   }
   return 0;
 }
 
 /* Combines values from all processes and distributes the result back to all processes */
 /* default root is 0 */
-int MPI_Allreduce(void* sendbuf, void* recvbuf, int count,
+int MPI_Allreduce(const void* sendbuf, void* recvbuf, int count,
 		  MPI_Datatype datatype,
 		  MPI_Op op, MPI_Comm comm) {
   int root = 0;

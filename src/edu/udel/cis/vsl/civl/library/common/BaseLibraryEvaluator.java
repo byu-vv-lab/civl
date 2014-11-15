@@ -200,7 +200,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		if (!(leastCommonArray.type() instanceof SymbolicArrayType)) {
 			if (!reasoner.isValid(universe.equals(dataSize, one)))
 				throw new CIVLInternalException("out of bound", source);
-			eval = new Evaluation(state, leastCommonArray);
+			eval = new Evaluation(state, universe.arrayRead(dataArray, zero));
 			return new Pair<>(eval, startPtr);
 		}
 		// Direct assignment conditions:

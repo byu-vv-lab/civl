@@ -18,8 +18,8 @@ void main(int argc, char * argv[]){
   }else{
     double temp;
 
-    MPI_Allreduce(&rank, &IntValue, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    temp = rank * 0.1;
+    MPI_Allreduce(&rank, &IntValue, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
+    temp = (double)rank;
     MPI_Reduce(&temp, &DoubleValue, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     printf("I'm process %d, my integer value is %d \n", rank, IntValue);
     if(rank == 0)
