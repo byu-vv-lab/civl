@@ -28,7 +28,7 @@ public class MPITranslationBigTest {
 	@Test
 	public void mpi_prime() {
 		assertTrue(ui.run("verify",
-				"-input__NPROCS=4", "-enablePrintf=false", filename("mpi_prime.c")));
+				"-input_NPROCS=4", "-enablePrintf=false", filename("mpi_prime.c")));
 	}
 
 }
