@@ -722,6 +722,16 @@ public class CommonAccuracyAssumptionBuilder implements
 		return i * factorial(i - 1);
 	}
 
+	/**
+	 * Why is this called multiple? Isn't it returning a power? Operand to the
+	 * "times" power? The expression returned has the form x*x*...*x (times
+	 * times), where x is the operand.
+	 * 
+	 * @param source
+	 * @param operand
+	 * @param times
+	 * @return
+	 */
 	private Expression multiple(CIVLSource source, Expression operand, int times) {
 		assert times > 0;
 		if (times == 1) {
