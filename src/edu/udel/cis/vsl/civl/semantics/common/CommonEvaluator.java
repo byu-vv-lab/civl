@@ -2802,13 +2802,13 @@ public class CommonEvaluator implements Evaluator {
 
 	/* ********************* Pointer addition helpers ************************ */
 	/**
-	 * Helper function for @link{pointerAdd}. Returns the new pointer after
-	 * adding an increment or decrement and the array capacities
-	 * information(@link{setDataBetween}) of the array pointed by the original
-	 * pointer. If the pointer addition operation can be done only on one
-	 * dimension (like for<code>int a[3][3];</code>, addition operation
-	 * "&a[0][0] + 2" can be done without known the whole array information),
-	 * the returned map container will be null.
+	 * Helper function for {@link #pointerAdd}. Returns the new pointer after
+	 * adding an increment or decrement and the array capacities information (
+	 * {@link #setDataBetween}) of the array pointed by the original pointer. If
+	 * the pointer addition operation can be done only on one dimension (like
+	 * for <code>int a[3][3];</code>) addition operation "&a[0][0] + 2" can be
+	 * done without known the whole array information), the returned map
+	 * container will be null.
 	 */
 	private Pair<Evaluation, Map<Integer, NumericExpression>> pointerAddWorker(
 			State state, String process, SymbolicExpression pointer,
