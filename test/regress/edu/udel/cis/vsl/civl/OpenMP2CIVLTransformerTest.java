@@ -53,10 +53,4 @@ public class OpenMP2CIVLTransformerTest {
 		assertTrue(ui.run("show -showModel", "-ompNoSimplify",
 				"-inputTHREAD_MAX=4", filename("raceCond1.c")));
 	}
-
-	@Test
-	public void canonicalForLoops() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
-				filename("canonicalForLoops.c")));
-	}
 }

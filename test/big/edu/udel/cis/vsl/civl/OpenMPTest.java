@@ -30,5 +30,11 @@ public class OpenMPTest {
 		assertTrue(ui.run("verify", "-inputTHREADS_BOUND=2", "-inputN_BOUND=4",
 				"-enablePrintf=false", filename("fig4.98-threadprivate.cvl")));
 	}
+	
+	@Test
+	public void canonicalForLoops() {
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+				filename("canonicalForLoops.c")));
+	}
 
 }
