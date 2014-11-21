@@ -1085,6 +1085,12 @@ Alternatively, it is also possible to specify a particular concrete
 initial value for an input variable.  This is done using a command
 line argument when verifying or running the program.
 
+An input variable declaration may contain an initializer.  The
+semantics are as follows: if no command line value is specified for
+the variable, the initializer is used to initialize the variable.  If
+a command line value is specified, the command line value is used and
+the initializer is ignored.
+
 Input (and output) variables also play a key role when determining
 whether two programs are functionally equivalent.  Two programs are
 considered functionally equivalent if, whenever they are given the

@@ -2531,12 +2531,16 @@ public class FunctionTranslator {
 				sourceLocation = null;
 			}
 		}
-		initialization = translateVariableInitializationNode(node, variable,
-				sourceLocation, scope);
-		if (result == null)
-			result = initialization;
-		else
-			result = result.combineWith(initialization);
+		// for input variables, only use the initialization if there
+		// was no command line specification of the input value:
+		if (result == null || !variable.isInput()) {
+			initialization = translateVariableInitializationNode(node,
+					variable, sourceLocation, scope);
+			if (result == null)
+				result = initialization;
+			else
+				result = result.combineWith(initialization);
+		}
 		return result;
 	}
 
