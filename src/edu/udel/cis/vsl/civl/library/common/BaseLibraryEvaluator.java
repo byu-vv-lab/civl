@@ -133,6 +133,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 *            The CIVL source of the start pointer.
 	 * @return the settled new array and the pointer to that array.
 	 * @throws UnsatisfiablePathConditionException
+	 * @author Ziqing Luo
 	 */
 	protected Pair<Evaluation, SymbolicExpression> setDataBetween(State state,
 			String process, SymbolicExpression startPtr,

@@ -2534,26 +2534,21 @@ public class CommonEvaluator implements Evaluator {
 	private Evaluation getSystemGuard(CIVLSource source, State state, int pid,
 			String library, String function, List<Expression> arguments)
 			throws UnsatisfiablePathConditionException {
-		LibraryEvaluator libEvaluator;
-
 		try {
-			libEvaluator = this.libLoader.getLibraryEvaluator(library, this,
-					this.modelFactory, symbolicUtil, symbolicAnalyzer);
+			LibraryEvaluator libEvaluator = this.libLoader.getLibraryEvaluator(
+					library, this, this.modelFactory, symbolicUtil,
+					symbolicAnalyzer);
 
 			return libEvaluator.evaluateGuard(source, state, pid, function,
 					arguments);
 		} catch (LibraryLoaderException exception) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
 					+ ")";
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
-					"An error is encountered when loading the library evaluator for "
-							+ library + ": " + exception.getMessage(),
-					this.symbolicAnalyzer.stateToString(state), source);
 
-			this.errorLogger.reportError(err);
+			throw new CIVLInternalException("An error occurred when " + process
+					+ " attempted to load the library evaluator for " + library
+					+ ": " + exception.getMessage(), source);
 		}
-		return new Evaluation(state, universe.falseExpression());
 	}
 
 	/**

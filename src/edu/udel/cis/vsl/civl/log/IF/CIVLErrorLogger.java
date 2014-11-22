@@ -59,14 +59,21 @@ public class CIVLErrorLogger extends ErrorLog {
 	}
 
 	/**
+	 * <p>
 	 * Report a (possible) error detected in the course of evaluating an
-	 * expression.
+	 * expression. This is the method that should normally be used for logging
+	 * and reporting errors.
+	 * </p>
 	 * 
-	 * Protocol for checking conditions and reporting and recovering from
-	 * errors. First, check some condition holds and call the result of that
-	 * check "condsat", which may be YES, NO, or MAYBE. If condsat is YES,
-	 * proceed. Otherwise, there is a problem: call this method.
+	 * <p>
+	 * This is the general protocol for checking conditions and reporting and
+	 * recovering from errors: first, check some condition holds and call the
+	 * result of that check "condsat", which may be YES, NO, or MAYBE. If
+	 * condsat is YES, proceed. Otherwise, there is a problem and you should
+	 * call this method.
+	 * </p>
 	 * 
+	 * <p>
 	 * This method first checks the satisfiability of the path condition, call
 	 * the result "pcsat". Logs a violation with certainty determined as
 	 * follows:
@@ -77,9 +84,43 @@ public class CIVLErrorLogger extends ErrorLog {
 	 * <li>pcsat=MAYBE && condsat=MAYBE : certainty=MAYBE</li>
 	 * <li>pcsat=NO: no error to report</li>
 	 * </ul>
+	 * </p>
 	 * 
+	 * <p>
 	 * Returns the state obtained by adding the claim to the pc of the given
 	 * state.
+	 * </p>
+	 * 
+	 * @param source
+	 *            the source of the expression being evaluated
+	 * @param state
+	 *            the state in which the evaluation is taking place
+	 * @param process
+	 *            a string representation of the process that is evaluating the
+	 *            expression; used for reporting errors
+	 * @param stateString
+	 *            a string representation of the state which is used in
+	 *            CIVLExecutionException that is recorded in the log
+	 * @param claim
+	 *            the boolean expression which was expected to hold. This should
+	 *            already have been checked for validity before invoking this
+	 *            method. The result of that check should not have been "YES"
+	 *            (i.e., definitely valid); that is why you are calling this
+	 *            method
+	 * @param resultType
+	 *            the result of evaluating the validity of the claim (which you
+	 *            did before you called this method).
+	 * @param errorKind
+	 *            the kind of error you want to report if it turns out there is
+	 *            an error
+	 * @param message
+	 *            the message you want to include in the error report if it
+	 *            turns out there is an error
+	 * @throws UnsatisfiablePathConditionException
+	 *             if it turns out the path condition is unsatisfiable; in this
+	 *             case no error will be reported since the current path is
+	 *             infeasible
+	 * @return
 	 * 
 	 */
 	public State logError(CIVLSource source, State state, String process,
