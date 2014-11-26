@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-//import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
@@ -131,7 +130,9 @@ public class CommonEvaluator implements Evaluator {
 	/* *************************** Instance Fields ************************* */
 
 	/**
-	 * The library evaluator loader.
+	 * The library evaluator loader. This is used to location and obtain the
+	 * appropriate library evaluators when library-defined expressions need to
+	 * be evaluated. These are primarily guards of system functions.
 	 */
 	private LibraryEvaluatorLoader libLoader;
 
@@ -145,6 +146,7 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * TODO: clean up boundVariables, which becomes a "state" of the evaluator
 	 * but it is not necessary. Possible solution: creates an evaluator worker<br>
+	 * 
 	 * LinkedList used to store a stack of bound variables during evaluation of
 	 * (possibly nested) quantified expressions. LinkedList is used instead of
 	 * Stack because of its more intuitive iteration order.
@@ -152,27 +154,45 @@ public class CommonEvaluator implements Evaluator {
 	private LinkedList<SymbolicConstant> boundVariables = new LinkedList<>();
 
 	/**
-	 * The symbolic bundle type.
+	 * The symbolic bundle type. This is the symbolic type of a symbolic
+	 * expression that represents a bundle value. A bundle is a special kind of
+	 * value in CIVL that is obtained by "bundling up" some region of memory up
+	 * into a single value.
 	 */
 	private SymbolicUnionType bundleType;
 
 	/**
-	 * The dynamic heap type.
+	 * The dynamic heap type. This is the symbolic type of a symbolic expression
+	 * which represents the value of an entire heap. It is a tuple in which
+	 * there is one component for each <code>malloc</code> statement in a CIVL
+	 * model. A component of such a tuple is used to represent all the object
+	 * allocated by the corresponding <code>malloc</code> statement. Such a
+	 * component has type "array of array of T", where T is the type that occurs
+	 * as in an expression of the form <code>(T*)malloc(n*sizeof(T))</code>.
 	 */
 	private SymbolicTupleType heapType;
 
 	/**
-	 * The identity reference expression.
+	 * The identity reference expression. A symbolic reference expression can be
+	 * viewed as a function which takes a symbolic expression x (of the
+	 * appropriate type) and returns a sub-expression of x. The identify
+	 * reference, viewed this way, corresponds to the identify function: given x
+	 * it returns x.
 	 */
 	private ReferenceExpression identityReference;
 
 	/**
-	 * The unique model factory used in the system.
+	 * The unique model factory used to construct the CIVL model elements that
+	 * this evaluator will encounter.
 	 */
 	private ModelFactory modelFactory;
 
 	/**
-	 * The symbolic expression of NULL expression, i.e., the undefined value.
+	 * The symbolic expression representing "NULL" expression, which is non-null
+	 * (as a Java object) but represents the absence of some value. It is used
+	 * in CIVL to represent the undefined value: it is the value assigned to
+	 * variables before they are initialized. Note that this is the only
+	 * symbolic expression that does not have a type.
 	 */
 	private SymbolicExpression nullExpression;
 
@@ -182,12 +202,15 @@ public class CommonEvaluator implements Evaluator {
 	private NumberFactory numberFactory = Numbers.REAL_FACTORY;
 
 	/**
-	 * The symbolic numeric expression of 1.
+	 * The symbolic expression 1 of integer type. (Note that this is distinct
+	 * from the 1 of real type.)
 	 */
 	private NumericExpression one;
 
 	/**
-	 * The symbolic int object of 1.
+	 * The symbolic "int object" 1. This is a kind of SARL symbolic object, but
+	 * is not a symbolic expression. It is needed as an argument to certain SARL
+	 * functions that require concrete (as opposed to symbolic) Java ints.
 	 */
 	private IntObject oneObj;
 
@@ -1155,7 +1178,7 @@ public class CommonEvaluator implements Evaluator {
 							.getSource());
 
 			this.errorLogger.reportError(err);
-			// TODO: throw UnsatisfiablePathConditionException?
+			throw new UnsatisfiablePathConditionException();
 		}
 		return dereference(expression.pointer().getSource(), eval.state,
 				process, eval.value, true);
@@ -1270,8 +1293,7 @@ public class CommonEvaluator implements Evaluator {
 						domElement);
 			eval.state = state;
 			// TODO:rectangular domain always has concrete ranges so that the
-			// result
-			// is always concrete ?
+			// result is always concrete ?
 			eval.value = universe.bool(hasNext);
 		} else if (symbolicUtil.isLiteralDomain(domainValue)) {
 			Variable literalDomCounterVar;
@@ -1304,27 +1326,6 @@ public class CommonEvaluator implements Evaluator {
 		eval.state = state;
 		eval.value = universe.bool(hasNext);
 		return eval;
-
-		/************** old *******************/
-		// Expression domain = domainGuard.domain();
-		// int dimension = domainGuard.dimension();
-		// BooleanExpression result = universe.trueExpression();
-		// SymbolicExpression domainValue;
-		// Evaluation eval = this.evaluate(state, pid, domain);
-		// List<SymbolicExpression> varValues = new ArrayList<>(dimension);
-		//
-		// domainValue = eval.value;
-		// state = eval.state;
-		// for (int i = 0; i < dimension; i++) {
-		// SymbolicExpression varValue;
-		//
-		// eval = this.evaluate(state, pid, domainGuard.variableAt(i));
-		// state = eval.state;
-		// varValue = eval.value;
-		// varValues.add(varValue);
-		// }
-		// result = symbolicUtil.domainHasNext(domainValue, varValues);
-		// return new Evaluation(state, result);
 	}
 
 	/**
