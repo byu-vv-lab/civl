@@ -159,13 +159,14 @@ We recommend using the Eclipse IDE for Java/EE developers.
    you will have to create it with mkdir /opt).
 
    Suppose that you put the .tgz file (or .tar file if your browser
-   unzipped it automatically to a .tar file) in the directory $Download.
+   unzipped it automatically to a .tar file) in the directory DOWNLOAD.
    You can use the following commands:
 
-   		$ cd $Download
+   		$ cd DOWNLOAD
    		$ tar xzf YourTgzOrTarFile vsl
    		$ sudo mv vsl /opt
 
+   (Leave out the "x" in the tar command if the file was already unzipped.)
    Now you can type "ls /opt/vsl", and the output should be
 
    		README.txt    lib        licenses    src
@@ -189,7 +190,7 @@ We recommend using the Eclipse IDE for Java/EE developers.
 
 9. Go to Run->Run Configurations... Create a new JUnit configuration.
    Name it CIVL Tests. Select "Run all tests in the selected project..."
-   and navigate to the folder "test" in the CIVL project.
+   and navigate to the folder "test/regress" in the CIVL project.
    The Test runner should be JUnit 4. Under the Arguments tab, type
    "-ea" (without the quotes) in the VM arguments area (to enable assertion
    checking). Under the Environment tab, create an entry 
@@ -202,6 +203,7 @@ We recommend using the Eclipse IDE for Java/EE developers.
    Configurations... menu.  Create a new "Java Application"
    configuration.  Call it "CIVL barrier2".  The Project is CIVL.  The
    main class is edu.udel.cis.vsl.civl.CIVL.  Under the Arguments tab,
-   set the Program arguments to "verify examples/barrier2.cvl" (without the
-   quotes).  Modify the VM arguments and the Environment as in the step
-   above.  You should now be able to run the test by clicking "Run".
+   set the Program arguments to "verify examples/concurrency/barrier2.cvl"
+   (without the quotes).  Modify the VM arguments and the Environment
+   as in the step above.  You should now be able to run the test by
+   clicking "Run".
