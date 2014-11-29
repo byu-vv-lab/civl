@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.HashMap;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -14,7 +13,6 @@ import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.program.IF.Program;
-import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
 import edu.udel.cis.vsl.civl.transform.IF.Transforms;
@@ -26,8 +24,6 @@ public class OmpTransformerTest {
 	private static File rootDir = new File(new File("examples"), "omp");
 
 	private static UserInterface ui = new UserInterface();
-
-	private File[] systemIncludes, userIncludes;
 
 	private PrintStream out = System.out;
 
@@ -66,18 +62,15 @@ public class OmpTransformerTest {
 		Program program;
 		File file = new File(root, filenameRoot + ".c");
 
-		this.systemIncludes = new File[0];
-		this.userIncludes = new File[0];
-		program = frontEnd.compileAndLink(new File[] { file }, Language.CIVL_C,
-				systemIncludes, userIncludes, new HashMap<String, Macro>());
-		if (true) {
+		program = frontEnd.compileAndLink(new File[] { file }, Language.CIVL_C);
+		if (debug) {
 			PrintStream before = new PrintStream("/tmp/before_simplify");
 			program.getAST().prettyPrint(before, true);
 			PrintStream beforeAST = new PrintStream("/tmp/before_AST");
 			frontEnd.printProgram(beforeAST, program, false, false);
 		}
 		program.apply(transformerFactory.getOpenMPSimplifier());
-		if (true) {
+		if (debug) {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
 			program.getAST().prettyPrint(after, true);
 		}
@@ -102,7 +95,8 @@ public class OmpTransformerTest {
 
 	@Test
 	public void dotProduct_critical1_run() throws ABCException, IOException {
-		assertTrue(ui.run("show", "-showModel", filename("dotProduct_critical.c")));
+		assertTrue(ui.run("show", "-showModel",
+				filename("dotProduct_critical.c")));
 	}
 
 	@Ignore
