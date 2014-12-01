@@ -285,7 +285,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void pointerAddBad3() throws ABCException {
-		assertFalse(ui.run("verify", filename("pointerAddBad3.cvl")));
+		assertFalse(ui.run("verify", filename("pointerAddBad3.c")));
 	}
 
 	@Test
