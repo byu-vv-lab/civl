@@ -312,29 +312,10 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			// first non-array element.
 			claim = universe.equals(count, one);
 			if (!reasoner.isValid(claim)) {
-				try {
-					eval = libevaluator.getDataFrom(state, process, pointer,
-							count, false, arguments[0].getSource());
-					state = eval.state;
-					arrayInBundle = eval.value;
-				} catch (CIVLInternalException | CIVLExecutionException e) {
-					CIVLExecutionException err = new CIVLExecutionException(
-							ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE,
-							process,
-							"Packing data with count: "
-									+ count
-									+ "from pointer: "
-									+ symbolicAnalyzer
-											.symbolicExpressionToString(source,
-													state, pointer), source);
-					errorLogger.reportError(err);
-				} catch (Exception e) {
-					CIVLExecutionException err = new CIVLExecutionException(
-							ErrorKind.OTHER, Certainty.PROVEABLE, process,
-							"Bundle pack failed", source);
-					errorLogger.reportError(err);
-					return state;
-				}
+				eval = libevaluator.getDataFrom(state, process, pointer, count,
+						false, arguments[0].getSource());
+				state = eval.state;
+				arrayInBundle = eval.value;
 			} else {
 				eval = evaluator.dereference(source, state, process, pointer,
 						true);
@@ -410,43 +391,24 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 							+ pointer, arguments[1].getSource()));
 			return state;
 		}
-		try {
-			eval_and_pointer = libevaluator.bundleUnpack(state, process,
-					(SymbolicExpression) bundle.argument(1), pointer, source);
-			eval = eval_and_pointer.left;
-			// bufPointer is the pointer to targetObj which may be the ancestor
-			// of the original pointer.
-			bufPointer = eval_and_pointer.right;
-			state = eval.state;
-			// targetObject is the object will be assigned to the output
-			// argument.
-			targetObject = eval.value;
-		} catch (CIVLInternalException | CIVLExecutionException e) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE, process,
-					"Unpacking data from bundle to pointer: "
-							+ symbolicAnalyzer.symbolicExpressionToString(
-									arguments[1].getSource(), state, pointer),
-					source);
-
-			errorLogger.reportError(err);
-			return state;
-		} catch (Exception e) {
-			// Out of bound exception will be throw inside the bundleUnpack
-			// function when an array write fails.
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.INTERNAL, Certainty.PROVEABLE, process,
-					"Bundle unpacking failed", source);
-
-			errorLogger.reportError(err);
-			return state;
-		}
+		eval_and_pointer = libevaluator.bundleUnpack(state, process,
+				(SymbolicExpression) bundle.argument(1), pointer, source);
+		eval = eval_and_pointer.left;
+		// bufPointer is the pointer to targetObj which may be the ancestor
+		// of the original pointer.
+		bufPointer = eval_and_pointer.right;
+		state = eval.state;
+		// targetObject is the object will be assigned to the output
+		// argument.
+		targetObject = eval.value;
 		// If it's assigned to an array or an object
 		if (bufPointer != null && targetObject != null)
 			state = primaryExecutor.assign(source, state, process, bufPointer,
 					targetObject);
 		else
-			throw new CIVLInternalException("Cannot complete unpack", source);
+			throw new CIVLInternalException(
+					"Cannot complete unpack.\nassigned pointer: " + bufPointer
+							+ "\nassigning object: " + targetObject, source);
 
 		return state;
 	}
@@ -550,38 +512,59 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					eval.value);
 			return state;
 		}
-		try {
-			i = zero;
-			claim = universe.lessThan(i, count);
+		i = zero;
+		claim = universe.lessThan(i, count);
 
-			while (reasoner.isValid(claim)) {
+		while (reasoner.isValid(claim)) {
+			try {
 				dataElement = universe.arrayRead(data, i);
+			} catch (SARLException e) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.OUT_OF_BOUNDS,
+						Certainty.CONCRETE,
+						process,
+						"One of the operands "
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										source, state, data)
+								+ " of CIVL Operation out of bound when reading at index: "
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										source, state, i),
+						symbolicAnalyzer.stateToString(state), source);
+
+				errorLogger.reportError(err);
+				return state;
+			}
+			try {
 				secOperandElement = universe.arrayRead(secOperand, i);
 				opRet = this.applyCIVLOperator(state, process, dataElement,
 						secOperandElement, CIVL_Op, source);
 				secOperand = universe.arrayWrite(secOperand, i, opRet);
-				i = universe.add(i, one);
-				claim = universe.lessThan(i, count);
+			} catch (SARLException e) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.OUT_OF_BOUNDS,
+						Certainty.CONCRETE,
+						process,
+						"One of the operands "
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										source, state, secOperand)
+								+ " of CIVL Operation out of bound when accessing at index: "
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										source, state, i),
+						symbolicAnalyzer.stateToString(state), source);
+
+				errorLogger.reportError(err);
+				return state;
 			}
-
-			eval_and_pointer = libevaluator.setDataFrom(state, process,
-					pointer, count, secOperand, false, source);
-			eval = eval_and_pointer.left;
-			assignPtr = eval_and_pointer.right;
-			state = eval.state;
-		} catch (SARLException e) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE, process,
-					"Operands of CIVL Operation out of bound at index: "
-							+ symbolicAnalyzer.symbolicExpressionToString(
-									source, state, i),
-					symbolicAnalyzer.stateToString(state), source);
-
-			errorLogger.reportError(err);
-			return state;
+			i = universe.add(i, one);
+			claim = universe.lessThan(i, count);
 		}
-		assert (assignPtr != null) : "Unknown bug in CIVL";
-		assert (eval != null) : "Unknown bug in CIVL";
+		eval_and_pointer = libevaluator.setDataFrom(state, process, pointer,
+				count, secOperand, false, source);
+		eval = eval_and_pointer.left;
+		assignPtr = eval_and_pointer.right;
+		state = eval.state;
+		assert (assignPtr != null) : "Unknown bug in CIVL: assigned pointer is null";
+		assert (eval != null) : "Unknown bug in CIVL: evaluation is null";
 		state = primaryExecutor.assign(source, state, process, assignPtr,
 				eval.value);
 		return state;

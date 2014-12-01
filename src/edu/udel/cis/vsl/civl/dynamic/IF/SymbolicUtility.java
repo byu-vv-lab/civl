@@ -1,8 +1,8 @@
 package edu.udel.cis.vsl.civl.dynamic.IF;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -401,8 +401,10 @@ public interface SymbolicUtility {
 	 * @param elementValueType
 	 *            The type of the array element. Note necessarily the type of
 	 *            <code>eleValue</code>.
-	 * @param length The length of the array.
-	 * @param eleValue The element value of the array.
+	 * @param length
+	 *            The length of the array.
+	 * @param eleValue
+	 *            The element value of the array.
 	 * @return
 	 */
 	SymbolicExpression newArray(BooleanExpression context,
@@ -662,21 +664,40 @@ public interface SymbolicUtility {
 	/* ****************** End of Domain Operation section ********************* */
 
 	/**
-	 * Computes the array capacity informations(@link{setDataBetween}) of the
-	 * given array. Array capacity informations are stored in a map whose keys
-	 * indicates each dimension of the array. Here, 0 marks the deepest
-	 * dimension, 1 marks the second deepest dimension and so forth.
+	 * Computes the array capacity informations of the given array. Array
+	 * capacity informations are stored in an ArrayList where indexes are
+	 * indicating dimensions. Here, index 0 marks the deepest dimension, index 1
+	 * marks the second deepest dimension and so forth. e.g. array
+	 * <code>int a[2][3];</code>, cells in deepest dimension contains one
+	 * element and cells in second deepest dimension contains three elements.
+	 * 
 	 * 
 	 * @param array
 	 *            The target array
 	 * @param source
 	 *            The CIVL source of the array or the pointer to the array
+	 * 
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	Map<Integer, NumericExpression> getArrayElementsSizes(
+	ArrayList<NumericExpression> getArrayElementsSizes(
 			SymbolicExpression array, CIVLSource source)
 			throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Same function as {@link getArrayElementsSizes} but the extents set of all
+	 * dimensions is passed in as an argument so that no need computing again
+	 * (which also makes it be able to omit "fakeDim").
+	 * 
+	 * @param array
+	 * @param dimExtents
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	ArrayList<NumericExpression> getArrayElementsSizes(
+			SymbolicExpression array, ArrayList<NumericExpression> dimExtents,
+			CIVLSource source) throws UnsatisfiablePathConditionException;
 
 	/**
 	 * Get the most ancestor pointer of the given array element reference
@@ -693,9 +714,32 @@ public interface SymbolicUtility {
 
 	/**
 	 * Computes extents of every dimension of an array.<br>
-	 * The extents informations are stored in a map whose keys indicate the
-	 * dimension of the array. Here 0 marks the outer most dimension, 1 marks
-	 * the second outer most dimension and so forth.
+	 * The extents informations are stored in an ArrayList whose indexes
+	 * indicate the dimension of the array. Here 0 marks the deepest dimension,
+	 * 1 marks the second deepest dimension and so forth.
+	 * 
+	 * @param source
+	 *            The CIVL source of the array or the pointer to the array
+	 * @param array
+	 *            The target array.
+	 * @param fakeDim
+	 *            This argument is decided by caller. This argument allows
+	 *            caller control this method to process nested arrays in a
+	 *            logical way. For example, for a nested array
+	 *            "int a[2][3][4];", if the fakeDim is 2, then this method will
+	 *            take the deepest dimension as a pure element that makes the
+	 *            input array "int a[2][3]". Intuitively, the returned list will
+	 *            be different.
+	 * @return The Map contains array extents information.
+	 */
+	ArrayList<NumericExpression> arrayExtents(CIVLSource source,
+			SymbolicExpression array, int fakeDim);
+
+	/**
+	 * Computes extents of every dimension of an array.<br>
+	 * The extents informations are stored in an ArrayList whose indexes
+	 * indicate the dimension of the array. Here 0 marks the deepest dimension,
+	 * 1 marks the second deepest dimension and so forth.
 	 * 
 	 * @param source
 	 *            The CIVL source of the array or the pointer to the array
@@ -703,6 +747,6 @@ public interface SymbolicUtility {
 	 *            The target array.
 	 * @return The Map contains array extents information.
 	 */
-	Map<Integer, NumericExpression> arrayExtents(CIVLSource source,
+	ArrayList<NumericExpression> arrayExtents(CIVLSource source,
 			SymbolicExpression array);
 }

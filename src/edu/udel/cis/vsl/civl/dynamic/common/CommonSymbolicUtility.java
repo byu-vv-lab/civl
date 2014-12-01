@@ -304,15 +304,23 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public int getArrayIndex(CIVLSource source, SymbolicExpression pointer) {
+	public int getArrayIndex(CIVLSource source, SymbolicExpression pointer)
+			throws CIVLInternalException {
 		int int_arrayIndex;
 
 		if (pointer.type() instanceof SymbolicArrayType) {
 			int_arrayIndex = 0;
-		} else {// TODO what if pointer is pointing to the heap?
-			ArrayElementReference arrayRef = (ArrayElementReference) getSymRef(pointer);
-			NumericExpression arrayIndex = arrayRef.getIndex();
+		} else {
+			ArrayElementReference arrayRef;
+			NumericExpression arrayIndex;
 
+			try {
+				arrayRef = (ArrayElementReference) getSymRef(pointer);
+			} catch (ClassCastException e) {
+				throw new CIVLInternalException(
+						"pointer is not a array element reference", source);
+			}
+			arrayIndex = arrayRef.getIndex();
 			int_arrayIndex = extractInt(source, arrayIndex);
 		}
 		return int_arrayIndex;
@@ -854,46 +862,79 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public Map<Integer, NumericExpression> getArrayElementsSizes(
+	public ArrayList<NumericExpression> getArrayElementsSizes(
 			SymbolicExpression array, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		NumericExpression capacity = one;
-		Map<Integer, NumericExpression> dimExtents;
-		Map<Integer, NumericExpression> dimCapacities = new HashMap<>();
+		NumericExpression elementSize = one;
+		ArrayList<NumericExpression> dimExtents;
+		ArrayList<NumericExpression> dimCapacities;
 		int dim;
-		int extentIter;
 
 		dimExtents = this.arrayExtents(source, array);
-		extentIter = dimExtents.size() - 1;
-		dim = 1;
-		dimCapacities.put(0, capacity);
-		while (dimExtents.containsKey(extentIter - 1)) {
-			capacity = universe.multiply(capacity, dimExtents.get(extentIter));
-			dimCapacities.put(dim, capacity);
-			extentIter--;
-			dim++;
+		dim = dimExtents.size();
+		dimCapacities = new ArrayList<>(dim);
+		for (int i = 0; i < dim; i++) {
+			dimCapacities.add(elementSize);
+			elementSize = universe.multiply(elementSize, dimExtents.get(i));
+			dimCapacities.add(elementSize);
 		}
 		return dimCapacities;
 	}
 
 	@Override
-	public Map<Integer, NumericExpression> arrayExtents(CIVLSource source,
-			SymbolicExpression array) {
-		SymbolicExpression element = array;
-		SymbolicType type = array.type();
-		Map<Integer, NumericExpression> dimExtents = new HashMap<>();
-		int dim = 0;
+	public ArrayList<NumericExpression> getArrayElementsSizes(
+			SymbolicExpression array, ArrayList<NumericExpression> dimExtents,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		NumericExpression elementSize = one;
+		ArrayList<NumericExpression> dimCapacities;
+		int dim;
 
+		dim = dimExtents.size();
+		dimCapacities = new ArrayList<>(dim);
+		for (int i = 0; i < dim; i++) {
+			dimCapacities.add(elementSize);
+			elementSize = universe.multiply(elementSize, dimExtents.get(i));
+		}
+		return dimCapacities;
+	}
+
+	@Override
+	public ArrayList<NumericExpression> arrayExtents(CIVLSource source,
+			SymbolicExpression array, int fakeDim) {
+		SymbolicType type = array.type();
+		ArrayList<NumericExpression> dimExtents = new ArrayList<>();
+		ArrayList<NumericExpression> retDimExtents;
+		int tempFakeDim = fakeDim;
+		int dim;
+
+		assert fakeDim > 0;
 		if (!(type instanceof SymbolicArrayType))
 			throw new CIVLInternalException(
 					"Cannot get extents from an non-array object", source);
-		while (type instanceof SymbolicArrayType) {
-			dimExtents.put(dim, universe.length(element));
-			dim++;
-			element = universe.arrayRead(element, zero);
-			type = element.type();
+		while (type instanceof SymbolicCompleteArrayType && tempFakeDim > 0) {
+			if (type instanceof SymbolicCompleteArrayType)
+				dimExtents.add(((SymbolicCompleteArrayType) type).extent());
+			type = ((SymbolicCompleteArrayType) type).elementType();
+			tempFakeDim--;
 		}
-		return dimExtents;
+		// If the deepest element type is still an array, then report there is
+		// something wrong here.
+		if (type instanceof SymbolicArrayType && tempFakeDim > 0)
+			throw new CIVLInternalException(
+					"SymbolicUtility.arrayExtents(CIVLSource, SymbolicExpression) cannot extract extents of all dimensions completely.\n",
+					source);
+		// Reverse the order of all elements in ArrayList
+		dim = dimExtents.size();
+		retDimExtents = new ArrayList<>(dim);
+		for (int i = 0; i < dim; i++)
+			retDimExtents.add(dimExtents.get(dim - 1 - i));
+		return retDimExtents;
+	}
+
+	@Override
+	public ArrayList<NumericExpression> arrayExtents(CIVLSource source,
+			SymbolicExpression array) {
+		return this.arrayExtents(source, array, Integer.MAX_VALUE);
 	}
 
 	@Override

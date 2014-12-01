@@ -1,11 +1,9 @@
 package edu.udel.cis.vsl.civl.library.bundle;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
-import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
@@ -56,13 +54,13 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			SymbolicExpression pointer, NumericExpression count,
 			boolean checkOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		Map<Integer, NumericExpression> arrayElementsSizes;
+		ArrayList<NumericExpression> arrayElementsSizes;
 		SymbolicExpression startPtr, endPtr;
 		Evaluation eval;
 		// The reason of using map here is that we can use a "int dim;" variable
 		// to control while loops and the condition can easily all be
 		// "isContainsKey(dim)".
-		Pair<Evaluation, Map<Integer, NumericExpression>> ret;
+		Pair<Evaluation, ArrayList<NumericExpression>> ret;
 
 		startPtr = pointer;
 		// The pointerAddWorker returns the evaluation containing a new pointer
@@ -79,17 +77,12 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		// because pointerAddWorker's not doing it means new pointer and
 		// original pointer are in the same dimension.
 		if (arrayElementsSizes == null) {
-			arrayElementsSizes = new HashMap<>();
-			arrayElementsSizes.put(0, one);
+			arrayElementsSizes = new ArrayList<>();
+			arrayElementsSizes.add(one);
 		}
-		try {
-			eval.value = getDataBetween(eval.state, process, startPtr, endPtr,
-					arrayElementsSizes, source);
-			return eval;
-		} catch (CIVLInternalException e) {
-			throw new CIVLInternalException(
-					"Error happend in getDataBetween()", source);
-		}
+		eval.value = getDataBetween(eval.state, process, startPtr, endPtr,
+				arrayElementsSizes, source);
+		return eval;
 	}
 
 	/**
@@ -118,11 +111,11 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 			NumericExpression count, SymbolicExpression dataArray,
 			boolean checkOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		Map<Integer, NumericExpression> getArrayElementsSizes;
+		ArrayList<NumericExpression> getArrayElementsSizes;
 		SymbolicExpression startPtr, endPtr;
 		Evaluation eval;
 		// TODO : specification for explain every thing including arrayInfo
-		Pair<Evaluation, Map<Integer, NumericExpression>> eval_and_arrayInfo;
+		Pair<Evaluation, ArrayList<NumericExpression>> eval_and_arrayInfo;
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
 		startPtr = pointer;
@@ -132,17 +125,12 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		eval = eval_and_arrayInfo.left;
 		endPtr = eval.value;
 		if (getArrayElementsSizes == null) {
-			getArrayElementsSizes = new HashMap<>();
-			getArrayElementsSizes.put(0, one);
+			getArrayElementsSizes = new ArrayList<>();
+			getArrayElementsSizes.add(one);
 		}
-		try {
-			eval_and_pointer = this.setDataBetween(eval.state, process,
-					startPtr, endPtr, dataArray, getArrayElementsSizes, source);
-			return eval_and_pointer;
-		} catch (CIVLInternalException e) {
-			throw new CIVLInternalException(
-					"Error happend in getDataBetween()", source);
-		}
+		eval_and_pointer = this.setDataBetween(eval.state, process, startPtr,
+				endPtr, dataArray, getArrayElementsSizes, source);
+		return eval_and_pointer;
 	}
 
 	/* *************** Helper functions for library executor ***************** */

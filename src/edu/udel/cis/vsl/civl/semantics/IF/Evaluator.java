@@ -1,7 +1,7 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -227,11 +227,13 @@ public interface Evaluator {
 	 * expression is necessary.<br>
 	 * Note: The given pointer for this function won't be casted to the deepest
 	 * array element reference which is the only difference from the other
-	 * function "evaluatePointerAdd". <br>
+	 * function
+	 * {@link #evaluatePointerAdd(State, String, SymbolicExpression, NumericExpresion, boolean, CIVLSource)}
+	 * . <br>
 	 * e.g. for <code>int a[2][2]</code>, passing pointer "a[0] + 1" will turn
 	 * out a new pointer "a[1]".
 	 * 
-	 * {@link #evaluatePointerAdd(State, String, SymbolicExpression, NumericExpresion, boolean, CIVLSource)}
+	 * @author Ziqing Luo
 	 * 
 	 * 
 	 * @param state
@@ -360,7 +362,7 @@ public interface Evaluator {
 	 *         pointed by the given pointer which helps saving computing time
 	 *         for caller functions.
 	 */
-	public Pair<Evaluation, Map<Integer, NumericExpression>> evaluatePointerAdd(
+	public Pair<Evaluation, ArrayList<NumericExpression>> evaluatePointerAdd(
 			State state, String process, SymbolicExpression ptr,
 			NumericExpression offset, boolean ifCheckOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException;

@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.library.common;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,6 +8,9 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
+import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -22,6 +26,7 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
@@ -138,8 +143,8 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	protected Pair<Evaluation, SymbolicExpression> setDataBetween(State state,
 			String process, SymbolicExpression startPtr,
 			SymbolicExpression endPtr, SymbolicExpression dataArray,
-			Map<Integer, NumericExpression> arrayElementsSizes,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
+			ArrayList<NumericExpression> arrayElementsSizes, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression startPointer, endPointer;
 		SymbolicExpression flattenLeastCommonArray, leastCommonArray;
 		NumericExpression startPos = zero;
@@ -154,6 +159,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		Map<Integer, NumericExpression> startIndexes;
 		Map<Integer, NumericExpression> endIndexes;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		ResultType resultType;
 
 		// Checking if they are pointing to the same thing
 		sidMatch = (symbolicUtil.getDyscopeId(source, startPtr) == symbolicUtil
@@ -188,10 +194,28 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		assert (reasoner.isValid(universe.lessThanEquals(zero, ptrInterval)));
 		dim = 1;
 		dataSize = universe.length(dataArray);
-		if (!reasoner.isValid(universe.lessThanEquals(dataSize,
-				universe.add(ptrInterval, one)))) {
-			throw new CIVLInternalException("out of bound", source);
-		}
+		claim = universe.lessThanEquals(dataSize,
+				universe.add(ptrInterval, one));
+		resultType = reasoner.valid(claim).getResultType();
+		if (!resultType.equals(ResultType.YES))
+			state = errorLogger
+					.logError(
+							source,
+							state,
+							process,
+							symbolicAnalyzer.stateToString(state),
+							claim,
+							resultType,
+							ErrorKind.OUT_OF_BOUNDS,
+							"Array index out of bound when writing data into the object pointed by "
+									+ symbolicAnalyzer
+											.symbolicExpressionToString(source,
+													state, startPtr)
+									+ ".\n"
+									+ "Number of elements in data: "
+									+ dataSize
+									+ ".\nNumber of elements can be stored in the object: "
+									+ universe.add(ptrInterval, one) + ".\n");
 		eval = evaluator.dereference(source, state, process, startPointer,
 				false);
 		state = eval.state;
@@ -199,8 +223,26 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		// If the result of dereferencing is not an array type, then the
 		// dataSize should only be one.
 		if (!(leastCommonArray.type() instanceof SymbolicArrayType)) {
-			if (!reasoner.isValid(universe.equals(dataSize, one)))
-				throw new CIVLInternalException("out of bound", source);
+			claim = universe.equals(dataSize, one);
+			resultType = reasoner.valid(claim).getResultType();
+			if (!resultType.equals(ResultType.YES))
+				state = errorLogger
+						.logError(
+								source,
+								state,
+								process,
+								symbolicAnalyzer.stateToString(state),
+								claim,
+								resultType,
+								ErrorKind.OUT_OF_BOUNDS,
+								"Array index out of bound when unpacking bundle data into the object pointed by "
+										+ symbolicAnalyzer
+												.symbolicExpressionToString(
+														source, state, startPtr)
+										+ ".\n"
+										+ "Number of elements in data: "
+										+ dataSize
+										+ ".\nNumber of elements can be stored in the object: 1\n");
 			eval = new Evaluation(state, universe.arrayRead(dataArray, zero));
 			return new Pair<>(eval, startPtr);
 		}
@@ -228,17 +270,43 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		i = startPos;
 		j = zero;
 		claim = universe.lessThan(j, dataSize);
-		try {
-			while (reasoner.isValid(claim)) {
-				flattenLeastCommonArray = universe.arrayWrite(
-						flattenLeastCommonArray, i,
-						universe.arrayRead(dataArray, j));
-				i = universe.add(i, one);
-				j = universe.add(j, one);
-				claim = universe.lessThan(j, dataSize);
+		while (reasoner.isValid(claim)) {
+			SymbolicExpression elementInDataArray = null;
+
+			try {
+				elementInDataArray = universe.arrayRead(dataArray, j);
+			} catch (SARLException e) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.OUT_OF_BOUNDS, Certainty.CONCRETE, process,
+						"Array index out of bound when reading data object "
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										source, state, dataArray)
+								+ " at position "
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										source, state, startPtr)
+								+ " + offset :" + j, source);
+
+				errorLogger.reportError(err);
 			}
-		} catch (SARLException e) {
-			throw new CIVLInternalException("Out of bound\n", source);
+			try {
+				flattenLeastCommonArray = universe.arrayWrite(
+						flattenLeastCommonArray, i, elementInDataArray);
+			} catch (SARLException e) {
+				CIVLExecutionException err = new CIVLExecutionException(
+						ErrorKind.OUT_OF_BOUNDS, Certainty.CONCRETE, process,
+						"Array index out of bound when writing object "
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										source, state, leastCommonArray)
+								+ " at position "
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										source, state, startPtr)
+								+ " + offset :" + i, source);
+
+				errorLogger.reportError(err);
+			}
+			i = universe.add(i, one);
+			j = universe.add(j, one);
+			claim = universe.lessThan(j, dataSize);
 		}
 
 		flattenLeastCommonArray = arrayCasting(state, process,
@@ -272,8 +340,8 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 */
 	protected SymbolicExpression getDataBetween(State state, String process,
 			SymbolicExpression startPtr, SymbolicExpression endPtr,
-			Map<Integer, NumericExpression> arrayElementsSizes,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
+			ArrayList<NumericExpression> arrayElementsSizes, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression startPointer, endPointer;
 		SymbolicExpression oldLeastCommonArray = null;
 		SymbolicExpression flattenedLeastComArray;
@@ -285,6 +353,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		boolean sidMatch, vidMatch;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		int dim = 0;
+		ResultType resultType;
 
 		// Checking if both of the pointers are pointing to the same obejct
 		sidMatch = (symbolicUtil.getDyscopeId(source, startPtr) == symbolicUtil
@@ -328,15 +397,31 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		oldLeastCommonArray = evaluator.dereference(source, state, process,
 				startPointer, false).value;
 		if (!(oldLeastCommonArray.type() instanceof SymbolicArrayType)) {
-			if (!reasoner.isValid(universe.equals(dataLength, one)))
-				throw new CIVLInternalException("out of bound", source);
+			BooleanExpression claim = universe.equals(dataLength, one);
+
+			resultType = reasoner.valid(claim).getResultType();
+			if (!resultType.equals(ResultType.YES)) {
+				state = errorLogger.logError(
+						source,
+						state,
+						process,
+						symbolicAnalyzer.stateToString(state),
+						claim,
+						resultType,
+						ErrorKind.OUT_OF_BOUNDS,
+						"Array index out of bound when reading from object pointed by "
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										source, state, startPtr) + ".\n"
+								+ "Data size: 1\n" + "Expected data size: "
+								+ dataLength + "\n");
+			}
 			return universe.array(oldLeastCommonArray.type(),
 					Arrays.asList(oldLeastCommonArray));
 		}
 		flattenedLeastComArray = arrayFlatten(state, process,
 				oldLeastCommonArray, source);
 		try {
-			// TODO: thow null pointer exception is bug in get sub array
+			// TODO: throw null pointer exception is bug in get sub array
 			flattenedLeastComArray = symbolicAnalyzer.getSubArray(
 					flattenedLeastComArray, startPos,
 					universe.add(endPos, one), state, process, source);
@@ -372,7 +457,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 			SymbolicExpression array, CIVLSource civlsource)
 			throws UnsatisfiablePathConditionException {
 		List<SymbolicExpression> flattenElementList;
-		Map<Integer, NumericExpression> arrayElementsSizes;
+		ArrayList<NumericExpression> arrayElementsSizes;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
 		if (array == null)
@@ -530,9 +615,10 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 */
 	private SymbolicExpression arrayLambdaFlatten(State state,
 			SymbolicExpression array,
-			Map<Integer, NumericExpression> arrayElementsSizes,
+			ArrayList<NumericExpression> arrayElementsSizes,
 			CIVLSource civlsource) {
-		SymbolicExpression myArray = array;
+		// Temporary array object during processing
+		SymbolicExpression tempArray = array;
 		NumericSymbolicConstant index = null;
 		SymbolicType elementType = null;
 		SymbolicExpression arrayEleFunc = null;
@@ -547,21 +633,21 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		index = (NumericSymbolicConstant) universe.symbolicConstant(
 				universe.stringObject("i"), universe.integerType());
 		// From outer to inner. later from inner to outer
-		dim = arrayElementsSizes.size() - 1;
+		dim = arrayElementsSizes.size();
 		tempIndex = index;
 		newExtent = one;
-		while (arrayElementsSizes.containsKey(dim)) {
+		for (int i = 0; i < dim; i++) {
 			NumericExpression newIndex; // new index is remainder
 
-			capacity = arrayElementsSizes.get(dim);
+			capacity = arrayElementsSizes.get(dim - 1 - i);
 			newIndex = universe.divide(tempIndex, capacity);
-			newExtent = universe.multiply(newExtent, universe.length(myArray));
-			myArray = universe.arrayRead(myArray, newIndex);
+			newExtent = universe
+					.multiply(newExtent, universe.length(tempArray));
+			tempArray = universe.arrayRead(tempArray, newIndex);
 			tempIndex = universe.modulo(tempIndex, capacity);
-			dim--;
 		}
-		elementType = myArray.type();
-		arrayEleFunc = universe.canonic(myArray);
+		elementType = tempArray.type();
+		arrayEleFunc = universe.canonic(tempArray);
 		lambdaFunc = universe.lambda(index, arrayEleFunc);
 		newArrayType = universe.arrayType(elementType, newExtent);
 		newArray = universe.arrayLambda(newArrayType, lambdaFunc);
@@ -603,15 +689,14 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 */
 	private NumericExpression arraySize(SymbolicExpression array,
 			CIVLSource source) {
-		Map<Integer, NumericExpression> dimExtents;
+		ArrayList<NumericExpression> dimExtents;
 		NumericExpression size = one;
 		int dim = 0;
 
 		dimExtents = symbolicUtil.arrayExtents(source, array);
-		while (dimExtents.containsKey(dim)) {
-			size = universe.multiply(size, dimExtents.get(dim));
-			dim++;
-		}
+		dim = dimExtents.size();
+		for (int i = 0; i < dim; i++)
+			size = universe.multiply(size, dimExtents.get(i));
 		return size;
 	}
 }

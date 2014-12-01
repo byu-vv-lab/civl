@@ -2797,16 +2797,19 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/* ********************* Pointer addition helpers ************************ */
-	/**
-	 * Helper function for {@link #pointerAdd}. Returns the new pointer after
-	 * adding an increment or decrement and the array capacities information (
-	 * {@link #setDataBetween}) of the array pointed by the original pointer. If
-	 * the pointer addition operation can be done only on one dimension (like
-	 * for <code>int a[3][3];</code>) addition operation "&a[0][0] + 2" can be
-	 * done without known the whole array information), the returned map
-	 * container will be null.
+/**
+	 * Helper function for {@link Evaluator#pointerAdd(State, int, String, BinaryExpression, SymbolicExpression, NumericExpression)
+	 * . Returns the new pointer after adding an increment or decrement and the
+	 * array capacities information of the array pointed
+	 * by the original pointer. If the pointer addition operation can be done
+	 * only on one dimension (like for<code>int a[3][3];</code>, addition
+	 * operation "&a[0][0] + 2" can be done without known the whole array
+	 * information), the returned map container will be null.
+	 * 
+	 * @author Ziqing Luo
 	 */
-	private Pair<Evaluation, Map<Integer, NumericExpression>> pointerAddWorker(
+
+	private Pair<Evaluation, ArrayList<NumericExpression>> pointerAddWorker(
 			State state, String process, SymbolicExpression pointer,
 			NumericExpression offset, boolean checkOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
@@ -2816,10 +2819,11 @@ public class CommonEvaluator implements Evaluator {
 		NumericExpression extent, index;
 		ReferenceExpression ref;
 		ReferenceExpression newRef;
-		BooleanExpression claim, over, equal, drown;
+		BooleanExpression claim, notOver, notEqual, notDrown;
 		Evaluation eval;
 		int scopeId, vid;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		ResultType resultType;
 
 		if (pointer.operator() != SymbolicOperator.CONCRETE)
 			errorLogger.logSimpleError(source, state, process,
@@ -2835,9 +2839,11 @@ public class CommonEvaluator implements Evaluator {
 		// Checking if the pointer addition will be out of bound at the current
 		// dimension.
 		if (ref.isArrayElementReference()) {
+			boolean isOutBound = false;
+			BooleanExpression outCondExpr;
+
 			arrayPtr = symbolicUtil.parentPointer(source, pointer);
-			index = universe.integer(symbolicUtil
-					.getArrayIndex(source, pointer));
+			index = ((ArrayElementReference) ref).getIndex();
 			eval = dereference(source, state, process, arrayPtr, false);
 			state = eval.state;
 			if (!(eval.value.type() instanceof SymbolicCompleteArrayType))
@@ -2845,75 +2851,190 @@ public class CommonEvaluator implements Evaluator {
 						"Pointer addition on a pointer to incomplete array",
 						source);
 			extent = ((SymbolicCompleteArrayType) eval.value.type()).extent();
-			// beyond the bound
-			over = universe.lessThan(extent, universe.add(index, offset));
-			// lower than the bound
-			drown = universe.lessThan(universe.add(index, offset), zero);
-			equal = universe.equals(universe.add(index, offset), extent);
-			// out of bound condition:
+			// Not beyond the bound
+			notOver = universe.lessThanEquals(universe.add(index, offset), extent);
+			// Not lower than the bound
+			notDrown = universe.lessThan(zero, universe.add(index, offset));
+			// Not exactly equal to the extent
+			notEqual = universe.neq(universe.add(index, offset), extent);
+			// Conditions of out of bound:
 			// If index + offset > extent, out of bound.
 			// If index + offset < 0, out of bound.
 			// If index + offset == extent and the parent reference is an array
 			// element reference, out of bound.(e.g. int a[2], b[2][2]. &a[2] is
 			// a valid pointer, &b[0][2] should be cast to &b[1][0] unless it's
 			// a sequence of memory space)
-			if (reasoner.isValid(over)
-					|| reasoner.isValid(drown)
-					|| (reasoner.isValid(equal)
-							&& symbolicUtil.getSymRef(arrayPtr)
-									.isArrayElementReference() && vid != 0)) {
-				NumericExpression newIndex, remainder = index;
+			isOutBound = true;
+			outCondExpr = notOver;
+			resultType = reasoner.valid(notOver).getResultType();
+			if (resultType.equals(ResultType.YES)) {
+				// not over
+				outCondExpr = notDrown;
+				resultType = reasoner.valid(notDrown).getResultType();
+				if (resultType.equals(ResultType.YES)) {
+					// not drown
+					outCondExpr = notEqual;
+					resultType = reasoner.valid(notEqual).getResultType();
+					if (resultType.equals(ResultType.YES)) // not equal
+						isOutBound = false;
+					else if (!symbolicUtil.getSymRef(arrayPtr)
+							.isArrayElementReference() || vid == 0)
+						isOutBound = false; // equal but valid
+				}
+			}
+			if (isOutBound) {
+				NumericExpression newIndex, remainder = zero;
 				NumericExpression capacity = one;
 				SymbolicExpression arrayRootPtr;
 				List<NumericExpression> indexes = new LinkedList<>();
-				Map<Integer, NumericExpression> dimCapacities;
-				int dim = 1;
+				ArrayList<NumericExpression> dimExtents;
+				ArrayList<NumericExpression> dimCapacities;
+				ArrayList<NumericExpression> oldIndexes;
+				int dim;
+				int arrayDim;
+				// Here is the difference between the 2 variable above "dim" and
+				// "arrayDim": "dim" is the dimension of the array pointed
+				// directly by the given pointer. Since arrays in CIVL-C are
+				// logically nested, the array pointed may have child arrays as
+				// its elements but we ignore them when we look at "dim". e.g.
+				// array "int a[2][3][4]" is pointed by pointer "a[0][0]", the
+				// "dim" will be 2 which includes the outer most 2 nested arrays
+				// (with extents 2 and 3).
+				// In contrast, "arrayDim" is always store the dimension of the
+				// whole array object pointed by the pointer. Continue to the
+				// example above, "arrayDim" should be 3.
 
 				// Checking if the array is an allocated memory space
-				if (vid == 0)
-					errorLogger.reportError(new CIVLExecutionException(
-							ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE,
-							process, "Array out of bound\n", source));
+				if (vid == 0) {
+					state = errorLogger.logError(
+							source,
+							state,
+							process,
+							symbolicAnalyzer.stateToString(state),
+							outCondExpr,
+							resultType,
+							ErrorKind.OUT_OF_BOUNDS,
+							"Pointer addition results index out of bound on object allocated in memory: "
+									+ symbolicAnalyzer
+											.symbolicExpressionToString(source,
+													state, eval.value)
+									+ ".\nExtent: "
+									+ symbolicAnalyzer
+											.symbolicExpressionToString(source,
+													state, extent)
+									+ "\nPointer: "
+									+ symbolicAnalyzer
+											.symbolicExpressionToString(source,
+													state, pointer)
+									+ "\nOffset: "
+									+ symbolicAnalyzer
+											.symbolicExpressionToString(source,
+													state, offset));
+				}
 				// Computes remainder
+				oldIndexes = new ArrayList<>();
+				parentPtr = pointer;
+				while (symbolicUtil.getSymRef(parentPtr) instanceof ArrayElementReference) {
+					ArrayElementReference arrayRef;
+
+					arrayRef = (ArrayElementReference) symbolicUtil
+							.getSymRef(parentPtr);
+					oldIndexes.add(arrayRef.getIndex());
+					parentPtr = symbolicUtil.parentPointer(source, parentPtr);
+				}
+				dim = oldIndexes.size();
 				arrayRootPtr = symbolicUtil.arrayRootPtr(arrayPtr, source);
 				eval = dereference(source, state, process, arrayRootPtr, false);
 				state = eval.state;
+				dimExtents = symbolicUtil.arrayExtents(source, eval.value, dim);
 				dimCapacities = symbolicUtil.getArrayElementsSizes(eval.value,
-						source);
-				parentPtr = arrayPtr;
-				while (dimCapacities.containsKey(dim)) {
+						dimExtents, source);
+				arrayDim = dimExtents.size();
+				for (int i = 0; i < dim; i++) {
 					NumericExpression oldIndex;
 
-					try {
-						oldIndex = universe.integer(symbolicUtil.getArrayIndex(
-								source, parentPtr));
-					} catch (ClassCastException e) {
-						errorLogger.reportError(new CIVLExecutionException(
-								ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE,
-								process, "Array out of bound\n", source));
-						return new Pair<>(new Evaluation(state, pointer), null);
-					}
-					capacity = dimCapacities.get(dim);
+					oldIndex = oldIndexes.get(i);
+					capacity = dimCapacities.get(arrayDim - dim + i);
 					remainder = universe.add(remainder,
 							universe.multiply(oldIndex, capacity));
-					dim++;
-					parentPtr = symbolicUtil.parentPointer(source, parentPtr);
 				}
+				// The remainder computed here represents the number of elements
+				// in whole array minus one (starts from zero).
 				remainder = universe.add(remainder, offset);
-				// computes new indexes
-				dim--;
-				while (dimCapacities.containsKey(dim)) {
-					capacity = dimCapacities.get(dim);
+				// Computes new indexes
+				for (int i = 0; i < dim; i++) {
+					BooleanExpression checkClaim;
+					ResultType checkResultType;
+
+					capacity = dimCapacities.get(arrayDim - 1 - i);
 					newIndex = universe.divide(remainder, capacity);
-					remainder = universe.modulo(remainder, capacity);
+					checkClaim = universe.lessThan(newIndex,
+							dimExtents.get(arrayDim - 1 - i));
+					checkClaim = universe.and(checkClaim,
+							universe.lessThanEquals(zero, newIndex));
+					checkResultType = reasoner.valid(checkClaim)
+							.getResultType();
+					if (!checkResultType.equals(ResultType.YES)) {
+						BooleanExpression equalExtentClaim = universe.equals(
+								newIndex, dimExtents.get(arrayDim - 1 - i));
+
+						checkResultType = reasoner.valid(equalExtentClaim)
+								.getResultType();
+						if (checkResultType.equals(ResultType.YES)) {
+							// If it equals the extent but not at the deepest
+							// index position, minus one. This process will
+							// reveal a valid pointer addition while the pointer
+							// of result cannot be dereferenced(Pointer to the
+							// very end of an array).
+							if (i < dim - 1)
+								newIndex = universe.subtract(newIndex, one);
+						} else {
+							// report error
+							state = errorLogger
+									.logError(
+											source,
+											state,
+											process,
+											symbolicAnalyzer
+													.stateToString(state),
+											equalExtentClaim,
+											checkResultType,
+											ErrorKind.OUT_OF_BOUNDS,
+											"Pointer addition results a out of bound error\n Pointer: "
+													+ symbolicAnalyzer
+															.symbolicExpressionToString(
+																	source,
+																	state,
+																	pointer)
+													+ "\nOffset: "
+													+ symbolicAnalyzer
+															.symbolicExpressionToString(
+																	source,
+																	state,
+																	offset)
+													+ "\nExtent: "
+													+ symbolicAnalyzer
+															.symbolicExpressionToString(
+																	source,
+																	state,
+																	dimExtents
+																			.get(arrayDim
+																					- 1
+																					- i))
+													+ "\nIndex: "
+													+ symbolicAnalyzer
+															.symbolicExpressionToString(
+																	source,
+																	state,
+																	newIndex));
+						}
+					}
+					remainder = universe.subtract(
+							remainder,
+							universe.multiply(newIndex,
+									dimCapacities.get(arrayDim - 1 - i)));
 					indexes.add(newIndex);
-					dim--;
 				}
-				claim = universe.equals(remainder, zero);
-				if (!reasoner.isValid(claim))
-					errorLogger.reportError(new CIVLExecutionException(
-							ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE,
-							process, "Array out of bound\n", source));
 				newRef = symbolicUtil.updateArrayElementReference(
 						(ArrayElementReference) ref, indexes);
 				eval = new Evaluation(state, symbolicUtil.makePointer(scopeId,
@@ -2930,11 +3051,8 @@ public class CommonEvaluator implements Evaluator {
 				return new Pair<>(eval, null);
 			}
 		} else {
-			errorLogger.reportError(new CIVLExecutionException(
-					ErrorKind.OUT_OF_BOUNDS, Certainty.PROVEABLE, process,
-					"Array out of bound\n", source));
-			eval = new Evaluation(state, pointer);
-			return new Pair<>(eval, null);
+			throw new CIVLUnimplementedFeatureException(
+					"Pointer addition on non array element references");
 		}
 	}
 
@@ -3631,8 +3749,8 @@ public class CommonEvaluator implements Evaluator {
 					state = errorLogger.logError(expression.getSource(), state,
 							process, symbolicAnalyzer.stateToString(state),
 							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
-							"Pointer addition resulted in out of bounds object pointer:\noffset = "
-									+ newOffset);
+							"Pointer addition resulted in out of bounds object pointer:\n"
+									+ "offset = " + newOffset);
 				}
 				eval = new Evaluation(state, symbolicUtil.setSymRef(pointer,
 						universe.offsetReference(offsetRef.getParent(),
@@ -3668,7 +3786,7 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicExpression array, arrayPtr;
 		NumericExpression leftPos = zero, rightPos = zero;
 		Map<Integer, NumericExpression> leftPtrIndexes, rightPtrIndexes;
-		Map<Integer, NumericExpression> dimCapacities;
+		ArrayList<NumericExpression> dimCapacities;
 		Evaluation eval;
 		int dim = 0;
 
@@ -3734,6 +3852,12 @@ public class CommonEvaluator implements Evaluator {
 								symbolicAnalyzer.stateToString(state), null,
 								ResultType.NO, ErrorKind.POINTER,
 								"Operands of pointer subtraction point to different heap obejcts");
+			// Since they are in the same heap object, the result is directly
+			// do a subtraction between two indexes
+			eval = new Evaluation(state, null);
+			eval.value = universe.subtract(leftPtrIndexes.get(0),
+					rightPtrIndexes.get(0));
+			return eval;
 		}
 		// Get array by dereferencing array pointer
 		eval = this.dereference(expression.left().getSource(), state, process,
@@ -3843,7 +3967,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public Pair<Evaluation, Map<Integer, NumericExpression>> evaluatePointerAdd(
+	public Pair<Evaluation, ArrayList<NumericExpression>> evaluatePointerAdd(
 			State state, String process, SymbolicExpression ptr,
 			NumericExpression offset, boolean ifCheckOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException {

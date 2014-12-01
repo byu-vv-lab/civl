@@ -1,8 +1,7 @@
 package edu.udel.cis.vsl.civl.library.stdio;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
@@ -65,7 +64,7 @@ public class LibstdioEvaluator extends BaseLibraryEvaluator implements
 			NumericExpression offset, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression endPtr;
-		Pair<Evaluation, Map<Integer, NumericExpression>> eval_and_arrayInfo;
+		Pair<Evaluation, ArrayList<NumericExpression>> eval_and_arrayInfo;
 		Evaluation eval;
 
 		eval_and_arrayInfo = evaluator.evaluatePointerAdd(state, process,
@@ -74,8 +73,8 @@ public class LibstdioEvaluator extends BaseLibraryEvaluator implements
 		state = eval.state;
 		endPtr = eval.value;
 		if (eval_and_arrayInfo.right == null) {
-			eval_and_arrayInfo.right = new HashMap<>();
-			eval_and_arrayInfo.right.put(0, one);
+			eval_and_arrayInfo.right = new ArrayList<>();
+			eval_and_arrayInfo.right.add(one);
 		}
 		return this.setDataBetween(state, process, argPtr, endPtr, data,
 				eval_and_arrayInfo.right, source);
