@@ -742,8 +742,7 @@ public class CommonEvaluator implements Evaluator {
 			ArrayLiteralExpression expression)
 			throws UnsatisfiablePathConditionException {
 		Expression[] elements = expression.elements();
-		SymbolicType symbolicElementType = expression.elementType()
-				.getDynamicType(universe);
+		SymbolicType symbolicElementType;
 		List<SymbolicExpression> symbolicElements = new ArrayList<>();
 		Evaluation eval;
 
@@ -752,8 +751,42 @@ public class CommonEvaluator implements Evaluator {
 			symbolicElements.add(eval.value);
 			state = eval.state;
 		}
+		// The symbolic element type is get from the function "getDynamicType()"
+		// which won't give any information about extents, so we have to add it
+		// if it's complete array type.
+		if (expression.elementType() instanceof CIVLCompleteArrayType) {
+			Pair<State, SymbolicType> pair;
+
+			pair = getCompleteArrayType(state, pid,
+					((CIVLCompleteArrayType) expression.elementType()));
+			state = pair.left;
+			symbolicElementType = pair.right;
+		} else
+			symbolicElementType = expression.elementType().getDynamicType(
+					universe);
 		return new Evaluation(state, universe.array(symbolicElementType,
 				symbolicElements));
+	}
+
+	private Pair<State, SymbolicType> getCompleteArrayType(State state,
+			int pid, CIVLCompleteArrayType elementType)
+			throws UnsatisfiablePathConditionException {
+		SymbolicType arrayType;
+		Evaluation eval;
+		Pair<State, SymbolicType> pair;
+
+		if (elementType.elementType() instanceof CIVLCompleteArrayType) {
+			pair = this.getCompleteArrayType(state, pid,
+					(CIVLCompleteArrayType) elementType.elementType());
+			state = pair.left;
+			arrayType = pair.right;
+		} else
+			arrayType = elementType.elementType().getDynamicType(universe);
+		eval = this.evaluate(state, pid, elementType.extent());
+		state = eval.state;
+		assert eval.value instanceof NumericExpression;
+		return new Pair<State, SymbolicType>(state, universe.arrayType(
+				arrayType, (NumericExpression) eval.value));
 	}
 
 	/**
@@ -2852,7 +2885,8 @@ public class CommonEvaluator implements Evaluator {
 						source);
 			extent = ((SymbolicCompleteArrayType) eval.value.type()).extent();
 			// Not beyond the bound
-			notOver = universe.lessThanEquals(universe.add(index, offset), extent);
+			notOver = universe.lessThanEquals(universe.add(index, offset),
+					extent);
 			// Not lower than the bound
 			notDrown = universe.lessThan(zero, universe.add(index, offset));
 			// Not exactly equal to the extent
