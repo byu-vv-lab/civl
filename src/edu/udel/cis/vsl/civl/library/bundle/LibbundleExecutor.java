@@ -407,8 +407,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					targetObject);
 		else
 			throw new CIVLInternalException(
-					"Cannot complete unpack.\nassigned pointer: " + bufPointer
-							+ "\nassigning object: " + targetObject, source);
+					"Cannot complete unpack.\nAssigned pointer: " + bufPointer
+							+ "\nAssigning object: " + targetObject, source);
 
 		return state;
 	}

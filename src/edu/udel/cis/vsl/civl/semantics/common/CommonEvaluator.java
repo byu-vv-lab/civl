@@ -2940,30 +2940,35 @@ public class CommonEvaluator implements Evaluator {
 
 				// Checking if the array is an allocated memory space
 				if (vid == 0) {
-					state = errorLogger.logError(
-							source,
-							state,
-							process,
-							symbolicAnalyzer.stateToString(state),
-							outCondExpr,
-							resultType,
-							ErrorKind.OUT_OF_BOUNDS,
-							"Pointer addition results index out of bound on object allocated in memory: "
-									+ symbolicAnalyzer
-											.symbolicExpressionToString(source,
-													state, eval.value)
-									+ ".\nExtent: "
-									+ symbolicAnalyzer
-											.symbolicExpressionToString(source,
-													state, extent)
-									+ "\nPointer: "
-									+ symbolicAnalyzer
-											.symbolicExpressionToString(source,
-													state, pointer)
-									+ "\nOffset: "
-									+ symbolicAnalyzer
-											.symbolicExpressionToString(source,
-													state, offset));
+					state = errorLogger
+							.logError(
+									source,
+									state,
+									process,
+									symbolicAnalyzer.stateToString(state),
+									outCondExpr,
+									resultType,
+									ErrorKind.OUT_OF_BOUNDS,
+									"Pointer addition results in an index out of bound error on object allocated in memory: "
+											+ symbolicAnalyzer
+													.symbolicExpressionToString(
+															source, state,
+															eval.value)
+											+ ".\nArray extent: "
+											+ symbolicAnalyzer
+													.symbolicExpressionToString(
+															source, state,
+															extent)
+											+ "\nOriginal pointer: "
+											+ symbolicAnalyzer
+													.symbolicExpressionToString(
+															source, state,
+															pointer)
+											+ "\nPointer addtion offset: "
+											+ symbolicAnalyzer
+													.symbolicExpressionToString(
+															source, state,
+															offset));
 				}
 				// Computes remainder
 				oldIndexes = new ArrayList<>();
@@ -3034,19 +3039,19 @@ public class CommonEvaluator implements Evaluator {
 											equalExtentClaim,
 											checkResultType,
 											ErrorKind.OUT_OF_BOUNDS,
-											"Pointer addition results a out of bound error\n Pointer: "
+											"Pointer addition results in an out of bound error\nOriginal pointer: "
 													+ symbolicAnalyzer
 															.symbolicExpressionToString(
 																	source,
 																	state,
 																	pointer)
-													+ "\nOffset: "
+													+ "\nPointer addition offset: "
 													+ symbolicAnalyzer
 															.symbolicExpressionToString(
 																	source,
 																	state,
 																	offset)
-													+ "\nExtent: "
+													+ "\nArray extent: "
 													+ symbolicAnalyzer
 															.symbolicExpressionToString(
 																	source,
@@ -3055,7 +3060,7 @@ public class CommonEvaluator implements Evaluator {
 																			.get(arrayDim
 																					- 1
 																					- i))
-													+ "\nIndex: "
+													+ "\nNew array index: "
 													+ symbolicAnalyzer
 															.symbolicExpressionToString(
 																	source,
