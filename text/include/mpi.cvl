@@ -105,7 +105,6 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
 int MPI_Reduce(const void* sendbuf, void* recvbuf, int count,
 	       MPI_Datatype datatype, MPI_Op op, int root,
 	       MPI_Comm comm) {
-#include <stdio.h>
   int rank;
 
   $assert comm.status == __INIT :
@@ -331,9 +330,9 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
     MPI_Recv(recvbuf, recvcount, recvtype, root, SCATTERV_TAG, comm, &status);
     MPI_Get_count(&status, recvtype, &real_recvcount);
     $assert real_recvcount == recvcount :
-    "MPI_Gather() asks for equality between"
-      " the amount of data sent and the "
-      "amount of data received.";
+    "Process rank:%d\nMPI_Scatterv() asks for equality between"
+      " the amount of data sent (%d) and the "
+      "amount of data received (%d).", rank, real_recvcount, recvcount;
   }
 }
 
