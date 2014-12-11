@@ -33,7 +33,7 @@ public class MPITranslationBigTest {
 
 	@Test
 	public void mpi_wave1d() {
-		assertTrue(ui.run("verify", filename("wave1d.c")));
+		assertTrue(ui.run("verify", "-enablePrintf=false", filename("wave1d.c")));
 	}
 
 }
