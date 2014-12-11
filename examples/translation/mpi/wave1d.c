@@ -1,3 +1,8 @@
+/* wave1d.c: parallel 1d-wave equation solver with constant boundary.
+ * To execute: mpicc wave1d.c ; mpiexec -n 4 ./a.out
+ * Or replace "4" with however many procs you want to use.
+ * To verify: civl verify wave1d.c
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +11,8 @@
 #include <mpi.h>
 
 #define SQR(x) ((x)*(x))
+#define OWNER(index) ((nprocs*(index+1)-1)/nx)
+
 /* MPI message tag */
 #define FROMLEFT     1
 #define FROMRIGHT    2
@@ -14,30 +21,26 @@
 /* Input parameters */
 #ifdef _CIVL
 
-const int NXB = 5;
+$input int NXB = 5;
 $input int nx;                    /* number of discrete points including endpoints */
-$assume 2 < nx && nx <= NXB;      /* setting bounds */
+$assume 2 <= nx && nx <= NXB;      /* setting bounds */
 $input double c;                  /* physical constant to do with string */
 $assume c > 0.0;
-$input int height_init;           /* max amplitude in initial state */
-$input int width_init;            /* width of initial pulse */
-$assume 1 < width_init && width_init < nx;
-$assume width_init < nx;
-const int NSTEPSB = 5;        
+$input int NSTEPSB = 5;        
 $input int nsteps;                /*  number of iterations */
 $assume 0 < nsteps && nsteps <= NSTEPSB;
-const int wstep = 1;
-int _NPROCS_LOWER_BOUND = 1;
-int _NPROCS_UPPER_BOUND = 4;
+$input int wstep = 1;
+$input int _NPROCS_LOWER_BOUND = 1;
+$input int _NPROCS_UPPER_BOUND = 4;
 double oracle[nsteps][nx];       /* array stores the results of sequential run in every step */
-$input double u[nx];             /* arbitraty input data */
+$input double u_init[nx];        /* arbitrary input data */
 
 #else
 
 int nx, height_init, width_init;
 int nsteps, wstep;
 double c;
-double * u;
+double * u_init;
 
 #endif
 
@@ -45,6 +48,7 @@ double * u;
 double *u_prev, *u_curr, *u_next;
 double k;
 int nprocs, nxl, rank;
+int first;                       /* the first index of cells in global array */
 int left, right;                 /* left neighbor and right neighbor */
 
 /* Returns the global index of the first cell owned
@@ -62,6 +66,8 @@ int countForProc(int rank) {
   return b - a;
 }
 
+#ifndef _CIVL
+
 /* Initialize data array for running in MPI */
 void init() {
   int i;
@@ -69,12 +75,14 @@ void init() {
 
   for(i = 0; i < nx; i++) {
     if(i == 1 || i >= width_init)
-      u[i] = 0.0;
+      u_init[i] = 0.0;
     else
-      u[i] = height_init * e *
+      u_init[i] = height_init * e *
 	exp(-1.0/(1-SQR(2.0*(i-width_init/2.0)/width_init)));
   }
 }
+
+#endif
 
 /* Update cells owned by processes */
 void update() {
@@ -97,9 +105,6 @@ void update() {
    comparison */
 void initialization() {
   int i, j;
-  int nxlLeft = 0; 
-  int nxlRight = 0;
-  int neighborRank;
 
 #ifndef _CIVL
 
@@ -109,14 +114,13 @@ void initialization() {
   width_init = 10;
   nsteps = 500;
   wstep = 5;
-  u = (double *)malloc(nx * sizeof(double));
+  u_init = (double *)malloc(nx * sizeof(double));
   init();
+
 #endif
 
-  printf("Wave1d with nx=%d, c=%f, height_init=%d, width_init=%d, \
-nsteps=%d, wstep=%d\n", nx, c, height_init, width_init, nsteps, wstep);
+  printf("Wave1d with nx=%d, c=%f, nsteps=%d, wstep=%d\n", nx, c, nsteps, wstep);
   assert(nx >= 2);
-  assert(width_init < nx);
   assert(c > 0);
   assert(nsteps >= 1);
   assert(wstep >= 1 && wstep <= nsteps);
@@ -138,8 +142,8 @@ nsteps=%d, wstep=%d\n", nx, c, height_init, width_init, nsteps, wstep);
     seq_u_next = (double *)malloc((nx + 2) * sizeof(double));
     assert(seq_u_next);
     //Initialize seq_u_curr and seq_u_prev
-    memcpy(&seq_u_curr[1], u, sizeof(double) * nx);
-    memcpy(&seq_u_prev[1], u, sizeof(double) * nx);
+    memcpy(&seq_u_curr[1], u_init, sizeof(double) * nx);
+    memcpy(&seq_u_prev[1], u_init, sizeof(double) * nx);
     // run in sequential.
     // wirte data in time 0.
     for(i = 0; i < nx; i++) 
@@ -168,25 +172,22 @@ nsteps=%d, wstep=%d\n", nx, c, height_init, width_init, nsteps, wstep);
 #endif
 
   nxl = countForProc(rank);
+  first = firstForProc(rank);
   u_prev = (double *)malloc((nxl + 2) * sizeof(double));
   assert(u_prev);
   u_curr = (double *)malloc((nxl + 2) * sizeof(double));
   assert(u_curr);
   u_next = (double *)malloc((nxl + 2) * sizeof(double));
   assert(u_next);
-  // Skip processes with none assignment
-  neighborRank = rank;
-  while(nxlLeft == 0 && nxl != 0) {
-    neighborRank = neighborRank > 0 ? neighborRank-1 : nprocs - 1;
-    nxlLeft = countForProc(neighborRank);
-  }
-  left = neighborRank;
-  neighborRank = rank;
-  while(nxlRight == 0 && nxl != 0) {
-    neighborRank = neighborRank < nprocs - 1 ? neighborRank+1 : 0;
-    nxlRight = countForProc(neighborRank);
-  }
-  right = neighborRank;
+  // skip processes which are allocated no cells
+  if(first != 0)
+    left = OWNER(first - 1);
+  else 
+    left = OWNER(nx-1);
+  if(first + nxl < nx)
+    right = OWNER(first + nxl);
+  else
+    right = OWNER(0);
 }
 
 /* Print out the value of data cells; 
@@ -208,15 +209,20 @@ void printData (int time, int first, int length, double * buf) {
 }
 
 /* receives data from other processes and wirte frames */
-void write_frame (int time, int * displs, int * counts) {
+void write_frame (int time) {
   if(rank == 0) {
     double  buf[nx + 2];
+    MPI_Status status;
 
     printf("======= Time %d =======\n", time);
-    printData(time, displs[0], counts[0], &u_curr[1]);
+    printData(time, first, nxl, &u_curr[1]);
     for(int i=1; i < nprocs; i++) {
-      MPI_Recv(buf, counts[i], MPI_DOUBLE, i, DATAPASS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      printData(time, displs[i], counts[i], buf);
+      int displ = firstForProc(i);
+      int count;
+
+      MPI_Recv(buf, nx, MPI_DOUBLE, i, DATAPASS, MPI_COMM_WORLD, &status);
+      MPI_Get_count(&status, MPI_DOUBLE, &count);
+      printData(time, displ, count, buf);
     }
     printf("\n");
   } else 
@@ -224,7 +230,7 @@ void write_frame (int time, int * displs, int * counts) {
 }
 
 /* Exchanging ghost cells */
-void communicate(){
+void exchange(){
   MPI_Sendrecv(&u_curr[1], 1, MPI_DOUBLE, left, FROMRIGHT, &u_curr[nxl+1], 1, MPI_DOUBLE, 
 	       right, FROMRIGHT, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   MPI_Sendrecv(&u_curr[nxl], 1, MPI_DOUBLE, right, FROMLEFT, &u_curr[0], 1, 
@@ -233,8 +239,6 @@ void communicate(){
 
 int main(int argc, char * argv[]) {
   int iter;
-  int * nxls;           // array stores counts of data of all processes
-  int * displs;         // array stores start points of data of all processes
 
   // elaborate nx to concrete value...
   for(int i=0; i<nx; i++);
@@ -242,39 +246,31 @@ int main(int argc, char * argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs); 
   initialization();
-  displs = (int *)malloc(nprocs * sizeof(int));
-  assert(displs);
-  nxls = (int *)malloc(nprocs * sizeof(int));
-  assert(nxls);
   if(rank == 0) {
-    for(int i=0; i < nprocs; i++) {
-      displs[i] = firstForProc(i);
-      nxls[i] = countForProc(i);
-    }
     // Send every process their cells
     for(int i=1; i < nprocs; i++) {
-      int first = displs[i];
-      int count = nxls[i];
+      int first = firstForProc(i);
+      int count = countForProc(i);
 
-      MPI_Send(&u[first], count, MPI_DOUBLE, i, DATAPASS, MPI_COMM_WORLD);
+      MPI_Send(&u_init[first], count, MPI_DOUBLE, i, DATAPASS, MPI_COMM_WORLD);
     }
-    memcpy(&u_prev[1], u, sizeof(double) * nxl);
-    memcpy(&u_curr[1], u, sizeof(double) * nxl);
+    memcpy(&u_prev[1], u_init, sizeof(double) * nxl);
+    memcpy(&u_curr[1], u_init, sizeof(double) * nxl);
   } else {
     MPI_Recv(&u_curr[1], nxl, MPI_DOUBLE, 0, DATAPASS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     memcpy(&u_prev[1], &u_curr[1], sizeof(double) * nxl);
   }
   for(iter = 0; iter < nsteps; iter++) {
     if(iter % wstep == 0)
-      write_frame(iter, displs, nxls);
-    communicate();
-    update();
+      write_frame(iter);
+    if(nxl != 0){
+      exchange();
+      update();
+    }
   }
   free(u_curr);
   free(u_prev);
   free(u_next);
-  free(displs);
-  free(nxls);
   MPI_Finalize(); 
   return 0;
 }

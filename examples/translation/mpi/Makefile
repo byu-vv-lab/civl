@@ -31,6 +31,9 @@ mpi_gatherv: ${Gather_Scatter/mpi_gatherv.c}
 mpi_scatterv: ${Gather_Scatter/mpi_scatterv.c}
 	$(VERIFY) -input__NPROCS=4 -enablePrintf=false Gather_Scatter/mpi_scatterv.c
 
+mpi_wave1d: wave1d.c
+	$(VERIFY) wave1d.c
+
 clean: 
 	rm -f -r CIVLREP
 	rm -r -f *~
