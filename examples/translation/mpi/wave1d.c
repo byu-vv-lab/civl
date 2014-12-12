@@ -124,7 +124,6 @@ void initialization() {
   assert(nsteps >= 1);
   assert(wstep >= 1 && wstep <= nsteps);
   k = c * c;
-
   printf("Wave1d with nx=%d, c=%f, nsteps=%d, wstep=%d\n", nx, c, nsteps, wstep);
 
 #ifdef _CIVL
@@ -233,6 +232,7 @@ int main(int argc, char * argv[]) {
 
 
 #ifdef _CIVL
+
   // elaborate nx to concrete value...
   elaborate(nx);
 
@@ -249,6 +249,7 @@ int main(int argc, char * argv[]) {
        u_curr[i] = u_init[first + i - 1];
     }
   }
+
 #else
 
   if(nxl != 0) {
