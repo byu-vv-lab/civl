@@ -34,8 +34,8 @@ public class MPITranslationTest {
 
 	@Test
 	public void reduce() {
-		assertTrue(ui.run("verify", "-input_NPROCS=2",
-				"-enablePrintf=false", filename("reduce.c")));
+		assertTrue(ui.run("verify", "-input_NPROCS=4",
+				"-enablePrintf=true", filename("reduce.c")));
 	}
 
 	@Test
@@ -95,5 +95,12 @@ public class MPITranslationTest {
 		assertTrue(ui.run("verify",
 				"-input_NPROCS=4", "-enablePrintf=false",
 				filename("Gather_Scatter/mpi_scatter_inPlace.c")));
+	}
+	
+	@Test
+	public void mpi_wave1d() throws ABCException {
+		assertTrue(ui.run("verify",
+				"-input_NPROCS_UPPER_BOUND=3", "-inputNSTEPSB=3", "-enablePrintf=false",
+				filename("wave1d.c")));
 	}
 }
