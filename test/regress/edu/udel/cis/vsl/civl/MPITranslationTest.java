@@ -100,7 +100,7 @@ public class MPITranslationTest {
 	@Test
 	public void mpi_wave1d() throws ABCException {
 		assertTrue(ui.run("verify",
-				"-input_NPROCS_UPPER_BOUND=3", "-inputNSTEPSB=3", "-enablePrintf=false",
+				"-input_NPROCS_UPPER_BOUND=3", "-inputNSTEPSB=2", "-inputNXB=4", "-enablePrintf=false",
 				filename("wave1d.c")));
 	}
 }
