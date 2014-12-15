@@ -1,3 +1,4 @@
+
 CIVL = civl
 VERIFY = $(CIVL) verify
 CC = cc
@@ -33,6 +34,9 @@ mpi_scatterv: ${Gather_Scatter/mpi_scatterv.c}
 
 mpi_wave1d: wave1d.c
 	$(VERIFY) wave1d.c
+
+mpi_diff2d: diffusion2d_cb.c
+	$(VERIFY) -input_NPROCS=4 -inputxProcs=2 -inputyProcs=2 -inputNSTEPSB=3 diffusion2d_cb.c
 
 clean: 
 	rm -f -r CIVLREP
