@@ -35,5 +35,15 @@ public class MPITranslationBigTest {
 	public void mpi_wave1d() {
 		assertTrue(ui.run("verify", "-enablePrintf=false", filename("wave1d.c")));
 	}
+	
+	@Test
+	public void mpi_diff1d() {
+		assertTrue(ui.run("verify", "-enablePrintf=false", filename("diffusion1d.c")));
+	}
+	
+	@Test
+	public void mpi_diff2d() {
+		assertTrue(ui.run("verify", "-enablePrintf=false", "-input_NPROCS=4", "-inputxProcs=2", "-inputyProcs=2", "-inputNSTEPSB=3", filename("diffusion2d_cb.c")));
+	}
 
 }
