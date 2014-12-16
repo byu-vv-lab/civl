@@ -34,7 +34,7 @@ public class OpenMPTest {
 	@Test
 	public void canonicalForLoops() {
 		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
-				filename("canonicalForLoops.c")));
+				filename("../../omp/canonicalForLoops.c")));
 	}
 
 }
