@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,11 +17,11 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
@@ -48,10 +47,6 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
  */
 public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		LibraryEnabler {
-
-	private static String chooseIntWork = "$choose_int_work";
-	private FunctionIdentifierExpression chooseIntWorkPointer;
-
 	/* **************************** Constructors *************************** */
 	/**
 	 * Creates a new instance of the library enabler for civlc.h.
@@ -70,18 +65,6 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil,
 				symbolicAnalyzer, libEnablerLoader, libEvaluatorLoader);
-		CIVLSource source = modelFactory.model().getSource();
-		SystemFunction chooseIntWorkFunction = modelFactory.systemFunction(
-				source,
-				modelFactory.identifier(source, chooseIntWork),
-				Arrays.asList(modelFactory.variable(source,
-						modelFactory.integerType(),
-						modelFactory.identifier(source, "n"), 1)),
-				modelFactory.integerType(), modelFactory.model().system()
-						.containingScope(), this.name);
-
-		chooseIntWorkPointer = modelFactory.functionPointerExpression(source,
-				chooseIntWorkFunction);
 	}
 
 	/* ********************* Methods from LibraryEnabler ******************* */
@@ -100,7 +83,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			int pid, int processIdentifier, Statement assignAtomicLock)
 			throws UnsatisfiablePathConditionException {
 		String functionName = call.function().name().name();
-		CallOrSpawnStatement callWorker;
+		AssignStatement assignmentCall;
 		List<Expression> arguments = call.arguments();
 		List<Transition> localTransitions = new LinkedList<>();
 		Statement transitionStatement;
@@ -116,6 +99,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 					(NumericExpression) eval.value);
 			int upper;
 
+			// TODO: is it can be solved by symbolic execution ?
 			if (upperNumber == null) {
 				throw new CIVLExecutionException(ErrorKind.INTERNAL,
 						Certainty.NONE, process,
@@ -125,20 +109,20 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			}
 			upper = upperNumber.intValue();
 			for (int i = 0; i < upper; i++) {
-				Expression workerArg = modelFactory.integerLiteralExpression(
-						arguments.get(0).getSource(), BigInteger.valueOf(i));
+				Expression singleChoice = modelFactory
+						.integerLiteralExpression(arguments.get(0).getSource(),
+								BigInteger.valueOf(i));
 
-				callWorker = modelFactory.callOrSpawnStatement(
-						call.getSource(), null, true, Arrays.asList(workerArg),
-						null);
-				callWorker.setTargetTemp(call.target());
-				callWorker.setFunction(chooseIntWorkPointer);
-				callWorker.setLhs(call.lhs());
+				assignmentCall = modelFactory.assignStatement(arguments.get(0)
+						.getSource(), call.source(), call.lhs(), singleChoice,
+						(call.lhs() instanceof InitialValueExpression));
+				assignmentCall.setTargetTemp(call.target());
+				assignmentCall.setTarget(call.target());
 				if (assignAtomicLock != null) {
 					transitionStatement = modelFactory.statmentList(
-							assignAtomicLock, callWorker);
+							assignAtomicLock, assignmentCall);
 				} else {
-					transitionStatement = callWorker;
+					transitionStatement = assignmentCall;
 				}
 				localTransitions.add(Semantics.newTransition(pathCondition,
 						pid, processIdentifier, transitionStatement));
