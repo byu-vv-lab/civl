@@ -244,10 +244,8 @@ int main(int argc, char * argv[]) {
 #ifdef _CIVL
 
   if(nxl != 0) {
-    for(int i=1; i<nxl+1; i++) {
-       u_prev[i] = u_init[first + i - 1];
-       u_curr[i] = u_init[first + i - 1];
-    }
+    memcpy(&u_curr[1], &u_init[first], sizeof(double) * nxl);
+    memcpy(&u_prev[1], &u_curr[1], sizeof(double) * nxl);
   }
 
 #else

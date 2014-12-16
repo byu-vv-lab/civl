@@ -6,6 +6,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<assert.h>
+#include<string.h>
 #include<mpi.h>
 
 /* Message tags */
@@ -333,9 +334,7 @@ int main(int argc, char * argv[]) {
 #ifdef _CIVL
 
   for(i=1; i<nyl+1; i++)
-    for(j=1; j<nxl+1; j++) {
-      u_curr[i][j] = u_init[firstRow+i][firstCol+j];
-    }
+    memcpy(&u_curr[i][1], &u_init[firstRow + i][firstCol + 1], nxl * sizeof(double));
 
 #else
 
