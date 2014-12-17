@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.library.comm;
 
 import java.math.BigInteger;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +14,7 @@ import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -30,6 +30,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
@@ -198,70 +199,47 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		List<Transition> localTransitions = new LinkedList<>();
 		Evaluation eval;
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
-		// Since both source and tag may be wild card, there are at most 4
-		// situations that will cause different results.
-		BooleanExpression isAnySource = null;
-		BooleanExpression sourceGTEzero = null;
-		BooleanExpression isAnyTag = null;
-		BooleanExpression tagGTEzero = null;
-		// The reasoner used to prove if clauses above are valid
 		Reasoner reasoner = universe.reasoner(pathCondition);
-		// Flag indicates if we need to add clauses to original path
-		// condition.
-		NumericExpression minusOne = universe.integer(-1);
-		NumericExpression minusTwo = universe.integer(-2);
-		IntegerNumber argSourceNumber, argTagNumber;
-		NumericExpression argSource, argTag;
-		List<SymbolicExpression> possibleSources;
+		IntegerNumber argSourceNumber; // numeric object of the value of source
+		IntegerNumber argTagNumber; // numeric object of the value of tag
+		int intSource;
+		int intTag;
+		// set of all available sources
+		List<NumericExpression> possibleSources;
 		Expression commHandleExpr, sourceExpr, tagExpr;
-		SymbolicExpression gcommHandle, gcomm, comm, commHandle, source, dest, tag;
-		BooleanExpression T = universe.trueExpression();
-		BooleanExpression newPathCondition = universe.and(T, pathCondition);
+		SymbolicExpression gcommHandle, gcomm, comm, commHandle, dest;
 		// Set of transition statements
 		List<Statement> callWorkers = new LinkedList<>();
-		// Set of new clauses
-		List<BooleanExpression> newClauses = new LinkedList<>();
+		boolean isWildcardSrc = false;
 
+		// evaluate the second argument: source
 		eval = this.evaluator.evaluate(state.setPathCondition(pathCondition),
 				pid, arguments.get(1));
+		state = eval.state;
 		argSourceNumber = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) eval.value);
 		if (argSourceNumber == null)
-			argSource = (NumericExpression) eval.value;
+			throw new CIVLUnimplementedFeatureException(
+					"CIVL doesn't support using non-concrete source of messages \n",
+					arguments.get(1).getSource());
 		else
-			argSource = universe.integer(argSourceNumber.intValue());
+			intSource = argSourceNumber.intValue();
+		// evaluate the third argument: tag
 		eval = this.evaluator.evaluate(eval.state, pid, arguments.get(2));
 		argTagNumber = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) eval.value);
 		if (argTagNumber == null)
-			argTag = (NumericExpression) eval.value;
+			throw new CIVLUnimplementedFeatureException(
+					"CIVL doesn't support using non-concrete message tag\n",
+					arguments.get(2).getSource());
 		else
-			argTag = universe.integer(argTagNumber.intValue());
+			intTag = argTagNumber.intValue();
+
 		// clause: source >= 0
-		sourceGTEzero = universe.lessThanEquals(zero, argSource);
-		if (!reasoner.isValid(sourceGTEzero)) {
-			// clause: source == 0
-			// TODO: can source be non-concrete
-			isAnySource = universe.equals(minusOne, argSource);
-			if (!reasoner.isValid(isAnySource)) {
-				isAnyTag = universe.equals(minusTwo, argTag);
-				if (!reasoner.isValid(isAnyTag)) {
-					tagGTEzero = universe.lessThanEquals(zero, argTag);
-					if (!reasoner.isValid(isAnyTag)) {
-						newClauses.add(universe.and(isAnySource, isAnyTag));
-						newClauses.add(universe.and(isAnySource, tagGTEzero));
-						newClauses.add(universe.and(sourceGTEzero, isAnyTag));
-						newClauses.add(universe.and(sourceGTEzero, tagGTEzero));
-					}
-				}
-				if (newClauses.isEmpty()) {
-					newClauses.add(isAnySource);
-					newClauses.add(sourceGTEzero);
-				}
-			}
-		}
-		if (newClauses.isEmpty())
-			newClauses.add(universe.trueExpression());
+		// If and only if "source < 0" is true, the "comm_dequeue()" becomes
+		// non-deterministic.
+		if (intSource == -1)
+			isWildcardSrc = true;
 		// Initialize arguments
 		possibleSources = new LinkedList<>();
 		commHandleExpr = arguments.get(0);
@@ -270,37 +248,83 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		commHandle = evaluator.evaluate(state, pid, commHandleExpr).value;
 		comm = evaluator.dereference(commHandleExpr.getSource(), state,
 				process, commHandle, false).value;
-		source = argSource;
 		dest = this.universe.tupleRead(comm, zeroObject);
-		tag = argTag;
 		gcommHandle = this.universe.tupleRead(comm, oneObject);
 		gcomm = evaluator.dereference(commHandleExpr.getSource(), state,
 				process, gcommHandle, false).value;
-		for (int i = 0; i < newClauses.size(); i++) {
-			BooleanExpression newClause = newClauses.get(i);
+		assert (dest instanceof NumericExpression) : "Argument of destination of $comm_dequeue() should be a numeric type.\n";
+		if (isWildcardSrc) {
+			LibcommEvaluator libevaluator;
 
-			// TODO: changing call.guard to T or null because it will never be
-			// used in the future.
-			newPathCondition = universe.and(pathCondition, newClause);
-			possibleSources = getAllPossibleSources(eval.state, newClause,
-					gcomm, source, dest, tag, call.getSource());
+			try {
+				libevaluator = (LibcommEvaluator) this.libEvaluatorLoader
+						.getLibraryEvaluator(this.name, evaluator,
+								this.modelFactory, symbolicUtil,
+								symbolicAnalyzer);
+				possibleSources = libevaluator.getAllPossibleSources(
+						eval.state, reasoner, gcomm, intSource, intTag,
+						(NumericExpression) dest, call.getSource());
+			} catch (LibraryLoaderException e) {
+				throw new CIVLInternalException(
+						"LibraryLoader exception happens when loading library comm evaluator.\n",
+						call.getSource());
+			}
+			possibleSources = libevaluator.getAllPossibleSources(eval.state,
+					reasoner, gcomm, intSource, intTag,
+					(NumericExpression) dest, call.getSource());
 			callWorkers = (List<Statement>) this.dequeueStatementGenerator(
-					sourceExpr, tagExpr, possibleSources, newPathCondition,
-					call.getSource(), call.function().parameters(), arguments,
-					call.function().returnType(), call.statementScope(),
-					call.guard(), call.target(), call.lhs(), assignAtomicLock);
+					sourceExpr, tagExpr, possibleSources, call.getSource(),
+					call.function().parameters(), arguments, call.function()
+							.returnType(), call.statementScope(), call.guard(),
+					call.target(), call.lhs(), assignAtomicLock);
 			for (int j = 0; j < callWorkers.size(); j++)
-				localTransitions.add(Semantics.newTransition(newPathCondition,
+				localTransitions.add(Semantics.newTransition(pathCondition,
 						pid, processIdentifier, callWorkers.get(j)));
-		}
+		} else
+			localTransitions.add(Semantics.newTransition(pathCondition, pid,
+					processIdentifier, call));
 		return localTransitions;
 	}
 
-	// TODO: doc
+	/**
+	 * Generates a list of "comm_dequeue()" statements whose second argument
+	 * "source" is always non-wild card and has a exact concrete value, which is
+	 * decided by the passed in list of numbers of all possible sources. This
+	 * method also helps building the statement expression from a bunch of
+	 * parameters and configurations.
+	 * 
+	 * @param sourceExpr
+	 *            The expression of source argument of the function statement
+	 * @param tagExpr
+	 *            The expression of tag argument of the function statement
+	 * @param possibleSources
+	 *            The list contains all possible values of the source argument.
+	 * @param civlsource
+	 *            CIVL source of the function statement
+	 * @param parameters
+	 *            A list of {@link Variable}s of parameters of the function
+	 * @param arguments
+	 *            A list of {@link Expression}s of parameters of the function
+	 * @param returnType
+	 *            The CIVL type of the function return type
+	 * @param containingScope
+	 *            The containing scope of the function in this statement.
+	 * @param callGuard
+	 *            The guard of this statement
+	 * @param callTarget
+	 *            The target location of the function statement
+	 * @param lhs
+	 *            The left hand side expression of this function statement
+	 * @param assignAtomicLock
+	 *            The assignment statement for the atomic lock variable, should
+	 *            be null except that the process is going to re-obtain the
+	 *            atomic lock variable.
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
 	private Iterable<Statement> dequeueStatementGenerator(
 			Expression sourceExpr, Expression tagExpr,
-			List<SymbolicExpression> possibleSources,
-			BooleanExpression pathCondition, CIVLSource civlsource,
+			List<NumericExpression> possibleSources, CIVLSource civlsource,
 			List<Variable> parameters, List<Expression> arguments,
 			CIVLType returnType, Scope containingScope, Expression callGuard,
 			Location callTarget, LHSExpression lhs, Statement assignAtomicLock)
@@ -313,16 +337,18 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		FunctionIdentifierExpression dequeueWorkPointer;
 		Location newLocation = null;
 		String dequeueWork = "$comm_dequeue_work";
-		Iterator<SymbolicExpression> sourceIter;
-		Reasoner reasoner = universe.reasoner(pathCondition);
 
-		sourceIter = possibleSources.iterator();
-		while (sourceIter.hasNext()) {
-			SymbolicExpression newSource = sourceIter.next();
-			int int_newSource = ((IntegerNumber) reasoner
-					.extractNumber((NumericExpression) newSource)).intValue();
+		for (NumericExpression newSource : possibleSources) {
+			int int_newSource;
 
-			// TODO: can these be a parameter ?
+			try {
+				int_newSource = ((IntegerNumber) universe
+						.extractNumber(newSource)).intValue();
+			} catch (ClassCastException e) {
+				throw new CIVLInternalException(
+						"Unexpected exception when casting Number object of a value of a message source to IntegerNumber object.\n",
+						civlsource);
+			}
 			dequeueWorkFunction = modelFactory.systemFunction(civlsource,
 					modelFactory.identifier(civlsource, dequeueWork),
 					parameters, returnType, containingScope, this.name);
@@ -348,161 +374,5 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		}
 
 		return transitionStatements;
-	}
-
-	/**
-	 * <p>
-	 * This function checks all message channels (messages receiving buffers) to
-	 * seek for available sources. If there are at least one message specified
-	 * by "tag" argument in the channel specified by the "source" argument(and
-	 * other arguments of course, but here only "source" will make any
-	 * difference), the "source" is available.
-	 * </p>
-	 * <p>
-	 * Precondition: The "predicate" argument shall be able to determine weather
-	 * the "source" or "tag" is wild card or valid specific symbolic expression.
-	 * </p>
-	 * 
-	 * @author Ziqing Luo
-	 * @param predicate
-	 *            Context conditions which helps determining weather the source
-	 *            or tag is a wild card. This argument shall be able to
-	 *            certainly prove: if the "source" belongs to [0, infinity) or
-	 *            {-1} and if the "tag" belongs to [0, infinity) or {-2}.
-	 * @param gcomm
-	 *            The global communicator
-	 * @param source
-	 *            The argument "source" which indicates some message
-	 *            channels(message queue in our implementation).
-	 * @param dest
-	 *            The argument "dest" which indicates the receiving process
-	 *            itself.
-	 * @param tag
-	 *            The argument "tag" which indicates some messages have the same
-	 *            tag.
-	 * @param civlsource
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private List<SymbolicExpression> getAllPossibleSources(State state,
-			BooleanExpression predicate, SymbolicExpression gcomm,
-			SymbolicExpression source, SymbolicExpression dest,
-			SymbolicExpression tag, CIVLSource civlsource)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression buf;
-		SymbolicExpression bufRow;
-		SymbolicExpression queue;
-		SymbolicExpression queueLength;
-		SymbolicExpression messages = null;
-		SymbolicExpression message = null;
-		BooleanExpression newPathConditions = universe.and(predicate,
-				state.getPathCondition());
-		Reasoner reasoner = universe.reasoner(newPathConditions);
-		IntegerNumber sourceNumber = (IntegerNumber) reasoner
-				.extractNumber((NumericExpression) source);
-		IntegerNumber tagNumber = (IntegerNumber) reasoner
-				.extractNumber((NumericExpression) tag);
-		List<SymbolicExpression> results = new LinkedList<>();
-		boolean isWildcardSource = false, isWildcardTag = false;
-
-		if (newPathConditions.equals(universe.falseExpression()))
-			return results;
-
-		if (sourceNumber != null && sourceNumber.intValue() == -1)
-			isWildcardSource = true;
-		if (tagNumber != null && tagNumber.intValue() == -2)
-			isWildcardTag = true;
-
-		buf = universe.tupleRead(gcomm, universe.intObject(2));
-		// non-wild card source and tag
-		if (!isWildcardSource && !isWildcardTag) {
-			BooleanExpression iterLTQueueLengthClaim;
-			NumericExpression iter = universe.integer(0);
-
-			bufRow = universe.arrayRead(buf, (NumericExpression) source);
-			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-			messages = universe.tupleRead(queue, oneObject);
-			queueLength = universe.tupleRead(queue, zeroObject);
-			iterLTQueueLengthClaim = universe.lessThan(iter,
-					(NumericExpression) queueLength);
-			while (reasoner.isValid(iterLTQueueLengthClaim)) {
-				BooleanExpression tagMatchClaim;
-
-				message = universe.arrayRead(messages, iter);
-				tagMatchClaim = universe.equals(
-						universe.tupleRead(message, twoObject), tag);
-				if (reasoner.isValid(tagMatchClaim)) {
-					results.add(source);
-					break;
-				}
-				iter = universe.add(iter, one);
-				iterLTQueueLengthClaim = universe.lessThan(iter,
-						(NumericExpression) queueLength);
-			}
-		}// non-wild card source and any_tag
-		else if (!isWildcardSource && isWildcardTag) {
-			bufRow = universe.arrayRead(buf, (NumericExpression) source);
-			queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-			messages = universe.tupleRead(queue, oneObject);
-			queueLength = universe.tupleRead(queue, zeroObject);
-			if (reasoner.isValid(universe.lessThan(zero,
-					(NumericExpression) queueLength)))
-				results.add(source);
-		} // any source and non-wild card tag
-		else if (isWildcardSource && !isWildcardTag) {
-			NumericExpression nprocs = (NumericExpression) universe.tupleRead(
-					gcomm, zeroObject);
-			NumericExpression iter = universe.zeroInt();
-			BooleanExpression iterLTnprocsClaim = universe.lessThan(iter,
-					nprocs);
-
-			while (reasoner.isValid(iterLTnprocsClaim)) {
-				NumericExpression queueIter = universe.zeroInt();
-				BooleanExpression queueIterLTlengthClaim;
-
-				bufRow = universe.arrayRead(buf, iter);
-				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-				messages = universe.tupleRead(queue, oneObject);
-				queueLength = universe.tupleRead(queue, zeroObject);
-				queueIterLTlengthClaim = universe.lessThan(queueIter,
-						(NumericExpression) queueLength);
-				while (reasoner.isValid(queueIterLTlengthClaim)) {
-					BooleanExpression tagMatchClaim;
-
-					message = universe.arrayRead(messages, queueIter);
-					tagMatchClaim = universe.equals(
-							universe.tupleRead(message, twoObject), tag);
-					if (reasoner.isValid(tagMatchClaim)) {
-						results.add(iter);
-						break;
-					}
-					queueIter = universe.add(queueIter, one);
-					queueIterLTlengthClaim = universe.lessThan(queueIter,
-							(NumericExpression) queueLength);
-				}
-				iter = universe.add(iter, one);
-				iterLTnprocsClaim = universe.lessThan(iter, nprocs);
-			}
-		} else if (isWildcardSource && isWildcardTag) {
-			NumericExpression nprocs = (NumericExpression) universe.tupleRead(
-					gcomm, zeroObject);
-			NumericExpression iter = universe.zeroInt();
-			BooleanExpression iterLTnprocsClaim = universe.lessThan(iter,
-					nprocs);
-
-			while (reasoner.isValid(iterLTnprocsClaim)) {
-				bufRow = universe.arrayRead(buf, iter);
-				queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-				messages = universe.tupleRead(queue, oneObject);
-				queueLength = universe.tupleRead(queue, zeroObject);
-				if (reasoner.isValid(universe.lessThan(zero,
-						(NumericExpression) queueLength))) {
-					results.add(iter);
-				}
-				iter = universe.add(iter, one);
-				iterLTnprocsClaim = universe.lessThan(iter, nprocs);
-			}
-		}
-		return results;
 	}
 }
