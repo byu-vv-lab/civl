@@ -43,7 +43,7 @@ public class MPITranslationBigTest {
 	
 	@Test
 	public void mpi_diff2d() {
-		assertTrue(ui.run("verify", "-enablePrintf=false", "-input_NPROCS=4", "-inputxProcs=2", "-inputyProcs=2", "-inputNSTEPSB=3", filename("diffusion2d_cb.c")));
+		assertTrue(ui.run("verify", "-enablePrintf=false", "-input_NPROCS=4", "-inputNPROCSX=2", "-inputNPROCSY=2", "-inputNSTEPSB=3", filename("diffusion2d.c")));
 	}
 
 }
