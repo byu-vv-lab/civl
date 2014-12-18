@@ -171,7 +171,7 @@ public class LanguageFeaturesTest {
 	public void choose() throws ABCException {
 		assertTrue(ui.run("verify", filename("choose.cvl")));
 	}
-	
+
 	@Test
 	public void choose_int() throws ABCException {
 		assertTrue(ui.run("verify", filename("choose_int.cvl")));
@@ -310,8 +310,8 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void scopeOperators() throws ABCException {
-		assertTrue(ui.run("verify", filename("scopeOperators.cvl"),
-				"-enablePrintf=false"));
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("scopeOperators.cvl")));
 	}
 
 	@Test
