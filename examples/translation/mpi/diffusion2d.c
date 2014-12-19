@@ -315,7 +315,7 @@ void write_frame(int time) {
 
       for (int j=0; j < numRows; j++) {
         for (int k=0; k < NPROCSX; k++) {
-	  int curr_rank = i*NPROCSX + k;
+          int curr_rank = i*NPROCSX + k;
 
           if (curr_rank!=0) {
             int senderx = firstColForProc(curr_rank);
