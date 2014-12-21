@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssertNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
@@ -30,6 +31,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
+import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
@@ -141,7 +143,13 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the variable representing the status of an MPI process, which
 	 * is modified by MPI_Init() and MPI_Finalized().
 	 */
-	private static String MPI_STATUS = "_my_status";
+	private static String MPI_SYS_STATUS = "_my_status";
+
+	/**
+	 * The name of the type of variables representing the status of an MPI
+	 * process.
+	 */
+	private static String MPI_SYS_STATUS_TYPENAME = "__MPI_Sys_status__";
 
 	/**
 	 * The name of the MPI procedure in the final CIVL-C program.
@@ -482,6 +490,9 @@ public class MPI2CIVLWorker extends BaseWorker {
 		// build MPI_Process() function:
 		items = new LinkedList<>();
 		number = root.numChildren();
+		// add MPI_Sys_status variable into each process
+		items.add(mpiSysStatusDeclaration());
+		items.add(mpiStatusDePruneAssertion());
 		items.add(commVar);
 		for (int i = 0; i < number; i++) {
 			ExternalDefinitionNode child = root.getSequenceChild(i);
@@ -496,7 +507,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
 
-					if (variableDeclaration.getName().equals(MPI_STATUS))
+					if (variableDeclaration.getName().equals(MPI_SYS_STATUS))
 						// keep variable declaration node of __MPI_Status__
 						// __my_status = __UNINIT;
 						items.add(variableDeclaration);
@@ -926,4 +937,52 @@ public class MPI2CIVLWorker extends BaseWorker {
 		return newAst;
 	}
 
+	/**
+	 * Create a variable declaration node of "__MPI_Sys_status__" type which
+	 * should be in every process representing the status of the process which
+	 * is controlled by MPI_Init() and MPI_Finalize()
+	 * 
+	 * @return
+	 */
+	private VariableDeclarationNode mpiSysStatusDeclaration() {
+		TypeNode sysStatusType;
+		VariableDeclarationNode node;
+
+		sysStatusType = nodeFactory.newTypedefNameNode(nodeFactory
+				.newIdentifierNode(
+						newSource("MPI_Sys_status in MPI_Process",
+								CParser.IDENTIFIER), MPI_SYS_STATUS_TYPENAME),
+				null);
+		node = variableDeclaration(MPI_SYS_STATUS, sysStatusType,
+				nodeFactory.newEnumerationConstantNode(nodeFactory
+						.newIdentifierNode(
+								newSource("__UNINIT",
+										CParser.ENUMERATION_CONSTANT),
+								"__UNINIT")));
+		return node;
+	}
+
+	/**
+	 * An inserted assertion "assert _my_status == __UNINIT" which is used to
+	 * prevent being pruned by Pruner.
+	 * 
+	 * @return
+	 */
+	private AssertNode mpiStatusDePruneAssertion() {
+		List<ExpressionNode> assertionNodesList = new LinkedList<>();
+		Source assertSrc = newSource("_my_status initial value assertion",
+				CParser.ASSERT);
+		Source myStatusSrc = newSource("_my_status", CParser.IDENTIFIER);
+
+		assertionNodesList.add(nodeFactory.newIdentifierExpressionNode(
+				myStatusSrc,
+				nodeFactory.newIdentifierNode(myStatusSrc, MPI_SYS_STATUS)));
+		assertionNodesList.add(nodeFactory
+				.newEnumerationConstantNode(nodeFactory.newIdentifierNode(
+						newSource("__UNINIT", CParser.ENUMERATION_CONSTANT),
+						"__UNINIT")));
+		return nodeFactory.newAssertNode(assertSrc,
+				nodeFactory.newOperatorNode(assertSrc, Operator.EQUALS,
+						assertionNodesList), null);
+	}
 }
