@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -25,7 +26,7 @@ public class CompareBigTest {
 	/* **************************** Test Methods *************************** */
 
 	// TODO: why specify concrete values for K?
-	@Test
+	@Ignore
 	public void diffusion1d() {
 		assertTrue(ui.run("compare", "-enablePrintf=false",
 				"-input__NPROCS_LOWER_BOUND=1", "-input__NPROCS_UPPER_BOUND=1",

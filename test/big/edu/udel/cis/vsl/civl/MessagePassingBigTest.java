@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -31,10 +32,4 @@ public class MessagePassingBigTest {
 		assertFalse(ui
 				.run("verify -inputNPROCS=2 -min", filename("hybrid.cvl")));
 	}
-
-	@Test
-	public void mpi_pi() {
-		assertTrue(ui.run("verify", filename("mpi_pi.c")));
-	}
-
 }
