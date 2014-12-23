@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -15,7 +16,7 @@ public class MPITranslationTest {
 	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"),
-			"translation/mpi");
+			"mpi");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -31,17 +32,17 @@ public class MPITranslationTest {
 	public void ring1() {
 		assertTrue(ui.run("verify", "-input_NPROCS=2", filename("ring1.c")));
 	}
-
+	
 	@Test
 	public void reduce() {
 		assertTrue(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=true",
-				filename("reduce.c")));
+				filename("routines/reduce.c")));
 	}
 
 	@Test
 	public void mpithreads_mpi() {
 		assertTrue(ui.run("verify", "-input_NPROCS=2", "-enablePrintf=false",
-				filename("mpithreads_mpi.c")));
+				filename("../mpi-pthread/mpithreads_mpi.c")));
 	}
 
 	@Test
@@ -74,25 +75,25 @@ public class MPITranslationTest {
 	@Test
 	public void mpi_scatter() throws ABCException {
 		assertTrue(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=false",
-				filename("Gather_Scatter/mpi_scatter.c")));
+				filename("routines/Gather_Scatter/mpi_scatter.c")));
 	}
 
 	@Test
 	public void mpi_gather() throws ABCException {
 		assertTrue(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=false",
-				filename("Gather_Scatter/mpi_gather.c")));
+				filename("routines/Gather_Scatter/mpi_gather.c")));
 	}
 
 	@Test
 	public void mpi_gatherv() throws ABCException {
 		assertTrue(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=false",
-				filename("Gather_Scatter/mpi_gather_inPlace.c")));
+				filename("routines/Gather_Scatter/mpi_gather_inPlace.c")));
 	}
 
 	@Test
 	public void mpi_scatterv() throws ABCException {
 		assertTrue(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=false",
-				filename("Gather_Scatter/mpi_scatter_inPlace.c")));
+				filename("routines/Gather_Scatter/mpi_scatter_inPlace.c")));
 	}
 
 	@Test
@@ -104,8 +105,28 @@ public class MPITranslationTest {
 
 	@Test
 	public void mpi_diff2d() throws ABCException {
-		assertTrue(ui.run("verify", "-input_NPROCS=4", "-inputnsteps=2",
-				"-inputnx=2", "-inputny=2", "-enablePrintf=false", "-inputNPROCSX=2",
-				"-inputNPROCSY=2", filename("diffusion2d.c")));
+		assertTrue(ui
+				.run("verify", "-input_NPROCS=4", "-inputnsteps=2",
+						"-inputnx=2", "-inputny=2", "-enablePrintf=false",
+						"-inputNPROCSX=2", "-inputNPROCSY=2",
+						filename("diffusion2d.c")));
+	}
+
+	@Test
+	public void mpiSysStatus() {
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("routines/mpiSysStatus.c")));
+	}
+
+	@Test
+	public void mpiSysStatusBad() {
+		assertFalse(ui.run("verify", "-enablePrintf=false",
+				filename("routines/mpiSysStatusBad.c")));
+	}
+
+	@Test
+	public void mpiSysStatusBad2() {
+		assertFalse(ui.run("verify", "-enablePrintf=false",
+				filename("routines/mpiSysStatusBad2.c")));
 	}
 }

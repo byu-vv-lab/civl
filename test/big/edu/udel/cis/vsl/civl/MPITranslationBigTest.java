@@ -13,7 +13,7 @@ public class MPITranslationBigTest {
 	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"),
-			"translation/mpi");
+			"mpi");
 
 	private static UserInterface ui = new UserInterface();
 

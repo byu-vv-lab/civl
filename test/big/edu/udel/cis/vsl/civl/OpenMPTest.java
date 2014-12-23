@@ -12,7 +12,7 @@ public class OpenMPTest {
 	
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"), "translation/openmp");
+	private static File rootDir = new File(new File("examples"), "omp");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -34,7 +34,7 @@ public class OpenMPTest {
 	@Test
 	public void canonicalForLoops() {
 		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
-				filename("../../omp/canonicalForLoops.c")));
+				filename("canonicalForLoops.c")));
 	}
 
 }

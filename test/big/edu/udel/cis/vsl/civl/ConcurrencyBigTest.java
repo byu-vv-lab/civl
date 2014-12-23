@@ -8,12 +8,12 @@ import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
-public class MessagePassingBigTest {
+public class ConcurrencyBigTest {
 
 	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"),
-			"messagePassing");
+			"concurrency");
 
 	private static UserInterface ui = new UserInterface();
 

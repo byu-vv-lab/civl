@@ -15,7 +15,7 @@ public class PthreadTest {
 	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"),
-			"translation/pthread/esbmc");
+			"pthread/esbmc");
 
 	private static UserInterface ui = new UserInterface();
 

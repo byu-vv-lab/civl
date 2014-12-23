@@ -13,7 +13,7 @@ public class PthreadThreaderBigTest {
 	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File(new File("examples"),
-			"translation/pthread/threader/");
+			"pthread/threader/");
 
 	private static UserInterface ui = new UserInterface();
 
