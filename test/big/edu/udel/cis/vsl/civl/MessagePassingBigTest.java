@@ -33,10 +33,8 @@ public class MessagePassingBigTest {
 	}
 
 	@Test
-	public void diffusion1d() {
-		assertTrue(ui.run("verify", "-inputNPROCSB=3", "-inputNSTEPSB=3",
-				"-inputNXB=6", "-enablePrintf=false",
-				filename("diffusion1d.cvl")));
+	public void mpi_pi() {
+		assertTrue(ui.run("verify", filename("mpi_pi.c")));
 	}
 
 }

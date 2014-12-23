@@ -71,4 +71,16 @@ public class MessagePassingTest {
 				filename("wildcardBad.cvl")));
 		ui.run("replay", filename("wildcardBad.cvl"));
 	}
+
+	@Test
+	public void mpiSysStatus() {
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("mpiSysStatus.c")));
+	}
+
+	@Test
+	public void mpiSysStatusBad() {
+		assertFalse(ui.run("verify", "-enablePrintf=false",
+				filename("mpiSysStatusBad.c")));
+	}
 }
