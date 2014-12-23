@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -15,8 +14,7 @@ public class MPITranslationTest {
 
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"),
-			"mpi");
+	private static File rootDir = new File(new File("examples"), "mpi");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -32,7 +30,7 @@ public class MPITranslationTest {
 	public void ring1() {
 		assertTrue(ui.run("verify", "-input_NPROCS=2", filename("ring1.c")));
 	}
-	
+
 	@Test
 	public void reduce() {
 		assertTrue(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=true",
