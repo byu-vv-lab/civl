@@ -1,6 +1,23 @@
 CIVL=civl
 VERIFY=$(CIVL) verify
 
+all: ring ring2 ring3 diffusion1d
+
+ring: ring.cvl mp_root.cvh mp_proc.cvh
+	$(VERIFY) -inputNPROCS_BOUND=10 -inputN_BOUND=5 ring.cvl
+
+ring2: ring2.cvl mp_root2.cvh mp_proc2.cvh
+	$(VERIFY) -inputNPROCS=3 -simplify=false ring2.cvl
+
+ring3: ring3.cvl
+	$(VERIFY) ring3.cvl
+
+wildcard: wildcard.cvl
+	$(VERIFY) wildcard.cvl
+
+wildcardBad: wildcardBad.cvl
+	$(VERIFY) wildcardBad.cvl
+
 all: adder adderBad bank barrier barrier2 \
 	barrierBad blockAdder blockAdderBad dining \
 	diningBad locksBad locksBad10 locksGood \
@@ -48,19 +65,16 @@ locksBad: locksBad.cvl
 
 locksBad10: locksBad10.cvl
 	$(VERIFY) locksBad10.cvl
-	
+
 locksGood: locksGood.cvl
 	$(VERIFY) locksGood.cvl
-	
+
 spawn: spawn.cvl
 	$(VERIFY) -inputN=10 spawn.cvl 
-	
+
 spawn2: spawn2.cvl
 	$(VERIFY) -inputN=10 spawn2.cvl
 
 spawnBad: spawnBad.cvl
 	$(VERIFY) -inputN=10 spawnBad.cvl
-
-clean:
-	rm -rf CIVLREP *~
 
