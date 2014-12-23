@@ -58,20 +58,6 @@ public class MPITranslationTest {
 				filename("adder_par.c")));
 	}
 
-	@Ignore
-	@Test
-	public void mpi_pi_send() {
-		assertTrue(ui.run("verify", "-input_NPROCS=3", "-enablePrintf=false",
-				filename("mpi_pi_send.c")));
-	}
-
-	@Ignore
-	@Test
-	public void pi_comp() {
-		assertTrue(ui.run("compare", "-input_NPROCS=3",
-				filename("seq/ser_pi_calc.c"), filename("mpi_pi_send.c")));
-	}
-
 	@Test
 	public void mpi_scatter() throws ABCException {
 		assertTrue(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=false",

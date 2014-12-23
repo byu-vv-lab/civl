@@ -1,11 +1,9 @@
 package edu.udel.cis.vsl.civl;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -70,15 +68,9 @@ public class OmpHelpersTest {
 	public void single() {
 		assertTrue(ui.run("run", filename("single.cvl")));
 	}
-	
+
 	@Test
 	public void ompfor() {
 		assertTrue(ui.run("run", filename("for.cvl")));
-	}
-
-	@Ignore
-	@Test
-	public void exp1() {
-		assertFalse(ui.run("run", filename("div0.cvl")));
 	}
 }

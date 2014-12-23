@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -130,7 +129,7 @@ public class ConcurrencyTest {
 	public void dlqueue() {
 		assertTrue(ui.run("verify", filename("dlqueue.cvl")));
 	}
-	
+
 	@Test
 	public void hybrid() {
 		assertFalse(ui.run("verify", "-inputNPROCS=2", filename("hybrid.cvl")));
@@ -157,10 +156,14 @@ public class ConcurrencyTest {
 		assertTrue(ui.run("verify", "-inputNPROCS=3", filename("ring1.cvl")));
 	}
 
-	@Ignore
 	@Test
 	public void ring2() {
 		assertTrue(ui.run("verify", "-inputNPROCS=3", filename("ring2.cvl")));
+	}
+
+	@Test
+	public void ring3() {
+		assertTrue(ui.run("verify", filename("ring3.cvl")));
 	}
 
 	@Test

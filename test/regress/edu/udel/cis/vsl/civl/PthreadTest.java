@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -55,20 +54,6 @@ public class PthreadTest {
 	public void fib_bench_longer_false() throws ABCException {
 		assertFalse(ui.run("verify", "-svcomp", "-inputNUM=6",
 				filename("fib_bench_longer_false.c")));
-	}
-
-	@Ignore
-	@Test
-	public void fib_bench_longest_false() throws ABCException {
-		assertFalse(ui.run("verify", filename("fib_bench_longest_false.c"),
-				"-svcomp", "-inputNUM=11"));
-	}
-
-	@Ignore
-	@Test
-	public void fib_bench_longest_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", "-inputNUM=11",
-				filename("fib_bench_longest_true.c")));
 	}
 
 	@Test
