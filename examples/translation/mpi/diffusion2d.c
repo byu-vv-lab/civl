@@ -32,13 +32,14 @@ $input int nsteps;                 // number of steps
 $assume 1<=nsteps && nsteps<=NSTEPSB;
 $input int wstep = 1;              // write frame every this many time steps
 double oracle[nsteps][ny+2][nx+2]; // solution computed sequentially, done by proc 0 only
-$input int NPROCSXB;               // upper bound for NPROCSX
-$input int NPROCSX = 2;            // number of procs in x direction
+$input int NPROCSXB = 2;               // upper bound for NPROCSX
+$input int NPROCSX;            // number of procs in x direction
 $assume NPROCSX >= 1 && NPROCSX <= NPROCSXB;
-$input int NPROCSYB;               // upper bound for NPROCSY
-$input int NPROCSY = 2;            // number of procs in y direction
+$input int NPROCSYB = 2;               // upper bound for NPROCSY
+$input int NPROCSY;            // number of procs in y direction
 $assume NPROCSY >= 1 && NPROCSY <= NPROCSYB;
 $input int _NPROCS = NPROCSX * NPROCSY;
+$assume _NPROCS == NPROCSX * NPROCSY;
 #else
 long nx, ny;
 int nsteps, wstep;
@@ -339,10 +340,10 @@ int main(int argc, char * argv[]) {
 
 #ifdef _CIVL
   // elaborating nx, ny, NPROCSX and NPROCSY...
+  elaborate(NPROCSY);
   elaborate(nx);
   elaborate(ny);
   elaborate(NPROCSX);
-  elaborate(NPROCSY);
 #endif
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(comm, &rank);
