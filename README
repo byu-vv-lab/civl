@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v 0.14
+                               v 0.15
 
 ------------------------------ Overview -------------------------------
 
@@ -39,22 +39,44 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.13 -------------------------
+-------------------------- Updates from v 0.14 -------------------------
 
-1. New command line options added:
-   "-D": support macros defined in command line;
-   "-ast": print the AST of input program
-   "-preproc": print the result of preprocessing the input program
-2. Supported compiling and linking multiple programs for verification;
-3. New command line specification:
-       civl (show | verify | replay | run) [options] filename+
-    or civl (compare | replay) [common options] \
-       -spec [spec options] filename+ \
-       -impl [impl options] filename+
-    or civl gui
-    or civl help [command]
-    
-    For more information, type "civl help".
+1. Fixed the bug that erroneously checking mpi processes statuses inside communicators
+
+2. Fixed the bug that invalid command line inputs crash CIVL.
+
+3. Fixed the bug that CIVL mis-handling float-to-int conversion.
+
+4. Fixed the bug that Translation will ignore unused variable erroneously.
+
+5. Fixed the bug that CIVL implementation misses extents information for literal array assignments.
+
+6. Fixed the bug that CIVL didn't report array out of bound error.
+
+7. Fixed performance bug dealing with MPI/link.
+
+8. Fixed the bug that POR didn't recognize input array.
+
+9. Fixed the bug that ABC can't print $forall.
+
+10. Fixed the bug of linkage with bound variables.
+
+11. Improving CIVL by get rid of unnecessary statements enabled from a nondeterministic statement.
+
+12. Support compound literals for input variables.
+
+13. Improves the performance of SARL which also makes CIVL run faster.
+
+14. Makes sources of inserted texts by transformer more clear.
+
+15. Support time.h
+
+16. Implemented fflush()
+
+17. Extended ABC to handle Cuda-c extensions.
+
+18. Simplify array representation in SARL.
+
    
    
 ------------------------- Binary Installation -------------------------
