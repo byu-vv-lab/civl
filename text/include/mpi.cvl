@@ -17,7 +17,6 @@ struct MPI_Comm {
   $comm p2p; // point-to-point communication
   $comm col; // collective communication
   $barrier barrier;
-  __MPI_Sys_status__ status;
 };
 
 /********************************** State *****************************************/
@@ -26,42 +25,63 @@ int CMPI_time_count = 0;
 
 /************************** MPI LIB Implementations *******************************/
 double MPI_Wtime() {
-  double result = CMPI_time(CMPI_time_count);
-  
+  double result;
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT : "MPI_Wtime() cannot be invoked "
+    "without MPI_Init() being called before.\n";
+  result = CMPI_time(CMPI_time_count);
   CMPI_time_count++;
   return result;
 }
 
 int MPI_Comm_size(MPI_Comm comm, int *size) {
-  $assert comm.status == __INIT :
-  "MPI_Comm_size() cannot be invoked without MPI_Init() being called before.\n";
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT : "MPI_Comm_size() cannot be "
+    "invoked without MPI_Init() being called before.\n";
   *size = $comm_size(comm.p2p);
   return 0;
 }
 
 int MPI_Comm_rank(MPI_Comm comm, int *rank) {
-  $assert comm.status == __INIT :
-  "MPI_Comm_rank() cannot be invoked without MPI_Init() being called before.\n";
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT : "MPI_Comm_rank() cannot be "
+    "invoked without MPI_Init() being called before.\n";
   *rank = $comm_place(comm.p2p);
   return 0;
 }
 
 int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
 	     int tag, MPI_Comm comm) {
-  $assert comm.status == __INIT :
-  "MPI_Send() cannot be invoked without MPI_Init() being called before.\n";
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT : "MPI_Send() cannot be invoked "
+    "without MPI_Init() being called before.\n";
   return CMPI_Send(buf, count, datatype, dest, tag, comm.p2p);
 }
 
 int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
 	     int tag, MPI_Comm comm, MPI_Status *status) {
-  $assert comm.status == __INIT :
-	  "MPI_Recv() cannot be invoked without "
-	  "MPI_Init() being called before.\n";
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT : "MPI_Recv() cannot be invoked "
+    "without MPI_Init() being called before.\n";
   return CMPI_Recv(buf, count, datatype, source, tag, comm.p2p, status);
 }
 
 int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) {
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT : "MPI_Get_count() cannot be invoked "
+    "without MPI_Init() being called before.\n";
   *count = status->size/sizeofDatatype(datatype);
   return 0;
 }
@@ -71,7 +91,10 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		 void *recvbuf, int recvcount, MPI_Datatype recvtype,
 		 int source, int recvtag,
 		 MPI_Comm comm, MPI_Status *status) {
-  $assert comm.status == __INIT :
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT :
 	  "MPI_Sendrecv() cannot be invoked "
 	  "without MPI_Init() being called before.\n";
   // not correct for checking potential deadlock...rewrite:
@@ -85,7 +108,10 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
  */
 int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
 	      MPI_Comm comm) {
-  $assert comm.status == __INIT :
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT :
 	  "MPI_Bcast() cannot be invoked without MPI_Init() "
 	  "being called before.\n";
   if ($comm_place(comm.col) == root) {
@@ -106,8 +132,10 @@ int MPI_Reduce(const void* sendbuf, void* recvbuf, int count,
 	       MPI_Datatype datatype, MPI_Op op, int root,
 	       MPI_Comm comm) {
   int rank;
+  __MPI_Sys_status__ curr_status;
 
-  $assert comm.status == __INIT :
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT :
 	  "MPI_Reduce() cannot be invoked without "
 	  "MPI_Init() being called before.\n";
   rank = $comm_place(comm.col);
@@ -142,8 +170,10 @@ int MPI_Allreduce(const void* sendbuf, void* recvbuf, int count,
 		  MPI_Op op, MPI_Comm comm) {
   int root = 0;
   MPI_Status status;
-  
-  $assert comm.status == __INIT :
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT :
   "MPI_Allreduce() cannot be invoked without "
     "MPI_Init() being called before.\n";
   MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
@@ -152,7 +182,11 @@ int MPI_Allreduce(const void* sendbuf, void* recvbuf, int count,
 }
 
 int MPI_Barrier(MPI_Comm comm){
-  $assert comm.status == __INIT : "MPI_Allreduce() cannot be invoked without MPI_Init() being called before.\n";
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT : "MPI_Allreduce() cannot be invoked "
+    "without MPI_Init() being called before.\n";
   $barrier_call(comm.barrier);
   return 0;
 }
@@ -167,8 +201,10 @@ int MPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   int rank, nprocs;
   _Bool rootInPlace = $false;
   MPI_Status status;
+  __MPI_Sys_status__ curr_status;
 
-  $assert comm.status == __INIT :
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT :
   "MPI_Gather() cannot be invoked without "
     "MPI_Init() being called before.\n";
   rank = $comm_place(comm.col);
@@ -215,8 +251,10 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_Comm comm){
   int rank, nprocs;
   _Bool rootInPlace = $false;
+  __MPI_Sys_status__ curr_status;
 
-  $assert comm.status == __INIT :
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT :
   "MPI_Scatter() cannot be invoked without "
     "MPI_Init() being called before.\n";
   rank = $comm_place(comm.col);
@@ -260,8 +298,10 @@ int MPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_Datatype recvtype, int root, MPI_Comm comm){
   int rank, nprocs;
   _Bool rootInPlace = $false;
+  __MPI_Sys_status__ curr_status;
 
-  $assert comm.status == __INIT :
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT :
   "MPI_Gatherv() cannot be invoked without "
     "MPI_Init() being called before.\n";
   rank = $comm_place(comm.col);
@@ -300,8 +340,10 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
 		 int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm){
   int rank, nprocs;
   _Bool rootInPlace = $false;
+  __MPI_Sys_status__ curr_status;
 
-  $assert comm.status == __INIT :
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT :
   "MPI_Scatterv() cannot be invoked without "
     "MPI_Init() being called before.\n";
   rank = $comm_place(comm.col);

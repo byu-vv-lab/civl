@@ -17,7 +17,6 @@ typedef struct MPI_Comm {
   $comm p2p; // point-to-point communication
   $comm col; // collective communication
   $barrier barrier;
-  __MPI_Sys_status__ status;
 }MPI_Comm;
 
 /* Definition of CMPI_Gcomm (CMPI_Gcomm has a type of __CMPI_Gcomm) 
@@ -80,7 +79,6 @@ MPI_Comm CMPI_Comm_create($scope scope, CMPI_Gcomm gc, int rank) {
   result.p2p = $comm_create(scope, gc.p2p, rank);
   result.col = $comm_create(scope, gc.col, rank);
   result.barrier = $barrier_create(scope, gc.gbarrier, rank);
-  result.status = __UNINIT;
   return result;
 }
 
@@ -90,13 +88,13 @@ void CMPI_Comm_destroy(MPI_Comm comm) {
   $barrier_destroy(comm.barrier);
 }
 
-int __MPI_Init(MPI_Comm *comm) {
-  comm->status = __INIT;
+int __MPI_Init(void) {
+  CMPI_Set_status(__INIT);
   return 0;
 }
 
-int __MPI_Finalize(MPI_Comm *comm) {
-  comm->status = __FINALIZED;
+int __MPI_Finalize(void) {
+  CMPI_Set_status(__FINALIZED);
   return 0;
 }
 
