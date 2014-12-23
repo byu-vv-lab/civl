@@ -38,6 +38,9 @@ mpi_wave1d: wave1d.c
 mpi_diff2d: diffusion2d.c
 	$(VERIFY) -inputNPROCSX=2 -inputNPROCSY=2 -inputNSTEPSB=3 diffusion2d.c
 
+mpi_pi: mpi_pi.c
+	$(VERIFY) mpi_pi.c
+
 clean: 
 	rm -f -r CIVLREP
 	rm -r -f *~

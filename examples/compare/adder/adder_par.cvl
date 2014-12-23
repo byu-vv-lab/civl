@@ -19,6 +19,7 @@
 #include<stdio.h>
 #include<mpi.h>
 #include<civlmpi.cvh>
+#include<assert.h>
 
 $input int NPROCS;
 $input int NPROCSB;
@@ -38,7 +39,9 @@ void MPI_Process(int place){
   int PID;
   int nprocs; 
   MPI_Comm MPI_COMM_WORLD;
+  __MPI_Sys_status__ _my_status = __UNINIT;
 
+  $assert _my_status == __UNINIT;
   double computeGlobalSum() {
     double result = localSum;
     double buffer;
@@ -59,7 +62,7 @@ void MPI_Process(int place){
     int i;
 
     MPI_COMM_WORLD = CMPI_Comm_create($here, __MPI_COMM_WORLD, place);
-    __MPI_Init(&MPI_COMM_WORLD);
+    __MPI_Init();
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &PID);
     first = N * PID / nprocs;
@@ -73,7 +76,7 @@ void MPI_Process(int place){
     } else {
       MPI_Send(&localSum, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
-    __MPI_Finalize(&MPI_COMM_WORLD);
+    __MPI_Finalize();
     CMPI_Comm_destroy(MPI_COMM_WORLD);
     return 0;
   }
