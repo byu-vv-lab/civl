@@ -41,6 +41,8 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 
 		if (name.equals("assert"))
 			name = "asserts";
+		if (name.equals("civlmpi"))
+			name = "mpi";
 		result = libraryEnablerCache.get(name);
 		if (result == null) {
 			String aClassName = this.className(name, "Enabler");

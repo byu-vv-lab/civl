@@ -668,29 +668,44 @@ public class MPI2CIVLWorker extends BaseWorker {
 			IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
 					.getFunction();
 			String functionName = functionExpression.getIdentifier().name();
+			SequenceNode<ExpressionNode> emptyArgNode = nodeFactory
+					.newSequenceNode(
+							newSource(
+									"empty parameter list of " + MPI_INIT_NEW,
+									CParser.ARGUMENT_LIST),
+							"EmptyParameterList",
+							new LinkedList<ExpressionNode>());
 
 			if (functionName.equals(MPI_INIT)) {
-				ExpressionNode addressOf = nodeFactory.newOperatorNode(
-						this.newSource("address-of expression", CParser.EXPR),
-						Operator.ADDRESSOF,
-						Arrays.asList(this.identifierExpression(COMM_WORLD)));
-
+				/*
+				 * ExpressionNode addressOf = nodeFactory.newOperatorNode(this
+				 * .newSource("address-of expression", CParser.EXPR),
+				 * Operator.ADDRESSOF, Arrays.asList(this
+				 * .identifierExpression(MPI_SYS_STATUS)));
+				 */
 				functionExpression.getIdentifier().setName(MPI_INIT_NEW);
-				functionCall.setArguments(nodeFactory.newSequenceNode(
-						this.newSource("actual parameter list of "
-								+ MPI_INIT_NEW, CParser.ARGUMENT_LIST),
-						"ActualParameterList", Arrays.asList(addressOf)));
+				functionCall.setArguments(emptyArgNode);
+				/*
+				 * functionCall.setArguments(nodeFactory.newSequenceNode(
+				 * this.newSource("actual parameter list of " + MPI_INIT_NEW,
+				 * CParser.ARGUMENT_LIST), "ActualParameterList",
+				 * Arrays.asList(addressOf)));
+				 */
 			} else if (functionName.equals(MPI_FINALIZE)) {
-				ExpressionNode addressOf = nodeFactory.newOperatorNode(
-						this.newSource("address-of expression", CParser.EXPR),
-						Operator.ADDRESSOF,
-						Arrays.asList(this.identifierExpression(COMM_WORLD)));
-
+				/*
+				 * ExpressionNode addressOf = nodeFactory.newOperatorNode(this
+				 * .newSource("address-of expression", CParser.EXPR),
+				 * Operator.ADDRESSOF, Arrays.asList(this
+				 * .identifierExpression(MPI_SYS_STATUS)));
+				 */
 				functionExpression.getIdentifier().setName(MPI_FINALIZE_NEW);
-				functionCall.setArguments(nodeFactory.newSequenceNode(
-						this.newSource("actual parameter list of "
-								+ MPI_FINALIZE_NEW, CParser.ARGUMENT_LIST),
-						"ActualParameterList", Arrays.asList(addressOf)));
+				functionCall.setArguments(emptyArgNode);
+				/*
+				 * functionCall.setArguments(nodeFactory.newSequenceNode(
+				 * this.newSource("actual parameter list of " +
+				 * MPI_FINALIZE_NEW, CParser.ARGUMENT_LIST),
+				 * "ActualParameterList", Arrays.asList(addressOf)));
+				 */
 			}
 			// else if (functionName.equals(EXIT)) {
 			// int myIndex = functionCall.parent().childIndex();

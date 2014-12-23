@@ -31,6 +31,8 @@ public class CommonLibraryEvaluatorLoader implements LibraryEvaluatorLoader {
 
 		if (name.equals("assert"))
 			name = "asserts";
+		if (name.equals("civlmpi"))
+			name = "mpi";
 		result = libraryEvaluatorCache.get(name);
 		if (result == null) {
 			String aClassName = className(name, "Evaluator");

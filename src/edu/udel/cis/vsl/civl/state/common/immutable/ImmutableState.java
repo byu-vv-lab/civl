@@ -632,6 +632,7 @@ public class ImmutableState implements State {
 		int dyScopeId = getProcessState(pid).getDyscopeId();
 		DynamicScope dyScope = this.getDyscope(dyScopeId);
 
+		//TODO: why parent scope id ? why not the scope in the next position of the stack ?
 		while (dyScope.lexicalScope().id() != staticId) {
 			dyScopeId = this.getParentId(dyScopeId);
 			if (dyScopeId < 0)

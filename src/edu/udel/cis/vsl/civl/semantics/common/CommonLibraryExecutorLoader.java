@@ -41,6 +41,8 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 
 		if (name.equals("assert"))
 			name = "asserts";
+		if (name.equals("civlmpi"))
+			name = "mpi";
 		result = libraryExecutorCache.get(name);
 		if (result == null) {
 			String aClassName = className(name, "Executor");
