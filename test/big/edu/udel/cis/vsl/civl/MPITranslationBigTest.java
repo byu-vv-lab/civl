@@ -49,7 +49,7 @@ public class MPITranslationBigTest {
 	
 	@Test
 	public void mpi_pi() {
-		assertTrue(ui.run("verify", filename("mpi_pi.c")));
+		assertTrue(ui.run("verify", "-enablePrintf=false", filename("mpi_pi.c")));
 	}
 
 }
