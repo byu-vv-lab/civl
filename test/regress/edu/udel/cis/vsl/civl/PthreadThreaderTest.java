@@ -13,8 +13,8 @@ import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 public class PthreadThreaderTest {
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"),
-			"pthread/threader/");
+	private static File rootDir = new File(new File(new File("examples"),
+			"pthread"), "threader");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -48,7 +48,7 @@ public class PthreadThreaderTest {
 
 	@Test
 	public void read_write_lock_false() throws ABCException {
-		assertFalse(ui.run("verify", "-svcomp",
+		assertFalse(ui.run("verify", "-showProverQueries", "-svcomp",
 				filename("read_write_lock_false.c")));
 	}
 
