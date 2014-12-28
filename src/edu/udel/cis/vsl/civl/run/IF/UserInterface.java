@@ -99,6 +99,7 @@ import edu.udel.cis.vsl.gmc.MisguidedExecutionException;
 import edu.udel.cis.vsl.gmc.Option;
 import edu.udel.cis.vsl.gmc.Trace;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.config.Configurations;
 
 /**
  * Basic command line and API user interface for CIVL tools.
@@ -250,6 +251,8 @@ public class UserInterface {
 			MisguidedExecutionException {
 		if (commandLine.normalCommandKind() == NormalCommandKind.HELP)
 			runHelp(commandLine);
+		if (commandLine.normalCommandKind() == NormalCommandKind.CONFIG)
+			Configurations.makeConfigFile();
 		else {
 			ModelTranslator modelTranslator = new ModelTranslator(
 					transformerFactory, frontEnd, commandLine.configuration(),
@@ -264,7 +267,7 @@ public class UserInterface {
 				return runVerify(modelTranslator);
 			case REPLAY:
 				return runReplay(modelTranslator);
-			default:// case RUN:
+			default:// case RUN: // TODO: why is this the default?!
 				return runRun(modelTranslator);
 			}
 		}

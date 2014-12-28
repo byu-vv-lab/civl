@@ -1,20 +1,12 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
-
 public interface CommandLine {
 	public enum CommandLineKind {
-		NORMAL,
-		COMPARE
+		NORMAL, COMPARE
 	}
 
 	public enum CommandKind {
-		COMPARE,
-		GUI,
-		HELP,
-		REPLAY,
-		RUN,
-		SHOW,
-		VERIFY
+		CONFIG, COMPARE, GUI, HELP, REPLAY, RUN, SHOW, VERIFY
 	}
 
 	CommandLineKind commandLineKind();

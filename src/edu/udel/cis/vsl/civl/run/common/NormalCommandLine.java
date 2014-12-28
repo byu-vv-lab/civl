@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 
 	public enum NormalCommandKind {
+		CONFIG,
 		SHOW,
 		VERIFY,
 		REPLAY,

@@ -55,17 +55,25 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	}
 
 	@Override
+	public void enterConfig(@NotNull CommandParser.ConfigContext ctx) {
+		kind = CommandLineKind.NORMAL;
+		normalCmd = new NormalCommandLine();
+		normalCmd.setCommandString(this.commandString);
+		normalCmd.setCommand(NormalCommandKind.CONFIG);
+	}
+
+	@Override
 	public void enterHelp(@NotNull CommandParser.HelpContext ctx) {
 		String commandArg = null;
-		
+
 		kind = CommandLineKind.NORMAL;
 		normalCmd = new NormalCommandLine();
 		normalCmd.setCommandString(this.commandString);
 		normalCmd.setCommand(NormalCommandKind.HELP);
-		if(ctx.children.size() > 2)
+		if (ctx.children.size() > 2)
 			commandArg = ctx.children.get(1).getText();
 		if (commandArg != null) {
-//			String commandArg = ctx.COMMAND().getText();
+			// String commandArg = ctx.COMMAND().getText();
 			switch (commandArg) {
 			case "compare":
 				normalCmd.setCommandArg(CommandKind.COMPARE);
@@ -85,7 +93,10 @@ public class CIVLCommandListener extends CommandBaseListener implements
 			case "show":
 				normalCmd.setCommandArg(CommandKind.SHOW);
 				break;
-			default:
+			case "config":
+				normalCmd.setCommandArg(CommandKind.CONFIG);
+				break;
+			default: // TODO: why is this the default???
 				normalCmd.setCommandArg(CommandKind.VERIFY);
 			}
 		}
@@ -114,7 +125,10 @@ public class CIVLCommandListener extends CommandBaseListener implements
 		case "show":
 			normalCmd.setCommand(NormalCommandKind.SHOW);
 			break;
-		default: //
+		case "config":
+			normalCmd.setCommand(NormalCommandKind.CONFIG);
+			break;
+		default: // TODO: why is this default?...
 			normalCmd.setCommand(NormalCommandKind.GUI);
 		}
 	}
@@ -178,10 +192,11 @@ public class CIVLCommandListener extends CommandBaseListener implements
 				return true;
 			else
 				return false;
-		} else if(ctx.NUMBER() != null) {
+		} else if (ctx.NUMBER() != null) {
 			// NUMBER
 			return Integer.parseInt(ctx.NUMBER().getText());
-		}else //PATH
+		} else
+			// PATH
 			return ctx.PATH().getText();
 	}
 

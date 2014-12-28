@@ -1,9 +1,11 @@
 /**
 * This file defines the syntax of CIVL's command line specification.
-* There are totally 7 commands, namely, compare, gui, help, replay, run, show, and verify.
+* There are totally 8 commands, namely, config, compare, gui, help,
+* replay, run, show, and verify.
 * There are a number of options to be chosen as well.
 *  
 * The usage of the commands are as follows:
+* civl config
 * civl compare [option]* -spec [option]* file+ -impl [option]* file+
 * civl gui (no options needed)
 * civl help [command]
@@ -22,6 +24,7 @@ start
       'help' (REPLAY | COMMAND | 'help')? NEWLINE # help
     | 'compare' commonOption? specOrImplCommand NEWLINE #compare
     | (REPLAY | COMMAND) commandBody NEWLINE #normal
+    | 'config' NEWLINE #config
     | REPLAY commonOption? specOrImplCommand NEWLINE #replayCompare
     ;
 

@@ -82,6 +82,7 @@ public class CIVLCommand {
 			printOptions(showOptions.values(), out);
 			break;
 		case GUI:
+		case CONFIG: // no options for "civl config"
 		default:
 		}
 	}
@@ -106,6 +107,8 @@ public class CIVLCommand {
 			case REPLAY:
 			case RUN:
 				return replayOptions.containsKey(option.name());
+			case CONFIG:
+				return false; // no options for "civl config"
 			default:
 				return false;
 			}
