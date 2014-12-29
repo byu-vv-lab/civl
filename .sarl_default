@@ -18,13 +18,3 @@ prover {
   showInconclusives = false;
   showErrors = true;
 }
-prover {
-  aliases = cvc3_api;
-  kind = CVC3_API;
-  version = "UNKNOWN";
-  path = "libcvc3jni.dylib";
-  timeout = 20.0;
-  showQueries = false;
-  showInconclusives = false;
-  showErrors = true;
-}
