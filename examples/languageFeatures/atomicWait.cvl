@@ -2,7 +2,7 @@
  *		civl verify -inputN=3 atomicWait.cvl
  * */
 #include <civlc.cvh>
-$input int N;
+$input int N = 3;
 int sum = 0;
 
 void foo(int i){

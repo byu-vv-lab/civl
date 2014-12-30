@@ -4,7 +4,7 @@
  * 		civl verify -inputB=10 -min meanBad.cvl
  */
 #include<civlc.h>
-$input int B;
+$input int B = 10;
 $input int n;
 $assume 1<=n && n<=B;
 $input double a[n];

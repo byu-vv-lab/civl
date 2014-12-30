@@ -2,7 +2,7 @@
 #include <domain.cvh>
 #include <stdio.h>
 
-$input int n;
+$input int n = 4;
 
 void decomp($domain domain){
   $domain_decomposition result;

@@ -3,7 +3,7 @@
  * */
 #include<civlc.cvh>
 
-$input int N;
+$input int N = 10;
 int s1, s2;
 
 void f1(int n) {

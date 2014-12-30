@@ -4,8 +4,8 @@
 #include <civlc.h>
 
 $input double h;
-$input int rows;
-$input int cols;
+$input int rows = 3;
+$input int cols = 3;
 $input double u[rows][cols];
 double result[rows][cols];
 $assume h > 0;

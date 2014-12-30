@@ -11,7 +11,7 @@
 #include<civlc.h>
 #define MIN(lhs, A, B) if ((A)<(B)) lhs=(A); else lhs=(B);
 
-$input int BOUND;
+$input int BOUND = 3;
 $input int L;
 $assume 1<=L && L<=BOUND;
 $input int M;

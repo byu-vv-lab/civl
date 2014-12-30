@@ -7,7 +7,7 @@
 #include<civlc.h>
 
 $input double h;
-$input int num_elements;
+$input int num_elements = 5;
 $input double initial[num_elements];
 double working[num_elements];
 $abstract $contin(4) $real rho($real x);

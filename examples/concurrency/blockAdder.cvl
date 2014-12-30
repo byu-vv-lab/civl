@@ -4,8 +4,8 @@
  */
 #include<civlc.cvh>
 
-$input int B; // upper bound on array length
-$input int W; // upper bound on number of workers
+$input int B = 6; // upper bound on array length
+$input int W = 3; // upper bound on number of workers
 
 $input int N; // array length
 $assume N>=1 && N<=B;

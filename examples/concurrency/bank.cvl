@@ -4,7 +4,7 @@
  * */
 #include<civlc.cvh>
 
-$input int NUM_ACCOUNTS;
+$input int NUM_ACCOUNTS = 3;
 
 /* ======================================================================== 
    constants

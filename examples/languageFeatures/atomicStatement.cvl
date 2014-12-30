@@ -2,7 +2,7 @@
  *		civl verify -inputB=3 atomicStatement.cvl
  * */
 #include<civlc.cvh>
-$input int B;
+$input int B = 3;
 $input int N;
 $assume 0<N && N<B;
 int n = 3;

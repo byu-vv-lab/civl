@@ -1,6 +1,8 @@
 #include <mpi.h>
 #include <stdio.h>
-
+#ifdef _CIVL
+$input int _NPROCS=5;
+#endif
 void main(int argc, char * argv[]){
 
   int nprocs, rank;

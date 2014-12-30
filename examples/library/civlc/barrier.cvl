@@ -6,7 +6,7 @@
 #include<concurrency.cvh>
  
 $input int N;
-$input int B;
+$input int B = 5;
 $assume N > 0 && N < B;
 $gbarrier gbarrier = $gbarrier_create($here, N);
 int counter = 0;

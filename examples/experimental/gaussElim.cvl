@@ -3,8 +3,8 @@
  * */
 #include<civlc.h>
 
-$input int N_BOUND; // bound on the number of rows
-$input int M_BOUND; // bound on the number of columns
+$input int N_BOUND = 3; // bound on the number of rows
+$input int M_BOUND = 3; // bound on the number of columns
 $input int N;  // number of rows
 $input int M;  // number of columns
 $assume N>0 && N<N_BOUND;

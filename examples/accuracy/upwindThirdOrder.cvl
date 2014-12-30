@@ -3,10 +3,10 @@
  * */
 #include<civlc.h>
 
-$input int n; /* Number of points */
-$input double h; /* Distance between points */
+$input int n = 5; /* Number of points */
+$input double h;  /* Distance between points */
 $input double dt; /* Size of a time step */
-$input double a; /* Constant for wave velocity */
+$input double a;  /* Constant for wave velocity */
 $input double u1[n];
 $abstract $contin(4) $real u($real x, $real t);
 $assume h > 0;

@@ -6,7 +6,7 @@
  */
 #include<civlc.cvh>
 
-$input int N;
+$input int N = 10;
 
 void f(int n) {
   int i = 0;

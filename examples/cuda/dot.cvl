@@ -8,8 +8,8 @@
 
 #define imin(a,b) (a<b?a:b)
 
-$input int THREADS_PER_BLOCK; // thread number per block: must be a power of 2, due to the while loop at the end of gpuThread();
-$input int N_BOUND;
+$input int THREADS_PER_BLOCK = 4; // thread number per block: must be a power of 2, due to the while loop at the end of gpuThread();
+$input int N_BOUND = 8;
 $input int N;
 $assume 0 < N && N <= N_BOUND;
 int const threadsPerBlock = THREADS_PER_BLOCK;

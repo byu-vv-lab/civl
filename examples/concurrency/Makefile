@@ -1,7 +1,11 @@
 CIVL=civl
 VERIFY=$(CIVL) verify
 
-all: ring ring2 ring3 diffusion1d
+all: ring ring2 ring3 wildcard wildcardBad \
+	adder adderBad bank barrier barrier2 \
+	barrierBad blockAdder blockAdderBad dining \
+	diningBad locksBad locksBad10 locksGood \
+	spawn spawn2 spawnBad
 
 ring: ring.cvl mp_root.cvh mp_proc.cvh
 	$(VERIFY) -inputNPROCS_BOUND=10 -inputN_BOUND=5 ring.cvl
@@ -18,11 +22,6 @@ wildcard: wildcard.cvl
 wildcardBad: wildcardBad.cvl
 	$(VERIFY) wildcardBad.cvl
 
-all: adder adderBad bank barrier barrier2 \
-	barrierBad blockAdder blockAdderBad dining \
-	diningBad locksBad locksBad10 locksGood \
-	spawn spawn2 spawnBad
-
 adder: adder.cvl
 	$(VERIFY) -inputB=5 adder.cvl
 
@@ -38,13 +37,10 @@ barrier: barrier.cvl
 
 barrier2: barrier2.cvl
 	$(VERIFY) -inputB=4 barrier2.cvl
-	
-# Two kinds of violations are found in the following:
-# a deadlock, and an assertion violation:
+
 barrierBad: barrierBad.cvl
 	$(VERIFY) -inputB=4 -min barrierBad.cvl 
 	$(CIVL) replay -id=0 barrierBad.cvl 
-	$(CIVL) replay -id=1 barrierBad.cvl
 
 blockAdder: blockAdder.cvl
 	$(VERIFY) -inputB=6 -inputW=3 blockAdder.cvl
@@ -54,7 +50,7 @@ blockAdderBad: blockAdderBad.cvl
 	$(CIVL) replay blockAdderBad.cvl
 
 dining: dining.cvl
-	$(VERIFY) -inputB=4 dining.cvl
+	$(VERIFY) -inputBOUND=4 dining.cvl
 
 diningBad:
 	$(VERIFY) -inputB=4 -min diningBad.cvl

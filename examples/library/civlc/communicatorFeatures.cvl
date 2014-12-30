@@ -7,10 +7,10 @@
 #include<stdio.h>
 #define TAG 0
 
-$input int NPROCS_BOUND; // upper bound of the number of mpi processes
+$input int NPROCS_BOUND = 2; // upper bound of the number of mpi processes
 $input int NPROCS; // number of mpi processes
 $assume 0 < NPROCS && NPROCS <= NPROCS_BOUND;
-$input int N_BOUND; // upper bound on number times to loop
+$input int N_BOUND = 2; // upper bound on number times to loop
 $input int N; // number of times to loop
 $assume 0 < N && N <= N_BOUND;
 _Bool initialized = $false;

@@ -5,8 +5,8 @@
  * */
 #include <civlc.cvh>
 
-$input int B; // upper bound on array length
-$input int N; // length of array
+$input int B = 5; // upper bound on array length
+$input int N;     // length of array
 $assume 0<=N && N<=B;
 $input double a[N];
 

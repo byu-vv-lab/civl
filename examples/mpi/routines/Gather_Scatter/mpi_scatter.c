@@ -11,6 +11,10 @@
 #include <assert.h>
 #define SIZE 4
 
+#ifdef _CIVL
+$input int _NPROCS=4;
+#endif 
+
 int main (int argc, char *argv[])
 {
 int numtasks, rank, sendcount, recvcount, source;

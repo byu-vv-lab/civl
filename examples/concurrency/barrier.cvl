@@ -3,8 +3,8 @@
  */
 #include <civlc.cvh>
 
-$input int B; // upper bound on number of threads
-$input int N; // number of threads
+$input int B = 4; // upper bound on number of threads
+$input int N;     // number of threads
 $assume 1<=N && N<=B;
 $proc threads[N]; // the threads
 int lock = 0; // 0=available
