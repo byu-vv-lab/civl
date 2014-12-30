@@ -251,7 +251,7 @@ public class UserInterface {
 			MisguidedExecutionException {
 		if (commandLine.normalCommandKind() == NormalCommandKind.HELP)
 			runHelp(commandLine);
-		if (commandLine.normalCommandKind() == NormalCommandKind.CONFIG)
+		else if (commandLine.normalCommandKind() == NormalCommandKind.CONFIG)
 			Configurations.makeConfigFile();
 		else {
 			ModelTranslator modelTranslator = new ModelTranslator(
