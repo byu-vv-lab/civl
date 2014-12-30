@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v 0.15
+                               v0.15
 
 ------------------------------ Overview -------------------------------
 
@@ -82,53 +82,81 @@ licenses.  See directory licenses for the license of each component.
 ------------------------- Binary Installation -------------------------
 
 For most users, this will be the easiest way to install and use CIVL.
+Developers should instead follow the instructions for
+"Source Installation" below.
 
-1. Install a Java 7 SDK if you have not already.  Go to
-http://www.oracle.com/technetwork/java/javase/downloads/ for the
-latest from Oracle.  On linux, you can optionally sudo apt-get install
-openjdk-7-jdk.
+1. Install the automated theorem prover CVC3 (if you have not already).
+The easiest way to do this is to visit
 
-2. If you already have the VSL dependencies library, you may
-skip this step.  Otherwise, download the archive of VSL
-dependencies from http://vsl.cis.udel.edu/tools/vsl_depend,
-choosing the version for your OS type (32-bit linux,
-64-bit linux, or 64-bit OS X).  Unzip and untar the
-downloaded .tgz file and you will have a folder named "vsl".
-If you do not already have a directory /opt, create one with
-"mkdir /opt".  Move vsl into /opt.  Use sudo as needed.
+  http://www.cs.nyu.edu/acsys/cvc3/download.html
+  
+and download the latest, optimized build with static library
+and executable for your OS.  Place the executable file "cvc3"
+somewhere in your PATH.  You can discard everything else.
 
-3. Download the CIVL distribution from http://vsl.cis.udel.edu/civl.
+Alternatively, on linux systems, CVC3 can be installed
+using the package manager via "sudo apt-get install cvc3".
+This will place cvc3 in /usr/bin.
 
-4. Unzip and untar the downloaded file if this does not happen
+2. Install the automated theorem prover CVC4 (if you have not already).
+The easiest way to do this is to visit
+
+  http://cvc4.cs.nyu.edu/downloads/
+
+and choose one of the installation approaches.  You only need the
+binary (cvc4), and you must put it in your PATH.
+
+3. Install a Java 7 SDK if you have not already.  Go to
+
+  http://www.oracle.com/technetwork/java/javase/downloads/
+
+for the latest from Oracle.  On linux, you can instead use
+the package manager:
+
+  sudo apt-get install openjdk-7-jdk
+
+4. Download the CIVL distribution from http://vsl.cis.udel.edu/civl.
+
+5. Unzip and untar the downloaded file if this does not happen
 automatically.  This should result in a folder named
-CIVL-TAG, where TAG is some version id string.  This folder
+CIVL-TAG, where TAG is some version ID string.  This folder
 contains the following:
 
  - README   : this file
  - bin      : containing one executable sh script called "civl"
  - lib      : containing civl-TAG.jar
  - doc      : containing the manual and the tutorial of CIVL
- - emacs    : CIVL-C emacs mode and its installation guideline
+ - emacs    : CIVL-C emacs mode and its installation instructions
  - licenses : licenses for CIVL and included libraries
  - examples : some example CIVL programs
 
-5. Move CIVL-TAG into /opt.
+6. Move CIVL-TAG into /opt.   Alternatively, if you don't want to
+put it in /opt for some reason, put CIVL-TAG wherever you want
+and edit the script (bin/civl) to reflect the chosen path.
 
-6. Put the civl script in your path however you like to put things
+7. Put the script bin/civl in your path however you like to put things
 in your path.   Either move it to a directory in your path,
 or create a symlink to it, or edit your .profile or equivalent
 to put it in your path.
 
+8. Type "civl config".  This should report that it found cvc3 and cvc4,
+and it should create a file called ".sarl" in your home directory.
+
+
 ------------------------- Source Installation -------------------------
 
 We recommend using the Eclipse IDE for Java/EE developers.
+
+0. Install CVC3 and CVC4 executables following the directions above.
+Install Eclipse IDE for Java/EE developers if you have not already
+done so.
 
 1. Install an SVN plugin in Eclipse (such as Subversive) if you have
    not already.
 
 2. Install prerequisite projects ABC, SARL and GMC. 
    Make sure that the three projects are put in the workspace
-   directory where CIVL will be put. 
+   directory where CIVL will be created. 
 
     a. Install the symbolic algebra and reasoning library SARL.
 	   In Eclipse, select New Project...from SVN, use the archive 

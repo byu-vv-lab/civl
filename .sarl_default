@@ -1,3 +1,4 @@
+
 prover {
   aliases = cvc4;
   kind = CVC4;
@@ -8,6 +9,7 @@ prover {
   showInconclusives = false;
   showErrors = true;
 }
+
 prover {
   aliases = cvc3;
   kind = CVC3;
