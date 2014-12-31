@@ -21,7 +21,7 @@ grammar Command;
 /* The top-level rule */
 start
     :
-      'help' (REPLAY | COMMAND | 'help')? NEWLINE # help
+      'help' (REPLAY | COMMAND | 'help' | 'config')? NEWLINE # help
     | 'compare' commonOption? specOrImplCommand NEWLINE #compare
     | (REPLAY | COMMAND) commandBody NEWLINE #normal
     | 'config' NEWLINE #config

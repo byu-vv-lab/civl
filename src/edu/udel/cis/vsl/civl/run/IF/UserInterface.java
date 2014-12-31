@@ -690,7 +690,11 @@ public class UserInterface {
 				out.println("\nUsage: civl show [options] filename+");
 				out.println("\nOptions:");
 				break;
-			default:// verify
+			case CONFIG:
+				out.println("Configure CIVL.  Detect theorem provers and create .sarl.");
+				out.println("\nUsage: civl config");
+				break;
+			default:// verify // TODO: WHY IS THIS THE DEFAULT?!
 				out.println("VERIFY a certain program.");
 				out.println("\nUsage: civl verify [options] filename+");
 				out.println("\nOptions:");
@@ -707,24 +711,26 @@ public class UserInterface {
 	 *            stream to which to print
 	 */
 	private void printUsage(PrintStream out) {
-		out.println("Usage: civl <normal command> [options] filename+");
-		out.println("    or civl compare (or replay) [common options] -spec [spec options] "
-				+ "filename+ -impl [impl options] filename+");
+		out.println("Usage: civl (replay|run|show|verify) [options] filename+");
+		out.println("    or civl (compare|replay) [common options] -spec [spec options]");
+		out.println("       filename+ -impl [impl options] filename+");
+		out.println("    or civl config");
 		out.println("    or civl gui");
 		out.println("    or civl help [command]");
-		out.println("Normal commands:");
+		out.println("Semantics:");
+		out.println("  config : configure CIVL");
 		out.println("  replay : replay trace for program filename");
-		out.println("  run : run program filename");
-		// out.println("  help : print this message");
-		out.println("  show : show result of preprocessing and parsing filename(s)");
+		out.println("  run    : run program filename");
+		out.println("  help   : print this message");
+		out.println("  show   : show result of preprocessing and parsing filename(s)");
 		out.println("  verify : verify program filename");
-		// out.println("  gui : launch civl in gui mode (beta)");
+		out.println("  gui    : launch civl in gui mode (beta)");
 		out.println("Options:");
 		for (Option option : definedOptions.values()) {
 			option.print(out);
 		}
-		out.println("Type \'civl help command\' for usage and options "
-				+ "of a particular command, e.g., \'civl help compare\'");
+		out.println("Type \'civl help command\' for usage and options");
+		out.println("for a particular command, e.g., \'civl help compare\'");
 		out.flush();
 	}
 

@@ -102,12 +102,10 @@ public class CIVLConstants {
 			"print the ample set when it contains more than one processes",
 			false);
 
-	public final static Option showAmpleSetWtStatesO = Option
-			.newScalarOption(
-					"showAmpleSetWtStates",
-					BOOLEAN,
-					"print the ample set and the state when there are more than one processes in the ample set",
-					false);
+	public final static Option showAmpleSetWtStatesO = Option.newScalarOption(
+			"showAmpleSetWtStates", BOOLEAN,
+			"print ample set and state when ample set contains >1 process",
+			false);
 
 	public final static Option showModelO = Option.newScalarOption("showModel",
 			BOOLEAN, "print the model", false);
