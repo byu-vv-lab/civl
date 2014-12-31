@@ -16,14 +16,15 @@ import edu.udel.cis.vsl.gmc.Option;
  * 
  */
 public class CIVLConstants {
+
 	/** The version of this release of CIVL. */
-	public final static String version = "0.15";
+	public final static String version = "0.15+ (unstable)";
 
 	/**
 	 * The date of this release of CIVL. Format: YYYY-MM-DD in accordance with
 	 * ISO 8601.
 	 */
-	public final static String date = "2014-12-23";
+	public final static String date = "2014-12-30";
 
 	/**
 	 * The prefix of the full name of the class of a library enabler/executor.
