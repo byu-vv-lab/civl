@@ -13,11 +13,8 @@ public class MessagePassingBenchmark {
 	private static UserInterface ui = new UserInterface();
 
 	public static void main(String[] args) {
-		// -inputNPROCS=5 -simplify=false: 17 seconds
-		// -inputNPROCS=6 -simplify=false: 68 seconds
-		// since 6 processes take much more than 50 seconds, so choose 5
-		// processes.
-		ui.run("verify -echo -inputNPROCS_BOUND=5 -inputN_BOUND=3 examples/messagePassing/ring.cvl");
+		// no longer appears to be a serious benchmark, executes too quickly
+		ui.run("verify -echo -inputNPROCS_BOUND=10 -inputN_BOUND=3 examples/concurrency/ring.cvl");
 	}
 
 }

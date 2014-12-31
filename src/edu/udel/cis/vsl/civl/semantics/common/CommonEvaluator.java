@@ -1954,7 +1954,6 @@ public class CommonEvaluator implements Evaluator {
 						expression.getSource());
 			}
 		}
-
 		boundVariables.pop();
 		return result;
 	}
@@ -2699,7 +2698,7 @@ public class CommonEvaluator implements Evaluator {
 			eval = new Evaluation(state, primitiveType.initialValue(universe));
 			break;
 		}
-		default:// STRUCT_OR_UNION{
+		default:// STRUCT_OR_UNION{ // TODO: don't make this the default!
 		{
 			CIVLStructOrUnionType strOrUnion = (CIVLStructOrUnionType) type;
 
@@ -3565,8 +3564,6 @@ public class CommonEvaluator implements Evaluator {
 			throws UnsatisfiablePathConditionException {
 		ExpressionKind kind = expression.expressionKind();
 		Evaluation eval;
-		int processIdentifier = state.getProcessState(pid).identifier();
-		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		switch (kind) {
 		case ADDRESS_OF:
@@ -3663,25 +3660,33 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case UNDEFINED_PROC:
 			break;
-		case VARIABLE:
+		case VARIABLE: {
 			Variable variable = ((VariableExpression) expression).variable();
-			int sid,
-			vid;
-			CIVLType type;
+			int sid = state.getDyscopeID(pid, variable);
 
-			try {
-				sid = state.getDyscopeID(pid, variable);
-				vid = variable.vid();
-				type = variable.type();
-			} catch (IllegalArgumentException ex) {
+			if (sid < 0) {
+				// the variable is not currently visible to process pid
+				// This can happen if exploring all the memory units
+				// of an atomic statement. This requires looking
+				// at all the sub-statements of the atomic statement.
+				// New variables may be declared within those sub-statements.
+				// Those variables are not yet reachable.
 				break;
 			}
+
+			int vid = variable.vid();
+			CIVLType type = variable.type();
+
 			// if (!variable.name().name().equals(
 			// modelFactory.atomicLockVariableExpression().variable()
 			// .name().name())) {
 			// atomic_enter statement is always considered as dependent with all
 			// processes since it accesses the global variable __atomic_lock_var
 			if (!variable.isConst() && !type.isHandleObjectType()) {
+				int processIdentifier = state.getProcessState(pid).identifier();
+				String process = "p" + processIdentifier + " (id = " + pid
+						+ ")";
+
 				eval = new Evaluation(state, symbolicUtil.makePointer(sid, vid,
 						identityReference));
 				memoryUnits.addAll(pointersInExpression(eval.value, state,
@@ -3689,6 +3694,7 @@ public class CommonEvaluator implements Evaluator {
 			}
 			// }
 			break;
+		}
 		case ABSTRACT_FUNCTION_CALL:
 			for (Expression arg : ((AbstractFunctionCallExpression) expression)
 					.arguments()) {

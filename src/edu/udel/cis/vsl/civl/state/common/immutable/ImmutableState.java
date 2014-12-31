@@ -616,7 +616,8 @@ public class ImmutableState implements State {
 				return scopeId;
 			scopeId = getParentId(scopeId);
 		}
-		throw new IllegalArgumentException("Variable not in scope: " + variable);
+		//throw new IllegalArgumentException("Variable not in scope: " + variable);
+		return -1;
 	}
 
 	@Override

@@ -129,16 +129,19 @@ public interface State {
 	int getParentId(int dyscopeId);
 
 	/**
-	 * Given a process ID and a variable, returns the first dynamic scope ID
-	 * reachable from the given process.
+	 * Given a process ID and a variable, finds the first dyscope containing the
+	 * variable in the path starting from the dyscope of the current (top) frame
+	 * of the process call stack and following the parent edges of the dyscope
+	 * tree.
 	 * 
 	 * @param pid
 	 *            The ID of the process whose current dynamic scope is the
-	 *            starting point of the searching.
+	 *            starting point of the search
 	 * @param variable
-	 *            The variable to be searched for.
-	 * @return The ID of the dyscope reachable from the process whose static
-	 *         scope is the scope of the given variable.
+	 *            A (static) variable in the model
+	 * @return the ID of the first dyscope reachable from the process whose
+	 *         static scope is the scope of the given variable, or -1 if there
+	 *         is no such scope (i.e., if the variable is not visible)
 	 */
 	int getDyscopeID(int pid, Variable variable);
 
