@@ -3,7 +3,7 @@ CIVL = civl
 VERIFY = $(CIVL) verify
 CC = cc
 
-all: mpi_wave1d mpi_diff2d mpi_diff1d mpi_pi mpi_gather mpi_scatter mpi_gatherv mpi_scatterv mpi_reduce mpi_sysStatus mpi_sysStatusBad mpi_sysStatusBad2
+all: mpi_wave1d mpi_diff2d mpi_diff1d mpi_pi mpi_gather mpi_scatter mpi_gatherv mpi_scatterv mpi_reduce mpi_sysStatus mpi_sysStatusBad mpi_sysStatusBad2 mpi_prime mpi_matmat sum_array
 
 mpi_wave1d: wave1d.c
 	$(VERIFY) wave1d.c
@@ -43,6 +43,15 @@ mpi_probe: ${routines/probe.c}
 
 mpi_reduce: ${routines/reduce.c}
 	$(VERIFY) routines/reduce.c
+
+mpi_prime: mpi_prime.c
+	$(VERIFY) mpi_prime.c
+
+mpi_matmat: ${matmat_mw/matmat_mw.c}
+	$(VERIFY) matmat_mw/matmat_mw.c
+
+mpi_sum_array: sum_array.c
+	$(VERIFY) sum_array.c
 
 clean: 
 	rm -f -r CIVLREP

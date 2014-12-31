@@ -12,8 +12,7 @@ public class MPITranslationBigTest {
 
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"),
-			"mpi");
+	private static File rootDir = new File(new File("examples"), "mpi");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -24,12 +23,6 @@ public class MPITranslationBigTest {
 	}
 
 	/* **************************** Test Methods *************************** */
-
-	@Test
-	public void mpi_prime() {
-		assertTrue(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=false",
-				filename("mpi_prime.c")));
-	}
 
 	@Test
 	public void mpi_wave1d() {
@@ -54,6 +47,24 @@ public class MPITranslationBigTest {
 	public void mpi_pi() {
 		assertTrue(ui
 				.run("verify", "-enablePrintf=false", filename("mpi_pi.c")));
+	}
+
+	@Test
+	public void mpi_prime() {
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("mpi_prime.c")));
+	}
+
+	@Test
+	public void mpi_matmat() {
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("matmat_mw/matmat_mw.c")));
+	}
+
+	@Test
+	public void mpi_sumArray() {
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				filename("sum_array.c")));
 	}
 
 }

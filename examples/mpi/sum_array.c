@@ -1,17 +1,32 @@
-/* Sum of an array - Second parallel version */
- 
- #include <stdio.h>
- #include <mpi.h>
- 
- #define N 100000
- #define MSG_DATA 100
- #define MSG_RESULT 101
+/* sum_array.c : parallel adder for an array of 
+ * floating-point numbers.
+ * To execute: mpicc sum_array.c ; mpiexec -n 4 ./a.out
+ * Or replace "4" with however many procs you want to use.
+ * To verify: civl verify sum_array.c
+ */ 
+#include <stdio.h>
+#include <mpi.h>
+
+/* MPI message passing tags */
+#define MSG_DATA 100
+#define MSG_RESULT 101
+#ifdef _CIVL
+$input int _NPROCS_LOWER_BOUND = 1;
+$input int _NPROCS_UPPER_BOUND = 5;
+$input long NB = 20;               // upper bound of N
+$input long N;                     // length of the array
+$assume 0 < N && N <= NB;
+double oracle;
+#else
+#define N 100000
+#endif
  
 void master (void);
 void slave (void);
  
 int main (int argc, char **argv) {
   int myrank;
+
   MPI_Init (&argc, &argv);
   MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
   if (!myrank)
@@ -28,9 +43,15 @@ void master (void) {
   unsigned long long step, i;
   int size;
   MPI_Status status;
+
   //Initialization of the array
   for (i = 0; i < N; i++)
     array[i] = i + 1;
+#ifdef _CIVL
+  oracle = 0.0;
+  for(i = 0; i < N; i++)
+    oracle += array[i];
+#endif
   MPI_Comm_size (MPI_COMM_WORLD, &size);
   if (size != 1)
     step = N / (size - 1);
@@ -43,9 +64,13 @@ void master (void) {
   //The master receives the results in any order
   for (i = 1; i < size; mysum += tmpsum, i++)
     MPI_Recv (&tmpsum, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MSG_RESULT, MPI_COMM_WORLD, &status);
+#ifdef _CIVL
+  $assert oracle == mysum : "The sum of %d array elements "
+    "is %f but the expected one is %f.\n", N, mysum, oracle;
+#endif
   printf ("%lf\n", mysum);
 }
- 
+
 void slave (void) {
   float array[N];
   double sum;

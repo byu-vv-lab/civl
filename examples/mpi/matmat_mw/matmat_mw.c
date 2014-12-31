@@ -1,46 +1,60 @@
-/* FEVS: A Functional Equivalence Verification Suite for High-Performance
- * Scientific Computing
- *
- * Copyright (C) 2010, Stephen F. Siegel, Timothy K. Zirkel,
- * University of Delaware
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301 USA.
+/* matmat_mw.c : parallel multiplication of two matrices.
+ * To execute: mpicc matmat_mw.c ; mpiexec -n 4 ./a.out N L M
+ * Or replace "4" with however many procs you want to use.
+ * Arguments N L M should be replaced with any integer numbers which is 
+ * no larger than the corresponding dimension decided in the "data" file.
+ * To verify: civl verify matmat_mw.c
  */
-
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <mpi.h>
 
 #define comm MPI_COMM_WORLD
-
+#ifdef _CIVL
+$input int _NPROCS_LOWER_BOUND = 1;
+$input int _NPROCS_UPPER_BOUND = 4;
+/* Dimensions of 2 matrices: a[N][L] * b[L][M] */
+$input int NB = 3;              // upper bound of N
+$input int N;
+$assume 0 < N && N <= NB;
+$input int LB = 3;              // upper bound of L
+$input int L;
+$assume 0 < L && L <= LB;
+$input int MB = 3;              // upper bound of M
+$input int M;
+$assume 0 < M && M <= MB;
+$input double a[N][L];          // input data for matrix a
+$input double b[L][M];          // input data for matrix b
+double oracle[N][M];            // matrix stores results of a sequential run
+#else
+FILE * fp;                      // pointer to the data file which gives two matrices
 int N, L, M;
+#endif
 
+/* prints a matrix. In CIVL mode, it will compare the matrix with the
+   result of the sequential run.*/
 void printMatrix(int numRows, int numCols, double *m) {
   int i, j;
+
   for (i = 0; i < numRows; i++) {
-    for (j = 0; j < numCols; j++)
+    for (j = 0; j < numCols; j++) {
       printf("%f ", m[i*numCols + j]);
+#ifdef _CIVL
+      $assert m[i*numCols + j] == oracle[i][j] : 
+      "The calculated value at position [%d][%d] is %f"
+	" but the expected one is %f", i, j, m[i*numCols+j], oracle[i][j];
+#endif
+    }
     printf("\n");
   }
   printf("\n");
-  fflush(stdout);
 }
 
+/* Computes a vetor with length L times a matrix with dimensions [L][M] */
 void vecmat(double vector[L], double matrix[L][M], double result[M]) {
   int j, k;
+
   for (j = 0; j < M; j++)
     for (k = 0, result[j] = 0.0; k < L; k++)
       result[j] += vector[k]*matrix[k][j];
@@ -50,26 +64,38 @@ int main(int argc, char *argv[]) {
   int rank, nprocs, i, j;
   MPI_Status status;
   
+#ifndef _CIVL
   N = atoi(argv[1]);
   L = atoi(argv[2]);
   M = atoi(argv[3]);
-#pragma CIVL $assume N && N <=2;
-#pragma CIVL $assume M && M <=2;
-#pragma CIVL $assume L && L <=2;
+#endif
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &nprocs);
   if (rank == 0) {
-    double a[N][L], b[L][M], c[N][M], tmp[M];
+    double c[N][M], tmp[M];
     int count;
-    
-    FILE *fp =fopen("data", "r");
+#ifndef _CIVL
+    double a[N][L], b[L][M];
+
+    fp = fopen("data", "r");
     for (i = 0; i < N; i++)
       for (j = 0; j < L; j++)
 	fscanf(fp,"%lf", &a[i][j]);
     for (i = 0; i < L; i++)
       for (j = 0; j < M; j++)
 	fscanf(fp,"%lf",&b[i][j]);
+#else
+    // elaborating N, L, M....
+    elaborate(N);
+    elaborate(L);
+    elaborate(M);
+    // sequential run
+    for(int i=0; i < N; i++) {
+      vecmat(a[i], b, &oracle[i][0]);
+  }
+
+#endif
     MPI_Bcast(b, L*M, MPI_DOUBLE, 0, comm);
     for (count = 0; count < nprocs-1 && count < N; count++)
       MPI_Send(&a[count][0], L, MPI_DOUBLE, count+1, count+1, comm);
@@ -83,7 +109,9 @@ int main(int argc, char *argv[]) {
     }
     for (i = 1; i < nprocs; i++) MPI_Send(NULL, 0, MPI_INT, i, 0, comm);
     printMatrix(N, M, &c[0][0]);
+#ifndef _CIVL
     fclose(fp);
+#endif
   } else {
     double b[L][M], in[L], out[M];
 
@@ -98,3 +126,4 @@ int main(int argc, char *argv[]) {
   MPI_Finalize();
   return 0;
 }
+

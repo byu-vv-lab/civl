@@ -113,4 +113,25 @@ public class MPITranslationTest {
 		assertFalse(ui.run("verify", "-enablePrintf=false",
 				filename("routines/mpiSysStatusBad2.c")));
 	}
+
+	@Test
+	public void mpiPrime() {
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				"-input_NPROCS_UPPER_BOUND=2", "-inputLIMITB=13",
+				filename("mpi_prime.c")));
+	}
+
+	@Test
+	public void mpiMatmat() {
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				"-input_NPROCS_UPPER_BOUND=3", "-inputNB=2", "-inputLB=2",
+				"-inputMB=2", filename("matmat_mw/matmat_mw.c")));
+	}
+
+	@Test
+	public void mpiSumArray() {
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				"-input_NPROCS_UPPER_BOUND=3", "-inputNB=8",
+				filename("sum_array.c")));
+	}
 }
