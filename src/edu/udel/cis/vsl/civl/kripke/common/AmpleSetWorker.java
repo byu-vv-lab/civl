@@ -41,6 +41,24 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * This class is responsible for computing the ample processes set at a given
  * state. It is a helper of Enabler.
  * 
+ * Basic ingredients.  Need to know, in a state s:
+ * 
+ * For each process p, what is the set of memory units that p can reach
+ * from its call stack?
+ * 
+ * For each process p, given an enabled statement in p, what are the memory
+ * units that could read/written to by that statement.
+ * 
+ * Questions:
+ * 
+ * Representation of set of memory units:
+ * 
+ * How much of this can be computed statically?
+ * 
+ * Can this information be stored in state and updated incrementally
+ * with each transition.
+ * 
+ * 
  * @author Manchun Zheng (zmanchun)
  * 
  */
