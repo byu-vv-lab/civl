@@ -41,10 +41,10 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * This class is responsible for computing the ample processes set at a given
  * state. It is a helper of Enabler.
  * 
- * Basic ingredients.  Need to know, in a state s:
+ * Basic ingredients. Need to know, in a state s:
  * 
- * For each process p, what is the set of memory units that p can reach
- * from its call stack?
+ * For each process p, what is the set of memory units that p can reach from its
+ * call stack?
  * 
  * For each process p, given an enabled statement in p, what are the memory
  * units that could read/written to by that statement.
@@ -55,9 +55,57 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * 
  * How much of this can be computed statically?
  * 
- * Can this information be stored in state and updated incrementally
- * with each transition.
+ * Can this information be stored in state and updated incrementally with each
+ * transition?
  * 
+ * <pre>
+ * Fix a process <code>p</code>, computes the set of processes that have to be
+ * in the ample set by examining the relation of the impact/reachable memory
+ * units of the processes.
+ * 
+ * Impact memory unit set: all memory units to be accessed (read or written) by a
+ * process <code>p</code> at a certain state <code>s</code>. Usually this
+ * includes the memory units through the variables appearing in the statements
+ * that origins from <code>p</code>'s location at <code>s</code>.
+ * 
+ * Reachable memory unit set: all memory units reachable by a process
+ * <code>p</code> at a certain state <code>s</code>. This includes all memory units 
+ * reachable through all the variables in the dyscopes visible to <code>p</code>.
+ * 
+ * Reachable memory unit access annotation: for each element in the reachable memory
+ * unit set, annotates the information if the process is possible to write it now or
+ * in the future. Immediately, any variable appearing as the left-hand-side of
+ * Note, all variables that ever appear as the operand of the address-of (&)
+ * operator are to be considered as possibly written by any process. Given a memory 
+ * unit <code>m</code> and a process <code>p</code>, <code>w(m, p, s)</code> is true 
+ * iff <code>p</code> is possible to write to <code>m</code> from <code>s</code>.
+ * 
+ * Note: the heap is excluded when computing the impact/reachable memory units; 
+ * memory of handle types (such as gcomm/comm, gbarrier/barrier) are ignored.
+ * 
+ * Ample set algorithm: 
+ * 0. Let <code>amp(p)</code> be the ample set of <code>p</code>. Initially, 
+ *    <code>amp(p) = { p }</code>. Let <code>work = { p }</code> be the 
+ *    set of working processes.
+ * 1. Let <code>sys(p, s)</code> be the set of system function calls of <code>p</code>
+ * 	  origins at <code>s</code>. Let <code>imp(p, s)</code> be the impact memory set 
+ *    of <code>p</code> at state <code>s</code>; remove <code>p</code> from work.
+ * 2. For every system call <code>c</code> of <code>sys(p, s)</code>, obtain the ample
+ *    set <code>amp(c, p, s)</code> from the corresponding library. Then, for every 
+ *    <code>q</code> in <code>amp(c, p, s)</code>, perform 2.1:
+ *    2.1. add <code>q</code> to <code>amp(p)</code>, and add <code>q</code> to <code>work</code> 
+ *         if <code>q</code> hasn't been added to <code>work</code> before.
+ * 3. For every process <code>q</code> active at state <code>s</code>, 
+ *    let <code>rea(q, s)</code> be the map of reachable memory units and 
+ *    the access annotation (read only or possible write) of process <code>q</code> 
+ *    at state <code>s</code>, then do the following:
+ *    - for every memory unit <code>m</code> in <code>imp(p, s)</code>, 
+ *      find out all memory units <code>m'</code> belonging to <code>rea(q, s)</code> 
+ *      that intersects with <code>m</code>;
+ *    - if there exists <code>m'</code>, such that <code>w(m, p, s)</code> or
+ *      <code>w(m', q, s)</code>, then perform step 2.1 for <code>q</code>.
+ * 
+ * </pre>
  * 
  * @author Manchun Zheng (zmanchun)
  * 
@@ -232,7 +280,7 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Compute the ample set starting with a specific process.
+	 * Compute the ample set by fixing a process first.
 	 * 
 	 * @param startPid
 	 *            The id of the process to start with.
@@ -279,16 +327,16 @@ public class AmpleSetWorker {
 										+ "gets loaded successfully otherwise an error should have been reported there",
 								call.getSource());
 					} catch (UnsatisfiablePathConditionException e) {
+						// error occur in the library enabler, returns all
+						// processes as the ample set.
 						ampleProcessIDs = activeProcesses;
 						return ampleProcessIDs;
 					}
 					if (ampleSubSet != null && !ampleSubSet.isEmpty()) {
 						for (int amplePid : ampleSubSet) {
 							if (amplePid != pid
-									// && activeProcesses.contains(amplePid)
 									&& !ampleProcessIDs.contains(amplePid)
 									&& !workingProcessIDs.contains(amplePid)) {
-
 								workingProcessIDs.add(amplePid);
 								ampleProcessIDs.add(amplePid);
 								if (this.activeProcesses.contains(amplePid))
@@ -307,7 +355,7 @@ public class AmpleSetWorker {
 			}
 			for (int otherPid : this.allProcesses) {
 				Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther;
-				List<Pair<SymbolicExpression, SymbolicExpression>> sharedMemUnitPairs;
+				List<Pair<SymbolicExpression, SymbolicExpression>> commonMemUnitPairs;
 
 				// add new ample id earlier
 				if (otherPid == pid || ampleProcessIDs.contains(otherPid)
@@ -315,9 +363,9 @@ public class AmpleSetWorker {
 					continue;
 				reachableMemUnitsMapOfOther = reachableMemUnitsMap
 						.get(otherPid);
-				sharedMemUnitPairs = this.memUnitPairs(impactMemUnits,
+				commonMemUnitPairs = this.commonMemUnitPairs(impactMemUnits,
 						reachableMemUnitsMapOfOther.keySet());
-				for (Pair<SymbolicExpression, SymbolicExpression> memPair : sharedMemUnitPairs) {
+				for (Pair<SymbolicExpression, SymbolicExpression> memPair : commonMemUnitPairs) {
 					if ((reachableMemUnitsMapOfThis.get(memPair.left) || reachableMemUnitsMapOfOther
 							.get(memPair.right))) {
 						workingProcessIDs.add(otherPid);
@@ -339,13 +387,27 @@ public class AmpleSetWorker {
 		return ampleProcessIDs;
 	}
 
-	private List<Pair<SymbolicExpression, SymbolicExpression>> memUnitPairs(
-			Iterable<SymbolicExpression> list1,
-			Iterable<SymbolicExpression> list2) {
+	/**
+	 * Given two collections of memory units, computes all the non-disjoint
+	 * memory units from both collections. Two memory units are disjoint if they
+	 * don't share any common memory space. For example, <code>&a</code> and
+	 * <code>&b</code> are disjoint if <code>a</code> and <code>b</code> are
+	 * variables; <code>&a[0]</code> and <code>&a</code> are not disjoint
+	 * because the latter contains the former.
+	 * 
+	 * @param memSet1
+	 *            The first memory unit set.
+	 * @param memSet2
+	 *            The second memory unit set.
+	 * @return All non-disjoint memory units from the specified two sets.
+	 */
+	private List<Pair<SymbolicExpression, SymbolicExpression>> commonMemUnitPairs(
+			Iterable<SymbolicExpression> memSet1,
+			Iterable<SymbolicExpression> memSet2) {
 		List<Pair<SymbolicExpression, SymbolicExpression>> result = new LinkedList<>();
 
-		for (SymbolicExpression unit1 : list1) {
-			for (SymbolicExpression unit2 : list2) {
+		for (SymbolicExpression unit1 : memSet1) {
+			for (SymbolicExpression unit2 : memSet2) {
 				if (!evaluator.symbolicUtility().isDisjointWith(unit1, unit2))
 					result.add(new Pair<>(unit1, unit2));
 			}
@@ -715,7 +777,6 @@ public class AmpleSetWorker {
 	private void preprocessing() {
 		for (int pid : allProcesses) {
 			ProcessState p = state.getProcessState(pid);
-
 			Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemUnitsPair = impactMemoryUnits(p);
 
 			if (impactMemUnitsPair.left == MemoryUnitsStatus.INCOMPLETE) {
@@ -728,7 +789,7 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Given a process, compute the set of reachable memory units and if the
+	 * Given a process, computes the set of reachable memory units and if the
 	 * memory unit could be modified at the current location or any future
 	 * location.
 	 * 
@@ -764,7 +825,8 @@ public class AmpleSetWorker {
 					Set<SymbolicExpression> varMemUnits;
 					boolean permission;
 
-					if (variable.type().isHeapType() && vid != 0)
+					// ignore the heap
+					if (variable.type().isHeapType())// && vid != 0)
 						continue;
 					varMemUnits = evaluator.memoryUnitsReachableFromVariable(
 							variable.type(), dyScope.getValue(vid), dyScopeID,
