@@ -267,8 +267,13 @@ public class UserInterface {
 				return runVerify(modelTranslator);
 			case REPLAY:
 				return runReplay(modelTranslator);
-			default:// case RUN: // TODO: why is this the default?!
+			case RUN:
 				return runRun(modelTranslator);
+			default:
+				throw new CIVLInternalException(
+						"missing implementation for command of "
+								+ commandLine.normalCommandKind() + " kind",
+						(CIVLSource) null);
 			}
 		}
 		return true;
@@ -694,11 +699,15 @@ public class UserInterface {
 				out.println("Configure CIVL.  Detect theorem provers and create .sarl.");
 				out.println("\nUsage: civl config");
 				break;
-			default:// verify // TODO: WHY IS THIS THE DEFAULT?!
+			case VERIFY:
 				out.println("VERIFY a certain program.");
 				out.println("\nUsage: civl verify [options] filename+");
 				out.println("\nOptions:");
 				break;
+			default:
+				throw new CIVLInternalException(
+						"missing implementation for command of " + arg
+								+ " kind", (CIVLSource) null);
 			}
 			CIVLCommand.printOptionsOfCommand(arg, out);
 		}
