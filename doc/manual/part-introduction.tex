@@ -52,14 +52,25 @@ as follows:
 This chapter gives instructions for downloading and installing CIVL,
 and running the verification tool on an example.
 
-\textbf{Note.} The following instructions explain how to install CIVL
-under the directory \texttt{/opt}, which is the standard installation
-point. If you do not wish to install CIVL there (e.g., because you
-don't want to use \texttt{sudo}, or you want to install it in your
-home directory), you can just modify the instructions by replacing
-\texttt{/opt} with another directory. You will just need to edit the
-script file \texttt{civl} appropriately, replacing the default paths
-with your chosen paths.
+\subsection*{Notes}
+
+\begin{itemize}
+\item The following instructions explain how to install CIVL under the
+  directory \texttt{/opt}, which is the standard installation
+  point. If you do not wish to install CIVL there (e.g., because you
+  don't want to use \texttt{sudo}, or you want to install it in your
+  home directory), you can just modify the instructions by replacing
+  \texttt{/opt} with another directory. You will just need to edit the
+  script file \texttt{civl} appropriately, replacing the default path
+  with your chosen path.
+\item The instructions say to install three theorem provers.  In
+  reality, each of these is optional.  CIVL will still work without
+  any theorem provers, but the results will not be very precise, i.e.,
+  it will produce a lot of false warnings.  The more provers you
+  install, the more precise the analysis.
+\end{itemize}
+
+\subsection*{Instructions}
 
 \begin{enumerate}
 \item Install the automated theorem prover CVC3 (if you have not
@@ -68,15 +79,21 @@ with your chosen paths.
   the latest, optimized build with static library and executable for
   your OS.  Place the executable file \texttt{cvc3} somewhere in your
   \texttt{PATH}.  You can discard everything else.  Alternatively, on
-  linux systems, CVC3 can be installed using the package manager via
-  \texttt{sudo apt-get install cvc3}.  This will place \texttt{cvc3}
-  in \texttt{/usr/bin}.
+  some linux systems, CVC3 can be installed using the package manager
+  via \texttt{sudo apt-get install cvc3}.  This will place
+  \texttt{cvc3} in \texttt{/usr/bin}.
 
 \item Install the automated theorem prover CVC4 (if you have not
   already).  The easiest way to do this is to visit
   \url{http://cvc4.cs.nyu.edu/downloads/} and choose one of the
   installation approaches.  You only need the binary (\texttt{cvc4}),
-  and you must put it in your \texttt{PATH}.
+  and you must put it in your \texttt{PATH}.  Alternatively, on OS X
+  you may install using MacPorts by \texttt{sudo port install cvc4}.
+
+\item Install the automated theorem prover Z3 (if you have not
+  already).  Follow instructions at
+  \url{http://z3.codeplex.com/SourceControl/latest#README}.  Make sure
+  the executable \texttt{z3} is in your path.
 
 \item Install a Java 7 SDK if you have not already.  Go to
   \url{http://www.oracle.com/technetwork/java/javase/downloads/} for
@@ -101,8 +118,9 @@ with your chosen paths.
   a help message describing the command line syntax.
 
 \item From the command line, type \texttt{civl config}.  This should
-  report that \texttt{cvc3} and \texttt{cvc4} were found, and it should
-  create a file called \texttt{.sarl} in your home directory.
+  report that \texttt{cvc3}, \texttt{cvc4}, and \texttt{z3} were
+  found, and it should create a file called \texttt{.sarl} in your
+  home directory.
 
 \end{enumerate}
 
