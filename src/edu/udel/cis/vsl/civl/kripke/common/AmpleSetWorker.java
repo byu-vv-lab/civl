@@ -65,8 +65,9 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * 
  * Impact memory unit set: all memory units to be accessed (read or written) by a
  * process <code>p</code> at a certain state <code>s</code>. Usually this
- * includes the memory units through the variables appearing in the statements
- * that origins from <code>p</code>'s location at <code>s</code>.
+ * includes the memory units through the variables appearing in the statements 
+ * (including its guard) that originates from <code>p</code>'s location at 
+ * <code>s</code>.
  * 
  * Reachable memory unit set: all memory units reachable by a process
  * <code>p</code> at a certain state <code>s</code>. This includes all memory units 
@@ -104,8 +105,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  *      that intersects with <code>m</code>;
  *    - if there exists <code>m'</code>, such that <code>w(m, p, s)</code> or
  *      <code>w(m', q, s)</code>, then perform step 2.1 for <code>q</code>.
- * 
+ * 4. Repeat steps 1-3 until <code>work</code> is empty.
  * </pre>
+ * 
+ * The ample set worker always return the minimal ample set, i.e., the set with
+ * the smallest number of processes. To achieve this, it greedily computes the
+ * ample set of all active processes. Sometimes, it doesn't have to iterates
+ * over all processes if it finds an ample set of size one.
  * 
  * @author Manchun Zheng (zmanchun)
  * 
@@ -239,14 +245,12 @@ public class AmpleSetWorker {
 		Set<Integer> ampleProcessIDs;
 		Set<ProcessState> ampleProcesses = new LinkedHashSet<>();
 
-		// process and if it contains any comm_enque or comm_deque call
 		computeActiveProcesses();
-		// return immediately if at most one process is activated.
 		if (activeProcesses.size() <= 1)
+			// return immediately if at most one process is activated.
 			ampleProcessIDs = activeProcesses;
-		else {
+		else
 			ampleProcessIDs = ampleProcessesWork();
-		}
 		for (int pid : ampleProcessIDs) {
 			ampleProcesses.add(state.getProcessState(pid));
 		}
@@ -256,7 +260,7 @@ public class AmpleSetWorker {
 	/* *************************** Private Methods ************************* */
 
 	/**
-	 * Compute the ample set when there are more than one active processes.
+	 * Computes the ample set when there are more than one active processes.
 	 * 
 	 * @return The set of process ID's to be contained in the ample set.
 	 */
@@ -280,7 +284,8 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Compute the ample set by fixing a process first.
+	 * Computes the ample set by fixing a certain process and looking at system
+	 * calls and impact/reachable memory units.
 	 * 
 	 * @param startPid
 	 *            The id of the process to start with.
@@ -416,9 +421,8 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Compute active processes at the current state, i.e., non-null processes
+	 * Computes active processes at the current state, i.e., non-null processes
 	 * with non-empty stack that have at least one enabled statements.
-	 * 
 	 */
 	private void computeActiveProcesses() {
 		for (ProcessState p : state.getProcessStates()) {
@@ -440,7 +444,9 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * The impact memory units of a certain process at the current state. The
+	 * Computes the impact memory units of a certain process at the current
+	 * state, which are usually decided by the variables appearing in the statements
+	 * (including guards) originating at the process's current location. The
 	 * computation could be incomplete when there is atomic/atom block that
 	 * contains function calls.
 	 * 
@@ -462,9 +468,10 @@ public class AmpleSetWorker {
 			debugOut.println("impact memory units of " + proc.name() + "(id="
 					+ proc.getPid() + "):");
 		if (pLocation.enterAtom() || pLocation.enterAtomic()
-				|| proc.atomicCount() > 0) {
+				|| proc.atomicCount() > 0)
+			// special handling of atomic blocks
 			result = impactMemoryUnitsOfAtomicBlock(pLocation, pid);
-		} else {
+		else {
 			for (Statement s : pLocation.outgoing()) {
 				try {
 					partialResult = impactMemoryUnitsOfStatement(s, pid);
@@ -496,7 +503,7 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Compute the set of impact memory units of an atomic or atom block. All
+	 * Computes the set of impact memory units of an atomic or atom block. All
 	 * system function bodies are assumed to be independent (only the arguments
 	 * are taken for computation). If there is any normal function calls, then
 	 * the computation is terminated immediately and an empty set is returned
@@ -590,7 +597,7 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Compute the impact memory units of a given statement of a certain process
+	 * Computes the impact memory units of a given statement of a certain process
 	 * at the current state.
 	 * 
 	 * @param statement
@@ -742,7 +749,7 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Compute the set of memory units accessed by a given expression of a
+	 * Computes the set of memory units accessed by a given expression of a
 	 * certain process at the current state.
 	 * 
 	 * @param expression
@@ -770,8 +777,8 @@ public class AmpleSetWorker {
 	/**
 	 * Pre-processing for ample set computation, including:
 	 * <ul>
-	 * <li>Compute the impact memory units for each process; and</li>
-	 * <li>Compute the reachable memory units for each process.</li>
+	 * <li>Computes the impact memory units for each process; and</li>
+	 * <li>Computes the reachable memory units for each process.</li>
 	 * </ul>
 	 */
 	private void preprocessing() {
@@ -779,11 +786,10 @@ public class AmpleSetWorker {
 			ProcessState p = state.getProcessState(pid);
 			Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemUnitsPair = impactMemoryUnits(p);
 
-			if (impactMemUnitsPair.left == MemoryUnitsStatus.INCOMPLETE) {
+			if (impactMemUnitsPair.left == MemoryUnitsStatus.INCOMPLETE)
 				impactMemUnitsMap.put(pid, null);
-			} else {
+			else
 				impactMemUnitsMap.put(pid, impactMemUnitsPair.right);
-			}
 			reachableMemUnitsMap.put(pid, reachableMemoryUnits(p));
 		}
 	}
