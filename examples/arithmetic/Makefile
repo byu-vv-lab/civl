@@ -4,7 +4,8 @@ VERIFY=$(CIVL) verify
 
 all: algebra assoc derivative diffusion division \
 	divisionBad laplace matmat matmatBad mean meanBad \
-	multiplicationInLoopCondition
+	multiplicationInLoopCondition sqrt sqrtBad1 sqrtBad2 quadratic1
+	quadratic2
 
 algebra: algebra.cvl
 	$(VERIFY) algebra.cvl
@@ -44,6 +45,21 @@ meanBad: meanBad.cvl
 	
 multiplicationInLoopCondition: multiplicationInLoopCondition.cvl
 	$(VERIFY) multiplicationInLoopCondition.cvl
+
+sqrt: sqrt.cvl
+	$(VERIFY) sqrt.cvl
+
+sqrtBad1: sqrtBad1.cvl
+	$(VERIFY) sqrtBad1.cvl
+
+sqrtBad2: sqrtBad2.cvl
+	$(VERIFY) sqrtBad2.cvl
+
+quadratic1: quadratic1.cvl
+	$(VERIFY) quadratic1.cvl
+
+quadratic2: quadratic2.cvl
+	$(VERIFY) quadratic2.cvl
 
 clean:
 	rm -rf CIVLREP *~

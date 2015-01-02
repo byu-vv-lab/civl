@@ -1,9 +1,4 @@
-/* CIVL model of math.h */
-
-#ifdef __MATH__
-#else
+#ifndef __MATH__
 #define __MATH__
-
 #include <math.cvl>
-
 #endif

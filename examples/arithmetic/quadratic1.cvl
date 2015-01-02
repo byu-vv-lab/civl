@@ -8,6 +8,5 @@ $assume 1 < y && y <= 3;
 $input int n = x * y;
 
 int main(){
-  elaborate(n);
-  printf("%d\n", n);
+  assert(1 < n && n <= 9);
 }
