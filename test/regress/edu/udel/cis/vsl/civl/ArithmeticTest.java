@@ -106,7 +106,7 @@ public class ArithmeticTest {
 	
 	@Test
 	public void sqrt() {
-		assertFalse(ui.run("verify", filename("sqrt.cvl")));
+		assertTrue(ui.run("verify", filename("sqrt.cvl")));
 	}
 	
 	@Test
