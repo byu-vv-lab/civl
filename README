@@ -86,7 +86,7 @@ use CIVL.  Developers should instead follow the instructions for
 "Source Installation" below.
 
 1. Install at least one of the theorem provers below.
-The more you install, the more precise CIVL analysis will
+The more provers you install, the more precise CIVL analysis will
 be.  Note that CIVL only requires the binary executable
 version of each prover; you can ignore the libraries, various
 API bindings, etc.   You just need to ensure that
@@ -129,16 +129,24 @@ This folder contains the following:
  - licenses : licenses for CIVL and included libraries
  - examples : some example CIVL programs
 
-5. Move CIVL-TAG into /opt.   Alternatively, if you don't want to
-put it in /opt for some reason, put CIVL-TAG wherever you want
-and edit the script (bin/civl) to reflect the chosen path.
+5.  You can move the CIVL folder wherever you want.
+The JAR file in the lib directory is all you need to run CIVL.
+You may also move this jar file wherever you want.   You 
+run CIVL by typing a command that begins
+"java -jar /path/to/civl-TAG.jar ...".  For convenience
+you may instead use the shell script "civl" in bin,
+which allows you to replace "java -jar /path/to/civl-TAG.jar"
+with just "civl" on the command line.   Simply edit the civl script
+to reflect the path to civl-TAG.jar and place the script 
+somewhere in your PATH.   Alternatively, you can just define
+an alias in your .profile, .bash_profile, or equivalent, such as
 
-6. Put the script bin/civl in your path however you like to
-put things in your path.   Either move it to a directory
-in your path, or create a symlink to it, or edit your .profile
-or equivalent to put it in your path.
+alias civl='java -jar /path/to/civl-TAG.jar'
 
-7. Type "civl config".  This should report that it found
+In the following, we will assume that you have defined
+a command "civl" in one these ways.
+
+6. Type "civl config".  This should report that it found
 the theorem provers you installed (and are in your PATH).
 It should create a file called ".sarl" in your home directory
 which you can also edit by hand.
@@ -157,7 +165,7 @@ done so.
 
 2. Install prerequisite projects ABC, SARL and GMC. 
    Make sure that the three projects are put in the workspace
-   directory where CIVL will be created. 
+   directory where CIVL will be created.  Specifically:
 
     a. Install the symbolic algebra and reasoning library SARL.
 	   In Eclipse, select New Project...from SVN, use the archive 
@@ -199,9 +207,13 @@ done so.
    skip this step. Otherwise, download the tgz archive of VSL
    dependencies from http://vsl.cis.udel.edu/tools/vsl_depend
    Unzip the .tgz file and you will have the folder vsl.
-   Move vsl to /opt (you might need to use sudo for this.
+   Move vsl to /opt.
+   Note: you probably will need to use sudo for this.
    Also, if you don't already have a directory called /opt, 
-   you will have to create it with mkdir /opt).
+   you will have to create it with "mkdir /opt".  Also, if you 
+   don't want to use /opt for some reason, you can use any 
+   directory you want; just modify the instructions below
+   accordingly.
 
    Suppose that you put the .tgz file (or .tar file if your browser
    unzipped it automatically to a .tar file) in the directory DOWNLOAD.
@@ -222,7 +234,8 @@ done so.
    build.properties in the directory containing build.xml.
    Copy and paste the content from any file under properties, edit each 
    entry with the path configured in your system. The newly created file
-   build.properties will automatically be used by ant to to build the .jar file.
+   build.properties will automatically be used by ant to to build the
+   .jar file.
 
 7. Navigate to Preferences -> Java -> Build Path -> ClassPath 
    Variables, and then select New to create a classpath variable VSL, 
@@ -241,6 +254,10 @@ java -jar /Path/To/Your/workspace/CIVL/civl.jar $@
    where "/Path/To/Your/workspace" is replaced with the path
    to your Eclipse workspace directory.  Name this file "civl",
    put it in your PATH, and make it executable (chmod ugo+x civl).
+   Alternatively, you can define an alias in your .profile,
+   .bash_profile, .bashrc, or equivalent:
+
+alias civl='java -jar /Path/To/Your/workspace/CIVL/civl.jar'
 
 10. From a terminal window, execute "civl config".  This should
     find the theorem provers in your PATH and create a file
@@ -265,3 +282,4 @@ java -jar /Path/To/Your/workspace/CIVL/civl.jar $@
    
    Modify the VM arguments as in the step above.  You should now be
    able to run the test by clicking "Run".
+   

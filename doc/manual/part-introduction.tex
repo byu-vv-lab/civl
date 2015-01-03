@@ -55,14 +55,6 @@ and running the verification tool on an example.
 \subsection*{Notes}
 
 \begin{itemize}
-\item The following instructions explain how to install CIVL under the
-  directory \texttt{/opt}, which is the standard installation
-  point. If you do not wish to install CIVL there (e.g., because you
-  don't want to use \texttt{sudo}, or you want to install it in your
-  home directory), you can just modify the instructions by replacing
-  \texttt{/opt} with another directory. You will just need to edit the
-  script file \texttt{civl} appropriately, replacing the default path
-  with your chosen path.
 \item The instructions say to install three theorem provers.  In
   reality, each of these is optional.  CIVL will still work without
   any theorem provers, but the results will not be very precise, i.e.,
@@ -80,7 +72,7 @@ and running the verification tool on an example.
   your OS.  Place the executable file \texttt{cvc3} somewhere in your
   \texttt{PATH}.  You can discard everything else.  Alternatively, on
   some linux systems, CVC3 can be installed using the package manager
-  via \texttt{sudo apt-get install cvc3}.  This will place
+  via ``\texttt{sudo apt-get install cvc3}''.  This will place
   \texttt{cvc3} in \texttt{/usr/bin}.
 
 \item Install the automated theorem prover CVC4 (if you have not
@@ -88,7 +80,8 @@ and running the verification tool on an example.
   \url{http://cvc4.cs.nyu.edu/downloads/} and choose one of the
   installation approaches.  You only need the binary (\texttt{cvc4}),
   and you must put it in your \texttt{PATH}.  Alternatively, on OS X
-  you may install using MacPorts by \texttt{sudo port install cvc4}.
+  you may install using MacPorts by ``\texttt{sudo port install
+    cvc4}''.
 
 \item Install the automated theorem prover Z3 (if you have not
   already).  Follow instructions at
@@ -98,7 +91,7 @@ and running the verification tool on an example.
 \item Install a Java 7 SDK if you have not already.  Go to
   \url{http://www.oracle.com/technetwork/java/javase/downloads/} for
   the latest from Oracle.  On linux, you can instead use the package
-  manager: \texttt{sudo apt-get install openjdk-7-jdk}.
+  manager: ``\texttt{sudo apt-get install openjdk-7-jdk}''.
 
 \item Download and unpack the latest stable release of CIVL from
   \url{http://vsl.cis.udel.edu/civl}.
@@ -106,18 +99,30 @@ and running the verification tool on an example.
 \item The resulting directory should be named
   \texttt{CIVL-\textit{tag}} for some string \textit{tag} which
   identifies the version of CIVL you downloaded.  Move this directory
-  into \texttt{/opt} (\texttt{mv\ CIVL-\textit{tag}\ /opt}).  Use
-  \texttt{sudo} if needed.
+  wherever you like.
 
-\item There should now be an executable script at
-  \texttt{/opt/CIVL-\textit{tag}/bin/civl}.  Move this script into
-  your path, or create a symlink from somewhere in your path to it, or
-  add the directory \texttt{/opt/CIVL-\textit{tag}/bin} to your path.
+\item The JAR file in the \texttt{lib} directory is all you need to
+  run CIVL.  You may move this JAR file wherever you want.  You run
+  CIVL by typing a command of the form ``\texttt{java -jar
+    /path/to/civl-TAG.jar ...}''.  For convenience, you may instead
+  use the shell script \texttt{civl} included in the \texttt{bin}
+  directory.  This allows you to replace ``\texttt{java -jar
+    /path/to/civl-TAG.jar}'' with just ``\texttt{civl}'' on the
+  command line.  Simply edit the \texttt{civl} script to reflect the
+  path to the JAR file and place the script somewhere in your
+  \texttt{PATH}.  Alternatively, you can define an alias in your
+  \texttt{.profile}, \verb!.bash_profile!, \texttt{.bashrc}, or
+  equivalent, such as
+\begin{verbatim}
+alias civl='java -jar /path/to/civl-TAG.jar'
+\end{verbatim}
+  In the following, we will assume that you have defined a command
+  \texttt{civl} in one of these ways.
 
-\item From the command line, type \texttt{civl help}.  You should see
+\item From the command line, type ``\texttt{civl help}''.  You should see
   a help message describing the command line syntax.
 
-\item From the command line, type \texttt{civl config}.  This should
+\item From the command line, type ``\texttt{civl config}''.  This should
   report that \texttt{cvc3}, \texttt{cvc4}, and \texttt{z3} were
   found, and it should create a file called \texttt{.sarl} in your
   home directory.
@@ -125,13 +130,13 @@ and running the verification tool on an example.
 \end{enumerate}
 
 To test your installation, copy the file
-\texttt{/opt/CIVL-\textit{tag}/examples/concurrency/locksBad.cvl} to
-your working directory.  Look at the program: it is a simple 2-process
-program with two shared variables used as locks.  The two processes
-try to obtain the locks in opposite order, which can lead to a
-deadlock if both processes obtain their first lock before either
-obtains the second.  Type ``\verb!civl verify locksBad.cvl!''.  You
-should see some output culminating in a message
+\texttt{examples/concurrency/locksBad.cvl} to your working directory.
+Look at the program: it is a simple 2-process program with two shared
+variables used as locks.  The two processes try to obtain the locks in
+opposite order, which can lead to a deadlock if both processes obtain
+their first lock before either obtains the second.  Type
+``\verb!civl verify locksBad.cvl!''.  You should see some output
+culminating in a message
 \begin{verbatim}
 The program MAY NOT be correct.  See CIVLREP/locksBad_log.txt
 \end{verbatim}
