@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.bench;
+package edu.udel.cis.vsl.civl;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -9,6 +9,17 @@ import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
+/**
+ * Tests involving order of accuracy work by Tim Zirkel.
+ * 
+ * Some interesting facts: some of the queries never get a conclusive result,
+ * but the tests nonetheless succeed. Why?
+ * 
+ * Some of the queries can be resolved by CVC3, but not by any other prover.
+ * 
+ * @author zirkel
+ *
+ */
 public class AccuracyTest {
 
 	/* *************************** Static Fields *************************** */
@@ -68,7 +79,7 @@ public class AccuracyTest {
 
 	@Test
 	public void upwindFirstOrder() {
-		assertTrue(ui.run("verify", "-inputn=4",
+		assertTrue(ui.run("verify", "-showProverQueries", "-inputn=4",
 				filename("upwindFirstOrder.cvl")));
 	}
 
