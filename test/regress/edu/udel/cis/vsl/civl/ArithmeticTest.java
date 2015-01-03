@@ -95,7 +95,7 @@ public class ArithmeticTest {
 
 	@Test
 	public void math() {
-		assertTrue(ui.run("verify", "-echo", filename("math.cvl")));
+		assertTrue(ui.run("verify", "-echo", filename("math.cvl"))); 
 	}
 
 	@Test
