@@ -48,7 +48,7 @@ public class PthreadThreaderTest {
 
 	@Test
 	public void read_write_lock_false() throws ABCException {
-		assertFalse(ui.run("verify", "-showProverQueries", "-svcomp",
+		assertFalse(ui.run("verify", "-svcomp",
 				filename("read_write_lock_false.c")));
 	}
 

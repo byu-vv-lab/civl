@@ -97,35 +97,34 @@ public class ArithmeticTest {
 	public void math() {
 		assertTrue(ui.run("verify", "-echo", filename("math.cvl")));
 	}
-	
 
 	@Test
 	public void exp1() {
 		assertFalse(ui.run("run", filename("div0.cvl")));
 	}
-	
+
 	@Test
 	public void sqrt() {
 		assertTrue(ui.run("verify", filename("sqrt.cvl")));
 	}
-	
+
 	@Test
 	public void sqrtBad1() {
 		assertFalse(ui.run("verify", filename("sqrtBad1.cvl")));
 	}
-	
+
 	@Test
 	public void sqrtBad2() {
 		assertFalse(ui.run("verify", filename("sqrtBad2.cvl")));
 	}
-	
+
 	@Test
 	public void quadratic1() {
-		assertFalse(ui.run("verify", filename("quadratic1.cvl")));
+		assertTrue(ui.run("verify", filename("quadratic1.cvl")));
 	}
-	
+
 	@Test
 	public void quadratic2() {
-		assertFalse(ui.run("verify", filename("quadratic2.cvl")));
+		assertTrue(ui.run("verify", filename("quadratic2.cvl")));
 	}
 }

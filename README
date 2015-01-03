@@ -81,32 +81,31 @@ licenses.  See directory licenses for the license of each component.
    
 ------------------------- Binary Installation -------------------------
 
-For most users, this will be the easiest way to install and use CIVL.
-Developers should instead follow the instructions for
+For most users, this will be the easiest way to install and
+use CIVL.  Developers should instead follow the instructions for
 "Source Installation" below.
 
-1. Install the automated theorem prover CVC3 (if you have not already).
-The easiest way to do this is to visit
-
-  http://www.cs.nyu.edu/acsys/cvc3/download.html
+1. Install at least one of the theorem provers below.
+The more you install, the more precise CIVL analysis will
+be.  Note that CIVL only requires the binary executable
+version of each prover; you can ignore the libraries, various
+API bindings, etc.   You just need to ensure that
+each binary executable is in your PATH when you run
+"civl config".   The currently supported provers are:
   
-and download the latest, optimized build with static library
-and executable for your OS.  Place the executable file "cvc3"
-somewhere in your PATH.  You can discard everything else.
+   - CVC3, http://www.cs.nyu.edu/acsys/cvc3/download.html
+     download the latest, optimized build with static library
+     and executable for your OS.  Place the executable file
+     "cvc3" in your PATH.  You can discard everything else.
+     Alternatively, on some linux systems, CVC3 can be installed
+     using the package manager via "sudo apt-get install cvc3".
+     This will place cvc3 in /usr/bin.
+     
+   - CVC4,  http://cvc4.cs.nyu.edu/downloads/
+   
+   - Z3, http://z3.codeplex.com/SourceControl/latest
 
-Alternatively, on linux systems, CVC3 can be installed
-using the package manager via "sudo apt-get install cvc3".
-This will place cvc3 in /usr/bin.
-
-2. Install the automated theorem prover CVC4 (if you have not already).
-The easiest way to do this is to visit
-
-  http://cvc4.cs.nyu.edu/downloads/
-
-and choose one of the installation approaches.  You only need the
-binary (cvc4), and you must put it in your PATH.
-
-3. Install a Java 7 SDK if you have not already.  Go to
+2. Install a Java 7 SDK if you have not already.  Go to
 
   http://www.oracle.com/technetwork/java/javase/downloads/
 
@@ -115,12 +114,12 @@ the package manager:
 
   sudo apt-get install openjdk-7-jdk
 
-4. Download the CIVL distribution from http://vsl.cis.udel.edu/civl.
+3. Download the CIVL distribution from http://vsl.cis.udel.edu/civl.
 
-5. Unzip and untar the downloaded file if this does not happen
-automatically.  This should result in a folder named
-CIVL-TAG, where TAG is some version ID string.  This folder
-contains the following:
+4. Unzip and untar the CIVL distribution file if this
+does not happen automatically.  This should result in a
+folder named CIVL-TAG, where TAG is some version ID string.
+This folder contains the following:
 
  - README   : this file
  - bin      : containing one executable sh script called "civl"
@@ -130,24 +129,26 @@ contains the following:
  - licenses : licenses for CIVL and included libraries
  - examples : some example CIVL programs
 
-6. Move CIVL-TAG into /opt.   Alternatively, if you don't want to
+5. Move CIVL-TAG into /opt.   Alternatively, if you don't want to
 put it in /opt for some reason, put CIVL-TAG wherever you want
 and edit the script (bin/civl) to reflect the chosen path.
 
-7. Put the script bin/civl in your path however you like to put things
-in your path.   Either move it to a directory in your path,
-or create a symlink to it, or edit your .profile or equivalent
-to put it in your path.
+6. Put the script bin/civl in your path however you like to
+put things in your path.   Either move it to a directory
+in your path, or create a symlink to it, or edit your .profile
+or equivalent to put it in your path.
 
-8. Type "civl config".  This should report that it found cvc3 and cvc4,
-and it should create a file called ".sarl" in your home directory.
+7. Type "civl config".  This should report that it found
+the theorem provers you installed (and are in your PATH).
+It should create a file called ".sarl" in your home directory
+which you can also edit by hand.
 
 
 ------------------------- Source Installation -------------------------
 
 We recommend using the Eclipse IDE for Java/EE developers.
 
-0. Install CVC3 and CVC4 executables following the directions above.
+0. Install theorem provers following the directions above.
 Install Eclipse IDE for Java/EE developers if you have not already
 done so.
 
@@ -191,18 +192,12 @@ done so.
 
 4. Check out the trunk, and create the project using the New Java
    Project Wizard as usual, naming it "CIVL". The .project, .classpath,
-   and other Eclipse meta-data are already in the SVN archive, saving you
-   a bunch of work.
+   and other Eclipse meta-data are already in the SVN archive,
+   saving you a bunch of work.
 
 5. If you already have the VSL dependencies library, you may
-   skip this step. Download the tgz archive of VSL dependencies from 
-   http://vsl.cis.udel.edu/tools/vsl_depend, choosing the right .tgz 
-   according to your platform:
-	
-	vsl_linux32-1.0.tgz	- 32-bit linux
-	vsl_linux64-1.0.tgz	- 64-bit linux
-	vsl_osx64-1.0.tgz	- 64-bit osx
-	
+   skip this step. Otherwise, download the tgz archive of VSL
+   dependencies from http://vsl.cis.udel.edu/tools/vsl_depend
    Unzip the .tgz file and you will have the folder vsl.
    Move vsl to /opt (you might need to use sudo for this.
    Also, if you don't already have a directory called /opt, 
@@ -216,44 +211,57 @@ done so.
    		$ tar xzf YourTgzOrTarFile vsl
    		$ sudo mv vsl /opt
 
-   (Leave out the "x" in the tar command if the file was already unzipped.)
-   Now you can type "ls /opt/vsl", and the output should be
+   (Leave out the "x" in the tar command if the file was already
+   unzipped.) Now you can type "ls /opt/vsl", and the output
+   should be
 
    		README.txt    lib        licenses    src
 
 6. If default_build.properties matches the configuration of your system,
    then you can skip this step. Otherwise, you may need to create a file 
-   build.properties in the directory where build.xml is in.
+   build.properties in the directory containing build.xml.
    Copy and paste the content from any file under properties, edit each 
    entry with the path configured in your system. The newly created file
    build.properties will automatically be used by ant to to build the .jar file.
 
 7. Navigate to Preferences -> Java -> Build Path -> ClassPath 
    Variables, and then select New to create a classpath variable VSL, 
-   and specify its value to be /opt/vsl. Navigate to Preferences -> Run/Debug 
-   -> String Substitution -> New, and then define an entry vsl_lib and 
-   set its value to be /opt/vsl/lib.
+   and specify its value to be /opt/vsl.
 
 8. Do a clean build.  Everything should compile.  Generate the civl.jar
    by right-clicking (or ctrl-click on OS X) the build.xml file and
-   Run As->Ant Build.  
+   Run As->Ant Build. 
+   
+9. Somewhere on your system, create a plain text file containing
+   exactly the following two lines:
+   
+#!/bin/sh
+java -jar /Path/To/Your/workspace/CIVL/civl.jar $@
+ 
+   where "/Path/To/Your/workspace" is replaced with the path
+   to your Eclipse workspace directory.  Name this file "civl",
+   put it in your PATH, and make it executable (chmod ugo+x civl).
 
-9. Go to Run->Run Configurations... Create a new JUnit configuration.
-   Name it CIVL Tests. Select "Run all tests in the selected project..."
-   and navigate to the folder "test/regress" in the CIVL project.
-   The Test runner should be JUnit 4. Under the Arguments tab, type
-   "-ea" (without the quotes) in the VM arguments area (to enable assertion
-   checking). Under the Environment tab, create an entry 
-   DYLD_LIBRARY_PATH (OS X) or LD_LIBRARY_PATH (linux), 
-   specify its value by clicking Variables and choose vsl_lib from the list, 
-   or you may type ${vsl_lib} in the value entry.
+10. From a terminal window, execute "civl config".  This should
+    find the theorem provers in your PATH and create a file
+    .sarl in your home directory.
 
-10. An example of how to set up a single test from within Eclipse:
+11. In Eclipse, navigate to "Run->Run Configurations... Create a new
+   JUnit configuration."
+   Name it "CIVL Regression Tests". Select "Run all tests in the
+   selected project..." and navigate to the folder "test/regress"
+   in the CIVL project. The Test runner should be JUnit 4. Under the
+   Arguments tab, type "-ea" (without the quotes) in the VM arguments
+   area (to enable assertion checking).
+
+12. An example of how to set up a single test from within Eclipse:
    create a new Run Configuration via the Run->Run
    Configurations... menu.  Create a new "Java Application"
    configuration.  Call it "CIVL barrier2".  The Project is CIVL.  The
    main class is edu.udel.cis.vsl.civl.CIVL.  Under the Arguments tab,
-   set the Program arguments to "verify examples/concurrency/barrier2.cvl"
-   (without the quotes).  Modify the VM arguments and the Environment
-   as in the step above.  You should now be able to run the test by
-   clicking "Run".
+   set the Program arguments to 
+   
+       verify examples/concurrency/barrier2.cvl
+   
+   Modify the VM arguments as in the step above.  You should now be
+   able to run the test by clicking "Run".
