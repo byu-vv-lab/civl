@@ -694,7 +694,7 @@ public class ModelTranslator {
 	 * @return The file name of the system implementation of the given header
 	 *         file, or null if there is no implementation of the header file.
 	 */
-	private String getSystemImplementationName(File file) {
+	private String getSystemImplementationName(File file) { 
 		String name = file.getName();
 
 		switch (name) {
