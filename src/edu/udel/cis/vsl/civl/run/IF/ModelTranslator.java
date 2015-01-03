@@ -126,7 +126,7 @@ public class ModelTranslator {
 				return null;
 			endTime = System.currentTimeMillis();
 			if (config.showTime()) {
-				totalTime = (endTime - startTime) ;/// 1000;
+				totalTime = (endTime - startTime);// / 1000;
 				out.println(totalTime + "ms:\tSUMARRY applying transformers");
 			}
 			if (config.debugOrVerbose() || config.showAST()) {
@@ -178,7 +178,7 @@ public class ModelTranslator {
 		long totalTime;
 
 		if (config.showTime()) {
-			totalTime = (endTime - startTime) ;/// 1000;
+			totalTime = (endTime - startTime);// / 1000;
 			out.println(totalTime
 					+ "ms: total time for building the whole program");
 		}
@@ -698,22 +698,24 @@ public class ModelTranslator {
 		String name = file.getName();
 
 		switch (name) {
-		case "string.h":
-			return "string.cvl";
 		case "civlc.cvh":
 			return "civlc.cvl";
 		case "civlmpi.cvh":
 			return "civlmpi.cvl";
-		case "mpi.h":
-			return "mpi.cvl";
 		case "comm.cvh":
 			return "comm.cvl";
 		case "concurrency.cvh":
 			return "concurrency.cvl";
-		case "omp.h":
-			return "omp.cvl";
 		case "civlc-omp.cvh":
 			return "civlc-omp.cvl";
+		case "mpi.h":
+			return "mpi.cvl";
+		case "math.h":
+			return "math.cvl";
+		case "omp.h":
+			return "omp.cvl";
+		case "string.h":
+			return "string.cvl";
 		default:
 			return null;
 		}

@@ -105,17 +105,21 @@ public class ArithmeticTest {
 
 	@Test
 	public void sqrt() {
-		assertTrue(ui.run("verify", filename("sqrt.cvl")));
+		assertTrue(ui.run("verify", "-showStates",filename("sqrt.cvl")));
+		assertTrue(ui.run("verify", "-DMATH_ELABORATE_ASSUMPTIONS",filename("sqrt.cvl")));
+		assertFalse(ui.run("verify", "-DMATH_NO_ASSUMPTIONS", filename("sqrt.cvl")));
 	}
 
 	@Test
 	public void sqrtBad1() {
 		assertFalse(ui.run("verify", filename("sqrtBad1.cvl")));
+		assertFalse(ui.run("verify", "-DMATH_ELABORATE_ASSUMPTIONS", filename("sqrtBad1.cvl")));
 	}
 
 	@Test
 	public void sqrtBad2() {
 		assertFalse(ui.run("verify", filename("sqrtBad2.cvl")));
+		assertFalse(ui.run("verify", "-DMATH_ELABORATE_ASSUMPTIONS", filename("sqrtBad2.cvl")));
 	}
 
 	@Test
