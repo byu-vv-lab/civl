@@ -35,6 +35,7 @@ import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.abc.token.IF.SourceFile;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.Models;
@@ -595,30 +596,23 @@ public class ModelTranslator {
 		return extractPaths((String) config.getValue(userIncludePathO));
 	}
 
+	/**
+	 * This adds the default CIVL include path to the list of system includes.
+	 *
+	 * @param config
+	 * @return list of system include directories specified in the (command
+	 *         line) config object with the default CIVL include directory
+	 *         tacked on at the end
+	 */
 	private File[] getSysIncludes(GMCConfiguration config) {
 		File[] sysIncludes = extractPaths((String) config
 				.getValue(sysIncludePathO));
-		File civlDefaultInclude = new File(new File(".").getAbsoluteFile(),
-				"text/include");
-		boolean hasCIVLDefaultSet = false;
-		String civlDefaultIncludePath = civlDefaultInclude.getAbsolutePath();
+		int numIncludes = sysIncludes.length;
+		File[] newSysIncludes = new File[numIncludes + 1];
 
-		for (File sysInclude : sysIncludes) {
-			if (sysInclude.getAbsolutePath().equals(civlDefaultIncludePath))
-				hasCIVLDefaultSet = true;
-		}
-		if (!hasCIVLDefaultSet) {
-			int length = sysIncludes.length;
-			List<File> newSysIncludes = new ArrayList<>(length + 1);
-
-			for (int i = 0; i < length; i++) {
-				newSysIncludes.add(sysIncludes[i]);
-			}
-			newSysIncludes.add(civlDefaultInclude);
-			sysIncludes = new File[length + 1];
-			newSysIncludes.toArray(sysIncludes);
-		}
-		return sysIncludes;
+		System.arraycopy(sysIncludes, 0, newSysIncludes, 0, numIncludes);
+		newSysIncludes[numIncludes] = CIVLConstants.CIVL_INCLUDE_PATH;
+		return newSysIncludes;
 	}
 
 	/**
@@ -679,6 +673,7 @@ public class ModelTranslator {
 	 */
 	private AST parseFile(String filename) throws SyntaxException,
 			ParseException, PreprocessorException, IOException {
+
 		CTokenSource tokens = preprocessor.outputTokenSource(systemIncludes,
 				userIncludes, macroMaps, filename);
 

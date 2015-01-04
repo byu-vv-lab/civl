@@ -38,6 +38,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
 import edu.udel.cis.vsl.abc.token.IF.TransformFormation;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 
 /**
  * Object used to perform one transformation task. It is instantiated to carry
@@ -162,8 +163,8 @@ public abstract class BaseWorker {
 		ParseTree tree;
 
 		try {
-			tokenSource = preprocessor.outputTokenSource(new File[] { new File(
-					new File(".").getAbsoluteFile(), "text/include") },
+			tokenSource = preprocessor.outputTokenSource(
+					new File[] { CIVLConstants.CIVL_INCLUDE_PATH },
 					new File[0], new HashMap<String, Macro>(), filename);
 			tree = frontEnd.getParser().parse(tokenSource);
 		} catch (PreprocessorException | IOException | ParseException e) {
@@ -235,9 +236,10 @@ public abstract class BaseWorker {
 									.getSource().getLastToken();
 							CToken postToken = postNode == null ? null
 									: postNode.getSource().getFirstToken();
-							String text = node.prettyRepresentation().toString();
-							
-							if(text.length() > 20)
+							String text = node.prettyRepresentation()
+									.toString();
+
+							if (text.length() > 20)
 								text = text.substring(0, 18) + "...";
 							tf.setPreToken(preToken);
 							tf.setPostToken(postToken);

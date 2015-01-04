@@ -99,13 +99,11 @@
 		<jar destfile="${jar-path}">
 			<fileset dir="${bin.dir}" />
 			<zipfileset includes="**/*.class" src="${abc.jar}" />
-			<zipfileset includes="**/*.h" src="${abc.jar}" />
-			<zipfileset includes="**/*.cvh" src="${abc.jar}" />
+			<zipfileset includes="include/**" src="${abc.jar}" />
 			<zipfileset includes="**/*.class" src="${antlr.runtime.jar}" />
 			<zipfileset includes="**/*.class" src="${gmc.jar}" />
 			<zipfileset includes="**/*.class" src="${sarl.jar}" />
-			<fileset dir="${basedir}/Images" />
-			<fileset dir="${basedir}/text/include" />
+			<fileset dir="${basedir}" includes="include/**" />
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Main-Class" value="${main-class}" />

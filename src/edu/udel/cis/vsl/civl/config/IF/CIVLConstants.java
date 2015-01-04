@@ -4,6 +4,7 @@ import static edu.udel.cis.vsl.gmc.Option.OptionType.BOOLEAN;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -239,4 +240,13 @@ public class CIVLConstants {
 		outputs.add(CIVLConstants.showTimeO);
 		return outputs.toArray(new Option[numOpts]);
 	}
+
+	/**
+	 * Where the CIVL header files (suffix .h and .cvh) and associated
+	 * implementations (.cvl) are located. This path is relative to the class
+	 * path. Since the "include" directory is in the class path, this will cause
+	 * ABC to look in include/civl.
+	 */
+	public final static File CIVL_INCLUDE_PATH = new File(File.separator
+			+ "civl");
 }
