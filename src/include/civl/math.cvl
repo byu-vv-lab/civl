@@ -1050,9 +1050,11 @@ long double copysignl(long double x, long double y) {
 }
 
 double nan(const char *tagp) {
-  $abstract double NAN(const char *tagp);
+  // changed by sfsiegel from NAN to CNAN
+  // since NAN is already used
+  $abstract double CNAN(const char *tagp);
 
-  return NAN(tagp);
+  return CNAN(tagp);
 }
 
 float nanf(const char *tagp) {

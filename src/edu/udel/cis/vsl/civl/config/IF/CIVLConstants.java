@@ -18,6 +18,15 @@ import edu.udel.cis.vsl.gmc.Option;
  */
 public class CIVLConstants {
 
+	/**
+	 * Where the CIVL header files (suffix .h and .cvh) and associated
+	 * implementations (.cvl) are located. This path is relative to the class
+	 * path. Since the "include" directory is in the class path, this will cause
+	 * ABC to look in include/civl.
+	 */
+	public final static File CIVL_INCLUDE_PATH = new File(new File(
+			File.separator + "include"), "civl");
+
 	/** The version of this release of CIVL. */
 	public final static String version = "0.15+ (unstable)";
 
@@ -241,12 +250,4 @@ public class CIVLConstants {
 		return outputs.toArray(new Option[numOpts]);
 	}
 
-	/**
-	 * Where the CIVL header files (suffix .h and .cvh) and associated
-	 * implementations (.cvl) are located. This path is relative to the class
-	 * path. Since the "include" directory is in the class path, this will cause
-	 * ABC to look in include/civl.
-	 */
-	public final static File CIVL_INCLUDE_PATH = new File(File.separator
-			+ "civl");
 }
