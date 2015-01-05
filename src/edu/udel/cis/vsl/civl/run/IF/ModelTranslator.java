@@ -49,6 +49,10 @@ public class ModelTranslator {
 
 	private static final String CIVL_MACRO = "_CIVL";
 
+	private final static File[] emptyFileArray = new File[0];
+
+	private final static File[] civlSysPathArray = new File[] { CIVLConstants.CIVL_INCLUDE_PATH };
+
 	GMCConfiguration cmdConfig;// = commandLine.configuration();
 	CIVLConfiguration config;// = new CIVLConfiguration(cmdConfig);
 	String[] filenames;// = commandLine.files();
@@ -648,7 +652,20 @@ public class ModelTranslator {
 
 				if (systemFilename != null
 						&& processedSystemFilenames.add(systemFilename)) {
-					AST newAST = parseFile(systemFilename);
+					// the following ensures the file found will be
+					// /include/civl/name.cvl, not something in the
+					// current directory or elsewhere in the path.
+					// It also ensures any file included will also
+					// be found in either /include/civl or /include/abc.
+					
+					// File systemFile = new
+					// File(CIVLConstants.CIVL_INCLUDE_PATH,
+					// systemFilename);
+					
+					CTokenSource tokens = preprocessor.outputTokenSource(
+							civlSysPathArray, emptyFileArray, macroMaps,
+							systemFilename);
+					AST newAST = parse(tokens);
 
 					workList.add(newAST);
 					result.add(newAST);
@@ -658,27 +675,27 @@ public class ModelTranslator {
 		return result;
 	}
 
-	/**
-	 * Parses a given file into an AST.
-	 * 
-	 * @param preprocessor
-	 *            The preprocessor that will extracts token source from the
-	 *            given file.
-	 * @param filename
-	 *            The name of the file that is to be parsed.
-	 * @return The AST which is the result of parsing the given file.
-	 * @throws SyntaxException
-	 * @throws ParseException
-	 * @throws PreprocessorException
-	 */
-	private AST parseFile(String filename) throws SyntaxException,
-			ParseException, PreprocessorException, IOException {
-
-		CTokenSource tokens = preprocessor.outputTokenSource(systemIncludes,
-				userIncludes, macroMaps, filename);
-
-		return parse(tokens);
-	}
+	// /**
+	// * Parses a given file into an AST.
+	// *
+	// * @param preprocessor
+	// * The preprocessor that will extracts token source from the
+	// * given file.
+	// * @param filename
+	// * The name of the file that is to be parsed.
+	// * @return The AST which is the result of parsing the given file.
+	// * @throws SyntaxException
+	// * @throws ParseException
+	// * @throws PreprocessorException
+	// */
+	// private AST parseFile(String filename) throws SyntaxException,
+	// ParseException, PreprocessorException, IOException {
+	//
+	// CTokenSource tokens = preprocessor.outputTokenSource(systemIncludes,
+	// userIncludes, macroMaps, filename);
+	//
+	// return parse(tokens);
+	// }
 
 	/**
 	 * Finds out the file name of the system implementation of a header file,
