@@ -27,12 +27,12 @@ public class LibraryTest {
 
 	@Test
 	public void string() throws ABCException {
-		assertTrue(ui.run("verify", filename("string.cvl")));
+		assertTrue(ui.run("verify", filename("string_test.cvl")));
 	}
 
 	@Test
 	public void assertH() throws ABCException {
-		assertTrue(ui.run("verify", filename("assert.cvl")));
+		assertTrue(ui.run("verify", filename("assert_test.cvl")));
 	}
 
 	@Test

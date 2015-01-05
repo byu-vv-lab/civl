@@ -1,35 +1,74 @@
 /* CIVL model of math.h */
 
-#ifdef __MATH_CIVL__
+#ifdef __CIVL_MATH__
 #else
-#define __MATH_CIVL__
+#define __CIVL_MATH__
 #include <math.h>
 
 double acos(double x) {
   $abstract double ACOS(double X);
+  double result;
 
   $assert -1 <= x && x <=1 :
   "Argument x should be in interval[-1, 1]"; 
-  $assume ACOS(x) >= 0;
-  return ACOS(x);
+  result = ACOS(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result > 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x == 1 => result == 0) && (x != 1 => result > 0));
+  return result;
+#endif
 }
 
 float acosf(float x) {
   $abstract float ACOSF(float X);
+  double result;
 
   $assert -1 <= x && x <=1 :
   "Argument x should be in interval[-1, 1]"; 
-  $assume ACOSF(x) >= 0;
-  return ACOSF(x);
+  result = ACOSF(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result > 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x == 1 => result == 0) && (x != 1 => result > 0));
+  return result;
+#endif
 }
 
 long double acosl(long double x) {
   $abstract long double ACOSL(long double X);
+  double result;
 
   $assert -1 <= x && x <=1 :
   "Argument x should be in interval[-1, 1]"; 
-  $assume ACOSL(x) >= 0;
-  return ACOSL(x);
+  result = ACOSL(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result > 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x == 1 => result == 0) && (x != 1 => result > 0));
+  return result;
+#endif
 }
 
 double asin(double x) {
@@ -269,65 +308,173 @@ long double tanhl(long double x) {
 
 double exp(double x) {
   $abstract double EXP(double X);
+  double result = EXP(x);
 
-  $assume EXP(x) > 0;
-  return EXP(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 1;
+  else {
+    $assume result > 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==0 => result == 1) && (x!=0 => result > 0));
+  return result;
+#endif
 }
 
 float expf(float x) {
   $abstract float EXPF(float X);
+  double result = EXPF(x);
 
-  $assume EXPF(x) > 0;
-  return EXPF(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 1;
+  else {
+    $assume result > 0 ;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==0 => result == 1) && (x!=0 => result > 0));
+  return result;
+#endif
 }
 
 long double expl(long double x) {
   $abstract long double EXPL(long double X);
+  double result = EXPL(x);
 
-  $assume EXPL(x) > 0;
-  return EXPL(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 1;
+  else {
+    $assume result > 0 ;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==0 => result == 1) && (x!=0 => result > 0));
+  return result;
+#endif
 }
 
 double exp2(double x) {
   $abstract double EXP2(double X);
+  double result = EXP2(x);
 
-  $assume EXP2(x) > 0;
-  return EXP2(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 1;
+  else {
+    $assume result > 0 ;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==0 => result == 1) && (x!=0 => result > 0));
+  return result;
+#endif
 }
 
 float exp2f(float x) {
   $abstract float EXP2F(float X);
+  double result = EXP2F(x);
 
-  $assume EXP2F(x) > 0;
-  return EXP2F(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 1;
+  else {
+    $assume result > 0 ;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==0 => result == 1) && (x!=0 => result > 0));
+  return result;
+#endif
 }
 
 long double exp2l(long double x) {
   $abstract long double EXP2L(long double X);
+  double result = EXP2L(x);
 
-  $assume EXP2L(x) > 0;
-  return EXP2L(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 1;
+  else {
+    $assume result > 0 ;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==0 => result == 1) && (x!=0 => result > 0));
+  return result;
+#endif
 }
 
 double expm1(double x) {
   $abstract double EXPM1(double X);
+  double result = EXPM1(x);
 
-  $assume EXPM1(x) > -1;
-  return EXPM1(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 0;
+  else {
+    $assume result > -1;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==0 => result == 0) && (x!=0 => result > -1));
+  return result;
+#endif
 }
 
 float expm1f(float x) {
   $abstract float EXPM1F(float X);
+  double result = EXPM1F(x);
 
-  $assume EXPM1F(x) > -1;
-  return EXPM1F(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 0;
+  else {
+    $assume result > -1;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==0 => result == 0) && (x!=0 => result > -1));
+  return result;
+#endif
 }
 
 long double expm1l(long double x) {
   $abstract long double EXPM1L(long double X);
+  double result = EXPM1L(x);
 
-  $assume EXPM1L(x) > -1;
-  return EXPM1L(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 0;
+  else {
+    $assume result > -1;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==0 => result == 0) && (x!=0 => result > -1));
+  return result;
+#endif
 }
 
 double frexp(double x, int * exp) {
@@ -608,26 +755,65 @@ long double fabsl(long double x) {
 
 double sqrt(double x) {
   $abstract double SQRT(double x);
+  double result;
 
   $assert x >= 0 : "Argument x should be greater than 0.";
-  $assume SQRT(x) >= 0;
-  return SQRT(x);
+  result = SQRT(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 0;
+  else {
+    $assume result > 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume (x == 0 => result == 0) && (x > 0 => result > 0);
+  return result;
+#endif
 }
 
 float sqrtf(float x) {
   $abstract float SQRTF(float x);
+  double result;
 
   $assert x >= 0 : "Argument x should be greater than 0.";
-  $assume SQRTF(x) >= 0;
-  return SQRTF(x);
+  result = SQRTF(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 0;
+  else {
+    $assume result > 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume (x == 0 => result == 0) && (x > 0 => result > 0);
+  return result;
+#endif
 }
 
 long double sqrtl(long double x) {
   $abstract long double SQRTL(long double x);
+  double result;
 
   $assert x >= 0 : "Argument x should be greater than 0.";
-  $assume SQRTL(x) >= 0;
-  return SQRTL(x);
+  result = SQRTL(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 0)
+    return 0;
+  else {
+    $assume result > 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume (x == 0 => result == 0) && (x > 0 => result > 0);
+  return result;
+#endif
 }
 
 double hypot(double x, double y) {
@@ -1166,8 +1352,6 @@ long double fmal(long double x, long double y, long double z) {
 #define islessequal(X,Y) ((X)<=(Y))
 #define islessgreater(X,Y) ((X)<(Y))||((X)>(Y))
 #define isunordered(X,Y) (X>Y)?1:0
-
-
 
 #endif
 
