@@ -41,7 +41,9 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NextInDomainStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
@@ -74,6 +76,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 /**
@@ -322,6 +326,7 @@ public class CommonExecutor implements Executor {
 		ResultType validity;
 		NumericExpression elementCount;
 		Pair<State, SymbolicExpression> mallocResult;
+		SymbolicType dynamicElementType;
 
 		eval = evaluator.evaluate(state, pid, statement.getScopeExpression());
 		state = eval.state;
@@ -357,9 +362,36 @@ public class CommonExecutor implements Executor {
 			state = state.setPathCondition(universe.and(pathCondition, claim));
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
+		// If the type of the allocated element object is an struct or union
+		// type, field types can be array types which should be evaluated
+		// carefully to provide extents informations.
+		if (statement.getStaticElementType().isStructType()) {
+			CIVLStructOrUnionType staticType = (CIVLStructOrUnionType) statement
+					.getStaticElementType();
+			int numFields = staticType.numFields();
+			SymbolicType fieldTypes[] = new SymbolicType[numFields];
+
+			for (int i = 0; i < numFields; i++) {
+				CIVLType civlfieldType = (CIVLType) staticType.getField(i)
+						.type();
+
+				if (civlfieldType.isArrayType()) {
+					Pair<State, SymbolicArrayType> pair = evaluator
+							.evaluateCIVLArrayType(state, pid,
+									(CIVLArrayType) civlfieldType);
+
+					state = pair.left;
+					fieldTypes[i] = pair.right;
+				} else
+					fieldTypes[i] = civlfieldType.getDynamicType(universe);
+			}
+			dynamicElementType = universe.tupleType(
+					universe.stringObject(staticType.name().name()),
+					Arrays.asList(fieldTypes));
+		} else
+			dynamicElementType = statement.getDynamicElementType();
 		mallocResult = stateFactory.malloc(state, pid, dyScopeID,
-				statement.getMallocId(), statement.getDynamicElementType(),
-				elementCount);
+				statement.getMallocId(), dynamicElementType, elementCount);
 		state = mallocResult.left;
 		if (lhs != null)
 			state = assign(state, pid, process, lhs, mallocResult.right);

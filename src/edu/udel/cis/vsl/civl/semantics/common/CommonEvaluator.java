@@ -4104,4 +4104,43 @@ public class CommonEvaluator implements Evaluator {
 		}
 		return result;
 	}
+
+	@Override
+	public Pair<State, SymbolicArrayType> evaluateCIVLArrayType(State state,
+			int pid, CIVLArrayType type)
+			throws UnsatisfiablePathConditionException {
+		Pair<State, SymbolicArrayType> ret_pair;
+		Evaluation eval;
+		NumericExpression extent;
+
+		if (!type.isComplete()) {
+			// since type is CIVLArrayType, following cast should be safe.
+			ret_pair = new Pair<>(state,
+					(SymbolicArrayType) type.getDynamicType(universe));
+			return ret_pair;
+		}
+		// if type is complete array type, get extent.
+		eval = this.evaluate(state, pid,
+				((CIVLCompleteArrayType) type).extent());
+		extent = (NumericExpression) eval.value;
+		if (!type.elementType().isArrayType()) {
+			SymbolicArrayType ret_type = universe.arrayType(type.elementType()
+					.getDynamicType(universe), extent);
+
+			state = eval.state;
+			ret_pair = new Pair<>(state, ret_type);
+			return ret_pair;
+		} else {
+			SymbolicArrayType ret_type;
+
+			// This branch comes from
+			// "if element type of 'type' has an array type", so following cast
+			// is safe.
+			ret_pair = this.evaluateCIVLArrayType(state, pid,
+					(CIVLArrayType) type.elementType());
+			ret_type = universe.arrayType(ret_pair.right, extent);
+			ret_pair.right = ret_type;
+			return ret_pair;
+		}
+	}
 }

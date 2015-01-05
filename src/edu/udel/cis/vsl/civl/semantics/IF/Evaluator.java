@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -23,6 +24,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
@@ -369,5 +371,24 @@ public interface Evaluator {
 
 	List<ReferenceExpression> leafNodeReferencesOfType(CIVLSource source,
 			State state, int pid, CIVLType type)
+			throws UnsatisfiablePathConditionException;
+
+	/**
+	 * Evaluating the symbolic array type from a {@link CIVLArrayType} based on
+	 * current state and specific process. This function supplements the
+	 * built-in function {@link CIVLType#getDynamicType(SymbolicUniverse)} by
+	 * providing the missing extent information.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param type
+	 *            The CIVLArrayType object
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public Pair<State, SymbolicArrayType> evaluateCIVLArrayType(State state,
+			int pid, CIVLArrayType type)
 			throws UnsatisfiablePathConditionException;
 }
