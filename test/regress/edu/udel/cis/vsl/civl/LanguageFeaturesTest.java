@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -506,5 +507,11 @@ public class LanguageFeaturesTest {
 	public void include1() {
 		assertFalse(ui.run("verify", "-userIncludePath=" + rootDir.getPath(),
 				filename("include1.cvl")));
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }

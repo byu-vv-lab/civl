@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -344,5 +345,11 @@ public class PthreadCProverTest {
 	public void fib_bench_longest_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp", "-inputNUM=11",
 				filename("fib_bench_longest_true.c")));
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }

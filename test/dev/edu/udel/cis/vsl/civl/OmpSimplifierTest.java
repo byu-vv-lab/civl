@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -221,5 +222,11 @@ public class OmpSimplifierTest {
 				filename("raceCond1.c")));
 		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=4",
 				filename("raceCond1.c")));
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }

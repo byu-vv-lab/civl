@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -58,5 +59,11 @@ public class OpenMP2CIVLTransformerTest {
 	public void raceCond1() {
 		assertTrue(ui.run("show -showModel", "-ompNoSimplify",
 				"-inputTHREAD_MAX=4", filename("raceCond1.c")));
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }

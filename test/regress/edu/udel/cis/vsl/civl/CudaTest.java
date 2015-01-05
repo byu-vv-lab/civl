@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -32,5 +33,11 @@ public class CudaTest {
 	public void dot() {
 		assertTrue(ui.run("verify", "-inputN_BOUND=2",
 				"-inputTHREADS_PER_BLOCK=2", filename("dot.cvl")));
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }

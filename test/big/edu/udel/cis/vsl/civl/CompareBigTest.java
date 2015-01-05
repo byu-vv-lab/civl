@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
 import org.junit.Ignore;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -33,5 +34,11 @@ public class CompareBigTest {
 				"-inputK=0.3", "-spec",
 				filename("diffusion1d/diffusion1d_spec_revision.c"), "-impl",
 				filename("diffusion1d/diffusion1d_par_revision.c")));
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }

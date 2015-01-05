@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -65,6 +66,12 @@ public class MPITranslationBigTest {
 	public void mpi_sumArray() {
 		assertTrue(ui.run("verify", "-enablePrintf=false",
 				filename("sum_array.c")));
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 
 }

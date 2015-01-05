@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -30,4 +31,9 @@ public class PthreadThreaderBigTest {
 		assertTrue(ui.run("verify", "-svcomp", filename("qrcu_true.c")));
 	}
 
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
+	}
 }

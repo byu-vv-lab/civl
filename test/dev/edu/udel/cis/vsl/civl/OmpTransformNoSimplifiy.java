@@ -26,14 +26,14 @@ public class OmpTransformNoSimplifiy {
 
 	@Test
 	public void dotProduct1() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
-				"-inputTHREAD_MAX=4", filename("dotProduct1.c")));
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=4",
+				filename("dotProduct1.c")));
 	}
 
 	@Test
 	public void dotProductCritical() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
-				"-inputTHREAD_MAX=4", filename("dotProduct_critical.c")));
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=4",
+				filename("dotProduct_critical.c")));
 	}
 
 	@Test
@@ -44,8 +44,8 @@ public class OmpTransformNoSimplifiy {
 
 	@Test
 	public void parallelfor() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
-				"-inputTHREAD_MAX=4", filename("parallelfor.c")));
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=4",
+				filename("parallelfor.c")));
 	}
 
 	@Test
@@ -53,7 +53,7 @@ public class OmpTransformNoSimplifiy {
 		assertTrue(ui.run("verify", "-showProgram -ompNoSimplify",
 				"-inputTHREAD_MAX=4", filename("raceCond1.c")));
 	}
-	
+
 	@Test
 	public void raceCond2() {
 		assertTrue(ui.run("verify", "-showProgram -ompNoSimplify",
@@ -65,4 +65,5 @@ public class OmpTransformNoSimplifiy {
 		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
 				filename("canonicalForLoops.c")));
 	}
+
 }

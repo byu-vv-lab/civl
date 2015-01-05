@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -155,5 +156,11 @@ public class LibraryTest {
 	public void domainDecomp() throws ABCException {
 		assertTrue(ui.run("verify", "-inputn=4", "-enablePrintf=false",
 				filename("civlc/domainDecomposition.cvl")));
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }

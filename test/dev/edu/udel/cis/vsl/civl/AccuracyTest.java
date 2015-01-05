@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -93,5 +94,11 @@ public class AccuracyTest {
 	public void upwindThirdOrder() {
 		assertTrue(ui.run("verify", "-inputn=5",
 				filename("upwindSecondOrder.cvl")));
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }

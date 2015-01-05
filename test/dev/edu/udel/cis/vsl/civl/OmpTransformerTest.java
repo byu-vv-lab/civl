@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -198,5 +199,11 @@ public class OmpTransformerTest {
 	@Test
 	public void quad() throws ABCException, IOException {
 		check("quad_openmp", false);
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }

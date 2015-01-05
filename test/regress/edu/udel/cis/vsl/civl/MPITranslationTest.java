@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -133,5 +134,11 @@ public class MPITranslationTest {
 		assertTrue(ui.run("verify", "-enablePrintf=false",
 				"-input_NPROCS_UPPER_BOUND=3", "-inputNB=8",
 				filename("sum_array.c")));
+	}
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }
