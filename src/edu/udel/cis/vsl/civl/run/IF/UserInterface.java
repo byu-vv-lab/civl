@@ -138,7 +138,7 @@ public class UserInterface {
 	/**
 	 * The time at which this instance of UserInterface was created.
 	 */
-	private final double startTime = System.currentTimeMillis();
+	private double startTime;
 
 	/**
 	 * The ABC front end.
@@ -365,6 +365,7 @@ public class UserInterface {
 	 * @throws IOException
 	 */
 	private boolean runMain(String[] args) throws CommandLineException {
+		this.startTime = System.currentTimeMillis();
 		out.println("CIVL v" + version + " of " + date
 				+ " -- http://vsl.cis.udel.edu/civl");
 		out.flush();
@@ -493,7 +494,6 @@ public class UserInterface {
 
 	private boolean runVerify(ModelTranslator modelTranslator)
 			throws CommandLineException, ABCException, IOException {
-		// SymbolicUniverse universe = SARL.newStandardUniverse();
 		boolean result;
 		Model model;
 		Verifier verifier;
@@ -770,7 +770,8 @@ public class UserInterface {
 				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
 		long numValidCalls = universe.numValidCalls();
 		long numProverCalls = universe.numProverValidCalls();
-		long memory = Runtime.getRuntime().totalMemory();
+		long memory = Runtime.getRuntime().totalMemory()
+				- Runtime.getRuntime().freeMemory();
 
 		out.println("\n" + bar + " Stats " + bar);
 		out.print("   validCalls          : ");
