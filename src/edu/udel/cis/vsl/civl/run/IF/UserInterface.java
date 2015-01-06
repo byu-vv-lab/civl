@@ -770,8 +770,7 @@ public class UserInterface {
 				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
 		long numValidCalls = universe.numValidCalls();
 		long numProverCalls = universe.numProverValidCalls();
-		long memory = Runtime.getRuntime().totalMemory()
-				- Runtime.getRuntime().freeMemory();
+		long memory = Runtime.getRuntime().totalMemory();
 
 		out.println("\n" + bar + " Stats " + bar);
 		out.print("   validCalls          : ");
