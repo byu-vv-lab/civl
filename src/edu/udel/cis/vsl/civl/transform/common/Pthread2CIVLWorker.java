@@ -391,6 +391,8 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		}
 	}
 
+	// TODO: what is this function trying to do for pthread_create? What kind of
+	// transformation and why?
 	private void functionList(ASTNode root) {
 		for (ASTNode node : root.children()) {
 			if (node == null)
