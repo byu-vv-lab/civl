@@ -1,4 +1,12 @@
-/* CIVL model of math.h */
+/* CIVL model of math.h.  Part of functions have optional assumption
+ * models which are controlled by two macros:
+ * 1. MATH_ELABORATE_ASSUMPTIONS: replacing a complicated assumption
+ * expression which includes implications with a "if..else" statement.
+ * This option reduces the complicity of the assumption expression but
+ * increase the number of branches. 
+ * 2. MATH_NO_ASSUMPTIONS: for some cases that the return value is not 
+ * important, it's no need to add any assumption.
+ */
 
 #ifdef __CIVL_MATH__
 #else
