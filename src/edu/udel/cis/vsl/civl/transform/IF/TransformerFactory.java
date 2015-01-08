@@ -40,6 +40,8 @@ public class TransformerFactory {
 
 	private Transformer pthread2CivlTransformer;
 
+	private Transformer cuda2CivlTransformer;
+
 	public TransformerFactory(ASTFactory astFactory) {
 		this.astFactory = astFactory;
 	}
@@ -84,6 +86,12 @@ public class TransformerFactory {
 		if (pthread2CivlTransformer == null)
 			pthread2CivlTransformer = new Pthread2CIVLTransformer(astFactory);
 		return pthread2CivlTransformer;
+	}
+	
+	public Transformer getCuda2CIVLTransformer() {
+		if (cuda2CivlTransformer == null)
+			cuda2CivlTransformer = new Cuda2CIVLTransformer(astFactory);
+		return cuda2CivlTransformer;
 	}
 
 	public static boolean hasFunctionCalls(AST ast, List<String> functions) {
