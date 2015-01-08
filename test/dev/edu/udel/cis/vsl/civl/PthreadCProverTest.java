@@ -15,8 +15,8 @@ import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 public class PthreadCProverTest {
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"),
-			"translation/pthread/cprover/");
+	private static File rootDir = new File(new File("examples", "pthread"),
+			"cprover");
 
 	private static UserInterface ui = new UserInterface();
 

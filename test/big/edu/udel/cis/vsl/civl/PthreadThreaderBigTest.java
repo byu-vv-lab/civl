@@ -13,8 +13,8 @@ import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 public class PthreadThreaderBigTest {
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"),
-			"pthread/threader/");
+	private static File rootDir = new File(new File("examples", "pthread"),
+			"threader");
 
 	private static UserInterface ui = new UserInterface();
 

@@ -13,8 +13,8 @@ import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 public class PthreadBigTest {
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"),
-			"pthread/esbmc");
+	private static File rootDir = new File(new File("examples", "pthread"),
+			"esbmc");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -28,9 +28,10 @@ public class PthreadBigTest {
 
 	@Test
 	public void fib_bench_longer_true() throws ABCException {
-		assertTrue(ui.run("verify",
-				"-svcomp", "-inputNUM=6", filename("fib_bench_longer_true.c")));
+		assertTrue(ui.run("verify", "-svcomp", "-inputNUM=6",
+				filename("fib_bench_longer_true.c")));
 	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

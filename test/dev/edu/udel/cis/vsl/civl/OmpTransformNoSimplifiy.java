@@ -38,8 +38,8 @@ public class OmpTransformNoSimplifiy {
 
 	@Test
 	public void matProduct1() {
-		assertTrue(ui.run("verify", "-showProgram -ompNoSimplify",
-				"-inputTHREAD_MAX=4", filename("matProduct1.c")));
+		assertTrue(ui.run("verify", "-ompNoSimplify -showAmpleSetWtStates -enablePrintf=false",
+				"-inputTHREAD_MAX=2", filename("matProduct1.c")));
 	}
 
 	@Test
@@ -50,7 +50,7 @@ public class OmpTransformNoSimplifiy {
 
 	@Test
 	public void raceCond1() {
-		assertTrue(ui.run("verify", "-showProgram -ompNoSimplify",
+		assertTrue(ui.run("verify", "-showTransitions -ompNoSimplify",
 				"-inputTHREAD_MAX=4", filename("raceCond1.c")));
 	}
 
