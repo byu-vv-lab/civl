@@ -741,24 +741,42 @@ long double cbrtl(long double x) {
 }
 
 double fabs(double x) {
+#ifdef MATH_NO_ASSUMPTIONS
   if(x >= 0)
     return x;
   else
     return -x;
+#else
+  $abstract double FABS(double x);
+  $assume FABS(x) >= 0;
+  return FABS(x);
+#endif
 }
 
 float fabsf(float x) {
+#ifdef MATH_NO_ASSUMPTIONS
   if(x >= 0)
     return x;
   else
     return -x;
+#else
+  $abstract double FABSF(double x);
+  $assume FABSF(x) >= 0;
+  return FABSF(x);
+#endif
 }
 
 long double fabsl(long double x) {
+#ifdef MATH_NO_ASSUMPTIONS
   if(x >= 0)
     return x;
   else
     return -x;
+#else
+  $abstract double FABSL(double x);
+  $assume FABSL(x) >= 0;
+  return FABSL(x);
+#endif
 }
 
 double sqrt(double x) {
