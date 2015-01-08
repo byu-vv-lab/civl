@@ -30,6 +30,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	private int hashCode;
 	private boolean purelyLocal = true;
 	private boolean isStatic = false;
+	private boolean hasPointerRef = false;
 
 	/**
 	 * A variable.
@@ -255,6 +256,16 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	@Override
 	public void setStatic(boolean value) {
 		this.isStatic = value;
+	}
+
+	@Override
+	public boolean hasPointerRef() {
+		return this.hasPointerRef;
+	}
+
+	@Override
+	public void setPointerRef(boolean value) {
+		this.hasPointerRef = value;
 	}
 
 }

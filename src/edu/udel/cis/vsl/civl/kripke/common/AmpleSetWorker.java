@@ -445,10 +445,10 @@ public class AmpleSetWorker {
 
 	/**
 	 * Computes the impact memory units of a certain process at the current
-	 * state, which are usually decided by the variables appearing in the statements
-	 * (including guards) originating at the process's current location. The
-	 * computation could be incomplete when there is atomic/atom block that
-	 * contains function calls.
+	 * state, which are usually decided by the variables appearing in the
+	 * statements (including guards) originating at the process's current
+	 * location. The computation could be incomplete when there is atomic/atom
+	 * block that contains function calls.
 	 * 
 	 * @param proc
 	 *            The process whose impact memory units are to be computed.
@@ -597,8 +597,8 @@ public class AmpleSetWorker {
 	}
 
 	/**
-	 * Computes the impact memory units of a given statement of a certain process
-	 * at the current state.
+	 * Computes the impact memory units of a given statement of a certain
+	 * process at the current state.
 	 * 
 	 * @param statement
 	 *            The statement whose impact memory units are to be computed.
@@ -834,9 +834,20 @@ public class AmpleSetWorker {
 					// ignore the heap
 					if (variable.type().isHeapType())// && vid != 0)
 						continue;
-					varMemUnits = evaluator.memoryUnitsReachableFromVariable(
-							variable.type(), dyScope.getValue(vid), dyScopeID,
-							vid, state, process);
+					if (variable.hasPointerRef())
+						varMemUnits = evaluator
+								.memoryUnitsReachableFromVariable(
+										variable.type(), dyScope.getValue(vid),
+										dyScopeID, vid, state, process);
+					else {
+						varMemUnits = new HashSet<SymbolicExpression>(1);
+						varMemUnits.add(evaluator.symbolicUtility()
+								.makePointer(
+										dyScopeID,
+										vid,
+										evaluator.universe()
+												.identityReference()));
+					}
 					permission = writableVariables.contains(variable) ? true
 							: false;
 					for (SymbolicExpression unit : varMemUnits) {

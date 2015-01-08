@@ -318,6 +318,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 
 		if (pointerType) {
 			pointerRefs.add(variable);
+			variable.setPointerRef(true);
 		}
 	}
 

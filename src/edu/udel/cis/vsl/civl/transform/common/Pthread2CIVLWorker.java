@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
@@ -31,9 +32,11 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 
 //TODO: add arguments to pthread_exit();
 
@@ -296,10 +299,14 @@ public class Pthread2CIVLWorker extends BaseWorker {
 			process_pthread_exit(function, true);
 			ExpressionNode ZERO = this.integerConstant(0);
 
-			function.getBody().addSequenceChild(
-					nodeFactory.newReturnNode(
-							this.newSource("return statement", CParser.RETURN),
-							ZERO));
+			if (returnType.getType().kind() == TypeKind.VOID)
+				function.getBody().addSequenceChild(
+						nodeFactory.newReturnNode(this.newSource(
+								"return statement", CParser.RETURN), null));
+			else
+				function.getBody().addSequenceChild(
+						nodeFactory.newReturnNode(this.newSource(
+								"return statement", CParser.RETURN), ZERO));
 			freePoolBeforeMainReturn(function);
 			return;
 
@@ -405,15 +412,28 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					String nameString = named.getIdentifier().name();
 					if (nameString.equals(PTHREAD_CREATE)) {
 						ExpressionNode arg = funcCall.getArgument(2);
+
 						if (arg instanceof OperatorNode) {
 							OperatorNode argOp = (OperatorNode) arg;
 							IdentifierExpressionNode threadName = (IdentifierExpressionNode) argOp
 									.getArgument(0);
+
 							funcList.add(threadName.getIdentifier().name());
-						} else {
+						} else if (arg instanceof IdentifierExpressionNode) {
 							IdentifierExpressionNode threadName = (IdentifierExpressionNode) funcCall
 									.getArgument(2);
+
 							funcList.add(threadName.getIdentifier().name());
+						} else if (arg instanceof CastNode) {
+							IdentifierExpressionNode threadName = (IdentifierExpressionNode) ((CastNode) arg)
+									.getArgument();
+
+							funcList.add(threadName.getIdentifier().name());
+						} else {
+							throw new CIVLUnimplementedFeatureException(
+									"unimplemented handling of Pthread transformer for expression of "
+											+ arg.expressionKind()
+											+ " kind as the function pointer argument of pthread_create()");
 						}
 					}
 				}

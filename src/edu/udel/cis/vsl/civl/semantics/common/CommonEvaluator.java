@@ -410,75 +410,6 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/* ************************** Private Methods ************************** */
-	/**
-	 * Does the type contains some non-concrete state? e.g., int[N] where N is
-	 * an input variable contains the non-concrete state N if N can't be
-	 * simplified to a concrete value at the given state.
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param pid
-	 *            The PID of the process that calls this method
-	 * @param type
-	 *            The type to be checked
-	 * @return true iff the type contains some non-concrete state.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	@SuppressWarnings("unused")
-	private boolean hasNonConcreteState(State state, int pid, CIVLType type)
-			throws UnsatisfiablePathConditionException {
-		TypeKind kind = type.typeKind();
-
-		switch (kind) {
-		case ARRAY:
-			return true;
-		case COMPLETE_ARRAY: {
-			CIVLCompleteArrayType arrayType = (CIVLCompleteArrayType) type;
-			Expression extent = arrayType.extent();
-			Reasoner reasoner = universe.reasoner(state.getPathCondition());
-			Evaluation eval = this.evaluate(state, pid, extent);
-			IntegerNumber extent_num;
-
-			state = eval.state;
-			extent_num = (IntegerNumber) reasoner
-					.extractNumber((NumericExpression) eval.value);
-			if (extent_num == null)
-				return true;
-			else
-				return this.hasNonConcreteState(state, pid,
-						arrayType.elementType());
-		}
-		case BUNDLE:
-			return true;
-		case DOMAIN: {
-			// CIVLDomainType domainType = (CIVLDomainType) type;
-			//
-			// if (domainType.dimension() > 0)
-			// return false;
-			return false;
-		}
-		case ENUM:
-			return false;
-		case POINTER:
-			return false;
-		case PRIMITIVE:
-			return false;
-		case STRUCT_OR_UNION: {
-			CIVLStructOrUnionType strOrUnionType = (CIVLStructOrUnionType) type;
-			int numFields = strOrUnionType.numFields();
-
-			for (int i = 0; i < numFields; i++) {
-				CIVLType fieldType = strOrUnionType.getField(i).type();
-
-				if (this.hasNonConcreteState(state, pid, fieldType))
-					return true;
-			}
-			return false;
-		}
-		default:// FUNCTION/HEAP
-			return false;
-		}
-	}
 
 	/**
 	 * Dereferences a pointer. Logs error when the dereference fails, like when
@@ -829,7 +760,18 @@ public class CommonEvaluator implements Evaluator {
 			return evaluateShiftleft(state, pid, expression);
 		case SHIFTRIGHT:
 			return evaluateShiftright(state, pid, expression);
-		default:// numeric expression like +,-,*,/,%,etc
+		case DIVIDE:
+		case EQUAL:
+		case LESS_THAN:
+		case LESS_THAN_EQUAL:
+		case MINUS:
+		case MODULO:
+		case NOT_EQUAL:
+		case PLUS:
+		case POINTER_ADD:
+		case POINTER_SUBTRACT:
+		case TIMES:
+			// numeric expression like +,-,*,/,%,etc
 			if (expression.left().getExpressionType() != null
 					&& expression.left().getExpressionType()
 							.equals(modelFactory.scopeType())) {
@@ -838,6 +780,9 @@ public class CommonEvaluator implements Evaluator {
 				return evaluateNumericOperations(state, pid, process,
 						expression);
 			}
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"Evaluating binary operator of " + operator + " kind");
 		}
 	}
 
@@ -1595,65 +1540,6 @@ public class CommonEvaluator implements Evaluator {
 				typeEval.type, sid);
 	}
 
-	@SuppressWarnings("unused")
-	private Evaluation initialNullValue(State state, int pid, CIVLType type)
-			throws UnsatisfiablePathConditionException {
-		TypeKind kind = type.typeKind();
-		Evaluation eval;
-
-		switch (kind) {
-		case COMPLETE_ARRAY: {
-			CIVLCompleteArrayType arrayType = (CIVLCompleteArrayType) type;
-			CIVLType elementType = arrayType.elementType();
-			Expression extent = arrayType.extent();
-			SymbolicExpression extentValue, elementValue, arrayValue;
-			Reasoner reasoner;
-			int extentCount;
-			List<SymbolicExpression> eleValues = new LinkedList<>();
-
-			eval = this.evaluate(state, pid, extent);
-			state = eval.state;
-			extentValue = eval.value;
-			eval = this.initialNullValue(state, pid, elementType);
-			state = eval.state;
-			elementValue = eval.value;
-			reasoner = universe.reasoner(state.getPathCondition());
-			extentCount = ((IntegerNumber) reasoner
-					.extractNumber((NumericExpression) extentValue)).intValue();
-			for (int i = 0; i < extentCount; i++)
-				eleValues.add(elementValue);
-			arrayValue = universe.array(elementType.getDynamicType(universe),
-					eleValues);
-			return new Evaluation(state, arrayValue);
-		}
-		case DOMAIN:
-		case ENUM:
-		case POINTER:
-		case PRIMITIVE:
-		case HEAP:
-			return new Evaluation(state, universe.nullExpression());
-		case STRUCT_OR_UNION: {
-			CIVLStructOrUnionType strOrUnionType = (CIVLStructOrUnionType) type;
-			int numFields = strOrUnionType.numFields();
-			List<SymbolicExpression> fieldValues = new LinkedList<>();
-			SymbolicExpression strValue;
-
-			for (int i = 0; i < numFields; i++) {
-				eval = this.initialNullValue(state, pid, strOrUnionType
-						.getField(i).type());
-				fieldValues.add(eval.value);
-				state = eval.state;
-			}
-			strValue = universe
-					.tuple((SymbolicTupleType) strOrUnionType
-							.getDynamicType(universe), fieldValues);
-			return new Evaluation(state, strValue);
-		}
-		default:
-			throw new CIVLInternalException("Unreachable", (CIVLSource) null);
-		}
-	}
-
 	/**
 	 * Computes the symbolic initial value of a variable.
 	 * 
@@ -1811,8 +1697,9 @@ public class CommonEvaluator implements Evaluator {
 		case OR:
 			throw new CIVLInternalException("unreachable", expression);
 		default:
-			throw new CIVLUnimplementedFeatureException("Operator "
-					+ expression.operator(), expression);
+			throw new CIVLUnimplementedFeatureException(
+					"Evaluating numeric operator " + expression.operator(),
+					expression);
 		}
 		return eval;
 	}
@@ -2042,7 +1929,8 @@ public class CommonEvaluator implements Evaluator {
 			eval.value = universe.bool(left != right);
 			break;
 		default:
-			throw new CIVLInternalException("unreachable",
+			throw new CIVLUnimplementedFeatureException(
+					"evaluting scope operator " + expression.operator(),
 					expression.getSource());
 		}
 		return eval;
@@ -2189,11 +2077,15 @@ public class CommonEvaluator implements Evaluator {
 					process,
 					(LHSExpression) (((SubscriptExpression) expression).array()));
 
-		default:// VARIABLE
+		case VARIABLE:// VARIABLE
 			int scopeId = state.getDyscopeID(pid,
 					((VariableExpression) expression).variable());
 
 			return new Evaluation(state, modelFactory.scopeValue(scopeId));
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"scope of expression with operand of "
+							+ expression.lhsExpressionKind() + " kind");
 		}
 	}
 
@@ -2298,8 +2190,9 @@ public class CommonEvaluator implements Evaluator {
 					new Singleton<SymbolicExpression>(eval.value));
 			break;
 		default:
-			throw new CIVLInternalException("Unknown unary operator "
-					+ expression.operator(), expression);
+			throw new CIVLUnimplementedFeatureException(
+					"evaluating unary operator " + expression.operator(),
+					expression);
 		}
 		return eval;
 	}
@@ -2413,7 +2306,6 @@ public class CommonEvaluator implements Evaluator {
 				try {
 					if (expr.operator() == SymbolicOperator.CONCRETE
 							&& symbolicUtil.getDyscopeId(null, expr) >= 0) {
-						// if (getScopeId(null, expr) >= 0) {
 						/*
 						 * If the expression is an arrayElementReference
 						 * expression, and finally it turns that the array type
@@ -2471,7 +2363,6 @@ public class CommonEvaluator implements Evaluator {
 	private void findPointersInObject(SymbolicObject object,
 			Set<SymbolicExpression> set, State state, String process) {
 		switch (object.symbolicObjectKind()) {
-
 		case EXPRESSION:
 			findPointersInExpression((SymbolicExpression) object, set, state,
 					process);
@@ -3689,8 +3580,11 @@ public class CommonEvaluator implements Evaluator {
 
 				eval = new Evaluation(state, symbolicUtil.makePointer(sid, vid,
 						identityReference));
-				memoryUnits.addAll(pointersInExpression(eval.value, state,
-						process));
+				if (variable.hasPointerRef())
+					memoryUnits.addAll(pointersInExpression(eval.value, state,
+							process));
+				else
+					memoryUnits.add(eval.value);
 			}
 			// }
 			break;

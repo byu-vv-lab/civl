@@ -121,7 +121,24 @@ public interface Variable extends Sourceable {
 	void setPurelyLocal(boolean pl);
 
 	boolean isStatic();
-	
+
 	void setStatic(boolean value);
+
+	/**
+	 * returns true iff this variable has some pointer reference, e.g., when the
+	 * variable is pointer type, or an array of pointer, etc.
+	 * 
+	 * @return
+	 */
+	boolean hasPointerRef();
+
+	/**
+	 * updates the pointer reference feature of this variable. This is for
+	 * static analysis and is called in the procedure of the containing scope
+	 * calculating variables with pointer references.
+	 * 
+	 * @param value
+	 */
+	void setPointerRef(boolean value);
 
 }
