@@ -5,8 +5,8 @@ extern void *value_ptr_value = NULL;
 __pthread_pool_t _pool={.len = 0};
 
 //pthread_mutex_t PTHREAD_MUTEX_INITIALIZER;
-pthread_mutexattr_t DEFAULT_MUTEX_ATTR = {.robust=0, .pshared=0, .protocol=0, .type=PTHREAD_MUTEX_NORMAL, .prioceiling=0};
-pthread_mutex_t PTHREAD_MUTEX_INITIALIZER = {.count=0, .ownerid=-1, .lock=0, .attr=DEFAULT_MUTEX_ATTR};
+//pthread_mutexattr_t DEFAULT_MUTEX_ATTR = {.robust=0, .pshared=0, .protocol=0, .type=PTHREAD_MUTEX_NORMAL, .prioceiling=0};
+//pthread_mutex_t PTHREAD_MUTEX_INITIALIZER = {.count=0, .ownerid=-1, .lock=0, .attr=DEFAULT_MUTEX_ATTR};
 
 void _free_pool(__pthread_pool_t* pool){
   $atomic{
