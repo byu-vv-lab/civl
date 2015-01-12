@@ -559,44 +559,122 @@ long double ldexpl(long double x, int exp) {
 
 double log(double x) {
   $abstract double LOG(double X);
+  double result = LOG(x);
 
   $assert x > 0 : "Argument x should be greater than 0";
-  return LOG(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result != 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==1) => (result==0)) && ((x!=1) => (result!=0));
+  return result;
+#endif
 }
 
 float logf(float x) {
   $abstract float LOGF(float X);
+  float result = LOGF(x);
 
   $assert x > 0 : "Argument x should be greater than 0";
-  return LOGF(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result != 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==1) => (result==0)) && ((x!=1) => (result!=0));
+  return result;
+#endif
 }
 
 long double logl(long double x) {
   $abstract long double LOGL(long double X);
+  long double result = LOGL(x);
 
   $assert x > 0 : "Argument x should be greater than 0";
-  return LOGL(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result != 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==1) => (result==0)) && ((x!=1) => (result!=0));
+  return result;
+#endif
 }
 
 double log10(double x) {
   $abstract double LOG10(double X);
+  double result = LOG10(x);
 
   $assert x > 0 : "Argument x should be greater than 0";
-  return LOG10(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result != 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==1) => (result==0)) && ((x!=1) => (result!=0));
+  return result;
+#endif
 }
 
 float log10f(float x) {
   $abstract float LOG10F(float X);
+  float result = LOG10F(x);
 
   $assert x > 0 : "Argument x should be greater than 0";
-  return LOG10F(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result != 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==1) => (result==0)) && ((x!=1) => (result!=0));
+  return result;
+#endif
 }
 
 long double log10l(long double x) {
   $abstract long double LOG10L(long double X);
+  long double result = LOG10L(x);
 
   $assert x > 0 : "Argument x should be greater than 0";
-  return LOG10L(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result != 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==1) => (result==0)) && ((x!=1) => (result!=0));
+  return result;
+#endif
 }
 
 double log1p(double x) {
@@ -622,23 +700,62 @@ long double log1pl(long double x) {
 
 double log2(double x) {
   $abstract double LOG2(double X);
+  double result = LOG2(x);
 
   $assert x > 0 : "Argument x should be greater than 0";
-  return LOG2(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result != 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==1) => (result==0)) && ((x!=1) => (result!=0));
+  return result;
+#endif
 }
 
 float log2f(float x) {
   $abstract float LOG2F(float X);
+  float result = LOG2F(x);
 
   $assert x > 0 : "Argument x should be greater than 0";
-  return LOG2F(x);
+ #ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result != 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==1) => (result==0)) && ((x!=1) => (result!=0));
+  return result;
+#endif
 }
 
 long double log2l(long double x) {
   $abstract long double LOG2L(long double X);
+  long double result = LOG2L(x);
 
   $assert x > 0 : "Argument x should be greater than 0";
-  return LOG2L(x);
+#ifdef MATH_ELABORATE_ASSUMPTIONS
+  if(x == 1)
+    return 0;
+  else {
+    $assume result != 0;
+    return result;
+  }
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
+#else
+  $assume ((x==1) => (result==0)) && ((x!=1) => (result!=0));
+  return result;
+#endif
 }
 
 double logb(double x) {
