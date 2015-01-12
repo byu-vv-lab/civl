@@ -40,6 +40,13 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 
 //TODO: add arguments to pthread_exit();
 
+/**
+ * TODO list all the transformation (e.g., pthread_create, pthread_exit to
+ * _pthread_exit) with explanation of how it works and why it is necessary
+ * 
+ * @author zmanchun
+ *
+ */
 public class Pthread2CIVLWorker extends BaseWorker {
 
 	private final static String PTHREAD_CREATE = "pthread_create";
@@ -85,6 +92,12 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	/* *************************** Private Methods ************************* */
 
+	/**
+	 * TODO javadocs
+	 * 
+	 * @param root
+	 * @throws SyntaxException
+	 */
 	private void processRoot(ASTNode root) throws SyntaxException {
 		functionList(root);
 		for (ASTNode node : root.children()) {
@@ -105,15 +118,28 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		translateNode(root);
 	}
 
+	/**
+	 * Processes function calls starting with __VERIFIER_, which are special
+	 * functions of the SV-COMP.
+	 * 
+	 * @param node
+	 *            The function definition node whose body is to be searched for
+	 *            __VERIFIER_ calls for transformation.
+	 * @throws SyntaxException
+	 */
 	private void process_VERIFIER_function_calls(FunctionDefinitionNode node)
 			throws SyntaxException {
 		process_VERIFIER_function_call_worker(node);
 	}
 
 	/**
-	 * Transforms VERIFIER functions into their corresponding counterparts:
-	 * VERIFIER_nondet_int: abstract integer function VERIFIER_atomic: atomic
-	 * function
+	 * TODO documentation about VERIFIER_nondet_int and VERIFIER_atomic
+	 * Transforms __VERIFIER_ function calls into their corresponding
+	 * counterparts:
+	 * <ul>
+	 * <li>VERIFIER_nondet_int: abstract integer function</li>
+	 * <li>VERIFIER_atomic: atomic function</li>
+	 * </ul>
 	 * 
 	 * @param node
 	 *            ASTNode to be be checked for a VERIFIER
@@ -278,7 +304,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 * nodeFactory.newNullStatementNode(mySource)); }
 	 */
 	/**
-	 * Creates an assertFalse StatementNode
+	 * Creates a StatementNode for error report: $assert $false.
 	 * 
 	 * @param mySource
 	 * 
@@ -290,6 +316,13 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		return assertNode(mySource, falseExpression);
 	}
 
+	/**
+	 * TODO javadocs
+	 * 
+	 * @param function
+	 * @param threadList
+	 * @throws SyntaxException
+	 */
 	private void process_pthread_exits(FunctionDefinitionNode function,
 			ArrayList<String> threadList) throws SyntaxException {
 		String name = function.getName();
@@ -311,7 +344,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 			return;
 
 		}
-		if (this.isVoidPointer(returnType) && threadList.contains(name)) {
+		if (this.isVoidPointerType(returnType) && threadList.contains(name)) {
 			if (function.getTypeNode().getParameters().numChildren() == 0) {
 				function.getTypeNode().setParameters(
 						nodeFactory.newSequenceNode(this.newSource(
@@ -353,6 +386,12 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		process_pthread_exit_worker(function, isMain);
 	}
 
+	/**
+	 * TODO javadoc
+	 * 
+	 * @param node
+	 * @param isMain
+	 */
 	private void process_pthread_exit_worker(ASTNode node, boolean isMain) {
 		for (ASTNode child : node.children()) {
 			if (child == null)
@@ -455,7 +494,12 @@ public class Pthread2CIVLWorker extends BaseWorker {
 				this.newSource("return statement", CParser.RETURN), nullNode);
 	}
 
-	private boolean isVoidPointer(TypeNode type) {
+	/**
+	 * 
+	 * @param type
+	 * @return
+	 */
+	private boolean isVoidPointerType(TypeNode type) {
 		if (type.kind() == TypeNodeKind.POINTER) {
 			PointerTypeNode pointer = (PointerTypeNode) type;
 
