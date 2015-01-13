@@ -331,15 +331,16 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		if (name.equals("main")) {
 			process_pthread_exit(function, true);
 			ExpressionNode ZERO = this.integerConstant(0);
-
-			if (returnType.getType().kind() == TypeKind.VOID)
-				function.getBody().addSequenceChild(
+			if(!hasReturn(function)){
+				if (returnType.getType().kind() == TypeKind.VOID)
+					function.getBody().addSequenceChild(
 						nodeFactory.newReturnNode(this.newSource(
 								"return statement", CParser.RETURN), null));
-			else
-				function.getBody().addSequenceChild(
+				else
+					function.getBody().addSequenceChild(
 						nodeFactory.newReturnNode(this.newSource(
 								"return statement", CParser.RETURN), ZERO));
+			}
 			freePoolBeforeMainReturn(function);
 			return;
 
@@ -505,6 +506,26 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 			if (pointer.referencedType().kind() == TypeNodeKind.VOID)
 				return true;
+		}
+		return false;
+	}
+	
+	/*
+	 * 
+	 */
+	
+	private boolean hasReturn(ASTNode node){
+		if(node instanceof ReturnNode){
+			return true;
+		}
+		else{
+			for(ASTNode child: node.children()){
+				if(child!=null){
+					if(hasReturn(child)){
+						return true;
+					}
+				}
+			}
 		}
 		return false;
 	}
