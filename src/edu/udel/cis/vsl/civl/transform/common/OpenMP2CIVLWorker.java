@@ -2276,9 +2276,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 *         that are parsed from header files and will be moved up to the
 	 *         higher scope (i.e., the file scope of the final AST), and the
 	 *         list of variable declaration nodes.
+	 * @throws SyntaxException 
 	 */
 	private Triple<List<ExternalDefinitionNode>, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> program(
-			SequenceNode<ExternalDefinitionNode> root) {
+			SequenceNode<ExternalDefinitionNode> root) throws SyntaxException {
 		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> vars = new ArrayList<>();
 		List<ExternalDefinitionNode> items;
@@ -2297,8 +2298,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			if (sourceFile.equals("omp.cvl")) {
 				includedNodes.add(child);
 			} else if (sourceFile.endsWith(".cvh")
-					|| sourceFile.equals("comm.cvl")
-					|| sourceFile.equals("civlmpi.cvl")
 					|| sourceFile.equals("omp.cvl")
 					|| sourceFile.equals("civlc.cvl")
 					|| sourceFile.equals("concurrency.cvl")
