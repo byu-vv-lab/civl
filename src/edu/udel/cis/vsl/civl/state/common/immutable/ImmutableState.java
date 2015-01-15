@@ -616,7 +616,8 @@ public class ImmutableState implements State {
 				return scopeId;
 			scopeId = getParentId(scopeId);
 		}
-		//throw new IllegalArgumentException("Variable not in scope: " + variable);
+		// throw new IllegalArgumentException("Variable not in scope: " +
+		// variable);
 		return -1;
 	}
 
@@ -629,15 +630,25 @@ public class ImmutableState implements State {
 
 	@Override
 	public int getDyscope(int pid, Scope scope) {
-		int staticId = scope.id();
-		int dyScopeId = getProcessState(pid).getDyscopeId();
+		return this.getDyscope(pid, scope.id());
+	}
+
+	@Override
+	public int getDyscope(int pid, int scopeID) {
+		ImmutableProcessState proc = getProcessState(pid);
+		int stackSize = proc.stackSize();
+		int stackIndex = 0;
+		int dyScopeId = proc.getStackEntry(stackIndex).scope();
 		DynamicScope dyScope = this.getDyscope(dyScopeId);
 
-		//TODO: why parent scope id ? why not the scope in the next position of the stack ?
-		while (dyScope.lexicalScope().id() != staticId) {
+		while (dyScope.lexicalScope().id() != scopeID) {
 			dyScopeId = this.getParentId(dyScopeId);
-			if (dyScopeId < 0)
-				return -1;
+			if (dyScopeId < 0) {
+				stackIndex++;
+				if (stackIndex >= stackSize)
+					return -1;
+				dyScopeId = proc.getStackEntry(stackIndex).scope();
+			}
 			dyScope = this.getDyscope(dyScopeId);
 		}
 		return dyScopeId;

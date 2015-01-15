@@ -239,6 +239,23 @@ public interface State {
 	int getDyscope(int pid, Scope scope);
 
 	/**
+	 * Given a PID and a static scope ID , returns the ID of the first dyscope
+	 * corresponding to the static scope and reachable from the given process.
+	 * The search starts at the dyscope referenced by the top frame of the
+	 * process's call stack, and walks its way up in the dyscope tree until it
+	 * finds a dyscope whose lexical scope is the specified one.
+	 * 
+	 * @param pid
+	 *            The ID of the process whose current dynamic scope is the
+	 *            starting point of the searching.
+	 * @param scope
+	 *            The static scope ID
+	 * @return the ID of the first dynamic scope corresponding to the static
+	 *         scope and reachable from the given process.
+	 */
+	int getDyscope(int pid, int scopeID);
+
+	/**
 	 * Returns the set of process states as an <code>Iterable</code>. This
 	 * should not be modified. It is convenient when you want to iterate over
 	 * the states, e.g.,
