@@ -102,4 +102,9 @@ cudaError_t cudaSetDevice(int device_id);
  */
 void __syncthreads( void );
 
+uint3 threadIdx;
+uint3 blockIdx;
+dim3 gridDim;
+dim3 blockDim;
+
 #endif
