@@ -523,7 +523,8 @@ public class MPI2CIVLWorker extends BaseWorker {
 					|| sourceFile.equals("concurrency.cvl")
 					|| sourceFile.equals("stdio.cvl")
 					|| sourceFile.equals("pthread.cvl")
-					|| sourceFile.equals("string.cvl"))
+					|| sourceFile.equals("string.cvl")
+					|| sourceFile.equals("civlc-omp.cvl"))
 				includedNodes.add(child);
 			else if (sourceFile.equals("pthread-c.cvl")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
