@@ -197,7 +197,7 @@ public class StatementSet implements Statement {
 
 	@Override
 	public StatementKind statementKind() {
-		return StatementKind.OTHERS;
+		return StatementKind.STATEMENT_SET;
 	}
 
 	@Override

@@ -4,6 +4,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -51,6 +52,13 @@ public class CommonHereOrRootExpression extends CommonExpression implements
 		if (this.isRoot)
 			return "$root";
 		return "$here";
+	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		HereOrRootExpression that = (HereOrRootExpression) expression;
+
+		return this.isRoot == that.isRoot();
 	}
 
 }

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -109,6 +110,13 @@ public class CommonVariableExpression extends CommonExpression implements
 	@Override
 	public LHSExpressionKind lhsExpressionKind() {
 		return LHSExpressionKind.VARIABLE;
+	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		VariableExpression that = (VariableExpression) expression;
+
+		return this.variable.equals(that.variable());
 	}
 
 }

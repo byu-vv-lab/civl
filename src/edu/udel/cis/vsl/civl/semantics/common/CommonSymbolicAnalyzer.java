@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
@@ -390,9 +391,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			SymbolicExpression value = dyscope.getValue(i);
 			String varName = variable.name().name();
 
-			if (varName.equals(ModelFactory.HEAP_VAR) && value.isNull()) {
+			if (varName.equals(ModelConfiguration.HEAP_VAR) && value.isNull()) {
 				continue;
-			} else if (varName.equals(ModelFactory.ATOMIC_LOCK_VARIABLE)
+			} else if (varName.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE)
 					&& (value.isNull() || modelFactory.isProcessDefined(
 							variable.getSource(), value).isFalse())) {
 				continue;
@@ -863,7 +864,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			case ARRAY_LAMBDA:
 				return "(" + arguments[0] + ")";
-//				return symbolicExpression.toStringBufferLong().toString();
+				// return symbolicExpression.toStringBufferLong().toString();
 			case ARRAY_READ:
 				result.append(arguments[0].toStringBuffer(true));
 				result.append("[");
@@ -941,8 +942,10 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				int count = 0;
 				boolean first = true;
 
-				if(arguments[0] instanceof SymbolicExpression)
-					result.append(this.symbolicExpressionToString(source, state, (SymbolicExpression) arguments[0], atomize, prefix, separate));
+				if (arguments[0] instanceof SymbolicExpression)
+					result.append(this.symbolicExpressionToString(source,
+							state, (SymbolicExpression) arguments[0], atomize,
+							prefix, separate));
 				else
 					result.append(arguments[0].toStringBuffer(true));
 				result.append("[");

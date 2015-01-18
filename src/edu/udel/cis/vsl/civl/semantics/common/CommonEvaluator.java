@@ -53,7 +53,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
@@ -81,6 +81,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
+import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -331,6 +332,8 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private SymbolicAnalyzer symbolicAnalyzer;
 
+	private MemoryUnitEvaluator memUnitEvaluator;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -360,6 +363,8 @@ public class CommonEvaluator implements Evaluator {
 		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
 		this.universe = stateFactory.symbolicUniverse();
+		this.memUnitEvaluator = new CommonMemoryUnitEvaluator(symbolicUtil,
+				this, universe);
 		pointerType = modelFactory.pointerSymbolicType();
 		functionPointerType = modelFactory.functionPointerSymbolicType();
 		heapType = modelFactory.heapSymbolicType();
@@ -431,8 +436,8 @@ public class CommonEvaluator implements Evaluator {
 	 *         pointer.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Evaluation dereference(CIVLSource source, State state,
-			String process, SymbolicExpression pointer, boolean checkOutput,
+	Evaluation dereference(CIVLSource source, State state, String process,
+			SymbolicExpression pointer, boolean checkOutput,
 			boolean analysisOnly) throws UnsatisfiablePathConditionException {
 		if (pointer.operator() != SymbolicOperator.CONCRETE) {
 			CIVLExecutionException se = new CIVLExecutionException(
@@ -1937,7 +1942,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	private Evaluation evaluateSizeofExpressionExpression(State state, int pid,
-			SizeofExpressionExpression expression)
+			SizeofExpression expression)
 			throws UnsatisfiablePathConditionException {
 		return evaluateSizeofType(expression.getSource(), state, pid,
 				expression.getArgument().getExpressionType());
@@ -3106,7 +3111,7 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case SIZEOF_EXPRESSION:
 			result = evaluateSizeofExpressionExpression(state, pid,
-					(SizeofExpressionExpression) expression);
+					(SizeofExpression) expression);
 			break;
 		case STRUCT_OR_UNION_LITERAL:
 			result = evaluateStructOrUnionLiteral(state, pid,
@@ -3522,7 +3527,7 @@ public class CommonEvaluator implements Evaluator {
 		case SIZEOF_TYPE:
 			break;
 		case SIZEOF_EXPRESSION:
-			SizeofExpressionExpression sizeofExpression = (SizeofExpressionExpression) expression;
+			SizeofExpression sizeofExpression = (SizeofExpression) expression;
 
 			memoryUnitsOfExpression(state, pid, sizeofExpression.getArgument(),
 					memoryUnits);
@@ -4036,5 +4041,10 @@ public class CommonEvaluator implements Evaluator {
 			ret_pair.right = ret_type;
 			return ret_pair;
 		}
+	}
+
+	@Override
+	public MemoryUnitEvaluator memoryUnitEvaluator() {
+		return this.memUnitEvaluator;
 	}
 }

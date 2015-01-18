@@ -342,4 +342,11 @@ public class CommonBinaryExpression extends CommonExpression implements
 					this);
 		}
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		BinaryExpression that = (BinaryExpression) expression;
+
+		return this.left.equals(that.left()) && this.right.equals(that.right());
+	}
 }

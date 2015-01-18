@@ -207,4 +207,13 @@ public class CommonConditionalExpression extends CommonExpression implements
 		return variableSet;
 	}
 
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		ConditionalExpression that = (ConditionalExpression) expression;
+
+		return this.condition.equals(that.getCondition())
+				&& this.trueBranch.equals(that.getTrueBranch())
+				&& this.falseBranch.equals(that.getFalseBranch());
+	}
+
 }

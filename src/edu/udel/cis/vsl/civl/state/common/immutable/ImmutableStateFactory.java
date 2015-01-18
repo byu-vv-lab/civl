@@ -2,10 +2,12 @@ package edu.udel.cis.vsl.civl.state.common.immutable;
 
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
 
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -16,8 +18,10 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
@@ -368,9 +372,12 @@ public class ImmutableStateFactory implements StateFactory {
 									: oldToNew[oldParent], oldParentIdentifier);
 				}
 			}
-			for (int pid = 0; pid < numProcs; pid++)
+			for (int pid = 0; pid < numProcs; pid++) {
 				newProcesses[pid] = theState.getProcessState(pid)
 						.updateDyscopes(oldToNew);
+				newProcesses[pid] = this.updateDyscopesForMemoryUnitSet(
+						scopeSubMap, newProcesses[pid]);
+			}
 			theState = ImmutableState.newState(theState, newProcesses,
 					newScopes, null);
 		}
@@ -425,6 +432,7 @@ public class ImmutableStateFactory implements StateFactory {
 		state = addProcess(state, function, arguments, -1);
 		state = this.setVariable(state, atomicVar.vid(), 0,
 				modelFactory.undefinedProcessValue());
+		state = this.updateReachableMemUnits(state, 0);
 		return canonic(state, false, false, false);
 	}
 
@@ -478,9 +486,20 @@ public class ImmutableStateFactory implements StateFactory {
 		ImmutableProcessState process = theState.getProcessState(pid);
 		ImmutableProcessState[] processArray = theState.copyProcessStates();
 		ImmutableDynamicScope[] newScopes = theState.copyScopes();
+		DynamicScope dyscopeExpired = state.getDyscope(process.getDyscopeId());
+		Scope staticScope = dyscopeExpired.lexicalScope();
 
 		processArray[pid] = process.pop();
 		setReachablesForProc(newScopes, processArray[pid]);
+		if (!processArray[pid].hasEmptyStack())
+			if (staticScope.hasVariable()) {
+				processArray[pid] = removeReachableMemUnitsFromDyscopes(
+						new HashSet<Integer>(Arrays.asList(process
+								.getDyscopeId())), processArray[pid]);
+				if (staticScope.hasVariableWtPointer())
+					processArray[pid] = updateReachableMemUnitsWtPointer(state,
+							processArray[pid]);
+			}
 		theState = new ImmutableState(processArray, newScopes,
 				theState.getPathCondition());
 		return theState;
@@ -548,6 +567,9 @@ public class ImmutableStateFactory implements StateFactory {
 					newProcesses[newPid] = theState.getProcessState(i).setPid(
 							newPid);
 			}
+			// newReachableMemUnitsMap =
+			// updateProcessReferencesInReachableMemoryUnitsMap(
+			// theState, oldToNewPidMap);
 			newScopes = updateProcessReferencesInScopes(theState,
 					oldToNewPidMap);
 			theState = ImmutableState.newState(theState, newProcesses,
@@ -560,7 +582,9 @@ public class ImmutableStateFactory implements StateFactory {
 	public State terminateProcess(State state, int pid) {
 		ImmutableState theState = (ImmutableState) state;
 		ImmutableProcessState emptyProcessState = new ImmutableProcessState(
-				pid, state.getProcessState(pid).identifier());
+				pid, state.getProcessState(pid).identifier(),
+				new HashMap<SymbolicExpression, Boolean>(0),
+				new HashMap<SymbolicExpression, Boolean>(0));
 
 		return theState.setProcessState(pid, emptyProcessState);
 	}
@@ -606,6 +630,7 @@ public class ImmutableStateFactory implements StateFactory {
 	 * @return
 	 */
 	@Override
+	// TODO UPDATE reachable mem units
 	public ImmutableState setLocation(State state, int pid, Location location) {
 		ImmutableState theState = (ImmutableState) state;
 		ImmutableProcessState[] processArray = theState.copyProcessStates();
@@ -616,18 +641,21 @@ public class ImmutableStateFactory implements StateFactory {
 		Scope ss0 = dynamicScope.lexicalScope();
 		Scope ss1 = location.scope();
 
-		if (ss0 == ss1) {
+		if (ss0 == ss1) {// remains in the same dyscope
 			processArray[pid] = theState.getProcessState(pid)
 					.replaceTop(
 							stackEntry(location, dynamicScopeId,
 									dynamicScopeIdentifier));
-			return theState.setProcessStates(processArray);
-		} else {
+			theState = theState.setProcessStates(processArray);
+			return updateReachableMemUnitsAccess(theState, pid);
+		} else {// a different dyscope is encountered
 			Scope[] joinSequence = joinSequence(ss0, ss1);
 			Scope join = joinSequence[0];
+			Set<Integer> dyscopeIDsequence = new HashSet<>();
 
 			// iterate UP...
 			while (dynamicScope.lexicalScope() != join) {
+				dyscopeIDsequence.add(dynamicScopeId);
 				dynamicScopeId = theState.getParentId(dynamicScopeId);
 				if (dynamicScopeId < 0)
 					throw new RuntimeException("State is inconsistent");
@@ -635,9 +663,14 @@ public class ImmutableStateFactory implements StateFactory {
 				dynamicScopeIdentifier = dynamicScope.identifier();
 			}
 			if (joinSequence.length == 1) {
+				// the previous scope(s) just disappear
 				processArray[pid] = theState.getProcessState(pid).replaceTop(
 						stackEntry(location, dynamicScopeId,
 								dynamicScopeIdentifier));
+				processArray[pid] = this.removeReachableMemUnitsFromDyscopes(
+						dyscopeIDsequence, processArray[pid]);
+				processArray[pid] = this.updateReachableMemUnitsWtPointer(
+						theState, processArray[pid]);
 				theState = theState.setProcessStates(processArray);
 			} else {
 				// iterate DOWN, adding new dynamic scopes...
@@ -646,6 +679,7 @@ public class ImmutableStateFactory implements StateFactory {
 				int index = 0;
 				ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[newNumScopes];
 				ImmutableProcessState process = processArray[pid];
+				int[] newDyscopes = new int[joinSequence.length - 1];
 
 				for (; index < oldNumScopes; index++)
 					newScopes[index] = theState.getDyscope(index);
@@ -658,16 +692,22 @@ public class ImmutableStateFactory implements StateFactory {
 							dynamicScopeId, dynamicScopeIdentifier, index,
 							reachers);
 					dynamicScopeId = index;
+					newDyscopes[i - 1] = dynamicScopeId;
 					index++;
 				}
 				process = process
 						.replaceTop(stackEntry(location, dynamicScopeId,
 								newScopes[dynamicScopeId].identifier()));
 				setReachablesForProc(newScopes, process);
+				theState = new ImmutableState(processArray, newScopes,
+						theState.getPathCondition());
+				process = addReachableMemUnitsFromDyscope(newDyscopes,
+						newScopes, theState, process);
 				processArray[pid] = process;
 				theState = new ImmutableState(processArray, newScopes,
 						theState.getPathCondition());
 			}
+			theState = updateReachableMemUnitsAccess(theState, pid);
 			return theState;
 		}
 	}
@@ -868,7 +908,11 @@ public class ImmutableStateFactory implements StateFactory {
 
 		newProcesses = theState.copyAndExpandProcesses();
 		newProcesses[numProcs] = new ImmutableProcessState(numProcs,
-				this.processCount++);
+				this.processCount++,
+				new HashMap<SymbolicExpression, Boolean>(0),
+				new HashMap<SymbolicExpression, Boolean>(0));
+		// TODO updateReachableMemUnitsForProcess(state,
+		// newProcesses[numProcs]);
 		theState = theState.setProcessStates(newProcesses);
 		return theState;
 	}
@@ -1208,8 +1252,16 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 		newProcesses[pid] = state.getProcessState(pid).push(
 				stackEntry(null, sid, newScopes[sid].identifier()));
-		state = new ImmutableState(newProcesses, newScopes,
-				state.getPathCondition());
+
+		// newProcesses[pid] = addReachableMemUnitsFromDyscope(sid,
+		// newScopes[sid], newProcesses[pid]);
+		// state = new ImmutableState(newProcesses, newScopes,
+		// state.getPathCondition());
+		state = ImmutableState.newState(state, newProcesses, newScopes, null);
+		newProcesses[pid] = this.addReachableMemUnitsFromDyscope(
+				new int[] { sid }, newScopes, state, newProcesses[pid],
+				function.startLocation());
+		state = ImmutableState.newState(state, newProcesses, null, null);
 		state = setLocation(state, pid, function.startLocation());
 		return state;
 	}
@@ -1705,4 +1757,296 @@ public class ImmutableStateFactory implements StateFactory {
 		return nameId;
 	}
 
+	/**
+	 * Finds pointers contained in a given expression recursively.
+	 * 
+	 * @param expr
+	 * @param set
+	 * @param state
+	 */
+	private void findPointersInExpression(SymbolicExpression expr,
+			Map<SymbolicExpression, Boolean> set, State state, boolean writable) {
+		SymbolicType type = expr.type();
+
+		// TODO check comm type
+		if (type != null && !type.equals(modelFactory.heapSymbolicType())
+				&& !type.equals(modelFactory.bundleSymbolicType())) {
+			// need to eliminate heap type as well. each proc has its own.
+			if (modelFactory.pointerSymbolicType().equals(type)) {
+				SymbolicExpression pointerValue;
+				SymbolicExpression eval;
+
+				set.put(expr, writable);
+				if (expr.operator() == SymbolicOperator.CONCRETE
+						&& symbolicUtil.getDyscopeId(null, expr) >= 0) {
+					/*
+					 * If the expression is an arrayElementReference expression,
+					 * and finally it turns that the array type has length 0,
+					 * return immediately. Because we can not dereference it and
+					 * the dereference exception shouldn't report here.
+					 */
+					if (symbolicUtil.getSymRef(expr).isArrayElementReference()) {
+						SymbolicExpression arrayPointer = symbolicUtil
+								.parentPointer(null, expr);
+
+						eval = this.dereference(state, arrayPointer);
+						/* Check if it's length == 0 */
+						if (universe.length(eval).isZero())
+							return;
+					}
+					pointerValue = this.dereference(state, expr);
+					if (pointerValue == null)
+						return;
+					if (pointerValue.operator() == SymbolicOperator.CONCRETE
+							&& pointerValue.type() != null
+							&& pointerValue.type().equals(
+									modelFactory.pointerSymbolicType()))
+						findPointersInExpression(pointerValue, set, state,
+								writable);
+				}
+			} else {
+				int numArgs = expr.numArguments();
+
+				for (int i = 0; i < numArgs; i++) {
+					SymbolicObject arg = expr.argument(i);
+
+					findPointersInObject(arg, set, state, writable);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Finds all the pointers that can be dereferenced inside a symbolic object.
+	 * 
+	 * @param object
+	 *            a symbolic object
+	 * @param set
+	 *            a set to which the pointer values will be added
+	 * @param heapType
+	 *            the heap type, which will be ignored
+	 */
+	private void findPointersInObject(SymbolicObject object,
+			Map<SymbolicExpression, Boolean> set, State state, boolean writable) {
+		switch (object.symbolicObjectKind()) {
+		case EXPRESSION:
+			findPointersInExpression((SymbolicExpression) object, set, state,
+					writable);
+			break;
+		case EXPRESSION_COLLECTION:
+			for (SymbolicExpression expr : (SymbolicCollection<?>) object)
+				findPointersInExpression(expr, set, state, writable);
+			break;
+		default:
+			// ignore types and primitives, they don't have any pointers
+			// you can dereference.
+		}
+	}
+
+	private SymbolicExpression dereference(State state,
+			SymbolicExpression pointer) {
+		int sid = symbolicUtil.getDyscopeId(null, pointer);
+		int vid = symbolicUtil.getVariableId(null, pointer);
+		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
+		SymbolicExpression variableValue;
+		SymbolicExpression deref;
+
+		variableValue = state.getDyscope(sid).getValue(vid);
+		try {
+			deref = universe.dereference(variableValue, symRef);
+		} catch (SARLException e) {
+			return null;
+		}
+		return deref;
+	}
+
+	// TODO
+	private ImmutableProcessState updateDyscopesForMemoryUnitSet(
+			Map<SymbolicExpression, SymbolicExpression> scopeSubMap,
+			ImmutableProcessState process) {
+		Map<SymbolicExpression, Boolean> reachable = new HashMap<>(), reachableByPointer = new HashMap<>();
+
+		for (Map.Entry<SymbolicExpression, Boolean> entry : process
+				.getReachableMemUnitsWoPointer().entrySet()) {
+			SymbolicExpression newMemUnit = universe.substitute(entry.getKey(),
+					scopeSubMap);
+
+			if (symbolicUtil.getDyscopeId(null, newMemUnit) >= 0)
+				reachable.put(newMemUnit, entry.getValue());
+		}
+		for (Map.Entry<SymbolicExpression, Boolean> entry : process
+				.getReachableMemUnitsWtPointer().entrySet()) {
+			SymbolicExpression newMemUnit = universe.substitute(entry.getKey(),
+					scopeSubMap);
+
+			if (symbolicUtil.getDyscopeId(null, newMemUnit) >= 0)
+				reachableByPointer.put(newMemUnit, entry.getValue());
+		}
+		process = process.setReachableMemUnits(reachable);
+		return process.setReachableMemUnitsWtPointer(reachableByPointer);
+	}
+
+	private ImmutableProcessState updateReachableMemUnitsWtPointer(State state,
+			ImmutableProcessState process) {
+		Set<MemoryUnitExpression> reachableMemUnitsWtPointer = process
+				.getLocation().reachableMemUnitsWtPointer();
+		Map<SymbolicExpression, Boolean> reachableWtPointer = new HashMap<>();
+		ReferenceExpression identity = universe.identityReference();
+
+		for (MemoryUnitExpression memUnit : reachableMemUnitsWtPointer) {
+			SymbolicExpression pointer = symbolicUtil.makePointer(
+					state.getDyscope(process.getPid(), memUnit.scopeId()),
+					memUnit.variableId(), identity);
+
+			reachableWtPointer.put(pointer, memUnit.writable());
+			this.findPointersInExpression(pointer, reachableWtPointer, state,
+					memUnit.writable());
+		}
+		return process.setReachableMemUnitsWtPointer(reachableWtPointer);
+	}
+
+	private ImmutableProcessState updateReachableMemUnitsWoPointer(State state,
+			ImmutableProcessState process) {
+		Set<MemoryUnitExpression> reachableMemUnits = process.getLocation()
+				.reachableMemUnitsWoPointer();
+		Map<SymbolicExpression, Boolean> reachable = new HashMap<>();
+		ReferenceExpression identity = universe.identityReference();
+
+		for (MemoryUnitExpression memUnit : reachableMemUnits) {
+			SymbolicExpression pointer = symbolicUtil.makePointer(
+					state.getDyscope(process.getPid(), memUnit.scopeId()),
+					memUnit.variableId(), identity);
+
+			reachable.put(pointer, memUnit.writable());
+		}
+		return process.setReachableMemUnits(reachable);
+	}
+
+	private ImmutableProcessState removeReachableMemUnitsFromDyscopes(
+			Set<Integer> dyscopesExpired, ImmutableProcessState process) {
+		Map<SymbolicExpression, Boolean> newReachableMem = new HashMap<>();
+
+		for (Map.Entry<SymbolicExpression, Boolean> entry : process
+				.getReachableMemUnitsWoPointer().entrySet()) {
+			int dyscopeID = symbolicUtil.getDyscopeId(null, entry.getKey());
+
+			if (!dyscopesExpired.contains(dyscopeID))
+				newReachableMem.put(entry.getKey(), entry.getValue());
+		}
+		return process.setReachableMemUnits(newReachableMem);
+	}
+
+	private ImmutableProcessState addReachableMemUnitsFromDyscope(
+			int[] dyscopeIDs, ImmutableDynamicScope[] dyscopes,
+			ImmutableState state, ImmutableProcessState process) {
+		return addReachableMemUnitsFromDyscope(dyscopeIDs, dyscopes, state,
+				process, null);
+	}
+
+	private ImmutableProcessState addReachableMemUnitsFromDyscope(
+			int[] dyscopeIDs, ImmutableDynamicScope[] dyscopes,
+			ImmutableState state, ImmutableProcessState process,
+			Location location) {
+		Map<SymbolicExpression, Boolean> reachableMUwoPointer = new HashMap<>(
+				process.getReachableMemUnitsWoPointer());
+		Map<SymbolicExpression, Boolean> reachableMUwtPointer = new HashMap<>(
+				process.getReachableMemUnitsWtPointer());
+		Set<Variable> writableVars = location != null ? location
+				.writableVariables() : process.getLocation()
+				.writableVariables();
+
+		for (int i = 0; i < dyscopeIDs.length; i++) {
+			int dyscopeID = dyscopeIDs[i];
+			DynamicScope dyscope = dyscopes[dyscopeID];
+
+			for (Variable variable : dyscope.lexicalScope().variables()) {
+				SymbolicExpression mu;
+
+				if (variable.vid() == ModelConfiguration.heapVariableIndex)
+					continue;
+				mu = symbolicUtil.makePointer(dyscopeID, variable.vid(),
+						universe.identityReference());
+				if (!variable.hasPointerRef()) {
+					reachableMUwoPointer.put(mu,
+							writableVars.contains(variable));
+				} else {
+					reachableMUwtPointer.put(mu,
+							writableVars.contains(variable));
+					this.findPointersInExpression(mu, reachableMUwtPointer,
+							state, writableVars.contains(variable));
+				}
+			}
+		}
+		return process.setReachableMemUnits(reachableMUwoPointer);
+	}
+
+	@Override
+	public void printReachableMemoryUnits(PrintStream out, State state) {
+		for (int i = 0; i < state.numProcs(); i++) {
+			ProcessState proc = state.getProcessState(i);
+
+			if (proc == null || proc.hasEmptyStack())
+				continue;
+			out.println("reachable memory units of process " + i + ":");
+			for (Map.Entry<SymbolicExpression, Boolean> entry : proc
+					.getReachableMemUnitsWoPointer().entrySet()) {
+				out.print(entry.getKey());
+				if (entry.getValue())
+					out.print(" (w)");
+				out.print("\t");
+			}
+			for (Map.Entry<SymbolicExpression, Boolean> entry : proc
+					.getReachableMemUnitsWtPointer().entrySet()) {
+				out.print(entry.getKey());
+				if (entry.getValue())
+					out.print(" (w)");
+				out.print("\t");
+			}
+			out.println();
+		}
+	}
+
+	@Override
+	public ImmutableState updateReachableMemUnits(State state, int pid) {
+		ImmutableProcessState process = (ImmutableProcessState) state
+				.getProcessState(pid);
+		ImmutableProcessState[] processes = ((ImmutableState) state)
+				.copyProcessStates();
+
+		process = this.updateReachableMemUnitsWoPointer(state, process);
+		processes[pid] = this.updateReachableMemUnitsWtPointer(state, process);
+		return ImmutableState.newState(((ImmutableState) state), processes,
+				null, null);
+	}
+
+	private ImmutableState updateReachableMemUnitsAccess(ImmutableState state,
+			int pid) {
+		ImmutableProcessState[] processes = state.copyProcessStates();
+		// ImmutableProcessState process = processes[pid];
+		Map<SymbolicExpression, Boolean> reachabeMemUnitsWoPointer = new HashMap<>(
+				processes[pid].getReachableMemUnitsWoPointer());
+		Location location = processes[pid].getLocation();
+		Set<Variable> writableVars = location.writableVariables();
+
+		for (Map.Entry<SymbolicExpression, Boolean> entry : processes[pid]
+				.getReachableMemUnitsWoPointer().entrySet()) {
+			if (entry.getValue()) {
+				int dyscopeID = this.symbolicUtil.getDyscopeId(null,
+						entry.getKey());
+				int varID = this.symbolicUtil.getVariableId(null,
+						entry.getKey());
+				Variable variable;
+				
+				if(dyscopeID<0)
+					continue;
+				 variable = state.getDyscope(dyscopeID).lexicalScope()
+						.variable(varID);
+				if (!writableVars.contains(variable))
+					reachabeMemUnitsWoPointer.put(entry.getKey(), false);
+			}
+		}
+		processes[pid] = processes[pid]
+				.setReachableMemUnits(reachabeMemUnitsWoPointer);
+		return ImmutableState.newState(state, processes, null, null);
+	}
 }

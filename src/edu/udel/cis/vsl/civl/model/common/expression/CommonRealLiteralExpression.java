@@ -8,6 +8,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -92,5 +93,10 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 	@Override
 	public void setLiteralConstantValue(SymbolicExpression value) {
 		this.constantValue = value;
+	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		return this.value == ((RealLiteralExpression)expression).value();
 	}
 }

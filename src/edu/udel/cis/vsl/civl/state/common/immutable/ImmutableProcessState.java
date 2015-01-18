@@ -6,10 +6,12 @@ package edu.udel.cis.vsl.civl.state.common.immutable;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * An ImmutableProcessState represents the state of a single process in a CIVL
@@ -126,6 +128,11 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	private int identifier;
 
+	private Map<SymbolicExpression, Boolean> reachableMemoryUnitsWoPointer;
+	// private Set<SymbolicExpression> reachableMemoryUnits;
+
+	private Map<SymbolicExpression, Boolean> reachableMemoryUnitsWtPointer;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -142,11 +149,15 @@ public class ImmutableProcessState implements ProcessState {
 	 *            the atomic count
 	 */
 	ImmutableProcessState(int pid, int identifier, StackEntry[] stack,
-			int atomicCount) {
+			int atomicCount,
+			Map<SymbolicExpression, Boolean> reachableMemoryUnits,
+			Map<SymbolicExpression, Boolean> reachableMemoryUnitsWtPointer) {
 		this.pid = pid;
 		this.callStack = stack;
 		this.atomicCount = atomicCount;
 		this.identifier = identifier;
+		this.reachableMemoryUnitsWoPointer = reachableMemoryUnits;
+		this.reachableMemoryUnitsWtPointer = reachableMemoryUnitsWtPointer;
 	}
 
 	/**
@@ -157,11 +168,26 @@ public class ImmutableProcessState implements ProcessState {
 	 * @param identifier
 	 *            The identifier of the process, which is not part of the state.
 	 */
-	ImmutableProcessState(int pid, int identifier) {
-		this(pid, identifier, new ImmutableStackEntry[0], 0);
+	ImmutableProcessState(int pid, int identifier,
+			Map<SymbolicExpression, Boolean> reachableMemoryUnits,
+			Map<SymbolicExpression, Boolean> reachableMemoryUnitsByPointer) {
+		this(pid, identifier, new ImmutableStackEntry[0], 0,
+				reachableMemoryUnits, reachableMemoryUnitsByPointer);
 	}
 
 	/* ********************** Package-private Methods ********************** */
+
+	ImmutableProcessState setReachableMemUnits(
+			Map<SymbolicExpression, Boolean> reachable) {
+		return new ImmutableProcessState(pid, this.identifier, callStack,
+				atomicCount, reachable, this.reachableMemoryUnitsWtPointer);
+	}
+
+	ImmutableProcessState setReachableMemUnitsWtPointer(
+			Map<SymbolicExpression, Boolean> reachable) {
+		return new ImmutableProcessState(pid, this.identifier, callStack,
+				atomicCount, this.reachableMemoryUnitsWoPointer, reachable);
+	}
 
 	/**
 	 * Makes this instance the unique representative of its equivalence class.
@@ -188,7 +214,8 @@ public class ImmutableProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 1, newStack, 0, callStack.length - 1);
 		return new ImmutableProcessState(pid, this.identifier, newStack,
-				this.atomicCount);
+				this.atomicCount, this.reachableMemoryUnitsWoPointer,
+				this.reachableMemoryUnitsWtPointer);
 	}
 
 	/**
@@ -206,7 +233,8 @@ public class ImmutableProcessState implements ProcessState {
 		System.arraycopy(callStack, 0, newStack, 1, callStack.length);
 		newStack[0] = newStackEntry;
 		return new ImmutableProcessState(pid, this.identifier, newStack,
-				this.atomicCount);
+				this.atomicCount, this.reachableMemoryUnitsWoPointer,
+				this.reachableMemoryUnitsWtPointer);
 	}
 
 	/**
@@ -228,7 +256,8 @@ public class ImmutableProcessState implements ProcessState {
 		System.arraycopy(callStack, 1, newStack, 1, length - 1);
 		newStack[0] = newStackEntry;
 		return new ImmutableProcessState(pid, this.identifier, newStack,
-				this.atomicCount);
+				this.atomicCount, this.reachableMemoryUnitsWoPointer,
+				this.reachableMemoryUnitsWtPointer);
 	}
 
 	/**
@@ -261,7 +290,8 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	ImmutableProcessState setPid(int pid) {
 		return new ImmutableProcessState(pid, this.identifier, callStack,
-				this.atomicCount);
+				this.atomicCount, this.reachableMemoryUnitsWoPointer,
+				this.reachableMemoryUnitsWtPointer);
 	}
 
 	/**
@@ -274,7 +304,8 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	ProcessState setStackEntries(StackEntry[] frames) {
 		return new ImmutableProcessState(pid, this.identifier, frames,
-				this.atomicCount);
+				this.atomicCount, this.reachableMemoryUnitsWoPointer,
+				this.reachableMemoryUnitsWtPointer);
 	}
 
 	/**
@@ -294,7 +325,8 @@ public class ImmutableProcessState implements ProcessState {
 		System.arraycopy(callStack, 0, newStack, 0, n);
 		newStack[index] = frame;
 		return new ImmutableProcessState(pid, this.identifier, newStack,
-				this.atomicCount);
+				this.atomicCount, this.reachableMemoryUnitsWoPointer,
+				this.reachableMemoryUnitsWtPointer);
 	}
 
 	/**
@@ -327,7 +359,8 @@ public class ImmutableProcessState implements ProcessState {
 			}
 		}
 		return stackChange ? new ImmutableProcessState(pid, this.identifier,
-				newStack, atomicCount) : this;
+				newStack, atomicCount, this.reachableMemoryUnitsWoPointer,
+				this.reachableMemoryUnitsWtPointer) : this;
 	}
 
 	/* ********************* Methods from ProcessState ********************* */
@@ -345,7 +378,9 @@ public class ImmutableProcessState implements ProcessState {
 	@Override
 	public ProcessState decrementAtomicCount() {
 		return new ImmutableProcessState(this.pid, this.identifier,
-				this.callStack, this.atomicCount - 1);
+				this.callStack, this.atomicCount - 1,
+				this.reachableMemoryUnitsWoPointer,
+				this.reachableMemoryUnitsWtPointer);
 	}
 
 	@Override
@@ -390,7 +425,9 @@ public class ImmutableProcessState implements ProcessState {
 	@Override
 	public ProcessState incrementAtomicCount() {
 		return new ImmutableProcessState(this.pid, this.identifier,
-				this.callStack, this.atomicCount + 1);
+				this.callStack, this.atomicCount + 1,
+				this.reachableMemoryUnitsWoPointer,
+				this.reachableMemoryUnitsWtPointer);
 	}
 
 	/**
@@ -438,6 +475,14 @@ public class ImmutableProcessState implements ProcessState {
 		return "p" + this.identifier;
 	}
 
+	public Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer() {
+		return this.reachableMemoryUnitsWoPointer;
+	}
+
+	public Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer() {
+		return this.reachableMemoryUnitsWtPointer;
+	}
+	
 	/* ************************ Methods from Object ************************ */
 
 	@Override

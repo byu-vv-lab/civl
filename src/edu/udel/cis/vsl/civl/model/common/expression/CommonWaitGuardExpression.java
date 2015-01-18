@@ -74,4 +74,10 @@ public class CommonWaitGuardExpression extends CommonExpression implements
 	public String toString() {
 		return "guard[" + this.joinedProcess + " terminated]";
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

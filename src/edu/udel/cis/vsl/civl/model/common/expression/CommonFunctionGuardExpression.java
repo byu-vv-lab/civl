@@ -61,4 +61,21 @@ public class CommonFunctionGuardExpression extends CommonExpression implements
 		return "guard[" + this.functionExpression + "()]";
 	}
 
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		FunctionGuardExpression that = (FunctionGuardExpression) expression;
+
+		if (this.functionExpression.equals(that.functionExpression())) {
+			int thisArgSize = this.arguments.size();
+
+			if (thisArgSize == that.arguments().size()) {
+				for (int i = 0; i < thisArgSize; i++)
+					if (!this.arguments.get(i).equals(that.arguments().get(i)))
+						return false;
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

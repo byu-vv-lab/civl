@@ -36,6 +36,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
@@ -45,7 +46,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
@@ -53,6 +54,11 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.ArraySliceReference;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.ArraySliceReference.ArraySliceKind;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.MemoryUnitReference;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.SelfReference;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.StructOrUnionFieldReference;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -112,15 +118,10 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  */
 public interface ModelFactory {
 
-	/**
-	 * The name of the heap variable
-	 */
-	public static final String HEAP_VAR = "__heap";
-
-	/**
-	 * The name of the atomic lock variable
-	 */
-	public static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
+//	/**
+//	 * The name of the atomic lock variable
+//	 */
+//	public static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
 
 	/* *********************************************************************
 	 * CIVL Types
@@ -650,7 +651,7 @@ public interface ModelFactory {
 	 *            an expression
 	 * @return a new sizeof expression
 	 */
-	SizeofExpressionExpression sizeofExpressionExpression(CIVLSource source,
+	SizeofExpression sizeofExpressionExpression(CIVLSource source,
 			Expression argument);
 
 	/**
@@ -757,6 +758,17 @@ public interface ModelFactory {
 			AbstractFunction function,
 			List<Pair<Variable, IntegerLiteralExpression>> partials,
 			List<Expression> arguments);
+
+	ArraySliceReference arraySliceReference(ArraySliceKind sliceKind,
+			Expression index);
+
+	SelfReference selfReference();
+
+	StructOrUnionFieldReference structFieldReference(int fieldIndex);
+
+	MemoryUnitExpression memoryUnitExpression(CIVLSource source, int scopeID,
+			int varID, CIVLType objetType, MemoryUnitReference reference,
+			boolean writable, boolean hasPinterRef);
 
 	/* *********************************************************************
 	 * Fragments and Statements

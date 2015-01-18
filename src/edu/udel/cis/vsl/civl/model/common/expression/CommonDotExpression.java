@@ -177,4 +177,12 @@ public class CommonDotExpression extends CommonExpression implements
 		return LHSExpressionKind.DOT;
 	}
 
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		DotExpression that = (DotExpression) expression;
+
+		return this.fieldIndex == that.fieldIndex()
+				&& this.structOrUnion.equals(that.structOrUnion());
+	}
+
 }

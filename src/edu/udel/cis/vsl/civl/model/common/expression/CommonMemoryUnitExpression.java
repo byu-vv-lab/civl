@@ -1,0 +1,145 @@
+package edu.udel.cis.vsl.civl.model.common.expression;
+
+import java.util.Set;
+
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.MemoryUnitReference;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+
+/**
+ * This represents a memory unit of (part of) a variable in a certain (static)
+ * scope.
+ * 
+ * @author Manchun Zheng (zmanchun)
+ *
+ */
+public class CommonMemoryUnitExpression extends CommonExpression implements
+		MemoryUnitExpression {
+
+	/**
+	 * The (static) scope ID.
+	 */
+	private int scopeID;
+
+	/**
+	 * The variable ID.
+	 */
+	private int varID;
+
+	/**
+	 * The type of the variable referred to by (scopeID, varID).
+	 */
+	private CIVLType objectType;
+
+	/**
+	 * The reference to the variable of this memory unit.
+	 */
+	private MemoryUnitReference reference;
+
+	private boolean writable;
+
+	private boolean hasPointerRef = false;
+
+	/**
+	 * Creates a memory unit expression.
+	 * 
+	 * @param source
+	 *            The source code information.
+	 * @param scopeId
+	 *            The static scope ID of the memory unit.
+	 * @param varId
+	 *            The variable ID that this memory unit refers to.
+	 * @param ref
+	 *            The reference that this memory unit holds for the variable.
+	 */
+	public CommonMemoryUnitExpression(CIVLSource source, int scopeId,
+			int varId, CIVLType objType, MemoryUnitReference ref,
+			boolean writable, boolean hasPointerRef) {
+		super(source, null, null);
+		this.scopeID = scopeId;
+		this.varID = varId;
+		this.objectType = objType;
+		this.reference = ref;
+		this.writable = writable;
+		this.hasPointerRef = hasPointerRef;
+	}
+
+	@Override
+	public int scopeId() {
+		return this.scopeID;
+	}
+
+	@Override
+	public int variableId() {
+		return this.varID;
+	}
+
+	@Override
+	public MemoryUnitReference reference() {
+		return this.reference;
+	}
+
+	@Override
+	public ExpressionKind expressionKind() {
+		return ExpressionKind.MEMORY_UNIT;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf(Scope scope) {
+		return null;
+	}
+
+	@Override
+	public Set<Variable> variableAddressedOf() {
+		return null;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj instanceof MemoryUnitExpression) {
+			MemoryUnitExpression that = (MemoryUnitExpression) obj;
+
+			if (scopeID == that.scopeId() && varID == that.variableId()
+					&& reference.equals(that.reference()))
+				return true;
+		}
+		return false;
+	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public CIVLType objectType() {
+		return this.objectType;
+	}
+
+	@Override
+	public boolean writable() {
+		return this.writable;
+	}
+
+	@Override
+	public boolean hasPointerRef() {
+		return this.hasPointerRef;
+	}
+
+	@Override
+	public String toString() {
+		String result;
+
+		result = "(" + scopeID + ", " + varID + ", " + reference + ")";
+		if (this.writable)
+			result = result + "[w]";
+		return result;
+	}
+}

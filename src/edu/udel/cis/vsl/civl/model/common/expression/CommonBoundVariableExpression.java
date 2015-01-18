@@ -6,6 +6,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -56,5 +57,11 @@ public class CommonBoundVariableExpression extends CommonExpression implements
 	@Override
 	public Set<Variable> variableAddressedOf() {
 		return null;
+	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		return this.name.name().equals(
+				((BoundVariableExpression) expression).name().name());
 	}
 }

@@ -621,8 +621,7 @@ public class AmpleSetWorker {
 			memUnits.addAll(memUnitsPartial);
 		}
 		switch (statement.statementKind()) {
-		case ASSIGN:
-		case CHOOSE: {
+		case ASSIGN: {
 			AssignStatement assignStatement = (AssignStatement) statement;
 
 			partialResult = memoryUnit(assignStatement.getLhs(), pid);

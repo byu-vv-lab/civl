@@ -520,6 +520,8 @@ public class ModelBuilderWorker {
 	 */
 	protected void staticAnalysis() {
 		Set<Variable> addressedOfVariables = new HashSet<>();
+		MemoryUnitExpressionAnalyzer memUnitAnalyzer = new MemoryUnitExpressionAnalyzer(
+				this.factory);
 
 		for (CIVLFunction f : model.functions()) {
 			// identify all purely local variables
@@ -564,6 +566,7 @@ public class ModelBuilderWorker {
 				factory.setImpactScopeOfLocation(loc);
 			}
 		}
+		memUnitAnalyzer.memoryUnitAnalysis(model);
 	}
 
 	/* *************************** Public Methods ************************** */

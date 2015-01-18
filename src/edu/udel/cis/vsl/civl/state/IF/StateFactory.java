@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.state.IF;
 
+import java.io.PrintStream;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -542,4 +544,9 @@ public interface StateFactory {
 	 */
 	State deallocate(State state, SymbolicExpression heapObjectPointer,
 			int dyscopeId, int mallocId, int index);
+
+	void printReachableMemoryUnits(PrintStream out, State state);
+
+	State updateReachableMemUnits(State state, int pid);
+
 }

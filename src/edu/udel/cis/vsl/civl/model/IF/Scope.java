@@ -143,7 +143,7 @@ public interface Scope extends Sourceable {
 	 *         types.
 	 */
 	Collection<Variable> variablesWithPointers();
-	
+
 	/**
 	 * A variable whose type is not a primitive type.
 	 * 
@@ -188,9 +188,13 @@ public interface Scope extends Sourceable {
 	void addFunction(CIVLFunction function);
 
 	CIVLFunction getFunction(Identifier name);
-	
+
 	CIVLFunction getFunction(String name);
 
 	void complete();
+
+	boolean hasVariable();
+
+	boolean hasVariableWtPointer();
 
 }

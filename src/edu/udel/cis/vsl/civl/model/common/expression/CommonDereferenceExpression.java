@@ -157,4 +157,11 @@ public class CommonDereferenceExpression extends CommonExpression implements
 	public LHSExpressionKind lhsExpressionKind() {
 		return LHSExpressionKind.DEREFERENCE;
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		DereferenceExpression that = (DereferenceExpression) expression;
+
+		return this.pointer.equals(that.pointer());
+	}
 }

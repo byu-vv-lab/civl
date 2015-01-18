@@ -125,4 +125,12 @@ public class CommonCastExpression extends CommonExpression implements
 		return variableSet;
 	}
 
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		CastExpression that = (CastExpression) expression;
+
+		return this.getCastType().equals(that.getCastType())
+				&& this.expression.equals(that.getExpression());
+	}
+
 }

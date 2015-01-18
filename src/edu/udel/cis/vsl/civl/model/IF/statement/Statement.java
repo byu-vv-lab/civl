@@ -29,11 +29,24 @@ public interface Statement extends Sourceable {
 	/**
 	 * Different kinds of statements.
 	 * 
-	 * @author zmanchun
+	 * @author Manchun Zheng (zmanchun)
 	 * 
 	 */
 	public enum StatementKind {
-		ASSIGN, ASSUME, CALL_OR_SPAWN, CHOOSE, MALLOC, MPI, NOOP, RETURN, OTHERS, STATEMENT_LIST, CIVL_FOR_ENTER, CIVL_PAR_FOR_ENTER, ASSERT
+		ASSERT, /** Assertion */
+		ASSIGN, /** Assignment */
+		ASSUME, /** Assumption */
+		CALL_OR_SPAWN, /** Function call or process spawn */
+		// CHOOSE, /** Non-deterministic choice */
+		CIVL_FOR_ENTER, /** CIVL for loop ($for) enter statement */
+		CIVL_PAR_FOR_ENTER, /** CIVL parallel for ($par) enter statement */
+		MALLOC, /** Memory allocation */
+		NOOP, /** No operation */
+		STATEMENT_SET, /** Non-malicious statement, e.g., statement set */
+		// TODO get rid of this
+		RETURN, /** Return statement */
+		STATEMENT_LIST,
+		/** Statement list */
 	}
 
 	/* **************************** Public Methods ************************* */
@@ -93,7 +106,6 @@ public interface Statement extends Sourceable {
 	 *         variables accessed.
 	 */
 	Scope statementScope();
-
 
 	/**
 	 * return true iff the statement has at least one dereferences

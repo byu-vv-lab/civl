@@ -6,7 +6,7 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
  * @author siegel
  * 
  */
-public interface SizeofExpressionExpression extends Expression {
+public interface SizeofExpression extends Expression {
 
 	Expression getArgument();
 

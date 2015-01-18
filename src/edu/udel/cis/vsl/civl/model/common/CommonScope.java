@@ -570,4 +570,13 @@ public class CommonScope extends CommonSourceable implements Scope {
 		return this.varsNeedSymbolicConstant;
 	}
 
+	@Override
+	public boolean hasVariable() {
+		return variables != null && variables.length > 0;
+	}
+
+	@Override
+	public boolean hasVariableWtPointer() {
+		return this.pointerRefs != null && this.pointerRefs.size() > 0;
+	}
 }

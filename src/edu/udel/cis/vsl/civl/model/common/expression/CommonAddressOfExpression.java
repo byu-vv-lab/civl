@@ -127,4 +127,11 @@ public class CommonAddressOfExpression extends CommonExpression implements
 	public String toString() {
 		return "&(" + operand + ")";
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		AddressOfExpression that = (AddressOfExpression) expression;
+
+		return this.operand.equals(that.operand());
+	}
 }

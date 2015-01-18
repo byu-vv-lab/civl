@@ -99,4 +99,21 @@ public class CommonAbstractFunctionCallExpression extends CommonExpression
 		result += ")";
 		return result;
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		AbstractFunctionCallExpression that = (AbstractFunctionCallExpression) expression;
+
+		if (this.function.name().name().equals(that.function().name().name())) {
+			int thisArgSize = this.arguments.size();
+
+			if (thisArgSize == that.arguments().size()) {
+				for (int i = 0; i < thisArgSize; i++)
+					if (!this.arguments.get(i).equals(that.arguments().get(i)))
+						return false;
+				return true;
+			}
+		}
+		return false;
+	}
 }

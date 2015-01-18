@@ -85,4 +85,10 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 	public Variable getLiteralDomCounter() {
 		return this.literalDomCounter;
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		return this.domain
+				.equals(((DomainGuardExpression) expression).domain());
+	}
 }

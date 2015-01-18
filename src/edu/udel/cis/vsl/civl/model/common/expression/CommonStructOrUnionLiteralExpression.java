@@ -136,4 +136,18 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 	public void setLiteralConstantValue(SymbolicExpression value) {
 		this.constantValue = value;
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		StructOrUnionLiteralExpression that = (StructOrUnionLiteralExpression) expression;
+		int thisFieldLength = this.fields.length;
+
+		if (thisFieldLength == that.fields().length) {
+			for (int i = 0; i < thisFieldLength; i++)
+				if (!this.fields[i].equals(that.fields()[i]))
+					return false;
+			return true;
+		}
+		return false;
+	}
 }

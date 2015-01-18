@@ -4,6 +4,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -49,6 +50,12 @@ public class CommonScopeofExpression extends CommonExpression implements
 	@Override
 	public String toString() {
 		return "$scopeof(" + argument + ")";
+	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		return this.argument
+				.equals(((ScopeofExpression) expression).argument());
 	}
 
 }

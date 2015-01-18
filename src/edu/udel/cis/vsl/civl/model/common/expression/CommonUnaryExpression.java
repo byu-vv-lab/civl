@@ -191,4 +191,12 @@ public class CommonUnaryExpression extends CommonExpression implements
 					+ operator, this);
 		}
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		UnaryExpression that = (UnaryExpression) expression;
+
+		return this.operator == that.operator()
+				&& this.operand.equals(that.operand());
+	}
 }

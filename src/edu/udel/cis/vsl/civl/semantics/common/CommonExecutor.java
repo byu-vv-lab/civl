@@ -542,6 +542,7 @@ public class CommonExecutor implements Executor {
 			state = assign(state, pid, process, statement.lhs(),
 					modelFactory.processValue(newPid));
 		state = stateFactory.setLocation(state, pid, statement.target());
+		state = stateFactory.updateReachableMemUnits(state, newPid);
 		return state;
 	}
 
@@ -614,8 +615,6 @@ public class CommonExecutor implements Executor {
 				return executeCall(state, pid, call);
 			else
 				return executeSpawn(state, pid, process, call);
-		case CHOOSE:
-			throw new CIVLInternalException("Should be unreachable", statement);
 		case MALLOC:
 			return executeMalloc(state, pid, process,
 					(MallocStatement) statement);
@@ -805,6 +804,7 @@ public class CommonExecutor implements Executor {
 			myValues.toArray(arguments);
 			newPid = state.numProcs();
 			state = stateFactory.addProcess(state, function, arguments, pid);
+			state = stateFactory.updateReachableMemUnits(state, newPid);
 			eval = evaluator.evaluatePointerAdd(state, process,
 					parProcsPointer, universe.integer(procPtrOffset++), false,
 					source).left; // no need for checking output

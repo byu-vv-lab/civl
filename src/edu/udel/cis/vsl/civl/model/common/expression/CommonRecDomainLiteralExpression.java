@@ -129,4 +129,19 @@ public class CommonRecDomainLiteralExpression extends CommonExpression
 	public void setLiteralConstantValue(SymbolicExpression value) {
 		this.constantValue = value;
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		RecDomainLiteralExpression that = (RecDomainLiteralExpression) expression;
+		int thisDim = this.dimension();
+
+		if (thisDim == that.dimension()) {
+			for (int i = 0; i < thisDim; i++)
+				if (!this.rangeAt(i).equals(that.rangeAt(i)))
+					return false;
+			return true;
+		}
+
+		return false;
+	}
 }

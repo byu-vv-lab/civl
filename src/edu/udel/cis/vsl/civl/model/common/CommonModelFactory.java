@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
@@ -52,6 +53,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ProcnullExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
@@ -61,7 +63,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpressionExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
@@ -70,6 +72,11 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.ArraySliceReference;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.ArraySliceReference.ArraySliceKind;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.MemoryUnitReference;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.SelfReference;
+import edu.udel.cis.vsl.civl.model.IF.expression.reference.StructOrUnionFieldReference;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -114,6 +121,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonFunctionIdentifierExp
 import edu.udel.cis.vsl.civl.model.common.expression.CommonHereOrRootExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonInitialValueExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonIntegerLiteralExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonMemoryUnitExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonProcnullExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonQuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
@@ -131,6 +139,9 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonSystemGuardExpression
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUnaryExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonVariableExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonArraySliceReference;
+import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonSelfReference;
+import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonStructOrUnionFieldReference;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssertStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
@@ -986,8 +997,8 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public SizeofExpressionExpression sizeofExpressionExpression(
-			CIVLSource source, Expression argument) {
+	public SizeofExpression sizeofExpressionExpression(CIVLSource source,
+			Expression argument) {
 		return new CommonSizeofExpression(source, this.integerType, argument);
 	}
 
@@ -1585,9 +1596,10 @@ public class CommonModelFactory implements ModelFactory {
 	private void createAtomicLockVariable(Scope scope) {
 		// Since the atomic lock variable is not declared explicitly in the CIVL
 		// model specification, the system source will be used here.
-		Variable variable = this.variable(this.systemSource, processType,
-				this.identifier(this.systemSource, ATOMIC_LOCK_VARIABLE),
-				scope.numVariables());
+		Variable variable = this.variable(this.systemSource, processType, this
+				.identifier(this.systemSource,
+						ModelConfiguration.ATOMIC_LOCK_VARIABLE), scope
+				.numVariables());
 
 		this.atomicLockVariableExpression = this.variableExpression(
 				this.systemSource, variable);
@@ -1766,7 +1778,7 @@ public class CommonModelFactory implements ModelFactory {
 		Set<Variable> myVariables = new HashSet<Variable>();
 
 		heapVariable = this.variable(source, modelBuilder.heapType,
-				this.identifier(source, HEAP_VAR), 0);
+				this.identifier(source, ModelConfiguration.HEAP_VAR), 0);
 		myVariables.add(heapVariable);
 		myVariables.addAll(variables);
 		newScope = new CommonScope(source, parent, myVariables, scopeID++);
@@ -2425,5 +2437,30 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CIVLCompleteDomainType completeDomainType(CIVLType rangeType, int dim) {
 		return new CommonCompleteDomainType(rangeType, dim);
+	}
+
+	@Override
+	public ArraySliceReference arraySliceReference(ArraySliceKind sliceKind,
+			Expression index) {
+		return new CommonArraySliceReference(sliceKind, index);
+	}
+
+	@Override
+	public SelfReference selfReference() {
+		return new CommonSelfReference();
+	}
+
+	@Override
+	public StructOrUnionFieldReference structFieldReference(int fieldIndex) {
+		return new CommonStructOrUnionFieldReference(fieldIndex);
+	}
+
+	@Override
+	public MemoryUnitExpression memoryUnitExpression(CIVLSource source,
+			int scopeID, int varID, CIVLType objType,
+			MemoryUnitReference reference, boolean writable,
+			boolean hasPinterRef) {
+		return new CommonMemoryUnitExpression(source, scopeID, varID, objType,
+				reference, writable, hasPinterRef);
 	}
 }

@@ -2,8 +2,10 @@ package edu.udel.cis.vsl.civl.state.IF;
 
 import java.io.PrintStream;
 import java.util.Iterator;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A ProcessState represents the state of a process (thread of execution) in a
@@ -140,4 +142,8 @@ public interface ProcessState {
 	 * @return The name of this process.
 	 */
 	String name();
+
+	Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer();
+
+	Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer();
 }

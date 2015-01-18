@@ -5,6 +5,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -87,5 +88,12 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 	@Override
 	public void setLiteralConstantValue(SymbolicExpression value) {
 		this.constantValue = value;
+	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		CharLiteralExpression that = (CharLiteralExpression) expression;
+
+		return this.value == that.value();
 	}
 }

@@ -25,6 +25,8 @@ import edu.udel.cis.vsl.gmc.EnablerIF;
  */
 public class PointeredEnabler extends CommonEnabler implements Enabler {
 
+	private boolean testNewAmpleSet = false;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -69,11 +71,20 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	@Override
 	protected TransitionSequence enabledTransitionsPOR(State state) {
 		TransitionSequence transitions = Semantics.newTransitionSequence(state);
-		AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this, evaluator,
-				this.symbolicAnalyzer, debugging, debugOut);
-		List<ProcessState> processStates = new LinkedList<>(
-				ampleWorker.ampleProcesses());// compute ample processes
+		List<ProcessState> processStates;
 
+		if (this.testNewAmpleSet) {
+			AmpleSetWorkerNew ampleWorker = new AmpleSetWorkerNew(state, this,
+					evaluator, debugging, debugOut);
+
+			processStates = new LinkedList<>(ampleWorker.ampleProcesses());
+			// compute ample processes
+		} else {
+			AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this,
+					evaluator, this.symbolicAnalyzer, debugging, debugOut);
+
+			processStates = new LinkedList<>(ampleWorker.ampleProcesses());
+		}
 		if (debugging || showAmpleSet) {
 			if (processStates.size() > 1) {
 				debugOut.print("ample processes at state "

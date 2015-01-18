@@ -4,6 +4,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -48,5 +49,11 @@ public class CommonSystemFunctionCallExpression extends CommonExpression
 	@Override
 	public void setExpressionType(CIVLType returnType) {
 		this.expressionType = returnType;
+	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

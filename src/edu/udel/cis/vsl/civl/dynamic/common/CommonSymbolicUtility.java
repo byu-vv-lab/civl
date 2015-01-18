@@ -1290,7 +1290,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 					"A domain object is neither a rectangular domain nor a literal domain",
 					source);
 	}
-
+	
 	/* ********************** Domain private helpers ************************** */
 	/**
 	 * Get the element in literal domain pointed by the given index.

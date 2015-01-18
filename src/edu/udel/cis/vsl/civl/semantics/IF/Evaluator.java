@@ -388,7 +388,8 @@ public interface Evaluator {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	public Pair<State, SymbolicArrayType> evaluateCIVLArrayType(State state,
-			int pid, CIVLArrayType type)
-			throws UnsatisfiablePathConditionException;
+	Pair<State, SymbolicArrayType> evaluateCIVLArrayType(State state, int pid,
+			CIVLArrayType type) throws UnsatisfiablePathConditionException;
+
+	MemoryUnitEvaluator memoryUnitEvaluator();
 }

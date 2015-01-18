@@ -5,6 +5,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.type.CommonPointerType;
@@ -50,5 +51,13 @@ public class CommonFunctionIdentifierExpression extends CommonExpression
 	@Override
 	public String toString() {
 		return function.name().name();
+	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		FunctionIdentifierExpression that = (FunctionIdentifierExpression) expression;
+
+		return this.function.name().name()
+				.equals(that.function().name().name());
 	}
 }

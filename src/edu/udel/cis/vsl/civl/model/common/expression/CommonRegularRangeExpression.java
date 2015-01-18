@@ -127,4 +127,13 @@ public class CommonRegularRangeExpression extends CommonExpression implements
 				stepValue));
 	}
 
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		RegularRangeExpression that = (RegularRangeExpression) expression;
+
+		return this.low.equals(that.getLow())
+				&& this.high.equals(that.getHigh())
+				&& this.step.equals(that.getStep());
+	}
+
 }

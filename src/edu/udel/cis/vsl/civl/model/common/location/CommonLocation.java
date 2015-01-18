@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -109,6 +110,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 * Is this the started location of a function?
 	 */
 	private boolean isStart = false;
+
+	private Set<MemoryUnitExpression> impactMemUnits;
+	private Set<MemoryUnitExpression> reachableMemUnitsWtPointer;
+	private Set<MemoryUnitExpression> reachableMemUnitsWoPointer;
+	private Set<CallOrSpawnStatement> systemCalls;
 
 	/* **************************** Constructors *************************** */
 
@@ -289,6 +295,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 				headString += ">";
 			}
 			headString += ")";
+			out.println("reachable memory units of location " + this.id + ":");
+			for (MemoryUnitExpression memUnit : this.reachableMemUnitsWoPointer) {
+				out.print(memUnit + "\t");
+			}
+			for (MemoryUnitExpression memUnit : this.reachableMemUnitsWtPointer) {
+				out.print(memUnit + "\t");
+			}
+			out.println();
 		} else {
 			headString = prefix + "location " + id() + " (scope: " + scope.id()
 					+ ")";
@@ -590,6 +604,48 @@ public class CommonLocation extends CommonSourceable implements Location {
 	@Override
 	public boolean isStart() {
 		return isStart;
+	}
+
+	@Override
+	public Set<MemoryUnitExpression> impactMemUnits() {
+		return this.impactMemUnits;
+	}
+
+	@Override
+	public Set<MemoryUnitExpression> reachableMemUnitsWtPointer() {
+		return this.reachableMemUnitsWtPointer;
+	}
+
+	@Override
+	public Set<MemoryUnitExpression> reachableMemUnitsWoPointer() {
+		return this.reachableMemUnitsWoPointer;
+	}
+
+	@Override
+	public void setImpactMemoryUnit(Set<MemoryUnitExpression> impacts) {
+		this.impactMemUnits = impacts;
+	}
+
+	@Override
+	public void setReachableMemUnitsWtPointer(
+			Set<MemoryUnitExpression> reachable) {
+		this.reachableMemUnitsWtPointer = reachable;
+	}
+
+	@Override
+	public void setReachableMemUnitsWoPointer(
+			Set<MemoryUnitExpression> reachable) {
+		this.reachableMemUnitsWoPointer = reachable;
+	}
+
+	@Override
+	public void setSystemCalls(Set<CallOrSpawnStatement> systemCalls) {
+		this.systemCalls = systemCalls;
+	}
+
+	@Override
+	public Set<CallOrSpawnStatement> systemCalls() {
+		return this.systemCalls;
 	}
 
 }

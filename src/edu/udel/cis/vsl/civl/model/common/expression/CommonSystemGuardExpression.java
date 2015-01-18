@@ -104,4 +104,10 @@ public class CommonSystemGuardExpression extends CommonExpression implements
 		return "guard[" + this.library + "." + this.functionName + "()]";
 	}
 
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

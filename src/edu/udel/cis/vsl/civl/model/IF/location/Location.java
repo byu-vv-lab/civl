@@ -10,6 +10,8 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
+import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -288,9 +290,36 @@ public interface Location extends Sourceable {
 	 * @return
 	 */
 	boolean hasDerefs();
-	
+
 	void setAsStart(boolean value);
-	
+
+	/**
+	 * Returns true if this location is the start location of a function.
+	 * 
+	 * @return
+	 */
 	boolean isStart();
-	
+
+	/* Memory analysis information of location */
+
+	/**
+	 * Returns the impact memory unit expressions of this location.
+	 * 
+	 * @return
+	 */
+	Set<MemoryUnitExpression> impactMemUnits();
+
+	Set<MemoryUnitExpression> reachableMemUnitsWtPointer();
+
+	Set<MemoryUnitExpression> reachableMemUnitsWoPointer();
+
+	void setImpactMemoryUnit(Set<MemoryUnitExpression> impacts);
+
+	void setReachableMemUnitsWtPointer(Set<MemoryUnitExpression> reachable);
+
+	void setReachableMemUnitsWoPointer(Set<MemoryUnitExpression> reachable);
+
+	void setSystemCalls(Set<CallOrSpawnStatement> systemCalls);
+
+	Set<CallOrSpawnStatement> systemCalls();
 }

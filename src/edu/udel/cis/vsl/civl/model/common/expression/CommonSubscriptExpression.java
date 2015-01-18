@@ -192,4 +192,12 @@ public class CommonSubscriptExpression extends CommonExpression implements
 	public LHSExpressionKind lhsExpressionKind() {
 		return LHSExpressionKind.SUBSCRIPT;
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		SubscriptExpression that = (SubscriptExpression) expression;
+
+		return this.array.equals(that.array())
+				&& this.index.equals(that.index());
+	}
 }

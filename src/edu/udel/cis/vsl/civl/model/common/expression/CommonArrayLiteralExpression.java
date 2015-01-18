@@ -170,4 +170,18 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	public void setLiteralConstantValue(SymbolicExpression value) {
 		this.constantValue = value;
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		ArrayLiteralExpression that = (ArrayLiteralExpression) expression;
+		int thisElementsLength = this.elements.length;
+
+		if (thisElementsLength == that.elements().length) {
+			for (int i = 0; i < thisElementsLength; i++)
+				if (!this.elements[i].equals(that.elements()[i]))
+					return false;
+			return true;
+		}
+		return false;
+	}
 }

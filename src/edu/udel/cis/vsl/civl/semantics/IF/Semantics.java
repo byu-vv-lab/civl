@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.semantics.common.CommonEvaluator;
 import edu.udel.cis.vsl.civl.semantics.common.CommonExecutor;
 import edu.udel.cis.vsl.civl.semantics.common.CommonLibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.common.CommonLibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.semantics.common.CommonMemoryUnitEvaluator;
 import edu.udel.cis.vsl.civl.semantics.common.CommonSymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.common.CommonTransition;
 import edu.udel.cis.vsl.civl.semantics.common.CommonTransitionSequence;
@@ -152,5 +153,10 @@ public class Semantics {
 	 */
 	public static TransitionSequence newTransitionSequence(State state) {
 		return new CommonTransitionSequence(state);
+	}
+
+	public static MemoryUnitEvaluator newMemoryUnitEvaluator(Evaluator evaluator) {
+		return new CommonMemoryUnitEvaluator(evaluator.symbolicUtility(),
+				evaluator, evaluator.universe());
 	}
 }

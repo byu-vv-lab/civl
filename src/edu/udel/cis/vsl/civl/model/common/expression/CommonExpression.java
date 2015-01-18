@@ -65,6 +65,8 @@ public abstract class CommonExpression extends CommonSourceable implements
 		this.expressionType = type;
 	}
 
+	protected abstract boolean expressionEquals(Expression expression);
+
 	@Override
 	public boolean hasDerefs() {
 		return hasDerefs;
@@ -123,5 +125,16 @@ public abstract class CommonExpression extends CommonSourceable implements
 
 	@Override
 	public void calculateConstantValue(SymbolicUniverse universe) {
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Expression) {
+			Expression that = (Expression) obj;
+
+			if (this.expressionKind() == that.expressionKind())
+				return this.expressionEquals(that);
+		}
+		return false;
 	}
 }

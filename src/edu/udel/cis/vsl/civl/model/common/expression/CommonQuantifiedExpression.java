@@ -276,4 +276,16 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 		}
 		return variableSet;
 	}
+
+	@Override
+	protected boolean expressionEquals(Expression expression) {
+		QuantifiedExpression that = (QuantifiedExpression) expression;
+
+		return this.quantifier.equals(that.quantifier())
+				&& this.isRange == that.isRange()
+				&& this.expression.equals(that.expression())
+				&& (this.isRange ? this.lower.equals(that.lower())
+						&& this.upper.equals(that.upper()) : this.restriction
+						.equals(that.boundRestriction()));
+	}
 }
