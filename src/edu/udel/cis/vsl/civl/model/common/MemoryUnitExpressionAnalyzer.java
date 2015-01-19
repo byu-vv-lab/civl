@@ -107,11 +107,9 @@ public class MemoryUnitExpressionAnalyzer {
 					Variable variable = myScope.variable(i);
 					MemoryUnitExpression memUnit;
 
-					if (scopeID == 0
-							&& variable
-									.name()
-									.name()
-									.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE))
+					if ((scopeID == 0 && variable.name().name()
+							.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE))
+							|| variable.type().isHandleType())
 						continue;
 					memUnit = modelFactory.memoryUnitExpression(
 							variable.getSource(), scopeID, i, variable.type(),
@@ -140,24 +138,25 @@ public class MemoryUnitExpressionAnalyzer {
 		Set<CallOrSpawnStatement> systemCalls = new HashSet<>();
 
 		if (location.enterAtom() || location.enterAtomic()) {
-			computeImpactMemoryUnitsOfAtomicAndAtom(
+			boolean predictable = computeImpactMemoryUnitsOfAtomicAndAtom(
 					location.writableVariables(), location, impactMemUnits,
 					systemCalls);
+			if (predictable)
+				location.setImpactMemoryUnit(impactMemUnits);
+			else
+				location.setImpactMemoryUnit(null);
 		} else {
 			for (Statement statement : location.outgoing()) {
 				computeImpactMemoryUnitsOfStatement(
 						location.writableVariables(), statement,
 						impactMemUnits, systemCalls);
 			}
-		}
-		if (impactMemUnits.size() < 1)
-			location.setImpactMemoryUnit(null);
-		else
 			location.setImpactMemoryUnit(impactMemUnits);
+		}
 		location.setSystemCalls(systemCalls);
 	}
 
-	private void computeImpactMemoryUnitsOfAtomicAndAtom(
+	private boolean computeImpactMemoryUnitsOfAtomicAndAtom(
 			Set<Variable> writableVars, Location location,
 			Set<MemoryUnitExpression> impactMemUnits,
 			Set<CallOrSpawnStatement> systemCalls) {
@@ -199,7 +198,7 @@ public class MemoryUnitExpressionAnalyzer {
 								&& callOrSpawnStatement.isSystemCall()) {
 							impactMemUnits.clear();
 							systemCalls.clear();
-							return;
+							return false;
 						}
 					}
 					this.computeImpactMemoryUnitsOfStatement(writableVars,
@@ -212,6 +211,7 @@ public class MemoryUnitExpressionAnalyzer {
 				}
 			}
 		}
+		return true;
 	}
 
 	/**
@@ -247,8 +247,9 @@ public class MemoryUnitExpressionAnalyzer {
 		case ASSIGN: {
 			AssignStatement assignStatement = (AssignStatement) statement;
 
-			computeImpactMemoryUnitsOfExpression(writableVars,
-					assignStatement.getLhs(), result);
+			if (!assignStatement.isInitialization())
+				computeImpactMemoryUnitsOfExpression(writableVars,
+						assignStatement.getLhs(), result);
 			computeImpactMemoryUnitsOfExpression(writableVars,
 					assignStatement.rhs(), result);
 			break;
@@ -466,6 +467,7 @@ public class MemoryUnitExpressionAnalyzer {
 		case VARIABLE: {
 			Variable variable = ((VariableExpression) expression).variable();
 
+			// if(variable.type().isHandleType())
 			result.add(this.modelFactory.memoryUnitExpression(
 					variable.getSource(), variable.scope().id(),
 					variable.vid(), variable.type(),

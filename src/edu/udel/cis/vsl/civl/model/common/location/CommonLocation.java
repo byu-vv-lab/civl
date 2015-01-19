@@ -501,11 +501,13 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + id;
-		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
-		return result;
+		// final int prime = 31;
+		// int result = 1;
+		//
+		// result = prime * result + id;
+		// result = prime * result + ((scope == null) ? 0 : scope.hashCode());
+		// return result;
+		return id;
 	}
 
 	@Override

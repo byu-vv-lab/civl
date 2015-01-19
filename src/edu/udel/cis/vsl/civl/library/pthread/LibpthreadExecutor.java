@@ -68,7 +68,8 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			break;
 		default:
 		}
-		state = stateFactory.setLocation(state, pid, statement.target());
+		state = stateFactory.setLocation(state, pid, statement.target(),
+				statement.lhs() != null);
 		return state;
 	}
 

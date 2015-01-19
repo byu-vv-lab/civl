@@ -173,7 +173,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					arguments, argumentValues, call.getSource());
 			break;
 		}
-		state = stateFactory.setLocation(state, pid, call.target());
+		state = stateFactory.setLocation(state, pid, call.target(),
+				call.lhs() != null);
 		return state;
 	}
 

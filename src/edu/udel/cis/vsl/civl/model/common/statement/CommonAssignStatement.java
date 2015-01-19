@@ -148,10 +148,13 @@ public class CommonAssignStatement extends CommonStatement implements
 	public Set<Variable> variableAddressedOf(Scope scope) {
 		Set<Variable> result = new HashSet<>();
 		Set<Variable> argumentResult = lhs.variableAddressedOf(scope);
-		Variable lhsVariable = lhs.variableWritten(scope);
 
-		if (lhsVariable != null)
-			result.add(lhsVariable);
+		if (!this.isInitialization) {
+			Variable lhsVariable = lhs.variableWritten(scope);
+
+			if (lhsVariable != null)
+				result.add(lhsVariable);
+		}
 		if (argumentResult != null)
 			result.addAll(argumentResult);
 		argumentResult = rhs.variableAddressedOf(scope);

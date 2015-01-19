@@ -115,7 +115,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			throw new CIVLUnimplementedFeatureException("the function " + name
 					+ " of library seq.cvh", call.getSource());
 		}
-		state = stateFactory.setLocation(state, pid, call.target());
+		state = stateFactory.setLocation(state, pid, call.target(),
+				call.lhs() != null);
 		return state;
 	}
 
@@ -416,7 +417,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 		if (!symbolicUtil.isNullPointer(valuesPtr)) {
 			valueType = symbolicAnalyzer.typeOfObjByPointer(valuesPtrSource,
 					state, valuesPtr);
-			
+
 			if (!arrayEleType.isSuperTypeOf(valueType)) {
 				CIVLExecutionException err = new CIVLExecutionException(
 						ErrorKind.SEQUENCE,
@@ -491,7 +492,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 
 			if (i == 0)
 				valuePtr = valuesPtr;
-			else if(!removeToNull) {
+			else if (!removeToNull) {
 				BinaryExpression pointerAdd = modelFactory.binaryExpression(
 						source, BINARY_OPERATOR.POINTER_ADD, arguments[2],
 						modelFactory.integerLiteralExpression(source,
@@ -501,7 +502,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 						valuesPtr, universe.integer(i));
 				state = eval.state;
 				valuePtr = eval.value;
-			}else
+			} else
 				valuePtr = valuesPtr;
 			if (isInsert) {
 				eval = evaluator.dereference(source, state, process, valuePtr,

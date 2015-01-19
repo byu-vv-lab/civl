@@ -482,7 +482,7 @@ public class ImmutableProcessState implements ProcessState {
 	public Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer() {
 		return this.reachableMemoryUnitsWtPointer;
 	}
-	
+
 	/* ************************ Methods from Object ************************ */
 
 	@Override

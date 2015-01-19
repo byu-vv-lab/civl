@@ -350,10 +350,14 @@ public class AmpleSetWorkerNew {
 							if (amplePid != pid
 									&& !ampleProcessIDs.get(amplePid)
 									&& !workingProcessIDs.contains(amplePid)) {
-								workingProcessIDs.add(amplePid);
-								ampleProcessIDs.set(amplePid);
-								if (this.activeProcesses.get(amplePid))
+								if (this.activeProcesses.get(amplePid)) {
 									myAmpleSetActiveSize++;
+									workingProcessIDs.add(amplePid);
+									ampleProcessIDs.set(amplePid);
+								} else if (!this.isWaitingFor(amplePid, pid)) {
+									workingProcessIDs.add(amplePid);
+									ampleProcessIDs.set(amplePid);
+								}
 								// early return
 								if (myAmpleSetActiveSize >= minAmpleSize
 										|| myAmpleSetActiveSize == activeProcesses
@@ -397,10 +401,14 @@ public class AmpleSetWorkerNew {
 					}
 					if ((reachableMemUnitsMapOfThis.get(memPair.left) || reachableMemUnitsMapOfOther
 							.get(memPair.right))) {
-						workingProcessIDs.add(otherPid);
-						ampleProcessIDs.set(otherPid);
-						if (this.activeProcesses.get(otherPid))
+						if (this.activeProcesses.get(otherPid)) {
 							myAmpleSetActiveSize++;
+							workingProcessIDs.add(otherPid);
+							ampleProcessIDs.set(otherPid);
+						} else if (!this.isWaitingFor(otherPid, pid)) {
+							workingProcessIDs.add(otherPid);
+							ampleProcessIDs.set(otherPid);
+						}
 						break;
 					}
 				}
@@ -413,6 +421,43 @@ public class AmpleSetWorkerNew {
 			}
 		}
 		return this.intersects(ampleProcessIDs, activeProcesses);
+	}
+
+	// is pid1 waiting for pid2?
+	private boolean isWaitingFor(int pid1, int pid2) {
+		Set<CallOrSpawnStatement> systemCalls1 = this.enabledSystemCallMap
+				.get(pid1);
+
+		if (systemCalls1 != null && systemCalls1.size() == 1) {
+			for (CallOrSpawnStatement call : systemCalls1) {
+				SystemFunction systemFunction = (SystemFunction) call
+						.function();
+				if ((systemFunction.name().name().equals("$wait") || systemFunction
+						.name().name().equals("$waitall"))
+						&& systemFunction.getLibrary().equals("civlc")) {
+					Set<Integer> ampleSubSet;
+
+					try {
+						LibraryEnabler lib = enabler.libraryEnabler(
+								call.getSource(), systemFunction.getLibrary());
+
+						ampleSubSet = lib.ampleSet(state, pid1, call,
+								reachableMemUnitsMap);
+					} catch (LibraryLoaderException e) {
+						throw new CIVLInternalException(
+								"This is unreachable because the earlier execution "
+										+ "has already checked that the library enabler "
+										+ "gets loaded successfully otherwise an error should have been reported there",
+								call.getSource());
+					} catch (UnsatisfiablePathConditionException e) {
+						return false;
+					}
+					if (ampleSubSet.contains(pid2))
+						return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	BitSet intersects(BitSet set1, BitSet set2) {

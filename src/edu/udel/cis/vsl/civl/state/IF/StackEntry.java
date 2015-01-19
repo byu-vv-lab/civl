@@ -31,4 +31,5 @@ public interface StackEntry {
 	 *         the function call.
 	 */
 	int dyscopeIdentifier();
+
 }

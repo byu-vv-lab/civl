@@ -207,7 +207,7 @@ public class CommonExecutor implements Executor {
 
 		state = assign(eval.state, pid, process, statement.getLhs(),
 				eval.value, statement.isInitialization());
-		state = stateFactory.setLocation(state, pid, statement.target());
+		state = stateFactory.setLocation(state, pid, statement.target(), true);
 		return state;
 	}
 
@@ -395,7 +395,8 @@ public class CommonExecutor implements Executor {
 		state = mallocResult.left;
 		if (lhs != null)
 			state = assign(state, pid, process, lhs, mallocResult.right);
-		state = stateFactory.setLocation(state, pid, statement.target());
+		state = stateFactory.setLocation(state, pid, statement.target(),
+				lhs != null);
 		return state;
 	}
 
@@ -491,7 +492,8 @@ public class CommonExecutor implements Executor {
 				}
 				state = assign(state, pid, process, call.lhs(), returnValue);
 			}
-			state = stateFactory.setLocation(state, pid, call.target());
+			state = stateFactory.setLocation(state, pid, call.target(),
+					call.lhs() != null);
 		}
 		return state;
 	}
@@ -541,7 +543,7 @@ public class CommonExecutor implements Executor {
 		if (statement.lhs() != null)
 			state = assign(state, pid, process, statement.lhs(),
 					modelFactory.processValue(newPid));
-		state = stateFactory.setLocation(state, pid, statement.target());
+		state = stateFactory.setLocation(state, pid, statement.target(), statement.lhs() != null);
 		state = stateFactory.updateReachableMemUnits(state, newPid);
 		return state;
 	}
@@ -753,7 +755,7 @@ public class CommonExecutor implements Executor {
 			state = this.executeSpawns(state, pid, parProcs, parProcsPointer,
 					parFor.parProcFunction(), dim, domainValue);
 		}
-		state = stateFactory.setLocation(state, pid, parFor.target());
+		state = stateFactory.setLocation(state, pid, parFor.target(), true);
 		return state;
 	}
 

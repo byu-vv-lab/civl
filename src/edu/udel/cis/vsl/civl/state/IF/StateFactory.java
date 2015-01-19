@@ -155,7 +155,6 @@ public interface StateFactory {
 	 *            The arguments to this function call.
 	 * @param callerPid
 	 *            the PID of the process that is creating the new process
-	 * 
 	 * @return A new state that is the old state modified by adding a process
 	 *         whose location is the start location of the function and with a
 	 *         new dynamic scope corresponding to the outermost lexical scope of
@@ -192,7 +191,6 @@ public interface StateFactory {
 	 *            The arguments to this function call.
 	 * @param callerPid
 	 *            the PID of the process that is creating the new process
-	 * 
 	 * @return A new state that is the old state modified by adding a process
 	 *         whose location is the start location of the function and with a
 	 *         new dynamic scope corresponding to the outermost lexical scope of
@@ -234,7 +232,8 @@ public interface StateFactory {
 	 * Sets the location of a process. This changes the top stack frame for the
 	 * process so that it points to the new location. The given process must
 	 * have a non-empty stack (although the location component of that frame is
-	 * not used, so it is OK if it is null).
+	 * not used, so it is OK if it is null). There is no change of the access of
+	 * variables from the current location to the target location.
 	 * 
 	 * This may involve adding and removing scopes, if the scope of the new
 	 * location differs from the original scope.
@@ -250,6 +249,31 @@ public interface StateFactory {
 	 *         necessary
 	 */
 	State setLocation(State state, int pid, Location location);
+
+	/**
+	 * Sets the location of a process. This changes the top stack frame for the
+	 * process so that it points to the new location. The given process must
+	 * have a non-empty stack (although the location component of that frame is
+	 * not used, so it is OK if it is null).
+	 * 
+	 * This may involve adding and removing scopes, if the scope of the new
+	 * location differs from the original scope.
+	 * 
+	 * @param state
+	 *            The old state.
+	 * @param pid
+	 *            The PID of the process making the move.
+	 * @param location
+	 *            The target location.
+	 * @param accessChanged
+	 *            True iff there is change of variable accessing (write or
+	 *            read-only) from the current location to the target location
+	 * @return A new state that is the same as the old state with the given
+	 *         process at a new location, and scopes added and removed as
+	 *         necessary
+	 */
+	State setLocation(State state, int pid, Location location,
+			boolean accessChanged);
 
 	/**
 	 * Pushes a new entry onto the call stack for a process. Used when a process

@@ -107,7 +107,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			throw new CIVLUnimplementedFeatureException("the function " + name
 					+ " of library pointer.cvh", call.getSource());
 		}
-		state = stateFactory.setLocation(state, pid, call.target());
+		state = stateFactory.setLocation(state, pid, call.target(),
+				call.lhs() != null);
 		return state;
 	}
 

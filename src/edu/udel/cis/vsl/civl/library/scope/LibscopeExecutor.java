@@ -79,7 +79,8 @@ public class LibscopeExecutor extends BaseLibraryExecutor implements
 					arguments, argumentValues);
 			break;
 		}
-		state = stateFactory.setLocation(state, pid, call.target());
+		state = stateFactory.setLocation(state, pid, call.target(),
+				call.lhs() != null);
 		return state;
 	}
 

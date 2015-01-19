@@ -132,7 +132,8 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			throw new CIVLInternalException("Unknown string function: " + name,
 					call);
 		}
-		state = stateFactory.setLocation(state, pid, call.target());
+		state = stateFactory.setLocation(state, pid, call.target(),
+				call.lhs() != null);
 		return state;
 	}
 

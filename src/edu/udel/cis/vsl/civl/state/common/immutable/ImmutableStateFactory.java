@@ -631,7 +631,8 @@ public class ImmutableStateFactory implements StateFactory {
 	 */
 	@Override
 	// TODO UPDATE reachable mem units
-	public ImmutableState setLocation(State state, int pid, Location location) {
+	public ImmutableState setLocation(State state, int pid, Location location,
+			boolean accessChanged) {
 		ImmutableState theState = (ImmutableState) state;
 		ImmutableProcessState[] processArray = theState.copyProcessStates();
 		int dynamicScopeId = theState.getProcessState(pid).getDyscopeId();
@@ -647,7 +648,9 @@ public class ImmutableStateFactory implements StateFactory {
 							stackEntry(location, dynamicScopeId,
 									dynamicScopeIdentifier));
 			theState = theState.setProcessStates(processArray);
-			return updateReachableMemUnitsAccess(theState, pid);
+			if (accessChanged)
+				theState = updateReachableMemUnitsAccess(theState, pid);
+			return theState;
 		} else {// a different dyscope is encountered
 			Scope[] joinSequence = joinSequence(ss0, ss1);
 			Scope join = joinSequence[0];
@@ -707,7 +710,8 @@ public class ImmutableStateFactory implements StateFactory {
 				theState = new ImmutableState(processArray, newScopes,
 						theState.getPathCondition());
 			}
-			theState = updateReachableMemUnitsAccess(theState, pid);
+			if (accessChanged)
+				theState = updateReachableMemUnitsAccess(theState, pid);
 			return theState;
 		}
 	}
@@ -1252,7 +1256,6 @@ public class ImmutableStateFactory implements StateFactory {
 		}
 		newProcesses[pid] = state.getProcessState(pid).push(
 				stackEntry(null, sid, newScopes[sid].identifier()));
-
 		// newProcesses[pid] = addReachableMemUnitsFromDyscope(sid,
 		// newScopes[sid], newProcesses[pid]);
 		// state = new ImmutableState(newProcesses, newScopes,
@@ -1962,7 +1965,8 @@ public class ImmutableStateFactory implements StateFactory {
 			for (Variable variable : dyscope.lexicalScope().variables()) {
 				SymbolicExpression mu;
 
-				if (variable.vid() == ModelConfiguration.heapVariableIndex)
+				if (variable.vid() == ModelConfiguration.heapVariableIndex
+						|| variable.type().isHandleType())
 					continue;
 				mu = symbolicUtil.makePointer(dyscopeID, variable.vid(),
 						universe.identityReference());
@@ -2036,10 +2040,10 @@ public class ImmutableStateFactory implements StateFactory {
 				int varID = this.symbolicUtil.getVariableId(null,
 						entry.getKey());
 				Variable variable;
-				
-				if(dyscopeID<0)
+
+				if (dyscopeID < 0)
 					continue;
-				 variable = state.getDyscope(dyscopeID).lexicalScope()
+				variable = state.getDyscope(dyscopeID).lexicalScope()
 						.variable(varID);
 				if (!writableVars.contains(variable))
 					reachabeMemUnitsWoPointer.put(entry.getKey(), false);
@@ -2048,5 +2052,10 @@ public class ImmutableStateFactory implements StateFactory {
 		processes[pid] = processes[pid]
 				.setReachableMemUnits(reachabeMemUnitsWoPointer);
 		return ImmutableState.newState(state, processes, null, null);
+	}
+
+	@Override
+	public ImmutableState setLocation(State state, int pid, Location location) {
+		return this.setLocation(state, pid, location, false);
 	}
 }

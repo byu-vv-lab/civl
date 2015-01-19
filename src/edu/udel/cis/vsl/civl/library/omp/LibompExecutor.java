@@ -132,7 +132,8 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 					source);
 
 		}
-		state = stateFactory.setLocation(state, pid, call.target());
+		state = stateFactory.setLocation(state, pid, call.target(),
+				call.lhs() != null);
 		return state;
 	}
 

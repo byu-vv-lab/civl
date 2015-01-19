@@ -108,7 +108,8 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					statement);
 		}
-		state = stateFactory.setLocation(state, pid, call.target());
+		state = stateFactory.setLocation(state, pid, call.target(),
+				call.lhs() != null);
 		return state;
 	}
 

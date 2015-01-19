@@ -642,7 +642,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			throw new CIVLUnimplementedFeatureException(name.name(), statement);
 
 		}
-		state = stateFactory.setLocation(state, pid, statement.target());
+		state = stateFactory.setLocation(state, pid, statement.target(),
+				statement.lhs() != null);
 		return state;
 	}
 

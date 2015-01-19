@@ -183,7 +183,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name of the function $wait() in the final CIVL-C program.
 	 */
-	private static String WAIT = "$wait";
+	private static String WAITALL = "$waitall";
 
 	/**
 	 * The name of $proc type in the final CIVL-C program.
@@ -406,18 +406,15 @@ public class MPI2CIVLWorker extends BaseWorker {
 				Operator.POSTINCREMENT, Arrays.asList(this
 						.identifierExpression("i")));
 		waitProc = nodeFactory.newFunctionCallNode(this.newSource(
-				"function call" + WAIT, CParser.CALL), this
-				.identifierExpression(WAIT), Arrays
-				.asList((ExpressionNode) nodeFactory.newOperatorNode(
-						this.newSource("subscript expression", CParser.SUB),
-						Operator.SUBSCRIPT,
-						Arrays.asList(this.identifierExpression(PROCS),
-								this.identifierExpression("i")))), null);
-		forLoop = nodeFactory.newForLoopNode(
-				this.newSource("for loop", CParser.FOR), initializerNode,
-				loopCondition, incrementer,
-				nodeFactory.newExpressionStatementNode(waitProc), null);
-		items.add(forLoop);
+				"function call" + WAITALL, CParser.CALL), this
+				.identifierExpression(WAITALL), Arrays
+				.asList((ExpressionNode) this.identifierExpression(PROCS),
+						this.identifierExpression(NPROCS)), null);
+//		forLoop = nodeFactory.newForLoopNode(
+//				this.newSource("for loop", CParser.FOR), initializerNode,
+//				loopCondition, incrementer,
+//				nodeFactory.newExpressionStatementNode(waitProc), null);
+		items.add(nodeFactory.newExpressionStatementNode(waitProc));
 		// destroying GCOMM_WROLD;
 		items.add(gcommDestroy);
 		// constructing the function definition node.

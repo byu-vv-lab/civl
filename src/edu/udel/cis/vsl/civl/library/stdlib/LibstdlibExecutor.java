@@ -133,7 +133,8 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 			throw new CIVLInternalException("Unknown stdlib function: " + name,
 					call);
 		}
-		state = stateFactory.setLocation(state, pid, call.target());
+		state = stateFactory.setLocation(state, pid, call.target(),
+				call.lhs() != null);
 		return state;
 	}
 
