@@ -108,8 +108,7 @@ public class MemoryUnitExpressionAnalyzer {
 					MemoryUnitExpression memUnit;
 
 					if ((scopeID == 0 && variable.name().name()
-							.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE))
-							|| variable.type().isHandleType())
+							.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE)))
 						continue;
 					memUnit = modelFactory.memoryUnitExpression(
 							variable.getSource(), scopeID, i, variable.type(),
@@ -165,7 +164,6 @@ public class MemoryUnitExpressionAnalyzer {
 		if (location.enterAtom() || location.enterAtomic()) {
 			Set<Integer> checkedLocations = new HashSet<Integer>();
 			Stack<Location> workings = new Stack<Location>();
-			Set<MemoryUnitExpression> memUnits = new HashSet<>();
 
 			workings.add(location);
 			// DFS searching for reachable statements inside the $atomic/$atom
@@ -202,7 +200,7 @@ public class MemoryUnitExpressionAnalyzer {
 						}
 					}
 					this.computeImpactMemoryUnitsOfStatement(writableVars,
-							statement, memUnits, systemCalls);
+							statement, impactMemUnits, systemCalls);
 					if (statement.target() != null) {
 						if (!checkedLocations.contains(statement.target().id())) {
 							workings.push(statement.target());
@@ -467,12 +465,15 @@ public class MemoryUnitExpressionAnalyzer {
 		case VARIABLE: {
 			Variable variable = ((VariableExpression) expression).variable();
 
-			// if(variable.type().isHandleType())
-			result.add(this.modelFactory.memoryUnitExpression(
-					variable.getSource(), variable.scope().id(),
-					variable.vid(), variable.type(),
-					modelFactory.selfReference(),
-					writableVars.contains(variable), variable.hasPointerRef()));
+			if (!((variable.scope().id() == 0 && variable.name().name()
+					.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE)) || variable
+					.type().isHandleType()))
+				result.add(this.modelFactory.memoryUnitExpression(
+						variable.getSource(), variable.scope().id(),
+						variable.vid(), variable.type(),
+						modelFactory.selfReference(),
+						writableVars.contains(variable),
+						variable.hasPointerRef()));
 			break;
 		}
 		case WAIT_GUARD:// TODO clean it up

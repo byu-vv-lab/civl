@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
 import java.io.PrintStream;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -317,5 +318,9 @@ public interface State {
 	 *            The print stream to be used.
 	 */
 	void print(PrintStream out);
+
+	Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer(int pid);
+
+	Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer(int pid);
 
 }

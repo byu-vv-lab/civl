@@ -543,8 +543,9 @@ public class CommonExecutor implements Executor {
 		if (statement.lhs() != null)
 			state = assign(state, pid, process, statement.lhs(),
 					modelFactory.processValue(newPid));
-		state = stateFactory.setLocation(state, pid, statement.target(), statement.lhs() != null);
-		state = stateFactory.updateReachableMemUnits(state, newPid);
+		state = stateFactory.setLocation(state, pid, statement.target(),
+				statement.lhs() != null);
+		state = stateFactory.computeReachableMemUnits(state, newPid);
 		return state;
 	}
 
@@ -806,7 +807,7 @@ public class CommonExecutor implements Executor {
 			myValues.toArray(arguments);
 			newPid = state.numProcs();
 			state = stateFactory.addProcess(state, function, arguments, pid);
-			state = stateFactory.updateReachableMemUnits(state, newPid);
+			state = stateFactory.computeReachableMemUnits(state, newPid);
 			eval = evaluator.evaluatePointerAdd(state, process,
 					parProcsPointer, universe.integer(procPtrOffset++), false,
 					source).left; // no need for checking output

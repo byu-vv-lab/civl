@@ -229,9 +229,9 @@ public class CommonVariable extends CommonSourceable implements Variable {
 		if (getClass() != obj.getClass())
 			return false;
 		Variable other = (Variable) obj;
-		if(scope.id() != other.scope().id())
+		if (scope.id() != other.scope().id())
 			return false;
-		if(vid != other.vid())
+		if (vid != other.vid())
 			return false;
 		if (isConst != other.isConst())
 			return false;
@@ -264,7 +264,7 @@ public class CommonVariable extends CommonSourceable implements Variable {
 
 	@Override
 	public boolean hasPointerRef() {
-		return this.hasPointerRef;
+		return !this.type.isHandleType() && this.hasPointerRef;
 	}
 
 	@Override

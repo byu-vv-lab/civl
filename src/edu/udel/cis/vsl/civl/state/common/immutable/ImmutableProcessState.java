@@ -149,15 +149,11 @@ public class ImmutableProcessState implements ProcessState {
 	 *            the atomic count
 	 */
 	ImmutableProcessState(int pid, int identifier, StackEntry[] stack,
-			int atomicCount,
-			Map<SymbolicExpression, Boolean> reachableMemoryUnits,
-			Map<SymbolicExpression, Boolean> reachableMemoryUnitsWtPointer) {
+			int atomicCount) {
 		this.pid = pid;
 		this.callStack = stack;
 		this.atomicCount = atomicCount;
 		this.identifier = identifier;
-		this.reachableMemoryUnitsWoPointer = reachableMemoryUnits;
-		this.reachableMemoryUnitsWtPointer = reachableMemoryUnitsWtPointer;
 	}
 
 	/**
@@ -168,27 +164,11 @@ public class ImmutableProcessState implements ProcessState {
 	 * @param identifier
 	 *            The identifier of the process, which is not part of the state.
 	 */
-	ImmutableProcessState(int pid, int identifier,
-			Map<SymbolicExpression, Boolean> reachableMemoryUnits,
-			Map<SymbolicExpression, Boolean> reachableMemoryUnitsByPointer) {
-		this(pid, identifier, new ImmutableStackEntry[0], 0,
-				reachableMemoryUnits, reachableMemoryUnitsByPointer);
+	ImmutableProcessState(int pid, int identifier) {
+		this(pid, identifier, new ImmutableStackEntry[0], 0);
 	}
 
 	/* ********************** Package-private Methods ********************** */
-
-	ImmutableProcessState setReachableMemUnits(
-			Map<SymbolicExpression, Boolean> reachable) {
-		return new ImmutableProcessState(pid, this.identifier, callStack,
-				atomicCount, reachable, this.reachableMemoryUnitsWtPointer);
-	}
-
-	ImmutableProcessState setReachableMemUnitsWtPointer(
-			Map<SymbolicExpression, Boolean> reachable) {
-		return new ImmutableProcessState(pid, this.identifier, callStack,
-				atomicCount, this.reachableMemoryUnitsWoPointer, reachable);
-	}
-
 	/**
 	 * Makes this instance the unique representative of its equivalence class.
 	 * 
@@ -214,8 +194,7 @@ public class ImmutableProcessState implements ProcessState {
 
 		System.arraycopy(callStack, 1, newStack, 0, callStack.length - 1);
 		return new ImmutableProcessState(pid, this.identifier, newStack,
-				this.atomicCount, this.reachableMemoryUnitsWoPointer,
-				this.reachableMemoryUnitsWtPointer);
+				this.atomicCount);
 	}
 
 	/**
@@ -233,8 +212,7 @@ public class ImmutableProcessState implements ProcessState {
 		System.arraycopy(callStack, 0, newStack, 1, callStack.length);
 		newStack[0] = newStackEntry;
 		return new ImmutableProcessState(pid, this.identifier, newStack,
-				this.atomicCount, this.reachableMemoryUnitsWoPointer,
-				this.reachableMemoryUnitsWtPointer);
+				this.atomicCount);
 	}
 
 	/**
@@ -256,8 +234,7 @@ public class ImmutableProcessState implements ProcessState {
 		System.arraycopy(callStack, 1, newStack, 1, length - 1);
 		newStack[0] = newStackEntry;
 		return new ImmutableProcessState(pid, this.identifier, newStack,
-				this.atomicCount, this.reachableMemoryUnitsWoPointer,
-				this.reachableMemoryUnitsWtPointer);
+				this.atomicCount);
 	}
 
 	/**
@@ -290,8 +267,7 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	ImmutableProcessState setPid(int pid) {
 		return new ImmutableProcessState(pid, this.identifier, callStack,
-				this.atomicCount, this.reachableMemoryUnitsWoPointer,
-				this.reachableMemoryUnitsWtPointer);
+				this.atomicCount);
 	}
 
 	/**
@@ -304,8 +280,7 @@ public class ImmutableProcessState implements ProcessState {
 	 */
 	ProcessState setStackEntries(StackEntry[] frames) {
 		return new ImmutableProcessState(pid, this.identifier, frames,
-				this.atomicCount, this.reachableMemoryUnitsWoPointer,
-				this.reachableMemoryUnitsWtPointer);
+				this.atomicCount);
 	}
 
 	/**
@@ -325,8 +300,7 @@ public class ImmutableProcessState implements ProcessState {
 		System.arraycopy(callStack, 0, newStack, 0, n);
 		newStack[index] = frame;
 		return new ImmutableProcessState(pid, this.identifier, newStack,
-				this.atomicCount, this.reachableMemoryUnitsWoPointer,
-				this.reachableMemoryUnitsWtPointer);
+				this.atomicCount);
 	}
 
 	/**
@@ -359,8 +333,7 @@ public class ImmutableProcessState implements ProcessState {
 			}
 		}
 		return stackChange ? new ImmutableProcessState(pid, this.identifier,
-				newStack, atomicCount, this.reachableMemoryUnitsWoPointer,
-				this.reachableMemoryUnitsWtPointer) : this;
+				newStack, atomicCount) : this;
 	}
 
 	/* ********************* Methods from ProcessState ********************* */
@@ -378,9 +351,7 @@ public class ImmutableProcessState implements ProcessState {
 	@Override
 	public ProcessState decrementAtomicCount() {
 		return new ImmutableProcessState(this.pid, this.identifier,
-				this.callStack, this.atomicCount - 1,
-				this.reachableMemoryUnitsWoPointer,
-				this.reachableMemoryUnitsWtPointer);
+				this.callStack, this.atomicCount - 1);
 	}
 
 	@Override
@@ -425,9 +396,7 @@ public class ImmutableProcessState implements ProcessState {
 	@Override
 	public ProcessState incrementAtomicCount() {
 		return new ImmutableProcessState(this.pid, this.identifier,
-				this.callStack, this.atomicCount + 1,
-				this.reachableMemoryUnitsWoPointer,
-				this.reachableMemoryUnitsWtPointer);
+				this.callStack, this.atomicCount + 1);
 	}
 
 	/**

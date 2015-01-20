@@ -177,6 +177,11 @@ public class ImmutableState implements State {
 	 */
 	ImmutableState simplifiedState = null;
 
+	Map<Integer, Map<SymbolicExpression, Boolean>> reachableMUwoPtr;
+	// private Set<SymbolicExpression> reachableMemoryUnits;
+
+	Map<Integer, Map<SymbolicExpression, Boolean>> reachableMUwtPtr;
+
 	/* *************************** Static Methods ************************** */
 
 	/**
@@ -201,11 +206,17 @@ public class ImmutableState implements State {
 	 */
 	static ImmutableState newState(ImmutableState state,
 			ImmutableProcessState[] processStates,
-			ImmutableDynamicScope[] dyscopes, BooleanExpression pathCondition) {
+			ImmutableDynamicScope[] dyscopes, BooleanExpression pathCondition,
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableWoPtr,
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableWtPtr) {
 		ImmutableState result = new ImmutableState(
 				processStates == null ? state.processStates : processStates,
 				dyscopes == null ? state.dyscopes : dyscopes,
-				pathCondition == null ? state.pathCondition : pathCondition);
+				pathCondition == null ? state.pathCondition : pathCondition,
+				reachableWoPtr == null ? state.reachableMUwoPtr
+						: reachableWoPtr,
+				reachableWtPtr == null ? state.reachableMUwtPtr
+						: reachableWtPtr);
 
 		if (processStates == null && state.procHashed) {
 			result.procHashed = true;
@@ -236,13 +247,17 @@ public class ImmutableState implements State {
 	 *            is assumed to hold in this state
 	 */
 	ImmutableState(ImmutableProcessState[] processStates,
-			ImmutableDynamicScope[] dyscopes, BooleanExpression pathCondition) {
+			ImmutableDynamicScope[] dyscopes, BooleanExpression pathCondition,
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableWoPtr,
+			Map<Integer, Map<SymbolicExpression, Boolean>> reachableWtPtr) {
 		assert processStates != null;
 		assert dyscopes != null;
 		assert pathCondition != null;
 		this.processStates = processStates;
 		this.dyscopes = dyscopes;
 		this.pathCondition = pathCondition;
+		this.reachableMUwoPtr = reachableWoPtr;
+		this.reachableMUwtPtr = reachableWtPtr;
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -509,7 +524,7 @@ public class ImmutableState implements State {
 	 */
 	ImmutableState setScopes(ImmutableDynamicScope[] dyscopes) {
 		ImmutableState result = new ImmutableState(processStates, dyscopes,
-				pathCondition);
+				pathCondition, this.reachableMUwoPtr, this.reachableMUwtPtr);
 
 		if (procHashed) {
 			result.procHashed = true;
@@ -537,7 +552,8 @@ public class ImmutableState implements State {
 
 		System.arraycopy(processStates, 0, newProcessStates, 0, n);
 		newProcessStates[index] = processState;
-		result = new ImmutableState(newProcessStates, dyscopes, pathCondition);
+		result = new ImmutableState(newProcessStates, dyscopes, pathCondition,
+				this.reachableMUwoPtr, this.reachableMUwtPtr);
 		if (scopeHashed) {
 			result.scopeHashed = true;
 			result.scopeHashCode = scopeHashCode;
@@ -555,7 +571,7 @@ public class ImmutableState implements State {
 	 */
 	ImmutableState setProcessStates(ImmutableProcessState[] processStates) {
 		ImmutableState result = new ImmutableState(processStates, dyscopes,
-				pathCondition);
+				pathCondition, this.reachableMUwoPtr, this.reachableMUwtPtr);
 
 		if (scopeHashed) {
 			result.scopeHashed = true;
@@ -740,7 +756,7 @@ public class ImmutableState implements State {
 	@Override
 	public ImmutableState setPathCondition(BooleanExpression pathCondition) {
 		ImmutableState result = new ImmutableState(processStates, dyscopes,
-				pathCondition);
+				pathCondition, this.reachableMUwoPtr, this.reachableMUwtPtr);
 
 		if (scopeHashed) {
 			result.scopeHashed = true;
@@ -764,6 +780,18 @@ public class ImmutableState implements State {
 		int variableID = scope.lexicalScope().getVid(variable);
 
 		return scope.getValue(variableID);
+	}
+
+	@Override
+	public Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer(
+			int pid) {
+		return this.reachableMUwoPtr.get(pid);
+	}
+
+	@Override
+	public Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer(
+			int pid) {
+		return this.reachableMUwtPtr.get(pid);
 	}
 
 	/* ************************ Methods from Object ************************ */

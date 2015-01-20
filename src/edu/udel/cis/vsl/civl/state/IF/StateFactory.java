@@ -571,6 +571,5 @@ public interface StateFactory {
 
 	void printReachableMemoryUnits(PrintStream out, State state);
 
-	State updateReachableMemUnits(State state, int pid);
-
+	State computeReachableMemUnits(State state, int pid);
 }

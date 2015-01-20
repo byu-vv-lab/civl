@@ -719,13 +719,12 @@ public class AmpleSetWorkerNew {
 					+ state.getCanonicId() + "================");
 		}
 		for (int pid = 0; pid < nonEmptyProcesses.length(); pid++) {
-			ProcessState p;
 			Map<SymbolicExpression, Boolean> reachableMemoryUnits;
 
 			pid = nonEmptyProcesses.nextSetBit(pid);
-			p = state.getProcessState(pid);
-			reachableMemoryUnits = p.getReachableMemUnitsWoPointer();
-			reachableMemoryUnits.putAll(p.getReachableMemUnitsWtPointer());
+			reachableMemoryUnits = state.getReachableMemUnitsWoPointer(pid);
+			reachableMemoryUnits.putAll(state
+					.getReachableMemUnitsWtPointer(pid));
 			impactMemUnitsMap.put(pid, this.impactMemoryUnitsOfProcess(pid));
 			reachableMemUnitsMap.put(pid, reachableMemoryUnits);
 			if (debugging) {
