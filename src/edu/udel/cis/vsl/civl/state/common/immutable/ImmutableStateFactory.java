@@ -2084,9 +2084,13 @@ public class ImmutableStateFactory implements StateFactory {
 				oldReachableMemUnitsWoPointer);
 		Map<SymbolicExpression, Boolean> reachabeMemUnitsWtPointer = this
 				.computeReachableMUofProc(state, pid, true);
-		Location location = state.getProcessState(pid).getLocation();
-		Set<Variable> writableVars = location.writableVariables();
-
+		ProcessState processState = state.getProcessState(pid);
+//		Location location = state.getProcessState(pid).getLocation();
+		Set<Variable> writableVars = new HashSet<>();// = location.writableVariables();
+		
+		for(StackEntry call: processState.getStackEntries()){
+			writableVars.addAll(call.location().writableVariables());
+		}
 		for (Map.Entry<SymbolicExpression, Boolean> entry : oldReachableMemUnitsWoPointer
 				.entrySet()) {
 			if (entry.getValue()) {

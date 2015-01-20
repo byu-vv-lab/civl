@@ -83,6 +83,8 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
 		int dyscopeID = state.getDyscope(pid, scopeID);
 		Set<ReferenceExpression> referenceValues = new HashSet<>();
 
+		if(dyscopeID < 0)
+			return state;
 		state = this.evaluatesMemoryUnitReference(memUnit.getSource(), state,
 				pid, memUnit.objectType(), memUnit.reference(), null,
 				referenceValues);
