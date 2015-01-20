@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.io.PrintStream;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -10,31 +11,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
-import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
-import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
-import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
+import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitEvaluator;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
-import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -131,19 +123,20 @@ public class AmpleSetWorker {
 	 * @author Manchun Zheng (zmanchun)
 	 * 
 	 */
-	private enum MemoryUnitsStatus {
-		NORMAL, INCOMPLETE
-	};
+	// private enum MemoryUnitsStatus {
+	// NORMAL, INCOMPLETE
+	// };
 
 	/* *************************** Instance Fields ************************* */
 
-	Set<Integer> allProcesses = new LinkedHashSet<>();
+	BitSet nonEmptyProcesses = new BitSet();
+	// Set<Integer> allProcesses = new LinkedHashSet<>();
 
 	/**
 	 * The map of active processes (i.e., non-null processes with non-empty
 	 * stack that have at least one enabled statement)
 	 */
-	Set<Integer> activeProcesses = new LinkedHashSet<>();
+	BitSet activeProcesses = new BitSet();
 
 	/**
 	 * The unique enabler used in the system. Used here for evaluating the guard
@@ -157,11 +150,13 @@ public class AmpleSetWorker {
 	 */
 	private Evaluator evaluator;
 
+	private MemoryUnitEvaluator memUnitEvaluator;
+
 	/**
 	 * Turn on/off the printing of debugging information for the ample set
 	 * algorithm.
 	 */
-	private boolean debugging = false;
+	private boolean debugging = true;
 
 	/**
 	 * The output stream used for debugging.
@@ -181,20 +176,23 @@ public class AmpleSetWorker {
 	 */
 	Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap = new HashMap<>();
 
-	/**
-	 * map of communicators and the sets of process ID's with different ranks of
-	 * the communicator
-	 */
-	Map<SymbolicExpression, Map<Integer, Set<Integer>>> processesInCommMap = new HashMap<>();
+	// /**
+	// * map of communicators and the sets of process ID's with different ranks
+	// of
+	// * the communicator
+	// */
+	// Map<SymbolicExpression, Map<Integer, Set<Integer>>> processesInCommMap =
+	// new HashMap<>();
+	//
+	// /**
+	// * map of process ID's and its rank id in each communicator.
+	// */
+	// Map<Integer, Map<SymbolicExpression, Integer>> processRankMap = new
+	// HashMap<>();
 
-	/**
-	 * map of process ID's and its rank id in each communicator.
-	 */
-	Map<Integer, Map<SymbolicExpression, Integer>> processRankMap = new HashMap<>();
-
-	/**
-	 * map of process ID's and the set of enabled system call statements.
-	 */
+	// /**
+	// * map of process ID's and the set of enabled system call statements.
+	// */
 	Map<Integer, Set<CallOrSpawnStatement>> enabledSystemCallMap = new HashMap<>();
 
 	/**
@@ -202,7 +200,11 @@ public class AmpleSetWorker {
 	 */
 	private State state;
 
-	private SymbolicAnalyzer symbolicAnalyzer;
+	SymbolicUtility symbolicUtil;
+
+	SymbolicUniverse universe;
+
+	// private SymbolicAnalyzer symbolicAnalyzer;
 
 	/* ***************************** Constructors ************************** */
 
@@ -224,14 +226,15 @@ public class AmpleSetWorker {
 	 *            The print stream for debugging information.
 	 */
 	AmpleSetWorker(State state, CommonEnabler enabler, Evaluator evaluator,
-			SymbolicAnalyzer symbolicAnalyzer, boolean debug,
-			PrintStream debugOut) {
+			boolean debug, PrintStream debugOut) {
+		this.memUnitEvaluator = evaluator.memoryUnitEvaluator();
 		this.state = state;
 		this.enabler = enabler;
 		this.evaluator = evaluator;
-		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.debugging = debug;
 		this.debugOut = debugOut;
+		this.symbolicUtil = evaluator.symbolicUtility();
+		this.universe = evaluator.universe();
 	}
 
 	/* *********************** Package-private Methods ********************* */
@@ -242,16 +245,17 @@ public class AmpleSetWorker {
 	 * @return
 	 */
 	Set<ProcessState> ampleProcesses() {
-		Set<Integer> ampleProcessIDs;
+		BitSet ampleProcessIDs;
 		Set<ProcessState> ampleProcesses = new LinkedHashSet<>();
 
 		computeActiveProcesses();
-		if (activeProcesses.size() <= 1)
+		if (activeProcesses.cardinality() <= 1)
 			// return immediately if at most one process is activated.
-			ampleProcessIDs = activeProcesses;
+			ampleProcessIDs = this.activeProcesses;
 		else
 			ampleProcessIDs = ampleProcessesWork();
-		for (int pid : ampleProcessIDs) {
+		for (int pid = 0; pid < ampleProcessIDs.length(); pid++) {
+			pid = ampleProcessIDs.nextSetBit(pid);
 			ampleProcesses.add(state.getProcessState(pid));
 		}
 		return ampleProcesses;
@@ -264,15 +268,18 @@ public class AmpleSetWorker {
 	 * 
 	 * @return The set of process ID's to be contained in the ample set.
 	 */
-	private Set<Integer> ampleProcessesWork() {
-		Set<Integer> result = new LinkedHashSet<>();
-		int minimalAmpleSetSize = activeProcesses.size() + 1;
+	private BitSet ampleProcessesWork() {
+		BitSet result = new BitSet();
+		int minimalAmpleSetSize = activeProcesses.cardinality() + 1;
 
 		preprocessing();
-		for (int pid : activeProcesses) {
-			Set<Integer> ampleSet = ampleSetOfProcess(pid, minimalAmpleSetSize);
-			int currentSize = ampleSet.size();
+		for (int pid = 0; pid < activeProcesses.length(); pid++) {
+			BitSet ampleSet;
+			int currentSize;
 
+			pid = activeProcesses.nextSetBit(pid);
+			ampleSet = ampleSetOfProcess(pid, minimalAmpleSetSize);
+			currentSize = ampleSet.cardinality();
 			if (currentSize == 1)
 				return ampleSet;
 			if (currentSize < minimalAmpleSetSize) {
@@ -291,15 +298,16 @@ public class AmpleSetWorker {
 	 *            The id of the process to start with.
 	 * @return The set of process ID's to be contained in the ample set.
 	 */
-	private Set<Integer> ampleSetOfProcess(int startPid, int minAmpleSize) {
-		Set<Integer> ampleProcessIDs = new LinkedHashSet<>();
+	private BitSet ampleSetOfProcess(int startPid, int minAmpleSize) {
+		BitSet ampleProcessIDs = new BitSet();
 		Stack<Integer> workingProcessIDs = new Stack<>();
 		int myAmpleSetActiveSize = 1;
 
 		workingProcessIDs.add(startPid);
-		ampleProcessIDs.add(startPid);
+		ampleProcessIDs.set(startPid);
 		while (!workingProcessIDs.isEmpty()) {
 			int pid = workingProcessIDs.pop();
+			// ProcessState procState = state.getProcessState(pid);
 			Set<SymbolicExpression> impactMemUnits = impactMemUnitsMap.get(pid);
 			Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfThis = reachableMemUnitsMap
 					.get(pid);
@@ -340,30 +348,38 @@ public class AmpleSetWorker {
 					if (ampleSubSet != null && !ampleSubSet.isEmpty()) {
 						for (int amplePid : ampleSubSet) {
 							if (amplePid != pid
-									&& !ampleProcessIDs.contains(amplePid)
+									&& !ampleProcessIDs.get(amplePid)
 									&& !workingProcessIDs.contains(amplePid)) {
-								workingProcessIDs.add(amplePid);
-								ampleProcessIDs.add(amplePid);
-								if (this.activeProcesses.contains(amplePid))
+								if (this.activeProcesses.get(amplePid)) {
 									myAmpleSetActiveSize++;
+									workingProcessIDs.add(amplePid);
+									ampleProcessIDs.set(amplePid);
+								} else if (!this.isWaitingFor(amplePid, pid)) {
+									workingProcessIDs.add(amplePid);
+									ampleProcessIDs.set(amplePid);
+								}
 								// early return
 								if (myAmpleSetActiveSize >= minAmpleSize
 										|| myAmpleSetActiveSize == activeProcesses
-												.size()) {
-									ampleProcessIDs.retainAll(activeProcesses);
-									return ampleProcessIDs;
+												.cardinality()) {
+									// ampleProcessIDs = intersects(
+									// ampleProcessIDs, activeProcesses);
+									// ampleProcessIDs.retainAll(activeProcesses);
+									return intersects(ampleProcessIDs,
+											activeProcesses);
 								}
 							}
 						}
 					}
 				}
 			}
-			for (int otherPid : this.allProcesses) {
+			for (int otherPid = 0; otherPid < nonEmptyProcesses.length(); otherPid++) {
 				Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfOther;
 				List<Pair<SymbolicExpression, SymbolicExpression>> commonMemUnitPairs;
 
+				otherPid = nonEmptyProcesses.nextSetBit(otherPid);
 				// add new ample id earlier
-				if (otherPid == pid || ampleProcessIDs.contains(otherPid)
+				if (otherPid == pid || ampleProcessIDs.get(otherPid)
 						|| workingProcessIDs.contains(otherPid))
 					continue;
 				reachableMemUnitsMapOfOther = reachableMemUnitsMap
@@ -371,25 +387,88 @@ public class AmpleSetWorker {
 				commonMemUnitPairs = this.commonMemUnitPairs(impactMemUnits,
 						reachableMemUnitsMapOfOther.keySet());
 				for (Pair<SymbolicExpression, SymbolicExpression> memPair : commonMemUnitPairs) {
+					// if (reachableMemUnitsMapOfThis.get(memPair.left) == null
+					// || reachableMemUnitsMapOfOther.get(memPair.right) ==
+					// null) {
+					// int i = 0;
+					//
+					// i++;
+					// }
+					if (reachableMemUnitsMapOfThis.get(memPair.left) == null) {
+						memPair.left = universe.tupleWrite(memPair.left,
+								universe.intObject(2),
+								universe.identityReference());
+					}
 					if ((reachableMemUnitsMapOfThis.get(memPair.left) || reachableMemUnitsMapOfOther
 							.get(memPair.right))) {
-						workingProcessIDs.add(otherPid);
-						ampleProcessIDs.add(otherPid);
-						if (this.activeProcesses.contains(otherPid))
+						if (this.activeProcesses.get(otherPid)) {
 							myAmpleSetActiveSize++;
+							workingProcessIDs.add(otherPid);
+							ampleProcessIDs.set(otherPid);
+						} else if (!this.isWaitingFor(otherPid, pid)) {
+							workingProcessIDs.add(otherPid);
+							ampleProcessIDs.set(otherPid);
+						}
 						break;
 					}
 				}
 				// early return
 				if (myAmpleSetActiveSize >= minAmpleSize
-						|| myAmpleSetActiveSize == activeProcesses.size()) {
-					ampleProcessIDs.retainAll(activeProcesses);
-					return ampleProcessIDs;
+						|| myAmpleSetActiveSize == activeProcesses
+								.cardinality()) {
+					return this.intersects(ampleProcessIDs, activeProcesses);
 				}
 			}
 		}
-		ampleProcessIDs.retainAll(activeProcesses);
-		return ampleProcessIDs;
+		return this.intersects(ampleProcessIDs, activeProcesses);
+	}
+
+	// is pid1 waiting for pid2?
+	private boolean isWaitingFor(int pid1, int pid2) {
+		Set<CallOrSpawnStatement> systemCalls1 = this.enabledSystemCallMap
+				.get(pid1);
+
+		if (systemCalls1 != null && systemCalls1.size() == 1) {
+			for (CallOrSpawnStatement call : systemCalls1) {
+				SystemFunction systemFunction = (SystemFunction) call
+						.function();
+				if ((systemFunction.name().name().equals("$wait") || systemFunction
+						.name().name().equals("$waitall"))
+						&& systemFunction.getLibrary().equals("civlc")) {
+					Set<Integer> ampleSubSet;
+
+					try {
+						LibraryEnabler lib = enabler.libraryEnabler(
+								call.getSource(), systemFunction.getLibrary());
+
+						ampleSubSet = lib.ampleSet(state, pid1, call,
+								reachableMemUnitsMap);
+					} catch (LibraryLoaderException e) {
+						throw new CIVLInternalException(
+								"This is unreachable because the earlier execution "
+										+ "has already checked that the library enabler "
+										+ "gets loaded successfully otherwise an error should have been reported there",
+								call.getSource());
+					} catch (UnsatisfiablePathConditionException e) {
+						return false;
+					}
+					if (ampleSubSet.contains(pid2))
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	BitSet intersects(BitSet set1, BitSet set2) {
+		BitSet result = new BitSet();
+
+		for (int i = 0; i < set1.length(); i++) {
+			i = set1.nextSetBit(i);
+			if (set2.get(i))
+				result.set(i);
+		}
+		return result;
 	}
 
 	/**
@@ -412,9 +491,17 @@ public class AmpleSetWorker {
 		List<Pair<SymbolicExpression, SymbolicExpression>> result = new LinkedList<>();
 
 		for (SymbolicExpression unit1 : memSet1) {
+			// ReferenceExpression myRef = symbolicUtil.getSymRef(unit1);
+			// SymbolicExpression unit1Obj = unit1;
+			//
+			// if (!myRef.isIdentityReference()) {
+			// unit1Obj = universe.tupleWrite(unit1, universe.intObject(2),
+			// universe.identityReference());
+			// }
 			for (SymbolicExpression unit2 : memSet2) {
-				if (!evaluator.symbolicUtility().isDisjointWith(unit1, unit2))
+				if (!evaluator.symbolicUtility().isDisjointWith(unit1, unit2)) {
 					result.add(new Pair<>(unit1, unit2));
+				}
 			}
 		}
 		return result;
@@ -432,14 +519,15 @@ public class AmpleSetWorker {
 			if (p == null || p.hasEmptyStack())
 				continue;
 			pid = p.getPid();
-			this.allProcesses.add(pid);
+			this.nonEmptyProcesses.set(pid);
 			for (Statement s : p.getLocation().outgoing()) {
 				if (!enabler.getGuard(s, pid, state).value.isFalse()) {
 					active = true;
+					break;
 				}
 			}
 			if (active)
-				activeProcesses.add(pid);
+				activeProcesses.set(pid);
 		}
 	}
 
@@ -455,52 +543,54 @@ public class AmpleSetWorker {
 	 * @return The impact memory units of the process and the status to denote
 	 *         if the computation is complete.
 	 */
-	private Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemoryUnits(
-			ProcessState proc) {
-		Set<SymbolicExpression> memUnits = new HashSet<>();
-		int pid = proc.getPid();
-		Location pLocation = proc.getLocation();
-		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> partialResult;
-		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> result = null;
-
-		this.enabledSystemCallMap.put(pid, new HashSet<CallOrSpawnStatement>());
-		if (debugging)
-			debugOut.println("impact memory units of " + proc.name() + "(id="
-					+ proc.getPid() + "):");
-		if (pLocation.enterAtom() || pLocation.enterAtomic()
-				|| proc.atomicCount() > 0)
-			// special handling of atomic blocks
-			result = impactMemoryUnitsOfAtomicBlock(pLocation, pid);
-		else {
-			for (Statement s : pLocation.outgoing()) {
-				try {
-					partialResult = impactMemoryUnitsOfStatement(s, pid);
-					if (partialResult.left == MemoryUnitsStatus.INCOMPLETE) {
-						result = partialResult;
-						break;
-					}
-					memUnits.addAll(partialResult.right);
-				} catch (UnsatisfiablePathConditionException e) {
-					continue;
-				}
-			}
-		}
-		if (result == null)
-			result = new Pair<>(MemoryUnitsStatus.NORMAL, memUnits);
-		if (debugging)
-			if (result.left == MemoryUnitsStatus.INCOMPLETE)
-				debugOut.println("INCOMPLETE");
-			else {
-				CIVLSource source = pLocation.getSource();
-
-				for (SymbolicExpression memUnit : result.right) {
-					debugOut.print(symbolicAnalyzer.symbolicExpressionToString(
-							source, state, memUnit) + "\t");
-				}
-				debugOut.println();
-			}
-		return result;
-	}
+	// private Pair<MemoryUnitsStatus, Set<SymbolicExpression>>
+	// impactMemoryUnits(
+	// ProcessState proc) {
+	// Set<SymbolicExpression> memUnits = new HashSet<>();
+	// int pid = proc.getPid();
+	// Location pLocation = proc.getLocation();
+	// Pair<MemoryUnitsStatus, Set<SymbolicExpression>> partialResult;
+	// Pair<MemoryUnitsStatus, Set<SymbolicExpression>> result = null;
+	//
+	// // this.enabledSystemCallMap.put(pid, new
+	// // HashSet<CallOrSpawnStatement>());
+	// if (debugging)
+	// debugOut.println("impact memory units of " + proc.name() + "(id="
+	// + proc.getPid() + "):");
+	// if (pLocation.enterAtom() || pLocation.enterAtomic()
+	// || proc.atomicCount() > 0)
+	// // special handling of atomic blocks
+	// result = impactMemoryUnitsOfAtomicFragment(pLocation, pid);
+	// else {
+	// for (Statement s : pLocation.outgoing()) {
+	// try {
+	// partialResult = impactMemoryUnitsOfStatement(s, pid);
+	// if (partialResult.left == MemoryUnitsStatus.INCOMPLETE) {
+	// result = partialResult;
+	// break;
+	// }
+	// memUnits.addAll(partialResult.right);
+	// } catch (UnsatisfiablePathConditionException e) {
+	// continue;
+	// }
+	// }
+	// }
+	// if (result == null)
+	// result = new Pair<>(MemoryUnitsStatus.NORMAL, memUnits);
+	// if (debugging)
+	// if (result.left == MemoryUnitsStatus.INCOMPLETE)
+	// debugOut.println("INCOMPLETE");
+	// else {
+	// CIVLSource source = pLocation.getSource();
+	//
+	// for (SymbolicExpression memUnit : result.right) {
+	// debugOut.print(symbolicAnalyzer.symbolicExpressionToString(
+	// source, state, memUnit) + "\t");
+	// }
+	// debugOut.println();
+	// }
+	// return result;
+	// }
 
 	/**
 	 * Computes the set of impact memory units of an atomic or atom block. All
@@ -519,81 +609,78 @@ public class AmpleSetWorker {
 	 *         status variable to denote if the computation can be done
 	 *         completely.
 	 */
-	private Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemoryUnitsOfAtomicBlock(
+	private Set<SymbolicExpression> impactMemoryUnitsOfAtomicFragment(
 			Location location, int pid) {
 		int atomicCount = state.getProcessState(pid).atomicCount();
-		Stack<Integer> atomFlags = new Stack<Integer>();
-		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> partialResult;
+		Set<CallOrSpawnStatement> systemCalls = new HashSet<>();
+		BitSet checkedLocationIDs = new BitSet();
+		Stack<Location> workings = new Stack<Location>();
+		Set<SymbolicExpression> memUnits = new HashSet<>();
 
-		if (atomicCount > 0) {
-			for (int i = 0; i < atomicCount; i++) {
-				atomFlags.push(1);
+		assert atomicCount > 0;
+		workings.add(location);
+		// DFS searching for reachable statements inside the $atomic/$atom
+		// block
+		while (!workings.isEmpty()) {
+			Location currentLocation = workings.pop();
+			Set<MemoryUnitExpression> impactMemUnitExprs = currentLocation
+					.impactMemUnits();
+
+			if (impactMemUnitExprs == null)
+				return null;
+			checkedLocationIDs.set(currentLocation.id());
+			if (currentLocation.enterAtomic())
+				atomicCount++;
+			if (currentLocation.leaveAtomic())
+				atomicCount--;
+			if (atomicCount == 0 && !currentLocation.enterAtomic()) {
+				atomicCount++;
+				continue;
 			}
-		}
-		if (atomicCount > 0 || location.enterAtom() || location.enterAtomic()) {
-			Set<Integer> checkedLocations = new HashSet<Integer>();
-			Stack<Location> workings = new Stack<Location>();
-			Set<SymbolicExpression> memUnits = new HashSet<>();
-
-			workings.add(location);
-			// DFS searching for reachable statements inside the $atomic/$atom
-			// block
-			while (!workings.isEmpty()) {
-				Location currentLocation = workings.pop();
-
-				checkedLocations.add(currentLocation.id());
-				if (location.enterAtom() && currentLocation.enterAtom())
-					atomFlags.push(1);
-				if (location.enterAtomic() && currentLocation.enterAtomic())
-					atomFlags.push(1);
-				if (location.enterAtom() && currentLocation.leaveAtom())
-					atomFlags.pop();
-				if (location.enterAtomic() && currentLocation.leaveAtomic())
-					atomFlags.pop();
-				if (atomFlags.isEmpty()) {
-					if (location.enterAtom()) {
-						if (!currentLocation.enterAtom())
-							atomFlags.push(1);
-					}
-					if (location.enterAtomic()) {
-						if (!currentLocation.enterAtomic())
-							atomFlags.push(1);
-					}
-					continue;
+			systemCalls.addAll(currentLocation.systemCalls());
+			for (MemoryUnitExpression memUnitExpr : impactMemUnitExprs) {
+				try {
+					this.memUnitEvaluator.evaluates(state, pid, memUnitExpr,
+							memUnits);
+				} catch (UnsatisfiablePathConditionException e) {
+					// do nothing
 				}
-				if (currentLocation.getNumOutgoing() > 0) {
-					int number = currentLocation.getNumOutgoing();
-					for (int i = 0; i < number; i++) {
-						Statement s = currentLocation.getOutgoing(i);
-
-						if (s instanceof CallOrSpawnStatement) {
-							CallOrSpawnStatement callOrSpawnStatement = (CallOrSpawnStatement) s;
-
-							if (callOrSpawnStatement.isCall()) {
-								return new Pair<MemoryUnitsStatus, Set<SymbolicExpression>>(
-										MemoryUnitsStatus.INCOMPLETE, memUnits);
-							}
-						}
-						try {
-							partialResult = impactMemoryUnitsOfStatement(s, pid);
-							if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-								return partialResult;
-							memUnits.addAll(partialResult.right);
-						} catch (UnsatisfiablePathConditionException e) {
-
-						}
-						if (s.target() != null) {
-							if (!checkedLocations.contains(s.target().id())) {
-								workings.push(s.target());
-							}
-						}
+			}
+			for (Statement statement : currentLocation.outgoing()) {
+				if (statement.target() != null) {
+					if (!checkedLocationIDs.get(statement.target().id())) {
+						workings.push(statement.target());
 					}
 				}
 			}
-			return new Pair<MemoryUnitsStatus, Set<SymbolicExpression>>(
-					MemoryUnitsStatus.NORMAL, memUnits);
 		}
-		return null;
+		this.enabledSystemCallMap.put(pid, systemCalls);
+		return memUnits;
+	}
+
+	private Set<SymbolicExpression> impactMemoryUnitsOfProcess(int pid) {
+		Location location = state.getProcessState(pid).getLocation();
+		Set<MemoryUnitExpression> impactMemUnitExprs = location
+				.impactMemUnits();
+		Set<SymbolicExpression> impactMemUnits = new HashSet<>();
+
+		if (state.getProcessState(pid).atomicCount() > 0)
+			return this.impactMemoryUnitsOfAtomicFragment(location, pid);
+		if (impactMemUnitExprs == null)
+			return null;
+		this.enabledSystemCallMap.put(pid, location.systemCalls());
+		for (MemoryUnitExpression memUnitExpr : impactMemUnitExprs) {
+			Set<SymbolicExpression> subResult = new HashSet<>();
+
+			try {
+				this.memUnitEvaluator.evaluates(state, pid, memUnitExpr,
+						subResult);
+			} catch (UnsatisfiablePathConditionException e) {
+				// do nothing
+			}
+			impactMemUnits.addAll(subResult);
+		}
+		return impactMemUnits;
 	}
 
 	/**
@@ -607,146 +694,6 @@ public class AmpleSetWorker {
 	 * @return the impact memory units of the statement
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemoryUnitsOfStatement(
-			Statement statement, int pid)
-			throws UnsatisfiablePathConditionException {
-		Set<SymbolicExpression> memUnits = new HashSet<>();
-		Pair<MemoryUnitsStatus, Set<SymbolicExpression>> partialResult = memoryUnit(
-				statement.guard(), pid);
-		Set<SymbolicExpression> memUnitsPartial = partialResult.right;
-
-		if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-			return partialResult;
-		if (memUnitsPartial != null) {
-			memUnits.addAll(memUnitsPartial);
-		}
-		switch (statement.statementKind()) {
-		case ASSIGN: {
-			AssignStatement assignStatement = (AssignStatement) statement;
-
-			partialResult = memoryUnit(assignStatement.getLhs(), pid);
-			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-				return partialResult;
-			memUnitsPartial = partialResult.right;
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-			partialResult = memoryUnit(assignStatement.rhs(), pid);
-			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-				return partialResult;
-			memUnitsPartial = partialResult.right;
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-		}
-			break;
-		case ASSUME: {
-			AssumeStatement assumeStatement = (AssumeStatement) statement;
-			Expression assumeExpression = assumeStatement.getExpression();
-
-			partialResult = memoryUnit(assumeExpression, pid);
-			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-				return partialResult;
-			memUnitsPartial = partialResult.right;
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-		}
-			break;
-		case ASSERT: {
-			AssertStatement assertStatement = (AssertStatement) statement;
-			Expression assertExpression = assertStatement.getCondition();
-
-			partialResult = memoryUnit(assertExpression, pid);
-			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-				return partialResult;
-			memUnitsPartial = partialResult.right;
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-		}
-			break;
-		case CALL_OR_SPAWN: {
-			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
-
-			if (call.isSystemCall()) {
-				this.enabledSystemCallMap.get(pid).add(call);
-			}
-			for (Expression argument : call.arguments()) {
-				partialResult = memoryUnit(argument, pid);
-				if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-					return partialResult;
-				memUnitsPartial = partialResult.right;
-				if (memUnitsPartial != null) {
-					memUnits.addAll(memUnitsPartial);
-				}
-			}
-		}
-			break;
-		case MALLOC: {
-			MallocStatement mallocStatement = (MallocStatement) statement;
-
-			partialResult = memoryUnit(mallocStatement.getLHS(), pid);
-			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-				return partialResult;
-			memUnitsPartial = partialResult.right;
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-			partialResult = memoryUnit(mallocStatement.getScopeExpression(),
-					pid);
-			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-				return partialResult;
-			memUnitsPartial = partialResult.right;
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-			partialResult = memoryUnit(mallocStatement.getSizeExpression(), pid);
-			if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-				return partialResult;
-			memUnitsPartial = partialResult.right;
-			if (memUnitsPartial != null) {
-				memUnits.addAll(memUnitsPartial);
-			}
-		}
-			break;
-		case NOOP:
-			break;
-		case RETURN: {
-			ReturnStatement returnStatement = (ReturnStatement) statement;
-
-			if (returnStatement.expression() != null) {
-				partialResult = memoryUnit(returnStatement.expression(), pid);
-				if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-					return partialResult;
-				memUnitsPartial = partialResult.right;
-				if (memUnitsPartial != null) {
-					memUnits.addAll(memUnitsPartial);
-				}
-			}
-		}
-			break;
-		case STATEMENT_LIST: {
-			StatementList statementList = (StatementList) statement;
-
-			for (Statement subStatement : statementList.statements()) {
-				partialResult = impactMemoryUnitsOfStatement(subStatement, pid);
-				if (partialResult.left == MemoryUnitsStatus.INCOMPLETE)
-					return partialResult;
-				memUnits.addAll(memUnitsPartial);
-			}
-		}
-			break;
-		case CIVL_FOR_ENTER:
-			break;
-		default:
-			throw new CIVLUnimplementedFeatureException(
-					"Impact memory units for statement: ", statement);
-		}
-
-		return new Pair<>(MemoryUnitsStatus.NORMAL, memUnits);
-	}
-
 	/**
 	 * Computes the set of memory units accessed by a given expression of a
 	 * certain process at the current state.
@@ -758,20 +705,6 @@ public class AmpleSetWorker {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Pair<MemoryUnitsStatus, Set<SymbolicExpression>> memoryUnit(
-			Expression expression, int pid)
-			throws UnsatisfiablePathConditionException {
-		Set<SymbolicExpression> memoryUnits = new HashSet<>();
-		MemoryUnitsStatus status;
-
-		evaluator.memoryUnitsOfExpression(state, pid, expression, memoryUnits);
-		// TODO get rid of status.
-		status = MemoryUnitsStatus.NORMAL;
-		// if (debugging) {
-		// printMemoryUnitsOfExpression(expression, memoryUnits);
-		// }
-		return new Pair<>(status, memoryUnits);
-	}
 
 	/**
 	 * Pre-processing for ample set computation, including:
@@ -781,15 +714,38 @@ public class AmpleSetWorker {
 	 * </ul>
 	 */
 	private void preprocessing() {
-		for (int pid : allProcesses) {
-			ProcessState p = state.getProcessState(pid);
-			Pair<MemoryUnitsStatus, Set<SymbolicExpression>> impactMemUnitsPair = impactMemoryUnits(p);
+		if (debugging) {
+			debugOut.println("===============memory analysis at state "
+					+ state.getCanonicId() + "================");
+		}
+		for (int pid = 0; pid < nonEmptyProcesses.length(); pid++) {
+			Map<SymbolicExpression, Boolean> reachableMemoryUnits;
 
-			if (impactMemUnitsPair.left == MemoryUnitsStatus.INCOMPLETE)
-				impactMemUnitsMap.put(pid, null);
-			else
-				impactMemUnitsMap.put(pid, impactMemUnitsPair.right);
-			reachableMemUnitsMap.put(pid, reachableMemoryUnits(p));
+			pid = nonEmptyProcesses.nextSetBit(pid);
+			reachableMemoryUnits = state.getReachableMemUnitsWoPointer(pid);
+			reachableMemoryUnits.putAll(state
+					.getReachableMemUnitsWtPointer(pid));
+			impactMemUnitsMap.put(pid, this.impactMemoryUnitsOfProcess(pid));
+			reachableMemUnitsMap.put(pid, reachableMemoryUnits);
+			if (debugging) {
+				debugOut.println("impact memory units of process " + pid + ":");
+				for (SymbolicExpression memUnit : this.impactMemUnitsMap
+						.get(pid)) {
+					debugOut.print(memUnit);
+					debugOut.print("\t");
+				}
+				debugOut.println();
+				debugOut.println("reachable memory units of process " + pid
+						+ ":");
+				for (Map.Entry<SymbolicExpression, Boolean> entry : this.reachableMemUnitsMap
+						.get(pid).entrySet()) {
+					debugOut.print(entry.getKey());
+					if (entry.getValue())
+						debugOut.print(" (w)");
+					debugOut.print("\t");
+				}
+				debugOut.println();
+			}
 		}
 	}
 
@@ -801,80 +757,80 @@ public class AmpleSetWorker {
 	 * @param proc
 	 *            The process whose reachable memory units are to be computed.
 	 * @return A map of reachable memory units and if they could be modified by
-	 *         the process.
+	 *         the process. //
 	 */
-	private Map<SymbolicExpression, Boolean> reachableMemoryUnits(
-			ProcessState proc) {
-		Set<Integer> checkedDyScopes = new HashSet<>();
-		Map<SymbolicExpression, Boolean> memUnitPermissionMap = new HashMap<>();
-		Set<Variable> writableVariables = proc.getLocation()
-				.writableVariables();
-		// only look at the top stack is sufficient
-		StackEntry callStack = proc.peekStack();
-		int dyScopeID = callStack.scope();
-		String process = "p" + proc.identifier() + " (id = " + proc.getPid()
-				+ ")";
-
-		if (debugging)
-			debugOut.println("reachable memory units of " + proc.name()
-					+ "(id=" + proc.getPid() + "):");
-		while (dyScopeID >= 0) {
-			if (checkedDyScopes.contains(dyScopeID))
-				break;
-			else {
-				DynamicScope dyScope = state.getDyscope(dyScopeID);
-				int size = dyScope.numberOfValues();
-
-				for (int vid = 0; vid < size; vid++) {
-					Variable variable = dyScope.lexicalScope().variable(vid);
-					Set<SymbolicExpression> varMemUnits;
-					boolean permission;
-
-					// ignore the heap
-					if (variable.type().isHeapType())// && vid != 0)
-						continue;
-					if (variable.hasPointerRef())
-						varMemUnits = evaluator
-								.memoryUnitsReachableFromVariable(
-										variable.type(), dyScope.getValue(vid),
-										dyScopeID, vid, state, process);
-					else {
-						varMemUnits = new HashSet<SymbolicExpression>(1);
-						varMemUnits.add(evaluator.symbolicUtility()
-								.makePointer(
-										dyScopeID,
-										vid,
-										evaluator.universe()
-												.identityReference()));
-					}
-					permission = writableVariables.contains(variable) ? true
-							: false;
-					for (SymbolicExpression unit : varMemUnits) {
-						if (!memUnitPermissionMap.containsKey(unit)) {
-							memUnitPermissionMap.put(unit, permission);
-						}
-					}
-				}
-				checkedDyScopes.add(dyScopeID);
-				dyScopeID = state.getParentId(dyScopeID);
-			}
-		}
-		if (debugging) {
-			CIVLSource source = proc.getLocation().getSource();
-
-			for (SymbolicExpression memUnit : memUnitPermissionMap.keySet()) {
-				debugOut.print(symbolicAnalyzer.symbolicExpressionToString(
-						source, state, memUnit));
-				debugOut.print("(");
-				if (memUnitPermissionMap.get(memUnit))
-					debugOut.print("W");
-				else
-					debugOut.print("R");
-				debugOut.print(")\t");
-			}
-			debugOut.println();
-		}
-		return memUnitPermissionMap;
-	}
+	// private Map<SymbolicExpression, Boolean> reachableMemoryUnits(
+	// ProcessState proc) {
+	// Set<Integer> checkedDyScopes = new HashSet<>();
+	// Map<SymbolicExpression, Boolean> memUnitPermissionMap = new HashMap<>();
+	// Set<Variable> writableVariables = proc.getLocation()
+	// .writableVariables();
+	// // only look at the top stack is sufficient
+	// StackEntry callStack = proc.peekStack();
+	// int dyScopeID = callStack.scope();
+	// String process = "p" + proc.identifier() + " (id = " + proc.getPid()
+	// + ")";
+	//
+	// if (debugging)
+	// debugOut.println("reachable memory units of " + proc.name()
+	// + "(id=" + proc.getPid() + "):");
+	// while (dyScopeID >= 0) {
+	// if (checkedDyScopes.contains(dyScopeID))
+	// break;
+	// else {
+	// DynamicScope dyScope = state.getDyscope(dyScopeID);
+	// int size = dyScope.numberOfValues();
+	//
+	// for (int vid = 0; vid < size; vid++) {
+	// Variable variable = dyScope.lexicalScope().variable(vid);
+	// Set<SymbolicExpression> varMemUnits;
+	// boolean permission;
+	//
+	// // ignore the heap
+	// if (variable.type().isHeapType())// && vid != 0)
+	// continue;
+	// if (variable.hasPointerRef())
+	// varMemUnits = evaluator
+	// .memoryUnitsReachableFromVariable(
+	// variable.type(), dyScope.getValue(vid),
+	// dyScopeID, vid, state, process);
+	// else {
+	// varMemUnits = new HashSet<SymbolicExpression>(1);
+	// varMemUnits.add(evaluator.symbolicUtility()
+	// .makePointer(
+	// dyScopeID,
+	// vid,
+	// evaluator.universe()
+	// .identityReference()));
+	// }
+	// permission = writableVariables.contains(variable) ? true
+	// : false;
+	// for (SymbolicExpression unit : varMemUnits) {
+	// if (!memUnitPermissionMap.containsKey(unit)) {
+	// memUnitPermissionMap.put(unit, permission);
+	// }
+	// }
+	// }
+	// checkedDyScopes.add(dyScopeID);
+	// dyScopeID = state.getParentId(dyScopeID);
+	// }
+	// }
+	// if (debugging) {
+	// CIVLSource source = proc.getLocation().getSource();
+	//
+	// for (SymbolicExpression memUnit : memUnitPermissionMap.keySet()) {
+	// debugOut.print(symbolicAnalyzer.symbolicExpressionToString(
+	// source, state, memUnit));
+	// debugOut.print("(");
+	// if (memUnitPermissionMap.get(memUnit))
+	// debugOut.print("W");
+	// else
+	// debugOut.print("R");
+	// debugOut.print(")\t");
+	// }
+	// debugOut.println();
+	// }
+	// return memUnitPermissionMap;
+	// }
 
 }
