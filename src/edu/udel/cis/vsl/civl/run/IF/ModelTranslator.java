@@ -310,7 +310,7 @@ public class ModelTranslator {
 		// ASTFactory astFactory = program.getAST().getASTFactory();
 		Set<String> headers = new HashSet<>();
 		boolean isC = userFileName.endsWith(".c");
-		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false;
+		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false, hasCuda = false;
 
 		for (SourceFile sourceFile : program.getAST().getSourceFiles()) {
 			String filename = sourceFile.getName();
@@ -327,6 +327,8 @@ public class ModelTranslator {
 			hasPthread = true;
 		if (isC && headers.contains("mpi.h"))
 			hasMpi = true;
+		if (headers.contains("cuda.h"))
+			hasCuda = true;
 		// always apply general transformation.
 		if (config.debugOrVerbose())
 			this.out.println("Apply general transformer...");
@@ -372,6 +374,13 @@ public class ModelTranslator {
 			if (config.debugOrVerbose())
 				this.out.println("Apply MPI transformer...");
 			program.apply(transformerFactory.getMPI2CIVLTransformer());
+			if (config.debugOrVerbose())
+				program.prettyPrint(out);
+		}
+		if (hasCuda) {
+			if (config.debugOrVerbose())
+				this.out.println("Apply Cuda transformer...");
+			program.apply(transformerFactory.getCuda2CIVLTransformer());
 			if (config.debugOrVerbose())
 				program.prettyPrint(out);
 		}
@@ -728,6 +737,12 @@ public class ModelTranslator {
 			return "omp.cvl";
 		case "string.h":
 			return "string.cvl";
+		case "cuda.h":
+			return "cuda.cvl";
+		case "cuda-helper.cvh":
+			return "cuda-helper.cvl";
+		case "bar.h":
+			return "bar.cvl";
 		default:
 			return null;
 		}
