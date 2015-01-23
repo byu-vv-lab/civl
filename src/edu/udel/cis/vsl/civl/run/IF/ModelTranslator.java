@@ -723,6 +723,8 @@ public class ModelTranslator {
 			return "civlc.cvl";
 		case "civlmpi.cvh":
 			return "civlmpi.cvl";
+		case "civlpthread.cvh":
+			return "civlpthread.cvl";
 		case "comm.cvh":
 			return "comm.cvl";
 		case "concurrency.cvh":
@@ -735,6 +737,10 @@ public class ModelTranslator {
 			return "math.cvl";
 		case "omp.h":
 			return "omp.cvl";
+		case "pthread.h":
+			return "pthread.cvl";
+		case "simplepthread.h":
+			return "simplepthread.cvl";
 		case "string.h":
 			return "string.cvl";
 		case "cuda.h":

@@ -1,0 +1,19 @@
+#ifdef __CIVL_CIVLPTHREAD__
+#else
+#define __CIVL_CIVLPTHREAD__
+
+#include <civlc.h>
+#include "civlpthread.cvh"
+#include <concurrency.cvh>
+#include <seq.cvh>
+
+void _free_pool(__pthread_pool_t * pool){
+  $atomic{
+    int len = pool->len;
+    
+    if(pool->threads != NULL)
+        $free(pool->threads);
+  }
+}
+
+#endif
