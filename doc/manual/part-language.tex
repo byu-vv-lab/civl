@@ -804,9 +804,9 @@ case it regains atomicity and continues where it left off.  For
 example, after executing the first loop, the process executing the
 following code will become blocked at the first \cwait\ or \cwaitall\ call:
  \begin{verbatim}  
-$atomic{
-  for(int i = 0; i < 5; i++) p[i] = $spawn foo(i);
-  for(int i = 0; i < 5; i++) $wait p[i];
+$atomic {
+  for (int i = 0; i < 5; i++) p[i] = $spawn foo(i);
+  for (int i = 0; i < 5; i++) $wait p[i];
 }
 \end{verbatim}
 Other processes will then execute. Eventually, if the process being
@@ -1176,7 +1176,7 @@ The expression \verb!p=>q! is equivalent to \verb~(!p)||q~.
 
 \subsection{Universal quantifier: \cforall}
 
-The universally qunatified formula has the form
+The universally quantified formula has the form
 \begin{verbatim}
   $forall { type identifier | restriction} expr
 \end{verbatim}

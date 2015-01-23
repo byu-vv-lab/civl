@@ -12,7 +12,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
 /**
  * java -classpath ${WORKING_DIR}/civl.jar:${WORKING_DIR}/bin
- * edu.udel.cis.vsl.civl.bench.ParseMemoryTest $arg0 $arg1
+ * edu.udel.cis.vsl.civl.bench.ParserMemoryTest $arg0 $arg1
  * 
  * where $arg0 is the full path to the test file and $arg1 is the number of
  * iteration, ${WORKING_DIR} is your CIVL directory.
@@ -21,6 +21,8 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
  *
  */
 public class ParserMemoryTest {
+	private static Runtime runtime = Runtime.getRuntime();
+	private static long mb = 1024 * 1024;
 	private static FrontEnd frontEnd = new FrontEnd();
 	private static List<String> codes = Arrays.asList("prune", "sef");
 
@@ -33,16 +35,14 @@ public class ParserMemoryTest {
 			System.out.println("i is " + i);
 			frontEnd.compileAndLink(new File[] { testFile }, Language.CIVL_C)
 					.applyTransformers(codes);
-
-			// System.out.println("##### Heap utilization statistics [MB] #####");
-			//
-			// // Print used memory
-			// System.out.println("Used Memory:"
-			// + (runtime.totalMemory() - runtime.freeMemory()) / mb);
-			//
-			// // Print free memory
-			// System.out.println("Free Memory:" + runtime.freeMemory() / mb);
-			// System.gc();
+			System.gc();
+			System.out.println("Number of types = "
+					+ frontEnd.getASTFactory().getTypeFactory().getNumTypes());
+			System.out.println("##### Heap utilization statistics [MB] #####");
+			System.out.println("Used Memory:"
+					+ (runtime.totalMemory() - runtime.freeMemory()) / mb);
+			System.out.println("Free Memory:" + runtime.freeMemory() / mb);
+			System.out.flush();
 		}
 	}
 }
