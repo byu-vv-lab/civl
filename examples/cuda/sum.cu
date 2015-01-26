@@ -4,7 +4,7 @@
 */
 
 #include <stdio.h>
-#include "cuda.h"
+#include <cuda.h>
 
 #define N 8
 #define NBLOCKS 4

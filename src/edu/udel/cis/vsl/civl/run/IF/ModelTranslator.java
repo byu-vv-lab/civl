@@ -747,8 +747,6 @@ public class ModelTranslator {
 			return "cuda.cvl";
 		case "cuda-helper.cvh":
 			return "cuda-helper.cvl";
-		case "bar.h":
-			return "bar.cvl";
 		default:
 			return null;
 		}

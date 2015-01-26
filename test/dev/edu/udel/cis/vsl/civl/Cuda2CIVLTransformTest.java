@@ -172,9 +172,9 @@ public class Cuda2CIVLTransformTest {
 	}
 
 	/* **************************** Test Methods *************************** */
-
+	
 	@Test
-	public void sum() throws ABCException, IOException {
-		check("sum", false);
+	public void sum() {
+		assertTrue(ui.run("verify", filename("sum.cu")));
 	}
 }
