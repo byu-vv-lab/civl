@@ -544,7 +544,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		for(ASTNode key : sharedWrite.keySet()){
 			ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> statements = sharedWrite.get(key);
 			ASTNode parent = key.parent();
-			if(parent instanceof ForLoopNode){
+			if(parent instanceof ForLoopNode || parent instanceof IfNode){
 				createBody(key);
 				parent = key.parent();
 			}
@@ -564,7 +564,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		for (ASTNode key : sharedRead.keySet()) {
 			ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> statements = sharedRead.get(key);
 			ASTNode parent = key.parent();
-			if(parent instanceof ForLoopNode){
+			if(parent instanceof ForLoopNode || parent instanceof IfNode){
 				createBody(key);
 				parent = key.parent();
 			}
@@ -652,7 +652,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				numThreads = this.identifierExpression(
 						newSource(nthreadDeclaration, 
 								CParser.IDENTIFIER),
-								THREADMAX);
+								"$omp_numThreads");
 			} 
 			
 			
@@ -1377,6 +1377,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				int index = node.childIndex();
 				ASTNode parent = node.parent();
 				parent.setChild(index, ifStatement);
+				
+				Iterable<ASTNode> children = body.children();
+
+				// Visit all the child to check for omp code
+				for (ASTNode child : children) {
+					replaceOMPPragmas(child, privateIDs, sharedIDs,
+							reductionIDs, firstPrivateIDs);
+				}
+				
 			} else if (syncKind.equals("BARRIER")) {
 				// Replace omp barrier with $omp_barrier_and_flush
 				ExpressionStatementNode barrierAndFlush = barrierAndFlush(TEAM);
@@ -1387,6 +1396,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				// For an omp critical, check if there is a name for the
 				// critical
 				// If there is a name, get the name. Else, give it noname
+				Iterable<ASTNode> children = node.children();
 				String syncNode = "criticalNode";
 				IdentifierNode criticalIDName = ((OmpSyncNode) node)
 						.criticalName();
@@ -1452,6 +1462,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				int index = node.childIndex();
 				ASTNode parent = node.parent();
 				parent.setChild(index, body);
+				
+				children = body.children();
+
+				// Visit all the child to check for omp code
+				for (ASTNode child : children) {
+					replaceOMPPragmas(child, privateIDs, sharedIDs,
+							reductionIDs, firstPrivateIDs);
+				}
+				
 			}
 		} else if (node instanceof OmpWorksharingNode) {
 			Iterable<ASTNode> children = node.children();
@@ -1815,7 +1834,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		Type currentType = ((Variable) node.getEntity()).getType();
 		int nodesDeep = 0;
 		boolean pointer = false;
-		if(currentType instanceof PointerType){
+		while(currentType instanceof PointerType){
 			currentType = ((PointerType) currentType).referencedType();
 			nodesDeep++;
 			pointer = true;
@@ -1933,23 +1952,28 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		if(k>=numChildren){
 			parent.setChild(k, nodeToInsert);
 		} else {
-			ASTNode current = parent.child(k);
-			parent.removeChild(k);
+			ASTNode current = parent.removeChild(k);
 			ASTNode next = null;
-			int i = 0;
-			for(i=k+1; i<numChildren; i++){
-				if(parent.child(i) != null){
-					next = parent.child(i);
-				}
-				parent.removeChild(i);
-				parent.setChild(i, current);
-				current = next;
-				
-			}
-			parent.setChild(i, current);
 			parent.setChild(k, nodeToInsert);
+			if(current != null){
+				for(int i=k+1; i<= numChildren; i++){
+					if(i==numChildren){
+						parent.setChild(i, current);
+						break;
+					}
+					next = parent.child(i);
+					if(next != null){
+						parent.removeChild(i);
+						parent.setChild(i, current);
+					} else {
+						parent.setChild(i, current);
+						break;
+					}
+					current = next;
+					
+				}
+			}
 		}
-
 		
 	}
 
@@ -1978,6 +2002,13 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		case "omp_get_thread_num":
 			place = "omp_get_thread_num->_tid";
 			replacementNode = this.identifierExpression(newSource(place, CParser.IDENTIFIER), TID);
+			break;
+		case "omp_set_num_threads":
+			String value = (String) ((IntegerConstantNode)node.getArgument(0)).getStringRepresentation();
+			replacementNode = nodeFactory.newOperatorNode(
+							source, Operator.ASSIGN, Arrays.asList(this
+									.identifierExpression(source, "$omp_numThreads"),
+									nodeFactory.newIntegerConstantNode(source, value)));
 			break;
 		case "omp_get_wtime":
 			place = "omp_get_wtime->time(NULL)";
@@ -2090,7 +2121,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		Type currentType = ((Variable) node.getEntity()).getType();
 		int nodesDeep = 0;
 		boolean pointer = false;
-		if(currentType instanceof PointerType){
+		while(currentType instanceof PointerType){
 			currentType = ((PointerType) currentType).referencedType();
 			nodesDeep++;
 			pointer = true;
@@ -2286,6 +2317,18 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		int number;
 		items = new LinkedList<>();
 		number = root.numChildren();
+		
+		final String place = "numThreadsDeclaration";
+		TypeNode nthreadsType = nodeFactory.newBasicTypeNode(
+				newSource(place, CParser.INT), BasicTypeKind.INT);
+		IdentifierNode identifierNode = nodeFactory.newIdentifierNode(
+				newSource(place, CParser.IDENTIFIER), "$omp_numThreads");
+
+		items.add(nodeFactory.newVariableDeclarationNode(source,
+				identifierNode, nthreadsType,
+				this.identifierExpression( newSource(place, 
+						CParser.IDENTIFIER), "THREAD_MAX")));
+		
 		for (int i = 0; i < number; i++) {
 			ExternalDefinitionNode child = root.getSequenceChild(i);
 			String sourceFile;
@@ -2329,6 +2372,9 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				items.add(child);
 			}
 		}
+		
+
+
 		return new Triple<>(items, includedNodes, vars);
 	}
 
