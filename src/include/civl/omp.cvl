@@ -1,8 +1,57 @@
 
 #include <omp.h>
 #include <civlc-omp.cvh>
+#include <stdbool.h>
 
 // implementations of functions in omp.h go here...
+
+struct omp_lock_t{
+  $proc owner;
+  _Bool lock;
+};
+
+/********************************** State *****************************************/
+/* The number of times the omp_get_wtime function has been called */
+int OMP_time_count = 0;
+
+/************************** OMP LIB Implementations *******************************/
+
+void omp_init_lock(omp_lock_t *slock){
+  slock->owner = $proc_null;
+  slock->lock = true;
+}
+
+void omp_destroy_lock(omp_lock_t *slock){
+  omp_lock_t blank;
+  *slock = blank;
+}
+
+void omp_set_lock(omp_lock_t *slock){
+  $atomic{
+    $when(!slock->lock && slock->owner == $proc_null){
+      slock->lock = true;
+      slock->owner == $self;
+    }
+  }
+}
+
+void omp_unset_lock(omp_lock_t *slock){
+  $atomic{
+    slock->owner = $proc_null;
+    slock->lock = false;
+  }
+}
+
+$abstract double OMP_time(int i);
+
+double omp_get_wtime() {
+  double result;
+
+  result = OMP_time(OMP_time_count);
+  OMP_time_count++;
+  return result;
+}
+
 
 /*
 void omp_set_num_threads (int);
