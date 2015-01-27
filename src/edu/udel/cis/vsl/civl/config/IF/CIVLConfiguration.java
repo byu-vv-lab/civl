@@ -2,9 +2,14 @@ package edu.udel.cis.vsl.civl.config.IF;
 
 import java.io.PrintStream;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants.DeadlockKind;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 public class CIVLConfiguration {
+
+	private DeadlockKind deadlock = DeadlockKind.ABSOLUTE;
 	private boolean debug = false;
 	private boolean enablePrintf = true;
 	private boolean saveStates = true;
@@ -21,7 +26,7 @@ public class CIVLConfiguration {
 	private boolean svcomp = false;
 	private boolean showProgram = false;
 	private boolean ompNoSimplify = false;
-	private String deadlock;
+	// private String deadlock;
 	private PrintStream out;
 	private PrintStream err;
 	private boolean showPathConditon = false;
@@ -35,6 +40,24 @@ public class CIVLConfiguration {
 	private boolean showMemoryUnits = false;
 
 	public CIVLConfiguration(GMCConfiguration config) {
+		String deadlockString = (String) config
+				.getValue(CIVLConstants.deadlockO);
+
+		if (deadlockString != null)
+			switch (deadlockString) {
+			case "absolute":
+				this.deadlock = DeadlockKind.ABSOLUTE;
+				break;
+			case "potential":
+				this.deadlock = DeadlockKind.POTENTIAL;
+				break;
+			case "none":
+				this.deadlock = DeadlockKind.NONE;
+				break;
+			default:
+				throw new CIVLInternalException("invalid deadlock kind "
+						+ deadlockString, (CIVLSource) null);
+			}
 		this.setShowMemoryUnits(config.isTrue(CIVLConstants.showMemoryUnitsO));
 		this.debug = config.isTrue(CIVLConstants.debugO);
 		this.enablePrintf = config.isTrue(CIVLConstants.enablePrintfO);
@@ -49,7 +72,6 @@ public class CIVLConfiguration {
 		this.statelessPrintf = config.isTrue(CIVLConstants.statelessPrintfO);
 		this.verbose = config.isTrue(CIVLConstants.verboseO);
 		this.svcomp = config.isTrue(CIVLConstants.svcompO);
-		this.deadlock = (String) config.getValue(CIVLConstants.deadlockO);
 		this.setShowProgram(config.isTrue(CIVLConstants.showProgramO));
 		this.showPathConditon = config.isTrue(CIVLConstants.showPathConditionO);
 		this.ompNoSimplify = config.isTrue(CIVLConstants.ompNoSimplifyO);
@@ -188,7 +210,7 @@ public class CIVLConfiguration {
 		this.svcomp = svcomp;
 	}
 
-	public String deadlock() {
+	public DeadlockKind deadlock() {
 		return deadlock;
 	}
 
@@ -200,7 +222,7 @@ public class CIVLConfiguration {
 		this.collectScopes = collectScopes;
 	}
 
-	public void setDeadlock(String deadlock) {
+	public void setDeadlock(DeadlockKind deadlock) {
 		this.deadlock = deadlock;
 	}
 

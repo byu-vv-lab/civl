@@ -17,6 +17,9 @@ import edu.udel.cis.vsl.gmc.Option;
  * 
  */
 public class CIVLConstants {
+	public enum DeadlockKind {
+		ABSOLUTE, POTENTIAL, NONE
+	}
 
 	/**
 	 * Where the CIVL header files (suffix .h and .cvh) and associated
