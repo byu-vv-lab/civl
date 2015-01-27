@@ -3981,7 +3981,7 @@ public class FunctionTranslator {
 		CIVLSource source = modelFactory.sourceOf(subscriptNode);
 		ExpressionNode leftNode = subscriptNode.getArgument(0);
 		ExpressionNode rightNode = subscriptNode.getArgument(1);
-		Expression lhs = translateExpressionNode(leftNode, scope, true);
+		Expression lhs = translateExpressionNode(leftNode, scope, false);
 		Expression rhs = translateExpressionNode(rightNode, scope, true);
 		CIVLType lhsType = lhs.getExpressionType();
 		Expression result;
