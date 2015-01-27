@@ -1,11 +1,9 @@
 package edu.udel.cis.vsl.civl.library.comm;
 
 import java.math.BigInteger;
-import java.util.HashSet;
+import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -34,6 +32,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -59,9 +58,12 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 	/* ********************* Methods from LibraryEnabler ******************* */
 
 	@Override
-	public Set<Integer> ampleSet(State state, int pid,
+	public BitSet ampleSet(State state, int pid,
 			CallOrSpawnStatement statement,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap)
+			MemoryUnitSet[] reachablePtrWritableMap,
+			MemoryUnitSet[] reachablePtrReadonlyMap,
+			MemoryUnitSet[] reachableNonPtrWritableMap,
+			MemoryUnitSet[] reachableNonPtrReadonlyMap)
 			throws UnsatisfiablePathConditionException {
 		Identifier name;
 		CallOrSpawnStatement call;
@@ -75,9 +77,13 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		switch (name.name()) {
 		case "$comm_enqueue":
 		case "$comm_dequeue":
-			return ampleSetWork(state, pid, call, reachableMemUnitsMap);
+			return ampleSetWork(state, pid, call, reachablePtrWritableMap,
+					reachablePtrReadonlyMap, reachableNonPtrWritableMap,
+					reachableNonPtrReadonlyMap);
 		default:
-			return super.ampleSet(state, pid, statement, reachableMemUnitsMap);
+			return super.ampleSet(state, pid, statement,
+					reachablePtrWritableMap, reachablePtrReadonlyMap,
+					reachableNonPtrWritableMap, reachableNonPtrReadonlyMap);
 		}
 	}
 
@@ -114,16 +120,18 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 	 *            The map of reachable memory units of all active processes.
 	 * @return
 	 */
-	private Set<Integer> ampleSetWork(State state, int pid,
-			CallOrSpawnStatement call,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
+	private BitSet ampleSetWork(State state, int pid,
+			CallOrSpawnStatement call, MemoryUnitSet[] reachablePtrWritableMap,
+			MemoryUnitSet[] reachablePtrReadonlyMap,
+			MemoryUnitSet[] reachableNonPtrWritableMap,
+			MemoryUnitSet[] reachableNonPtrReadonlyMap) {
 		int numArgs;
 		numArgs = call.arguments().size();
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		String function = call.function().name().name();
 		CIVLSource source = call.getSource();
-		Set<Integer> ampleSet = new HashSet<>();
+		BitSet ampleSet = new BitSet();
 
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
@@ -134,7 +142,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			try {
 				eval = evaluator.evaluate(state, pid, arguments[i]);
 			} catch (UnsatisfiablePathConditionException e) {
-				return new HashSet<>();
+				return new BitSet();
 			}
 			argumentValues[i] = eval.value;
 			state = eval.state;
@@ -150,20 +158,23 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			// the same communicator will be added into ample set.
 			if (reasoner.isValid(universe.lessThanEquals(zero, argSrc))) {
 				return this.computeAmpleSetByHandleObject(state, pid,
-						arguments[0], argumentValues[0], reachableMemUnitsMap);
+						arguments[0], argumentValues[0],
+						reachablePtrWritableMap, reachablePtrReadonlyMap,
+						reachableNonPtrWritableMap, reachableNonPtrReadonlyMap);
 			} else {
 				// TODO: find out processes in the gcomm, instead of all
 				// processes of the system.
-				for (int p : reachableMemUnitsMap.keySet()) {
-					ampleSet.add(p);
-				}
+				for (int otherPid = 0; otherPid < state.numProcs(); otherPid++)
+					ampleSet.set(otherPid);
 			}
 			return ampleSet;
 		case "$comm_enqueue":
 			// Because we don't know if other processes will call an wild card
 			// receive(dequeue), we have to put all processes into ample set.
 			return this.computeAmpleSetByHandleObject(state, pid, arguments[0],
-					argumentValues[0], reachableMemUnitsMap);
+					argumentValues[0], reachablePtrWritableMap,
+					reachablePtrReadonlyMap, reachableNonPtrWritableMap,
+					reachableNonPtrReadonlyMap);
 		default:
 			throw new CIVLInternalException("Unreachable" + function, source);
 		}

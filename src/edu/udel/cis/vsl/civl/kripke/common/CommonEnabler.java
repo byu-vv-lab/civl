@@ -1,8 +1,10 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -34,6 +36,7 @@ import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * CommonEnabler implements {@link EnablerIF} for CIVL models. It is an abstract
@@ -72,6 +75,8 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	protected boolean showAmpleSet = false;
 
+	protected boolean showMemoryUnits = false;
+
 	/**
 	 * The unique symbolic universe used by the system.
 	 */
@@ -103,7 +108,7 @@ public abstract class CommonEnabler implements Enabler {
 	protected CIVLErrorLogger errorLogger;
 
 	/**
-	 *  The symbolic analyzer to be used.
+	 * The symbolic analyzer to be used.
 	 */
 	protected SymbolicAnalyzer symbolicAnalyzer;
 
@@ -142,6 +147,7 @@ public abstract class CommonEnabler implements Enabler {
 		falseExpression = universe.falseExpression();
 		this.libraryLoader = libLoader;
 		this.stateFactory = stateFactory;
+		this.showMemoryUnits = civlConfig.showMemoryUnits();
 	}
 
 	/* ************************ Methods from EnablerIF ********************* */
@@ -253,6 +259,7 @@ public abstract class CommonEnabler implements Enabler {
 	 *            The state to work with.
 	 * @param pid
 	 *            The process id to work with.
+	 * @param newGuardMap
 	 * @param assignAtomicLock
 	 *            The assignment statement for the atomic lock variable, should
 	 *            be null except that the process is going to re-obtain the
@@ -260,7 +267,8 @@ public abstract class CommonEnabler implements Enabler {
 	 * @return the list of enabled transitions of the given process at the
 	 *         specified state
 	 */
-	List<Transition> enabledTransitionsOfProcess(State state, int pid) {
+	List<Transition> enabledTransitionsOfProcess(State state, int pid,
+			Map<Integer, Map<Statement, SymbolicExpression>> newGuardMap) {
 		ProcessState p = state.getProcessState(pid);
 		Location pLocation = p.getLocation();
 		LinkedList<Transition> transitions = new LinkedList<>();
@@ -277,7 +285,7 @@ public abstract class CommonEnabler implements Enabler {
 		for (int i = 0; i < numOutgoing; i++) {
 			Statement statement = pLocation.getOutgoing(i);
 			BooleanExpression newPathCondition = newPathCondition(state, pid,
-					statement);
+					statement, newGuardMap);
 
 			if (!newPathCondition.isFalse()) {
 				transitions.addAll(enabledTransitionsOfStatement(state,
@@ -315,8 +323,12 @@ public abstract class CommonEnabler implements Enabler {
 			TransitionSequence localTransitions = Semantics
 					.newTransitionSequence(state);
 
-			localTransitions.addAll(enabledTransitionsOfProcess(state,
-					pidInAtomic));
+			localTransitions
+					.addAll(enabledTransitionsOfProcess(
+							state,
+							pidInAtomic,
+							new HashMap<Integer, Map<Statement, SymbolicExpression>>(
+									0)));
 			if (!localTransitions.isEmpty())
 				return localTransitions;
 		}
@@ -432,14 +444,31 @@ public abstract class CommonEnabler implements Enabler {
 	 *            The id of the currently executing process.
 	 * @param statement
 	 *            The statement.
+	 * @param newGuardMap
 	 * @return The new path condition. False if the guard is not satisfiable
 	 *         under the path condition.
 	 */
 	private BooleanExpression newPathCondition(State state, int pid,
-			Statement statement) {
-		Evaluation eval = getGuard(statement, pid, state);
-		BooleanExpression guard = (BooleanExpression) eval.value;
-		BooleanExpression pathCondition = eval.state.getPathCondition();
+			Statement statement,
+			Map<Integer, Map<Statement, SymbolicExpression>> newGuardMap) {
+		BooleanExpression guard = null;
+		 Map<Statement, SymbolicExpression> myMap = newGuardMap.get(pid);
+		 
+		 if(myMap != null){
+			 guard = (BooleanExpression) myMap.get(statement);
+		 }
+		
+		// BooleanExpression guard = (BooleanExpression)
+		// newGuardMap.get(pid).get(
+		// statement);
+
+		if (guard == null) {
+
+			Evaluation eval = getGuard(statement, pid, state);
+			guard = (BooleanExpression) eval.value;
+		}
+
+		BooleanExpression pathCondition = state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(pathCondition);
 
 		if (guard.isTrue()) {
@@ -450,5 +479,11 @@ public abstract class CommonEnabler implements Enabler {
 		if (reasoner.isValid(guard))
 			return pathCondition;
 		return universe.and(pathCondition, guard);
+	}
+
+	public List<Transition> enabledTransitionsOfProcess(State state, int pid) {
+		// TODO Auto-generated method stub
+		return this.enabledTransitionsOfProcess(state, pid,
+				new HashMap<Integer, Map<Statement, SymbolicExpression>>(0));
 	}
 }

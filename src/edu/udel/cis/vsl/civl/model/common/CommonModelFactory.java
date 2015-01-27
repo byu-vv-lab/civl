@@ -2457,10 +2457,9 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public MemoryUnitExpression memoryUnitExpression(CIVLSource source,
-			int scopeID, int varID, CIVLType objType,
-			MemoryUnitReference reference, boolean writable,
-			boolean hasPinterRef) {
-		return new CommonMemoryUnitExpression(source, scopeID, varID, objType,
+			Variable variable, CIVLType objType, MemoryUnitReference reference,
+			boolean writable, boolean hasPinterRef) {
+		return new CommonMemoryUnitExpression(source, variable, objType,
 				reference, writable, hasPinterRef);
 	}
 }

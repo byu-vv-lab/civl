@@ -1,16 +1,15 @@
 package edu.udel.cis.vsl.civl.kripke.IF;
 
+import java.util.BitSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * A Library Enabler provides a method to compute the enabled transitions of
@@ -55,8 +54,11 @@ public interface LibraryEnabler {
 	 *            The map of reachable memory units of all active processes.
 	 * @return
 	 */
-	Set<Integer> ampleSet(State state, int pid, CallOrSpawnStatement statement,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap)
+	BitSet ampleSet(State state, int pid, CallOrSpawnStatement statement,
+			MemoryUnitSet[] reachablePtrWritableMap,
+			MemoryUnitSet[] reachablePtrReadonlyMap,
+			MemoryUnitSet[] reachableNonPtrWritableMap,
+			MemoryUnitSet[] reachableNonPtrReadonlyMap)
 			throws UnsatisfiablePathConditionException;
 
 	/**

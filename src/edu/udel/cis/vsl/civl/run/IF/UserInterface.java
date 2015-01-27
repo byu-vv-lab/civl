@@ -27,6 +27,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.seedO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetWtStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showInputVarsO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showMemoryUnitsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showModelO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showPathConditionO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showProgramO;
@@ -162,7 +163,8 @@ public class UserInterface {
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
 				svcompO, showInputVarsO, showProgramO, showPathConditionO,
 				ompNoSimplifyO, collectProcessesO, collectScopesO,
-				collectHeapsO, linkO, webO, macroO, preprocO, astO, showTimeO);
+				collectHeapsO, linkO, webO, macroO, preprocO, astO, showTimeO,
+				showMemoryUnitsO);
 
 		for (Option option : options)
 			definedOptions.put(option.name(), option);
@@ -179,13 +181,16 @@ public class UserInterface {
 				showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcompO,
 				showProgramO, showPathConditionO, ompNoSimplifyO,
 				collectProcessesO, collectScopesO, collectHeapsO, macroO,
-				preprocO, astO, showTimeO);
-		CIVLCommand.addReplayOption(showModelO, verboseO, debugO, echoO,
-				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,
-				showAmpleSetWtStatesO, statelessPrintfO, guiO, showProgramO,
-				showPathConditionO, ompNoSimplifyO, collectProcessesO,
-				collectScopesO, collectHeapsO, preprocO, astO);
+				preprocO, astO, showTimeO, showMemoryUnitsO);
+		CIVLCommand
+				.addReplayOption(showModelO, verboseO, debugO, echoO,
+						showTransitionsO, showStatesO, showSavedStatesO,
+						showQueriesO, showProverQueriesO, idO, traceO,
+						enablePrintfO, showAmpleSetO, showAmpleSetWtStatesO,
+						statelessPrintfO, guiO, showProgramO,
+						showPathConditionO, ompNoSimplifyO, collectProcessesO,
+						collectScopesO, collectHeapsO, preprocO, astO,
+						showMemoryUnitsO);
 		CIVLCommand.addRunOption(errorBoundO, verboseO, randomO, guidedO,
 				seedO, debugO, echoO, userIncludePathO, sysIncludePathO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
@@ -193,7 +198,8 @@ public class UserInterface {
 				enablePrintfO, showAmpleSetO, showAmpleSetWtStatesO,
 				statelessPrintfO, deadlockO, svcompO, showProgramO,
 				showPathConditionO, ompNoSimplifyO, collectProcessesO,
-				collectScopesO, collectHeapsO, macroO, preprocO, astO);
+				collectScopesO, collectHeapsO, macroO, preprocO, astO,
+				showMemoryUnitsO);
 	}
 
 	/* ************************** Constructors ***************************** */

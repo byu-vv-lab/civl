@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -26,6 +27,8 @@ import edu.udel.cis.vsl.gmc.EnablerIF;
 public class PointeredEnabler extends CommonEnabler implements Enabler {
 
 	// private boolean testNewAmpleSet = false;
+
+	private MemoryUnitFactory memUnitFactory;
 
 	/* ***************************** Constructors ************************** */
 
@@ -52,10 +55,12 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	 *            The configuration of the CIVL model.
 	 */
 	public PointeredEnabler(StateFactory stateFactory, Evaluator evaluator,
-			SymbolicAnalyzer symbolicAnalyzer, LibraryEnablerLoader libLoader,
+			SymbolicAnalyzer symbolicAnalyzer,
+			MemoryUnitFactory memUnitFactory, LibraryEnablerLoader libLoader,
 			CIVLErrorLogger errorLogger, CIVLConfiguration civlConfig) {
 		super(stateFactory, evaluator, symbolicAnalyzer, libLoader,
 				errorLogger, civlConfig);
+		this.memUnitFactory = memUnitFactory;
 	}
 
 	/* ************************* Methods from Enabler ********************** */
@@ -74,8 +79,8 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 		List<ProcessState> processStates;
 
 		// if (this.testNewAmpleSet) {
-		AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this,
-				evaluator, debugging, debugOut);
+		AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this, evaluator,
+				memUnitFactory, debugging || this.showMemoryUnits, debugOut);
 
 		processStates = new LinkedList<>(ampleWorker.ampleProcesses());
 		// compute ample processes
@@ -99,7 +104,7 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 		}
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
-			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid()));
+			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(), ampleWorker.newGuardMap));
 		}
 		return transitions;
 	}

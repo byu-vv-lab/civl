@@ -111,10 +111,11 @@ public class MemoryUnitExpressionAnalyzer {
 							.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE)))
 						continue;
 					memUnit = modelFactory.memoryUnitExpression(
-							variable.getSource(), scopeID, i, variable.type(),
+							variable.getSource(), variable, variable.type(),
 							selfRef, writableVars.contains(variable),
 							variable.hasPointerRef());
-					if (variable.hasPointerRef()) {
+					if (variable.hasPointerRef()
+							&& !variable.type().isHandleType()) {
 						reachableMemUnitsWtPointer.add(memUnit);
 					} else
 						reachableMemUnitsWoPointer.add(memUnit);
@@ -469,8 +470,7 @@ public class MemoryUnitExpressionAnalyzer {
 					.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE)) || variable
 					.type().isHandleType()))
 				result.add(this.modelFactory.memoryUnitExpression(
-						variable.getSource(), variable.scope().id(),
-						variable.vid(), variable.type(),
+						variable.getSource(), variable, variable.type(),
 						modelFactory.selfReference(),
 						writableVars.contains(variable),
 						variable.hasPointerRef()));

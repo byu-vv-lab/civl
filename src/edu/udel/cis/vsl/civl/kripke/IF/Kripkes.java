@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 
 /**
@@ -38,10 +39,10 @@ public class Kripkes {
 	 */
 	public static Enabler newEnabler(StateFactory stateFactory,
 			Evaluator evaluator, SymbolicAnalyzer symbolicAnalyzer,
-			LibraryEnablerLoader libLoader, CIVLErrorLogger errorLogger,
-			CIVLConfiguration civlConfig) {
+			MemoryUnitFactory memUnitFactory, LibraryEnablerLoader libLoader,
+			CIVLErrorLogger errorLogger, CIVLConfiguration civlConfig) {
 		return new PointeredEnabler(stateFactory, evaluator, symbolicAnalyzer,
-				libLoader, errorLogger, civlConfig);
+				memUnitFactory, libLoader, errorLogger, civlConfig);
 	}
 
 	/**

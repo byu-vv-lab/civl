@@ -1,10 +1,8 @@
 package edu.udel.cis.vsl.civl.library.common;
 
-import java.util.HashSet;
+import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -20,6 +18,8 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -59,6 +59,8 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 
 	protected LibraryEnablerLoader libEnablerLoader;
 
+	protected MemoryUnitFactory memUnitFactory;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -84,16 +86,21 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
 		this.modelFactory = modelFactory;
+		this.memUnitFactory = stateFactory.memUnitFactory();
+
 	}
 
 	/* ********************* Methods from LibraryEnabler ******************* */
 
 	@Override
-	public Set<Integer> ampleSet(State state, int pid,
+	public BitSet ampleSet(State state, int pid,
 			CallOrSpawnStatement statement,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap)
+			MemoryUnitSet[] reachablePtrWritableMap,
+			MemoryUnitSet[] reachablePtrReadonlyMap,
+			MemoryUnitSet[] reachableNonPtrWritableMap,
+			MemoryUnitSet[] reachableNonPtrReadonlyMap)
 			throws UnsatisfiablePathConditionException {
-		return new HashSet<>();
+		return new BitSet(0);
 	}
 
 	@Override
@@ -134,26 +141,41 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 	 *            The map contains all reachable memory units of all processes
 	 * @return
 	 */
-	protected Set<Integer> computeAmpleSetByHandleObject(State state, int pid,
+	protected BitSet computeAmpleSetByHandleObject(State state, int pid,
 			Expression handleObj, SymbolicExpression handleObjValue,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap) {
-		Set<SymbolicExpression> handleObjMemUnits = new HashSet<>();
-		Set<Integer> ampleSet = new HashSet<Integer>();
+			MemoryUnitSet[] reachablePtrWritableMap,
+			MemoryUnitSet[] reachablePtrReadonlyMap,
+			MemoryUnitSet[] reachableNonPtrWritableMap,
+			MemoryUnitSet[] reachableNonPtrReadonlyMap) {
+		MemoryUnitSet handleObjMemUnits = memUnitFactory.newMemoryUnitSet();
+		BitSet ampleSet = new BitSet();
+		int numProcs = state.numProcs();
 
 		try {
-			evaluator.memoryUnitsOfExpression(state, pid, handleObj,
-					handleObjMemUnits);
+			handleObjMemUnits = evaluator.memoryUnitsOfExpression(state, pid,
+					handleObj, handleObjMemUnits);
 		} catch (UnsatisfiablePathConditionException e) {
-			handleObjMemUnits.add(handleObjValue);
+			memUnitFactory.add(handleObjMemUnits, handleObjValue);
+			// handleObjMemUnits.add(handleObjValue);
 		}
-		for (SymbolicExpression memUnit : handleObjMemUnits) {
-			for (int otherPid : reachableMemUnitsMap.keySet()) {
-				if (otherPid == pid || ampleSet.contains(otherPid))
-					continue;
-				else if (reachableMemUnitsMap.get(otherPid)
-						.containsKey(memUnit)) {
-					ampleSet.add(otherPid);
-				}
+		for (int otherPid = 0; otherPid < numProcs; otherPid++) {
+			if (otherPid == pid || ampleSet.get(otherPid))
+				continue;
+			else {
+				MemoryUnitSet reachablePtrWritable = reachablePtrWritableMap[otherPid];
+				MemoryUnitSet reachableNonPtrWritable = reachableNonPtrWritableMap[otherPid];
+				MemoryUnitSet reachablePtrReadonly = reachablePtrReadonlyMap[otherPid];
+				MemoryUnitSet reachableNonPtrReadonly = reachableNonPtrReadonlyMap[otherPid];
+
+				if (memUnitFactory.isJoint(handleObjMemUnits,
+						reachablePtrWritable)
+						|| memUnitFactory.isJoint(handleObjMemUnits,
+								reachableNonPtrWritable)
+						|| memUnitFactory.isJoint(handleObjMemUnits,
+								reachablePtrReadonly)
+						|| memUnitFactory.isJoint(handleObjMemUnits,
+								reachableNonPtrReadonly))
+					ampleSet.set(otherPid);
 			}
 		}
 		return ampleSet;

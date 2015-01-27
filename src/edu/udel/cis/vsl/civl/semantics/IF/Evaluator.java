@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
@@ -15,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -186,8 +186,8 @@ public interface Evaluator {
 	 *            The set of memory units reachable by the expression.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	void memoryUnitsOfExpression(State state, int pid, Expression expression,
-			Set<SymbolicExpression> memoryUnits)
+	MemoryUnitSet memoryUnitsOfExpression(State state, int pid,
+			Expression expression, MemoryUnitSet muSet)
 			throws UnsatisfiablePathConditionException;
 
 	/**
@@ -212,9 +212,9 @@ public interface Evaluator {
 	 *         Every member of the set is a pointer value, and is a pointer to a
 	 *         memory unit.
 	 */
-	Set<SymbolicExpression> memoryUnitsReachableFromVariable(
-			CIVLType variableType, SymbolicExpression variableValue,
-			int dyScopeID, int vid, State state, String process);
+//	Set<SymbolicExpression> memoryUnitsReachableFromVariable(
+//			CIVLType variableType, SymbolicExpression variableValue,
+//			int dyScopeID, int vid, State state, String process);
 
 	/**
 	 * The model factory should be the unique one used in the system.

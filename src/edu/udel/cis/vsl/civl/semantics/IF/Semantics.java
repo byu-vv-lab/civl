@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.semantics.common.CommonMemoryUnitEvaluator;
 import edu.udel.cis.vsl.civl.semantics.common.CommonSymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.common.CommonTransition;
 import edu.udel.cis.vsl.civl.semantics.common.CommonTransitionSequence;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.gmc.ErrorLog;
@@ -98,9 +99,9 @@ public class Semantics {
 	public static Evaluator newEvaluator(ModelFactory modelFactory,
 			StateFactory stateFactory, LibraryEvaluatorLoader loader,
 			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
-			CIVLErrorLogger errLogger) {
+			MemoryUnitFactory memUnitFactory, CIVLErrorLogger errLogger) {
 		return new CommonEvaluator(modelFactory, stateFactory, loader,
-				symbolicUtil, symbolicAnalyzer, errLogger);
+				symbolicUtil, symbolicAnalyzer, memUnitFactory, errLogger);
 	}
 
 	/**
@@ -155,8 +156,9 @@ public class Semantics {
 		return new CommonTransitionSequence(state);
 	}
 
-	public static MemoryUnitEvaluator newMemoryUnitEvaluator(Evaluator evaluator) {
+	public static MemoryUnitEvaluator newMemoryUnitEvaluator(
+			Evaluator evaluator, MemoryUnitFactory memUnitFactory) {
 		return new CommonMemoryUnitEvaluator(evaluator.symbolicUtility(),
-				evaluator, evaluator.universe());
+				evaluator, memUnitFactory, evaluator.universe());
 	}
 }

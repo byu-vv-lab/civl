@@ -20,15 +20,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 public class CommonMemoryUnitExpression extends CommonExpression implements
 		MemoryUnitExpression {
 
-	/**
-	 * The (static) scope ID.
-	 */
-	private int scopeID;
-
-	/**
-	 * The variable ID.
-	 */
-	private int varID;
+	private Variable variable;
 
 	/**
 	 * The type of the variable referred to by (scopeID, varID).
@@ -56,12 +48,11 @@ public class CommonMemoryUnitExpression extends CommonExpression implements
 	 * @param ref
 	 *            The reference that this memory unit holds for the variable.
 	 */
-	public CommonMemoryUnitExpression(CIVLSource source, int scopeId,
-			int varId, CIVLType objType, MemoryUnitReference ref,
-			boolean writable, boolean hasPointerRef) {
+	public CommonMemoryUnitExpression(CIVLSource source, Variable variable,
+			CIVLType objType, MemoryUnitReference ref, boolean writable,
+			boolean hasPointerRef) {
 		super(source, null, null);
-		this.scopeID = scopeId;
-		this.varID = varId;
+		this.variable = variable;
 		this.objectType = objType;
 		this.reference = ref;
 		this.writable = writable;
@@ -70,12 +61,12 @@ public class CommonMemoryUnitExpression extends CommonExpression implements
 
 	@Override
 	public int scopeId() {
-		return this.scopeID;
+		return this.variable.scope().id();
 	}
 
 	@Override
 	public int variableId() {
-		return this.varID;
+		return this.variable.vid();
 	}
 
 	@Override
@@ -105,7 +96,7 @@ public class CommonMemoryUnitExpression extends CommonExpression implements
 		if (obj instanceof MemoryUnitExpression) {
 			MemoryUnitExpression that = (MemoryUnitExpression) obj;
 
-			if (scopeID == that.scopeId() && varID == that.variableId()
+			if (variable.equals(that.variable())
 					&& reference.equals(that.reference()))
 				return true;
 		}
@@ -137,9 +128,15 @@ public class CommonMemoryUnitExpression extends CommonExpression implements
 	public String toString() {
 		String result;
 
-		result = "(" + scopeID + ", " + varID + ", " + reference + ")";
+		result = "(" + variable.scope().id() + ", " + variable.vid() + ", "
+				+ reference + ")";
 		if (this.writable)
 			result = result + "[w]";
 		return result;
+	}
+
+	@Override
+	public Variable variable() {
+		return this.variable;
 	}
 }

@@ -1,11 +1,9 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.math.BigInteger;
-import java.util.HashSet;
+import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -30,6 +28,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -70,11 +69,13 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	/* ********************* Methods from LibraryEnabler ******************* */
 
 	@Override
-	public Set<Integer> ampleSet(State state, int pid,
-			CallOrSpawnStatement call,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap)
+	public BitSet ampleSet(State state, int pid, CallOrSpawnStatement call,
+			MemoryUnitSet[] reachablePtrWritableMap,
+			MemoryUnitSet[] reachablePtrReadonlyMap,
+			MemoryUnitSet[] reachableNonPtrWritableMap,
+			MemoryUnitSet[] reachableNonPtrReadonlyMap)
 			throws UnsatisfiablePathConditionException {
-		return this.ampleSetWork(state, pid, call, reachableMemUnitsMap);
+		return this.ampleSetWork(state, pid, call);
 	}
 
 	@Override
@@ -152,9 +153,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private Set<Integer> ampleSetWork(State state, int pid,
-			CallOrSpawnStatement call,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap)
+	private BitSet ampleSetWork(State state, int pid, CallOrSpawnStatement call)
 			throws UnsatisfiablePathConditionException {
 		int numArgs;
 		numArgs = call.arguments().size();
@@ -171,7 +170,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			try {
 				eval = evaluator.evaluate(state, pid, arguments[i]);
 			} catch (UnsatisfiablePathConditionException e) {
-				return new HashSet<>();
+				return new BitSet(0);
 			}
 			argumentValues[i] = eval.value;
 			state = eval.state;
@@ -183,25 +182,25 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		case "$waitall":
 			return ampleSetOfWaitall(state, pid, arguments, argumentValues);
 		default:
-			return super.ampleSet(state, pid, call, reachableMemUnitsMap);
+			return super.ampleSet(state, pid, call, null, null, null, null);
 		}
 	}
 
-	private Set<Integer> ampleSetOfWait(State state, int pid,
-			Expression[] arguments, SymbolicExpression[] argumentValues) {
+	private BitSet ampleSetOfWait(State state, int pid, Expression[] arguments,
+			SymbolicExpression[] argumentValues) {
 		SymbolicExpression joinProc = argumentValues[0];
 		int joinPid = modelFactory.getProcessId(arguments[0].getSource(),
 				joinProc);
-		Set<Integer> ampleSet = new HashSet<>();
+		BitSet ampleSet = new BitSet();
 
 		if (modelFactory.isPocessIdDefined(joinPid)
 				&& !modelFactory.isProcNull(arguments[0].getSource(), joinProc)) {
-			ampleSet.add(joinPid);
+			ampleSet.set(joinPid);
 		}
 		return ampleSet;
 	}
 
-	private Set<Integer> ampleSetOfWaitall(State state, int pid,
+	private BitSet ampleSetOfWaitall(State state, int pid,
 			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression procsPointer = argumentValues[0];
@@ -210,7 +209,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		IntegerNumber number_nprocs = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) numOfProcs);
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
-		Set<Integer> ampleSet = new HashSet<>();
+		BitSet ampleSet = new BitSet();
 
 		if (number_nprocs == null) {
 			CIVLExecutionException err = new CIVLExecutionException(
@@ -248,7 +247,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 				pidValue = modelFactory.getProcessId(procsSource, proc);
 				if (!modelFactory.isProcessIdNull(pidValue)
 						&& modelFactory.isPocessIdDefined(pidValue))
-					ampleSet.add(pidValue);
+					ampleSet.set(pidValue);
 			}
 		}
 		return ampleSet;

@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
 import java.io.PrintStream;
-import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -319,8 +318,17 @@ public interface State {
 	 */
 	void print(PrintStream out);
 
-	Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer(int pid);
+	//
+	// Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer(int pid);
+	//
+	// Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer(int pid);
 
-	Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer(int pid);
+	// MemoryUnitSet reachableMemUnitsPtrReadonly(int pid);
+	//
+	// MemoryUnitSet reachableMemUnitsNonPtrReadonly(int pid);
+	//
+	// MemoryUnitSet reachableMemUnitsPtrWritable(int pid);
+	//
+	// MemoryUnitSet reachableMemUnitsNonPtrWritable(int pid);
 
 }

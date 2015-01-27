@@ -157,11 +157,11 @@ public class CommonStateManager implements StateManager {
 		firstTransition = (Transition) transition;
 		if (state.getProcessState(pid).getLocation().enterAtom())
 			atomCount = 1;
-		if (config.debug()) {
-			config.out().println(
-					"===========memory analysis at " + state + "=============");
-			stateFactory.printReachableMemoryUnits(config.out(), state);
-		}
+//		if (config.debug()) {
+//			config.out().println(
+//					"===========memory analysis at " + state + "=============");
+//			stateFactory.printReachableMemoryUnits(config.out(), state);
+//		}
 		state = executor.execute(state, pid, firstTransition);
 		if (printTransitions) {
 			printTransitionPrefix(oldState, processIdentifier);
@@ -183,12 +183,12 @@ public class CommonStateManager implements StateManager {
 			traceStep.addAtomicStep(new CommonAtomicStep(state,
 					stateStatus.enabledTransition));
 			oldState = state;
-			if (config.debug()) {
-				config.out().println(
-						"===========memory analysis at " + state
-								+ "=============");
-				stateFactory.printReachableMemoryUnits(config.out(), state);
-			}
+			// if (config.debug()) {
+			// config.out().println(
+			// "===========memory analysis at " + state
+			// + "=============");
+			// stateFactory.printReachableMemoryUnits(config.out(), state);
+			// }
 		}
 		assert stateStatus.atomCount == 0;
 		assert stateStatus.enabledStatus != EnabledStatus.DETERMINISTIC;

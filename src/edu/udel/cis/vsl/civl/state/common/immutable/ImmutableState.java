@@ -177,10 +177,28 @@ public class ImmutableState implements State {
 	 */
 	ImmutableState simplifiedState = null;
 
-	Map<Integer, Map<SymbolicExpression, Boolean>> reachableMUwoPtr;
-	// private Set<SymbolicExpression> reachableMemoryUnits;
+	// TODO use arrays instead of maps
+	// arrays of memory unit sets:
+	// reachableNonPtrReadOnly
+	// reachableNonPtrWritable
+	// reachablePtrReadOnly
+	// reachablePtrWritable
+	// Create new TYPE: ImmutableMemoryUnitSet (add, union, intersect,
+	// membership, etc) over-approximation
+	// these are completely determined by the state
 
-	Map<Integer, Map<SymbolicExpression, Boolean>> reachableMUwtPtr;
+	/**
+	 * reachable memory units without pointers: PID to Map of memory units and
+	 * access permission( true: writable, false: read-only). If a pointer is not
+	 * in the map, it means that pointer (pointers to variables) is not
+	 * reachable from the process.
+	 * 
+	 */
+	// // directly reachable
+	// Map<Integer, Map<SymbolicExpression, Boolean>> reachableMUnonPtr;
+	//
+	// // pointer reachable = directly reachable + anything else
+	// Map<Integer, Map<SymbolicExpression, Boolean>> reachableMUPtr;
 
 	/* *************************** Static Methods ************************** */
 
@@ -206,17 +224,11 @@ public class ImmutableState implements State {
 	 */
 	static ImmutableState newState(ImmutableState state,
 			ImmutableProcessState[] processStates,
-			ImmutableDynamicScope[] dyscopes, BooleanExpression pathCondition,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableWoPtr,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableWtPtr) {
+			ImmutableDynamicScope[] dyscopes, BooleanExpression pathCondition) {
 		ImmutableState result = new ImmutableState(
 				processStates == null ? state.processStates : processStates,
 				dyscopes == null ? state.dyscopes : dyscopes,
-				pathCondition == null ? state.pathCondition : pathCondition,
-				reachableWoPtr == null ? state.reachableMUwoPtr
-						: reachableWoPtr,
-				reachableWtPtr == null ? state.reachableMUwtPtr
-						: reachableWtPtr);
+				pathCondition == null ? state.pathCondition : pathCondition);
 
 		if (processStates == null && state.procHashed) {
 			result.procHashed = true;
@@ -228,6 +240,21 @@ public class ImmutableState implements State {
 		}
 		return result;
 	}
+
+	// static ImmutableState newState(ImmutableState state,
+	// ImmutableMemoryUnitSet[] reachableNonPtrReadonly,
+	// ImmutableMemoryUnitSet[] reachableNonPtrWritable,
+	// ImmutableMemoryUnitSet[] reachablePtrReadonly,
+	// ImmutableMemoryUnitSet[] reachablePtrWritable) {
+	// ImmutableState result = ImmutableState
+	// .newState(state, null, null, null);
+	//
+	// result.reachableNonPtrReadonly = reachableNonPtrReadonly;
+	// result.reachableNonPtrWritable = reachableNonPtrWritable;
+	// result.reachablePtrReadonly = reachablePtrReadonly;
+	// result.reachablePtrWritable = reachablePtrWritable;
+	// return result;
+	// }
 
 	/* **************************** Constructors *************************** */
 
@@ -247,17 +274,13 @@ public class ImmutableState implements State {
 	 *            is assumed to hold in this state
 	 */
 	ImmutableState(ImmutableProcessState[] processStates,
-			ImmutableDynamicScope[] dyscopes, BooleanExpression pathCondition,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableWoPtr,
-			Map<Integer, Map<SymbolicExpression, Boolean>> reachableWtPtr) {
+			ImmutableDynamicScope[] dyscopes, BooleanExpression pathCondition) {
 		assert processStates != null;
 		assert dyscopes != null;
 		assert pathCondition != null;
 		this.processStates = processStates;
 		this.dyscopes = dyscopes;
 		this.pathCondition = pathCondition;
-		this.reachableMUwoPtr = reachableWoPtr;
-		this.reachableMUwtPtr = reachableWtPtr;
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -524,7 +547,7 @@ public class ImmutableState implements State {
 	 */
 	ImmutableState setScopes(ImmutableDynamicScope[] dyscopes) {
 		ImmutableState result = new ImmutableState(processStates, dyscopes,
-				pathCondition, this.reachableMUwoPtr, this.reachableMUwtPtr);
+				pathCondition);
 
 		if (procHashed) {
 			result.procHashed = true;
@@ -552,8 +575,7 @@ public class ImmutableState implements State {
 
 		System.arraycopy(processStates, 0, newProcessStates, 0, n);
 		newProcessStates[index] = processState;
-		result = new ImmutableState(newProcessStates, dyscopes, pathCondition,
-				this.reachableMUwoPtr, this.reachableMUwtPtr);
+		result = new ImmutableState(newProcessStates, dyscopes, pathCondition);
 		if (scopeHashed) {
 			result.scopeHashed = true;
 			result.scopeHashCode = scopeHashCode;
@@ -571,7 +593,7 @@ public class ImmutableState implements State {
 	 */
 	ImmutableState setProcessStates(ImmutableProcessState[] processStates) {
 		ImmutableState result = new ImmutableState(processStates, dyscopes,
-				pathCondition, this.reachableMUwoPtr, this.reachableMUwtPtr);
+				pathCondition);
 
 		if (scopeHashed) {
 			result.scopeHashed = true;
@@ -756,7 +778,7 @@ public class ImmutableState implements State {
 	@Override
 	public ImmutableState setPathCondition(BooleanExpression pathCondition) {
 		ImmutableState result = new ImmutableState(processStates, dyscopes,
-				pathCondition, this.reachableMUwoPtr, this.reachableMUwtPtr);
+				pathCondition);
 
 		if (scopeHashed) {
 			result.scopeHashed = true;
@@ -782,17 +804,17 @@ public class ImmutableState implements State {
 		return scope.getValue(variableID);
 	}
 
-	@Override
-	public Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer(
-			int pid) {
-		return this.reachableMUwoPtr.get(pid);
-	}
-
-	@Override
-	public Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer(
-			int pid) {
-		return this.reachableMUwtPtr.get(pid);
-	}
+	// @Override
+	// public Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer(
+	// int pid) {
+	// return this.reachableMUnonPtr.get(pid);
+	// }
+	//
+	// @Override
+	// public Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer(
+	// int pid) {
+	// return this.reachableMUPtr.get(pid);
+	// }
 
 	/* ************************ Methods from Object ************************ */
 
@@ -845,5 +867,25 @@ public class ImmutableState implements State {
 	public String toString() {
 		return "State " + identifier();
 	}
+
+	// @Override
+	// public MemoryUnitSet reachableMemUnitsPtrReadonly(int pid) {
+	// return this.reachablePtrReadonly[pid];
+	// }
+	//
+	// @Override
+	// public MemoryUnitSet reachableMemUnitsNonPtrReadonly(int pid) {
+	// return this.reachableNonPtrReadonly[pid];
+	// }
+	//
+	// @Override
+	// public MemoryUnitSet reachableMemUnitsPtrWritable(int pid) {
+	// return this.reachablePtrWritable[pid];
+	// }
+	//
+	// @Override
+	// public MemoryUnitSet reachableMemUnitsNonPtrWritable(int pid) {
+	// return this.reachableNonPtrWritable[pid];
+	// }
 
 }

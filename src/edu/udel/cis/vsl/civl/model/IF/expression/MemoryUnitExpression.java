@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.model.IF.expression;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.reference.MemoryUnitReference;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
  * A memory unit expression is an expression that represents (part of) the
@@ -31,6 +32,8 @@ public interface MemoryUnitExpression extends Expression {
 	 * @return The variable ID.
 	 */
 	int variableId();
+	
+	Variable variable();
 
 	/**
 	 * Returns the reference of this memory unit expression.

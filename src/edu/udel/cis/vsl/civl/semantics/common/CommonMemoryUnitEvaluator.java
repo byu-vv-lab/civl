@@ -20,8 +20,11 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitEvaluator;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -59,11 +62,15 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
 	 */
 	private SymbolicUniverse universe;
 
+	private MemoryUnitFactory muFactory;
+
 	public CommonMemoryUnitEvaluator(SymbolicUtility symbolicUtil,
-			Evaluator evaluator, SymbolicUniverse universe) {
+			Evaluator evaluator, MemoryUnitFactory muFactory,
+			SymbolicUniverse universe) {
 		this.symbolicUtil = symbolicUtil;
 		this.evaluator = (CommonEvaluator) evaluator;
 		this.universe = universe;
+		this.muFactory = muFactory;
 		this.modelFactory = evaluator.modelFactory();
 	}
 
@@ -76,29 +83,29 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	public State evaluates(State state, int pid, MemoryUnitExpression memUnit,
-			Set<SymbolicExpression> result)
+	public MemoryUnitSet evaluates(State state, int pid,
+			MemoryUnitExpression memUnit, MemoryUnitSet muSet)
 			throws UnsatisfiablePathConditionException {
+		MemoryUnitSet result = muSet;
 		int scopeID = memUnit.scopeId();
 		int dyscopeID = state.getDyscope(pid, scopeID);
-		Set<ReferenceExpression> referenceValues = new HashSet<>();
+		Set<ReferenceExpression> referenceValues;
 
-		if(dyscopeID < 0)
-			return state;
-		state = this.evaluatesMemoryUnitReference(memUnit.getSource(), state,
-				pid, memUnit.objectType(), memUnit.reference(), null,
-				referenceValues);
+		if (dyscopeID < 0)
+			return result;
+		referenceValues = this.evaluatesMemoryUnitReference(
+				memUnit.getSource(), state, pid, memUnit.objectType(),
+				memUnit.reference(), null).right;
 		for (ReferenceExpression reference : referenceValues) {
-			SymbolicExpression pointer = symbolicUtil.makePointer(dyscopeID,
-					memUnit.variableId(), reference);
-
-			result.add(pointer);
+			muFactory.add(result, muFactory.newMemoryUnit(dyscopeID,
+					memUnit.variableId(), reference));
+			// result.add(pointer);
 			// this.findPointersInExpression(pointer, result, state, state
 			// .getProcessState(pid).name());
 			// result.add(symbolicUtil.makePointer(dyscopeID,
 			// memUnit.variableId(), reference));
 		}
-		return state;
+		return result;
 
 	}
 
@@ -112,9 +119,9 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State evaluatesMemoryUnitReference(CIVLSource source, State state,
-			int pid, CIVLType objType, MemoryUnitReference reference,
-			Set<ReferenceExpression> parents, Set<ReferenceExpression> result)
+	private Pair<State, Set<ReferenceExpression>> evaluatesMemoryUnitReference(
+			CIVLSource source, State state, int pid, CIVLType objType,
+			MemoryUnitReference reference, Set<ReferenceExpression> parents)
 			throws UnsatisfiablePathConditionException {
 		MemoryUnitReferenceKind refKind = reference.memoryUnitKind();
 		MemoryUnitReference child = reference.child();
@@ -193,10 +200,10 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
 		assert myRefValues.size() > 0;
 		if (child != null)
 			return evaluatesMemoryUnitReference(source, state, pid, myObjType,
-					child, myRefValues, result);
+					child, myRefValues);
 		else {
-			result.addAll(myRefValues);
-			return state;
+			// result.addAll(myRefValues);
+			return new Pair<>(state, myRefValues);
 		}
 	}
 

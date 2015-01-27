@@ -2,12 +2,10 @@ package edu.udel.cis.vsl.civl.semantics.common;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
@@ -83,6 +81,8 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -334,6 +334,8 @@ public class CommonEvaluator implements Evaluator {
 
 	private MemoryUnitEvaluator memUnitEvaluator;
 
+	private MemoryUnitFactory memUnitFactory;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -355,16 +357,17 @@ public class CommonEvaluator implements Evaluator {
 	public CommonEvaluator(ModelFactory modelFactory,
 			StateFactory stateFactory, LibraryEvaluatorLoader loader,
 			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
-			CIVLErrorLogger errorLogger) {
+			MemoryUnitFactory memUnitFactory, CIVLErrorLogger errorLogger) {
 		this.libLoader = loader;
 		this.errorLogger = errorLogger;
 		this.symbolicUtil = symbolicUtil;
 		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.modelFactory = modelFactory;
 		this.stateFactory = stateFactory;
+		this.memUnitFactory = stateFactory.memUnitFactory();
 		this.universe = stateFactory.symbolicUniverse();
 		this.memUnitEvaluator = new CommonMemoryUnitEvaluator(symbolicUtil,
-				this, universe);
+				this, memUnitFactory, universe);
 		pointerType = modelFactory.pointerSymbolicType();
 		functionPointerType = modelFactory.functionPointerSymbolicType();
 		heapType = modelFactory.heapSymbolicType();
@@ -2297,8 +2300,9 @@ public class CommonEvaluator implements Evaluator {
 	 * @param state
 	 */
 	private void findPointersInExpression(SymbolicExpression expr,
-			Set<SymbolicExpression> set, State state, String process) {
+			MemoryUnitSet muSet, State state, String process) {
 		SymbolicType type = expr.type();
+		MemoryUnitSet result = muSet;
 
 		// TODO check comm type
 		if (type != null && !type.equals(heapType) && !type.equals(bundleType)) {
@@ -2307,7 +2311,8 @@ public class CommonEvaluator implements Evaluator {
 				SymbolicExpression pointerValue;
 				Evaluation eval;
 
-				set.add(expr);
+				memUnitFactory.add(muSet, expr);
+				// set.add(expr);
 				try {
 					if (expr.operator() == SymbolicOperator.CONCRETE
 							&& symbolicUtil.getDyscopeId(null, expr) >= 0) {
@@ -2336,8 +2341,8 @@ public class CommonEvaluator implements Evaluator {
 						if (pointerValue.operator() == SymbolicOperator.CONCRETE
 								&& pointerValue.type() != null
 								&& pointerValue.type().equals(pointerType))
-							findPointersInExpression(pointerValue, set, state,
-									process);
+							findPointersInExpression(pointerValue, result,
+									state, process);
 					}
 				} catch (UnsatisfiablePathConditionException e) {
 					// // TODO Auto-generated catch block
@@ -2349,10 +2354,11 @@ public class CommonEvaluator implements Evaluator {
 				for (int i = 0; i < numArgs; i++) {
 					SymbolicObject arg = expr.argument(i);
 
-					findPointersInObject(arg, set, state, process);
+					findPointersInObject(arg, result, state, process);
 				}
 			}
 		}
+		return;
 	}
 
 	/**
@@ -2366,16 +2372,19 @@ public class CommonEvaluator implements Evaluator {
 	 *            the heap type, which will be ignored
 	 */
 	private void findPointersInObject(SymbolicObject object,
-			Set<SymbolicExpression> set, State state, String process) {
+			MemoryUnitSet memSet, State state, String process) {
 		switch (object.symbolicObjectKind()) {
 		case EXPRESSION:
-			findPointersInExpression((SymbolicExpression) object, set, state,
-					process);
+			findPointersInExpression((SymbolicExpression) object, memSet,
+					state, process);
 			break;
-		case EXPRESSION_COLLECTION:
+		case EXPRESSION_COLLECTION: {
+			MemoryUnitSet result = memSet;
+
 			for (SymbolicExpression expr : (SymbolicCollection<?>) object)
-				findPointersInExpression(expr, set, state, process);
+				findPointersInExpression(expr, result, state, process);
 			break;
+		}
 		default:
 			// ignore types and primitives, they don't have any pointers
 			// you can dereference.
@@ -2497,27 +2506,27 @@ public class CommonEvaluator implements Evaluator {
 		return (SymbolicType) universe.objectWithId(id);
 	}
 
-	private Set<SymbolicExpression> heapCells(State state, int dyscopeId) {
-		SymbolicExpression heapValue = state.getVariableValue(dyscopeId, 0);
-
-		if (heapValue.isNull())
-			return new HashSet<>();
-		else {
-			CIVLHeapType heapType = modelFactory.heapType();
-			int numMallocs = heapType.getNumMallocs();
-			Set<SymbolicExpression> result = new HashSet<>();
-
-			for (int i = 0; i < numMallocs; i++) {
-				ReferenceExpression ref = universe.tupleComponentReference(
-						identityReference, universe.intObject(i));
-				SymbolicExpression heapCell = symbolicUtil.makePointer(
-						dyscopeId, 0, ref);
-
-				result.add(heapCell);
-			}
-			return result;
-		}
-	}
+	// private Set<SymbolicExpression> heapCells(State state, int dyscopeId) {
+	// SymbolicExpression heapValue = state.getVariableValue(dyscopeId, 0);
+	//
+	// if (heapValue.isNull())
+	// return new HashSet<>();
+	// else {
+	// CIVLHeapType heapType = modelFactory.heapType();
+	// int numMallocs = heapType.getNumMallocs();
+	// Set<SymbolicExpression> result = new HashSet<>();
+	//
+	// for (int i = 0; i < numMallocs; i++) {
+	// ReferenceExpression ref = universe.tupleComponentReference(
+	// identityReference, universe.intObject(i));
+	// SymbolicExpression heapCell = symbolicUtil.makePointer(
+	// dyscopeId, 0, ref);
+	//
+	// result.add(heapCell);
+	// }
+	// return result;
+	// }
+	// }
 
 	// TODO: add doc here
 	private Evaluation initialValueOfType(State state, int pid, CIVLType type)
@@ -2698,9 +2707,9 @@ public class CommonEvaluator implements Evaluator {
 	 *         (including expression itself) but not in a heap
 	 */
 
-	private Set<SymbolicExpression> pointersInExpression(
+	private MemoryUnitSet pointersInExpression(MemoryUnitSet muSet,
 			SymbolicExpression expr, State state, String process) {
-		Set<SymbolicExpression> result = new HashSet<>();
+		MemoryUnitSet result = muSet;
 
 		findPointersInExpression(expr, result, state, process);
 		return result;
@@ -3455,57 +3464,62 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public void memoryUnitsOfExpression(State state, int pid,
-			Expression expression, Set<SymbolicExpression> memoryUnits)
+	public MemoryUnitSet memoryUnitsOfExpression(State state, int pid,
+			Expression expression, MemoryUnitSet muSet)
 			throws UnsatisfiablePathConditionException {
 		ExpressionKind kind = expression.expressionKind();
 		Evaluation eval;
+		MemoryUnitSet result = muSet;
 
 		switch (kind) {
 		case ADDRESS_OF:
 			AddressOfExpression addressOfExpression = (AddressOfExpression) expression;
 			Expression operand = addressOfExpression.operand();
 
-			memoryUnitsOfExpression(state, pid, operand, memoryUnits);
+			result = memoryUnitsOfExpression(state, pid, operand, result);
 			break;
 		case ARRAY_LITERAL:
 			Expression[] elements = ((ArrayLiteralExpression) expression)
 					.elements();
 
 			for (Expression element : elements) {
-				memoryUnitsOfExpression(state, pid, element, memoryUnits);
+				result = memoryUnitsOfExpression(state, pid, element, result);
 			}
 			break;
-		case BINARY:
+		case BINARY: {
 			BinaryExpression binaryExpression = (BinaryExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, binaryExpression.left(),
-					memoryUnits);
-			memoryUnitsOfExpression(state, pid, binaryExpression.right(),
-					memoryUnits);
+			result = memoryUnitsOfExpression(state, pid,
+					binaryExpression.left(), result);
+			result = memoryUnitsOfExpression(state, pid,
+					binaryExpression.right(), result);
 			break;
+		}
 		case BOOLEAN_LITERAL:
 			break;
-		case CAST:
+		case CAST: {
 			CastExpression castExpression = (CastExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, castExpression.getExpression(),
-					memoryUnits);
+			result = memoryUnitsOfExpression(state, pid,
+					castExpression.getExpression(), result);
 			break;
+		}
 		case CHAR_LITERAL:
 			break;
-		case DEREFERENCE:
+		case DEREFERENCE: {
 			DereferenceExpression deferenceExpression = (DereferenceExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, deferenceExpression.pointer(),
-					memoryUnits);
+			result = memoryUnitsOfExpression(state, pid,
+					deferenceExpression.pointer(), result);
 			break;
-		case DOT:
+		}
+		case DOT: {
 			DotExpression dotExpression = (DotExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, dotExpression.structOrUnion(),
-					memoryUnits);
+			result = memoryUnitsOfExpression(state, pid,
+					dotExpression.structOrUnion(), result);
 			break;
+		}
 		case DYNAMIC_TYPE_OF:
 			break;
 		case INITIAL_VALUE:
@@ -3518,42 +3532,47 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case PROC_NULL:
 			break;
-		case SCOPEOF:
+		case SCOPEOF: {
 			ScopeofExpression scopeofExpression = (ScopeofExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, scopeofExpression.argument(),
-					memoryUnits);
+			result = memoryUnitsOfExpression(state, pid,
+					scopeofExpression.argument(), result);
 			break;
+		}
 		case SIZEOF_TYPE:
 			break;
-		case SIZEOF_EXPRESSION:
+		case SIZEOF_EXPRESSION: {
 			SizeofExpression sizeofExpression = (SizeofExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, sizeofExpression.getArgument(),
-					memoryUnits);
+			result = memoryUnitsOfExpression(state, pid,
+					sizeofExpression.getArgument(), result);
 			break;
-		case STRUCT_OR_UNION_LITERAL:
+		}
+		case STRUCT_OR_UNION_LITERAL: {
 			Expression[] fields = ((StructOrUnionLiteralExpression) expression)
 					.fields();
 
 			for (Expression field : fields) {
-				memoryUnitsOfExpression(state, pid, field, memoryUnits);
+				result = memoryUnitsOfExpression(state, pid, field, result);
 			}
 			break;
-		case SUBSCRIPT:
+		}
+		case SUBSCRIPT: {
 			SubscriptExpression subscriptExpression = (SubscriptExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, subscriptExpression.array(),
-					memoryUnits);
-			memoryUnitsOfExpression(state, pid, subscriptExpression.index(),
-					memoryUnits);
+			result = memoryUnitsOfExpression(state, pid,
+					subscriptExpression.array(), result);
+			result = memoryUnitsOfExpression(state, pid,
+					subscriptExpression.index(), result);
 			break;
-		case UNARY:
+		}
+		case UNARY: {
 			UnaryExpression unaryExpression = (UnaryExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, unaryExpression.operand(),
-					memoryUnits);
+			result = memoryUnitsOfExpression(state, pid,
+					unaryExpression.operand(), result);
 			break;
+		}
 		case UNDEFINED_PROC:
 			break;
 		case VARIABLE: {
@@ -3586,10 +3605,10 @@ public class CommonEvaluator implements Evaluator {
 				eval = new Evaluation(state, symbolicUtil.makePointer(sid, vid,
 						identityReference));
 				if (variable.hasPointerRef())
-					memoryUnits.addAll(pointersInExpression(eval.value, state,
-							process));
+					result = pointersInExpression(result, eval.value, state,
+							process);
 				else
-					memoryUnits.add(eval.value);
+					memUnitFactory.add(result, eval.value);
 			}
 			// }
 			break;
@@ -3597,17 +3616,18 @@ public class CommonEvaluator implements Evaluator {
 		case ABSTRACT_FUNCTION_CALL:
 			for (Expression arg : ((AbstractFunctionCallExpression) expression)
 					.arguments()) {
-				memoryUnitsOfExpression(state, pid, arg, memoryUnits);
+				result = memoryUnitsOfExpression(state, pid, arg, result);
 			}
 			break;
 		case REGULAR_RANGE: {
 			RegularRangeExpression rangeExpr = (RegularRangeExpression) expression;
 
-			memoryUnitsOfExpression(state, pid, rangeExpr.getLow(), memoryUnits);
-			memoryUnitsOfExpression(state, pid, rangeExpr.getHigh(),
-					memoryUnits);
-			memoryUnitsOfExpression(state, pid, rangeExpr.getStep(),
-					memoryUnits);
+			result = memoryUnitsOfExpression(state, pid, rangeExpr.getLow(),
+					result);
+			result = memoryUnitsOfExpression(state, pid, rangeExpr.getHigh(),
+					result);
+			result = memoryUnitsOfExpression(state, pid, rangeExpr.getStep(),
+					result);
 		}
 			break;
 		case REC_DOMAIN_LITERAL: {
@@ -3615,13 +3635,13 @@ public class CommonEvaluator implements Evaluator {
 			int dim = domain.dimension();
 
 			for (int i = 0; i < dim; i++)
-				memoryUnitsOfExpression(state, pid, domain.rangeAt(i),
-						memoryUnits);
+				result = memoryUnitsOfExpression(state, pid, domain.rangeAt(i),
+						result);
 		}
 			break;
 		case DOMAIN_GUARD:
-			memoryUnitsOfExpression(state, pid,
-					((DomainGuardExpression) expression).domain(), memoryUnits);
+			result = memoryUnitsOfExpression(state, pid,
+					((DomainGuardExpression) expression).domain(), result);
 			break;
 		case WAIT_GUARD:
 			break;
@@ -3641,18 +3661,19 @@ public class CommonEvaluator implements Evaluator {
 					"Computing impact memory units of " + kind + " expressions",
 					expression.getSource());
 		}
+		return result;
 	}
 
-	@Override
-	public Set<SymbolicExpression> memoryUnitsReachableFromVariable(
-			CIVLType variableType, SymbolicExpression variableValue,
-			int dyScopeID, int vid, State state, String process) {
-		if (variableType.isHeapType())
-			return heapCells(state, dyScopeID);
-		return pointersInExpression(
-				symbolicUtil.makePointer(dyScopeID, vid, identityReference),
-				state, process);
-	}
+	// @Override
+	// public Set<SymbolicExpression> memoryUnitsReachableFromVariable(
+	// CIVLType variableType, SymbolicExpression variableValue,
+	// int dyScopeID, int vid, State state, String process) {
+	// if (variableType.isHeapType())
+	// return heapCells(state, dyScopeID);
+	// return pointersInExpression(
+	// symbolicUtil.makePointer(dyScopeID, vid, identityReference),
+	// state, process);
+	// }
 
 	@Override
 	public ModelFactory modelFactory() {

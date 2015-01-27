@@ -117,6 +117,13 @@ public class CIVLConstants {
 			"print ample set and state when ample set contains >1 process",
 			false);
 
+	public final static Option showMemoryUnitsO = Option
+			.newScalarOption(
+					"showMemoryUnits",
+					BOOLEAN,
+					"print the impact/reachable memory units when the state contains more than one processes",
+					false);
+
 	public final static Option showModelO = Option.newScalarOption("showModel",
 			BOOLEAN, "print the model", false);
 

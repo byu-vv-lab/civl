@@ -2,8 +2,10 @@ package edu.udel.cis.vsl.civl.state.IF;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableMemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableStateFactory;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
  * Entry point for the state module: provides a static method to get a new state
@@ -27,8 +29,14 @@ public class States {
 	 */
 	public static StateFactory newImmutableStateFactory(
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			GMCConfiguration config) {
-		return new ImmutableStateFactory(modelFactory, symbolicUtil, config);
+			MemoryUnitFactory memFactory, GMCConfiguration config) {
+		return new ImmutableStateFactory(modelFactory, symbolicUtil,
+				memFactory, config);
+	}
+
+	public static MemoryUnitFactory newImmutableMemoryUnitFactory(
+			SymbolicUniverse universe, ModelFactory factory) {
+		return new ImmutableMemoryUnitFactory(universe, factory);
 	}
 
 }

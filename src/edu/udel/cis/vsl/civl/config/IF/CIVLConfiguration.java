@@ -32,8 +32,10 @@ public class CIVLConfiguration {
 	private boolean showPreproc = false;
 	private boolean showInputVars = false;
 	private boolean showTime = false;
+	private boolean showMemoryUnits = false;
 
 	public CIVLConfiguration(GMCConfiguration config) {
+		this.setShowMemoryUnits(config.isTrue(CIVLConstants.showMemoryUnitsO));
 		this.debug = config.isTrue(CIVLConstants.debugO);
 		this.enablePrintf = config.isTrue(CIVLConstants.enablePrintfO);
 		this.saveStates = config.isTrue(CIVLConstants.saveStatesO);
@@ -284,5 +286,13 @@ public class CIVLConfiguration {
 
 	public void setShowTime(boolean showTime) {
 		this.showTime = showTime;
+	}
+
+	public boolean showMemoryUnits() {
+		return showMemoryUnits;
+	}
+
+	public void setShowMemoryUnits(boolean showMemoryUnits) {
+		this.showMemoryUnits = showMemoryUnits;
 	}
 }

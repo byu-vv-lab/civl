@@ -118,10 +118,10 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  */
 public interface ModelFactory {
 
-//	/**
-//	 * The name of the atomic lock variable
-//	 */
-//	public static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
+	// /**
+	// * The name of the atomic lock variable
+	// */
+	// public static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
 
 	/* *********************************************************************
 	 * CIVL Types
@@ -766,9 +766,10 @@ public interface ModelFactory {
 
 	StructOrUnionFieldReference structFieldReference(int fieldIndex);
 
-	MemoryUnitExpression memoryUnitExpression(CIVLSource source, int scopeID,
-			int varID, CIVLType objetType, MemoryUnitReference reference,
-			boolean writable, boolean hasPinterRef);
+	MemoryUnitExpression memoryUnitExpression(CIVLSource source,
+			Variable variable, CIVLType objetType,
+			MemoryUnitReference reference, boolean writable,
+			boolean hasPinterRef);
 
 	/* *********************************************************************
 	 * Fragments and Statements
