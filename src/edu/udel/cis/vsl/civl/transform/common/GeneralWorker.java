@@ -8,11 +8,12 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
+import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
+import edu.udel.cis.vsl.abc.ast.entity.IF.OrdinaryEntity;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.DeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
@@ -63,24 +64,32 @@ public class GeneralWorker extends BaseWorker {
 		List<ExternalDefinitionNode> newExternalList = new ArrayList<>();
 		Map<String, VariableDeclarationNode> macroVars = new HashMap<>();
 
+		OrdinaryEntity mainEntity = unit.getInternalOrExternalEntity("main");
+
+		if (mainEntity == null) {
+			throw new SyntaxException("missing main function", unit
+					.getRootNode().getSource());
+		}
+		if (!(mainEntity instanceof Function)) {
+			throw new SyntaxException("non-function entity with name \"main\"",
+					mainEntity.getFirstDeclaration().getSource());
+		}
+
+		Function mainFunction = (Function) mainEntity;
+		FunctionDefinitionNode mainDef = mainFunction.getDefinition();
+
 		unit.release();
 		processMalloc(root);
-		for (ASTNode child : root) {
-			if (child.nodeKind() == NodeKind.FUNCTION_DEFINITION) {
-				FunctionDefinitionNode functionNode = (FunctionDefinitionNode) child;
-				IdentifierNode functionName = (IdentifierNode) functionNode
-						.child(0);
 
-				if (functionName.name().equals("main")) {
-					this.mainSource = functionNode.getSource();
-					inputVars = processMainFunction(functionNode);
-					processArgvRefs(functionNode.getBody());
-				}
+		// remove main prototypes...
+		for (DeclarationNode decl : mainFunction.getDeclarations()) {
+			if (!decl.isDefinition()) {
+				decl.parent().removeChild(decl.childIndex());
 			}
-			// TODO factor this out
-			// if (config.svcomp())
-			// recoverMacro(child, macroVars);
 		}
+		this.mainSource = mainDef.getSource();
+		inputVars = processMainFunction(mainDef);
+		processArgvRefs(mainDef.getBody());
 		for (ExternalDefinitionNode inputVar : macroVars.values())
 			newExternalList.add(inputVar);
 		for (ExternalDefinitionNode inputVar : inputVars)
@@ -90,8 +99,10 @@ public class GeneralWorker extends BaseWorker {
 		// add my root
 		newExternalList.add(this.myRootNode());
 		for (ExternalDefinitionNode child : root) {
-			newExternalList.add(child);
-			child.parent().removeChild(child.childIndex());
+			if (child != null) {
+				newExternalList.add(child);
+				child.parent().removeChild(child.childIndex());
+			}
 		}
 		root = nodeFactory.newSequenceNode(root.getSource(), "TranslationUnit",
 				newExternalList);
@@ -220,6 +231,7 @@ public class GeneralWorker extends BaseWorker {
 			FunctionDefinitionNode mainFunction) throws SyntaxException {
 		List<VariableDeclarationNode> inputVars = new ArrayList<>();
 		FunctionTypeNode functionType = mainFunction.getTypeNode();
+
 		SequenceNode<VariableDeclarationNode> parameters = functionType
 				.getParameters();
 		int count = parameters.numChildren();
