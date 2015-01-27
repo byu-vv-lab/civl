@@ -56,10 +56,9 @@ public class Cuda2CIVLWorker extends BaseWorker {
 		translateKernelCalls(root);
 		translateMainDefinition(root);
 		translateKernelDefinitions(root);
-		root.addSequenceChild(nodeFactory.newAssertNode(root.getSource(),
-				nodeFactory.newBooleanConstantNode(root.getSource(), true),
-				null));
 
+		root.prettyPrint(System.out);
+		System.out.println();
 		return astFactory.newAST(root, ast.getSourceFiles());
 	}
 
@@ -76,7 +75,6 @@ public class Cuda2CIVLWorker extends BaseWorker {
 				FunctionDefinitionNode definition = (FunctionDefinitionNode) child;
 				if (definition.getName() != null
 						&& definition.getName().equals("main")) {
-					System.out.println("main found");
 					root.setChild(child.childIndex(),
 							mainDefinitionTransform(definition));
 				}
@@ -114,7 +112,6 @@ public class Cuda2CIVLWorker extends BaseWorker {
 								.getFunction();
 						if (identifierExpression.getIdentifier().name()
 								.equals("cudaMalloc")) {
-							System.out.println("Transforming malloc");
 							int index = functionCall.childIndex();
 							root.setChild(index,
 									cudaMallocTransform(functionCall));

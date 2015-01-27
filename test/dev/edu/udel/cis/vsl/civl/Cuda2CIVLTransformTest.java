@@ -177,4 +177,9 @@ public class Cuda2CIVLTransformTest {
 	public void sum() {
 		assertTrue(ui.run("verify", filename("sum.cu")));
 	}
+	
+	@Test
+	public void dot() {
+		assertTrue(ui.run("verify", filename("dot.cu")));
+	}
 }
