@@ -71,6 +71,16 @@ public interface State {
 	int numProcs();
 
 	/**
+	 * Returns the number of "live" processes. This includes processes which
+	 * have terminated (i.e., have empty call stack), but have not yet been
+	 * "waited on". Once a process has been waited on, it is no longer live: it
+	 * becomes "null" and is eligible for garbage collection.
+	 * 
+	 * @return the number of non-null process states in this state
+	 */
+	int numLiveProcs();
+
+	/**
 	 * Returns the dynamic scope ID of the root (or "system") scope.
 	 * 
 	 * @return the root dynamic scope ID

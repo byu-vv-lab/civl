@@ -22,7 +22,8 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
- * A function call or spawn. Either of the form f(x) or else v=f(x).
+ * A function call or spawn. Either of the form f(x) or else v=f(x), i.e., the
+ * left-hand side expression is optional.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
@@ -44,7 +45,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @param source
 	 *            The source location for this call statement.
 	 * @param isCall
-	 *            is this a call statement (not fork)?
+	 *            is this a call statement (not spawn)?
 	 * @param function
 	 *            The function.
 	 * @param arguments
@@ -114,7 +115,6 @@ public class CommonCallStatement extends CommonStatement implements
 	@Override
 	public String toString() {
 		String result = this.functionExpression.toString();
-		;
 		boolean first = true;
 
 		result += "(";

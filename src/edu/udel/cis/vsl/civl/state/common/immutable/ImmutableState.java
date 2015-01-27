@@ -654,8 +654,6 @@ public class ImmutableState implements State {
 				return scopeId;
 			scopeId = getParentId(scopeId);
 		}
-		// throw new IllegalArgumentException("Variable not in scope: " +
-		// variable);
 		return -1;
 	}
 
@@ -708,6 +706,16 @@ public class ImmutableState implements State {
 	@Override
 	public int numProcs() {
 		return processStates.length;
+	}
+
+	@Override
+	public int numLiveProcs() {
+		int count = 0;
+
+		for (ProcessState procState : processStates)
+			if (procState != null)
+				count++;
+		return count;
 	}
 
 	@Override

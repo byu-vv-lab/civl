@@ -78,6 +78,12 @@ public abstract class CommonEnabler implements Enabler {
 	protected boolean showMemoryUnits = false;
 
 	/**
+	 * If negative, ignore, otherwise an upper bound on the number of live
+	 * processes.
+	 */
+	protected int procBound;
+
+	/**
 	 * The unique symbolic universe used by the system.
 	 */
 	protected SymbolicUniverse universe;
@@ -148,6 +154,7 @@ public abstract class CommonEnabler implements Enabler {
 		this.libraryLoader = libLoader;
 		this.stateFactory = stateFactory;
 		this.showMemoryUnits = civlConfig.showMemoryUnits();
+		this.procBound = civlConfig.getProcBound();
 	}
 
 	/* ************************ Methods from EnablerIF ********************* */
@@ -359,7 +366,6 @@ public abstract class CommonEnabler implements Enabler {
 			Statement s, BooleanExpression pathCondition, int pid,
 			Statement assignAtomicLock) {
 		List<Transition> localTransitions = new LinkedList<>();
-		Statement transitionStatement = null;
 		int processIdentifier = state.getProcessState(pid).identifier();
 
 		try {
@@ -367,26 +373,30 @@ public abstract class CommonEnabler implements Enabler {
 				CallOrSpawnStatement call = (CallOrSpawnStatement) s;
 
 				// TODO think about optimization of system functions
-				if (call.isSystemCall()) // TODO check function pointer
+				if (call.isSystemCall()) { // TODO check function pointer
 					return this.getEnabledTransitionsOfSystemCall(
 							call.getSource(), state, call, pathCondition, pid,
 							processIdentifier, assignAtomicLock);
-				else
-					transitionStatement = s;
-			} else
-				transitionStatement = s;
-			if (transitionStatement != null) {
-				if (assignAtomicLock != null) {
-					StatementList statementList = modelFactory
-							.statmentList(assignAtomicLock);
-
-					statementList.add(s);
-					transitionStatement = statementList;
-				} else
-					transitionStatement = s;
-				localTransitions.add(Semantics.newTransition(pathCondition,
-						pid, processIdentifier, transitionStatement));
+				} else if (procBound > 0 && call.isSpawn()
+						&& state.numLiveProcs() >= procBound) {
+					// empty set: spawn is disabled due to procBound
+					return localTransitions;
+				}
 			}
+
+			Statement transitionStatement;
+
+			if (assignAtomicLock != null) {
+				StatementList statementList = modelFactory
+						.statmentList(assignAtomicLock);
+
+				statementList.add(s);
+				transitionStatement = statementList;
+			} else {
+				transitionStatement = s;
+			}
+			localTransitions.add(Semantics.newTransition(pathCondition, pid,
+					processIdentifier, transitionStatement));
 		} catch (UnsatisfiablePathConditionException e) {
 			// nothing to do: don't add this transition
 		}
@@ -452,12 +462,12 @@ public abstract class CommonEnabler implements Enabler {
 			Statement statement,
 			Map<Integer, Map<Statement, SymbolicExpression>> newGuardMap) {
 		BooleanExpression guard = null;
-		 Map<Statement, SymbolicExpression> myMap = newGuardMap.get(pid);
-		 
-		 if(myMap != null){
-			 guard = (BooleanExpression) myMap.get(statement);
-		 }
-		
+		Map<Statement, SymbolicExpression> myMap = newGuardMap.get(pid);
+
+		if (myMap != null) {
+			guard = (BooleanExpression) myMap.get(statement);
+		}
+
 		// BooleanExpression guard = (BooleanExpression)
 		// newGuardMap.get(pid).get(
 		// statement);

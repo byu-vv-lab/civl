@@ -124,7 +124,7 @@ OPTION_NAME
     | '-min'
     | '-ompNoSimplify'
     | '-preproc'
-    | '-procbound'
+    | '-procBound'
     | '-random'
     | '-saveStates'
     | '-seed'

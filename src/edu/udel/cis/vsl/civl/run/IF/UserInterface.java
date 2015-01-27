@@ -15,12 +15,12 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guiO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guidedO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.idO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.inputO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.linkO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.macroO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompNoSimplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.preprocO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.procBoundO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.randomO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.saveStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.seedO;
@@ -46,7 +46,6 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.userIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.version;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.webO;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -154,19 +153,7 @@ public class UserInterface {
 	// TODO civl verify help: options applicable to verify
 	// TODO maxdepth, saveStates,
 	static {
-		Collection<Option> options = Arrays.asList(errorBoundO, showModelO,
-				verboseO, randomO, guidedO, seedO, debugO, echoO,
-				userIncludePathO, sysIncludePathO, showTransitionsO,
-				showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, inputO, idO, traceO, minO, maxdepthO,
-				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
-				showAmpleSetWtStatesO, statelessPrintfO, guiO, deadlockO,
-				svcompO, showInputVarsO, showProgramO, showPathConditionO,
-				ompNoSimplifyO, collectProcessesO, collectScopesO,
-				collectHeapsO, linkO, webO, macroO, preprocO, astO, showTimeO,
-				showMemoryUnitsO);
-
-		for (Option option : options)
+		for (Option option : CIVLConstants.getAllOptions())
 			definedOptions.put(option.name(), option);
 		CIVLCommand
 				.addShowOption(showModelO, verboseO, debugO, echoO,
@@ -176,8 +163,8 @@ public class UserInterface {
 		CIVLCommand.addVerifyOrCompareOption(errorBoundO, verboseO, debugO,
 				echoO, userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, inputO, minO, maxdepthO, saveStatesO,
-				simplifyO, solveO, enablePrintfO, showAmpleSetO,
+				showProverQueriesO, inputO, minO, maxdepthO, procBoundO,
+				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
 				showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcompO,
 				showProgramO, showPathConditionO, ompNoSimplifyO,
 				collectProcessesO, collectScopesO, collectHeapsO, macroO,
@@ -194,7 +181,7 @@ public class UserInterface {
 		CIVLCommand.addRunOption(errorBoundO, verboseO, randomO, guidedO,
 				seedO, debugO, echoO, userIncludePathO, sysIncludePathO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, inputO, maxdepthO, simplifyO,
+				showProverQueriesO, inputO, maxdepthO, procBoundO, simplifyO,
 				enablePrintfO, showAmpleSetO, showAmpleSetWtStatesO,
 				statelessPrintfO, deadlockO, svcompO, showProgramO,
 				showPathConditionO, ompNoSimplifyO, collectProcessesO,
@@ -419,7 +406,30 @@ public class UserInterface {
 		}
 	}
 
-	// TODO what if there is input variables?
+	/**
+	 * <p>
+	 * Executes a "replay" command. This parses a trace file. The trace file
+	 * contains all of the command line options that were used in the original
+	 * verify run. These are parsed to form the new configuration object.
+	 * </p>
+	 * 
+	 * <p>
+	 * Some of these arguments are however ignored; they are set to their
+	 * default values and then to new values if specified in the replay command.
+	 * These options include things like showModel, verbose, etc. These are
+	 * things that the user probably doesn't want to do the same way in the
+	 * replay as she did in the verify. In contrast, arguments like input values
+	 * have to be exactly the same in both commands.
+	 * </p>
+	 * 
+	 * @param modelTranslator
+	 * @return
+	 * @throws CommandLineException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ABCException
+	 * @throws MisguidedExecutionException
+	 */
 	private boolean runReplay(ModelTranslator modelTranslator)
 			throws CommandLineException, FileNotFoundException, IOException,
 			ABCException, MisguidedExecutionException {

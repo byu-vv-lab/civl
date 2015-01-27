@@ -5,18 +5,20 @@ import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
 
 import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
-
 import edu.udel.cis.vsl.gmc.Option;
 
 /**
  * This class manages all constant configurations of the system.
  * 
+ * NOTE: when you add a new option, add it here, give it name ending in "O",
+ * like the others, AND add it to the list in method {@link #getAllOptions()}.
+ * And keep them in alphabetical order.
+ * 
  * @author Manchun Zheng
  * 
  */
 public class CIVLConstants {
+
 	public enum DeadlockKind {
 		ABSOLUTE, POTENTIAL, NONE
 	}
@@ -95,6 +97,10 @@ public class CIVLConstants {
 
 	public final static Option minO = Option.newScalarOption("min", BOOLEAN,
 			"search for minimal counterexample", false);
+
+	public final static Option procBoundO = Option.newScalarOption("procBound",
+			INTEGER,
+			"bound on number of live processes (no bound if negative)", -1);
 
 	public final static Option randomO = Option.newScalarOption("random",
 			BOOLEAN, "select enabled transitions randomly; default for run,\n"
@@ -218,46 +224,16 @@ public class CIVLConstants {
 
 	public final static String civlSystemFunction = "_CIVL_system";
 
-	public static Option[] getAllOptions() {
-		int numOpts = 32;
-		List<Option> outputs = new LinkedList<Option>();
-
-		outputs.add(CIVLConstants.deadlockO);
-		outputs.add(CIVLConstants.debugO);
-		outputs.add(CIVLConstants.echoO);
-		outputs.add(CIVLConstants.enablePrintfO);
-		outputs.add(CIVLConstants.errorBoundO);
-		outputs.add(CIVLConstants.guidedO);
-		// outputs.add(CIVLConstants.guiO);
-		outputs.add(CIVLConstants.idO);
-		outputs.add(CIVLConstants.maxdepthO);
-		outputs.add(CIVLConstants.minO);
-		outputs.add(CIVLConstants.randomO);
-		outputs.add(CIVLConstants.saveStatesO);
-		outputs.add(CIVLConstants.seedO);
-		outputs.add(CIVLConstants.showAmpleSetO);
-		outputs.add(CIVLConstants.showAmpleSetWtStatesO);
-		outputs.add(CIVLConstants.showInputVarsO);
-		outputs.add(CIVLConstants.showModelO);
-		outputs.add(CIVLConstants.showPathConditionO);
-		outputs.add(CIVLConstants.showProgramO);
-		outputs.add(CIVLConstants.showProverQueriesO);
-		outputs.add(CIVLConstants.showQueriesO);
-		outputs.add(CIVLConstants.showSavedStatesO);
-		outputs.add(CIVLConstants.showStatesO);
-		outputs.add(CIVLConstants.showTransitionsO);
-		outputs.add(CIVLConstants.simplifyO);
-		outputs.add(CIVLConstants.solveO);
-		outputs.add(CIVLConstants.statelessPrintfO);
-		outputs.add(CIVLConstants.svcompO);
-		outputs.add(CIVLConstants.sysIncludePathO);
-		outputs.add(CIVLConstants.traceO);
-		outputs.add(CIVLConstants.userIncludePathO);
-		outputs.add(CIVLConstants.verboseO);
-		outputs.add(CIVLConstants.ompNoSimplifyO);
-		outputs.add(CIVLConstants.webO);
-		outputs.add(CIVLConstants.showTimeO);
-		return outputs.toArray(new Option[numOpts]);
+	public final static Option[] getAllOptions() {
+		return new Option[] { astO, collectHeapsO, collectProcessesO,
+				collectScopesO, deadlockO, debugO, echoO, enablePrintfO,
+				errorBoundO, guiO, guidedO, idO, inputO, linkO, macroO,
+				maxdepthO, minO, ompNoSimplifyO, preprocO, procBoundO, randomO,
+				saveStatesO, seedO, showAmpleSetO, showAmpleSetWtStatesO,
+				showInputVarsO, showMemoryUnitsO, showModelO,
+				showPathConditionO, showProgramO, showProverQueriesO,
+				showQueriesO, showSavedStatesO, showStatesO, showTimeO,
+				showTransitionsO, simplifyO, solveO, statelessPrintfO, svcompO,
+				sysIncludePathO, traceO, userIncludePathO, verboseO, webO };
 	}
-
 }

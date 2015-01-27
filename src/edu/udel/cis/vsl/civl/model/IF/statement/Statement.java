@@ -162,7 +162,7 @@ public interface Statement extends Sourceable {
 	 * Return a new statement by copying this statement and modifying it as well
 	 * as its guard by replacing a certain conditional expression with a
 	 * expression, used when translating away conditional expression WITHOUT
-	 * introducing temporal variables. The original statement can't be modified,
+	 * introducing temporary variables. The original statement can't be modified,
 	 * because it needs to be used twice to generate the if branch statement and
 	 * the else branch statement.<br>
 	 * For example, <code>x = a ? b : c</code> will be translated into

@@ -38,6 +38,7 @@ public class CIVLConfiguration {
 	private boolean showInputVars = false;
 	private boolean showTime = false;
 	private boolean showMemoryUnits = false;
+	private int procBound = -1;
 
 	public CIVLConfiguration(GMCConfiguration config) {
 		String deadlockString = (String) config
@@ -84,6 +85,8 @@ public class CIVLConfiguration {
 		this.setShowModel(config.isTrue(CIVLConstants.showModelO));
 		this.showInputVars = config.isTrue(CIVLConstants.showInputVarsO);
 		this.showTime = config.isTrue(CIVLConstants.showTimeO);
+		this.procBound = (Integer) config
+				.getValueOrDefault(CIVLConstants.procBoundO);
 	}
 
 	public void setOut(PrintStream out) {
@@ -316,5 +319,13 @@ public class CIVLConfiguration {
 
 	public void setShowMemoryUnits(boolean showMemoryUnits) {
 		this.showMemoryUnits = showMemoryUnits;
+	}
+
+	public int getProcBound() {
+		return procBound;
+	}
+
+	public void setProcBound(int value) {
+		this.procBound = value;
 	}
 }
