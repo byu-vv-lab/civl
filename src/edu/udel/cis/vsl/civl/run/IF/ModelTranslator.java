@@ -743,6 +743,8 @@ public class ModelTranslator {
 			return "simplepthread.cvl";
 		case "string.h":
 			return "string.cvl";
+		case "svcomp.h":
+			return "svcomp.cvl";
 		case "cuda.h":
 			return "cuda.cvl";
 		case "cuda-helper.cvh":

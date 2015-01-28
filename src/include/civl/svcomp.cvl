@@ -1,6 +1,6 @@
-#ifdef __SVCOMP__
+#ifdef __CIVL_SVCOMP__
 #else
-#define __SVCOMP__
+#define __CIVL_SVCOMP__
 
 void __VERIFIER_assume(int expression) { 
   if (!expression) 
@@ -9,6 +9,7 @@ void __VERIFIER_assume(int expression) {
       goto LOOP; 
   }
 }
+
 
 #endif
 

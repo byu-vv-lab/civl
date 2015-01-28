@@ -7,7 +7,6 @@
 #include <concurrency.cvh>
 #include <pthread.h>
 #include <seq.cvh>
-#include <svcomp.cvl>
 
 extern void *value_ptr_value = NULL;
 extern $scope root = $here;

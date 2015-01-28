@@ -28,7 +28,6 @@ public class PthreadThreaderTest {
 
 	/* **************************** Test Methods *************************** */
 
-	@Ignore
 	@Test
 	public void dekker_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp", filename("dekker_true.c")));
@@ -55,7 +54,6 @@ public class PthreadThreaderTest {
 				filename("read_write_lock_false.c")));
 	}
 
-	@Ignore
 	@Test
 	public void read_write_lock_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp",
@@ -67,7 +65,6 @@ public class PthreadThreaderTest {
 		assertTrue(ui.run("verify", "-svcomp", filename("szymanski_true.c")));
 	}
 
-	@Ignore
 	@Test
 	public void time_var_mutex_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp",
