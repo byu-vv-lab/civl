@@ -80,7 +80,8 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 
 		// if (this.testNewAmpleSet) {
 		AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this, evaluator,
-				memUnitFactory, debugging || this.showMemoryUnits, debugOut);
+				memUnitFactory, this.procBound, debugging
+						|| this.showMemoryUnits, debugOut);
 
 		processStates = new LinkedList<>(ampleWorker.ampleProcesses());
 		// compute ample processes
@@ -104,7 +105,8 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 		}
 		// Compute the ample set (of transitions)
 		for (ProcessState p : processStates) {
-			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(), ampleWorker.newGuardMap));
+			transitions.addAll(enabledTransitionsOfProcess(state, p.getPid(),
+					ampleWorker.newGuardMap));
 		}
 		return transitions;
 	}

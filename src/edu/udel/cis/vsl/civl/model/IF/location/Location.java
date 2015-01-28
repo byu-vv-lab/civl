@@ -322,4 +322,13 @@ public interface Location extends Sourceable {
 	void setSystemCalls(Set<CallOrSpawnStatement> systemCalls);
 
 	Set<CallOrSpawnStatement> systemCalls();
+
+	/**
+	 * Is a spawn statement reachable from this location?
+	 * 
+	 * @return true iff a spawn statement is reachable from this location.
+	 */
+	boolean hasSpawn();
+
+	void staticAnalysis();
 }

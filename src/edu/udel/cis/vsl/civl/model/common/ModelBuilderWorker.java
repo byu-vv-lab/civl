@@ -550,6 +550,7 @@ public class ModelBuilderWorker {
 			// identified after ALL variables have been
 			// checked for being purely local or not
 			for (Location loc : f.locations()) {
+				loc.staticAnalysis();
 				loc.computeWritableVariables(addressedOfVariables);
 				for (Statement s : loc.outgoing()) {
 					s.purelyLocalAnalysis();

@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.common.location;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
@@ -116,6 +117,13 @@ public class CommonLocation extends CommonSourceable implements Location {
 	private Set<MemoryUnitExpression> reachableMemUnitsWoPointer;
 	private Set<CallOrSpawnStatement> systemCalls;
 
+	private Set<Location> reachableLoacations;
+	/**
+	 * upper bound of the number of spawn statements reachable from this
+	 * location. -1 stands for infinity.
+	 */
+	private int spawnBound = 0;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -134,6 +142,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 		this.scope = scope;
 		this.id = id;
 		this.function = scope.function();
+		this.reachableLoacations = new HashSet<>();
 	}
 
 	/* ************************ Methods from Location ********************** */
@@ -588,6 +597,78 @@ public class CommonLocation extends CommonSourceable implements Location {
 		this.writableVariables = variableWritten;
 	}
 
+	private void computeSpawnBound() {
+		for (Location location : this.reachableLoacations) {
+			if (location.hasSpawn()) {
+				this.spawnBound++;
+				return;
+			}
+			for (Statement statement : location.outgoing()) {
+				if (statement instanceof CallOrSpawnStatement) {
+					if (((CallOrSpawnStatement) statement).isSpawn()) {
+						this.spawnBound++;
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	public void staticAnalysis() {
+		this.computeReachableLocations();
+		this.computeSpawnBound();
+	}
+
+	/**
+	 * computes the set of reachable locations from the current location.
+	 */
+	private void computeReachableLocations() {
+		BitSet checkedLocationIDs = new BitSet();
+		Stack<Location> workings = new Stack<>();
+		Set<CIVLFunction> checkedFunctions = new HashSet<>();
+
+		workings.push(this);
+		checkedLocationIDs.set(this.id());
+		while (!workings.isEmpty()) {
+			Location location = workings.pop();
+
+			for (Statement statement : location.outgoing()) {
+				Location target = statement.target();
+
+				if (target != null)
+					if (!checkedLocationIDs.get(target.id())) {
+						workings.push(target);
+						checkedLocationIDs.set(target.id());
+					}
+				if (statement instanceof CallOrSpawnStatement) {
+					CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
+
+					if (call.isCall()) {
+						CIVLFunction function = call.function();
+
+						if (function != null
+								&& !checkedFunctions.contains(function)) {
+							checkedFunctions.add(function);
+							for (Location functionLoc : function.locations()) {
+								if (functionLoc != null) {
+									int funcLocID = functionLoc.id();
+
+									if (!checkedLocationIDs.get(funcLocID)) {
+										workings.push(functionLoc);
+										checkedLocationIDs.set(funcLocID);
+									}
+								}
+							}
+
+						}
+					}
+
+				}
+			}
+		}
+	}
+
 	@Override
 	public Set<Variable> writableVariables() {
 		return this.writableVariables;
@@ -648,6 +729,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 	@Override
 	public Set<CallOrSpawnStatement> systemCalls() {
 		return this.systemCalls;
+	}
+
+	@Override
+	public boolean hasSpawn() {
+		return this.spawnBound > 0;
 	}
 
 }

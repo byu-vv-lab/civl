@@ -187,6 +187,8 @@ public class AmpleSetWorker {
 	// HashMap<>();
 	MemoryUnitSet[] impactMemUnits;
 
+	int procBound = -1;
+
 	/**
 	 * map of process ID's and their reachable memory units with information
 	 * that whether the memory unit is to be written.
@@ -252,7 +254,8 @@ public class AmpleSetWorker {
 	 *            The print stream for debugging information.
 	 */
 	AmpleSetWorker(State state, CommonEnabler enabler, Evaluator evaluator,
-			MemoryUnitFactory muFactory, boolean debug, PrintStream debugOut) {
+			MemoryUnitFactory muFactory, int procBound, boolean debug,
+			PrintStream debugOut) {
 		this.memUnitEvaluator = evaluator.memoryUnitEvaluator();
 		this.modelFactory = evaluator.modelFactory();
 		this.state = state;
@@ -264,6 +267,7 @@ public class AmpleSetWorker {
 		this.universe = evaluator.universe();
 		impactMemUnits = new MemoryUnitSet[state.numProcs()];
 		this.memUnitFactory = muFactory;
+		this.procBound = procBound;
 	}
 
 	/* *********************** Package-private Methods ********************* */
@@ -336,7 +340,7 @@ public class AmpleSetWorker {
 		ampleProcessIDs.set(startPid);
 		while (!workingProcessIDs.isEmpty()) {
 			int pid = workingProcessIDs.pop();
-			// ProcessState procState = state.getProcessState(pid);
+			ProcessState procState = state.getProcessState(pid);
 			MemoryUnitSet impactMUSet = impactMemUnits[pid];
 			// Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfThis =
 			// reachableMemUnitsMap
@@ -350,6 +354,43 @@ public class AmpleSetWorker {
 				// completely
 				ampleProcessIDs = activeProcesses;
 				return ampleProcessIDs;
+			}
+			if (procBound > 0) {
+				for (Statement statement : procState.getLocation().outgoing()) {
+					if (statement instanceof CallOrSpawnStatement) {
+						CallOrSpawnStatement callOrSpawn = (CallOrSpawnStatement) statement;
+
+						if (callOrSpawn.isSpawn()) {
+							for (int otherPid = 0; otherPid < nonEmptyProcesses
+									.length(); otherPid++) {
+								otherPid = nonEmptyProcesses
+										.nextSetBit(otherPid);
+								if (otherPid == pid
+										|| ampleProcessIDs.get(otherPid))
+									continue;
+								if (state.getProcessState(otherPid)
+										.getLocation().hasSpawn()) {
+									if (this.activeProcesses.get(otherPid)) {
+										myAmpleSetActiveSize++;
+										workingProcessIDs.add(otherPid);
+										ampleProcessIDs.set(otherPid);
+									} else if (!this
+											.isWaitingFor(otherPid, pid)) {
+										workingProcessIDs.add(otherPid);
+										ampleProcessIDs.set(otherPid);
+									}
+									if (myAmpleSetActiveSize >= minAmpleSize
+											|| myAmpleSetActiveSize == activeProcesses
+													.cardinality()) {
+										return this.intersects(ampleProcessIDs,
+												activeProcesses);
+									}
+								}
+							}
+						}
+					}
+				}
+
 			}
 			if (systemCalls != null && !systemCalls.isEmpty()) {
 				for (CallOrSpawnStatement call : systemCalls) {
@@ -548,8 +589,13 @@ public class AmpleSetWorker {
 			pid = p.getPid();
 			this.nonEmptyProcesses.set(pid);
 			for (Statement s : p.getLocation().outgoing()) {
-				SymbolicExpression myGuard = enabler.getGuard(s, pid, state).value;
+				SymbolicExpression myGuard;
 
+				if (this.procBound > 0 && s instanceof CallOrSpawnStatement
+						&& ((CallOrSpawnStatement) s).isSpawn()
+						&& state.numLiveProcs() >= this.procBound)
+					continue;
+				myGuard = enabler.getGuard(s, pid, state).value;
 				if (!myGuard.isFalse()) {
 					myGuards.put(s, myGuard);
 					active = true;
