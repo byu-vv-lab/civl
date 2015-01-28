@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -3152,9 +3153,14 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateQuantifiedExpression(state, pid,
 					(QuantifiedExpression) expression);
 			break;
+		case MEMORY_UNIT:
+		case NULL_LITERAL:
+		case STRING_LITERAL:
+		case SYSTEM_FUNC_CALL:
+			throw new CIVLSyntaxException("Illegal use of " + kind
+					+ " expression: ", expression.getSource());
 		default:
-			throw new CIVLInternalException("Unknown kind of expression: "
-					+ kind, expression.getSource());
+			throw new CIVLInternalException("unreachable", expression);
 		}
 		return result;
 	}
@@ -3170,7 +3176,6 @@ public class CommonEvaluator implements Evaluator {
 			BooleanExpression pathCondition = universe.and(facts,
 					state.getPathCondition());
 
-			// TODO: this will modify state if state is mutable!
 			state = state.setPathCondition(pathCondition);
 			eval = new Evaluation(state, value);
 		} else if (type instanceof CIVLCompleteArrayType) {
