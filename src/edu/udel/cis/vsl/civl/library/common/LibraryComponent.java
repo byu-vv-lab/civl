@@ -199,6 +199,7 @@ public abstract class LibraryComponent {
 			CIVLSource civlsource) {
 		BooleanExpression claim;
 		SymbolicExpression[] operands = { arg0, arg1 };
+		SymbolicExpression[] tmpOperands = new SymbolicExpression[2];
 
 		/*
 		 * For MAX and MIN operation, if CIVL cannot figure out a concrete
@@ -241,8 +242,6 @@ public abstract class LibraryComponent {
 			case CIVL_BOR:
 			case CIVL_BXOR:
 			case CIVL_MINLOC:
-				SymbolicExpression[] tmpOperands = new SymbolicExpression[2];
-
 				assert (operands.length == 2);
 				for (int i = 0; i < operands.length; i++)
 					if (operands[i].type() instanceof SymbolicTupleType)
@@ -259,20 +258,21 @@ public abstract class LibraryComponent {
 						(NumericExpression) tmpOperands[1]);
 				return universe.cond(claim, operands[0], operands[1]);
 			case CIVL_MAXLOC:
+				assert (operands.length == 2);
 				for (int i = 0; i < operands.length; i++)
 					if (operands[i].type() instanceof SymbolicTupleType)
-						operands[i] = universe.tupleRead(operands[i],
+						tmpOperands[i] = universe.tupleRead(operands[i],
 								universe.intObject(0));
 					else if (operands[i].type() instanceof SymbolicArrayType)
-						operands[i] = universe.arrayRead(operands[i],
+						tmpOperands[i] = universe.arrayRead(operands[i],
 								universe.zeroInt());
 					else
 						throw new CIVLInternalException(
-								"CIVL_MINLOC operations cannot resolve operands",
+								"CIVL_MAXLOC operations cannot resolve operands",
 								civlsource);
-				claim = universe.lessThan((NumericExpression) operands[1],
-						(NumericExpression) operands[0]);
-				return universe.cond(claim, operands[0], operands[1]);
+				claim = universe.lessThan((NumericExpression) tmpOperands[0],
+						(NumericExpression) tmpOperands[1]);
+				return universe.cond(claim, operands[1], operands[0]);
 			case CIVL_REPLACE:
 			default:
 				throw new CIVLUnimplementedFeatureException("CIVLOperation: "
