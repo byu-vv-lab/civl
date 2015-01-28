@@ -9,7 +9,7 @@
 
 /* Copies a region of memory */
 void* memcpy(void *p, const void *q, const size_t size) {
-  if(size == 0.0)
+  if(size == 0)
     return p;
   $bundle bundle = $bundle_pack(q, size);
   $bundle_unpack(bundle, p);
