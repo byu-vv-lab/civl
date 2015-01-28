@@ -97,6 +97,131 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		return new Evaluation(state, universe.trueExpression());
 	}
 
+	/* ******************** Public Array Utility functions ****************** */
+	/**
+	 * Cast an array to another array. The two arrays before and after casting
+	 * must be able to hold same number of non-array elements.<br>
+	 * e.g. For arrays <code>int a[2][2]; int b[4]; int c[5]</code>, a and b can
+	 * be casted into each other but both of them can not be casted to c.
+	 * 
+	 * @author Ziqing Luo
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The information of the process
+	 * @param oldArray
+	 *            The array before casting
+	 * @param targetTypeArray
+	 *            The array has the type which is the target type of casting
+	 * @param source
+	 *            The CIVL source of the oldArray or the pointer to OldArray
+	 * @return casted array
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public SymbolicExpression arrayCasting(State state, String process,
+			SymbolicExpression oldArray, SymbolicExpression targetTypeArray,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		BooleanExpression claim;
+		NumericExpression extent, chunkLength, oldArraySize;
+		List<SymbolicExpression> elements = new LinkedList<>();
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+
+		if (!(oldArray.type() instanceof SymbolicCompleteArrayType))
+			throw new CIVLInternalException(
+					"Array casting cannot be applied on non-array type object or incomplete array",
+					source);
+		if (!(targetTypeArray.type() instanceof SymbolicCompleteArrayType))
+			throw new CIVLInternalException(
+					"Array casting cannot cast to non-array type object or incomplete array type",
+					source);
+		extent = universe.length(targetTypeArray);
+		oldArraySize = universe.length(oldArray);
+		chunkLength = universe.divide(oldArraySize, extent);
+		if (reasoner.isValid(universe.equals(chunkLength, one))
+				&& (!(((SymbolicArrayType) targetTypeArray.type())
+						.elementType() instanceof SymbolicArrayType)))
+			return oldArray;
+		else {
+			NumericExpression i = zero;
+			NumericExpression endIndex = chunkLength;
+			SymbolicExpression flattenOldArray = arrayFlatten(state, process,
+					oldArray, source);
+
+			if (!(((SymbolicArrayType) targetTypeArray.type()).elementType() instanceof SymbolicArrayType))
+				throw new CIVLInternalException(
+						"Array cannot be casted to an non-array type", source);
+			claim = universe.lessThan(i, extent);
+			while (reasoner.isValid(claim)) {
+				SymbolicExpression subArray = symbolicAnalyzer.getSubArray(
+						flattenOldArray, universe.multiply(i, chunkLength),
+						endIndex, state, process, source);
+				SymbolicExpression childArray;
+
+				childArray = arrayCasting(state, process, subArray,
+						universe.arrayRead(targetTypeArray, zero), source);
+
+				elements.add(childArray);
+				// update
+				i = universe.add(i, one);
+				endIndex = universe.add(endIndex, chunkLength);
+				claim = universe.lessThan(i, extent);
+			}
+			return universe.array(elements.get(0).type(), elements);
+		}
+	}
+
+	/**
+	 * Flatten the given array. Here flatten means converting a nested array
+	 * (which represents multiple dimensional array in CIVL) to an one
+	 * dimensional array.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The information of the process
+	 * @param array
+	 *            The array which is going to be flatten
+	 * @param civlsource
+	 *            The CIVL source the array or the pointer to the array
+	 * @return the flatten array
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public SymbolicExpression arrayFlatten(State state, String process,
+			SymbolicExpression array, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
+		List<SymbolicExpression> flattenElementList;
+		ArrayList<NumericExpression> arrayElementsSizes;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+
+		if (array == null)
+			throw new CIVLInternalException("parameter 'array' is null.",
+					civlsource);
+		if (array.isNull())
+			return array;
+		// If the array is already a one-dimensional array no matter if the
+		// length is concrete or non-concrete, return it directly.
+		if (!(((SymbolicArrayType) array.type()).elementType() instanceof SymbolicArrayType))
+			return array;
+		// If the array has at least one dimension whose length is non-concrete,
+		// using array lambda to flatten it.
+		if (this.hasNonConcreteExtent(reasoner, array)) {
+			arrayElementsSizes = symbolicUtil.getArrayElementsSizes(array,
+					civlsource);
+			return this.arrayLambdaFlatten(state, array, arrayElementsSizes,
+					civlsource);
+		}
+		flattenElementList = this.arrayFlattenWorker(state, array, civlsource);
+		if (flattenElementList.size() > 0) {
+			assert (!(flattenElementList.get(0).type() instanceof SymbolicArrayType));
+			return universe.array(flattenElementList.get(0).type(),
+					flattenElementList);
+		} else if (array instanceof SymbolicArrayType)
+			return universe.emptyArray(((SymbolicArrayType) array)
+					.elementType());
+		else
+			return universe.emptyArray(array.type());
+	}
+
 	/* ************* Output Argument Assignment Utility functions ************ */
 	/*
 	 * These utility functions are used for dealing with assigning objects to
@@ -435,130 +560,6 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 							state, flattenedLeastComArray), source);
 		}
 		return flattenedLeastComArray;
-	}
-
-	/**
-	 * Flatten the given array. Here flatten means converting a nested array
-	 * (which represents multiple dimensional array in CIVL) to an one
-	 * dimensional array.
-	 * 
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The information of the process
-	 * @param array
-	 *            The array which is going to be flatten
-	 * @param civlsource
-	 *            The CIVL source the array or the pointer to the array
-	 * @return the flatten array
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private SymbolicExpression arrayFlatten(State state, String process,
-			SymbolicExpression array, CIVLSource civlsource)
-			throws UnsatisfiablePathConditionException {
-		List<SymbolicExpression> flattenElementList;
-		ArrayList<NumericExpression> arrayElementsSizes;
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-
-		if (array == null)
-			throw new CIVLInternalException("parameter 'array' is null.",
-					civlsource);
-		if (array.isNull())
-			return array;
-		// If the array is already a one-dimensional array no matter if the
-		// length is concrete or non-concrete, return it directly.
-		if (!(((SymbolicArrayType) array.type()).elementType() instanceof SymbolicArrayType))
-			return array;
-		// If the array has at least one dimension whose length is non-concrete,
-		// using array lambda to flatten it.
-		if (this.hasNonConcreteExtent(reasoner, array)) {
-			arrayElementsSizes = symbolicUtil.getArrayElementsSizes(array,
-					civlsource);
-			return this.arrayLambdaFlatten(state, array, arrayElementsSizes,
-					civlsource);
-		}
-		flattenElementList = this.arrayFlattenWorker(state, array, civlsource);
-		if (flattenElementList.size() > 0) {
-			assert (!(flattenElementList.get(0).type() instanceof SymbolicArrayType));
-			return universe.array(flattenElementList.get(0).type(),
-					flattenElementList);
-		} else if (array instanceof SymbolicArrayType)
-			return universe.emptyArray(((SymbolicArrayType) array)
-					.elementType());
-		else
-			return universe.emptyArray(array.type());
-	}
-
-	/**
-	 * Cast an array to another array. The two arrays before and after casting
-	 * must be able to hold same number of non-array elements.<br>
-	 * e.g. For arrays <code>int a[2][2]; int b[4]; int c[5]</code>, a and b can
-	 * be casted into each other but both of them can not be casted to c.
-	 * 
-	 * @author Ziqing Luo
-	 * @param state
-	 *            The current state
-	 * @param process
-	 *            The information of the process
-	 * @param oldArray
-	 *            The array before casting
-	 * @param targetTypeArray
-	 *            The array has the type which is the target type of casting
-	 * @param source
-	 *            The CIVL source of the oldArray or the pointer to OldArray
-	 * @return casted array
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private SymbolicExpression arrayCasting(State state, String process,
-			SymbolicExpression oldArray, SymbolicExpression targetTypeArray,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
-		BooleanExpression claim;
-		NumericExpression extent, chunkLength, oldArraySize;
-		List<SymbolicExpression> elements = new LinkedList<>();
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-
-		if (!(oldArray.type() instanceof SymbolicCompleteArrayType))
-			throw new CIVLInternalException(
-					"Array casting cannot be applied on non-array type object or incomplete array",
-					source);
-		if (!(targetTypeArray.type() instanceof SymbolicCompleteArrayType))
-			throw new CIVLInternalException(
-					"Array casting cannot cast to non-array type object or incomplete array type",
-					source);
-		extent = universe.length(targetTypeArray);
-		oldArraySize = universe.length(oldArray);
-		chunkLength = universe.divide(oldArraySize, extent);
-		if (reasoner.isValid(universe.equals(chunkLength, one))
-				&& (!(((SymbolicArrayType) targetTypeArray.type())
-						.elementType() instanceof SymbolicArrayType)))
-			return oldArray;
-		else {
-			NumericExpression i = zero;
-			NumericExpression endIndex = chunkLength;
-			SymbolicExpression flattenOldArray = arrayFlatten(state, process,
-					oldArray, source);
-
-			if (!(((SymbolicArrayType) targetTypeArray.type()).elementType() instanceof SymbolicArrayType))
-				throw new CIVLInternalException(
-						"Array cannot be casted to an non-array type", source);
-			claim = universe.lessThan(i, extent);
-			while (reasoner.isValid(claim)) {
-				SymbolicExpression subArray = symbolicAnalyzer.getSubArray(
-						flattenOldArray, universe.multiply(i, chunkLength),
-						endIndex, state, process, source);
-				SymbolicExpression childArray;
-
-				childArray = arrayCasting(state, process, subArray,
-						universe.arrayRead(targetTypeArray, zero), source);
-
-				elements.add(childArray);
-				// update
-				i = universe.add(i, one);
-				endIndex = universe.add(endIndex, chunkLength);
-				claim = universe.lessThan(i, extent);
-			}
-			return universe.array(elements.get(0).type(), elements);
-		}
 	}
 
 	/* ******************* Output Args Assignment Helpers ******************** */

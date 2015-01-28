@@ -876,7 +876,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		for (int i = 0; i < dim; i++) {
 			dimCapacities.add(elementSize);
 			elementSize = universe.multiply(elementSize, dimExtents.get(i));
-			dimCapacities.add(elementSize);
 		}
 		return dimCapacities;
 	}

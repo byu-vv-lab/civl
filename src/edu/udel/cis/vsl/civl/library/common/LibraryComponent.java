@@ -1,13 +1,13 @@
 package edu.udel.cis.vsl.civl.library.common;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
@@ -16,6 +16,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 
 /**
  * The LibraryComponent class provides the common data and operations of library
@@ -196,6 +198,7 @@ public abstract class LibraryComponent {
 			SymbolicExpression arg0, SymbolicExpression arg1, CIVLOperator op,
 			CIVLSource civlsource) {
 		BooleanExpression claim;
+		SymbolicExpression[] operands = { arg0, arg1 };
 
 		/*
 		 * For MAX and MIN operation, if CIVL cannot figure out a concrete
@@ -238,7 +241,38 @@ public abstract class LibraryComponent {
 			case CIVL_BOR:
 			case CIVL_BXOR:
 			case CIVL_MINLOC:
+				SymbolicExpression[] tmpOperands = new SymbolicExpression[2];
+
+				assert (operands.length == 2);
+				for (int i = 0; i < operands.length; i++)
+					if (operands[i].type() instanceof SymbolicTupleType)
+						tmpOperands[i] = universe.tupleRead(operands[i],
+								universe.intObject(0));
+					else if (operands[i].type() instanceof SymbolicArrayType)
+						tmpOperands[i] = universe.arrayRead(operands[i],
+								universe.zeroInt());
+					else
+						throw new CIVLInternalException(
+								"CIVL_MINLOC operations cannot resolve operands",
+								civlsource);
+				claim = universe.lessThan((NumericExpression) tmpOperands[0],
+						(NumericExpression) tmpOperands[1]);
+				return universe.cond(claim, operands[0], operands[1]);
 			case CIVL_MAXLOC:
+				for (int i = 0; i < operands.length; i++)
+					if (operands[i].type() instanceof SymbolicTupleType)
+						operands[i] = universe.tupleRead(operands[i],
+								universe.intObject(0));
+					else if (operands[i].type() instanceof SymbolicArrayType)
+						operands[i] = universe.arrayRead(operands[i],
+								universe.zeroInt());
+					else
+						throw new CIVLInternalException(
+								"CIVL_MINLOC operations cannot resolve operands",
+								civlsource);
+				claim = universe.lessThan((NumericExpression) operands[1],
+						(NumericExpression) operands[0]);
+				return universe.cond(claim, operands[0], operands[1]);
 			case CIVL_REPLACE:
 			default:
 				throw new CIVLUnimplementedFeatureException("CIVLOperation: "

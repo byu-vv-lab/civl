@@ -1,6 +1,8 @@
 package edu.udel.cis.vsl.civl.library.bundle;
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -446,21 +448,25 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression bundle = argumentValues[0];
 		SymbolicExpression pointer = argumentValues[1];
-		SymbolicExpression secOperand = null;
-		SymbolicExpression data = null;
-		SymbolicExpression dataElement = null;
-		SymbolicExpression secOperandElement = null;
+		NumericExpression count = (NumericExpression) argumentValues[2];
+		// Enumerator number of the operation
+		NumericExpression operation = (NumericExpression) argumentValues[3];
+		SymbolicExpression secOperand = null; // one of the 2 operands
+		SymbolicExpression firOperand = null; // one of the 2 operands
 		SymbolicExpression assignPtr = null;
 		SymbolicExpression opRet = null; // result after applying one operation
-		NumericExpression count = (NumericExpression) argumentValues[2];
-		NumericExpression i = zero;
-		NumericExpression operation = (NumericExpression) argumentValues[3];
+		NumericExpression i = zero; // NumericExpression of loop identifier
+		CIVLOperator CIVL_Op;
+		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
+		SymbolicExpression operand0, operand1;
+		SymbolicType operandElementType;
+		// when count is 1, the number of units of
+		// the given data will be accessed.
+		int countStep;
 		BooleanExpression pathCondition = state.getPathCondition();
 		BooleanExpression claim;
 		Reasoner reasoner = universe.reasoner(pathCondition);
-		CIVLOperator CIVL_Op;
 		Evaluation eval = null;
-		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 
 		// Checking if pointer is valid.
 		if (pointer.operator() != SymbolicOperator.CONCRETE) {
@@ -470,42 +476,62 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					arguments[1].getSource()));
 			return state;
 		}
-		// Obtain data form bundle
-		data = (SymbolicExpression) bundle.argument(1);
-		// Checking if data is null
-		if (data.isNull() || data == null)
-			return state;
 		// In executor, operation must be concrete.
 		// Translate operation
 		CIVL_Op = CIVLOperator.values()[((IntegerNumber) reasoner
 				.extractNumber(operation)).intValue()];
+		// MINLOC and MAXLOC takes pairs of data
+		if (CIVL_Op.equals(CIVLOperator.CIVL_MINLOC)
+				|| CIVL_Op.equals(CIVLOperator.CIVL_MAXLOC))
+			countStep = 2;
+		else
+			countStep = 1;
+		// Obtain data form bundle
+		firOperand = (SymbolicExpression) bundle.argument(1);
+		operandElementType = ((SymbolicArrayType) firOperand.type())
+				.elementType();
+		if (firOperand.isNull() || firOperand == null)
+			return state;
 		// Get the second operand from pointer
-
-		eval = libevaluator.getDataFrom(state, process, pointer, count, false,
+		eval = libevaluator.getDataFrom(state, process, pointer,
+				universe.multiply(count, universe.integer(countStep)), false,
 				source);
 		state = eval.state;
 		secOperand = eval.value;
-		// If count is non-concrete
+		// If count is non-concrete, make it a abstract function
 		if (reasoner.extractNumber(count) == null) {
 			NumericSymbolicConstant index = (NumericSymbolicConstant) universe
 					.symbolicConstant(universe.stringObject("i"),
 							universe.integerType());
 			SymbolicExpression arrayEleFunc, lambdaFunc, newArray;
-			SymbolicType elementType;
+			SymbolicExpression[] tmp;
 			SymbolicCompleteArrayType newArrayType;
+			SymbolicType elementType;
 
-			// TODO: move civlOp to super class
-			// TODO: new name for civlOperation
-			arrayEleFunc = this.applyCIVLOperator(state, process,
-					(NumericExpression) universe.arrayRead(data, index),
-					(NumericExpression) universe.arrayRead(secOperand, index),
-					CIVL_Op, source);
+			if (countStep > 1) {
+				tmp = this.getOperands(firOperand, secOperand, countStep,
+						index, operandElementType);
+				operand0 = tmp[0];
+				operand1 = tmp[1];
+				elementType = universe.arrayType(operandElementType,
+						universe.integer(countStep));
+			} else {
+				operand0 = universe.arrayRead(firOperand, index);
+				operand1 = universe.arrayRead(secOperand, index);
+				elementType = operandElementType;
+			}
+			arrayEleFunc = this.applyCIVLOperator(state, process, operand0,
+					operand1, CIVL_Op, source);
 			lambdaFunc = universe.lambda(index, arrayEleFunc);
-			elementType = ((SymbolicArrayType) data.type()).elementType();
 			newArrayType = universe.arrayType(elementType, count);
 			newArray = universe.arrayLambda(newArrayType, lambdaFunc);
+			// array should be flatten before calling setDataFrom
+			newArray = this.libevaluator.arrayFlatten(state, process, newArray,
+					source);
 			eval_and_pointer = libevaluator.setDataFrom(state, process,
-					pointer, count, newArray, false, source);
+					pointer,
+					universe.multiply(count, universe.integer(countStep)),
+					newArray, false, source);
 			eval = eval_and_pointer.left;
 			assignPtr = eval_and_pointer.right;
 			state = eval.state;
@@ -515,10 +541,19 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		}
 		i = zero;
 		claim = universe.lessThan(i, count);
-
 		while (reasoner.isValid(claim)) {
 			try {
-				dataElement = universe.arrayRead(data, i);
+				if (countStep > 1) {
+					SymbolicExpression[] tmp;
+
+					tmp = this.getOperands(firOperand, secOperand, countStep,
+							i, operandElementType);
+					operand0 = tmp[0];
+					operand1 = tmp[1];
+				} else {
+					operand0 = universe.arrayRead(firOperand, i);
+					operand1 = universe.arrayRead(secOperand, i);
+				}
 			} catch (SARLException e) {
 				CIVLExecutionException err = new CIVLExecutionException(
 						ErrorKind.OUT_OF_BOUNDS,
@@ -526,20 +561,28 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 						process,
 						"One of the operands "
 								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, data)
+										source, state, firOperand)
 								+ " of CIVL Operation out of bound when reading at index: "
 								+ symbolicAnalyzer.symbolicExpressionToString(
 										source, state, i),
 						symbolicAnalyzer.stateToString(state), source);
-
 				errorLogger.reportError(err);
 				return state;
 			}
 			try {
-				secOperandElement = universe.arrayRead(secOperand, i);
-				opRet = this.applyCIVLOperator(state, process, dataElement,
-						secOperandElement, CIVL_Op, source);
-				secOperand = universe.arrayWrite(secOperand, i, opRet);
+				opRet = this.applyCIVLOperator(state, process, operand0,
+						operand1, CIVL_Op, source);
+				if (countStep > 1) {
+					for (int k = 0; k < countStep; k++) {
+						secOperand = universe.arrayWrite(secOperand, universe
+								.add(universe.multiply(i,
+										universe.integer(countStep)),
+										universe.integer(k)), universe
+								.arrayRead(opRet, universe.integer(k)));
+					}
+				} else
+					secOperand = universe.arrayWrite(secOperand, i, opRet);
+
 			} catch (SARLException e) {
 				CIVLExecutionException err = new CIVLExecutionException(
 						ErrorKind.OUT_OF_BOUNDS,
@@ -560,7 +603,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			claim = universe.lessThan(i, count);
 		}
 		eval_and_pointer = libevaluator.setDataFrom(state, process, pointer,
-				count, secOperand, false, source);
+				universe.multiply(count, universe.integer(countStep)),
+				secOperand, false, source);
 		eval = eval_and_pointer.left;
 		assignPtr = eval_and_pointer.right;
 		state = eval.state;
@@ -569,5 +613,40 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		state = primaryExecutor.assign(source, state, process, assignPtr,
 				eval.value);
 		return state;
+	}
+
+	/**
+	 * Helper for
+	 * {@link #executeBundleUnpackApply(State, int, String, LHSExpression, Expression[], SymbolicExpression[], CIVLSource)}
+	 * 
+	 * @param data
+	 *            one of the 2 operands
+	 * @param secOperand
+	 *            one of the 2 operands
+	 * @param countStep
+	 *            Number of elements the operandType specified(e.g. MPI_2INT
+	 *            makes countStep 2, MPI_INT makes countStep 1)
+	 * @param index
+	 *            the index of the first element of one operand in data or
+	 *            secOperand (data and secOperand are guaranteed to be array)
+	 * @return a pair of elements of 2 operands
+	 */
+	private SymbolicExpression[] getOperands(SymbolicExpression data,
+			SymbolicExpression secOperand, int countStep,
+			NumericExpression idx, SymbolicType operandType) {
+		SymbolicExpression[] operands = new SymbolicExpression[2];
+		List<SymbolicExpression> dataComp = new LinkedList<>();
+		List<SymbolicExpression> secOperandComp = new LinkedList<>();
+		NumericExpression index;
+
+		for (int i = 0; i < countStep; i++) {
+			index = universe.multiply(idx, universe.integer(countStep));
+			index = universe.add(index, universe.integer(i));
+			dataComp.add(universe.arrayRead(data, index));
+			secOperandComp.add(universe.arrayRead(secOperand, index));
+		}
+		operands[0] = universe.array(operandType, dataComp);
+		operands[1] = universe.array(operandType, secOperandComp);
+		return operands;
 	}
 }

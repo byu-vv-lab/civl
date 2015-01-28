@@ -32,6 +32,8 @@ int sizeofDatatype(MPI_Datatype datatype) {
   switch (datatype) {
   case MPI_INT:
     return sizeof(int);
+  case MPI_2INT:
+    return (sizeof(int)*2);
   case MPI_FLOAT:
     return sizeof(float);
   case MPI_DOUBLE:
