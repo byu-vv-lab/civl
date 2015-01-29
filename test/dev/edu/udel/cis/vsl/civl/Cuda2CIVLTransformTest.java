@@ -180,13 +180,11 @@ public class Cuda2CIVLTransformTest {
 	
 	@Test
 	public void dot() {
-		ui.run("verify", "-inputLENGTH=8", "-inputTHREADS_PER_BLOCK=2", filename("dot.cu"));
-		assertTrue(ui.run("verify", "-intputLENGTH=8", "-inputTHREADS_PER_BLOCK=2", filename("dot.cu")));
+		assertTrue(ui.run("verify", "-inputB=8", "-inputTHREADS_B=2", filename("dot.cu")));
 	}
 	
 	@Test
 	public void matMult() {
-		assertTrue(ui.run("verify", "-intputLENGTH=8", "-inputTHREADS_PER_BLOCK=2", filename("dot.cu")));
 	}
 	
 	@Test
