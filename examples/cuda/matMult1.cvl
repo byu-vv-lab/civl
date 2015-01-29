@@ -23,10 +23,10 @@
 *************************************************************************/
 // online source: https://www.rcac.purdue.edu/userinfo/resources/carter/compile/MM.cu
 
-#include "civlc.h" 
-#include "civlc-cuda.cvl" 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <cuda.h>
 
 $input int N;               /* size of square matrix                   */
 $input int TILE_WIDTH;

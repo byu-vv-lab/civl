@@ -180,6 +180,17 @@ public class Cuda2CIVLTransformTest {
 	
 	@Test
 	public void dot() {
-		assertTrue(ui.run("verify", filename("dot.cu")));
+		ui.run("verify", "-inputLENGTH=8", "-inputTHREADS_PER_BLOCK=2", filename("dot.cu"));
+		assertTrue(ui.run("verify", "-intputLENGTH=8", "-inputTHREADS_PER_BLOCK=2", filename("dot.cu")));
+	}
+	
+	@Test
+	public void matMult() {
+		assertTrue(ui.run("verify", "-intputLENGTH=8", "-inputTHREADS_PER_BLOCK=2", filename("dot.cu")));
+	}
+	
+	@Test
+	public void cudaOmp() {
+		assertTrue(ui.run("verify", filename("cuda-omp.cu")));
 	}
 }

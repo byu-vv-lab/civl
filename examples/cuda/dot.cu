@@ -23,10 +23,32 @@
 
 #define imin(a,b) (a<b?a:b)
 
-const int N = 8;
-const int threadsPerBlock = 4;
-const int blocksPerGrid =
-            imin(32, (N+threadsPerBlock-1) / threadsPerBlock );
+_Bool isPowerOfTwo(int x) {
+	if (x == 1) {
+		return $true;
+	} else {
+		return x % 2 == 0 && isPowerOfTwo(x / 2);
+	}
+}
+
+
+// the length of the vectors to dot product
+$input int LENGTH;
+// upper bound on LENGTH
+$input int B;
+//$assume(0 <= LENGTH && LENGTH <= B);
+$assume(0 < LENGTH && LENGTH <= B);
+$input int THREADS_PER_BLOCK; // thread number per block: must be a power of 2, due to the while loop at the end of gpuThread();
+$input int THREADS_B; 
+$assume(1 <= THREADS_PER_BLOCK && THREADS_PER_BLOCK <= THREADS_B);
+
+
+
+const int N = LENGTH;
+const int threadsPerBlock = THREADS_PER_BLOCK;
+//const int blocksPerGrid =
+//            imin(32, (N+threadsPerBlock-1) / threadsPerBlock );
+const int blocksPerGrid = (N+threadsPerBlock-1) / threadsPerBlock;
 
 __global__ void dot( float *a, float *b, float *c ) {
     __shared__ float cache[threadsPerBlock];
@@ -58,6 +80,10 @@ __global__ void dot( float *a, float *b, float *c ) {
 
 
 int main( void ) {
+    elaborate(N);
+    //_Bool validThreadsPerBlock = isPowerOfTwo(THREADS_PER_BLOCK);
+    //$assume(validThreadsPerBlock);
+    //$assume(isPowerOfTwo(THREADS_PER_BLOCK));
     float   *a, *b, c, *partial_c;
     float   *dev_a, *dev_b, *dev_partial_c;
 
@@ -103,6 +129,7 @@ int main( void ) {
     #define sum_squares(x)  (x*(x+1)*(2*x+1)/6)
     printf( "Does GPU value %.6g = %.6g?\n", c,
              2 * sum_squares( (float)(N - 1) ) );
+    $assert(c == 2 * sum_squares( (float)(N - 1) ) );
 
     // free memory on the gpu side
     HANDLE_ERROR( cudaFree( dev_a ) );
