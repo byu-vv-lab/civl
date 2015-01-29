@@ -32,6 +32,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
+import edu.udel.cis.vsl.abc.ast.type.IF.QualifiedObjectType;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
@@ -185,11 +187,11 @@ public class Cuda2CIVLWorker extends BaseWorker {
 				cudaMallocCall.getSource(), Operator.ASSIGN,
 				Arrays.asList(assignLhs, mallocCast));
 		// create comma node
-//		ExpressionNode finalExpression = nodeFactory.newOperatorNode(source,
-//				Operator.COMMA, Arrays.asList(assignment, nodeFactory
-//						.newEnumerationConstantNode(nodeFactory
-//								.newIdentifierNode(source, "cudaSuccess"))));
-//		finalExpression.prettyPrint(System.out);
+		// ExpressionNode finalExpression = nodeFactory.newOperatorNode(source,
+		// Operator.COMMA, Arrays.asList(assignment, nodeFactory
+		// .newEnumerationConstantNode(nodeFactory
+		// .newIdentifierNode(source, "cudaSuccess"))));
+		// finalExpression.prettyPrint(System.out);
 		return assignment;
 	}
 
@@ -524,20 +526,27 @@ public class Cuda2CIVLWorker extends BaseWorker {
 		List<VariableDeclarationNode> tempVarDecls = new ArrayList<>();
 		List<ExpressionNode> newArgumentList = new ArrayList<>();
 		for (int i = 0; i < 2; i++) {
-			String tmpVar = newTemporaryVariableName();
-			ExpressionNode intConvertedToDim3 = nodeFactory
-					.newFunctionCallNode(source, this
-							.identifierExpression("_toDim3"), Arrays
-							.asList(kernelCall.getContextArgument(i).copy()),
-							null);
-			tempVarDecls
-					.add(nodeFactory.newVariableDeclarationNode(
-							source,
-							this.identifier(tmpVar),
-							nodeFactory.newTypedefNameNode(
-									this.identifier("dim3"), null),
-							intConvertedToDim3));
-			newArgumentList.add(this.identifierExpression(tmpVar));
+			ExpressionNode arg = kernelCall.getContextArgument(i);
+			Type argType = arg.getConvertedType();
+			if (argType.kind() == TypeKind.QUALIFIED) {
+				argType = ((QualifiedObjectType) argType).getBaseType();
+			}
+			if (argType.kind() == TypeKind.BASIC
+					&& ((StandardBasicType) argType).getBasicTypeKind() == BasicTypeKind.INT) {
+
+				String tmpVar = newTemporaryVariableName();
+				ExpressionNode intConvertedToDim3 = nodeFactory
+						.newFunctionCallNode(source,
+								this.identifierExpression("_toDim3"),
+								Arrays.asList(arg.copy()), null);
+				tempVarDecls.add(nodeFactory.newVariableDeclarationNode(source,
+						this.identifier(tmpVar), nodeFactory
+								.newTypedefNameNode(this.identifier("dim3"),
+										null), intConvertedToDim3));
+				newArgumentList.add(this.identifierExpression(tmpVar));
+			} else {
+				newArgumentList.add(arg.copy());
+			}
 		}
 		if (kernelCall.getNumberOfContextArguments() < 3) {
 			try {
