@@ -1,5 +1,5 @@
 #include<civlc.cvh>
-#include<civlc-omp.cvh>
+#include<civl-omp.cvh>
 #include<stdio.h>
 
 #define numSections 6

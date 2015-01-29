@@ -1,6 +1,6 @@
 // civlc-omp.cvl: implementations of functions and types in civlc-omp.cvh
 
-#include<civlc-omp.cvh>
+#include<civl-omp.cvh>
 #include<civlc.cvh>
 #include<pointer.cvh>
 #include<seq.cvh>

@@ -1,6 +1,6 @@
 #include <comm.cvh>
 #include <stdio.h>
-#include <civlmpi.cvh>
+#include <civl-mpi.cvh>
 #include <mpi.h>
 
 $input int NPROCS = 3;

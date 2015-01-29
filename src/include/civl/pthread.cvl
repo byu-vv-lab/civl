@@ -3,7 +3,7 @@
 #define __CIVL_PTHREAD__
 
 #include <stdbool.h>
-#include "civlpthread.cvh"
+#include "civl-pthread.cvh"
 #include <concurrency.cvh>
 #include <pthread.h>
 #include <seq.cvh>

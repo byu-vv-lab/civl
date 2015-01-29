@@ -1,5 +1,5 @@
 #include <mpi.h>
-#include <civlmpi.cvh>
+#include <civl-mpi.cvh>
 #include <assert.h>
 
 #ifdef _CIVL

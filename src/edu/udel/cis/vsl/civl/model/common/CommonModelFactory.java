@@ -1800,7 +1800,9 @@ public class CommonModelFactory implements ModelFactory {
 	public SystemFunction systemFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, String libraryName) {
-		if (libraryName.endsWith("-common")) {
+		if (libraryName.startsWith("civl-")) {
+			libraryName = libraryName.substring(5, libraryName.length());
+		} else if (libraryName.endsWith("-common")) {
 			libraryName = libraryName.substring(0, libraryName.length() - 7);
 		} else if (libraryName.startsWith("civlc-")) {
 			libraryName = "civlc";

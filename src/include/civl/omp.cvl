@@ -1,6 +1,6 @@
 
 #include <omp.h>
-#include <civlc-omp.cvh>
+#include <civl-omp.cvh>
 #include <stdbool.h>
 
 // implementations of functions in omp.h go here...

@@ -529,7 +529,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		Triple<List<ExternalDefinitionNode>, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> result;
 		String criticalDeclaration = "criticalDeclarations";
 		AST civlcAST = this.parseSystemLibrary("civlc.cvh");
-		AST civlcOmpAST = this.parseSystemLibrary("civlc-omp.cvh");
+		AST civlcOmpAST = this.parseSystemLibrary("civl-omp.cvh");
 		
 		this.source = root.getSource();
 		assert this.astFactory == ast.getASTFactory();

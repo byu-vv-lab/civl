@@ -41,6 +41,25 @@ import edu.udel.cis.vsl.civl.util.IF.Triple;
  * equivalent CIVL-C program. See {@linkplain #transform(AST)}. TODO: copy
  * output files only for the mpi process with rank 0.
  * 
+ * 
+ * The MPI transformer tries to move the main function and file scope stuffs of
+ * the original MPI program into the scope of the function MPI_Process(). Most
+ * unstateful functions remain in the file scope, which are usually functions of
+ * included headers. The Pthread library implementation contains a global
+ * variable for the thread pool, which however, if in a MPI+Pthread program,
+ * should go to the scope of the MPI process, instead of the file scope. And
+ * ditto for pthread_create, pthread_exit, pthread_is_terminated function,
+ * because they access the thread pool.
+ * 
+ * CIVL currently uses this order for transformers: general, IO, OpenMP,
+ * Pthread, CUDA, MPI.
+ * 
+ * At this point, the order matters. Because if MPI transformer goes first,
+ * Pthread transformer is not be able to insert the thread pool variable in the
+ * right place. Since MPI is modifying the program structure more than other
+ * transformers (moving the original file scope stuffs to a function), it is
+ * easier to make it always the last transformer to apply.
+ * 
  * @author Manchun Zheng (zmanchun)
  * 
  */
@@ -407,13 +426,13 @@ public class MPI2CIVLWorker extends BaseWorker {
 						.identifierExpression("i")));
 		waitProc = nodeFactory.newFunctionCallNode(this.newSource(
 				"function call" + WAITALL, CParser.CALL), this
-				.identifierExpression(WAITALL), Arrays
-				.asList((ExpressionNode) this.identifierExpression(PROCS),
-						this.identifierExpression(NPROCS)), null);
-//		forLoop = nodeFactory.newForLoopNode(
-//				this.newSource("for loop", CParser.FOR), initializerNode,
-//				loopCondition, incrementer,
-//				nodeFactory.newExpressionStatementNode(waitProc), null);
+				.identifierExpression(WAITALL), Arrays.asList(
+				(ExpressionNode) this.identifierExpression(PROCS),
+				this.identifierExpression(NPROCS)), null);
+		// forLoop = nodeFactory.newForLoopNode(
+		// this.newSource("for loop", CParser.FOR), initializerNode,
+		// loopCondition, incrementer,
+		// nodeFactory.newExpressionStatementNode(waitProc), null);
 		items.add(nodeFactory.newExpressionStatementNode(waitProc));
 		// destroying GCOMM_WROLD;
 		items.add(gcommDestroy);
@@ -513,17 +532,19 @@ public class MPI2CIVLWorker extends BaseWorker {
 				} else
 					includedNodes.add(child);
 			} else if (sourceFile.endsWith(".cvh")
+					|| sourceFile.equals("civl-cuda.cvl")
+					|| sourceFile.equals("civl-pthread.cvl")
 					|| sourceFile.equals("comm.cvl")
-					|| sourceFile.equals("civlmpi.cvl")
+					|| sourceFile.equals("civl-mpi.cvl")
 					|| sourceFile.equals("mpi.cvl")
 					|| sourceFile.equals("civlc.cvl")
 					|| sourceFile.equals("concurrency.cvl")
 					|| sourceFile.equals("stdio.cvl")
 					|| sourceFile.equals("pthread.cvl")
 					|| sourceFile.equals("string.cvl")
-					|| sourceFile.equals("civlc-omp.cvl"))
+					|| sourceFile.equals("civl-omp.cvl"))
 				includedNodes.add(child);
-			else if (sourceFile.equals("pthread-c.cvl")) {
+			else if (sourceFile.equals("pthread.cvl")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
 					String varName = variableDeclaration.getName();

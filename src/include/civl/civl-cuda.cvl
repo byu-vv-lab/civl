@@ -5,7 +5,7 @@
 #include <string.h>
 //#include <stdio.h>
 #include <concurrency.cvh>
-#include <cuda-helper.cvh>
+#include <civl-cuda.cvh>
 
 /* Computes the one dimensional index of a grid cell at a given location
  * in a three dimensional grid of a given size

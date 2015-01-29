@@ -7,7 +7,7 @@
 #include <comm.cvh>
 #include <bundle.cvh>
 #include <mpi.h>
-#include <civlmpi.cvh>
+#include <civl-mpi.cvh>
 
 /**************************** Duplicated Part *************************************/
 /* Duplicated definition with the same struct in mpi.h.

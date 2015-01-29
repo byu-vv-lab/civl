@@ -666,11 +666,11 @@ public class ModelTranslator {
 					// current directory or elsewhere in the path.
 					// It also ensures any file included will also
 					// be found in either /include/civl or /include/abc.
-					
+
 					// File systemFile = new
 					// File(CIVLConstants.CIVL_INCLUDE_PATH,
 					// systemFilename);
-					
+
 					CTokenSource tokens = preprocessor.outputTokenSource(
 							civlSysPathArray, emptyFileArray, macroMaps,
 							systemFilename);
@@ -721,16 +721,16 @@ public class ModelTranslator {
 		switch (name) {
 		case "civlc.cvh":
 			return "civlc.cvl";
-		case "civlmpi.cvh":
-			return "civlmpi.cvl";
-		case "civlpthread.cvh":
-			return "civlpthread.cvl";
+		case "civl-mpi.cvh":
+			return "civl-mpi.cvl";
+		case "civl-pthread.cvh":
+			return "civl-pthread.cvl";
 		case "comm.cvh":
 			return "comm.cvl";
 		case "concurrency.cvh":
 			return "concurrency.cvl";
-		case "civlc-omp.cvh":
-			return "civlc-omp.cvl";
+		case "civl-omp.cvh":
+			return "civl-omp.cvl";
 		case "mpi.h":
 			return "mpi.cvl";
 		case "math.h":
@@ -745,10 +745,12 @@ public class ModelTranslator {
 			return "string.cvl";
 		case "svcomp.h":
 			return "svcomp.cvl";
+		case "stdlib.h":
+			return "stdlib.cvl";
 		case "cuda.h":
 			return "cuda.cvl";
-		case "cuda-helper.cvh":
-			return "cuda-helper.cvl";
+		case "civl-cuda.cvh":
+			return "civl-cuda.cvl";
 		default:
 			return null;
 		}

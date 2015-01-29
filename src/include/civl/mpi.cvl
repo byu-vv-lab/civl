@@ -5,7 +5,7 @@
 #include <concurrency.cvh>
 #include <bundle.cvh>
 #include <mpi.h>
-#include <civlmpi.cvh>
+#include <civl-mpi.cvh>
 #include <string.h>
 
 /* Completed definition for mpi-common.h */

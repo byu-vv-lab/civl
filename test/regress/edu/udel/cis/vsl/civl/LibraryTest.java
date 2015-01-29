@@ -153,11 +153,16 @@ public class LibraryTest {
 	}
 
 	@Test
+	public void random() throws ABCException {
+		assertFalse(ui.run("verify", filename("stdlib/random.cvl")));
+	}
+
+	@Test
 	public void domainDecomp() throws ABCException {
 		assertTrue(ui.run("verify", "-inputn=4", "-enablePrintf=false",
 				filename("civlc/domainDecomposition.cvl")));
 	}
-	
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

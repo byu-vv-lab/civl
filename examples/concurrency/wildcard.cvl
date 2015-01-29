@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <mpi.h>
-#include <civlmpi.cvh>
+#include <civl-mpi.cvh>
 #include <assert.h>
 
 $input int NPROCS = 5;
