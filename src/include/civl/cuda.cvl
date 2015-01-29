@@ -166,3 +166,10 @@ cudaError_t cudaFree(void *devPtr) {
 cudaError_t cudaSetDevice(int device_id) {
   return cudaSuccess;
 }
+
+/* Returns the last error that has been produced by any of the runtime calls
+ * in the same host thread and resets it to cudaSuccess
+ */
+cudaError_t cudaGetLastError() {
+  return cudaSuccess;
+} 
