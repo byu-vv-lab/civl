@@ -25,6 +25,8 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -180,7 +182,10 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		int place_num = ((IntegerNumber) universe
 				.extractNumber((NumericExpression) place)).intValue();
-		int totalPlaces;
+		NumericExpression totalPlaces;
+		BooleanExpression claim;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		ResultType resultType;
 
 		if (place_num < 0) {
 			throw new CIVLExecutionException(ErrorKind.OTHER,
@@ -191,10 +196,12 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 				false);
 		state = eval.state;
 		gbarrierObj = eval.value;
-		totalPlaces = ((IntegerNumber) universe
-				.extractNumber((NumericExpression) universe.tupleRead(
-						gbarrierObj, zeroObject))).intValue();
-		if (place_num >= totalPlaces) {
+		totalPlaces = (NumericExpression) universe.tupleRead(gbarrierObj,
+				zeroObject);
+		claim = universe.lessThanEquals(universe.integer(place_num),
+				totalPlaces);
+		resultType = reasoner.valid(claim).getResultType();
+		if (!resultType.equals(ResultType.YES)) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.OTHER,
 					Certainty.CONCRETE,
@@ -205,6 +212,18 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 					source);
 
 			this.errorLogger.reportError(err);
+			this.errorLogger
+					.logError(
+							source,
+							state,
+							process,
+							symbolicAnalyzer.stateToString(state),
+							claim,
+							resultType,
+							ErrorKind.OTHER,
+							"Place "
+									+ place_num
+									+ " used in $barrier_create() exceeds the size of the $gbarrier.");
 		}
 		procMapArray = universe.tupleRead(gbarrierObj, oneObject);
 		if (!universe.arrayRead(procMapArray, (NumericExpression) place)
