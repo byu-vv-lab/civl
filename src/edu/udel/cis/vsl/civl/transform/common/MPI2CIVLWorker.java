@@ -83,7 +83,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 
 	private static String PTHREAD_EXIT = "_pthread_exit";
 
-	private static String PTHREAD_IS_TERMINATED = "_isTerminated";
+	// private static String PTHREAD_IS_TERMINATED = "_isTerminated";
 
 	/**
 	 * The name of the identifier of the CMPI_Gcomm variable in the final CIVL
@@ -537,6 +537,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 					|| sourceFile.equals("comm.cvl")
 					|| sourceFile.equals("civl-mpi.cvl")
 					|| sourceFile.equals("mpi.cvl")
+					|| sourceFile.equals("omp.cvl")
 					|| sourceFile.equals("civlc.cvl")
 					|| sourceFile.equals("concurrency.cvl")
 					|| sourceFile.equals("stdio.cvl")
@@ -560,7 +561,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 					String name = functionDef.getName();
 
 					if (name.equals(PTHREAD_ADD_THREAD)
-							|| name.equals(PTHREAD_IS_TERMINATED)
+							// || name.equals(PTHREAD_IS_TERMINATED)
 							|| name.equals(PTHREAD_CREATE)
 							|| name.equals(PTHREAD_EXIT))
 						items.add(functionDef);
