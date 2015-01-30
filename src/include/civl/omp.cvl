@@ -6,7 +6,6 @@
 // implementations of functions in omp.h go here...
 
 struct omp_lock_t{
-  $proc owner;
   _Bool lock;
 };
 
@@ -17,7 +16,6 @@ int OMP_time_count = 0;
 /************************** OMP LIB Implementations *******************************/
 
 void omp_init_lock(omp_lock_t *slock){
-  slock->owner = $proc_null;
   slock->lock = true;
 }
 
@@ -28,16 +26,14 @@ void omp_destroy_lock(omp_lock_t *slock){
 
 void omp_set_lock(omp_lock_t *slock){
   $atomic{
-    $when(!slock->lock && slock->owner == $proc_null){
+    $when(!slock->lock){
       slock->lock = true;
-      slock->owner == $self;
     }
   }
 }
 
 void omp_unset_lock(omp_lock_t *slock){
   $atomic{
-    slock->owner = $proc_null;
     slock->lock = false;
   }
 }

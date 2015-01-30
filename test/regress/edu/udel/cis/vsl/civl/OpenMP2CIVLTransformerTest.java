@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -30,10 +31,23 @@ public class OpenMP2CIVLTransformerTest {
 		assertTrue(ui.run("verify ", "-ompNoSimplify",
 				"-inputTHREAD_MAX=2", filename("dotProduct1.c")));
 	}
+	
+	@Test
+	public void dotProduct1Simplify() {
+		assertTrue(ui.run("verify ",
+				"-inputTHREAD_MAX=2", filename("dotProduct1.c")));
+	}
 
 	@Test
 	public void dotProductCritical() {
 		assertTrue(ui.run("verify ", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2", filename("dotProduct_critical.c")));
+	}
+	
+	@Ignore
+	@Test
+	public void dotProductCriticalSimplify() {
+		assertTrue(ui.run("verify ",
 				"-inputTHREAD_MAX=2", filename("dotProduct_critical.c")));
 	}
 
@@ -42,16 +56,34 @@ public class OpenMP2CIVLTransformerTest {
 		assertTrue(ui.run("verify", "-ompNoSimplify",
 				"-inputTHREAD_MAX=2", filename("matProduct1.c")));
 	}
+	
+	@Test
+	public void matProduct1Simplify() {
+		assertTrue(ui.run("verify",
+				"-inputTHREAD_MAX=2", filename("matProduct1.c")));
+	}
 
 	@Test
 	public void parallelfor() {
 		assertTrue(ui.run("verify", "-ompNoSimplify",
 				"-inputTHREAD_MAX=2", filename("parallelfor.c")));
 	}
+	
+	@Test
+	public void parallelforSimplify() {
+		assertTrue(ui.run("verify",
+				"-inputTHREAD_MAX=2", filename("parallelfor.c")));
+	}
 
 	@Test
 	public void raceCond1() {
 		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2", filename("raceCond1.c")));
+	}
+	
+	@Test
+	public void raceCond1Simplify() {
+		assertTrue(ui.run("verify",
 				"-inputTHREAD_MAX=2", filename("raceCond1.c")));
 	}
 	

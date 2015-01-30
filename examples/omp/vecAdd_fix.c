@@ -16,7 +16,7 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define N 1000000
+#define N 100
 #define PI 3.1415926535
 #define DELTA .01415926535
 
