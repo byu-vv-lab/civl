@@ -128,8 +128,6 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private ImmutableMemoryUnitFactory memUnitFactory;
 
-	public int nsatCalls = 0;
-
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -226,12 +224,11 @@ public class ImmutableStateFactory implements StateFactory {
 			// int nameId = 0;
 			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
 			ReferenceExpression[] fieldRefs = new ReferenceExpression[numHeapFields];
-			
-			for(int mallocId=0; mallocId < numHeapFields; mallocId++){
-			fieldRefs[mallocId] = universe
-						.tupleComponentReference(
-								universe.identityReference(),
-								universe.intObject(mallocId));
+
+			for (int mallocId = 0; mallocId < numHeapFields; mallocId++) {
+				fieldRefs[mallocId] = universe.tupleComponentReference(
+						universe.identityReference(),
+						universe.intObject(mallocId));
 			}
 			for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
 				DynamicScope dyscope = theState.getDyscope(dyscopeId);
@@ -250,10 +247,10 @@ public class ImmutableStateFactory implements StateFactory {
 								universe.intObject(mallocId));
 						int length = this.symbolicUtil.extractInt(null,
 								(NumericExpression) universe.length(heapField));
-//						ReferenceExpression fieldRef = universe
-//								.tupleComponentReference(
-//										universe.identityReference(),
-//										universe.intObject(mallocId));
+						// ReferenceExpression fieldRef = universe
+						// .tupleComponentReference(
+						// universe.identityReference(),
+						// universe.intObject(mallocId));
 						Map<Integer, Integer> oldID2NewID = new HashMap<>();
 						int numRemoved = 0;
 						SymbolicExpression newHeapField = heapField;
@@ -822,7 +819,6 @@ public class ImmutableStateFactory implements StateFactory {
 			}
 			newPathCondition = reasoner.getReducedContext();
 			if (newPathCondition != pathCondition) {
-				nsatCalls++;
 				if (nsat(newPathCondition))
 					newPathCondition = universe.falseExpression();
 			} else
@@ -1540,8 +1536,8 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression heapObjPtr = this.symbolicUtil
 					.heapMemUnit(value);
 
-//			if (!reachable.contains(heapObjPtr))
-				reachable.add(heapObjPtr);
+			// if (!reachable.contains(heapObjPtr))
+			reachable.add(heapObjPtr);
 		} else if (this.symbolicUtil.isValidPointer(value)) {
 			// other pointers
 			int dyscopeId = this.symbolicUtil.getDyscopeId(null, value);
