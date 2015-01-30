@@ -30,6 +30,12 @@ public class ExperimentalTest {
 		assertTrue(ui.run("run", filename("arrayWrite.cvl")));
 	}
 
+	@Test
+	public void diff1dCompare() {
+		assertTrue(ui.run("compare", "-spec", filename("diff1d_spec.c"),
+				"-impl", filename("diff1d_par.c")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
