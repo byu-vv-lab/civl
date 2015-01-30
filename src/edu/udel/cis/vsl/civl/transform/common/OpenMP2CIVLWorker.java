@@ -630,6 +630,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 		newAst = this.combineASTs(civlcOmpAST, newAst);
 		newAst = this.combineASTs(civlcAST, newAst);
+		newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
@@ -2383,9 +2384,21 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				ASTNode parent = node.parent();
 				while(parent != null){
 					if(parent.equals(triple.first)){
-						//System.out.println("FOUND!!!");
 						String name = node.name();
-						node.setName(triple.third);
+						
+						if (nodesDeep == 0) {
+							parentOfID = node.parent();
+						} else {
+							parentOfID = node.parent();
+							while (nodesDeep > 0) {
+								parentOfID = parentOfID.parent();
+								nodesDeep--;
+							}
+						}
+						
+						//node.setName(triple.third);
+						int index = parentOfID.childIndex();
+						ASTNode directParent = parentOfID.parent();
 						alreadyUsed = true;
 						
 						statementParent = node.parent();
@@ -2400,19 +2413,12 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 							statementParent = statementParent.parent();
 						}
 						
-						if (nodesDeep == 0) {
-							parentOfID = node.parent();
-						} else {
-							parentOfID = node.parent();
-							while (nodesDeep > 0) {
-								parentOfID = parentOfID.parent();
-								nodesDeep--;
-							}
-						}
-						
 						writeCall = write(this.identifierExpression(newSource(place, CParser.IDENTIFIER),triple.second.name()),
 								name, (ExpressionNode)parentOfID.copy());
 						
+						
+						directParent.setChild(index, this.identifierExpression(source, triple.third));
+
 						break;
 					}
 					parent = parent.parent();
