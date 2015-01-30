@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableStateFactory;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
@@ -261,6 +262,9 @@ public class Verifier extends Player {
 		civlConfig.out().println(executor.getNumSteps());
 		civlConfig.out().print("   transitions         : ");
 		civlConfig.out().println(searcher.numTransitions());
+		civlConfig.out().println(
+				"nsat calls: "
+						+ ((ImmutableStateFactory) stateFactory).nsatCalls);
 	}
 
 	public boolean run() throws FileNotFoundException {

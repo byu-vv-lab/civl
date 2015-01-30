@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Stack;
 
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
@@ -347,16 +348,36 @@ public class ModelBuilderWorker {
 	}
 
 	private void translateParProcFunctions() {
-		for (Entry<CIVLFunction, StatementNode> funcPair : this.parProcFunctions
-				.entrySet()) {
-			CIVLFunction function = funcPair.getKey();
-			StatementNode bodyNode = funcPair.getValue();
+		Set<CIVLFunction> checkedFunctions = new HashSet<>();
+		Stack<CIVLFunction> working = new Stack<>();
+
+		for (CIVLFunction func : this.parProcFunctions.keySet()) {
+			working.push(func);
+		}
+		while (!working.isEmpty()) {
+			CIVLFunction function = working.pop();
+			StatementNode bodyNode = parProcFunctions.get(function);
 			FunctionTranslator translator = new FunctionTranslator(this,
 					factory, bodyNode, function);
 
+			checkedFunctions.add(function);
 			translator.translateFunction();
-
+			for (CIVLFunction func : this.parProcFunctions.keySet()) {
+				if (!checkedFunctions.contains(func) && !working.contains(func))
+					working.push(func);
+			}
 		}
+		// for (Entry<CIVLFunction, StatementNode> funcPair :
+		// this.parProcFunctions
+		// .entrySet()) {
+		// CIVLFunction function = funcPair.getKey();
+		// StatementNode bodyNode = funcPair.getValue();
+		// FunctionTranslator translator = new FunctionTranslator(this,
+		// factory, bodyNode, function);
+		//
+		// translator.translateFunction();
+		//
+		// }
 	}
 
 	/* *********************************************************************

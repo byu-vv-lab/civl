@@ -128,6 +128,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private ImmutableMemoryUnitFactory memUnitFactory;
 
+	public int nsatCalls = 0;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -223,7 +225,14 @@ public class ImmutableStateFactory implements StateFactory {
 			// oldToNewHeapObjectNames = new HashMap<>();
 			// int nameId = 0;
 			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
-
+			ReferenceExpression[] fieldRefs = new ReferenceExpression[numHeapFields];
+			
+			for(int mallocId=0; mallocId < numHeapFields; mallocId++){
+			fieldRefs[mallocId] = universe
+						.tupleComponentReference(
+								universe.identityReference(),
+								universe.intObject(mallocId));
+			}
 			for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
 				DynamicScope dyscope = theState.getDyscope(dyscopeId);
 				SymbolicExpression heap = dyscope.getValue(0);
@@ -241,10 +250,10 @@ public class ImmutableStateFactory implements StateFactory {
 								universe.intObject(mallocId));
 						int length = this.symbolicUtil.extractInt(null,
 								(NumericExpression) universe.length(heapField));
-						ReferenceExpression fieldRef = universe
-								.tupleComponentReference(
-										universe.identityReference(),
-										universe.intObject(mallocId));
+//						ReferenceExpression fieldRef = universe
+//								.tupleComponentReference(
+//										universe.identityReference(),
+//										universe.intObject(mallocId));
 						Map<Integer, Integer> oldID2NewID = new HashMap<>();
 						int numRemoved = 0;
 						SymbolicExpression newHeapField = heapField;
@@ -252,7 +261,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 						for (int objectId = 0; objectId < length; objectId++) {
 							ReferenceExpression objectRef = universe
-									.arrayElementReference(fieldRef,
+									.arrayElementReference(fieldRefs[mallocId],
 											universe.integer(objectId));
 							SymbolicExpression objectPtr = this.symbolicUtil
 									.setSymRef(heapPointer, objectRef);
@@ -266,7 +275,7 @@ public class ImmutableStateFactory implements StateFactory {
 									throw new CIVLStateException(
 											ErrorKind.MEMORY_LEAK,
 											Certainty.CONCRETE,
-											"An unreachable object is dected in the heap of dyscope "
+											"An unreachable object is detectd in the heap of dyscope "
 													+ dyscope.name() + "(id="
 													+ dyscopeId + ")"
 													+ ".\n  malloc ID: "
@@ -276,7 +285,7 @@ public class ImmutableStateFactory implements StateFactory {
 											dyscope.lexicalScope().getSource());
 								}
 								// unreachable heap object
-								// updates refeferences
+								// updates references
 								for (int nextId = objectId + 1; nextId < length; nextId++) {
 									if (oldID2NewID.containsKey(nextId))
 										oldID2NewID.put(nextId,
@@ -302,7 +311,7 @@ public class ImmutableStateFactory implements StateFactory {
 						}
 						if (oldID2NewID.size() > 0)
 							addOldToNewHeapMemUnits(oldID2NewID, heapPointer,
-									fieldRef, oldToNewHeapMemUnits);
+									fieldRefs[mallocId], oldToNewHeapMemUnits);
 						if (hasNew)
 							newHeap = universe.tupleWrite(newHeap,
 									universe.intObject(mallocId), newHeapField);
@@ -813,6 +822,7 @@ public class ImmutableStateFactory implements StateFactory {
 			}
 			newPathCondition = reasoner.getReducedContext();
 			if (newPathCondition != pathCondition) {
+				nsatCalls++;
 				if (nsat(newPathCondition))
 					newPathCondition = universe.falseExpression();
 			} else
@@ -1530,7 +1540,7 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression heapObjPtr = this.symbolicUtil
 					.heapMemUnit(value);
 
-			if (!reachable.contains(heapObjPtr))
+//			if (!reachable.contains(heapObjPtr))
 				reachable.add(heapObjPtr);
 		} else if (this.symbolicUtil.isValidPointer(value)) {
 			// other pointers
@@ -1771,7 +1781,6 @@ public class ImmutableStateFactory implements StateFactory {
 		return nameId;
 	}
 
-	
 	// private Map<Integer, Map<SymbolicExpression, Boolean>>
 	// updateDyscopesForReachableMUs(
 	// Map<SymbolicExpression, SymbolicExpression> scopeSubMap,
