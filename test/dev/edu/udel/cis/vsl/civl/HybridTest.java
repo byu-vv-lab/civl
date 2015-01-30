@@ -13,14 +13,19 @@ import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 public class HybridTest {
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"), "mpi-pthread");
+	private static File rootDir = new File("examples");
 
 	private static UserInterface ui = new UserInterface();
 
+	private static final String mpiPthread = "mpi-pthread";
+	private static final String mpiOmp = "mpi-omp";
+
+	// private static final String cudaOmp = "cuda-omp";
+
 	/* *************************** Helper Methods *************************** */
 
-	private static String filename(String name) {
-		return new File(rootDir, name).getPath();
+	private static String filename(String parent, String name) {
+		return new File(new File(rootDir, parent), name).getPath();
 	}
 
 	/* **************************** Test Methods *************************** */
@@ -30,15 +35,16 @@ public class HybridTest {
 		// assertTrue(ui.run("verify",
 		// filename("mpi-pthread/mpithreads_both.c"),
 		// "-input__NPROCS=3", "-showInputs", "-enablePrintf=false"));
-		ui.run("show", "-showProgram", filename("mpithreads_both.c"));
+		ui.run("show", "-showProgram",
+				filename("mpi-pthread", "mpithreads_both.c"));
 		ui.run("verify", "-input_NPROCS=3", "-showInputs",
-				"-enablePrintf=true", filename("mpithreads_both.c"));
+				"-enablePrintf=true", filename(mpiPthread, "mpithreads_both.c"));
 	}
 
 	@Test
 	public void mpi_pthreads_pie_collective() throws ABCException {
 		assertTrue(ui.run("verify", "-input_NPROCS=2", "-enablePrintf=false",
-				filename("mpi-pthreads-pie-collective.c")));
+				filename(mpiPthread, "mpi-pthreads-pie-collective.c")));
 	}
 
 	@Test
@@ -46,7 +52,14 @@ public class HybridTest {
 		// ui.run("run", "-input_NPROCS=3", "-showTransitions=false",
 		// filename("helloWorld.c"));
 		// ui.run("show", "-showProgram", filename("helloWorld.c"));
-		ui.run("verify", "-input_NPROCS=2", filename("helloWorld.c"));
+		assertTrue(ui.run("verify", "-input_NPROCS=2",
+				filename(mpiPthread, "helloWorld.c")));
+	}
+
+	@Test
+	public void inform_blkstp() throws ABCException {
+		assertTrue(ui.run("verify -input_NPROCS=2 -inputTHREAD_MAX=2 ",
+				filename(mpiOmp, "mpi-omp-mat-infnorm-blkstp.c")));
 	}
 
 	@AfterClass
