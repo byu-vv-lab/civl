@@ -25,6 +25,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpReductionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode.OmpSyncNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode.OmpWorksharingNodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.DeclarationListNode;
@@ -157,7 +159,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			if (allIndependent) {
 				/*
 				 * Remove the nested omp constructs, e.g., workshares, calls to
-				 * omp_*
+				 * omp_*, ordered sync nodes, etc.
 				 */
 				children = node.children();
 				for (ASTNode child : children) {
@@ -192,12 +194,12 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	}
 
 	/*
-	 * This method assumes that all of the OMP workshares that are encountered
+	 * This method assumes that all of the OMP statements that are encountered
 	 * can be safely removed or transformed into non-OMP equivalents.
 	 */
 	private void removeOmpConstruct(ASTNode node) {
-		if (node instanceof OmpWorksharingNode) {
-			// Remove "statement" node from "omp workshare" node
+		if (node instanceof OmpStatementNode) {
+			// Remove "statement" node from "omp statement" node
 			StatementNode stmt = ((OmpStatementNode) node).statementNode();
 			int stmtIndex = getChildIndex(node, stmt);
 			assert stmtIndex != -1;
@@ -278,6 +280,8 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			 * dependences.
 			 */
 			loopPrivateIDs = new ArrayList<Entity>();
+			
+			// Add loop index variable as private
 
 			addEntities(loopPrivateIDs, ompFor.privateList());
 			addEntities(loopPrivateIDs, ompFor.copyinList());
@@ -295,6 +299,33 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			processFor(ompFor);
 
 			// Record of independent workshare is computed in processFor
+			
+		} else if (node instanceof OmpSyncNode) {
+			OmpSyncNode syncNode = (OmpSyncNode) node;
+			// System.out.println("OpenMP Simplifier : Found Syncnode "+node);
+
+			OmpSyncNodeKind kind = syncNode.ompSyncNodeKind();
+			switch (kind) {
+			case MASTER:
+				allIndependent &= true;
+				break;
+			case CRITICAL:
+				allIndependent &= true;
+				break;
+			case BARRIER:
+				allIndependent = false;;
+				break;
+			case ORDERED:
+				allIndependent = false;;
+				break;
+			case FLUSH:
+				allIndependent = false;;
+				break;
+			default:
+				allIndependent = false;
+				break;
+			}
+
 
 		} else if (node instanceof OmpWorksharingNode) {
 			OmpWorksharingNode wsNode = (OmpWorksharingNode) node;
@@ -303,7 +334,6 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			OmpWorksharingNodeKind kind = wsNode.ompWorkshareNodeKind();
 			switch (kind) {
 			case SECTIONS:
-				processSections(wsNode);
 				allIndependent = false;
 				break;
 			case SECTION:
@@ -330,15 +360,6 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				transformOmpWorkshare(child);
 			}
 		}
-	}
-
-	// need to refactor the analysis code to apply to individual section/for
-	// body
-
-	// need to collect up a sequence of sections/for bodies to be subjected to
-	// analysis. this should be done in the high-level pass above.
-
-	private void processSections(OmpWorksharingNode ompSections) {
 	}
 
 	/*
@@ -583,10 +604,17 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	}
 
 	/*
-	 * This is a visitor that processes assignment statements
+	 * This is a visitor that processes assignment statements.   
+	 * 
+	 * It detects when it descends into a critical section and ignores
+	 * writes to shared variables nested within.
 	 */
 	private void collectAssignRefExprs(ASTNode node) {
-		if (node instanceof OperatorNode
+		if (node instanceof OmpSyncNode && 
+				((OmpSyncNode)node).ompSyncNodeKind() == OmpSyncNode.OmpSyncNodeKind.CRITICAL) {
+			// Do not collect read/write references from critical sections
+			return;
+		} else if (node instanceof OperatorNode
 				&& ((OperatorNode) node).getOperator() == Operator.ASSIGN) {
 			/*
 			 * Need to handle all of the *EQ operators as well.
