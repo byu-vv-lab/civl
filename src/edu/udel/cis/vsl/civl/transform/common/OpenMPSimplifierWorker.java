@@ -83,6 +83,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 	public OpenMPSimplifierWorker(ASTFactory astFactory) {
 		super("OpenMPSimplifier", astFactory);
+		this.identifierPrefix = "$omp_sim$";
 	}
 
 	@Override
@@ -229,24 +230,25 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				} catch (SyntaxException e) {
 					e.printStackTrace();
 				}
-			} else if (ompFunctionName.equals("omp_get_num_threads") ||
-			           ompFunctionName.equals("omp_get_max_threads") ||
-			           ompFunctionName.equals("omp_get_num_procs") ||
-			           ompFunctionName.equals("omp_get_thread_limit")) {
+			} else if (ompFunctionName.equals("omp_get_num_threads")
+					|| ompFunctionName.equals("omp_get_max_threads")
+					|| ompFunctionName.equals("omp_get_num_procs")
+					|| ompFunctionName.equals("omp_get_thread_limit")) {
 				try {
 					replacement = nodeFactory.newIntegerConstantNode(
 							node.getSource(), "1");
 				} catch (SyntaxException e) {
 					e.printStackTrace();
 				}
-				
-			} else if (ompFunctionName.equals("omp_init_lock") || 
-					ompFunctionName.equals("omp_set_lock") || 
-					ompFunctionName.equals("omp_unset_lock") || 
-					ompFunctionName.equals("omp_set_num_threads")) {
+
+			} else if (ompFunctionName.equals("omp_init_lock")
+					|| ompFunctionName.equals("omp_set_lock")
+					|| ompFunctionName.equals("omp_unset_lock")
+					|| ompFunctionName.equals("omp_set_num_threads")) {
 				// delete this node
-				replacement = nodeFactory.newNullStatementNode(node.getSource());
-				
+				replacement = nodeFactory
+						.newNullStatementNode(node.getSource());
+
 			} else if (ompFunctionName.equals("omp_get_wtime")) {
 				// this will be transformed by the OMP transformer
 

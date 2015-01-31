@@ -48,6 +48,13 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
  */
 public abstract class BaseWorker {
 
+	protected String identifierPrefix;
+
+	/**
+	 * The number of new identifiers created by this transformer worker.
+	 */
+	protected int newIdentifierCounter = 0;
+
 	/**
 	 * The name of this transformer, e.g., "OMPtoCIVLTransformer". To be used in
 	 * output such as error messages.
@@ -145,6 +152,10 @@ public abstract class BaseWorker {
 	 *             process of transsformation
 	 */
 	protected abstract AST transform(AST ast) throws SyntaxException;
+
+	protected String newUniqueIdentifierPrefix() {
+		return identifierPrefix + this.newIdentifierCounter++;
+	}
 
 	/**
 	 * parses a certain CIVL library (which resides in the folder text/include)

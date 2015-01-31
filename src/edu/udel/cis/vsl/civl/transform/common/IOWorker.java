@@ -177,6 +177,7 @@ public class IOWorker extends BaseWorker {
 	 */
 	public IOWorker(ASTFactory astFactory) {
 		super("IOTransformer", astFactory);
+		this.identifierPrefix = "$io$";
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -370,18 +371,18 @@ public class IOWorker extends BaseWorker {
 			IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
 					.getFunction();
 			String functionName = functionExpression.getIdentifier().name();
-//			IdentifierNode functionNameIdentifer = functionExpression
-//					.getIdentifier();
+			// IdentifierNode functionNameIdentifer = functionExpression
+			// .getIdentifier();
 
 			if (functionName.equals(FFLUSH)) {
 				functionCall.parent().removeChild(functionCall.childIndex());
-//				SequenceNode<ExpressionNode> arguments = nodeFactory
-//						.newSequenceNode(functionCall.getArgument(0)
-//								.getSource(), "Actual Parameters",
-//								new ArrayList<ExpressionNode>(0));
-//
-//				functionNameIdentifer.setName(FFLUSH_NEW);
-//				functionCall.setArguments(arguments);
+				// SequenceNode<ExpressionNode> arguments = nodeFactory
+				// .newSequenceNode(functionCall.getArgument(0)
+				// .getSource(), "Actual Parameters",
+				// new ArrayList<ExpressionNode>(0));
+				//
+				// functionNameIdentifer.setName(FFLUSH_NEW);
+				// functionCall.setArguments(arguments);
 			}
 		}
 	}
@@ -688,8 +689,8 @@ public class IOWorker extends BaseWorker {
 		if (transformationNeeded) {
 			this.renameFunctionCalls(rootNode);
 			this.processFreeCall(rootNode);
-//		} else if (hasFflush) {
-//			this.renameFflushCalls(rootNode);
+			// } else if (hasFflush) {
+			// this.renameFflushCalls(rootNode);
 		} else {
 			// remove nodes from stdio-c.cvl
 			removeNodes(rootNode);

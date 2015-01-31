@@ -88,6 +88,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 */
 	public Pthread2CIVLWorker(ASTFactory astFactory) {
 		super("PthreadToCIVLTransformer", astFactory);
+		this.identifierPrefix = "$pthreads$";
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -331,15 +332,15 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		if (name.equals("main")) {
 			process_pthread_exit(function, true);
 			ExpressionNode ZERO = this.integerConstant(0);
-			if(!hasReturn(function)){
+			if (!hasReturn(function)) {
 				if (returnType.getType().kind() == TypeKind.VOID)
 					function.getBody().addSequenceChild(
-						nodeFactory.newReturnNode(this.newSource(
-								"return statement", CParser.RETURN), null));
+							nodeFactory.newReturnNode(this.newSource(
+									"return statement", CParser.RETURN), null));
 				else
 					function.getBody().addSequenceChild(
-						nodeFactory.newReturnNode(this.newSource(
-								"return statement", CParser.RETURN), ZERO));
+							nodeFactory.newReturnNode(this.newSource(
+									"return statement", CParser.RETURN), ZERO));
 			}
 			freePoolBeforeMainReturn(function);
 			return;
@@ -509,19 +510,18 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		}
 		return false;
 	}
-	
+
 	/*
 	 * 
 	 */
-	
-	private boolean hasReturn(ASTNode node){
-		if(node instanceof ReturnNode){
+
+	private boolean hasReturn(ASTNode node) {
+		if (node instanceof ReturnNode) {
 			return true;
-		}
-		else{
-			for(ASTNode child: node.children()){
-				if(child!=null){
-					if(hasReturn(child)){
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child != null) {
+					if (hasReturn(child)) {
 						return true;
 					}
 				}

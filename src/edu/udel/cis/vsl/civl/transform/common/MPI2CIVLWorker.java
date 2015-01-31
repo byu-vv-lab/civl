@@ -68,6 +68,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/* ************************** Private Static Fields ********************** */
 
 	// private static String EXIT = "exit";
+	private static String MPI_PREFIX = "$mpi$";
 
 	/**
 	 * The name of the identifier of the MPI_Comm variable in the final CIVL
@@ -129,12 +130,12 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name used for renaming the main function of the original MPI program.
 	 */
-	private static String MPI_MAIN = "_main";
+	private final String MPI_MAIN = MPI_PREFIX + "_main";
 
 	/**
 	 * The name of the parameter of a MPI procedure.
 	 */
-	private static String MPI_RANK = "_rank";
+	private final String MPI_RANK = MPI_PREFIX + "_rank";
 
 	/**
 	 * The name of the function MPI_Init in the original MPI program.
@@ -162,7 +163,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the variable representing the status of an MPI process, which
 	 * is modified by MPI_Init() and MPI_Finalized().
 	 */
-	private static String MPI_SYS_STATUS = "_my_status";
+	private final String MPI_SYS_STATUS = "_my_status";
 
 	/**
 	 * The name of the type of variables representing the status of an MPI
@@ -197,7 +198,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the variable used to declare the array of references to all
 	 * MPI processes in the final CIVL-C program.
 	 */
-	private static String PROCS = "_procs";
+	private final String PROCS = MPI_PREFIX + "_procs";
 
 	/**
 	 * The name of the function $wait() in the final CIVL-C program.
@@ -218,6 +219,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 */
 	public MPI2CIVLWorker(ASTFactory astFactory) {
 		super("MPItoCIVLTransformer", astFactory);
+		this.identifierPrefix = MPI_PREFIX;
 	}
 
 	/* *************************** Private Methods ************************* */

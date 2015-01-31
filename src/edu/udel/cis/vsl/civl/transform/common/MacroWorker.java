@@ -27,6 +27,7 @@ public class MacroWorker extends BaseWorker {
 
 	public MacroWorker(ASTFactory astFactory) {
 		super("MacroTransformer", astFactory);
+		this.identifierPrefix = "$macro$";
 	}
 
 	@Override
