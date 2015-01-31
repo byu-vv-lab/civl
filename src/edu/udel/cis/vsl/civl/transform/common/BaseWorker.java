@@ -154,7 +154,7 @@ public abstract class BaseWorker {
 	protected abstract AST transform(AST ast) throws SyntaxException;
 
 	protected String newUniqueIdentifierPrefix() {
-		return identifierPrefix + this.newIdentifierCounter++;
+		return identifierPrefix + this.newIdentifierCounter++ + "_";
 	}
 
 	/**
