@@ -73,7 +73,7 @@ public abstract class BaseWorker {
 	protected NodeFactory nodeFactory;
 
 	/**
-	 * The token facotry used by this transformer; same as the token factory
+	 * The token factory used by this transformer; same as the token factory
 	 * used by the {@link #astFactory}.
 	 */
 	protected TokenFactory tokenFactory;
@@ -149,12 +149,28 @@ public abstract class BaseWorker {
 	 * @return the transformed AST, which may or may not == the given one
 	 * @throws SyntaxException
 	 *             if some statically-detectable error is discovered in the
-	 *             process of transsformation
+	 *             process of transformation
 	 */
 	protected abstract AST transform(AST ast) throws SyntaxException;
 
+	/**
+	 * Produces a unique identifier ending with the given name.
+	 * 
+	 * @param name
+	 *            The ending of the new unique identifier.
+	 * @return a unique identifier ending with the given name.
+	 */
+	protected String newUniqueIdentifier(String name) {
+		return identifierPrefix + this.newIdentifierCounter++ + "_" + name;
+	}
+
+	/**
+	 * Produces a unique identifier.
+	 * 
+	 * @return a unique identifier.
+	 */
 	protected String newUniqueIdentifierPrefix() {
-		return identifierPrefix + this.newIdentifierCounter++ + "_";
+		return identifierPrefix + this.newIdentifierCounter++;
 	}
 
 	/**
