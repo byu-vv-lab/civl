@@ -44,7 +44,6 @@ public class OpenMP2CIVLTransformerTest {
 				"-inputTHREAD_MAX=2", filename("dotProduct_critical.c")));
 	}
 	
-	@Ignore
 	@Test
 	public void dotProductCriticalSimplify() {
 		assertTrue(ui.run("verify ",
