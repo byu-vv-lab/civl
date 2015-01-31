@@ -12,7 +12,6 @@ public class RuntimeCommandException extends RuntimeException {
 	}
 
 	public RuntimeCommandException(String msg) {
-		super(msg);
+		super(msg != null ? msg : "Command line sytax error");
 	}
-
 }
