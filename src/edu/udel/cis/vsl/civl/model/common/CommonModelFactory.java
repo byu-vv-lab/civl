@@ -260,6 +260,8 @@ public class CommonModelFactory implements ModelFactory {
 
 	private Variable timeCountVariable;
 
+	private Variable brokenTimeVariable;
+
 	private VariableExpression civlFilesystemVariableExpression;
 
 	/**
@@ -452,7 +454,7 @@ public class CommonModelFactory implements ModelFactory {
 	private FunctionIdentifierExpression waitallFuncPointer;
 
 	private Map<String, CIVLType> systemTypes = new HashMap<>();
-	
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -1589,6 +1591,11 @@ public class CommonModelFactory implements ModelFactory {
 		return this.timeCountVariable;
 	}
 
+	@Override
+	public Variable brokenTimeVariable() {
+		return this.brokenTimeVariable;
+	}
+
 	/**
 	 * An atomic lock variable is used to keep track of the process that
 	 * executes an $atomic block which prevents interleaving with other
@@ -1616,12 +1623,17 @@ public class CommonModelFactory implements ModelFactory {
 	private void createTimeCountVariable(Scope scope) {
 		// Since the atomic lock variable is not declared explicitly in the CIVL
 		// model specification, the system source will be used here.
-		timeCountVariable = this.variable(this.systemSource, processType, this
-				.identifier(this.systemSource,
+		timeCountVariable = this.variable(this.systemSource, this.integerType,
+				this.identifier(this.systemSource,
 						ModelConfiguration.TIME_COUNT_VARIABLE), scope
-				.numVariables());
+						.numVariables());
 		timeCountVariable.setStatic(true);
 		scope.addVariable(timeCountVariable);
+		brokenTimeVariable = this.variable(this.systemSource, this.integerType,
+				this.identifier(systemSource,
+						ModelConfiguration.BROKEN_TIME_VARIABLE), scope
+						.numVariables());
+		scope.addVariable(brokenTimeVariable);
 	}
 
 	/* *********************************************************************

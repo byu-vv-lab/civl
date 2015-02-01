@@ -14,6 +14,8 @@ public final class ModelConfiguration {
 	 */
 	public static final String ATOMIC_LOCK_VARIABLE = "_atomic_lock_var";
 	public static final String TIME_COUNT_VARIABLE = "_time_count_var";
+	public static final String BROKEN_TIME_VARIABLE = "_broken_time_var";
+
 	/**
 	 * The name of the heap variable
 	 */

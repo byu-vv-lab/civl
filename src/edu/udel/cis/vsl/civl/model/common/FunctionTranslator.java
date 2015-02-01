@@ -4252,7 +4252,7 @@ public class FunctionTranslator {
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case Model.TM_TYPE:
-			modelBuilder.handledObjectTypes.add(result);
+			// modelBuilder.handledObjectTypes.add(result);
 			modelFactory.addSystemType(tag, result);
 			break;
 		default:

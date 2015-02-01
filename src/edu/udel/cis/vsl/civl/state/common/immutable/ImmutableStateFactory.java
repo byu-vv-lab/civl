@@ -445,8 +445,9 @@ public class ImmutableStateFactory implements StateFactory {
 		state = addProcess(state, function, arguments, -1);
 		state = this.setVariable(state, atomicVar.vid(), 0,
 				modelFactory.undefinedProcessValue());
-		if(timeCountVar != null)
-			state = this.setVariable(state, timeCountVar.vid(), 0, universe.zeroInt());
+		if (timeCountVar != null)
+			state = this.setVariable(state, timeCountVar.vid(), 0,
+					universe.zeroInt());
 		// state = this.computeReachableMemUnits(state, 0);
 		return canonic(state, false, false, false);
 	}
@@ -1759,7 +1760,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 		if (heapObject instanceof SymbolicConstant)
 			oldConstant = (SymbolicConstant) heapObject;
-		else {
+		else if (heapObject.operator() != SymbolicOperator.APPLY) {
 			SymbolicObject arg0 = heapObject.argument(0);
 
 			if (arg0 instanceof SymbolicConstant)

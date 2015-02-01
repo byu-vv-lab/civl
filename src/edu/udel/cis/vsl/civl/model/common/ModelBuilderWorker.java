@@ -678,9 +678,17 @@ public class ModelBuilderWorker {
 		completeCallOrSpawnStatements();
 		completeBundleType();
 		completeHeapType();
+		completeTimeVar();
 		completeModel(system);
 		this.calculateConstantValue();
 		this.staticAnalysis();
+	}
+
+	private void completeTimeVar() {
+		Variable brokenTimeVar = this.factory.brokenTimeVariable();
+
+		if (brokenTimeVar != null)
+			brokenTimeVar.setType(this.factory.getSystemType(Model.TM_TYPE));
 	}
 
 	/**

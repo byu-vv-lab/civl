@@ -1620,4 +1620,6 @@ public interface ModelFactory {
 	Expression trueExpression(CIVLSource source);
 
 	Variable timeCountVariable();
+
+	Variable brokenTimeVariable();
 }

@@ -3357,8 +3357,9 @@ public class CommonEvaluator implements Evaluator {
 						originalArray = (SymbolicSequence<?>) charArray
 								.argument(0);
 					} catch (ClassCastException e) {
-						throw new CIVLUnimplementedFeatureException(
-								"non-concrete strings", source);
+						// throw new CIVLUnimplementedFeatureException(
+						// "non-concrete strings", source);
+						return new Pair<>(state, charArray.toStringBuffer(true));
 					} catch (ArrayIndexOutOfBoundsException e) {
 						CIVLExecutionException err = new CIVLExecutionException(
 								ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
