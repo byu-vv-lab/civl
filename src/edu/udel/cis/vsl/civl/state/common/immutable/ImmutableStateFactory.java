@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -347,7 +348,7 @@ public class ImmutableStateFactory implements StateFactory {
 			if (id < 0) {
 				ImmutableDynamicScope scopeToBeRemoved = theState.getDyscope(i);
 				Variable heapVariable = scopeToBeRemoved.lexicalScope()
-						.variable("__heap");
+						.variable(ModelConfiguration.HEAP_VAR);
 				SymbolicExpression heapValue = scopeToBeRemoved
 						.getValue(heapVariable.vid());
 
@@ -435,6 +436,7 @@ public class ImmutableStateFactory implements StateFactory {
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
 		Variable atomicVar = modelFactory.atomicLockVariableExpression()
 				.variable();
+		Variable timeCountVar = modelFactory.timeCountVariable();
 
 		// reachableMUs.put(0, new HashMap<SymbolicExpression, Boolean>());
 		state = new ImmutableState(new ImmutableProcessState[0],
@@ -443,6 +445,8 @@ public class ImmutableStateFactory implements StateFactory {
 		state = addProcess(state, function, arguments, -1);
 		state = this.setVariable(state, atomicVar.vid(), 0,
 				modelFactory.undefinedProcessValue());
+		if(timeCountVar != null)
+			state = this.setVariable(state, timeCountVar.vid(), 0, universe.zeroInt());
 		// state = this.computeReachableMemUnits(state, 0);
 		return canonic(state, false, false, false);
 	}

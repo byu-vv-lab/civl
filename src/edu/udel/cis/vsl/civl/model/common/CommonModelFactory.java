@@ -258,6 +258,8 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private VariableExpression atomicLockVariableExpression;
 
+	private Variable timeCountVariable;
+
 	private VariableExpression civlFilesystemVariableExpression;
 
 	/**
@@ -450,7 +452,7 @@ public class CommonModelFactory implements ModelFactory {
 	private FunctionIdentifierExpression waitallFuncPointer;
 
 	private Map<String, CIVLType> systemTypes = new HashMap<>();
-
+	
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -1582,6 +1584,11 @@ public class CommonModelFactory implements ModelFactory {
 		return this.atomicLockVariableExpression;
 	}
 
+	@Override
+	public Variable timeCountVariable() {
+		return this.timeCountVariable;
+	}
+
 	/**
 	 * An atomic lock variable is used to keep track of the process that
 	 * executes an $atomic block which prevents interleaving with other
@@ -1604,6 +1611,17 @@ public class CommonModelFactory implements ModelFactory {
 		this.atomicLockVariableExpression = this.variableExpression(
 				this.systemSource, variable);
 		scope.addVariable(variable);
+	}
+
+	private void createTimeCountVariable(Scope scope) {
+		// Since the atomic lock variable is not declared explicitly in the CIVL
+		// model specification, the system source will be used here.
+		timeCountVariable = this.variable(this.systemSource, processType, this
+				.identifier(this.systemSource,
+						ModelConfiguration.TIME_COUNT_VARIABLE), scope
+				.numVariables());
+		timeCountVariable.setStatic(true);
+		scope.addVariable(timeCountVariable);
 	}
 
 	/* *********************************************************************
@@ -1782,8 +1800,11 @@ public class CommonModelFactory implements ModelFactory {
 		myVariables.add(heapVariable);
 		myVariables.addAll(variables);
 		newScope = new CommonScope(source, parent, myVariables, scopeID++);
-		if (newScope.id() == 0)
+		if (newScope.id() == 0) {
 			this.createAtomicLockVariable(newScope);
+			if (modelBuilder.timeLibIncluded)
+				createTimeCountVariable(newScope);
+		}
 		if (parent != null) {
 			parent.addChild(newScope);
 		}

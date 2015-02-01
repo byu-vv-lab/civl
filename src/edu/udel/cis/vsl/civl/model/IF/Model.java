@@ -49,6 +49,8 @@ public interface Model extends Sourceable {
 
 	public static final String OMP_TEAM_TYPE = "__OMP_team__";
 
+	public static final String TM_TYPE = "tm";
+
 	/**
 	 * @return The model factory that created this model.
 	 */

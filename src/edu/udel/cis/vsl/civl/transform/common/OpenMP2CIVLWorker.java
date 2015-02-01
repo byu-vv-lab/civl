@@ -1420,7 +1420,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 															newSource(
 																	myItersPlace,
 																	CParser.INTEGER_CONSTANT),
-															"3")), null));
+															"2")), null));
 			this.ompArriveLoopCounter++;
 			// Get correct level "n" for domain(n)
 			IntegerConstantNode domainLevel = nodeFactory

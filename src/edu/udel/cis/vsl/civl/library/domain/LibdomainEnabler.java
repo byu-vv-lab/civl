@@ -128,9 +128,9 @@ public class LibdomainEnabler extends BaseLibraryEnabler implements
 			return super.enabledTransitions(state, call, pathCondition, pid,
 					processIdentifier, assignAtomicLock);
 		case DECOMP_RANDOM:
-			throw new CIVLUnimplementedFeatureException(
-					"Decomp_random strategy");
 		default:
+			throw new CIVLUnimplementedFeatureException(
+					"domain strategy");
 		}
 		for (int i = 0; i < statements.size(); i++) {
 			transitions.add(Semantics.newTransition(pathCondition, pid,

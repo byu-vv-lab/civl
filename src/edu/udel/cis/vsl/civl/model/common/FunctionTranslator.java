@@ -1755,6 +1755,7 @@ public class FunctionTranslator {
 					(FunctionCallNode) expressionNode,
 					modelFactory.sourceOf(expressionNode));
 			break;
+		case CONSTANT:
 		case IDENTIFIER_EXPRESSION: {
 			Statement noopStatement = modelFactory.noopStatement(
 					modelFactory.sourceOf(expressionNode), location);
@@ -4249,6 +4250,10 @@ public class FunctionTranslator {
 			modelFactory.addSystemType(tag, result);
 			modelBuilder.FILEtype = result;
 			modelBuilder.handledObjectTypes.add(result);
+			break;
+		case Model.TM_TYPE:
+			modelBuilder.handledObjectTypes.add(result);
+			modelFactory.addSystemType(tag, result);
 			break;
 		default:
 		}

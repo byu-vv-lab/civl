@@ -12,10 +12,11 @@ public final class ModelConfiguration {
 	/**
 	 * The name of the atomic lock variable
 	 */
-	public static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
+	public static final String ATOMIC_LOCK_VARIABLE = "_atomic_lock_var";
+	public static final String TIME_COUNT_VARIABLE = "_time_count_var";
 	/**
 	 * The name of the heap variable
 	 */
-	public static final String HEAP_VAR = "__heap";
+	public static final String HEAP_VAR = "_heap";
 	public static final int heapVariableIndex = 0;
 }

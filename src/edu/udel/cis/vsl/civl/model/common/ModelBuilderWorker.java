@@ -19,6 +19,9 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.program.IF.Program;
+import edu.udel.cis.vsl.abc.token.IF.CToken;
+import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.abc.token.IF.SourceFile;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -61,6 +64,8 @@ public class ModelBuilderWorker {
 	 * Used to give names to anonymous structs and unions.
 	 */
 	int anonymousStructCounter = 0;
+
+	boolean timeLibIncluded = false;
 
 	Map<CIVLFunction, StatementNode> parProcFunctions = new HashMap<>();
 
@@ -302,6 +307,37 @@ public class ModelBuilderWorker {
 	}
 
 	/* *************************** Private Methods ************************* */
+
+	/**
+	 * analysis of AST tree before translation, including: check if time.h is
+	 * ever included, if yes, then we need to add _time_count to the root scope.
+	 */
+	private void preprocess() {
+		ASTNode root = program.getAST().getRootNode();
+
+		this.timeLibIncluded = this.hasTimeLibrary(root);
+	}
+
+	private boolean hasTimeLibrary(ASTNode node) {
+		Source source = node.getSource();
+		CToken token = source == null ? null : node.getSource().getFirstToken();
+		SourceFile file = token == null ? null : token.getFormation()
+				.getLastFile();
+
+		if (file != null && file.getName().equals("time.h"))
+			return true;
+		else {
+			for (ASTNode child : node.children()) {
+				if (child != null) {
+					boolean childResult = this.hasTimeLibrary(child);
+
+					if (childResult)
+						return childResult;
+				}
+			}
+		}
+		return false;
+	}
 
 	private void completeHeapType() {
 		completeHandleObjectTypes();
@@ -601,13 +637,15 @@ public class ModelBuilderWorker {
 	public void buildModel() throws CommandLineException {
 		Identifier systemID = factory.identifier(factory.systemSource(),
 				CIVLConstants.civlSystemFunction);
-		CIVLFunction system = factory.function(
+		CIVLFunction system;
+		ASTNode rootNode = program.getAST().getRootNode();
+		FunctionTranslator systemFunctionTranslator;
+
+		preprocess();
+		system = factory.function(
 				factory.sourceOf(program.getAST().getRootNode()), systemID,
 				new ArrayList<Variable>(), null, null, null);
-		ASTNode rootNode = program.getAST().getRootNode();
-		FunctionTranslator systemFunctionTranslator = new FunctionTranslator(
-				this, factory, system);
-
+		systemFunctionTranslator = new FunctionTranslator(this, factory, system);
 		initialization(system);
 		systemFunctionTranslator.translateRootFunction(systemScope, rootNode);
 		if (inputInitMap != null) {

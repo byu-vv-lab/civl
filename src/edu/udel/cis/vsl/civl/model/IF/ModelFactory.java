@@ -1618,4 +1618,6 @@ public interface ModelFactory {
 	Identifier getLiteralDomCounterIdentifier(CIVLSource source, int count);
 
 	Expression trueExpression(CIVLSource source);
+
+	Variable timeCountVariable();
 }

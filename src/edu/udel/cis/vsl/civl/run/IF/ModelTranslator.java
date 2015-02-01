@@ -739,14 +739,14 @@ public class ModelTranslator {
 			return "omp.cvl";
 		case "pthread.h":
 			return "pthread.cvl";
-		case "simplepthread.h":
-			return "simplepthread.cvl";
 		case "string.h":
 			return "string.cvl";
 		case "svcomp.h":
 			return "svcomp.cvl";
 		case "stdlib.h":
 			return "stdlib.cvl";
+		case "time.h":
+			return "time.cvl";
 		case "cuda.h":
 			return "cuda.cvl";
 		case "civl-cuda.cvh":
