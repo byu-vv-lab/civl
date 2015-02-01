@@ -5,16 +5,19 @@
 int main (int argc, char *argv[]) {
   double a[N], b[N];
   int i, sum;
-  
-
     
-// This omp construct is completely eliminated
+    
+#pragma omp parallel
+#pragma omp single
+    for (i=0; i < N; i++)
+      a[i] = 0;
+      
 /*
+// This omp construct is completely eliminated
 #pragma omp parallel for
     for (i=0; i < N-1; i++)
       b[i+1] = a[i+1] + 2*i;
-      */
-      
+         
 // These nested omp constructs are completely eliminated
 #pragma omp parallel
 { 
@@ -23,7 +26,7 @@ int main (int argc, char *argv[]) {
       b[i+1] = a[i+1] + 2*i;
 }
       
-    /*  
+   
 #pragma omp parallel for
     for (i=0; i < N; i++) {
       a[i] = 0.0;
@@ -32,10 +35,11 @@ int main (int argc, char *argv[]) {
     }
     
 #pragma omp parallel for
-	for (i=0; i < N-1; i++)
-	  a[i+1] = a[1+i] + 1;
-	  //a[i+2-1] = a[(-2*3) + 2*i - i + 7] + 1;
-      
+	for (i=0; i < N-1; i++) {
+	  //a[i+1] = a[1+i] + 1;
+	  a[i+2-1] = a[(-2*3) + 2*i - i + 7] + 1;
+	  }
+    
       
 #pragma omp parallel for private(sum)
     for (i=0; i < N; i++)
@@ -44,6 +48,6 @@ int main (int argc, char *argv[]) {
 #pragma omp parallel for 
     for (i=0; i < N; i++)
       sum = sum + i;
-      */
+*/   
       
 }

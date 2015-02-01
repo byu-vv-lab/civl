@@ -61,7 +61,7 @@ int main ( void )
   int ln2_max = 25;
   double mflops;
   int n;
-  int nits = 10000;
+  int nits = 100; //MATT CHANGED FROM 10000 TO SCALE DOWN
   int proc_num;
   static double seed;
   double sgn;
