@@ -1873,12 +1873,14 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				for(ASTNode child : sharedIDs.children()){
 					IdentifierExpressionNode idexp = (IdentifierExpressionNode) child;
 					IdentifierNode id = idexp.getIdentifier();
-					for(ASTNode childPrivateList : privateList.children()){
-						IdentifierExpressionNode privateIdexp = (IdentifierExpressionNode) childPrivateList;
-						IdentifierNode privateId = privateIdexp.getIdentifier();
-						if(id.name().equals(privateId.name())){
-							child.remove();
-							removed = true;
+					if(privateList !=null){
+						for(ASTNode childPrivateList : privateList.children()){
+							IdentifierExpressionNode privateIdexp = (IdentifierExpressionNode) childPrivateList;
+							IdentifierNode privateId = privateIdexp.getIdentifier();
+							if(id.name().equals(privateId.name())){
+								child.remove();
+								removed = true;
+							}
 						}
 					}
 					
