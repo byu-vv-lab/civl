@@ -2454,12 +2454,9 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					newSource(place, CParser.IDENTIFIER), TID);
 			break;
 		case "omp_set_num_threads":
-			String value = (String) ((IntegerConstantNode) node.getArgument(0))
-					.getStringRepresentation();
 			replacementNode = nodeFactory.newOperatorNode(source,
 					Operator.ASSIGN, Arrays.asList(this.identifierExpression(
-							source, "$omp_numThreads"), nodeFactory
-							.newIntegerConstantNode(source, value)));
+							source, "$omp_numThreads"), node.getArgument(0).copy()));
 			break;
 		}
 
