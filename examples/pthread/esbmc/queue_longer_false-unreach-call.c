@@ -1,22 +1,23 @@
+extern void __VERIFIER_error();
 #include <pthread.h>
 #include <stdio.h>
 #include <assert.h>
 
-#define SIZE	(20)
+#define SIZE	(400)
 #define EMPTY	(-1)
 #define FULL	(-2)
 #define FALSE	(0)
 #define TRUE	(1)
 
 typedef struct {
-  int element[SIZE];
-  int head;
-  int tail;
-  int amount;
+    int element[SIZE];
+    int head;
+    int tail;
+    int amount;
 } QType;
 
 pthread_mutex_t m;
-int __VERIFIER_nondet_int(void);
+int __VERIFIER_nondet_int();
 int stored_elements[SIZE];
 _Bool enqueue_flag, dequeue_flag;
 QType queue;
@@ -43,8 +44,8 @@ int full(QType * q)
 {
   if (q->amount == SIZE) 
   {  
-    printf("queue is full\n");
-    return FULL;
+	printf("queue is full\n");
+	return FULL;
   } 
   else
     return 0;
@@ -87,41 +88,54 @@ void *t1(void *arg)
   int value, i;
 
   pthread_mutex_lock(&m);
-  if (enqueue_flag)
+  value = __VERIFIER_nondet_int();
+  if (enqueue(&queue,value)) {
+    goto ERROR;
+  }
+
+  stored_elements[0]=value;
+  if (empty(&queue)) {
+    goto ERROR;
+  }
+
+  pthread_mutex_unlock(&m);
+
+  for(i=0; i<(SIZE-1); i++)  
   {
-    for(i=0; i<SIZE; i++)  
+    pthread_mutex_lock(&m);
+    if (enqueue_flag)
     {
       value = __VERIFIER_nondet_int();
       enqueue(&queue,value);
-      stored_elements[i]=value;
+      stored_elements[i+1]=value;
+      enqueue_flag=FALSE;
+      dequeue_flag=TRUE;
     }
-    enqueue_flag=FALSE;
-    dequeue_flag=TRUE;
+    pthread_mutex_unlock(&m);
   }	
-  pthread_mutex_unlock(&m);
 
   return NULL;
+
+  ERROR:__VERIFIER_error();
 }
 
 void *t2(void *arg) 
 {
   int i;
 
-  pthread_mutex_lock(&m);
-  if (dequeue_flag)
+  for(i=0; i<SIZE; i++)  
   {
-    for(i=0; i<SIZE; i++)  
+    pthread_mutex_lock(&m);
+    if (dequeue_flag)
     {
-      if (empty(&queue)!=EMPTY)
-        if (!(dequeue(&queue)==stored_elements[i])) {
-          ERROR:
-          goto ERROR;
-        }
+      if (!dequeue(&queue)==stored_elements[i]) {
+        ERROR:__VERIFIER_error();
+      }
+      dequeue_flag=FALSE;
+      enqueue_flag=TRUE;
     }
-    dequeue_flag=FALSE;
-    enqueue_flag=TRUE;
+    pthread_mutex_unlock(&m);
   }
-  pthread_mutex_unlock(&m);
 
   return NULL;
 }
@@ -135,10 +149,10 @@ int main(void)
 
   init(&queue);
 
-  if (!(empty(&queue)==EMPTY)) {
-    ERROR:
-    goto ERROR;
+  if (!empty(&queue)==EMPTY) {
+    ERROR:__VERIFIER_error();
   }
+
 
   pthread_mutex_init(&m, 0);
 
@@ -150,6 +164,4 @@ int main(void)
 
   return 0;
 }
-
-
 

@@ -1,11 +1,10 @@
-extern void __VERIFIER_error();
-
+extern void __VERIFIER_error() ;
 #include <pthread.h>
 #include <stdio.h>
 
 #define TRUE	  (1)
 #define FALSE	  (0) 
-#define SIZE	  (5)
+#define SIZE	  (800)
 #define OVERFLOW  (-1)
 #define UNDERFLOW (-2)
 
@@ -17,8 +16,7 @@ _Bool flag=FALSE;
 
 void error(void) 
 { 
-  ERROR: __VERIFIER_error();
-  return;
+  ERROR: __VERIFIER_error();  return;
 }
 
 void inc_top(void)
@@ -58,7 +56,7 @@ int push(unsigned int *stack, int x)
 
 int pop(unsigned int *stack)
 {
-  if (top==0) 
+  if (get_top()==0) 
   {
     printf("stack underflow\n");	
     return UNDERFLOW;
@@ -78,10 +76,11 @@ void *t1(void *arg)
 
   for(i=0; i<SIZE; i++)
   {
-    pthread_mutex_lock(&m);   
+    pthread_mutex_lock(&m);
     tmp = __VERIFIER_nondet_uint()%SIZE;
-    if ((push(arr,tmp)==OVERFLOW))
+    if (push(arr,tmp)==OVERFLOW)
       error();
+    flag=TRUE;
     pthread_mutex_unlock(&m);
   }
 }
@@ -93,11 +92,11 @@ void *t2(void *arg)
   for(i=0; i<SIZE; i++)
   {
     pthread_mutex_lock(&m);
-    if (top>0)
-    {    
-      if ((pop(arr)==UNDERFLOW))
+    if (flag)
+    {
+      if (!(pop(arr)!=UNDERFLOW))
         error();
-    }    
+    }
     pthread_mutex_unlock(&m);
   }
 }

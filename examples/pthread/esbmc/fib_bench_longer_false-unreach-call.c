@@ -1,10 +1,10 @@
-#include <pthread.h>
+extern void __VERIFIER_error();
 
-void __VERIFIER_assert(int expression) { if (!expression) { ERROR: goto ERROR; }; return; }
+#include <pthread.h>
 
 int i=1, j=1;
 
-#define NUM 11
+#define NUM 6
 
 void *
 t1(void* arg)
@@ -35,15 +35,11 @@ main(int argc, char **argv)
 
   pthread_create(&id1, NULL, t1, NULL);
   pthread_create(&id2, NULL, t2, NULL);
-    
-  pthread_join(id1, 0);
-  pthread_join(id2, 0);
+  pthread_join(id1, NULL);
+  pthread_join(id2, NULL);
 
-    printf(" %d \n", i);
-    printf(" %d \n", j);
-  if (i >= 46368 || j >= 46368) {
-    ERROR:
-    goto ERROR;
+  if (i >= 377 || j >= 377) {
+    ERROR: __VERIFIER_error();
   }
 
   return 0;

@@ -1,8 +1,10 @@
+extern void __VERIFIER_error();
+
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
 
-void __VERIFIER_assert(int expression) { if (!expression) { ERROR: goto ERROR; }; return; }
+void __VERIFIER_assert(int expression) { if (!expression) { ERROR: __VERIFIER_error();}; return; }
 
 char *v;
 
@@ -38,6 +40,7 @@ void *thread0(void *arg)
   pthread_join(t3, 0);
   pthread_join(t4, 0);
   pthread_join(t5, 0);
+
   return 0;
 }
 
@@ -49,7 +52,8 @@ int main(void)
   pthread_join(t, 0);
 
   __VERIFIER_assert(v[0] == 'X' || v[0] == 'Y');
-      free(v);
+  free(v);
   return 0;
 }
+
 

@@ -1,11 +1,10 @@
 extern void __VERIFIER_error();
-
 #include <pthread.h>
 #include <stdio.h>
 
 #define TRUE	  (1)
 #define FALSE	  (0) 
-#define SIZE	  (5)
+#define SIZE	  (400)
 #define OVERFLOW  (-1)
 #define UNDERFLOW (-2)
 
@@ -17,8 +16,7 @@ _Bool flag=FALSE;
 
 void error(void) 
 { 
-  ERROR: __VERIFIER_error();
-  return;
+  ERROR: __VERIFIER_error();  return;
 }
 
 void inc_top(void)

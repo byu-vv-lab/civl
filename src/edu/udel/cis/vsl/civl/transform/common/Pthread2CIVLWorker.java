@@ -17,7 +17,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
@@ -54,10 +53,6 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	private final static String PTHREAD_EXIT = "pthread_exit";
 
 	private final static String PTHREAD_EXIT_NEW = "_pthread_exit";
-
-	private final static String PTHREAD_FREE_POOL = "_free_pool";
-
-	private final static String PTHREAD_POOL = "_pool";
 
 	private final static String ERROR = "ERROR";
 
@@ -342,7 +337,6 @@ public class Pthread2CIVLWorker extends BaseWorker {
 							nodeFactory.newReturnNode(this.newSource(
 									"return statement", CParser.RETURN), ZERO));
 			}
-			freePoolBeforeMainReturn(function);
 			return;
 
 		}
@@ -530,35 +524,6 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		return false;
 	}
 
-	private void freePoolBeforeMainReturn(ASTNode node) {
-		if (node instanceof ReturnNode) {
-			BlockItemNode freePoolCall = freePoolCall();
-			CompoundStatementNode compound;
-			ASTNode parent = node.parent();
-			int index = node.childIndex();
-
-			parent.removeChild(index);
-			compound = nodeFactory.newCompoundStatementNode(node.getSource(),
-					Arrays.asList(freePoolCall, (ReturnNode) node));
-			parent.setChild(index, compound);
-		} else
-			for (ASTNode child : node.children())
-				if (child != null)
-					freePoolBeforeMainReturn(child);
-	}
-
-	private StatementNode freePoolCall() {
-		ExpressionNode poolArg = nodeFactory.newOperatorNode(
-				this.newSource("address-of expression", CParser.EXPR),
-				Operator.ADDRESSOF,
-				Arrays.asList(identifierExpression(PTHREAD_POOL)));
-		FunctionCallNode funcCall = nodeFactory.newFunctionCallNode(this
-				.newSource("function call " + PTHREAD_FREE_POOL, CParser.CALL),
-				this.identifierExpression(PTHREAD_FREE_POOL), Arrays
-						.asList(poolArg), null);
-
-		return nodeFactory.newExpressionStatementNode(funcCall);
-	}
 
 	/* ********************* Methods From BaseTransformer ****************** */
 

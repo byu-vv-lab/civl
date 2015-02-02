@@ -1,3 +1,5 @@
+extern void __VERIFIER_error();
+
 #include <pthread.h>
 #include <stdio.h>
 
@@ -7,7 +9,7 @@
 #define OVERFLOW  (-1)
 #define UNDERFLOW (-2)
 
-unsigned int __VERIFIER_nondet_uint(void);
+unsigned int __VERIFIER_nondet_uint();
 static int top=0;
 static unsigned int arr[SIZE];
 pthread_mutex_t m;
@@ -15,8 +17,7 @@ _Bool flag=FALSE;
 
 void error(void) 
 { 
-  ERROR: ;
-  goto ERROR;
+  ERROR: __VERIFIER_error();
   return;
 }
 
@@ -84,7 +85,6 @@ void *t1(void *arg)
     flag=TRUE;
     pthread_mutex_unlock(&m);
   }
-  pthread_exit(NULL);
 }
 
 void *t2(void *arg) 
@@ -101,7 +101,6 @@ void *t2(void *arg)
     }
     pthread_mutex_unlock(&m);
   }
-  pthread_exit(NULL);
 }
 
 
@@ -116,7 +115,7 @@ int main(void)
 
   pthread_join(id1, NULL);
   pthread_join(id2, NULL);
-  pthread_exit(NULL);
+
   return 0;
 }
 

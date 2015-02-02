@@ -1,13 +1,15 @@
+extern void __VERIFIER_error();
+
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
 
-void __VERIFIER_assert(int expression) { if (!expression) { ERROR: goto ERROR; }; return; }
+void __VERIFIER_assert(int expression) { if (!expression) { ERROR: __VERIFIER_error();}; return; }
 
 const int SIGMA = 16;
 
 int *array;
-int array_index = -1;
+int array_index;
 
 
 void *thread(void * arg)
