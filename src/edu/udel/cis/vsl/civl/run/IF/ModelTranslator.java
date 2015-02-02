@@ -321,7 +321,7 @@ public class ModelTranslator {
 		}
 		if (headers.contains("stdio.h"))
 			hasStdio = true;
-		if (isC && (headers.contains("omp.h") || program.hasOmpPragma()))
+		if (headers.contains("omp.h") || program.hasOmpPragma())
 			hasOmp = true;
 		if (isC && headers.contains("pthread.h"))
 			hasPthread = true;
