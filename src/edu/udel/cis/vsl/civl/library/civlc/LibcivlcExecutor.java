@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
+import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
@@ -170,6 +171,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = executeApply(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$next_time_count":
+			state = this.executeNextTimeCount(state, pid, process, lhs,
+					arguments, argumentValues);
+			break;
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
 					call);
@@ -180,6 +185,22 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
+
+	private State executeNextTimeCount(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		Variable timeCountVar = this.modelFactory.timeCountVariable();
+		NumericExpression timeCountValue = (NumericExpression) state.valueOf(
+				pid, timeCountVar);
+
+		state = stateFactory.setVariable(state, timeCountVar, pid,
+				universe.add(timeCountValue, one));
+		if (lhs != null)
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					timeCountValue);
+		return state;
+	}
 
 	/**
 	 * <pre>

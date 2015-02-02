@@ -1620,7 +1620,7 @@ public class CommonModelFactory implements ModelFactory {
 		scope.addVariable(variable);
 	}
 
-	private void createTimeCountVariable(Scope scope) {
+	private void createTimeVariables(Scope scope) {
 		// Since the atomic lock variable is not declared explicitly in the CIVL
 		// model specification, the system source will be used here.
 		timeCountVariable = this.variable(this.systemSource, this.integerType,
@@ -1629,11 +1629,13 @@ public class CommonModelFactory implements ModelFactory {
 						.numVariables());
 		timeCountVariable.setStatic(true);
 		scope.addVariable(timeCountVariable);
-		brokenTimeVariable = this.variable(this.systemSource, this.integerType,
-				this.identifier(systemSource,
-						ModelConfiguration.BROKEN_TIME_VARIABLE), scope
-						.numVariables());
-		scope.addVariable(brokenTimeVariable);
+		if (modelBuilder.timeLibIncluded) {
+			brokenTimeVariable = this.variable(this.systemSource,
+					this.integerType, this.identifier(systemSource,
+							ModelConfiguration.BROKEN_TIME_VARIABLE), scope
+							.numVariables());
+			scope.addVariable(brokenTimeVariable);
+		}
 	}
 
 	/* *********************************************************************
@@ -1814,8 +1816,8 @@ public class CommonModelFactory implements ModelFactory {
 		newScope = new CommonScope(source, parent, myVariables, scopeID++);
 		if (newScope.id() == 0) {
 			this.createAtomicLockVariable(newScope);
-			if (modelBuilder.timeLibIncluded)
-				createTimeCountVariable(newScope);
+			// if (modelBuilder.timeLibIncluded)
+			createTimeVariables(newScope);
 		}
 		if (parent != null) {
 			parent.addChild(newScope);

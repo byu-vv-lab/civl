@@ -1,4 +1,4 @@
-
+#include <civlc.cvh>
 #include <omp.h>
 #include <civl-omp.cvh>
 #include <stdbool.h>
@@ -8,10 +8,6 @@
 struct omp_lock_t{
   _Bool lock;
 };
-
-/********************************** State *****************************************/
-/* The number of times the omp_get_wtime function has been called */
-int OMP_time_count = 0;
 
 /************************** OMP LIB Implementations *******************************/
 
@@ -38,13 +34,17 @@ void omp_unset_lock(omp_lock_t *slock){
   }
 }
 
-$abstract double OMP_time(int i);
+$abstract double OMP_time(int time_count);
 
 double omp_get_wtime() {
-  double result;
-
-  result = OMP_time(OMP_time_count);
-  OMP_time_count++;
+  int OMP_time_count = $next_time_count();
+  double result = OMP_time(OMP_time_count);
+  
+  if (OMP_time_count > 0) {
+    $assume result > OMP_time(OMP_time_count-1);
+  } else {
+    $assume result > 0;
+  }
   return result;
 }
 

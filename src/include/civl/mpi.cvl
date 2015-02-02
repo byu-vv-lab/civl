@@ -2,6 +2,7 @@
 #else
 #define __CIVL_MPI__
 
+#include <civlc.cvh>
 #include <concurrency.cvh>
 #include <bundle.cvh>
 #include <mpi.h>
@@ -19,20 +20,21 @@ struct MPI_Comm {
   $barrier barrier;
 };
 
-/********************************** State *****************************************/
-/* The number of times the MPI_Wtime function has been called */
-int CMPI_time_count = 0;
-
 /************************** MPI LIB Implementations *******************************/
 double MPI_Wtime() {
   double result;
   __MPI_Sys_status__ curr_status;
+  int CMPI_time_count = $next_time_count();
 
   curr_status = CMPI_Get_status();
   $assert curr_status == __INIT : "MPI_Wtime() cannot be invoked "
     "without MPI_Init() being called before.\n";
   result = CMPI_time(CMPI_time_count);
-  CMPI_time_count++;
+  if (CMPI_time_count > 0) {
+    $assume result > CMPI_time(CMPI_time_count-1);
+  } else {
+    $assume result > 0;
+  }
   return result;
 }
 
