@@ -99,8 +99,7 @@ public class MPITranslationTest {
 
 	@Test
 	public void mpi_diff2dBad() throws ABCException {
-		assertFalse(ui.run("verify", "-input_NPROCS=4", "-inputnsteps=2",
-				"-inputnx=2", "-inputny=2", "-enablePrintf=false",
+		assertFalse(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=false",
 				"-inputNPROCSX=2", "-inputNPROCSY=2",
 				filename("diffusion2dBad.c")));
 	}
