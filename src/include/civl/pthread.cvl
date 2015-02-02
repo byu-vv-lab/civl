@@ -9,7 +9,6 @@
 #include <seq.cvh>
 
 extern void *value_ptr_value = NULL;
-extern $scope root = $here;
 pthread_t * pool[];
 
 typedef struct {
