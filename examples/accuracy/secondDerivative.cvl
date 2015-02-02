@@ -4,7 +4,7 @@
  * Note: based on Quarteroni, Sacco, Saleri. "Numerical Mathematics" 2nd ed. sec 10.10.1
  *
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 $input double h;
 $input int num_elements = 5;

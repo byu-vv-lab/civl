@@ -1,7 +1,7 @@
 /* Commandline execution:
  * 		civl verify -inputB=10 mean.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
 $input int B = 10;
 $input int n;
 $assume 1<=n && n<=B;

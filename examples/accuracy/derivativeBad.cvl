@@ -4,7 +4,7 @@
  * The assertion checked in this version erroneously expects the method to be fourth
  * order accurate in terms of h.
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 #include<stdio.h>
 
 $input double h;

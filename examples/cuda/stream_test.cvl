@@ -1,5 +1,5 @@
-#include "civlc.h"
-#include "civlc-cuda.cvl"
+#include <civlc.cvh>
+#include "civlc-cuda.cv"
 #include <stdio.h>
 
 $input int N;

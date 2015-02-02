@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify -inputnum_elements=5 derivative.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 #include<stdio.h>
 
 $input double h;

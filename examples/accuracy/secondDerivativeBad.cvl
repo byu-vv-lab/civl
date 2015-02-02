@@ -5,7 +5,7 @@
  *
  * This version erroneously assumes that the method is 3rd order accurate in terms of h.
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 $input double h;
 $input int num_elements = 5;

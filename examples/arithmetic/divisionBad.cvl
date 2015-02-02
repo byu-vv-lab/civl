@@ -4,7 +4,7 @@
  * Commandline execution:
  * 		civl verify divisionBad.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
 $input double x;
 $input double y; // could be 0
 

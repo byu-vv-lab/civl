@@ -1,7 +1,7 @@
 /* Testing for bundle pack and unpack.
    Bad example.
  */
-#include <civlc.h>
+#include <civlc.cvh>
 #include <bundle.cvh>
 
 void main(){

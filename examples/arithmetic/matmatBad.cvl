@@ -8,7 +8,7 @@
  * will verify equivalent for all matrix dimensions and tile
  * sizes in the range 1..4.
  */
-#include<civlc.h>
+#include<civlc.cvh>
 #define MIN(lhs, A, B) if ((A)<(B)) lhs=(A); else lhs=(B);
 
 $input int BOUND = 3;

@@ -7,7 +7,7 @@
  * doen't reuse itself to run GPU_BLOCK/GPU_THREAD.
  */
 
-#include<civlc.h>
+#include<civlc.cvh>
 
 #define pyramid_height 2
 #define rows 3

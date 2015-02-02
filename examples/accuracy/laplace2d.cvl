@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify -inputrows=3 -inputcols=3 laplace.cvl
  * */
-#include <civlc.h>
+#include <civlc.cvh>
 
 $input double h;
 $input int rows = 3;

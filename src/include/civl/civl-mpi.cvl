@@ -2,7 +2,7 @@
 #else
 #define __CIVL_CIVLMPI__
 
-#include <civlc.h>
+#include <civlc.cvh>
 #include <concurrency.cvh>
 #include <comm.cvh>
 #include <bundle.cvh>

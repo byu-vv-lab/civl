@@ -16,7 +16,6 @@
  *****************************************/
 
 #include<stdio.h>
-#include<civlc.h>
 $input int NPROCS;   /* useless input variables for civl compare */
 $input int NPROCSB;
 $input int N;

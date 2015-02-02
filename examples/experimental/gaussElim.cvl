@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify -inputN_BOUND=3 -inputM_BOUND=3 gaussElim.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 $input int N_BOUND = 3; // bound on the number of rows
 $input int M_BOUND = 3; // bound on the number of columns

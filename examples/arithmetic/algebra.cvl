@@ -1,7 +1,7 @@
 /* Commandline execution:
  * 		civl verify algebra.cvl
  */
-#include <civlc.h>
+#include <civlc.cvh>
 $input int x;
 $input int y;
 

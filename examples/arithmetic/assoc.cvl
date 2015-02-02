@@ -7,7 +7,7 @@
  * the length of the array.  Example:
  *      civl verify -inputB=100 assoc.cvl
  */
-#include <civlc.h>
+#include <civlc.cvh>
 $input int B = 10;
 $input int n;
 $assume 0<=n && n<B;

@@ -1,7 +1,7 @@
 /* Commandline execution:
  *		civl verify -inputn=4 diffusion.cvl
  * */
-#include<civlc.h>
+#include<civlc.cvh>
 
 $input int n = 4; /* Number of points */
 $input double h;  /* Distance between points */

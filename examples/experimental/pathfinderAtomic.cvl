@@ -7,7 +7,7 @@
  * doen't reuse itself to run GPU_BLOCK/GPU_THREAD.
  */
 
-#include<civlc.h>
+#include<civlc.cvh>
 
 //pyramid height of 0 does nothing, of 1 is normal stencil, 2 is where
 //the algorithm even kicks in

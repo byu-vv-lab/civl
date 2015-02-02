@@ -2,7 +2,7 @@
    reading and writing arrays. This example may still not cover all possible 
    cases. Anyone can add more send and receive pairs for different cases.
  */
-#include <civlc.h>
+#include <civlc.cvh>
 #include <bundle.cvh>
 
 $input int N;

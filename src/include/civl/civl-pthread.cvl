@@ -2,7 +2,7 @@
 #else
 #define __CIVL_CIVLPTHREAD__
 
-#include <civlc.h>
+#include <civlc.cvh>
 #include "civl-pthread.cvh"
 #include <concurrency.cvh>
 #include <seq.cvh>

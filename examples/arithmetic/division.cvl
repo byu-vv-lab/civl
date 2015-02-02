@@ -4,7 +4,7 @@
  * Commandline execution:
  * 		civl verify division.cvl
  */
-#include<civlc.h>
+#include<civlc.cvh>
 $input double x;
 $input double y;
 $assume y!=0;
