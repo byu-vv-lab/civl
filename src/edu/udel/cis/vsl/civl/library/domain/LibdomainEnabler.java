@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.civl.library.common.BaseLibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -38,10 +39,6 @@ import edu.udel.cis.vsl.sarl.IF.number.Number;
 
 public class LibdomainEnabler extends BaseLibraryEnabler implements
 		LibraryEnabler {
-
-	public static final int DECOMP_ALL = 0;
-	public static final int DECOMP_RANDOM = 1;
-	public static final int DECOMP_ROUND_ROBIN = 2;
 
 	public LibdomainEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
@@ -110,7 +107,7 @@ public class LibdomainEnabler extends BaseLibraryEnabler implements
 				+ ": strategy must be a DECOMP_STRATEGY type";
 		strategyInt = ((IntegerNumber) strategyNum).intValue();
 		switch (strategyInt) {
-		case DECOMP_ALL:
+		case ModelConfiguration.DECOMP_ALL:
 			LibdomainEvaluator libevaluator = (LibdomainEvaluator) this.libEvaluatorLoader
 					.getLibraryEvaluator(name, evaluator, modelFactory,
 							symbolicUtil, symbolicAnalyzer);
@@ -124,13 +121,12 @@ public class LibdomainEnabler extends BaseLibraryEnabler implements
 					.expressionScope(), call.lhs().getExpressionType(),
 					subDecomp, arguments[0].getSource()));
 			break;
-		case DECOMP_ROUND_ROBIN:
+		case ModelConfiguration.DECOMP_ROUND_ROBIN:
 			return super.enabledTransitions(state, call, pathCondition, pid,
 					processIdentifier, assignAtomicLock);
-		case DECOMP_RANDOM:
+		case ModelConfiguration.DECOMP_RANDOM:
 		default:
-			throw new CIVLUnimplementedFeatureException(
-					"domain strategy");
+			throw new CIVLUnimplementedFeatureException("domain strategy");
 		}
 		for (int i = 0; i < statements.size(); i++) {
 			transitions.add(Semantics.newTransition(pathCondition, pid,

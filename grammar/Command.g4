@@ -123,6 +123,7 @@ OPTION_NAME
     | '-maxdepth'
     | '-min'
     | '-ompNoSimplify'
+    | '-ompLoopDecomp'
     | '-preproc'
     | '-procBound'
     | '-random'

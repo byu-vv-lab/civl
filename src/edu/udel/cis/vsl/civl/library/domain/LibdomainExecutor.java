@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -40,10 +41,6 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 public class LibdomainExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
-
-	public static final int DECOMP_ALL = 0;
-	public static final int DECOMP_RANDOM = 1;
-	public static final int DECOMP_ROUND_ROBIN = 2;
 
 	public LibdomainExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
@@ -150,7 +147,7 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 		numParts_int = numParts_num.intValue();
 		switch (strategy_int) {
 		default:
-		case DECOMP_ROUND_ROBIN:
+		case ModelConfiguration.DECOMP_ROUND_ROBIN:
 			subDomains = this.domainPartition_round_robin(domain, numParts_int);
 			break;
 		}

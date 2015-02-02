@@ -5,6 +5,7 @@ import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
 
 import java.io.File;
+
 import edu.udel.cis.vsl.gmc.Option;
 
 /**
@@ -222,18 +223,24 @@ public class CIVLConstants {
 	public final static Option webO = Option.newScalarOption("web", BOOLEAN,
 			"write output for web app?", false);
 
+	public final static Option ompLoopDecompO = Option.newScalarOption(
+			"ompLoopDecomp", STRING,
+			"loop decomposition strategy? (ALL|ROUND_ROBIN|RANDOM)",
+			"ROUND_ROBIN");
+
 	public final static String civlSystemFunction = "_CIVL_system";
 
 	public final static Option[] getAllOptions() {
 		return new Option[] { astO, collectHeapsO, collectProcessesO,
 				collectScopesO, deadlockO, debugO, echoO, enablePrintfO,
 				errorBoundO, guiO, guidedO, idO, inputO, linkO, macroO,
-				maxdepthO, minO, ompNoSimplifyO, preprocO, procBoundO, randomO,
-				saveStatesO, seedO, showAmpleSetO, showAmpleSetWtStatesO,
-				showInputVarsO, showMemoryUnitsO, showModelO,
-				showPathConditionO, showProgramO, showProverQueriesO,
-				showQueriesO, showSavedStatesO, showStatesO, showTimeO,
-				showTransitionsO, simplifyO, solveO, statelessPrintfO, svcompO,
-				sysIncludePathO, traceO, userIncludePathO, verboseO, webO };
+				maxdepthO, minO, ompLoopDecompO, ompNoSimplifyO, preprocO,
+				procBoundO, randomO, saveStatesO, seedO, showAmpleSetO,
+				showAmpleSetWtStatesO, showInputVarsO, showMemoryUnitsO,
+				showModelO, showPathConditionO, showProgramO,
+				showProverQueriesO, showQueriesO, showSavedStatesO,
+				showStatesO, showTimeO, showTransitionsO, simplifyO, solveO,
+				statelessPrintfO, svcompO, sysIncludePathO, traceO,
+				userIncludePathO, verboseO, webO };
 	}
 }

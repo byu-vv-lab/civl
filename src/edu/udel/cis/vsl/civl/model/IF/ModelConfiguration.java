@@ -9,6 +9,9 @@ package edu.udel.cis.vsl.civl.model.IF;
  *
  */
 public final class ModelConfiguration {
+	public static final int DECOMP_ALL = 0;
+	public static final int DECOMP_RANDOM = 1;
+	public static final int DECOMP_ROUND_ROBIN = 2;
 	/**
 	 * The name of the atomic lock variable
 	 */

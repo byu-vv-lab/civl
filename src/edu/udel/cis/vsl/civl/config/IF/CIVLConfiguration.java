@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants.DeadlockKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 public class CIVLConfiguration {
@@ -39,11 +40,31 @@ public class CIVLConfiguration {
 	private boolean showTime = false;
 	private boolean showMemoryUnits = false;
 	private int procBound = -1;
+	private int ompLoopDecomp = ModelConfiguration.DECOMP_ROUND_ROBIN;
 
 	public CIVLConfiguration(GMCConfiguration config) {
 		String deadlockString = (String) config
 				.getValue(CIVLConstants.deadlockO);
+		String ompLoopDecompString = (String) config
+				.getValue(CIVLConstants.ompLoopDecompO);
 
+		if (ompLoopDecompString != null) {
+			switch (ompLoopDecompString) {
+			case "ALL":
+				this.setOmpLoopDecomp(ModelConfiguration.DECOMP_ALL);
+				break;
+			case "ROUND_ROBIN":
+				this.setOmpLoopDecomp(ModelConfiguration.DECOMP_ROUND_ROBIN);
+				break;
+			case "RANDOM":
+				this.setOmpLoopDecomp(ModelConfiguration.DECOMP_RANDOM);
+				break;
+			default:
+				throw new CIVLInternalException(
+						"invalid OpenMP loop decomposition strategy "
+								+ deadlockString, (CIVLSource) null);
+			}
+		}
 		if (deadlockString != null)
 			switch (deadlockString) {
 			case "absolute":
@@ -327,5 +348,13 @@ public class CIVLConfiguration {
 
 	public void setProcBound(int value) {
 		this.procBound = value;
+	}
+
+	public int ompLoopDecomp() {
+		return ompLoopDecomp;
+	}
+
+	public void setOmpLoopDecomp(int ompLoopDecomp) {
+		this.ompLoopDecomp = ompLoopDecomp;
 	}
 }

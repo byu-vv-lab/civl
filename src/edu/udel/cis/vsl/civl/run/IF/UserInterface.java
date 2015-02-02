@@ -18,6 +18,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.inputO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.macroO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompLoopDecompO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompNoSimplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.preprocO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.procBoundO;
@@ -150,16 +151,14 @@ public class UserInterface {
 
 	/* ************************** Static Code ***************************** */
 
-	// TODO civl verify help: options applicable to verify
 	// TODO maxdepth, saveStates,
 	static {
 		for (Option option : CIVLConstants.getAllOptions())
 			definedOptions.put(option.name(), option);
-		CIVLCommand
-				.addShowOption(showModelO, verboseO, debugO, echoO,
-						userIncludePathO, sysIncludePathO, svcompO,
-						showInputVarsO, showProgramO, ompNoSimplifyO, macroO,
-						preprocO, astO, showTimeO);
+		CIVLCommand.addShowOption(showModelO, verboseO, debugO, echoO,
+				userIncludePathO, sysIncludePathO, svcompO, showInputVarsO,
+				showProgramO, ompNoSimplifyO, ompLoopDecompO, macroO, preprocO,
+				astO, showTimeO);
 		CIVLCommand.addVerifyOrCompareOption(errorBoundO, verboseO, debugO,
 				echoO, userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
@@ -167,8 +166,9 @@ public class UserInterface {
 				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
 				showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcompO,
 				showProgramO, showPathConditionO, ompNoSimplifyO,
-				collectProcessesO, collectScopesO, collectHeapsO, macroO,
-				preprocO, astO, showTimeO, showMemoryUnitsO);
+				ompLoopDecompO, collectProcessesO, collectScopesO,
+				collectHeapsO, macroO, preprocO, astO, showTimeO,
+				showMemoryUnitsO);
 		CIVLCommand
 				.addReplayOption(showModelO, verboseO, debugO, echoO,
 						showTransitionsO, showStatesO, showSavedStatesO,
@@ -184,9 +184,9 @@ public class UserInterface {
 				showProverQueriesO, inputO, maxdepthO, procBoundO, simplifyO,
 				enablePrintfO, showAmpleSetO, showAmpleSetWtStatesO,
 				statelessPrintfO, deadlockO, svcompO, showProgramO,
-				showPathConditionO, ompNoSimplifyO, collectProcessesO,
-				collectScopesO, collectHeapsO, macroO, preprocO, astO,
-				showMemoryUnitsO);
+				showPathConditionO, ompNoSimplifyO, ompLoopDecompO,
+				collectProcessesO, collectScopesO, collectHeapsO, macroO,
+				preprocO, astO, showMemoryUnitsO);
 	}
 
 	/* ************************** Constructors ***************************** */
