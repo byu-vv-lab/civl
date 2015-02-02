@@ -1,4 +1,0 @@
-#include "bar.h"
-
-int main() {
-}
