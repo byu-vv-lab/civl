@@ -739,6 +739,8 @@ public class ModelTranslator {
 			return "omp.cvl";
 		case "pthread.h":
 			return "pthread.cvl";
+		case "seq.cvh":
+			return "seq.cvl";
 		case "string.h":
 			return "string.cvl";
 		case "svcomp.h":
