@@ -98,6 +98,14 @@ public class MPITranslationTest {
 	}
 
 	@Test
+	public void mpi_diff2dBad() throws ABCException {
+		assertFalse(ui.run("verify", "-input_NPROCS=4", "-inputnsteps=2",
+				"-inputnx=2", "-inputny=2", "-enablePrintf=false",
+				"-inputNPROCSX=2", "-inputNPROCSY=2",
+				filename("diffusion2dBad.c")));
+	}
+
+	@Test
 	public void mpiSysStatus() {
 		assertTrue(ui.run("verify", "-enablePrintf=false",
 				filename("routines/mpiSysStatus.c")));
@@ -135,7 +143,7 @@ public class MPITranslationTest {
 				"-input_NPROCS_UPPER_BOUND=3", "-inputNB=8",
 				filename("sum_array.c")));
 	}
-	
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

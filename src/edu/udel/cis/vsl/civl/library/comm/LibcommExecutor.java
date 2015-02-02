@@ -28,6 +28,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -129,9 +130,12 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 					argumentValues);
 			break;
 		case "$comm_destroy":
-		case "$gcomm_destroy":
 			state = executeFree(state, pid, process, arguments, argumentValues,
 					call.getSource());
+			break;
+		case "$gcomm_destroy":
+			state = this.executeGcommDestroy(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
 			break;
 		case "$gcomm_create":
 			state = executeGcommCreate(state, pid, process, lhs, arguments,
@@ -691,6 +695,92 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 	}
 
 	/**
+	 * Free the gcomm object and check if there is any message still remaining
+	 * the message buffer
+	 * 
+	 * @param state
+	 *            the current state
+	 * @param pid
+	 *            the PID of the process
+	 * @param process
+	 *            the identifier of the process
+	 * @param lhs
+	 *            the left hand side expression
+	 * @param arguments
+	 *            expressions of the arguments
+	 * @param argumentValues
+	 *            symbolic expressions of the arguments
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeGcommDestroy(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		Expression nprocExpr;
+		Expression gcommHandleExpr = arguments[0];
+		Expression gcommExpr;
+		SymbolicExpression gcommHandle;
+		SymbolicExpression gcomm;
+		NumericExpression nprocs;
+		SymbolicExpression buf;
+		SymbolicExpression queues;
+		int nprocs_int;
+		Evaluation eval;
+
+		gcommHandle = argumentValues[0];
+		eval = evaluator.dereference(arguments[0].getSource(), state, process,
+				gcommHandle, false);
+		state = eval.state;
+		gcomm = eval.value;
+		nprocs = (NumericExpression) universe.tupleRead(gcomm, zeroObject);
+		gcommExpr = modelFactory.dereferenceExpression(
+				gcommHandleExpr.getSource(), gcommHandleExpr);
+		nprocExpr = modelFactory.dotExpression(gcommExpr.getSource(),
+				gcommExpr, 0);
+		nprocs_int = symbolicUtil.extractInt(nprocExpr.getSource(), nprocs);
+		buf = universe.tupleRead(gcomm, twoObject);
+		for (int i = 0; i < nprocs_int; i++) {
+			Reasoner reasoner = universe.reasoner(state.getPathCondition());
+
+			queues = universe.arrayRead(buf, universe.integer(i));
+			for (int j = 0; j < nprocs_int; j++) {
+				SymbolicExpression queue;
+				NumericExpression queueLength;
+				BooleanExpression claim;
+				ResultType resultType;
+
+				queue = universe.arrayRead(queues, universe.integer(j));
+				queueLength = (NumericExpression) universe.tupleRead(queue,
+						zeroObject);
+				claim = universe.lessThan(zero, queueLength);
+				resultType = reasoner.valid(claim).getResultType();
+				if (!resultType.equals(ResultType.NO)) {
+					this.errorLogger
+							.logError(
+									source,
+									state,
+									process,
+									symbolicAnalyzer.stateToString(state),
+									claim,
+									resultType,
+									ErrorKind.MEMORY_LEAK,
+									"There is at least one message still remaing in channel["
+											+ i
+											+ "]["
+											+ j
+											+ "] of the communicator referenced by "
+											+ gcommHandleExpr
+											+ " when the commmunicator is going to be destroied");
+				}
+			}
+		}
+		state = this.executeFree(state, pid, process, arguments,
+				argumentValues, source);
+		return state;
+	}
+
+	/**
 	 * Read matched message index from the given messages array. Here
 	 * "matched message" means if the given tag is wild card tag, then read the
 	 * first message inside the messages array, otherwise the tag should be a
@@ -787,5 +877,4 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 				emptyMessageComponents);
 		return message;
 	}
-
 }

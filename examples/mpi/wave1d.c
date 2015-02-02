@@ -257,9 +257,9 @@ int main(int argc, char * argv[]) {
 
 #endif
   for(iter = 0; iter < nsteps; iter++) {
-    if(nxl != 0){
-      if(iter % wstep == 0)
+    if(iter % wstep == 0)
 	write_frame(iter);
+    if(nxl != 0){
       exchange();
       update();
     }
