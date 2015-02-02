@@ -41,6 +41,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <omp.h>
+
+#define M 10
+#define N 10
 
 void mxv(int m, int n, double * restrict a,
          double * restrict b, double * restrict c);
@@ -50,9 +54,13 @@ int main(int argc, char *argv[])
    double *a,*b,*c;
    int i, j, m, n;
 
+/* REPLACED WITH defines
    printf("Please give m and n: ");
    scanf("%d %d",&m,&n);
    printf("\n");
+*/
+   m = M;
+   n = N;
 
    if ( (a=(double *)malloc(m*sizeof(double))) == NULL )
       perror("memory allocation for a");

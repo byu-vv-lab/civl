@@ -4,6 +4,9 @@
 # include <time.h>
 # include <omp.h>
 
+#define NITS 4    // originally 10000
+#define LN2MAX 1  //originally 25
+
 int main ( void );
 void ccopy ( int n, double x[], double y[] );
 void cfft2 ( int n, double x[], double y[], double w[], double sgn );
@@ -58,10 +61,10 @@ int main ( void )
   int icase;
   int it;
   int ln2;
-  int ln2_max = 25;
+  int ln2_max = LN2MAX;
   double mflops;
   int n;
-  int nits = 100; //MATT CHANGED FROM 10000 TO SCALE DOWN
+  int nits = NITS;
   int proc_num;
   static double seed;
   double sgn;
@@ -193,7 +196,7 @@ int main ( void )
         flops = 2.0 * ( double ) nits 
           * ( 5.0 * ( double ) n * ( double ) ln2 );
 
-        mflops = flops / 1.0E+06 / wtime;
+        mflops = flops / 1.0E+06; // / wtime;
 
         printf ( "  %12e  %12e  %12f\n", wtime, wtime / ( double ) ( 2 * nits ), mflops );
       }
