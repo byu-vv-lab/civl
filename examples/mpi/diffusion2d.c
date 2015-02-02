@@ -351,9 +351,9 @@ int main(int argc, char * argv[]) {
   initialization(argc, argv);
   initData();
   for (i=0; i<nsteps; i++) {
+    if (i%wstep == 0)
+      write_frame(i);
     if (nxl != 0 && nyl != 0) {
-      if (i%wstep == 0)
-        write_frame(i);
       exchange();
       update();
     }
