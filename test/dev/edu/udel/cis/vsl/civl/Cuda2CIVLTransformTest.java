@@ -182,7 +182,7 @@ public class Cuda2CIVLTransformTest {
 	
 	@Test
 	public void dot() {
-		assertTrue(ui.run("verify", "-inputB=8", "-inputTHREADS_B=2", filename("dot.cu")));
+		assertTrue(ui.run("verify", "-inputB=6", "-inputTHREADS_B=4", filename("dot.cu")));
 	}
 	
 	@Test
@@ -191,6 +191,10 @@ public class Cuda2CIVLTransformTest {
 	
 	@Test
 	public void cudaOmp() {
-		assertTrue(ui.run("verify", filename("cuda-omp.cu")));
+		assertTrue(ui.run("verify", "-verbose", filename("cuda-omp.cu")));
+	}
+	
+	@Test
+	public void test() {
 	}
 }
