@@ -84,7 +84,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
@@ -103,10 +102,12 @@ public class Cuda2CIVLTransformTest {
 
 	private static UserInterface ui = new UserInterface();
 
+	@SuppressWarnings("unused")
 	private PrintStream out = System.out;
 
 	private File root = new File(new File("examples"), "cuda");
 	
+	@SuppressWarnings("unused")
 	private File cudaHelper = new File(root, "cuda-helper.cvh");
 	
 
@@ -132,6 +133,7 @@ public class Cuda2CIVLTransformTest {
 	 * @throws ABCException
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unused")
 	private void check(String filenameRoot, boolean debug) throws ABCException,
 			IOException {
 		FrontEnd frontEnd = new FrontEnd();

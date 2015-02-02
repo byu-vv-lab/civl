@@ -212,9 +212,9 @@ public interface Evaluator {
 	 *         Every member of the set is a pointer value, and is a pointer to a
 	 *         memory unit.
 	 */
-//	Set<SymbolicExpression> memoryUnitsReachableFromVariable(
-//			CIVLType variableType, SymbolicExpression variableValue,
-//			int dyScopeID, int vid, State state, String process);
+	// Set<SymbolicExpression> memoryUnitsReachableFromVariable(
+	// CIVLType variableType, SymbolicExpression variableValue,
+	// int dyScopeID, int vid, State state, String process);
 
 	/**
 	 * The model factory should be the unique one used in the system.
@@ -339,8 +339,8 @@ public interface Evaluator {
 	 */
 	SymbolicUniverse universe();
 
-	Pair<State, StringBuffer> getString(CIVLSource source, State state,
-			String process, SymbolicExpression charPointer)
+	Triple<State, StringBuffer, Boolean> getString(CIVLSource source,
+			State state, String process, SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException;
 
 	/**

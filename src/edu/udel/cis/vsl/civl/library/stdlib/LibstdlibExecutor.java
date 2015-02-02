@@ -13,7 +13,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -27,7 +26,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
@@ -148,20 +147,26 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 			intValue = universe.apply(atoiFunction,
 					Arrays.asList(argumentValues[0]));
 		} else {
-			Pair<State, StringBuffer> argStringPair = null;
+			Triple<State, StringBuffer, Boolean> argStringPair = null;
 			String argString;
 
-			try {
-				argStringPair = this.evaluator.getString(
-						arguments[0].getSource(), state, process,
-						argumentValues[0]);
-			} catch (CIVLUnimplementedFeatureException e) {
+			argStringPair = this.evaluator.getString(arguments[0].getSource(),
+					state, process, argumentValues[0]);
+			if (!argStringPair.third) {
 				intValue = universe.apply(atoiFunction,
 						Arrays.asList(argumentValues[0]));
-			}
-			if (argStringPair != null) {
-				state = argStringPair.left;
-				argString = argStringPair.right.toString();
+			} else {
+				// try {
+				// argStringPair = this.evaluator.getString(
+				// arguments[0].getSource(), state, process,
+				// argumentValues[0]);
+				// } catch (CIVLUnimplementedFeatureException e) {
+				// intValue = universe.apply(atoiFunction,
+				// Arrays.asList(argumentValues[0]));
+				// }
+				// if (argStringPair != null) {
+				state = argStringPair.first;
+				argString = argStringPair.second.toString();
 				try {
 					int integer = Integer.parseInt(argString);
 

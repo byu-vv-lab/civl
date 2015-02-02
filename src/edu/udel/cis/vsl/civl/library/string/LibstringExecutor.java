@@ -27,7 +27,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
@@ -236,8 +236,8 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		NumericExpression result;
 		SymbolicExpression charPointer1 = argumentValues[0];
 		SymbolicExpression charPointer2 = argumentValues[1];
-		Pair<State, StringBuffer> strEval1 = null;
-		Pair<State, StringBuffer> strEval2 = null;
+		Triple<State, StringBuffer, Boolean> strEval1 = null;
+		Triple<State, StringBuffer, Boolean> strEval2 = null;
 		StringBuffer str1, str2;
 
 		if ((charPointer1.operator() != SymbolicOperator.CONCRETE))
@@ -257,14 +257,20 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			try {
 				strEval1 = evaluator.getString(source, state, process,
 						charPointer1);
-				state = strEval1.left;
+				state = strEval1.first;
 				strEval2 = evaluator.getString(source, state, process,
 						charPointer2);
-				state = strEval2.left;
+				state = strEval2.first;
 			} catch (CIVLExecutionException e) {
 				errorLogger.reportError(new CIVLExecutionException(e.kind(), e
 						.certainty(), process, e.getMessage(), source));
-			} catch (CIVLUnimplementedFeatureException e) {
+			} catch (Exception e) {
+				throw new CIVLInternalException("Unknown error", source);
+			}
+
+			if (!strEval1.third || !strEval2.third) {
+
+				// catch (CIVLUnimplementedFeatureException e) {
 				// If the string pointed by either pointer1 or pointer2 is
 				// non-concrete, try to compare two string objects, if
 				// different, return abstract function.
@@ -299,14 +305,13 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 					state = primaryExecutor.assign(state, pid, process, lhs,
 							symResult);
 				return state;
-			} catch (Exception e) {
-				throw new CIVLInternalException("Unknown error", source);
+			} else {
+				assert (strEval1.second != null && strEval2.second != null) : "Evaluating String failed";
+				str1 = strEval1.second;
+				str2 = strEval2.second;
+				output = str1.toString().compareTo(str2.toString());
+				result = universe.integer(output);
 			}
-			assert (strEval1.right != null && strEval2.right != null) : "Evaluating String failed";
-			str1 = strEval1.right;
-			str2 = strEval2.right;
-			output = str1.toString().compareTo(str2.toString());
-			result = universe.integer(output);
 		}
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs, result);

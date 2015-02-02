@@ -545,7 +545,7 @@ public class CommonExecutor implements Executor {
 					modelFactory.processValue(newPid));
 		state = stateFactory.setLocation(state, pid, statement.target(),
 				statement.lhs() != null);
-//		state = stateFactory.computeReachableMemUnits(state, newPid);
+		// state = stateFactory.computeReachableMemUnits(state, newPid);
 		return state;
 	}
 
@@ -956,14 +956,14 @@ public class CommonExecutor implements Executor {
 		StringBuffer stringOfSymbolicExpression;
 		StringBuffer formatBuffer;
 		List<StringBuffer> printedContents = new ArrayList<>();
-		Pair<State, StringBuffer> concreteString;
+		Triple<State, StringBuffer, Boolean> concreteString;
 		List<Format> formats;
 		List<Format> nonVoidFormats = new ArrayList<>();
 
 		concreteString = this.evaluator.getString(arguments[0].getSource(),
 				state, process, argumentValues[0]);
-		formatBuffer = concreteString.right;
-		state = concreteString.left;
+		formatBuffer = concreteString.second;
+		state = concreteString.first;
 		formats = this.splitFormat(arguments[0].getSource(), formatBuffer);
 		for (Format format : formats) {
 			if (format.type != ConversionType.VOID)
@@ -983,8 +983,8 @@ public class CommonExecutor implements Executor {
 					concreteString = this.evaluator.getString(
 							arguments[i].getSource(), state, process,
 							argumentValue);
-					stringOfSymbolicExpression = concreteString.right;
-					state = concreteString.left;
+					stringOfSymbolicExpression = concreteString.second;
+					state = concreteString.first;
 					printedContents.add(stringOfSymbolicExpression);
 				} else if (myFormat.type == ConversionType.POINTER) {
 					printedContents.add(new StringBuffer(symbolicAnalyzer

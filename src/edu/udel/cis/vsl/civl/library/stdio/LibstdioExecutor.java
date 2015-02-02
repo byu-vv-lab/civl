@@ -36,6 +36,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -797,7 +798,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		SymbolicExpression fileObject;
 		StringBuffer formatBuffer;
-		Pair<State, StringBuffer> formatString;
+		Triple<State, StringBuffer, Boolean> formatString;
 		NumericExpression position;
 		Reasoner reasoner;
 
@@ -836,9 +837,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		}
 		formatString = this.evaluator.getString(arguments[1].getSource(),
 				state, process, argumentValues[1]);
-		formatBuffer = formatString.right;
-		state = formatString.left;
-
+		formatBuffer = formatString.second;
+		state = formatString.first;
 		{ // reads the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,
 					oneObject);
@@ -1008,14 +1008,14 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		SymbolicExpression fileObject;
 		SymbolicExpression fileName;
-		Pair<State, StringBuffer> stringResult;
+		Triple<State, StringBuffer, Boolean> stringResult;
 		String fileNameString;
 		StringBuffer stringOfSymbolicExpression;
 		StringBuffer formatBuffer;
 		List<StringBuffer> printedContents = new ArrayList<>();
 		List<Integer> sIndexes = new LinkedList<>();
 		int sCount = 2;
-		Pair<State, StringBuffer> concreteString;
+		Triple<State, StringBuffer, Boolean> concreteString;
 		List<Format> formats;
 
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
@@ -1030,12 +1030,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		fileName = universe.tupleRead(fileObject, zeroObject);
 		stringResult = this.evaluator.getString(source, state, process,
 				fileName);
-		state = stringResult.left;
-		fileNameString = stringResult.right.toString();
+		state = stringResult.first;
+		fileNameString = stringResult.second.toString();
 		concreteString = this.evaluator.getString(arguments[1].getSource(),
 				state, process, argumentValues[1]);
-		formatBuffer = concreteString.right;
-		state = concreteString.left;
+		formatBuffer = concreteString.second;
+		state = concreteString.first;
 		formats = this.primaryExecutor.splitFormat(arguments[1].getSource(),
 				formatBuffer);
 		for (Format format : formats) {
@@ -1059,8 +1059,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				concreteString = this.evaluator
 						.getString(arguments[i].getSource(), state, process,
 								argumentValue);
-				stringOfSymbolicExpression = concreteString.right;
-				state = concreteString.left;
+				stringOfSymbolicExpression = concreteString.second;
+				state = concreteString.first;
 				printedContents.add(stringOfSymbolicExpression);
 			} else
 				printedContents.add(new StringBuffer(this.symbolicAnalyzer

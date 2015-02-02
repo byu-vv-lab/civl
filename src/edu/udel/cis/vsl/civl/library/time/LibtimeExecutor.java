@@ -49,7 +49,8 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 				symbolicAnalyzer, civlConfig, libExecutorLoader,
 				libEvaluatorLoader);
 		this.tmType = this.modelFactory.getSystemType(Model.TM_TYPE);
-		this.tmSymbolicType = tmType.getDynamicType(universe);
+		if (tmType != null)
+			this.tmSymbolicType = tmType.getDynamicType(universe);
 		this.stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
 				.arrayType(universe.characterType()));
 		this.timeFunc = (SymbolicConstant) universe.canonic(universe
@@ -58,22 +59,28 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 						universe.functionType(
 								Arrays.asList(universe.integerType()),
 								universe.realType())));
-		this.localtimeFunc = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("localtime"), universe
-						.functionType(Arrays.asList(universe.realType()),
-								this.tmSymbolicType)));
-		this.tmToStrFunc = (SymbolicConstant) universe
-				.canonic(universe.symbolicConstant(universe
-						.stringObject("strftime"), universe.functionType(Arrays
-						.asList(universe.integerType(),
-								modelFactory.pointerSymbolicType(),
-								this.tmSymbolicType), this.stringSymbolicType)));
-		this.tmToStrSizeFunc = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(universe.stringObject("strftimeSize"),
-						universe.functionType(Arrays.asList(
-								universe.integerType(),
-								modelFactory.pointerSymbolicType(),
-								this.tmSymbolicType), universe.integerType())));
+		if (tmType != null)
+			this.localtimeFunc = (SymbolicConstant) universe.canonic(universe
+					.symbolicConstant(universe.stringObject("localtime"),
+							universe.functionType(
+									Arrays.asList(universe.realType()),
+									this.tmSymbolicType)));
+		if (tmType != null)
+			this.tmToStrFunc = (SymbolicConstant) universe.canonic(universe
+					.symbolicConstant(universe.stringObject("strftime"),
+							universe.functionType(Arrays.asList(
+									universe.integerType(),
+									modelFactory.pointerSymbolicType(),
+									this.tmSymbolicType),
+									this.stringSymbolicType)));
+		if (tmType != null)
+			this.tmToStrSizeFunc = (SymbolicConstant) universe.canonic(universe
+					.symbolicConstant(universe.stringObject("strftimeSize"),
+							universe.functionType(Arrays.asList(
+									universe.integerType(),
+									modelFactory.pointerSymbolicType(),
+									this.tmSymbolicType), universe
+									.integerType())));
 	}
 
 	@Override
@@ -146,7 +153,8 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 				state, process, argumentValues[3], false);
 		SymbolicExpression tmValue, sizeValue, tmStr;
 
-		resultPointer = this.symbolicUtil.parentPointer(arguments[0].getSource(), resultPointer);
+		resultPointer = this.symbolicUtil.parentPointer(
+				arguments[0].getSource(), resultPointer);
 		state = eval.state;
 		tmValue = eval.value;
 		tmStr = universe.apply(tmToStrFunc,

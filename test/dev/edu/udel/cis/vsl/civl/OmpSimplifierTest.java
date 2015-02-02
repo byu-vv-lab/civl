@@ -1,13 +1,10 @@
 package edu.udel.cis.vsl.civl;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
 import org.junit.AfterClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
@@ -48,7 +45,9 @@ public class OmpSimplifierTest {
 		File file = new File(rootDir, fileNameRoot + ".c");
 		File simplifiedFile = new File(new File(rootDir, "simple"),
 				fileNameRoot + ".c.s");
+		@SuppressWarnings("unused")
 		Program program, simplifiedProgram;
+		@SuppressWarnings("unused")
 		DifferenceObject diff;
 
 		{ // Parse the program and apply the CIVL transformations
@@ -179,10 +178,12 @@ public class OmpSimplifierTest {
 		check("pi");
 	}
 
+	@SuppressWarnings("unused")
 	private static UserInterface ui = new UserInterface();
 
 	/* *************************** Helper Methods ************************** */
 
+	@SuppressWarnings("unused")
 	private static String filename(String name) {
 		return new File(rootDir, name).getPath();
 	}

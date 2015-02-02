@@ -3329,7 +3329,7 @@ public class CommonEvaluator implements Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	@Override
-	public Pair<State, StringBuffer> getString(CIVLSource source, State state,
+	public Triple<State, StringBuffer, Boolean> getString(CIVLSource source, State state,
 			String process, SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException {
 		if (charPointer.operator() == SymbolicOperator.CONCRETE) {
@@ -3357,9 +3357,9 @@ public class CommonEvaluator implements Evaluator {
 						originalArray = (SymbolicSequence<?>) charArray
 								.argument(0);
 					} catch (ClassCastException e) {
-						// throw new CIVLUnimplementedFeatureException(
-						// "non-concrete strings", source);
-						return new Pair<>(state, charArray.toStringBuffer(true));
+//						 throw new CIVLUnimplementedFeatureException(
+//						 "non-concrete strings", source);
+						return new Triple<>(state, charArray.toStringBuffer(true), false);
 					} catch (ArrayIndexOutOfBoundsException e) {
 						CIVLExecutionException err = new CIVLExecutionException(
 								ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
@@ -3392,7 +3392,7 @@ public class CommonEvaluator implements Evaluator {
 			}
 			result = symbolicUtil.charArrayToString(source, originalArray,
 					int_arrayIndex, false);
-			return new Pair<>(state, result);
+			return new Triple<>(state, result, true);
 		} else
 			throw new CIVLUnimplementedFeatureException("non-concrete strings",
 					source);

@@ -687,8 +687,13 @@ public class ModelBuilderWorker {
 	private void completeTimeVar() {
 		Variable brokenTimeVar = this.factory.brokenTimeVariable();
 
-		if (brokenTimeVar != null)
-			brokenTimeVar.setType(this.factory.getSystemType(Model.TM_TYPE));
+		if (brokenTimeVar != null) {
+			CIVLType tmType = this.factory.getSystemType(Model.TM_TYPE);
+
+			if (tmType != null)// tmType may be null because of the pruner
+				brokenTimeVar
+						.setType(this.factory.getSystemType(Model.TM_TYPE));
+		}
 	}
 
 	/**

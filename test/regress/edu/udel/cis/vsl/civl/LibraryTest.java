@@ -163,6 +163,13 @@ public class LibraryTest {
 				filename("civlc/domainDecomposition.cvl")));
 	}
 
+	@Test
+	public void timeTest() throws ABCException {
+		assertTrue(ui.run("verify", "-inputN=10",
+				"-enablePrintf=false -showProgram=false",
+				filename("time/timeTest.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
