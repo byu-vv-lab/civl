@@ -1919,9 +1919,20 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						newSource(singlePlace, CParser.IDENTIFIER), "owner"));
 				operands.add(this.identifierExpression(
 						newSource(singlePlace, CParser.IDENTIFIER), "_tid"));
-				int i = 0;
+				
 				CompoundStatementNode ifBody;
 				LinkedList<BlockItemNode> ifItems = new LinkedList<>();
+				
+				// Declare local copies of the private variables
+				if (privateList != null) {
+					for (ASTNode child : privateList.children()) {
+						VariableDeclarationNode localPrivate = addPrivateVariable(
+								(IdentifierExpressionNode) child, "regular");
+						ifItems.add(localPrivate);
+					}
+				}
+				
+				int i = 0;
 				for (ASTNode child : node.children()) {
 					node.removeChild(i);
 					ifItems.add((BlockItemNode) child);
@@ -1949,7 +1960,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				children = ifBody.children();
 
 				for (ASTNode child : children) {
-					replaceOMPPragmas(child, privateIDs, sharedIDs,
+					replaceOMPPragmas(child, privateList, sharedIDs,
 							reductionIDs, firstPrivateIDs);
 				}
 
