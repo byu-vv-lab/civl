@@ -1867,6 +1867,35 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 			}
 			if (workshareKind.equals("SINGLE")) {
+				SequenceNode<IdentifierExpressionNode> privateList = ((OmpWorksharingNode) node).privateList();
+				removeNodeFromParent(privateList);
+				boolean removed = false;
+				for(ASTNode child : sharedIDs.children()){
+					IdentifierExpressionNode idexp = (IdentifierExpressionNode) child;
+					IdentifierNode id = idexp.getIdentifier();
+					for(ASTNode childPrivateList : privateList.children()){
+						IdentifierExpressionNode privateIdexp = (IdentifierExpressionNode) childPrivateList;
+						IdentifierNode privateId = privateIdexp.getIdentifier();
+						if(id.name().equals(privateId.name())){
+							child.remove();
+							removed = true;
+						}
+					}
+					
+				}
+				SequenceNode<IdentifierExpressionNode> newSharedList;
+				List<IdentifierExpressionNode> list = new LinkedList<IdentifierExpressionNode>();
+				if(removed){
+					for(ASTNode child : sharedIDs.children()){
+						if(child != null){
+							child.remove();
+							list.add((IdentifierExpressionNode) child);
+						}
+					}
+					newSharedList = nodeFactory.newSequenceNode(source, "sharedList", list);
+					sharedIDs = newSharedList;
+				}
+				
 				String singlePlace = "single";
 				ExpressionNode arriveSingle = nodeFactory
 						.newFunctionCallNode(source, this.identifierExpression(
