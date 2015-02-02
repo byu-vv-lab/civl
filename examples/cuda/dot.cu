@@ -36,8 +36,7 @@ _Bool isPowerOfTwo(int x) {
 $input int LENGTH;
 // upper bound on LENGTH
 $input int B;
-//$assume(0 <= LENGTH && LENGTH <= B);
-$assume(0 < LENGTH && LENGTH <= B);
+$assume(0 <= LENGTH && LENGTH <= B);
 $input int THREADS_PER_BLOCK; // thread number per block: must be a power of 2, due to the while loop at the end of gpuThread();
 $input int THREADS_B; 
 $assume(1 <= THREADS_PER_BLOCK && THREADS_PER_BLOCK <= THREADS_B);
@@ -46,9 +45,8 @@ $assume(1 <= THREADS_PER_BLOCK && THREADS_PER_BLOCK <= THREADS_B);
 
 const int N = LENGTH;
 const int threadsPerBlock = THREADS_PER_BLOCK;
-//const int blocksPerGrid =
-//            imin(32, (N+threadsPerBlock-1) / threadsPerBlock );
-const int blocksPerGrid = (N+threadsPerBlock-1) / threadsPerBlock;
+const int blocksPerGrid =
+            imin(32, (N+threadsPerBlock-1) / threadsPerBlock );
 
 __global__ void dot( float *a, float *b, float *c ) {
     __shared__ float cache[threadsPerBlock];
@@ -80,10 +78,8 @@ __global__ void dot( float *a, float *b, float *c ) {
 
 
 int main( void ) {
-    elaborate(N);
-    //_Bool validThreadsPerBlock = isPowerOfTwo(THREADS_PER_BLOCK);
-    //$assume(validThreadsPerBlock);
-    //$assume(isPowerOfTwo(THREADS_PER_BLOCK));
+    elaborate(THREADS_PER_BLOCK);
+    $assume(isPowerOfTwo(THREADS_PER_BLOCK));
     float   *a, *b, c, *partial_c;
     float   *dev_a, *dev_b, *dev_partial_c;
 
