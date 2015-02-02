@@ -65,6 +65,19 @@ import edu.udel.cis.vsl.civl.util.IF.Triple;
  */
 public class MPI2CIVLWorker extends BaseWorker {
 
+	/* ************************** Pthread Constants ********************** */
+
+	private static final String PTHREAD_MUTEX_TRYLOCK = "pthread_mutex_trylock";
+	private static final String PTHREAD_POOL = "pool";
+	private static final String PTHREAD_ROOT = "root";
+	private static final String PTHREAD_PTR = "value_ptr_value";
+	private static final String PTHREAD_JOIN = "pthread_join";
+	private static final String PTHREAD_MUTEX_LOCK = "pthread_mutex_lock";
+	private static final String PTHREAD_MUTEX_UNLOCK = "pthread_mutex_unlock";
+	private static final String PTHREAD_COND_WAIT = "pthread_cond_wait";
+	private static final String PTHREAD_CREATE = "pthread_create";
+	private static final String PTHREAD_EXIT = "_pthread_exit";
+
 	/* ************************** Private Static Fields ********************** */
 
 	// private static String EXIT = "exit";
@@ -75,14 +88,6 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * program.
 	 */
 	private static String COMM_WORLD = "MPI_COMM_WORLD";
-
-	private static String PTHREAD_POOL = "_pool";
-
-	private static String PTHREAD_ADD_THREAD = "_add_thread";
-
-	private static String PTHREAD_CREATE = "pthread_create";
-
-	private static String PTHREAD_EXIT = "_pthread_exit";
 
 	// private static String PTHREAD_IS_TERMINATED = "_isTerminated";
 
@@ -533,26 +538,18 @@ public class MPI2CIVLWorker extends BaseWorker {
 						includedNodes.add(child);
 				} else
 					includedNodes.add(child);
-			} else if (sourceFile.endsWith(".cvh")
-					|| sourceFile.equals("civl-cuda.cvl")
-					|| sourceFile.equals("civl-pthread.cvl")
-					|| sourceFile.equals("comm.cvl")
-					|| sourceFile.equals("civl-mpi.cvl")
-					|| sourceFile.equals("mpi.cvl")
-					|| sourceFile.equals("omp.cvl")
-					|| sourceFile.equals("civlc.cvl")
-					|| sourceFile.equals("concurrency.cvl")
-					|| sourceFile.equals("stdio.cvl")
-					|| sourceFile.equals("pthread.cvl")
-					|| sourceFile.equals("string.cvl")
-					|| sourceFile.equals("civl-omp.cvl"))
-				includedNodes.add(child);
-			else if (sourceFile.equals("pthread.cvl")) {
+			} else if (sourceFile.equals("pthread.cvl")) {
+				// extern void *value_ptr_value = NULL;
+				// extern $scope root = $here;
+				// pthread_t * pool[];
+
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
 					String varName = variableDeclaration.getName();
 
-					if (varName.equals(PTHREAD_POOL))
+					if (varName.equals(PTHREAD_POOL)
+							|| varName.equals(PTHREAD_ROOT)
+							|| varName.equals(PTHREAD_PTR))
 						// keep variable declaration nodes for _pool in
 						// pthread.cvl
 						items.add(variableDeclaration);
@@ -562,28 +559,57 @@ public class MPI2CIVLWorker extends BaseWorker {
 					FunctionDefinitionNode functionDef = (FunctionDefinitionNode) child;
 					String name = functionDef.getName();
 
-					if (name.equals(PTHREAD_ADD_THREAD)
+					if (name.equals(PTHREAD_JOIN)
 							// || name.equals(PTHREAD_IS_TERMINATED)
 							|| name.equals(PTHREAD_CREATE)
-							|| name.equals(PTHREAD_EXIT))
+							|| name.equals(PTHREAD_EXIT)
+							|| name.equals(PTHREAD_MUTEX_LOCK)
+							|| name.equals(PTHREAD_MUTEX_UNLOCK)
+							|| name.equals(PTHREAD_MUTEX_TRYLOCK)
+							|| name.equals(PTHREAD_COND_WAIT))
 						items.add(functionDef);
 					else
 						includedNodes.add(child);
 				} else
 					includedNodes.add(child);
-			} else if (sourceFile.endsWith(".h")) {
+			} else if (sourceFile.equals("stdio.h")) {
+				// keep variable declaration nodes from stdio, i.e.,
+				// stdout, stdin, stderr, etc.
+				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION)
+					items.add((BlockItemNode) child);
+				else
+					includedNodes.add(child);
+			} else if (sourceFile.equals("mpi.h")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
 
-					if (sourceFile.equals("stdio.h"))
-						// keep variable declaration nodes from stdio, i.e.,
-						// stdout, stdin, etc.
-						items.add(variableDeclaration);
-					else if (!variableDeclaration.getName().equals(COMM_WORLD))
-						// ignore the MPI_COMM_WORLD declaration in mpi.h.
+					// ignore the MPI_COMM_WORLD declaration in mpi.h.
+					if (!variableDeclaration.getName().equals(COMM_WORLD))
 						includedNodes.add(child);
 				} else
 					includedNodes.add(child);
+			} else if (sourceFile.endsWith(".h")) {
+				includedNodes.add(child);
+			} else if (sourceFile.endsWith(".cvh")
+					|| sourceFile.equals("civl-cuda.cvl")
+					|| sourceFile.equals("civl-mpi.cvl")
+					|| sourceFile.equals("civl-omp.cvl")
+					|| sourceFile.equals("civl-pthread.cvl")
+					|| sourceFile.equals("civlc.cvl")
+					|| sourceFile.equals("comm.cvl")
+					|| sourceFile.equals("concurrency.cvl")
+					|| sourceFile.equals("cuda.cvl")
+					|| sourceFile.equals("math.cvl")
+					|| sourceFile.equals("mpi.cvl")
+					|| sourceFile.equals("omp.cvl")
+					|| sourceFile.equals("pthread-functions.cvl")
+					|| sourceFile.equals("pthread-types.cvl")
+					|| sourceFile.equals("sched.cvl")
+					|| sourceFile.equals("seq.cvl")
+					|| sourceFile.equals("stdio.cvl")
+					|| sourceFile.equals("stdio-c.cvl")
+					|| sourceFile.equals("string.cvl")) {
+				includedNodes.add(child);
 			} else {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 					VariableDeclarationNode variable = (VariableDeclarationNode) child;
