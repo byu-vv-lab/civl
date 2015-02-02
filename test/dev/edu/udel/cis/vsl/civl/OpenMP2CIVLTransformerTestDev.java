@@ -133,6 +133,17 @@ public class OpenMP2CIVLTransformerTestDev {
 				"-inputTHREAD_MAX=2", filename("pi.c")));
 	}
 
+	@Test
+	public void forWorkshare() {
+		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2 -showAmpleSetWtStates", filename("for.c")));
+	}
+	
+	@Test
+	public void singleWorkshare() {
+		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2 -showAmpleSetWtStates", filename("single.c")));
+	}
 	
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
