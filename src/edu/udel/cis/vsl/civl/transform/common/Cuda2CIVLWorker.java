@@ -60,8 +60,8 @@ public class Cuda2CIVLWorker extends BaseWorker {
 		translateMainDefinition(root);
 		translateKernelDefinitions(root);
 
-		root.prettyPrint(System.out);
-		System.out.println();
+		//root.prettyPrint(System.out);
+		//System.out.println();
 		return astFactory.newAST(root, ast.getSourceFiles());
 	}
 
@@ -225,7 +225,6 @@ public class Cuda2CIVLWorker extends BaseWorker {
 		FunctionDefinitionNode newMain = nodeFactory.newFunctionDefinitionNode(
 				source, nodeFactory.newIdentifierNode(source, "main"), oldMain
 						.getTypeNode().copy(), null, newMainBody);
-		newMain.prettyPrint(System.out);
 		return newMain;
 	}
 
@@ -280,7 +279,6 @@ public class Cuda2CIVLWorker extends BaseWorker {
 				.newFunctionDefinitionNode(source,
 						nodeFactory.newIdentifierNode(source, newKernelName),
 						newKernelType, null, newKernelBody);
-		newKernel.prettyPrint(System.out);
 		return newKernel;
 	}
 
@@ -491,7 +489,6 @@ public class Cuda2CIVLWorker extends BaseWorker {
 				this.identifierExpression(source, "$barrier_call"),
 				Arrays.asList(this.identifierExpression(source, "_b")), null);
 		replaceSyncThreadsCalls(threadDefinition, barrierCall);
-		threadDefinition.prettyPrint(System.out);
 		return threadDefinition;
 	}
 
