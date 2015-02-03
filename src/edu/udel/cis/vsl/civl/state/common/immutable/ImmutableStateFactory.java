@@ -1693,6 +1693,7 @@ public class ImmutableStateFactory implements StateFactory {
 		int nameId = 0;
 		Map<SymbolicExpression, SymbolicExpression> oldName2NewName = new HashMap<>();
 		int numHeapFields = this.modelFactory.heapType().getNumMallocs();
+		Pair<Integer, Map<SymbolicExpression, SymbolicExpression>> nameMappingResult;
 
 		for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
 			ImmutableDynamicScope dyscope = theState.getDyscope(dyscopeId);
@@ -1722,13 +1723,17 @@ public class ImmutableStateFactory implements StateFactory {
 										.arrayRead(heapField,
 												universe.integer(heapObjId));
 
-								nameId = this.addOldToNewName(heapObj, nameId,
-										oldName2NewName);
+								nameMappingResult = this.addOldToNewName(
+										heapObj, nameId, oldName2NewName);
+								nameId = nameMappingResult.left;
+								oldName2NewName = nameMappingResult.right;
 							}
 						}
 				} else if (!variable.isInput()) {// normal variables
-					nameId = this.addOldToNewName(value, nameId,
+					nameMappingResult = this.addOldToNewName(value, nameId,
 							oldName2NewName);
+					nameId = nameMappingResult.left;
+					oldName2NewName = nameMappingResult.right;
 				}
 			}
 		}
@@ -1753,7 +1758,8 @@ public class ImmutableStateFactory implements StateFactory {
 		return theState;
 	}
 
-	private int addOldToNewName(SymbolicExpression heapObject, int nameId,
+	private Pair<Integer, Map<SymbolicExpression, SymbolicExpression>> addOldToNewName(
+			SymbolicExpression heapObject, int nameId,
 			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapObjectNames) {
 		SymbolicConstant oldConstant = null;
 		String prefix = "V";
@@ -1776,10 +1782,10 @@ public class ImmutableStateFactory implements StateFactory {
 						newNameString, oldConstant.type());
 
 				oldToNewHeapObjectNames.put(oldConstant, newConstant);
-				return nameId + 1;
 			}
+			return new Pair<>(nameId + 1, oldToNewHeapObjectNames);
 		}
-		return nameId;
+		return new Pair<>(nameId, oldToNewHeapObjectNames);
 	}
 
 	// private Map<Integer, Map<SymbolicExpression, Boolean>>

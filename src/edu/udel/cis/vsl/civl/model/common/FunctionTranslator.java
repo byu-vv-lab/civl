@@ -201,7 +201,7 @@ public class FunctionTranslator {
 
 	/* ************************** Instance Fields ************************** */
 
-//	private int civlParForCount = 0;
+	// private int civlParForCount = 0;
 	private int atomicCount = 0;
 
 	private int atomCount = 0;
@@ -577,7 +577,7 @@ public class FunctionTranslator {
 		Expression domain = this.translateExpressionNode(
 				civlForNode.getDomain(), scope, true);
 
-//		this.civlParForCount++;
+		// this.civlParForCount++;
 		for (int i = 0; i < numOfLoopVars; i++) {
 			Variable loopVar = loopVars.get(i);
 			Variable parameter = modelFactory.variable(loopVar.getSource(),
@@ -588,8 +588,8 @@ public class FunctionTranslator {
 		procFunc = modelFactory.function(
 				procFuncSource,
 				modelFactory.identifier(procFuncStartSource, PAR_FUNC_NAME
-						+ modelBuilder.parProcFunctions.size()), procFuncParameters,
-				modelFactory.voidType(), scope, null);
+						+ modelBuilder.parProcFunctions.size()),
+				procFuncParameters, modelFactory.voidType(), scope, null);
 		scope.addFunction(procFunc);
 		modelBuilder.parProcFunctions.put(procFunc, bodyNode);
 		location = modelFactory.location(parForBeginSource, scope);
@@ -2578,7 +2578,8 @@ public class FunctionTranslator {
 		if (node.getTypeNode().isOutputQualified()) {
 			variable.setIsOutput(true);
 		}
-		if (node.getInitializer() == null && scope.id() == 0) {
+		if (node.hasStaticStorage()
+				|| (node.getInitializer() == null && scope.id() == 0)) {
 			variable.setStatic(true);
 		}
 		return variable;

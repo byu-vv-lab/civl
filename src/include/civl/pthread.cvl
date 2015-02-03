@@ -9,7 +9,7 @@
 #include <seq.cvh>
 
 extern void *value_ptr_value = NULL;
-pthread_t * pool[];
+static pthread_t * pool[];
 
 typedef struct {
   $proc queue[];
