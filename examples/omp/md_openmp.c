@@ -4,6 +4,11 @@
 # include <math.h>
 # include <omp.h>
 
+#define ND 1 // Originally 3
+#define NP 10 // Originally 1000
+#define NSTEPS 10 // Originally 400
+#define DT 0.1 // Originally 0.0001
+
 int main ( int argc, char *argv[] );
 void compute ( int np, int nd, double pos[], double vel[], 
   double mass, double f[], double *pot, double *kin );
@@ -55,21 +60,21 @@ int main ( int argc, char *argv[] )
 {
   double *acc;
   double *box;
-  double dt = 0.0001;
+  double dt = DT; 
   double e0;
   double *force;
   int i;
   int id;
   double kinetic;
   double mass = 1.0;
-  int nd = 3;
-  int np = 1000;
+  int nd = ND;
+  int np = NP;
   double *pos;
   double potential;
   int proc_num;
   int seed = 123456789;
   int step;
-  int step_num = 400;
+  int step_num = NSTEPS;
   int step_print;
   int step_print_index;
   int step_print_num;
