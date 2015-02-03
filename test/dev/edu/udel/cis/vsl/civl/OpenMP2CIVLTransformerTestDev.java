@@ -133,6 +133,29 @@ public class OpenMP2CIVLTransformerTestDev {
 		assertTrue(ui.run("verify",
 				"-inputTHREAD_MAX=2", filename("md_openmp.c")));
 	}
+
+	@Test
+	public void heatedplate() {
+		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2", filename("heated_plate_openmp.c")));
+	}
+	
+	@Test
+	public void heatedplateSimplify() {
+		assertTrue(ui.run("verify",
+				"-inputTHREAD_MAX=2", filename("heated_plate_openmp.c")));
+	}
+	@Test
+	public void prime() {
+		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2", filename("prime_openmp.c")));
+	}
+	
+	@Test
+	public void primeSimplify() {
+		assertTrue(ui.run("verify",
+				"-inputTHREAD_MAX=2", filename("prime_openmp.c")));
+	}
 	
 	@Test
 	public void fig310_mxv_omp() {
