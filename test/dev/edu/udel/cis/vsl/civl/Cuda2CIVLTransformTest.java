@@ -191,7 +191,7 @@ public class Cuda2CIVLTransformTest {
 	
 	@Test
 	public void cudaOmp() {
-		assertTrue(ui.run("verify", "-verbose", filename("cuda-omp.cu")));
+		assertTrue(ui.run("verify", filename("cuda-omp.cu")));
 	}
 	
 	@Test
