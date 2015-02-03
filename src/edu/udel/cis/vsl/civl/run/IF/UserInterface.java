@@ -388,7 +388,8 @@ public class UserInterface {
 			} catch (ABCException e) {
 				err.println(e);
 			} catch (ABCRuntimeException e) {
-				err.println(e);
+				// not supposed to happen, so show the gory details...
+				e.printStackTrace(err);
 			} catch (IOException e) {
 				err.println(e);
 			} catch (MisguidedExecutionException e) {
