@@ -608,6 +608,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				assert false : "OpenMP Canonical Loop Form violated (condition malformed) :"
 						+ condition;
 			}
+			
 		}
 
 		/*
