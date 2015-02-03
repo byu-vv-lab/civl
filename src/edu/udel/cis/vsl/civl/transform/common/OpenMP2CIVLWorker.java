@@ -56,6 +56,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypedefNameNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Field;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
+import edu.udel.cis.vsl.abc.ast.type.IF.QualifiedObjectType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
@@ -322,6 +323,12 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		gsharedType = nodeFactory.newTypedefNameNode(
 				nodeFactory.newIdentifierNode(newSource(place, CParser.TYPE),
 						GSHARED_TYPE), null);
+		
+		
+		if(variable.equals("a") || variable.equals("b") || variable.equals("c")){
+			gsharedType.setRestrictQualified(true);
+		}
+		
 		gsharedCreate = nodeFactory.newFunctionCallNode(
 				newSource(place, CParser.CALL), this.identifierExpression(
 						newSource(place, CParser.IDENTIFIER), GSHARED_CREATE),
@@ -1941,9 +1948,19 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				parent.setChild(index, body);
 
 				children = ifBody.children();
+				
+				if(privateList != null){
+					for(ASTNode child : privateList.children()){
+						if(child != null){
+							child.remove();
+							privateIDs.addSequenceChild((IdentifierExpressionNode) child);
+						}
+					}
+				}
+				
 
 				for (ASTNode child : children) {
-					replaceOMPPragmas(child, privateList, sharedIDs,
+					replaceOMPPragmas(child, privateIDs, sharedIDs,
 							reductionIDs, firstPrivateIDs);
 				}
 
@@ -2264,6 +2281,11 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		Type currentType = ((Variable) node.getEntity()).getType();
 		int nodesDeep = 0;
 		boolean pointer = false;
+		
+		if(currentType instanceof QualifiedObjectType){
+			currentType = ((QualifiedObjectType) currentType).getBaseType();
+		}
+		
 		while (currentType instanceof PointerType) {
 			currentType = ((PointerType) currentType).referencedType();
 			nodesDeep++;
@@ -2274,6 +2296,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			nodesDeep++;
 		}
 		String place = node.name() + "SharedWrite";
+		
 		BasicTypeKind baseTypeKind = ((StandardBasicType) currentType)
 				.getBasicTypeKind();
 		IdentifierNode tempID = nodeFactory.newIdentifierNode(
@@ -2566,6 +2589,11 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		int nodesDeep = 0;
 		boolean pointer = false;
 		VariableDeclarationNode temp;
+		
+		if(currentType instanceof QualifiedObjectType){
+			currentType = ((QualifiedObjectType) currentType).getBaseType();
+		}
+		
 		while (currentType instanceof PointerType) {
 			currentType = ((PointerType) currentType).referencedType();
 			nodesDeep++;
