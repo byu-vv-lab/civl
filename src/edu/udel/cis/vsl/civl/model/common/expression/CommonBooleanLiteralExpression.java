@@ -46,7 +46,7 @@ public class CommonBooleanLiteralExpression extends CommonExpression implements
 			boolean value) {
 		// the expression scope is null because no variable is accessed by a
 		// boolean literal.
-		super(source, null, type);
+		super(source, null, null, type);
 		this.value = value;
 	}
 

@@ -48,10 +48,10 @@ public class CommonAtomicLockAssignStatement extends CommonAssignStatement {
 	 * @param atomicKind
 	 *            The atomic kind of this statement
 	 */
-	public CommonAtomicLockAssignStatement(CIVLSource civlSource, Scope scope,
-			Location source, Expression guard, boolean isEntering,
-			LHSExpression lhs, Expression rhs) {
-		super(civlSource, scope, source, guard, lhs, rhs, false);
+	public CommonAtomicLockAssignStatement(CIVLSource civlSource, Scope hscope,
+			Scope lscope, Location source, Expression guard,
+			boolean isEntering, LHSExpression lhs, Expression rhs) {
+		super(civlSource, hscope, lscope, source, guard, lhs, rhs, false);
 		this.enter = isEntering;
 	}
 

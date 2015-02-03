@@ -17,7 +17,7 @@ public class CommonHereOrRootExpression extends CommonExpression implements
 
 	public CommonHereOrRootExpression(CIVLSource source, CIVLType type,
 			boolean isRoot, SymbolicExpression constantValue) {
-		super(source, null, type);
+		super(source, null, null, type);
 		this.isRoot = isRoot;
 		this.constantValue = constantValue;
 	}

@@ -42,7 +42,7 @@ public class CommonUnaryExpression extends CommonExpression implements
 	 */
 	public CommonUnaryExpression(CIVLSource source, CIVLType type,
 			UNARY_OPERATOR operator, Expression operand) {
-		super(source, operand.expressionScope(), type);
+		super(source, operand.expressionScope(), operand.lowestScope(), type);
 		this.operator = operator;
 		this.operand = operand;
 	}

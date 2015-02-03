@@ -41,7 +41,8 @@ public class CommonReturnStatement extends CommonStatement implements
 	public CommonReturnStatement(CIVLSource civlSource, Location source,
 			Expression guard, Expression expression, CIVLFunction function) {
 		super(civlSource, expression != null ? expression.expressionScope()
-				: null, source, guard);
+				: null, expression != null ? expression.lowestScope() : null,
+				source, guard);
 		this.expression = expression;
 		this.function = function;
 	}

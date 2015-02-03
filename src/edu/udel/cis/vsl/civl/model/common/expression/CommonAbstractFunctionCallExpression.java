@@ -48,9 +48,10 @@ public class CommonAbstractFunctionCallExpression extends CommonExpression
 	 *            Expressions for the arguments used in the abstract function
 	 *            call.
 	 */
-	public CommonAbstractFunctionCallExpression(CIVLSource source, Scope scope,
-			AbstractFunction function, List<Expression> arguments) {
-		super(source, scope, function.returnType());
+	public CommonAbstractFunctionCallExpression(CIVLSource source,
+			Scope hscope, Scope lscope, AbstractFunction function,
+			List<Expression> arguments) {
+		super(source, hscope, lscope, function.returnType());
 		this.function = function;
 		this.arguments = arguments;
 	}
@@ -116,4 +117,5 @@ public class CommonAbstractFunctionCallExpression extends CommonExpression
 		}
 		return false;
 	}
+
 }

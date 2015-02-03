@@ -41,10 +41,10 @@ public class CommonAssertStatement extends CommonStatement implements
 	 *            The expression being added to the path condition.
 	 * @param
 	 */
-	public CommonAssertStatement(CIVLSource civlSource, Scope scope,
-			Location source, Expression guard, Expression condition,
-			Expression[] explanation) {
-		super(civlSource, scope, source, guard);
+	public CommonAssertStatement(CIVLSource civlSource, Scope hscope,
+			Scope lscope, Location source, Expression guard,
+			Expression condition, Expression[] explanation) {
+		super(civlSource, hscope, lscope, source, guard);
 		this.condition = condition;
 		this.explanation = explanation;
 	}
@@ -154,16 +154,16 @@ public class CommonAssertStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonAssertStatement(this.getSource(),
-					this.statementScope, this.source(), newGuard,
-					this.condition, this.explanation);
+					this.statementScope, this.lowestScope, this.source(),
+					newGuard, this.condition, this.explanation);
 		} else {
 			Expression newExpressionField = condition.replaceWith(
 					oldExpression, newExpression);
 
 			if (newExpressionField != null) {
 				newStatement = new CommonAssertStatement(this.getSource(),
-						this.statementScope, this.source(), this.guard(),
-						newExpressionField, this.explanation);
+						this.statementScope, this.lowestScope, this.source(),
+						this.guard(), newExpressionField, this.explanation);
 			} else {
 				int numArgs = this.explanation.length;
 				Expression[] newExplanation = Arrays.copyOf(this.explanation,
@@ -177,8 +177,8 @@ public class CommonAssertStatement extends CommonStatement implements
 						newExplanation[i] = newArg;
 						newStatement = new CommonAssertStatement(
 								this.getSource(), this.statementScope,
-								this.source(), this.guard(), this.condition,
-								newExplanation);
+								this.lowestScope, this.source(), this.guard(),
+								this.condition, newExplanation);
 						break;
 					}
 				}

@@ -16,7 +16,7 @@ public class CommonSizeofTypeExpression extends CommonExpression implements
 
 	public CommonSizeofTypeExpression(CIVLSource source, Scope scope,
 			CIVLType myType, CIVLType type) {
-		super(source, scope, myType);
+		super(source, scope, scope, myType);
 		this.type = type;
 	}
 

@@ -36,6 +36,12 @@ public abstract class CommonExpression extends CommonSourceable implements
 	private Scope expressionScope = null;
 
 	/**
+	 * The lowest scope accessed by this expression. NULL if no variable is
+	 * accessed.
+	 */
+	private Scope lowestScope = null;
+
+	/**
 	 * The type of this expression.
 	 * 
 	 */
@@ -59,9 +65,11 @@ public abstract class CommonExpression extends CommonSourceable implements
 	/**
 	 * The parent of all expressions.
 	 */
-	public CommonExpression(CIVLSource source, Scope scope, CIVLType type) {
+	public CommonExpression(CIVLSource source, Scope hscope, Scope lscope,
+			CIVLType type) {
 		super(source);
-		this.expressionScope = scope;
+		this.lowestScope = lscope;
+		this.expressionScope = hscope;
 		this.expressionType = type;
 	}
 
@@ -136,5 +144,10 @@ public abstract class CommonExpression extends CommonSourceable implements
 				return this.expressionEquals(that);
 		}
 		return false;
+	}
+	
+	@Override
+	public Scope lowestScope() {
+		return this.lowestScope;
 	}
 }

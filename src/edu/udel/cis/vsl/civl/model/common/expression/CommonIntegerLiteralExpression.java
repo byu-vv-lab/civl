@@ -34,7 +34,7 @@ public class CommonIntegerLiteralExpression extends CommonExpression implements
 	 */
 	public CommonIntegerLiteralExpression(CIVLSource source, CIVLType type,
 			BigInteger value) {
-		super(source, null, type);
+		super(source, null, null, type);
 		this.value = value;
 	}
 

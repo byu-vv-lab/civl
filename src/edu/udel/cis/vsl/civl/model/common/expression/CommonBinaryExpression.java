@@ -67,10 +67,10 @@ public class CommonBinaryExpression extends CommonExpression implements
 	 * @param right
 	 *            The right-hand-side operand.
 	 */
-	public CommonBinaryExpression(CIVLSource source, Scope scope,
-			CIVLType type, BINARY_OPERATOR operator, Expression left,
-			Expression right) {
-		super(source, scope, type);
+	public CommonBinaryExpression(CIVLSource source, Scope hscope,
+			Scope lscope, CIVLType type, BINARY_OPERATOR operator,
+			Expression left, Expression right) {
+		super(source, hscope, lscope, type);
 		this.operator = operator;
 		this.left = left;
 		this.right = right;
@@ -159,16 +159,16 @@ public class CommonBinaryExpression extends CommonExpression implements
 
 		if (newLeft != null) {
 			result = new CommonBinaryExpression(this.getSource(),
-					expressionScope(), expressionType, this.operator, newLeft,
-					right);
+					expressionScope(), lowestScope(), expressionType,
+					this.operator, newLeft, right);
 		} else {
 			Expression newRight = right.replaceWith(oldExpression,
 					newExpression);
 
 			if (newRight != null)
 				result = new CommonBinaryExpression(this.getSource(),
-						expressionScope(), expressionType, this.operator, left,
-						newRight);
+						expressionScope(), lowestScope(), expressionType,
+						this.operator, left, newRight);
 		}
 		return result;
 	}

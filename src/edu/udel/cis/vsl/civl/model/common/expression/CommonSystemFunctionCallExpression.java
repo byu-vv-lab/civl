@@ -17,7 +17,8 @@ public class CommonSystemFunctionCallExpression extends CommonExpression
 
 	public CommonSystemFunctionCallExpression(CIVLSource source,
 			CallOrSpawnStatement callStatement) {
-		super(source, callStatement.statementScope(), null);
+		super(source, callStatement.statementScope(), callStatement
+				.lowestScope(), null);
 		this.callStatement = callStatement;
 	}
 

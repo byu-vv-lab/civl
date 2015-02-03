@@ -34,11 +34,11 @@ public class CommonDerivativeCallExpression extends
 	 *            Expressions for the arguments used in the abstract function
 	 *            call.
 	 */
-	public CommonDerivativeCallExpression(CIVLSource source, Scope scope,
-			AbstractFunction function,
+	public CommonDerivativeCallExpression(CIVLSource source, Scope hscope,
+			Scope lscope, AbstractFunction function,
 			List<Pair<Variable, IntegerLiteralExpression>> partials,
 			List<Expression> arguments) {
-		super(source, scope, function, arguments);
+		super(source, hscope, lscope, function, arguments);
 		this.partials = partials;
 	}
 

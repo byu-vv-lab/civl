@@ -162,9 +162,9 @@ public interface Statement extends Sourceable {
 	 * Return a new statement by copying this statement and modifying it as well
 	 * as its guard by replacing a certain conditional expression with a
 	 * expression, used when translating away conditional expression WITHOUT
-	 * introducing temporary variables. The original statement can't be modified,
-	 * because it needs to be used twice to generate the if branch statement and
-	 * the else branch statement.<br>
+	 * introducing temporary variables. The original statement can't be
+	 * modified, because it needs to be used twice to generate the if branch
+	 * statement and the else branch statement.<br>
 	 * For example, <code>x = a ? b : c</code> will be translated into
 	 * <code> if(a) x = b; else x = c; </code><br>
 	 * Another example, <code> $when(a?b:c) x = k;</code> will be translated
@@ -207,6 +207,13 @@ public interface Statement extends Sourceable {
 
 	String toStepString(AtomicKind atomicKind, int atomCount,
 			boolean atomicLockVarChanged);
+
+	/**
+	 * Obtains the lowest scope of expression accessed by this statement.
+	 * 
+	 * @return the lowest scope of expression accessed by this statement.
+	 */
+	Scope lowestScope();
 
 	void calculateConstantValue(SymbolicUniverse universe);
 }

@@ -23,7 +23,7 @@ public class CommonCharLiteralExpression extends CommonExpression implements
 	 */
 	public CommonCharLiteralExpression(CIVLSource source, CIVLType type,
 			char value) {
-		super(source, null, type);
+		super(source, null, null, type);
 		this.value = value;
 	}
 

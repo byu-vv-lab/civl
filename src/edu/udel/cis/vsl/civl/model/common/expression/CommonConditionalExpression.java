@@ -35,10 +35,10 @@ public class CommonConditionalExpression extends CommonExpression implements
 	 * @param falseBranch
 	 *            The expression returned if the branch evaluates to false.
 	 */
-	public CommonConditionalExpression(CIVLSource source, Scope scope,
-			CIVLType type, Expression condition, Expression trueBranch,
-			Expression falseBranch) {
-		super(source, scope, type);
+	public CommonConditionalExpression(CIVLSource source, Scope hscope,
+			Scope lscope, CIVLType type, Expression condition,
+			Expression trueBranch, Expression falseBranch) {
+		super(source, hscope, lscope, type);
 		this.condition = condition;
 		this.trueBranch = trueBranch;
 		this.falseBranch = falseBranch;
@@ -153,23 +153,24 @@ public class CommonConditionalExpression extends CommonExpression implements
 
 		if (newCondition != null) {
 			result = new CommonConditionalExpression(this.getSource(),
-					this.expressionScope(), this.expressionType, newCondition,
-					trueBranch, falseBranch);
+					this.expressionScope(), this.lowestScope(),
+					this.expressionType, newCondition, trueBranch, falseBranch);
 		} else {
 			newTrue = trueBranch.replaceWith(oldExpression, newExpression);
 
 			if (newTrue != null) {
 				result = new CommonConditionalExpression(this.getSource(),
-						this.expressionScope(), this.expressionType, condition,
-						newTrue, falseBranch);
+						this.expressionScope(), this.lowestScope(),
+						this.expressionType, condition, newTrue, falseBranch);
 			} else {
 				newFalse = falseBranch
 						.replaceWith(oldExpression, newExpression);
 
 				if (newFalse != null)
 					result = new CommonConditionalExpression(this.getSource(),
-							this.expressionScope(), this.expressionType,
-							condition, trueBranch, newFalse);
+							this.expressionScope(), this.lowestScope(),
+							this.expressionType, condition, trueBranch,
+							newFalse);
 			}
 		}
 		return result;

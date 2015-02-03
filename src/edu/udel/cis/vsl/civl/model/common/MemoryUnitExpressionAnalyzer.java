@@ -148,7 +148,7 @@ public class MemoryUnitExpressionAnalyzer {
 		} else {
 			for (Statement statement : location.outgoing()) {
 				computeImpactMemoryUnitsOfStatement(
-						location.writableVariables(), statement,
+						location.writableVariables(), null, statement,
 						impactMemUnits, systemCalls);
 			}
 			location.setImpactMemoryUnit(impactMemUnits);
@@ -201,7 +201,8 @@ public class MemoryUnitExpressionAnalyzer {
 						}
 					}
 					this.computeImpactMemoryUnitsOfStatement(writableVars,
-							statement, impactMemUnits, systemCalls);
+							currentLocation.scope(), statement, impactMemUnits,
+							systemCalls);
 					if (statement.target() != null) {
 						if (!checkedLocations.contains(statement.target().id())) {
 							workings.push(statement.target());
@@ -222,8 +223,8 @@ public class MemoryUnitExpressionAnalyzer {
 	 * @param systemCalls
 	 */
 	private void computeImpactMemoryUnitsOfStatement(
-			Set<Variable> writableVars, Statement statement,
-			Set<MemoryUnitExpression> result,
+			Set<Variable> writableVars, Scope currentScope,
+			Statement statement, Set<MemoryUnitExpression> result,
 			Set<CallOrSpawnStatement> systemCalls) {
 		StatementKind statementKind = statement.statementKind();
 
@@ -260,8 +261,12 @@ public class MemoryUnitExpressionAnalyzer {
 		case CALL_OR_SPAWN: {
 			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
-			if (call.isSystemCall())
+			if (call.isSystemCall()) {
+				if (currentScope != null
+						&& isLowerThan(statement.lowestScope(), currentScope))
+					break;
 				systemCalls.add(call);
+			}
 			for (Expression argument : call.arguments())
 				computeImpactMemoryUnitsOfExpression(writableVars, argument,
 						result);
@@ -309,6 +314,26 @@ public class MemoryUnitExpressionAnalyzer {
 							+ statementKind + " kind");
 		}
 
+	}
+
+	private boolean isLowerThan(Scope s0, Scope s1) {
+		if (s0 == null || s1 == null)
+			return false;
+		else {
+			Scope parent0 = s0, parent1 = s1;
+
+			while (parent0.id() != 0 && parent1.id() != 0) {
+				if (parent0.id() == s1.id())
+					return true;
+				if (parent1.id() == s0.id())
+					return false;
+				parent0 = parent0.parent();
+				parent1 = parent1.parent();
+			}
+			if (parent0.id() == 0)
+				return false;
+		}
+		return true;
 	}
 
 	/**
@@ -476,8 +501,6 @@ public class MemoryUnitExpressionAnalyzer {
 						variable.hasPointerRef()));
 			break;
 		}
-		case WAIT_GUARD:// TODO clean it up
-			break;
 		case HERE_OR_ROOT:
 			break;
 		case PROC_NULL:

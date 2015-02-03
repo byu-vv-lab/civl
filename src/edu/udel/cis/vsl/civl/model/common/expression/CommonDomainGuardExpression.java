@@ -22,7 +22,7 @@ public class CommonDomainGuardExpression extends CommonExpression implements
 
 	public CommonDomainGuardExpression(CIVLSource source, CIVLType type,
 			Expression dom, List<Variable> vars, Variable counter) {
-		super(source, null, type);
+		super(source, dom.expressionScope(), dom.expressionScope(), type);
 		this.variables = new Variable[vars.size()];
 		vars.toArray(this.variables);
 		this.domain = dom;

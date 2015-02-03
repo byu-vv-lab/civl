@@ -41,10 +41,10 @@ public class CommonAssignStatement extends CommonStatement implements
 	 * @param rhs
 	 *            The right hand side of the assignment.
 	 */
-	public CommonAssignStatement(CIVLSource civlSource, Scope scope,
-			Location source, Expression guard, LHSExpression lhs,
+	public CommonAssignStatement(CIVLSource civlSource, Scope hscope,
+			Scope lscope, Location source, Expression guard, LHSExpression lhs,
 			Expression rhs, boolean isInitialization) {
-		super(civlSource, scope, source, guard);
+		super(civlSource, hscope, lscope, source, guard);
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.isInitialization = isInitialization;
@@ -125,15 +125,15 @@ public class CommonAssignStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonAssignStatement(this.getSource(),
-					this.statementScope, this.source(), newGuard, lhs,
-					this.rhs, this.isInitialization);
+					this.statementScope, this.lowestScope, this.source(),
+					newGuard, lhs, this.rhs, this.isInitialization);
 		} else {
 			Expression newRhs = rhs.replaceWith(oldExpression, newExpression);
 
 			if (newRhs != null) {
 				newStatement = new CommonAssignStatement(this.getSource(),
-						this.statementScope, this.source(), this.guard(), lhs,
-						newRhs, this.isInitialization);
+						this.statementScope, this.lowestScope, this.source(),
+						this.guard(), lhs, newRhs, this.isInitialization);
 			}
 		}
 		return newStatement;

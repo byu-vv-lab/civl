@@ -14,7 +14,7 @@ public class CommonInitialValueExpression extends CommonExpression implements
 	private Variable variable;
 
 	public CommonInitialValueExpression(CIVLSource source, Variable variable) {
-		super(source, null, variable.type());
+		super(source, variable.scope(), variable.scope(), variable.type());
 		this.variable = variable;
 	}
 

@@ -19,7 +19,7 @@ public class CommonSizeofExpression extends CommonExpression implements
 
 	public CommonSizeofExpression(CIVLSource source, CIVLType type,
 			Expression argument) {
-		super(source, argument.expressionScope(), type);
+		super(source, argument.expressionScope(), argument.lowestScope(), type);
 		this.argument = argument;
 	}
 

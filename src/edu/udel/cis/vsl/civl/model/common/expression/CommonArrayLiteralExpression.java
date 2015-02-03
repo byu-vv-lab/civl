@@ -41,9 +41,9 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	 * @param elements
 	 *            The elements of this array literal.
 	 */
-	public CommonArrayLiteralExpression(CIVLSource source, Scope scope,
-			CIVLArrayType arrayType, List<Expression> elements) {
-		super(source, scope, arrayType);
+	public CommonArrayLiteralExpression(CIVLSource source, Scope hscope,
+			Scope lscope, CIVLArrayType arrayType, List<Expression> elements) {
+		super(source, hscope, lscope, arrayType);
 		this.elements = new Expression[elements.size()];
 		elements.toArray(this.elements);
 	}

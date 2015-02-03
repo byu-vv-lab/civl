@@ -24,9 +24,9 @@ public class CommonRegularRangeExpression extends CommonExpression implements
 	private Expression high;
 	private Expression step;
 
-	public CommonRegularRangeExpression(CIVLSource source, Scope scope,
+	public CommonRegularRangeExpression(CIVLSource source, Scope hscope, Scope lscope,
 			CIVLType type, Expression low, Expression high, Expression step) {
-		super(source, scope, type);
+		super(source, hscope, lscope, type);
 		this.low = low;
 		this.high = high;
 		this.step = step;

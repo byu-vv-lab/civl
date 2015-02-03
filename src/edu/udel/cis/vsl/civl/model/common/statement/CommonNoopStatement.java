@@ -34,7 +34,7 @@ public class CommonNoopStatement extends CommonStatement implements
 	 */
 	public CommonNoopStatement(CIVLSource civlSource, Location source,
 			Expression guard) {
-		super(civlSource, null, source, guard);
+		super(civlSource, null, null, source, guard);
 		noopKind = NoopKind.NONE;
 	}
 
@@ -80,7 +80,7 @@ public class CommonNoopStatement extends CommonStatement implements
 	}
 
 	@Override
-	protected void calculateConstantValueWork(SymbolicUniverse universe) {		
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {
 	}
 
 }

@@ -51,11 +51,11 @@ public class CommonCallStatement extends CommonStatement implements
 	 * @param arguments
 	 *            The arguments to the function.
 	 */
-	public CommonCallStatement(CIVLSource civlSource, Scope scope,
-			Location source, Expression guard, boolean isCall,
+	public CommonCallStatement(CIVLSource civlSource, Scope hscope,
+			Scope lscope, Location source, Expression guard, boolean isCall,
 			LHSExpression lhs, Expression functionExpression,
 			List<Expression> arguments) {
-		super(civlSource, scope, source, guard);
+		super(civlSource, hscope, lscope, source, guard);
 		this.isCall = isCall;
 		this.lhs = lhs;
 		this.functionExpression = functionExpression;
@@ -217,8 +217,9 @@ public class CommonCallStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonCallStatement(this.getSource(),
-					this.statementScope, this.source(), newGuard, this.isCall,
-					lhs, this.functionExpression, this.arguments);
+					this.statementScope, this.lowestScope, this.source(),
+					newGuard, this.isCall, lhs, this.functionExpression,
+					this.arguments);
 		} else {
 			boolean hasNewArg = false;
 			ArrayList<Expression> newArgs = new ArrayList<Expression>();
@@ -240,8 +241,9 @@ public class CommonCallStatement extends CommonStatement implements
 			}
 			if (hasNewArg) {
 				newStatement = new CommonCallStatement(this.getSource(),
-						this.statementScope, this.source(), this.guard(),
-						this.isCall, lhs, this.functionExpression, newArgs);
+						this.statementScope, this.lowestScope, this.source(),
+						this.guard(), this.isCall, lhs,
+						this.functionExpression, newArgs);
 			}
 		}
 		return newStatement;

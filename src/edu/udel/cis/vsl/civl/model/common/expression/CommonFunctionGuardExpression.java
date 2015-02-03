@@ -26,7 +26,7 @@ public class CommonFunctionGuardExpression extends CommonExpression implements
 
 	public CommonFunctionGuardExpression(CIVLSource source,
 			Expression function, List<Expression> arguments, CIVLType type) {
-		super(source, null, type);
+		super(source, null, null, type);
 		this.functionExpression = function;
 		this.arguments = arguments;
 	}

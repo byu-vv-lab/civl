@@ -38,7 +38,8 @@ public class CommonAssumeStatement extends CommonStatement implements
 	 */
 	public CommonAssumeStatement(CIVLSource civlSource, Location source,
 			Expression guard, Expression expression) {
-		super(civlSource, expression.expressionScope(), source, guard);
+		super(civlSource, expression.expressionScope(), expression
+				.lowestScope(), source, guard);
 		this.expression = expression;
 	}
 

@@ -51,7 +51,7 @@ public class CommonMemoryUnitExpression extends CommonExpression implements
 	public CommonMemoryUnitExpression(CIVLSource source, Variable variable,
 			CIVLType objType, MemoryUnitReference ref, boolean writable,
 			boolean hasPointerRef) {
-		super(source, null, null);
+		super(source, null, null, null);
 		this.variable = variable;
 		this.objectType = objType;
 		this.reference = ref;

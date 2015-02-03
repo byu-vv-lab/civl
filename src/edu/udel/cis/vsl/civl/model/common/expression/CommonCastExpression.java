@@ -36,7 +36,7 @@ public class CommonCastExpression extends CommonExpression implements
 	 */
 	public CommonCastExpression(CIVLSource source, Scope scope, CIVLType type,
 			Expression expression) {
-		super(source, scope, type);
+		super(source, scope, expression.lowestScope(), type);
 		this.expression = expression;
 	}
 

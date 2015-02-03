@@ -18,8 +18,9 @@ public class CommonFunctionIdentifierExpression extends CommonExpression
 
 	public CommonFunctionIdentifierExpression(CIVLSource source,
 			CIVLFunction function, SymbolicType functionPointerType) {
-		super(source, function.containingScope(), new CommonPointerType(
-				function.functionType(), functionPointerType));
+		super(source, function.containingScope(), function.containingScope(),
+				new CommonPointerType(function.functionType(),
+						functionPointerType));
 		this.function = function;
 	}
 

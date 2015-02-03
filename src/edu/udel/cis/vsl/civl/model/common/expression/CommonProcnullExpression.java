@@ -15,7 +15,7 @@ public class CommonProcnullExpression extends CommonExpression implements
 
 	public CommonProcnullExpression(CIVLSource source, CIVLType type,
 			SymbolicExpression constantValue) {
-		super(source, null, type);
+		super(source, null, null, type);
 		this.constantValue = constantValue;
 	}
 

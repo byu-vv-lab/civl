@@ -307,4 +307,10 @@ public class CommonStatementList implements StatementList {
 	public void calculateConstantValue(SymbolicUniverse universe) {
 	}
 
+	@Override
+	public Scope lowestScope() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

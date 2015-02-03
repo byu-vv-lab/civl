@@ -219,4 +219,10 @@ public class StatementSet implements Statement {
 			statement.calculateConstantValue(universe);
 	}
 
+	@Override
+	public Scope lowestScope() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

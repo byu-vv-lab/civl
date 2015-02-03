@@ -22,9 +22,9 @@ public class CommonRecDomainLiteralExpression extends CommonExpression
 
 	private Expression[] ranges;
 
-	public CommonRecDomainLiteralExpression(CIVLSource source,
+	public CommonRecDomainLiteralExpression(CIVLSource source, Scope lscope,
 			List<Expression> ranges, CIVLType type) {
-		super(source, null, type);
+		super(source, null, lscope, type);
 		this.ranges = new Expression[ranges.size()];
 		ranges.toArray(this.ranges);
 	}

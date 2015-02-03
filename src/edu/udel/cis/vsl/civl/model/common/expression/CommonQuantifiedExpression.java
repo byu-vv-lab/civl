@@ -50,7 +50,7 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 			CIVLType type, Quantifier quantifier, Identifier boundVariableName,
 			CIVLType boundVariableType, Expression restriction,
 			Expression expression) {
-		super(source, scope, type);
+		super(source, scope, scope, type);
 		this.quantifier = quantifier;
 		this.boundVariableName = boundVariableName;
 		this.boundVariableType = boundVariableType;
@@ -80,7 +80,7 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 			CIVLType type, Quantifier quantifier, Identifier boundVariableName,
 			CIVLType boundVariableType, Expression lower, Expression upper,
 			Expression expression) {
-		super(source, scope, type);
+		super(source, scope, scope, type);
 		this.quantifier = quantifier;
 		this.boundVariableName = boundVariableName;
 		this.boundVariableType = boundVariableType;

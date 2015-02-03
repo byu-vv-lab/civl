@@ -38,13 +38,13 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	private LHSExpression lhs;
 
-	public CommonMallocStatement(CIVLSource civlSource, Scope scope,
-			Location source, Expression guard, int mallocId,
+	public CommonMallocStatement(CIVLSource civlSource, Scope hscope,
+			Scope lscope, Location source, Expression guard, int mallocId,
 			Expression heapPointerExpression, CIVLType staticElementType,
 			SymbolicType dynamicElementType,
 			SymbolicArrayType dynamicObjectType, Expression sizeExpression,
 			SymbolicExpression undefinedObject, LHSExpression lhs) {
-		super(civlSource, scope, source, guard);
+		super(civlSource, hscope, lscope, source, guard);
 		this.id = mallocId;
 		this.scopeExpression = heapPointerExpression;
 		this.staticElementType = staticElementType;
@@ -171,8 +171,8 @@ public class CommonMallocStatement extends CommonStatement implements
 
 		if (newGuard != null) {
 			newStatement = new CommonMallocStatement(this.getSource(),
-					this.statementScope, this.source(), newGuard, this.id,
-					this.scopeExpression, staticElementType,
+					this.statementScope, this.lowestScope, this.source(),
+					newGuard, this.id, this.scopeExpression, staticElementType,
 					dynamicElementType, dynamicObjectType, this.sizeExpression,
 					undefinedObject, lhs);
 		} else {
@@ -181,10 +181,11 @@ public class CommonMallocStatement extends CommonStatement implements
 
 			if (newSizeExpression != null) {
 				newStatement = new CommonMallocStatement(this.getSource(),
-						this.statementScope, this.source(), this.guard(), id,
-						this.scopeExpression, staticElementType,
-						dynamicElementType, dynamicObjectType,
-						newSizeExpression, undefinedObject, lhs);
+						this.statementScope, this.lowestScope, this.source(),
+						this.guard(), id, this.scopeExpression,
+						staticElementType, dynamicElementType,
+						dynamicObjectType, newSizeExpression, undefinedObject,
+						lhs);
 			}
 		}
 		return newStatement;
@@ -232,7 +233,7 @@ public class CommonMallocStatement extends CommonStatement implements
 	@Override
 	protected void calculateConstantValueWork(SymbolicUniverse universe) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

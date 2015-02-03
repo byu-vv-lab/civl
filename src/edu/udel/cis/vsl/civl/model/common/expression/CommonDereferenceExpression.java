@@ -21,7 +21,7 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 	public CommonDereferenceExpression(CIVLSource source, Scope scope,
 			CIVLType type, Expression pointer) {
-		super(source, scope, type);
+		super(source, scope, pointer.lowestScope(), type);
 		this.pointer = pointer;
 	}
 

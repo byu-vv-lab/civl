@@ -31,9 +31,18 @@ public abstract class CommonStatement extends CommonSourceable implements
 	private Location target;
 	private Expression guard;
 	private Model model;
+	/**
+	 * The highest scope that this statement accesses. Null if no variable is
+	 * accessed.
+	 */
 	protected Scope statementScope = null;
 	protected boolean hasDerefs = false;
 	protected boolean purelyLocal = false;
+	/**
+	 * The lowest scope that this statement accesses. Null if no variable is
+	 * accessed.
+	 */
+	protected Scope lowestScope = null;
 
 	/**
 	 * The parent of all statements.
@@ -41,14 +50,15 @@ public abstract class CommonStatement extends CommonSourceable implements
 	 * @param source
 	 *            The location that is the source of this statement.
 	 */
-	public CommonStatement(CIVLSource civlSource, Scope scope, Location source,
-			Expression guard) {
+	public CommonStatement(CIVLSource civlSource, Scope hscope, Scope lscope,
+			Location source, Expression guard) {
 		super(civlSource);
 		this.source = source;
 		this.guard = guard;
 		if (source != null)
 			source.addOutgoing(this);
-		this.statementScope = scope;
+		this.statementScope = hscope;
+		this.lowestScope = lscope;
 	}
 
 	public CommonStatement() {
@@ -283,7 +293,12 @@ public abstract class CommonStatement extends CommonSourceable implements
 		this.guard.calculateConstantValue(universe);
 
 	}
-	
+
+	@Override
+	public Scope lowestScope() {
+		return this.lowestScope;
+	}
+
 	protected abstract void calculateConstantValueWork(SymbolicUniverse universe);
 
 }

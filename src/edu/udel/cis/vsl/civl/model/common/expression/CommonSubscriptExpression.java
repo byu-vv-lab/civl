@@ -38,9 +38,9 @@ public class CommonSubscriptExpression extends CommonExpression implements
 	 * @param index
 	 *            An expression evaluating to an integer.
 	 */
-	public CommonSubscriptExpression(CIVLSource source, Scope scope,
-			CIVLType type, LHSExpression array, Expression index) {
-		super(source, scope, type);
+	public CommonSubscriptExpression(CIVLSource source, Scope hscope,
+			Scope lscope, CIVLType type, LHSExpression array, Expression index) {
+		super(source, hscope, lscope, type);
 		this.array = array;
 		this.index = index;
 	}
@@ -138,16 +138,16 @@ public class CommonSubscriptExpression extends CommonExpression implements
 
 		if (newIndex != null)
 			result = new CommonSubscriptExpression(this.getSource(),
-					this.expressionScope(), this.expressionType, array,
-					newIndex);
+					this.expressionScope(), this.lowestScope(),
+					this.expressionType, array, newIndex);
 		else {
 			Expression newArray = array.replaceWith(oldExpression,
 					newExpression);
 
 			if (newArray != null)
 				result = new CommonSubscriptExpression(this.getSource(),
-						this.expressionScope(), this.expressionType,
-						(LHSExpression) newArray, index);
+						this.expressionScope(), this.lowestScope(),
+						this.expressionType, (LHSExpression) newArray, index);
 		}
 		return result;
 	}

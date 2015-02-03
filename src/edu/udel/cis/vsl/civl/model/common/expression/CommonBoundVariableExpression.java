@@ -24,7 +24,7 @@ public class CommonBoundVariableExpression extends CommonExpression implements
 
 	public CommonBoundVariableExpression(CIVLSource source, CIVLType type,
 			Identifier name) {
-		super(source, null, type);
+		super(source, null, null, type);
 		this.name = name;
 	}
 

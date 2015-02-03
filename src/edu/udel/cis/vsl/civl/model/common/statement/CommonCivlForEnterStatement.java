@@ -25,7 +25,8 @@ public class CommonCivlForEnterStatement extends CommonStatement implements
 	public CommonCivlForEnterStatement(CIVLSource civlSource, Location source,
 			Expression guard, Expression dom, List<Variable> variables,
 			Variable counter) {
-		super(civlSource, dom.expressionScope(), source, guard);
+		super(civlSource, dom.expressionScope(), dom.lowestScope(), source,
+				guard);
 		this.domain = dom;
 		this.setLoopVariables(variables);
 		this.literalDomCounter = counter;

@@ -2353,6 +2353,8 @@ public class FunctionTranslator {
 				leaveAtomic = new CommonAtomicLockAssignStatement(
 						location.getSource(), modelFactory
 								.atomicLockVariableExpression()
+								.expressionScope(), modelFactory
+								.atomicLockVariableExpression()
 								.expressionScope(), location,
 						modelFactory.trueExpression(location.getSource()),
 						false, modelFactory.atomicLockVariableExpression(),

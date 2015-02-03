@@ -35,7 +35,7 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 	 */
 	public CommonRealLiteralExpression(CIVLSource source, CIVLType type,
 			BigDecimal value) {
-		super(source, null, type);
+		super(source, null, null, type);
 		this.value = value;
 	}
 
@@ -97,6 +97,6 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 
 	@Override
 	protected boolean expressionEquals(Expression expression) {
-		return this.value == ((RealLiteralExpression)expression).value();
+		return this.value == ((RealLiteralExpression) expression).value();
 	}
 }

@@ -54,9 +54,10 @@ public class CommonSystemGuardExpression extends CommonExpression implements
 	 * @param type
 	 *            The type of this expression (should be always boolean type).
 	 */
-	public CommonSystemGuardExpression(CIVLSource source, Scope scope, String library,
-			String function, List<Expression> args, CIVLType type) {
-		super(source, scope, type);
+	public CommonSystemGuardExpression(CIVLSource source, Scope scope,
+			String library, String function, List<Expression> args,
+			CIVLType type) {
+		super(source, scope, scope, type);
 		this.library = library;
 		this.functionName = function;
 		this.arguments = args;

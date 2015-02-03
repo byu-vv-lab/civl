@@ -37,8 +37,9 @@ public class CommonDotExpression extends CommonExpression implements
 	 */
 	public CommonDotExpression(CIVLSource source, Expression struct,
 			int fieldIndex) {
-		super(source, struct.expressionScope(), ((CIVLStructOrUnionType) struct
-				.getExpressionType()).getField(fieldIndex).type());
+		super(source, struct.expressionScope(), struct.lowestScope(),
+				((CIVLStructOrUnionType) struct.getExpressionType()).getField(
+						fieldIndex).type());
 		assert struct.getExpressionType() instanceof CIVLStructOrUnionType;
 		this.structOrUnion = struct;
 		this.fieldIndex = fieldIndex;

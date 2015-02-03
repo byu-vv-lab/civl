@@ -37,7 +37,7 @@ public class CommonAddressOfExpression extends CommonExpression implements
 	 */
 	public CommonAddressOfExpression(CIVLSource source, CIVLPointerType type,
 			LHSExpression operand) {
-		super(source, operand.expressionScope(), type);
+		super(source, operand.expressionScope(), operand.lowestScope(), type);
 		this.operand = operand;
 	}
 

@@ -27,7 +27,7 @@ public class CommonSelfExpression extends CommonExpression implements
 	 * expression is evaluated.
 	 */
 	public CommonSelfExpression(CIVLSource source, CIVLType type) {
-		super(source, null, type);
+		super(source, null, null, type);
 	}
 
 	@Override

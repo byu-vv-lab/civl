@@ -29,7 +29,7 @@ public class CommonUndefinedProcessExpression extends CommonExpression
 	 */
 	public CommonUndefinedProcessExpression(CIVLSource source, CIVLType type,
 			SymbolicExpression constantValue) {
-		super(source, null, type);
+		super(source, null, null, type);
 		this.constantValue = constantValue;
 	}
 

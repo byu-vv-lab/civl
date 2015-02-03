@@ -23,7 +23,8 @@ public class CommonScopeofExpression extends CommonExpression implements
 
 	public CommonScopeofExpression(CIVLSource source, CIVLType type,
 			LHSExpression expression) {
-		super(source, expression.expressionScope(), type);
+		super(source, expression.expressionScope(), expression.lowestScope(),
+				type);
 		this.argument = expression;
 	}
 
