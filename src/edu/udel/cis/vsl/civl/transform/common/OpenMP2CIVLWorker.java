@@ -955,6 +955,21 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 												+ "_status");
 						Type currentType = ((Variable) c.getEntity()).getType();
 
+						if(privateType instanceof ArrayTypeNode && currentType instanceof PointerType){					
+							if(!(((PointerType) currentType).referencedType() instanceof ArrayType)){
+								currentType = ((PointerType) currentType).referencedType();
+								while (currentType instanceof ArrayType) {
+									currentType = ((ArrayType) currentType).getElementType();
+								}
+								BasicTypeKind baseTypeKind = ((StandardBasicType) currentType)
+										.getBasicTypeKind();
+
+								privateType = nodeFactory.newPointerTypeNode(
+										source, nodeFactory.newBasicTypeNode(newSource(localDeclaration, 
+												CParser.TYPE), baseTypeKind));
+							}
+						}
+						
 						localSharedVar = nodeFactory
 								.newVariableDeclarationNode(
 										newSource(localDeclaration,
@@ -1368,7 +1383,9 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 											CParser.INTEGER_CONSTANT), "1")),
 					cln);
 			items.add(loopDomain);
-
+			
+			int loopDecomp = config.ompLoopDecomp();
+			
 			// ($domain(1))$omp_arrive_loop(team, int, loop_domain, strategy)
 			String myItersPlace = "myItersDeclaration";
 			ExpressionNode ompArriveLoop = nodeFactory
@@ -1417,7 +1434,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 															newSource(
 																	myItersPlace,
 																	CParser.INTEGER_CONSTANT),
-															"2")), null));
+															String.valueOf(loopDecomp))), null));
 			this.ompArriveLoopCounter++;
 			// Get correct level "n" for domain(n)
 			IntegerConstantNode domainLevel = nodeFactory
