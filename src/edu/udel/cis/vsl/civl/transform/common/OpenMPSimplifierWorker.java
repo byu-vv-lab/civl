@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.AttributeKey;
 import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
@@ -24,6 +25,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpReductionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpStatementNode;
@@ -70,6 +72,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
  */
 public class OpenMPSimplifierWorker extends BaseWorker {
 
+	// TBD: clean this up
 	private AttributeKey dependenceKey;
 
 	// Visitor identifies scalars through their "defining" declaration
@@ -78,11 +81,16 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 	private Set<OperatorNode> writeArrayRefs;
 	private Set<OperatorNode> readArrayRefs;
+	
+	private Set<Entity> ompMethods;
+	private Set<FunctionDefinitionNode> ompMethodDefinitions;
 
 	private boolean allIndependent;
 
 	private List<Entity> privateIDs;
 	private List<Entity> loopPrivateIDs;
+	
+	private OmpParallelNode parallelNode;
 
 	public OpenMPSimplifierWorker(ASTFactory astFactory) {
 		super("OpenMPSimplifier", astFactory);
@@ -96,8 +104,27 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
+		
+		/*
+		 * TBD: We want a proper inter-procedural analysis.  This is more of a stop-gap.
+		 * 
+		 * There are two challenges:
+		 *    1) Detect orphaning "omp parallel" statements - since they should not be simplified without
+		 *       considering whether the methods they call are themselves simplified
+		 *    2) Detecting orphaned "omp" statements - since they should be analyzed for simplification
+		 *       even though they might not be lexically nested within an "omp parallel"
+		 *       
+		 * We collect the set of methods that contain an omp construct, recording their entities to detect
+		 * calls to such methods for case 1) and recording their definition to drive analysis into those
+		 * methods to handle case 2)
+		 */
+		ompMethods = new HashSet<Entity>();
+		ompMethodDefinitions = new HashSet<FunctionDefinitionNode>();
+		collectOmpMethods(rootNode);
 
-		transformOmpParallel(rootNode);
+		for (FunctionDefinitionNode fdn : ompMethodDefinitions) {
+			transformOmp(fdn);
+		}
 
 		return astFactory.newAST(rootNode, unit.getSourceFiles());
 	}
@@ -116,13 +143,46 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			}
 		}
 	}
+	
+	/*
+	 * Scan program to collect methods involving omp constructs.
+	 */
+	private void collectOmpMethods(ASTNode node) {
+		if (node instanceof FunctionDefinitionNode) {
+			FunctionDefinitionNode fdn = (FunctionDefinitionNode)node;
+			if (hasOmpConstruct(fdn.getBody())) {
+				ompMethods.add(fdn.getEntity());
+				ompMethodDefinitions.add(fdn);
+			}
+		} else if (node != null) {
+			Iterable<ASTNode> children = node.children();
+			for (ASTNode child : children) {
+				collectOmpMethods(child);
+			}
+		}
+	}
+	
+	private boolean callsMethodWithOmpConstruct(ASTNode node) {
+		boolean result = false;
+		if (node instanceof FunctionCallNode) {
+			ExpressionNode fun = ((FunctionCallNode) node).getFunction();
+			if (fun instanceof IdentifierExpressionNode) {
+				result |= ompMethods.contains(((IdentifierExpressionNode) fun).getIdentifier().getEntity());
+			}
+		} else if (node != null) {
+			Iterable<ASTNode> children = node.children();
+			for (ASTNode child : children) {
+				result |= callsMethodWithOmpConstruct(child);
+				if (result) break;
+			}
+		}
+		return result;
+	}
 
 	/*
-	 * Generically traverse the AST. When an OmpParallel node is encountered
-	 * traverse it to detect workshares, analyze their independence, and
-	 * transform those workshares.
+	 * Traverse the method declaration analyzing and simplifying omp constructs
 	 */
-	private void transformOmpParallel(ASTNode node) {
+	private void transformOmp(ASTNode node) {
 		if (node instanceof OmpParallelNode) {
 			OmpParallelNode opn = (OmpParallelNode) node;
 			/*
@@ -130,13 +190,14 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			 * sections workshares - collapse clauses - chunk clauses - omp_*
 			 * calls which should be interpreted as being dependent
 			 */
+			
+			parallelNode = opn;
 
 			/*
 			 * Determine the private variables since they cannot generate
 			 * dependences.
 			 */
 			privateIDs = new ArrayList<Entity>();
-
 			addEntities(privateIDs, opn.privateList());
 			addEntities(privateIDs, opn.copyinList());
 			addEntities(privateIDs, opn.copyprivateList());
@@ -149,12 +210,26 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				}
 			}
 
+			/*
+			 * Analyze the workshares contained lexically within the parallel node.
+			 * A parallel node is "orphaned" if it makes calls to methods that contain
+			 * OpenMP statements or calls.   An orphaned parallel should not be removed
+			 * without determining if all called methods can be simplified to eliminate
+			 * their OpenMP statements.
+			 * 
+			 * TBD: Currently the orphan analysis only checks a single level of call; the
+			 * full solution would require construction of a call graph.
+			 */
 			allIndependent = true;
 
 			// Visit the rest of this node
 			transformOmpWorkshare(opn.statementNode());
+			
+			boolean isOrphaned = callsMethodWithOmpConstruct(opn.statementNode());
 
-			if (allIndependent) {
+			if (allIndependent && !isOrphaned) {
+		 		System.out.println("Removing OpenMP parallel "+opn);
+
 				/*
 				 * Remove the nested omp constructs, e.g., workshares, calls to
 				 * omp_*, ordered sync nodes, etc.
@@ -178,7 +253,10 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				assert parentIndex != -1;
 				parent.setChild(parentIndex, stmt);
 			}
-
+			
+		} else if (node instanceof OmpStatementNode) {
+			transformOmpWorkshare(node);
+			
 		} else if (node != null) {
 			// BUG: can get here with null values in parallelfor.c example
 
@@ -188,7 +266,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			 */
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				transformOmpParallel(child);
+				transformOmp(child);
 			}
 		}
 	}
@@ -273,11 +351,12 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		}
 	}
 
+	/*
+	 * Scan workshares to drive dependence analysis.
+	 */
 	private void transformOmpWorkshare(ASTNode node) {
 		if (node instanceof OmpForNode) {
 			OmpForNode ompFor = (OmpForNode) node;
-			// System.out.println("OpenMP Simplifier : Found For "+node);
-
 			/*
 			 * Determine the private variables since they cannot generate
 			 * dependences.
@@ -315,6 +394,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				allIndependent = false;;
 				break;
 			case ORDERED:
+				/* Should be able to optimize this case since semantics guarantee serial order */
 				allIndependent = false;;
 				break;
 			case FLUSH:
@@ -557,11 +637,14 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		 */
 		independent &= noArrayRefDependences(boundingConditions, writeArrayRefs, readArrayRefs);
 		
-/*		System.out.println("Found "+(independent?"independent":"dependent")+" loop "+ompFor+"\nwith the following:");
+ 		System.out.println("Found "+(independent?"independent":"dependent")+" OpenMP for "+ompFor);
+		
+/*		
 		System.out.println("  writeVars : "+writeVars);
 		System.out.println("  readVars : "+readVars);
 		System.out.println("  writeArrays : "+writeArrayRefs);
-		System.out.println("  readArrays : "+readArrayRefs);*/
+		System.out.println("  readArrays : "+readArrayRefs);
+*/
 
 		if (independent) {
 			/*
@@ -570,9 +653,12 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			 * "omp for" must be of the form "var = var op ...".
 			 */
 			SequenceNode<OmpReductionNode> reductionList = ompFor.reductionList();
+			List<IdentifierNode> reductionVariables = null;
 			boolean safeReduction = true;
 			
 			if (reductionList != null) {
+				reductionVariables = new ArrayList<IdentifierNode>();
+
 			    // Build a map for scanning for reduction variable operator assignment consistency
 				Map<Entity,Operator> idOpMap = new HashMap<Entity,Operator>();
 				for (OmpReductionNode r : reductionList) {
@@ -580,7 +666,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 						Operator op = ((OmpSymbolReductionNode)r).operator();
 						for (IdentifierExpressionNode id : r.variables()) {
 							idOpMap.put(id.getIdentifier().getEntity(),op);
-							System.out.println(""+id);
+							reductionVariables.add(id.getIdentifier());
 						}
 						safeReduction &= checkReductionAssignments(fln,idOpMap);
 					} else {
@@ -591,6 +677,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			}
 			
 			if (safeReduction) {
+				System.out.println("Replacing OpenMP for with single");
 				ASTNode parent = ompFor.parent();
 				int ompForIndex = getChildIndex(parent, ompFor);
 				assert ompForIndex != -1;
@@ -602,9 +689,43 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 				// Transfer private, firstprivate, copyprivate, and nowait
 				// clauses to single
-				single.setPrivateList(ompFor.privateList());
-				single.setFirstprivateList(ompFor.firstprivateList());
-				single.setCopyprivateList(ompFor.copyprivateList());
+				
+				SequenceNode<IdentifierExpressionNode> singlePrivateList = ompFor.privateList();
+				SequenceNode<IdentifierExpressionNode> singleFirstPrivateList = ompFor.firstprivateList();
+				SequenceNode<IdentifierExpressionNode> singleCopyPrivateList = ompFor.copyprivateList();
+								
+				// Add iteration variable to private list for single
+				IdentifierExpressionNode privateLoopVariable = 
+						nodeFactory.newIdentifierExpressionNode(single.getSource(), 
+								nodeFactory.newIdentifierNode(single.getSource(), loopVariable.name()));
+				if (ompFor.privateList() == null) {
+					List<IdentifierExpressionNode> l = new ArrayList<IdentifierExpressionNode>();
+					l.add(privateLoopVariable);
+					singlePrivateList = nodeFactory.newSequenceNode(ompFor.getSource(), "private", l);
+				} else {
+					singlePrivateList.addSequenceChild(privateLoopVariable);
+				}
+				
+				single.setPrivateList(singlePrivateList);
+				single.setFirstprivateList(singleFirstPrivateList);
+				
+				// Any reduction variables should be added to copyprivate
+				if (reductionVariables != null) {
+					List<IdentifierExpressionNode> l = new ArrayList<IdentifierExpressionNode>();
+					for (IdentifierNode id : reductionVariables) {
+						l.add(nodeFactory.newIdentifierExpressionNode(single.getSource(), 
+								nodeFactory.newIdentifierNode(single.getSource(), id.name())));
+					}
+					if (ompFor.copyprivateList() == null) {
+						singleCopyPrivateList = nodeFactory.newSequenceNode(ompFor.getSource(), "copyprivate", l);
+					} else {
+						for (IdentifierExpressionNode ide : l) {
+							singleCopyPrivateList.addSequenceChild(ide);
+						}
+					}
+				}
+
+				single.setCopyprivateList(singleCopyPrivateList);
 				single.setNowait(ompFor.nowait());
 
 				parent.setChild(ompForIndex, single);
@@ -675,7 +796,6 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	}
 	
 	private Operator eqOpToOp(Operator op) {
-		System.out.println("Converting operator :"+op);
 		switch (op) {
 		case BITANDEQ: return Operator.BITAND;
 		case BITOREQ: return Operator.BITOR;
@@ -699,35 +819,38 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				((OmpSyncNode)node).ompSyncNodeKind() == OmpSyncNode.OmpSyncNodeKind.CRITICAL) {
 			// Do not collect read/write references from critical sections
 			return;
-		} else if (node instanceof OperatorNode
-				&& ((OperatorNode) node).getOperator() == Operator.ASSIGN) {
-			/*
-			 * Need to handle all of the *EQ operators as well.
-			 */
-			OperatorNode assign = (OperatorNode) node;
+		} else if (node instanceof OperatorNode) {
+			OperatorNode on = ((OperatorNode)node);
+			if (on.getOperator() == Operator.ASSIGN || on.getOperator() == Operator.PLUSEQ) {
 
-			ExpressionNode lhs = assign.getArgument(0);
-			if (lhs instanceof IdentifierExpressionNode) {
-				Entity idEnt = ((IdentifierExpressionNode) lhs).getIdentifier()
-						.getEntity();
-				if (!privateIDs.contains(idEnt)
-						&& !loopPrivateIDs.contains(idEnt)) {
-					writeVars.add(idEnt);
-				}
-			} else if (lhs instanceof OperatorNode
-					&& ((OperatorNode) lhs).getOperator() == Operator.SUBSCRIPT) {
-				Entity idEnt = baseArray((OperatorNode) lhs).getIdentifier().getEntity();
-				if (!privateIDs.contains(idEnt)
-						&& !loopPrivateIDs.contains(idEnt)) {
-					writeArrayRefs.add((OperatorNode) lhs);
+				/*
+				 * Need to handle all of the *EQ operators as well.
+				 */
+				OperatorNode assign = (OperatorNode) node;
+
+				ExpressionNode lhs = assign.getArgument(0);
+				if (lhs instanceof IdentifierExpressionNode) {
+					Entity idEnt = ((IdentifierExpressionNode) lhs).getIdentifier()
+							.getEntity();
+					if (!privateIDs.contains(idEnt)
+							&& !loopPrivateIDs.contains(idEnt)) {
+						writeVars.add(idEnt);
+					}
+				} else if (lhs instanceof OperatorNode
+						&& ((OperatorNode) lhs).getOperator() == Operator.SUBSCRIPT) {
+					Entity idEnt = baseArray((OperatorNode) lhs).getIdentifier().getEntity();
+					if (!privateIDs.contains(idEnt)
+							&& !loopPrivateIDs.contains(idEnt)) {
+						writeArrayRefs.add((OperatorNode) lhs);
+					}
+
+				} else {
+					// System.out.println("DependenceAnnotator found lhs:" + lhs);
 				}
 
-			} else {
-				// System.out.println("DependenceAnnotator found lhs:" + lhs);
+				// The argument at index 1 is the RHS
+				collectRHSRefExprs(assign.getArgument(1));
 			}
-
-			// The argument at index 1 is the RHS
-			collectRHSRefExprs(assign.getArgument(1));
 
 		} else if (node != null) {
 			// BUG: can get here with null values in parallelfor.c example
@@ -791,7 +914,8 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	 * TBD: Currently this analysis does not handle copy statements and may
 	 * therefore overestimate dependences
 	 * 
-	 * TBD: Currently this code only handles single dimensional arrays
+	 * TBD: Currently this code assumes that one dimension is dependent on the 
+	 * for iteration variables. Needs to be extended for collapse.
 	 */
 	private boolean noArrayRefDependences(
 			List<ExpressionNode> boundingConditions, Set<OperatorNode> writes,
@@ -802,8 +926,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			for (OperatorNode r : reads) {
 				IdentifierExpressionNode baseRead = baseArray(r);
 
-				if (baseWrite.getIdentifier().getEntity() == baseRead
-						.getIdentifier().getEntity()) {
+				if (baseWrite.getIdentifier().getEntity() == baseRead.getIdentifier().getEntity()) {
 					// Need to check logical equality of these expressions
 					if (!ExpressionEvaluator.checkEqualityWithConditions(
 							indexExpression(w, 1), indexExpression(r, 1),
@@ -814,6 +937,29 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			}
 		}
 		return true;
+	}
+	
+	/*
+	 * Determine whether node lexically contains an omp construct
+	 */
+	private boolean hasOmpConstruct(ASTNode node) {
+		boolean result = false;
+		if (node instanceof OmpNode) {
+			result = true;
+		} else if (node instanceof FunctionCallNode
+				&& ((FunctionCallNode) node).getFunction() instanceof IdentifierExpressionNode
+				&& ((IdentifierExpressionNode) ((FunctionCallNode) node)
+						.getFunction()).getIdentifier().name()
+						.startsWith("omp_")) {
+			result = true;
+		} else if (node != null) {
+			Iterable<ASTNode> children = node.children();
+			for (ASTNode child : children) {
+				result |= hasOmpConstruct(child);
+				if (result) break;
+			}
+		}
+		return result;
 	}
 
 	/*
