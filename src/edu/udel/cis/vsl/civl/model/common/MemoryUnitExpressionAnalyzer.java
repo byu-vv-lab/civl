@@ -194,7 +194,7 @@ public class MemoryUnitExpressionAnalyzer {
 						CallOrSpawnStatement callOrSpawnStatement = (CallOrSpawnStatement) statement;
 
 						if (callOrSpawnStatement.isCall()
-								&& callOrSpawnStatement.isSystemCall()) {
+								&& !callOrSpawnStatement.isSystemCall()) {
 							impactMemUnits.clear();
 							systemCalls.clear();
 							return false;
