@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.UnaryOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -308,7 +309,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 	 *         values changed according to the given dyscope map.
 	 */
 	ImmutableDynamicScope updateDyscopeIds(
-			Map<SymbolicExpression, SymbolicExpression> scopeSubMap,
+			UnaryOperator<SymbolicExpression> substituter,
 			SymbolicUniverse universe, int newParentId, int newParentIdentifier) {
 		Collection<Variable> scopeVariableIter = lexicalScope
 				.variablesWithScoperefs();
@@ -319,8 +320,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 			SymbolicExpression oldValue = variableValues[vid];
 
 			if (oldValue != null && !oldValue.isNull()) {
-				SymbolicExpression newValue = universe.substitute(oldValue,
-						scopeSubMap);
+				SymbolicExpression newValue = substituter.apply(oldValue);
 
 				if (oldValue != newValue) {
 					if (newValues == null)
@@ -363,7 +363,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 				lexicalScope, this.parent, this.parentIdentifier, newValues,
 				reachers, this.identifier);
 	}
-	
+
 	ImmutableDynamicScope updateSymbolicConstants(
 			Map<SymbolicExpression, SymbolicExpression> oldToNewExpression,
 			SymbolicUniverse universe) {
@@ -390,7 +390,6 @@ public class ImmutableDynamicScope implements DynamicScope {
 				lexicalScope, this.parent, this.parentIdentifier, newValues,
 				reachers, this.identifier);
 	}
-	
 
 	/* ************************* Methods from Object *********************** */
 

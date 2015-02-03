@@ -34,6 +34,7 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.UnaryOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
@@ -116,6 +117,39 @@ public class ImmutableStateFactory implements StateFactory {
 			1000000);
 
 	/**
+	 * Class used to wrap integer arrays so they can be used as keys in hash
+	 * maps. This is used to map dyscope ID substitution maps to SARL
+	 * substituters, in order to reuse substituters when the same substitution
+	 * map comes up again and again. Since the substituters cache their results,
+	 * this has the potential to increase performance.
+	 * 
+	 * @author siegel
+	 *
+	 */
+	private class IntArray {
+		private int[] contents;
+
+		public IntArray(int[] contents) {
+			this.contents = contents;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof IntArray) {
+				return Arrays.equals(contents, ((IntArray) obj).contents);
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return Arrays.hashCode(contents);
+		}
+	}
+
+	private Map<IntArray, UnaryOperator<SymbolicExpression>> dyscopeSubMap = new HashMap<>();
+
+	/**
 	 * The reasoner for evaluating boolean formulas, provided by SARL.
 	 */
 	private Reasoner trueReasoner;
@@ -182,6 +216,9 @@ public class ImmutableStateFactory implements StateFactory {
 			boolean collectScopes, boolean collectHeaps)
 			throws CIVLStateException {
 		ImmutableState theState = (ImmutableState) state;
+
+		// performance experiment: seems to make no difference
+		// theState = flyweight(theState);
 
 		if (collectProcesses)
 			theState = collectProcesses(theState);
@@ -338,6 +375,10 @@ public class ImmutableStateFactory implements StateFactory {
 		boolean change = false;
 		int newNumScopes = 0;
 
+		// Performance debug:
+
+		// System.out.println("oldToNew: " + Arrays.toString(oldToNew));
+
 		for (int i = 0; i < oldNumScopes; i++) {
 			int id = oldToNew[i];
 
@@ -363,7 +404,15 @@ public class ImmutableStateFactory implements StateFactory {
 			}
 		}
 		if (change) {
-			Map<SymbolicExpression, SymbolicExpression> scopeSubMap = scopeSubMap(oldToNew);
+			IntArray key = new IntArray(oldToNew);
+			UnaryOperator<SymbolicExpression> substituter = dyscopeSubMap
+					.get(key);
+
+			if (substituter == null) {
+				substituter = universe.substituter(scopeSubMap(oldToNew));
+				dyscopeSubMap.put(key, substituter);
+			}
+
 			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[newNumScopes];
 			int numProcs = theState.numProcs();
 			ImmutableProcessState[] newProcesses = new ImmutableProcessState[numProcs];
@@ -376,7 +425,7 @@ public class ImmutableStateFactory implements StateFactory {
 					int oldParent = oldScope.getParent();
 					int oldParentIdentifier = oldScope.identifier();
 
-					newScopes[newId] = oldScope.updateDyscopeIds(scopeSubMap,
+					newScopes[newId] = oldScope.updateDyscopeIds(substituter,
 							universe, oldParent < 0 ? oldParent
 									: oldToNew[oldParent], oldParentIdentifier);
 				}

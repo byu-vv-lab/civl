@@ -92,6 +92,9 @@ public class CommonStateManager implements StateManager {
 	private SymbolicAnalyzer symbolicAnalyzer;
 
 	private BooleanExpression falseExpr;
+	
+	// TODO: trying to fix this:
+	private boolean saveStates;
 
 	/* ***************************** Constructor *************************** */
 
@@ -119,6 +122,7 @@ public class CommonStateManager implements StateManager {
 		this.errorLogger = errorLogger;
 		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.falseExpr = symbolicAnalyzer.getUniverse().falseExpression();
+		this.saveStates = config.saveStates();
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -235,6 +239,7 @@ public class CommonStateManager implements StateManager {
 			}
 			if (config.simplify())
 				state = stateFactory.simplify(state);
+			traceStep.complete(state);
 		}
 		if (config.printTransitions())
 			config.out().println(state);

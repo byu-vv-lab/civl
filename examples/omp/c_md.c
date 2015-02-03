@@ -46,6 +46,12 @@
 //#include "OmpSCR.h"
 #include <math.h>
 #include <omp.h>
+
+// following added by sfsiegel due to use of "calloc":
+#include <stdlib.h>
+// following added by sfsiegel due to use of "printf":
+#include <stdio.h>
+
 #ifndef RAND_MAX
 #define RAND_MAX 0x7fff
 #endif
