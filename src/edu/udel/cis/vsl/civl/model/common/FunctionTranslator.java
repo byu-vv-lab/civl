@@ -1777,10 +1777,10 @@ public class FunctionTranslator {
 	 * <code> for (init; cond; inc) stmt </code>, where <code>init</code> is a
 	 * {@link ForLoopInitializerNode} which either is a variable declaration
 	 * list or an expression (the expression could be a comma expression, like
-	 * <code>int i = 0, j = 0</code>), <code>cond</code> is a boolean
-	 * expression, and <code>inc</code> is an expression (also could be a comma
-	 * expression, like <code>i=i+1,j=j+1</code>). All side effects except
-	 * assignments should have been removed already.
+	 * <code>int i = 0, j = 0</code>), <code>cond</code> is a boolean expression
+	 * which is side-effect-free, and <code>inc</code> is an expression (also
+	 * could be a comma expression, like <code>i=i+1,j=j+1</code>). All side
+	 * effects except assignments should have been removed already.
 	 * 
 	 * @param scope
 	 *            The scope
