@@ -56,11 +56,11 @@ void lu(int, int);
 /* MAIN: PROCESS PARAMETERS */
 int main(int argc, char *argv[]) {
 int nthreads, size;
-char *argNames[1] = { "size" };
-char *defaultValues[1] = { "500" };
-char *timerNames[1] = { "EXE_TIME" };
+//char *argNames[1] = { "size" };
+//char *defaultValues[1] = { "500" };
+//char *timerNames[1] = { "EXE_TIME" };
 
-nthreads = omp_get_num_threads();
+nthreads = 1; // omp_get_num_threads();
 //OSCR_init( nthreads,
 //	"LU reduction of a dense matrix.",
 //	NULL,

@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
   char *DEFAULT_VALUES[NUM_ARGS] = {"2048 K"};
 
 
-  NUMTHREADS = omp_get_num_threads();
+  NUMTHREADS = 1; //omp_get_num_threads();
   //OSCR_init (NUMTHREADS, "Quicksort", "Use 'qsort' <size (in K)>", NUM_ARGS,
    // PARAM_NAMES, DEFAULT_VALUES , NUM_TIMERS, NUM_TIMERS, TIMERS_NAMES,
    // argc, argv);

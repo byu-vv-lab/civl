@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
 	/* Default: DEFAULT_PREC; */
 
-	NUMTHREADS = omp_get_num_threads();
+	NUMTHREADS = 1; //omp_get_num_threads();
 	//OSCR_init (NUMTHREADS, "Pi generator", "Param: precission", NUM_ARGS, PARAM_NAMES, DEFAULTS_VALUE , NUM_TIMERS, NUM_TIMERS, TIMERS_NAMES, argc, argv); 
 	//N = OSCR_getarg_int(NUM_ARGS);
 	//OSCR_timer_start(0);

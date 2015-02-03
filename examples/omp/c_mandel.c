@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 //  char *DEFAULT_VALUES[NUM_ARGS] = {"4092"};
 
 
-   NUMTHREADS = omp_get_num_threads();
+   NUMTHREADS = 1; //omp_get_num_threads();
    //OSCR_init (NUMTHREADS, "Mandelbrot set area", "Use 'mandel' <Number of points>", NUM_ARGS,
      //           PARAM_NAMES, DEFAULT_VALUES , NUM_TIMERS, NUM_TIMERS, TIMERS_NAMES,
       //          argc, argv);
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   /* Default: DEFAULT_NPOINTS */
 
   points = (complex *)calloc(NPOINTS, sizeof(complex));
-  NUMTHREADS = omp_get_num_threads();
+  NUMTHREADS = 1; //omp_get_num_threads();
 
 /*1. Generate NPOINTS random points in the complex plane */
   srandom(31416);

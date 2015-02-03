@@ -228,7 +228,7 @@ int main (int argc, char **argv) {
   char *DEFAULT_VALUES[NUM_ARGS] = {"8192", "10"};
 
 
-  NUMTHREADS = omp_get_num_threads();
+  NUMTHREADS = 1; //omp_get_num_threads();
   //OSCR_init (NUMTHREADS, "Molecular dynamic simulation", "Use md <Nparts> <Nsteps>", NUM_ARGS, 
    // PARAM_NAMES, DEFAULT_VALUES , NUM_TIMERS, NUM_TIMERS, TIMERS_NAMES, 
     //argc, argv);
@@ -244,7 +244,7 @@ int main (int argc, char **argv) {
 	force    = calloc(NPARTS, sizeof(vnd_t));
 	accel    = calloc(NPARTS, sizeof(vnd_t));
 
-  NUMTHREADS = omp_get_num_threads();
+  NUMTHREADS = 1; //omp_get_num_threads();
   for (i = 0; i < NDIM; i++)
     box[i] = 10.0;
   /* set initial positions, velocities, and accelerations */

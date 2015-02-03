@@ -443,7 +443,7 @@ int main(int argc, char *argv[]) {
  // char *DEFAULT_VALUES[NUM_ARGS] = {"64", "10"};
 
 
-  NUMTHREADS = omp_get_num_threads();
+  NUMTHREADS = 1; //omp_get_num_threads();
   //OSCR_init (NUMTHREADS, "Bailey's '6-step' Fast Fourier Transform", "Use 'fft6' <size (in K)> <iters>", NUM_ARGS,
    //             PARAM_NAMES, DEFAULT_VALUES , NUM_TIMERS, NUM_TIMERS, TIMERS_NAMES,
     //            argc, argv);
@@ -465,7 +465,7 @@ int main(int argc, char *argv[]) {
 	}
   */
 
-	MAX_THREADS = omp_get_num_threads();
+	MAX_THREADS = 1; //omp_get_num_threads();
   NN = N * N;
 	LOGN = log2_int(N);
   LOGNN = log2_int(NN);
