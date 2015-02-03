@@ -147,13 +147,14 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression charPointer = argumentValues[1];
 		int startIndex;
 		int lStartIndex;
-		SymbolicExpression lhsPointer = symbolicUtil.parentPointer(source,
-				argumentValues[0]);
+		SymbolicExpression lhsPointer = argumentValues[0];
+		// symbolicUtil.parentPointer(source, argumentValues[0]);
 		SymbolicSequence<?> originalArray;
 		int numChars;
 		int vid = symbolicUtil.getVariableId(source, lhsPointer);
 		int scopeId = symbolicUtil.getDyscopeId(source, lhsPointer);
-		ReferenceExpression symRef = symbolicUtil.getSymRef(lhsPointer);
+		ReferenceExpression symRef = ((ArrayElementReference) symbolicUtil
+				.getSymRef(lhsPointer)).getParent();
 
 		if (charPointer.operator() == SymbolicOperator.CONCRETE)
 			startIndex = symbolicUtil.getArrayIndex(source, charPointer);
