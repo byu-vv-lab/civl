@@ -614,9 +614,13 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		 * Accumulate the set of memory-referencing expressions, i.e., variable
 		 * references, array index expressions, on the LHS and the RHS.
 		 * 
-		 * TBD: extend this to handle general nowait clauses on loops. This must be done
-		 * "higher up" in the AST until the next barrier is reached (either
-		 * explicit or implicit).
+		 * TBD: Need to generalize this to record the full alias-equivalence relation.
+		 *    - parameters of the same type are potential aliases unless the "restrict" keyword is used
+		 *    - assignments through pointers need to be handled as well
+		 * 
+		 * TBD: We need to know the dimensions of array parameters or else we cannot reason about
+		 * independent memory regions, e.g., indexing of the end of one array may touch an element
+		 * of an adjacent array.
 		 */
 		StatementNode body = fln.getBody();
 		writeVars = new HashSet<Entity>();
