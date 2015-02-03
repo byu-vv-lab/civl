@@ -75,7 +75,7 @@ public class OmpTransformerTest {
 			PrintStream after = new PrintStream("/tmp/after_simplify");
 			program.getAST().prettyPrint(after, true);
 		}
-		program.apply(transformerFactory.getOpenMP2CIVLTransformer());
+		program.apply(transformerFactory.getOpenMP2CIVLTransformer(null));
 		if (debug) {
 			out.println("======== After applying OpenMP Simplifier ========");
 			frontEnd.printProgram(out, program, true, false);

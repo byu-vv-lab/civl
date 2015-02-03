@@ -352,7 +352,7 @@ public class ModelTranslator {
 			}
 			if (config.debugOrVerbose())
 				this.out.println("Apply OpenMP transformer...");
-			program.apply(transformerFactory.getOpenMP2CIVLTransformer());
+			program.apply(transformerFactory.getOpenMP2CIVLTransformer(config));
 			if (config.debugOrVerbose())
 				program.prettyPrint(out);
 		}

@@ -41,7 +41,7 @@ public class CIVLConfiguration {
 	private boolean showMemoryUnits = false;
 	private int procBound = -1;
 	private int ompLoopDecomp = ModelConfiguration.DECOMP_ROUND_ROBIN;
-
+	
 	public CIVLConfiguration(GMCConfiguration config) {
 		String deadlockString = (String) config
 				.getValue(CIVLConstants.deadlockO);

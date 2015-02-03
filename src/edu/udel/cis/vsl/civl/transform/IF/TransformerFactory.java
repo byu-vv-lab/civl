@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.transform.IF.Transformer;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 
 /**
  * This class manages the set of transformations provided by CIVL.
@@ -76,9 +77,10 @@ public class TransformerFactory {
 		return mpi2CivlTransformer;
 	}
 
-	public Transformer getOpenMP2CIVLTransformer() {
+	public Transformer getOpenMP2CIVLTransformer(CIVLConfiguration config) {
 		if (openMP2CivlTransformer == null)
-			openMP2CivlTransformer = new OpenMP2CIVLTransformer(astFactory);
+			openMP2CivlTransformer = new OpenMP2CIVLTransformer(astFactory,
+					config);
 		return openMP2CivlTransformer;
 	}
 
@@ -87,7 +89,7 @@ public class TransformerFactory {
 			pthread2CivlTransformer = new Pthread2CIVLTransformer(astFactory);
 		return pthread2CivlTransformer;
 	}
-	
+
 	public Transformer getCuda2CIVLTransformer() {
 		if (cuda2CivlTransformer == null)
 			cuda2CivlTransformer = new Cuda2CIVLTransformer(astFactory);

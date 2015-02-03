@@ -81,13 +81,13 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/* ************************** Private Static Fields ********************** */
 
 	// private static String EXIT = "exit";
-	private static String MPI_PREFIX = "$mpi$";
+	private final static String MPI_PREFIX = "$mpi$";
 
 	/**
 	 * The name of the identifier of the MPI_Comm variable in the final CIVL
 	 * program.
 	 */
-	private static String COMM_WORLD = "MPI_COMM_WORLD";
+	private final static String COMM_WORLD = "MPI_COMM_WORLD";
 
 	// private static String PTHREAD_IS_TERMINATED = "_isTerminated";
 
@@ -95,42 +95,42 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the identifier of the CMPI_Gcomm variable in the final CIVL
 	 * program.
 	 */
-	private static String GCOMM_WORLD = "GCOMM_WORLD";
+	private final static String GCOMM_WORLD = "GCOMM_WORLD";
 
 	/**
 	 * The name of CMPI_Gcomm type in the final CIVL-C program.
 	 */
-	private static String GCOMM_TYPE = "CMPI_Gcomm";
+	private final static String GCOMM_TYPE = "CMPI_Gcomm";
 
 	/**
 	 * The name of MPI_Comm type in both the original program and the final
 	 * CIVL-C program.
 	 */
-	private static String COMM_TYPE = "MPI_Comm";
+	private final static String COMM_TYPE = "MPI_Comm";
 
 	/**
 	 * The name of the function to create a new CMPI_Gcomm object in the final
 	 * CIVL-C program.
 	 */
-	private static String GCOMM_CREATE = "CMPI_Gcomm_create";
+	private final static String GCOMM_CREATE = "CMPI_Gcomm_create";
 
 	/**
 	 * The name of the function to create a new MPI_Comm object in the final
 	 * CIVL-C program.
 	 */
-	private static String COMM_CREATE = "CMPI_Comm_create";
+	private final static String COMM_CREATE = "CMPI_Comm_create";
 
 	/**
 	 * The name of the function to free a CMPI_Gcomm object in the final CIVL-C
 	 * program.
 	 */
-	private static String GCOMM_DESTROY = "CMPI_Gcomm_destroy";
+	private final static String GCOMM_DESTROY = "CMPI_Gcomm_destroy";
 
 	/**
 	 * The name of the function to free a MPI_Comm object in the final CIVL-C
 	 * program.
 	 */
-	private static String COMM_DESTROY = "CMPI_Comm_destroy";
+	private final static String COMM_DESTROY = "CMPI_Comm_destroy";
 
 	/**
 	 * The name used for renaming the main function of the original MPI program.
@@ -145,59 +145,59 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name of the function MPI_Init in the original MPI program.
 	 */
-	private static String MPI_INIT = "MPI_Init";
+	private final static String MPI_INIT = "MPI_Init";
 
 	/**
 	 * The name of the function translating MPI_Init in the final CIVL-C
 	 * program.
 	 */
-	private static String MPI_INIT_NEW = "__MPI_Init";
+	private final static String MPI_INIT_NEW = "__MPI_Init";
 
 	/**
 	 * The name of the function MPI_Init in the original MPI program.
 	 */
-	private static String MPI_FINALIZE = "MPI_Finalize";
+	private final static String MPI_FINALIZE = "MPI_Finalize";
 
 	/**
 	 * The name of the function translating MPI_Init in the final CIVL-C
 	 * program.
 	 */
-	private static String MPI_FINALIZE_NEW = "__MPI_Finalize";
+	private final static String MPI_FINALIZE_NEW = "__MPI_Finalize";
 
 	/**
 	 * The name of the variable representing the status of an MPI process, which
 	 * is modified by MPI_Init() and MPI_Finalized().
 	 */
-	private final String MPI_SYS_STATUS = "_my_status";
+	private final static String MPI_SYS_STATUS = "_my_status";
 
 	/**
 	 * The name of the type of variables representing the status of an MPI
 	 * process.
 	 */
-	private static String MPI_SYS_STATUS_TYPENAME = "__MPI_Sys_status__";
+	private final static String MPI_SYS_STATUS_TYPENAME = "__MPI_Sys_status__";
 
 	/**
 	 * The name of the MPI procedure in the final CIVL-C program.
 	 */
-	private static String MPI_PROCESS = "MPI_Process";
+	private final static String MPI_PROCESS = "MPI_Process";
 
 	/**
 	 * The name of the input variable denoting the number of MPI processes in
 	 * the final CIVL-C program.
 	 */
-	private static String NPROCS = "_NPROCS";
+	private final static String NPROCS = "_NPROCS";
 
 	/**
 	 * The name of the input variable denoting the upper bound of the number of
 	 * MPI processes in the final CIVL-C program.
 	 */
-	private static String NPROCS_UPPER_BOUND = "_NPROCS_UPPER_BOUND";
+	private final static String NPROCS_UPPER_BOUND = "_NPROCS_UPPER_BOUND";
 
 	/**
 	 * The name of the input variable denoting the lower bound of the number of
 	 * MPI processes in the final CIVL-C program.
 	 */
-	private static String NPROCS_LOWER_BOUND = "_NPROCS_LOWER_BOUND";
+	private final static String NPROCS_LOWER_BOUND = "_NPROCS_LOWER_BOUND";
 
 	/**
 	 * The name of the variable used to declare the array of references to all
@@ -208,12 +208,12 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name of the function $wait() in the final CIVL-C program.
 	 */
-	private static String WAITALL = "$waitall";
+	private final static String WAITALL = "$waitall";
 
 	/**
 	 * The name of $proc type in the final CIVL-C program.
 	 */
-	private static String PROC_TYPE = "$proc";
+	private final static String PROC_TYPE = "$proc";
 
 	/* ****************************** Constructor ************************** */
 	/**
@@ -572,7 +572,8 @@ public class MPI2CIVLWorker extends BaseWorker {
 						includedNodes.add(child);
 				} else
 					includedNodes.add(child);
-			} else if (sourceFile.equals("stdio.h") || sourceFile.equals("stdio-c.cvl")) {
+			} else if (sourceFile.equals("stdio.h")
+					|| sourceFile.equals("stdio-c.cvl")) {
 				// keep variable declaration nodes from stdio, i.e.,
 				// stdout, stdin, stderr, etc.
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION)
@@ -607,7 +608,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 					|| sourceFile.equals("sched.cvl")
 					|| sourceFile.equals("seq.cvl")
 					|| sourceFile.equals("stdio.cvl")
-					
+
 					|| sourceFile.equals("string.cvl")) {
 				includedNodes.add(child);
 			} else {
