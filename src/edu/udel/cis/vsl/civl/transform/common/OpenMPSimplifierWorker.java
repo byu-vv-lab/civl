@@ -90,8 +90,6 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	private List<Entity> privateIDs;
 	private List<Entity> loopPrivateIDs;
 	
-	private OmpParallelNode parallelNode;
-
 	public OpenMPSimplifierWorker(ASTFactory astFactory) {
 		super("OpenMPSimplifier", astFactory);
 		this.identifierPrefix = "$omp_sim_";
@@ -191,8 +189,6 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			 * calls which should be interpreted as being dependent
 			 */
 			
-			parallelNode = opn;
-
 			/*
 			 * Determine the private variables since they cannot generate
 			 * dependences.
@@ -650,8 +646,26 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		System.out.println("  writeArrays : "+writeArrayRefs);
 		System.out.println("  readArrays : "+readArrayRefs);
 */
-
+ 		
 		if (independent) {
+			/*
+			 * At this point we can create a branch in the program based on the boundingConditions
+			 * and array's reference expressions.   Essentially we want to construct a runtime 
+			 * predicate that captures the assumptions about referenced memory locations that led
+			 * to the judgement of independence.
+			 * 
+			 * For example if the program had
+			 *      for (int i=0; i<N; i++) 
+			 *         a[i] = b[i];
+			 * then we want to generate a condition that says that:
+			 *      a != b && a+(N-1) < b && b+(N-1) < a
+			 * which ensures that the array regions that are accessed are disjoint.
+			 * 
+			 * Note that this would approach could generalize to more interesting cases:
+			 *      for (int i=0; i<(N/2); i++)
+			 *         a[i] = a[N-1-i];
+			 */
+			
 			/*
 			 * Transform this "omp for" into a "omp single" workshare.  To safely perform this
 			 * when a reduction is present for an (op,var) pair all assignments to "var" in the
