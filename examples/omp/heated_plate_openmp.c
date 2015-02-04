@@ -103,11 +103,12 @@ int main ( int argc, char *argv[] )
     Local, double W[M][N], the solution computed at the latest iteration.
 */
 {
-# define M 500
-# define N 500
+# define M 20		// originally 500
+# define N 20		// originally 500
+#define EPSILON 0.01    // originally 0.001
 
   double diff;
-  double epsilon = 0.001;
+  double epsilon = EPSILON;
   int i;
   int iterations;
   int iterations_print;
