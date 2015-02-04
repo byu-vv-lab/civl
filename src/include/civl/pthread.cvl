@@ -8,14 +8,11 @@
 #include <pthread.h>
 #include <seq.cvh>
 
+
+
 extern void *value_ptr_value = NULL;
 static pthread_t * pool[];
 
-typedef struct {
-  $proc queue[];
-  $proc head;
-  $proc tail;
-} proc_fifo_queue;
 
 /* pthread_barrierattr_t
 */
@@ -99,7 +96,6 @@ struct pthread_mutex_t{
   int ownerid;
   int lock;
   int prioceiling;
-  proc_fifo_queue contenders;
   pthread_mutexattr_t attr;
 };
 
