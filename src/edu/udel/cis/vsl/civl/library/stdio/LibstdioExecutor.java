@@ -423,8 +423,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression theFile;
 		NumericExpression pos0 = zero, pos1 = zero;
 		boolean isInputFile = false;
-		int scopeId = symbolicUtil.getDyscopeId(expressions[0].getSource(),
-				filesystemPointer);
+		int filesystemDyscopeId = symbolicUtil.getDyscopeId(
+				expressions[0].getSource(), filesystemPointer);
 		int filesystemVid = symbolicUtil.getVariableId(
 				expressions[0].getSource(), filesystemPointer);
 		ReferenceExpression fileSystemRef = symbolicUtil
@@ -531,11 +531,11 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			ReferenceExpression ref = universe.arrayElementReference(
 					universe.tupleComponentReference(fileSystemRef, oneObject),
 					universe.integer(fileIndex));
-			SymbolicExpression filePointer = symbolicUtil.makePointer(scopeId,
-					filesystemVid, ref);
+			SymbolicExpression filePointer = symbolicUtil.makePointer(
+					filesystemDyscopeId, filesystemVid, ref);
 			SymbolicExpression fileStream;
-			SymbolicExpression scope = modelFactory.scopeValue(state
-					.getProcessState(pid).getDyscopeId());
+			// SymbolicExpression scope = modelFactory.scopeValue(state
+			// .getProcessState(pid).getDyscopeId());
 
 			streamComponents.add(filePointer);
 			streamComponents.add(filesystemPointer);
@@ -549,7 +549,9 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			// do malloc, get pointer, do the assignments.
 			// state = primaryExecutor.assign(state, pid, lhs, fileStream);
 			state = primaryExecutor.malloc(source, state, pid, process, lhs,
-					expressions[0], scope, FILEtype, fileStream);
+					expressions[0],
+					modelFactory.scopeValue(filesystemDyscopeId), FILEtype,
+					fileStream);
 
 		}
 		return state;
