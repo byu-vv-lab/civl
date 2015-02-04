@@ -46,7 +46,7 @@ public class Cuda2CIVLWorker extends BaseWorker {
 
 	public Cuda2CIVLWorker(ASTFactory astFactory) {
 		super("CUDAtoCIVLTransformer", astFactory);
-		this.identifierPrefix = "$cuda$";
+		this.identifierPrefix = "$cuda_";
 	}
 
 	@Override

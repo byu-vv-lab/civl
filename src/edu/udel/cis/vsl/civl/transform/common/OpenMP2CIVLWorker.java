@@ -208,7 +208,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 */
 	public OpenMP2CIVLWorker(ASTFactory astFactory, CIVLConfiguration config) {
 		super("OpenMPtoCIVLTransformer", astFactory);
-		this.identifierPrefix = "$omp$";
+		this.identifierPrefix = "$omp_";
 		this.config = config;
 	}
 

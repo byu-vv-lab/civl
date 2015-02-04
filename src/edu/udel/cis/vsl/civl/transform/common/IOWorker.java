@@ -177,7 +177,7 @@ public class IOWorker extends BaseWorker {
 	 */
 	public IOWorker(ASTFactory astFactory) {
 		super("IOTransformer", astFactory);
-		this.identifierPrefix = "$io$";
+		this.identifierPrefix = "$io_";
 	}
 
 	/* *************************** Private Methods ************************* */

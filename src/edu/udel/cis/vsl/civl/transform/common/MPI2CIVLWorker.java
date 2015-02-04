@@ -81,7 +81,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/* ************************** Private Static Fields ********************** */
 
 	// private static String EXIT = "exit";
-	private final static String MPI_PREFIX = "$mpi$";
+	private final static String MPI_PREFIX = "$mpi_";
 
 	/**
 	 * The name of the identifier of the MPI_Comm variable in the final CIVL

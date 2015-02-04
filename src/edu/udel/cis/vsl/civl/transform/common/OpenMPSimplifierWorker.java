@@ -94,7 +94,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 	public OpenMPSimplifierWorker(ASTFactory astFactory) {
 		super("OpenMPSimplifier", astFactory);
-		this.identifierPrefix = "$omp_sim$";
+		this.identifierPrefix = "$omp_sim_";
 	}
 
 	@Override

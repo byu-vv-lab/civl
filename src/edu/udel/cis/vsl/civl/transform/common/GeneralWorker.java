@@ -54,7 +54,7 @@ public class GeneralWorker extends BaseWorker {
 
 	public GeneralWorker(ASTFactory astFactory) {
 		super("GeneralTransformer", astFactory);
-		this.identifierPrefix = "$gen$";
+		this.identifierPrefix = "$gen_";
 	}
 
 	@Override

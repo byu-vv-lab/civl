@@ -83,7 +83,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 */
 	public Pthread2CIVLWorker(ASTFactory astFactory) {
 		super("PthreadToCIVLTransformer", astFactory);
-		this.identifierPrefix = "$pthreads$";
+		this.identifierPrefix = "$pthreads_";
 	}
 
 	/* *************************** Private Methods ************************* */
