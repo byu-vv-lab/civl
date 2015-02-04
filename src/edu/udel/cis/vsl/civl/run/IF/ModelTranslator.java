@@ -461,9 +461,13 @@ public class ModelTranslator {
 						+ " ASTs");
 			}
 		} catch (SyntaxException e) {
-			err.println("errors encountered when linking input program with"
-					+ " the implementation of system libraries:");
-			err.println(e.getMessage());
+			// the following is inaccurate and I think not helpful.
+			// this is the first time the translation units get analyzed,
+			// so this may report an error that is in a single translation unit
+			// and has nothing to do with linking.
+			// err.println("errors encountered when linking input program with"
+			// + " the implementation of system libraries:");
+			err.println("Compilation error: " + e.getMessage());
 			err.flush();
 			return null;
 		}
@@ -475,7 +479,8 @@ public class ModelTranslator {
 	 * 
 	 * @param tokenSource
 	 *            The token source to be parsed.
-	 * @return The AST which is the result of parsing the given token source.
+	 * @return The unanalyzed AST which is the result of parsing the given token
+	 *         source.
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
