@@ -43,10 +43,12 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
+import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicFunctionType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
+import edu.udel.cis.vsl.sarl.ideal.common.IdealSymbolicConstant;
 
 /**
  * Executor for stdlib function calls.
@@ -388,6 +390,28 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
+	/**
+	 * Execute memset() function. CIVL currently only support set memory units
+	 * to zero (In other words, the second argument of the memset function can
+	 * only be zero).
+	 * 
+	 * @param state
+	 *            the current state
+	 * @param pid
+	 *            the PID of the process
+	 * @param process
+	 *            the identifier of the process
+	 * @param lhs
+	 *            the left hand size expression
+	 * @param arguments
+	 *            the expressions of arguments
+	 * @param argumentValues
+	 *            the symbolic expressions of arguments
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 * @author ziqing luo
+	 */
 	private State execute_memset(State state, int pid, String process,
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
@@ -406,6 +430,7 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		Pair<Evaluation, SymbolicExpression> setDataRet;
 		edu.udel.cis.vsl.sarl.IF.number.Number num_length;
 		int int_length;
+		boolean byteIsUnit = true;
 
 		pointer = argumentValues[0];
 		c = argumentValues[1];
@@ -429,6 +454,19 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 				universe);
 		dataTypeSize = symbolicUtil.sizeof(arguments[0].getSource(),
 				objectElementType);
+		for (SymbolicObject obj : size.arguments()) {
+			if (obj instanceof IdealSymbolicConstant) {
+				/*
+				 * size contains any "SIZEOF(CHAR) or SIZEOF(BOOLEAN)", never
+				 * simplify SIZEOF(CHAR)(or SIZEOF(BOOLEAN) to one
+				 */
+				if (obj.equals(symbolicUtil.sizeof(null,
+						universe.characterType()))
+						|| obj.equals(symbolicUtil.sizeof(null,
+								universe.booleanType())))
+					byteIsUnit = false;
+			}
+		}
 		switch (objectElementType.typeKind()) {
 		case REAL:
 			zeroVar = universe.rational(0);
@@ -438,11 +476,13 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			break;
 		case CHAR:
 			zeroVar = universe.character('\0');
-			dataTypeSize = one;
+			if (byteIsUnit)
+				dataTypeSize = one;
 			break;
 		case BOOLEAN:
 			zeroVar = universe.bool(false);
-			dataTypeSize = one;
+			if (byteIsUnit)
+				dataTypeSize = one;
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(
@@ -466,6 +506,7 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			zerosArray = symbolicUtil.newArray(state.getPathCondition(),
 					objectElementType, length, zeroVar);
 		}
+		// Calling setDataFrom to set the pointed object to zero
 		try {
 			libEvaluator = (LibbundleEvaluator) this.libEvaluatorLoader
 					.getLibraryEvaluator("bundle", evaluator, modelFactory,
@@ -480,6 +521,9 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			throw new CIVLInternalException(
 					"Failure of loading library evaluator of library 'string'",
 					source);
+		}
+		if (lhs != null) {
+			state = primaryExecutor.assign(state, pid, process, lhs, pointer);
 		}
 		return state;
 	}
