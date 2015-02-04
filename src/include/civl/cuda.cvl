@@ -19,6 +19,13 @@ cudaError_t cudaGetDeviceCount(int *count) {
   return cudaSuccess;
 }
 
+/* Returns in *device the current device for the calling host thread
+ */
+cudaError_t cudaGetDevice(int * device) {
+  *device = 0;
+  return cudaSuccess;
+}
+
 /* Returns in *prop the properties of device dev
  */
 cudaError_t cudaGetDeviceProperties(struct cudaDeviceProp * prop, int dev) {
@@ -161,6 +168,14 @@ cudaError_t cudaMemcpy ( void *dst, const void *src, size_t count, enum cudaMemc
   cudaDeviceSynchronize();
   memcpy(dst, src, count);
   cudaDeviceSynchronize();
+  return cudaSuccess;
+}
+
+/* Fills the first count bytes of the memory area pointed to by devPtr
+ * with the constant byte value value
+ */
+cudaError_t cudaMemset(void * devPtr, int value, size_t count) {
+  memset(devPtr, value, count);
   return cudaSuccess;
 }
 

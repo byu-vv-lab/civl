@@ -5,6 +5,13 @@
 #include <stdio.h>      
 #include <stdlib.h>      
 
+$input int BLOCKS;
+$input int BLOCK_B;
+$assume 1 <= BLOCKS && BLOCKS <= BLOCK_B;
+$input int THREADS_PER_BLOCK;
+$input int THREADS_B;
+$assume 1 <= THREADS_PER_BLOCK && THREADS_PER_BLOCK <= THREADS_B;
+
 // A kernel that increments each array element by the value b
 
 __global__ void kernelAddConstant(int *g_a, const int b)
@@ -24,6 +31,8 @@ int correctResult(int *data, const int n, const int b)
 
 int main(int argc, char *argv[])
 {
+	elaborate(BLOCKS);
+	elaborate(THREADS_PER_BLOCK);
 
 	// Variable which holds number of GPUs
 	int num_gpus = 0;   
@@ -42,7 +51,6 @@ int main(int argc, char *argv[])
     	printf("number of CUDA devices:\t%d\n", num_gpus);
 	for(int i = 0; i < num_gpus; i++)
     	{
-        	_kernelStatus tmp;
         	cudaDeviceProp dprop;
         	cudaGetDeviceProperties(&dprop, i);
                 printf("\t Device %d is a %s\n", i, dprop.name);
@@ -50,7 +58,7 @@ int main(int argc, char *argv[])
 
 
 	// Initialize the variables 
-    	unsigned int n = num_gpus * 8192;
+    	unsigned int n = num_gpus * THREADS_PER_BLOCK * BLOCKS;
     	unsigned int nbytes = n * sizeof(int);
         int *a = 0;             // pointer to data on the CPU
         int b = 3;              // value by which each array array element will be incremented
@@ -87,7 +95,7 @@ int main(int argc, char *argv[])
                 int *sub_a = a + cpu_thread_id * n / num_cpu_threads;
    
                 unsigned int nbytes_per_kernel = nbytes / num_cpu_threads;
-                dim3 gpu_threads = {128, 1, 1};  // 128 threads per block
+                dim3 gpu_threads = {THREADS_PER_BLOCK, 1, 1};  // 128 threads per block
                 dim3 gpu_blocks = {(n / (gpu_threads.x * num_cpu_threads)), 1, 1};
 
 		//Allocate memory on the device
@@ -119,9 +127,10 @@ int main(int argc, char *argv[])
 
 
 	//Check for correctness of the result
-    	if(correctResult(a, n, b))
+    	if(correctResult(a, n, b)) {
+		$assert($true);
         	printf("Test PASSED\n");
-    	else
+    	} else
         	printf("Test FAILED\n");
 
 	//Deallocate the CPU memory 
