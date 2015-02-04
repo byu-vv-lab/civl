@@ -160,9 +160,8 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 		tmValue = eval.value;
 		tmStr = universe.apply(tmToStrFunc,
 				Arrays.asList(argumentValues[1], argumentValues[2], tmValue));
-		// TODO assign tmStr to argument[0]
-		state = this.primaryExecutor.assign(lhs.getSource(), state, process,
-				resultPointer, tmStr);
+		state = this.primaryExecutor.assign(arguments[0].getSource(), state,
+				process, resultPointer, tmStr);
 		sizeValue = universe.apply(tmToStrSizeFunc,
 				Arrays.asList(argumentValues[1], argumentValues[2], tmValue));
 		if (lhs != null)
