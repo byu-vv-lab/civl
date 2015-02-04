@@ -43,7 +43,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.number.Number;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicFunctionType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
@@ -396,6 +395,7 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression pointer, c;
 		NumericExpression size, length, dataTypeSize;
 		SymbolicExpression zerosArray;
+		SymbolicExpression zeroVar;
 		SymbolicType objectElementType;
 		BooleanExpression claim;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
@@ -404,7 +404,7 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		LibbundleEvaluator libEvaluator;
 		Pair<Evaluation, ArrayList<NumericExpression>> ptrAddRet;
 		Pair<Evaluation, SymbolicExpression> setDataRet;
-		Number num_length;
+		edu.udel.cis.vsl.sarl.IF.number.Number num_length;
 		int int_length;
 
 		pointer = argumentValues[0];
@@ -429,6 +429,25 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 				universe);
 		dataTypeSize = symbolicUtil.sizeof(arguments[0].getSource(),
 				objectElementType);
+		switch (objectElementType.typeKind()) {
+		case REAL:
+			zeroVar = universe.rational(0);
+			break;
+		case INTEGER:
+			zeroVar = universe.integer(0);
+			break;
+		case CHAR:
+			zeroVar = universe.character('\0');
+			dataTypeSize = one;
+			break;
+		case BOOLEAN:
+			zeroVar = universe.bool(false);
+			dataTypeSize = one;
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"Any datatype other than REAL, INTEGER, CHAR and BOOLEAN is not supported yet");
+		}
 		length = universe.divide(size, dataTypeSize);
 		ptrAddRet = evaluator.evaluatePointerAdd(state, process, pointer,
 				length, false, arguments[0].getSource());
@@ -437,17 +456,15 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		// create a set of zeros to set to the pointed object.
 		num_length = universe.extractNumber(length);
 		if (num_length != null) {
-			List<NumericExpression> zeros = new LinkedList<>();
+			List<SymbolicExpression> zeros = new LinkedList<>();
 
 			int_length = ((IntegerNumber) num_length).intValue();
 			for (int i = 0; i < int_length; i++)
-				zeros.add(universe.number(universe.numberFactory()
-						.rational("0")));
+				zeros.add(zeroVar);
 			zerosArray = universe.array(objectElementType, zeros);
 		} else {
 			zerosArray = symbolicUtil.newArray(state.getPathCondition(),
-					objectElementType, length,
-					universe.number(universe.numberFactory().rational("0")));
+					objectElementType, length, zeroVar);
 		}
 		try {
 			libEvaluator = (LibbundleEvaluator) this.libEvaluatorLoader
