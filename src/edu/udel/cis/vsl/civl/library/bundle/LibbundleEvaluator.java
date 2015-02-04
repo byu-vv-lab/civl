@@ -114,7 +114,6 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		ArrayList<NumericExpression> getArrayElementsSizes;
 		SymbolicExpression startPtr, endPtr;
 		Evaluation eval;
-		// TODO : specification for explain every thing including arrayInfo
 		Pair<Evaluation, ArrayList<NumericExpression>> eval_and_arrayInfo;
 		Pair<Evaluation, SymbolicExpression> eval_and_pointer;
 

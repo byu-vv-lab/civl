@@ -2770,7 +2770,7 @@ public class CommonEvaluator implements Evaluator {
 			notOver = universe.lessThanEquals(universe.add(index, offset),
 					extent);
 			// Not lower than the bound
-			notDrown = universe.lessThan(zero, universe.add(index, offset));
+			notDrown = universe.lessThanEquals(zero, universe.add(index, offset));
 			// Not exactly equal to the extent
 			notEqual = universe.neq(universe.add(index, offset), extent);
 			// Conditions of out of bound:

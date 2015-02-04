@@ -265,7 +265,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 * @throws UnsatisfiablePathConditionException
 	 * @author Ziqing Luo
 	 */
-	protected Pair<Evaluation, SymbolicExpression> setDataBetween(State state,
+	public Pair<Evaluation, SymbolicExpression> setDataBetween(State state,
 			String process, SymbolicExpression startPtr,
 			SymbolicExpression endPtr, SymbolicExpression dataArray,
 			ArrayList<NumericExpression> arrayElementsSizes, CIVLSource source)
@@ -463,7 +463,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 * @return a sequence of data which is in form of an one dimensional array.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	protected SymbolicExpression getDataBetween(State state, String process,
+	public SymbolicExpression getDataBetween(State state, String process,
 			SymbolicExpression startPtr, SymbolicExpression endPtr,
 			ArrayList<NumericExpression> arrayElementsSizes, CIVLSource source)
 			throws UnsatisfiablePathConditionException {

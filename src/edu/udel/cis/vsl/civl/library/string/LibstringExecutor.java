@@ -3,10 +3,14 @@
  */
 package edu.udel.cis.vsl.civl.library.string;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.library.bundle.LibbundleEvaluator;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
@@ -24,17 +28,25 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
+import edu.udel.cis.vsl.sarl.IF.number.Number;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicFunctionType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 /**
@@ -127,7 +139,10 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			state = execute_strcmp(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
 			break;
-
+		case "memset":
+			state = execute_memset(state, pid, process, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
 		default:
 			throw new CIVLInternalException("Unknown string function: " + name,
 					call);
@@ -371,6 +386,84 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs,
 					universe.integer(length));
+		return state;
+	}
+
+	private State execute_memset(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression pointer, c;
+		NumericExpression size, length, dataTypeSize;
+		SymbolicExpression zerosArray;
+		SymbolicType objectElementType;
+		BooleanExpression claim;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		ResultType resultType;
+		Evaluation eval;
+		LibbundleEvaluator libEvaluator;
+		Pair<Evaluation, ArrayList<NumericExpression>> ptrAddRet;
+		Pair<Evaluation, SymbolicExpression> setDataRet;
+		Number num_length;
+		int int_length;
+
+		pointer = argumentValues[0];
+		c = argumentValues[1];
+		// check if pointer is valid first
+		if (pointer.operator() != SymbolicOperator.CONCRETE)
+			errorLogger.reportError(new CIVLExecutionException(
+					ErrorKind.POINTER, Certainty.CONCRETE, process,
+					"Attempt to read/write from an invalid pointer\n",
+					arguments[0].getSource()));
+		// check if c == 0, because that's the only case we support
+		claim = universe.equals(c, zero);
+		resultType = reasoner.valid(claim).getResultType();
+		if (resultType != ResultType.YES) {
+			throw new CIVLUnimplementedFeatureException(
+					"memset() is not support copy a non-zero: " + c
+							+ " value to the given address");
+		}
+		size = (NumericExpression) argumentValues[2];
+		objectElementType = symbolicAnalyzer.getFlattenedArrayElementType(
+				state, arguments[0].getSource(), pointer).getDynamicType(
+				universe);
+		dataTypeSize = symbolicUtil.sizeof(arguments[0].getSource(),
+				objectElementType);
+		length = universe.divide(size, dataTypeSize);
+		ptrAddRet = evaluator.evaluatePointerAdd(state, process, pointer,
+				length, false, arguments[0].getSource());
+		eval = ptrAddRet.left;
+		state = eval.state;
+		// create a set of zeros to set to the pointed object.
+		num_length = universe.extractNumber(length);
+		if (num_length != null) {
+			List<NumericExpression> zeros = new LinkedList<>();
+
+			int_length = ((IntegerNumber) num_length).intValue();
+			for (int i = 0; i < int_length; i++)
+				zeros.add(universe.number(universe.numberFactory()
+						.rational("0")));
+			zerosArray = universe.array(objectElementType, zeros);
+		} else {
+			zerosArray = symbolicUtil.newArray(state.getPathCondition(),
+					objectElementType, length,
+					universe.number(universe.numberFactory().rational("0")));
+		}
+		try {
+			libEvaluator = (LibbundleEvaluator) this.libEvaluatorLoader
+					.getLibraryEvaluator("bundle", evaluator, modelFactory,
+							symbolicUtil, symbolicAnalyzer);
+			setDataRet = libEvaluator.setDataFrom(state, process, pointer,
+					length, zerosArray, false, source);
+			eval = setDataRet.left;
+			state = eval.state;
+			state = this.primaryExecutor.assign(source, state, process,
+					setDataRet.right, eval.value);
+		} catch (LibraryLoaderException e) {
+			throw new CIVLInternalException(
+					"Failure of loading library evaluator of library 'string'",
+					source);
+		}
 		return state;
 	}
 }
