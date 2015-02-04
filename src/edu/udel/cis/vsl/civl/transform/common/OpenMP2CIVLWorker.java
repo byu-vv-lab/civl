@@ -653,7 +653,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 		newAst = this.combineASTs(civlcOmpAST, newAst);
 		newAst = this.combineASTs(civlcAST, newAst);
-		// newAst.prettyPrint(System.out, true);
+		//newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
@@ -2128,8 +2128,20 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					IdentifierNode c = ((IdentifierExpressionNode) child)
 							.getIdentifier();
 					if (c.name().equals(((IdentifierNode) lhs).name())) {
-						sharedWrite((IdentifierNode) lhs, privateIDs,
-								sharedIDs, reductionIDs, firstPrivateIDs, op);
+						boolean isInReduction = false;
+						if(reductionIDs != null){
+							for(ASTNode childReduction : reductionIDs.children()){
+								IdentifierNode cReduction = ((IdentifierExpressionNode) childReduction)
+										.getIdentifier();
+								if (cReduction.name().equals(((IdentifierNode) lhs).name())) {
+									isInReduction = true;
+								}
+							}
+						}
+						if(!isInReduction){ 
+							sharedWrite((IdentifierNode) lhs, privateIDs,
+									sharedIDs, reductionIDs, firstPrivateIDs, op);
+						}
 					}
 				}
 
