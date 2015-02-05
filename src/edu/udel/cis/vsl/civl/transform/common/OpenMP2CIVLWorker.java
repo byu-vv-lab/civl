@@ -612,8 +612,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					insertChildAt(index + i, key.parent(), pair.left);
 					i++;
 				}
-				insertChildAt(index + i, key.parent(), pair.right);
-				i++;
+				if(pair.right != null){
+					insertChildAt(index + i, key.parent(), pair.right);
+					i++;
+				}
 			}
 		}
 
@@ -2001,6 +2003,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				while (!(parent instanceof ExpressionStatementNode)) {
 					if (parent instanceof FunctionCallNode) {
 						nestedFunctionCall = true;
+						break;
 					}
 					if (parent.parent() != null) {
 						parent = parent.parent();
@@ -2012,8 +2015,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					Type currentType = ((FunctionCallNode) node).getType();
 					BasicTypeKind baseTypeKind = ((StandardBasicType) currentType)
 							.getBasicTypeKind();
-					CompoundStatementNode body;
-					LinkedList<BlockItemNode> items = new LinkedList<>();
 					String tempFuncCall = "tempFuncCall";
 					ASTNode nodeDirectParent = node.parent();
 					int index = node.childIndex();
@@ -2032,17 +2033,33 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 															CParser.INT),
 													baseTypeKind),
 									(InitializerNode) node);
-					items.add(tempNode);
-					nodeDirectParent = parent.parent();
-					index = parent.childIndex();
-					nodeDirectParent.removeChild(index);
-					items.add((BlockItemNode) parent);
 
-					body = nodeFactory
-							.newCompoundStatementNode(
-									newSource(tempFuncCall,
-											CParser.COMPOUND_STATEMENT), items);
-					nodeDirectParent.setChild(index, body);
+					while(!(parent instanceof StatementNode)){
+						parent = parent.parent();
+					}
+					
+					ASTNode parentOfParent = parent.parent();
+					
+					if (parentOfParent instanceof ForLoopNode || parentOfParent instanceof IfNode) {
+						createBody(parent);
+						parentOfParent = parent.parent();
+					}
+					
+					Pair<VariableDeclarationNode, ExpressionStatementNode> tempPair = new Pair<>(
+							tempNode, null);
+					if (sharedRead.containsKey(parent)) {
+						ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> nodeToAdd = sharedRead
+								.get(parent);
+						nodeToAdd.add(tempPair);
+					} else {
+						ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> tempPairs = new ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>>();
+						tempPairs.add(tempPair);
+						sharedRead.put(parent, tempPairs);
+					}
+					
+//					index = parent.childIndex();
+//
+//					insertChildAt(index, parentOfParent, tempNode);
 
 				}
 
