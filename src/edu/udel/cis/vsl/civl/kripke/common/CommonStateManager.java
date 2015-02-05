@@ -222,21 +222,21 @@ public class CommonStateManager implements StateManager {
 			if (newCanonicId > this.maxCanonicId)
 				this.maxCanonicId = newCanonicId;
 		} else {
-			if (config.collectProcesses())
-				state = stateFactory.collectProcesses(state);
-			try {
-				if (config.collectHeaps())
-					state = stateFactory.collectHeaps(state);
-				if (config.collectScopes())
-					state = stateFactory.collectScopes(state);
-			} catch (CIVLStateException stex) {
-				CIVLExecutionException err = new CIVLExecutionException(
-						stex.kind(), stex.certainty(), process, stex.message(),
-						symbolicAnalyzer.stateToString(stex.state()),
-						stex.source());
-
-				errorLogger.reportError(err);
-			}
+//			if (config.collectProcesses())
+//				state = stateFactory.collectProcesses(state);
+//			try {
+//				if (config.collectHeaps())
+//					state = stateFactory.collectHeaps(state);
+//				if (config.collectScopes())
+//					state = stateFactory.collectScopes(state);
+//			} catch (CIVLStateException stex) {
+//				CIVLExecutionException err = new CIVLExecutionException(
+//						stex.kind(), stex.certainty(), process, stex.message(),
+//						symbolicAnalyzer.stateToString(stex.state()),
+//						stex.source());
+//
+//				errorLogger.reportError(err);
+//			}
 			if (config.simplify())
 				state = stateFactory.simplify(state);
 			traceStep.complete(state);
