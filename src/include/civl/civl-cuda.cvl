@@ -28,6 +28,9 @@ dim3 _toDim3(int x) {
  * The location of the cell is passed to the spawning function.
  */
 void _runProcs(dim3 dim, void spawningFunction(uint3)) {
+  elaborate(dim.x);
+  elaborate(dim.y);
+  elaborate(dim.z);
 	$range rx = 0 .. dim.x - 1;
 	$range ry = 0 .. dim.y - 1;
 	$range rz = 0 .. dim.z - 1;

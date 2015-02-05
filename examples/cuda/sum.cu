@@ -6,8 +6,21 @@
 #include <stdio.h>
 #include <cuda.h>
 
+#ifdef _CIVL
+$input int N;
+$input int N_B;
+$assume 1 <= N && N <= N_B;
+$input int NBLOCKS;
+$input int NBLOCKS_B;
+$assume 1 <= NBLOCKS && NBLOCKS <= NBLOCKS_B;
+$assume NBLOCKS <= N;
+$assume N % NBLOCKS == 0;
+$assume N % 2 == 0;
+$assume NBLOCKS % 2 == 0;
+#else
 #define N 8
 #define NBLOCKS 4
+#endif
 #define NTHREADS (N/NBLOCKS)
 
 __global__ void sum(int* in, int* out) {
@@ -33,10 +46,16 @@ __global__ void sum(int* in, int* out) {
 
 int main(void) {
   int i, *dev_in, *dev_out, host[N];
+#ifdef _CIVL
+  int seqSum = 0;
+#endif
   
   printf("INPUT: ");
   for(i = 0; i != N; ++i) {
     host[i] = (21*i + 29) % 100;
+#ifdef _CIVL
+    seqSum += host[i];
+#endif
     printf(" %d ", host[i]);
   }
   printf("\n");
@@ -55,6 +74,10 @@ int main(void) {
   cudaDeviceSynchronize();
   
   printf("OUTPUT: %u\n", *host);
+#ifdef _CIVL
+  $assert *host == seqSum;
+#endif
+
   cudaFree(dev_in);
   cudaFree(dev_out);
   return 0;
