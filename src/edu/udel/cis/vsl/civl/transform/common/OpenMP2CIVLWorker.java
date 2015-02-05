@@ -316,24 +316,27 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 * 
 	 * @return The declaration node of the variable <code>x_gshared</code>.
 	 */
-	private VariableDeclarationNode gsharedDeclaration(String variable) {
+	private VariableDeclarationNode gsharedDeclaration(IdentifierNode variable) {
 		TypeNode gsharedType;
 		ExpressionNode gsharedCreate;
 		final String place = variable + "_gsharedDeclaration";
 
+		TypeNode currentType = ((VariableDeclarationNode) ((Variable) variable
+				.getEntity()).getFirstDeclaration())
+				.getTypeNode().copy();
+		
 		ExpressionNode addressOf = nodeFactory.newOperatorNode(
 				newSource(place, CParser.AMPERSAND),
 				Operator.ADDRESSOF,
 				Arrays.asList(this.identifierExpression(
-						newSource(place, CParser.IDENTIFIER), variable)));
+						newSource(place, CParser.IDENTIFIER), variable.name())));
 
 		gsharedType = nodeFactory.newTypedefNameNode(
 				nodeFactory.newIdentifierNode(newSource(place, CParser.TYPE),
 						GSHARED_TYPE), null);
-
-		if (variable.equals("a") || variable.equals("b")
-				|| variable.equals("c")) {
-			gsharedType.setRestrictQualified(true);
+		
+		if(currentType.isRestrictQualified()){
+			addressOf = nodeFactory.newCastNode(source, nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source)), addressOf);
 		}
 
 		gsharedCreate = nodeFactory.newFunctionCallNode(
@@ -346,7 +349,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		return nodeFactory.newVariableDeclarationNode(
 				newSource(place, CParser.DECLARATION),
 				nodeFactory.newIdentifierNode(
-						newSource(place, CParser.IDENTIFIER), variable
+						newSource(place, CParser.IDENTIFIER), variable.name()
 								+ "_gshared"), gsharedType, gsharedCreate);
 	}
 
@@ -359,11 +362,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 * 
 	 * @return The declaration node of the variable <code>x_shared</code>.
 	 */
-	private VariableDeclarationNode sharedDeclaration(String variable) {
+	private VariableDeclarationNode sharedDeclaration(IdentifierNode variable) {
 		TypeNode sharedType;
 		ExpressionNode sharedCreate;
 		final String place = variable + "_sharedDeclaration";
 
+		TypeNode currentType = ((VariableDeclarationNode) ((Variable) variable
+				.getEntity()).getFirstDeclaration())
+				.getTypeNode().copy();
+		
 		sharedType = nodeFactory.newTypedefNameNode(
 				nodeFactory.newIdentifierNode(newSource(place, CParser.TYPE),
 						SHARED_TYPE), null);
@@ -371,14 +378,19 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				newSource(place, CParser.AMPERSAND),
 				Operator.ADDRESSOF,
 				Arrays.asList(this.identifierExpression(
-						newSource(place, CParser.IDENTIFIER), variable
+						newSource(place, CParser.IDENTIFIER), variable.name()
 								+ "_local")));
 		ExpressionNode addressOfStatusVar = nodeFactory.newOperatorNode(
 				newSource(place, CParser.AMPERSAND),
 				Operator.ADDRESSOF,
 				Arrays.asList(this.identifierExpression(
-						newSource(place, CParser.IDENTIFIER), variable
+						newSource(place, CParser.IDENTIFIER), variable.name()
 								+ "_status")));
+		
+		if(currentType.isRestrictQualified()){
+			addressOfLocalVar = nodeFactory.newCastNode(source, nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source)), addressOfLocalVar);
+		}
+		
 		sharedCreate = nodeFactory.newFunctionCallNode(
 				newSource(place, CParser.CALL), this.identifierExpression(
 						newSource(place, CParser.IDENTIFIER), SHARED_CREATE),
@@ -386,13 +398,14 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						this.identifierExpression(
 								newSource(place, CParser.IDENTIFIER), TEAM),
 						this.identifierExpression(
-								newSource(place, CParser.IDENTIFIER), variable
+								newSource(place, CParser.IDENTIFIER), variable.name()
 										+ "_gshared"), addressOfLocalVar,
 						addressOfStatusVar), null);
+		
 		return nodeFactory.newVariableDeclarationNode(
 				newSource(place, CParser.DECLARATION),
 				nodeFactory.newIdentifierNode(
-						newSource(place, CParser.IDENTIFIER), variable
+						newSource(place, CParser.IDENTIFIER), variable.name()
 								+ "_shared"), sharedType, sharedCreate);
 	}
 
@@ -907,7 +920,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						IdentifierNode c = ((IdentifierExpressionNode) child)
 								.getIdentifier();
 
-						gsharedVar = this.gsharedDeclaration(c.name());
+						gsharedVar = this.gsharedDeclaration(c);
 						items.add(gsharedVar);
 					}
 				}
@@ -1138,7 +1151,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						IdentifierNode c = ((IdentifierExpressionNode) child)
 								.getIdentifier();
 
-						sharedVar = this.sharedDeclaration(c.name());
+						sharedVar = this.sharedDeclaration(c);
 						parForItems.add(sharedVar);
 					}
 				}
