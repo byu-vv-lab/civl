@@ -220,9 +220,14 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 			}
 			// Making all integer-elements entries be a literal domain
 			for (int i = 0; i < number; i++) {
-				SymbolicExpression elementsArray = universe.array(
-						domainElementType, partitions.get(i));
-
+				List<SymbolicExpression> myPartition = partitions.get(i);
+				SymbolicExpression elementsArray;
+				if (myPartition != null)
+					elementsArray = universe.array(domainElementType,
+							myPartition);
+				else {
+					elementsArray = universe.emptyArray(domainElementType);
+				}
 				myLiterals = universe.unionInject(domUnionType, oneObject,
 						elementsArray);
 				myDomain = universe.tuple(domType,
