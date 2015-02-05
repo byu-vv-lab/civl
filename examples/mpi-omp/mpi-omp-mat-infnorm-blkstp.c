@@ -88,12 +88,18 @@ int main(int argc, char **argv) // "int" inserted manually
   }
   MPI_Bcast(&NoofRows, 1, MPI_INT, Root, MPI_COMM_WORLD);
 
+  #ifdef _CIVL
+  $assume NoofRows >= Numprocs;
+  #endif
   if (NoofRows < Numprocs) {
     MPI_Finalize();
     if (MyRank == 0)
       printf("Noof Rows Should Be More Than No of Processors ... \n");
     exit(0);
   }
+  #ifdef _CIVL
+  $assume NoofRows % Numprocs == 0;
+  #endif
   if (NoofRows % Numprocs != 0) {
     MPI_Finalize();
     if (MyRank == 0) {
