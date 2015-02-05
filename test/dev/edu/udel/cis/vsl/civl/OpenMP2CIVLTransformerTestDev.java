@@ -133,18 +133,49 @@ public class OpenMP2CIVLTransformerTestDev {
 		assertTrue(ui.run("verify",
 				"-inputTHREAD_MAX=2", filename("md_openmp.c")));
 	}
+	*/
 
+	@Ignore
 	@Test
-	public void heatedplate() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
+	public void heatedplateAllDecomp() {
+		assertTrue(ui.run("verify", "-ompNoSimplify -ompLoopDecomp=ALL", "-DMATH_NO_ASSUMPTIONS",
 				"-inputTHREAD_MAX=2", filename("heated_plate_openmp.c")));
 	}
 	
 	@Test
-	public void heatedplateSimplify() {
-		assertTrue(ui.run("verify",
+	public void heatedplateRoundRobinDecomp() {
+		assertTrue(ui.run("verify", "-ompNoSimplify -ompLoopDecomp=ROUND_ROBIN", "-DMATH_NO_ASSUMPTIONS",
 				"-inputTHREAD_MAX=2", filename("heated_plate_openmp.c")));
 	}
+	
+	@Ignore
+	@Test
+	public void heatedplateSimplify() {
+		assertTrue(ui.run("verify", "-ompLoopDecomp=ALL", "-DMATH_NO_ASSUMPTIONS",
+				"-inputTHREAD_MAX=2", filename("heated_plate_openmp.c")));
+	}
+	
+	@Ignore
+	@Test
+	public void heatedplateAllDecomp4() {
+		assertTrue(ui.run("verify", "-ompNoSimplify -ompLoopDecomp=ALL", "-DMATH_NO_ASSUMPTIONS",
+				"-inputTHREAD_MAX=4", filename("heated_plate_openmp.c")));
+	}
+	
+	@Ignore
+	@Test
+	public void heatedplateSimplify4() {
+		assertTrue(ui.run("verify", "-ompLoopDecomp=ALL", "-DMATH_NO_ASSUMPTIONS",
+				"-inputTHREAD_MAX=4", filename("heated_plate_openmp.c")));
+	}
+	
+	@Test
+	public void heatedplateRoundRobinDecomp4() {
+		assertTrue(ui.run("verify", "-ompNoSimplify -ompLoopDecomp=ROUND_ROBIN", "-DMATH_NO_ASSUMPTIONS",
+				"-inputTHREAD_MAX=4", filename("heated_plate_openmp.c")));
+	}
+	
+	/*
 	@Test
 	public void prime() {
 		assertTrue(ui.run("verify", "-ompNoSimplify",
@@ -180,7 +211,7 @@ public class OpenMP2CIVLTransformerTestDev {
 		assertTrue(ui.run("verify",
 				"-inputTHREAD_MAX=2", filename("pi.c")));
 	}
-	*/
+	
 	
 	@Test
         public void cmandel() {
@@ -297,20 +328,21 @@ public class OpenMP2CIVLTransformerTestDev {
                 assertTrue(ui.run("verify",
                                 "-inputTHREAD_MAX=2", filename("c_lu.c")));
         }
-        /*
+        
 	
 	@Test
 	public void forWorkshare() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
-				"-inputTHREAD_MAX=2 -showAmpleSetWtStates", filename("for.c")));
+		assertTrue(ui.run("verify", "-ompNoSimplify -ompLoopDecomp=ALL",
+				"-inputTHREAD_MAX=2 -showAmpleSet", filename("for.c")));
 	}
 	
 	@Test
 	public void singleWorkshare() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
-				"-inputTHREAD_MAX=2 -showAmpleSetWtStates", filename("single.c")));
+		assertTrue(ui.run("verify", "-ompNoSimplify -ompLoopDecomp=ALL",
+				"-inputTHREAD_MAX=2 -showAmpleSet", filename("single.c")));
 	}
 	*/
+	
 	
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
