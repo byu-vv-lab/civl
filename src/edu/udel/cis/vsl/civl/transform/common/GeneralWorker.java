@@ -42,7 +42,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 public class GeneralWorker extends BaseWorker {
 
 	private final static String MALLOC = "malloc";
-	private final static String MY_ROOT_SCOPE = "CIVL_root";
+	 final static String GENERAL_ROOT = "$gen_root";
 	private final static String MAX_ARGC = "10";
 
 	private final static String INPUT_PREFIX = "CIVL_";
@@ -114,7 +114,7 @@ public class GeneralWorker extends BaseWorker {
 
 	private VariableDeclarationNode myRootNode() {
 		return nodeFactory.newVariableDeclarationNode(mainSource,
-				nodeFactory.newIdentifierNode(mainSource, MY_ROOT_SCOPE),
+				nodeFactory.newIdentifierNode(mainSource, GENERAL_ROOT),
 				nodeFactory.newScopeTypeNode(mainSource),
 				nodeFactory.newHereNode(mainSource));
 	}
@@ -172,7 +172,7 @@ public class GeneralWorker extends BaseWorker {
 					ASTNode parent = funcCall.parent();
 					int callIndex = funcCall.childIndex();
 					ExpressionNode myRootScope = this.identifierExpression(
-							funcCall.getSource(), MY_ROOT_SCOPE);
+							funcCall.getSource(), GENERAL_ROOT);
 					ExpressionNode argument = funcCall.getArgument(0);
 
 					functionExpression.getIdentifier().setName("$" + MALLOC);
