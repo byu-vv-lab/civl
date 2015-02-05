@@ -858,41 +858,53 @@ long double cbrtl(long double x) {
 }
 
 double fabs(double x) {
-#ifdef MATH_NO_ASSUMPTIONS
+  $abstract double FABS(double x);
+  double result = FABS(x);
+
+#ifdef MATH_ELABORATE_ASSUMPTIONS
   if(x >= 0)
     return x;
   else
     return -x;
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
 #else
-  $abstract double FABS(double x);
-  $assume FABS(x) >= 0;
-  return FABS(x);
+  $assume (x >= 0 => result == x) && (x < 0 => result == -x);
+  return result;
 #endif
 }
 
 float fabsf(float x) {
-#ifdef MATH_NO_ASSUMPTIONS
+  $abstract float FABSF(float x);
+  float result = FABSF(x);
+
+#ifdef MATH_ELABORATE_ASSUMPTIONS
   if(x >= 0)
     return x;
   else
     return -x;
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
 #else
-  $abstract double FABSF(double x);
-  $assume FABSF(x) >= 0;
-  return FABSF(x);
+  $assume (x >= 0 => result == x) && (x < 0 => result == -x);
+  return result;
 #endif
 }
 
 long double fabsl(long double x) {
-#ifdef MATH_NO_ASSUMPTIONS
+  $abstract long double FABSL(long double x);
+  long double result = FABSL(x);
+
+#ifdef MATH_ELABORATE_ASSUMPTIONS
   if(x >= 0)
     return x;
   else
     return -x;
+#elif defined(MATH_NO_ASSUMPTIONS)
+  return result;
 #else
-  $abstract double FABSL(double x);
-  $assume FABSL(x) >= 0;
-  return FABSL(x);
+  $assume (x >= 0 => result == x) && (x < 0 => result == -x);
+  return result;
 #endif
 }
 
@@ -1004,7 +1016,7 @@ double pow(double x, double y) {
 
 float powf(float x, float y) {
   $abstract float POWF(float x, float y);
-  double result = POWF(x, y);
+  float result = POWF(x, y);
 
   $assert x != 0 || y > 0 : "It's invalid that argument x "
     "is 0 and y is no greater than 0."; 
@@ -1030,7 +1042,7 @@ float powf(float x, float y) {
 long double powl(long double x, long double y) {
   $abstract long double POWL(long double x, 
 			       long double y);
-  double result = POWL(x, y);
+  long double result = POWL(x, y);
   $assert x != 0 || y > 0 : "It's invalid that argument x "
     "is 0 and y is no greater than 0."; 
 #ifdef MATH_ELABORATE_ASSUMPTIONS
