@@ -165,12 +165,12 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		if (node instanceof FunctionCallNode) {
 			ExpressionNode fun = ((FunctionCallNode) node).getFunction();
 			if (fun instanceof IdentifierExpressionNode) {
-				result |= ompMethods.contains(((IdentifierExpressionNode) fun).getIdentifier().getEntity());
+				result = ompMethods.contains(((IdentifierExpressionNode) fun).getIdentifier().getEntity());
 			}
 		} else if (node != null) {
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				result |= callsMethodWithOmpConstruct(child);
+				result = callsMethodWithOmpConstruct(child);
 				if (result) break;
 			}
 		}
@@ -220,7 +220,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 			// Visit the rest of this node
 			transformOmpWorkshare(opn.statementNode());
-			
+						
 			boolean isOrphaned = callsMethodWithOmpConstruct(opn.statementNode());
 
 			if (allIndependent && !isOrphaned) {
