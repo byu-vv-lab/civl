@@ -14,7 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -352,7 +352,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		LinkedList<SymbolicExpression> intArrayComponents = new LinkedList<>();
 		List<SymbolicExpression> intIterComponents = new LinkedList<>();
 		int int_size;
-		CIVLType intIterType = modelFactory.getSystemType(Model.INT_ITER_TYPE);
+		CIVLType intIterType = modelFactory
+				.getSystemType(ModelConfiguration.INT_ITER_TYPE);
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		IntegerNumber number_size = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) size);

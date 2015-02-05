@@ -131,7 +131,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
@@ -403,8 +403,8 @@ public class FunctionTranslator {
 					}
 				}
 				this.function.setParameters(parameters);
-				this.function.setParameterTypes(parameters
-						.toArray(new CIVLType[parameters.size()]));
+				this.function.setParameterTypes(parameterTypes
+						.toArray(new CIVLType[parameterTypes.size()]));
 			}
 			this.functionBodyNode = modelBuilder.mainFunctionNode.getBody();
 			body = this.translateFunctionBody();
@@ -4240,13 +4240,19 @@ public class FunctionTranslator {
 		case QUEUE_TYPE:
 			modelBuilder.queueType = result;
 			break;
-		case Model.BARRIER_TYPE:
+		case ModelConfiguration.PTHREAD_POOL:
+		case ModelConfiguration.PTHREAD_GPOOL:
+			result.setHandleObjectType(true);
+			modelFactory.addSystemType(tag, result);
+			modelBuilder.handledObjectTypes.add(result);
+			break;
+		case ModelConfiguration.BARRIER_TYPE:
 			result.setHandleObjectType(true);
 			modelFactory.addSystemType(tag, result);
 			modelBuilder.barrierType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
-		case Model.GBARRIER_TYPE:
+		case ModelConfiguration.GBARRIER_TYPE:
 			result.setHandleObjectType(true);
 			modelFactory.addSystemType(tag, result);
 			modelBuilder.gbarrierType = result;
@@ -4264,40 +4270,40 @@ public class FunctionTranslator {
 			modelBuilder.ompWsType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
-		case Model.INT_ITER_TYPE:
+		case ModelConfiguration.INT_ITER_TYPE:
 			modelFactory.addSystemType(tag, result);
 			// result.setHandleObjectType(true);
 			modelBuilder.intIterType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
-		case Model.COMM_TYPE:
+		case ModelConfiguration.COMM_TYPE:
 			modelFactory.addSystemType(tag, result);
 			result.setHandleObjectType(true);
 			modelBuilder.commType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
-		case Model.GCOMM_TYPE:
+		case ModelConfiguration.GCOMM_TYPE:
 			modelFactory.addSystemType(tag, result);
 			result.setHandleObjectType(true);
 			modelBuilder.gcommType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
-		case Model.FILE_SYSTEM_TYPE:
+		case ModelConfiguration.FILE_SYSTEM_TYPE:
 			// result.setHandleObjectType(true);
 			modelBuilder.basedFilesystemType = result;
 			modelFactory.addSystemType(tag, result);
 			modelBuilder.handledObjectTypes.add(result);
 			break;
-		case Model.REAL_FILE_TYPE:
+		case ModelConfiguration.REAL_FILE_TYPE:
 			modelBuilder.fileType = result;
 			modelFactory.addSystemType(tag, result);
 			break;
-		case Model.FILE_STREAM_TYPE:
+		case ModelConfiguration.FILE_STREAM_TYPE:
 			modelFactory.addSystemType(tag, result);
 			modelBuilder.FILEtype = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
-		case Model.TM_TYPE:
+		case ModelConfiguration.TM_TYPE:
 			// modelBuilder.handledObjectTypes.add(result);
 			modelFactory.addSystemType(tag, result);
 			break;

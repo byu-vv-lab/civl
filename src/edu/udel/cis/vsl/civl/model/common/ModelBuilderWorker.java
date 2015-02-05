@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
@@ -695,11 +696,11 @@ public class ModelBuilderWorker {
 		Variable brokenTimeVar = this.factory.brokenTimeVariable();
 
 		if (brokenTimeVar != null) {
-			CIVLType tmType = this.factory.getSystemType(Model.TM_TYPE);
+			CIVLType tmType = this.factory
+					.getSystemType(ModelConfiguration.TM_TYPE);
 
 			if (tmType != null)// tmType may be null because of the pruner
-				brokenTimeVar
-						.setType(this.factory.getSystemType(Model.TM_TYPE));
+				brokenTimeVar.setType(tmType);
 		}
 	}
 

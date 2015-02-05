@@ -374,6 +374,9 @@ public interface SymbolicUtility {
 	SymbolicExpression makePointer(int dyscopeId, int varId,
 			ReferenceExpression symRef);
 
+	SymbolicExpression makePointer(SymbolicExpression oldPointer,
+			ReferenceExpression symRef);
+
 	/**
 	 * TODO a better name?
 	 * 

@@ -2,6 +2,11 @@ package edu.udel.cis.vsl.civl.transform.common;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
@@ -11,6 +16,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
@@ -48,11 +54,33 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
  */
 public class Pthread2CIVLWorker extends BaseWorker {
 
-	private final static String PTHREAD_CREATE = "pthread_create";
+	// private final static String PTHREAD_MUTEX_LOCK="pthread_mutex_lock";
+
+	private final static String PTHREAD_POOL_TYPE = "$pthread_pool_t";
+
+	static final String PTHREAD_MUTEX_LOCK = "pthread_mutex_lock";
+
+	static final String PTHREAD_MUTEX_LOCK_NEW = "_pthread_mutex_lock";
+
+	static final String PTHREAD_COND_WAIT = "pthread_cond_wait";
+
+	static final String PTHREAD_COND_WAIT_NEW = "_pthread_cond_wait";
+
+	final static String PTHREAD_POOL_CREATE = "$pthread_pool_create";
+
+	final static String PTHREAD_GPOOL = "$pthread_gpool";
+
+	private final static String PTHREAD_POOL = "$pthread_pool";
+
+	// needs to go to MPI process scope
+	final static String PTHREAD_CREATE = "pthread_create";
 
 	private final static String PTHREAD_EXIT = "pthread_exit";
 
-	private final static String PTHREAD_EXIT_NEW = "_pthread_exit";
+	final static String PTHREAD_EXIT_NEW = "_pthread_exit";
+
+	// needs to go to MPI process scope
+	final static String PTHREAD_EXIT_MAIN_NEW = "_pthread_exit_main";
 
 	private final static String ERROR = "ERROR";
 
@@ -70,7 +98,11 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	/* **************************** Instance Fields ************************* */
 
-	private ArrayList<String> funcList = new ArrayList<String>();
+	private List<String> funcList = new ArrayList<>();
+
+	private Set<FunctionDefinitionNode> nonThreadFunctionsWtSyncCalls = new HashSet<>();
+
+	private List<String> syncCallFunctionNames = new ArrayList<>();
 
 	// private boolean isSvComp = true;
 
@@ -88,6 +120,29 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	/* *************************** Private Methods ************************* */
 
+	private VariableDeclarationNode pthread_pool_declaration(
+			boolean wtInitializer) {
+		TypeNode pthreadPoolType;
+		List<ExpressionNode> pthreadPoolCreateArgs;
+		ExpressionNode pthreadPoolCreate;
+
+		pthreadPoolType = nodeFactory.newTypedefNameNode(nodeFactory
+				.newIdentifierNode(this.newSource("$phtread_pool_t type",
+						CParser.IDENTIFIER), PTHREAD_POOL_TYPE), null);
+		if (wtInitializer) {
+			pthreadPoolCreateArgs = new ArrayList<>(2);
+			pthreadPoolCreateArgs.add(this.hereNode());
+			pthreadPoolCreateArgs.add(this.identifierExpression(PTHREAD_GPOOL));
+			pthreadPoolCreate = nodeFactory.newFunctionCallNode(this.newSource(
+					"function call " + PTHREAD_POOL_CREATE, CParser.CALL), this
+					.identifierExpression(PTHREAD_POOL_CREATE),
+					pthreadPoolCreateArgs, null);
+			return this.variableDeclaration(PTHREAD_POOL, pthreadPoolType,
+					pthreadPoolCreate);
+		} else
+			return this.variableDeclaration(PTHREAD_POOL, pthreadPoolType);
+	}
+
 	/**
 	 * TODO javadocs
 	 * 
@@ -101,17 +156,136 @@ public class Pthread2CIVLWorker extends BaseWorker {
 				continue;
 			if (node instanceof FunctionDefinitionNode) {
 				// if (config.svcomp()) {
+				process_thread_functions((FunctionDefinitionNode) node);
 				process_VERIFIER_function_calls((FunctionDefinitionNode) node);
 				// }
 				process_pthread_exits((FunctionDefinitionNode) node, funcList);
+				process_pthread_sync_calls((FunctionDefinitionNode) node);
 			} else if (/*
 						 * config.svcomp() &&
 						 */node instanceof FunctionDeclarationNode) {
 				process_VERIFIER_functions((FunctionDeclarationNode) node);
 			}
 		}
+		process_nonThread_functions_wt_syncCalls();
+		if (this.syncCallFunctionNames.size() > 0)
+			process_function_call_of_functionsWtSyncCalls(root);
 		// if (config.svcomp())
 		translateNode(root);
+	}
+
+	private void process_function_call_of_functionsWtSyncCalls(ASTNode root) {
+		for (ASTNode node : root.children()) {
+			if (node == null)
+				continue;
+			if (node instanceof FunctionCallNode) {
+				FunctionCallNode call = (FunctionCallNode) node;
+				ExpressionNode function = call.getFunction();
+
+				if (function instanceof IdentifierExpressionNode) {
+					String funcName = ((IdentifierExpressionNode) function)
+							.getIdentifier().name();
+
+					if (this.syncCallFunctionNames.contains(funcName)) {
+						call.getArguments().addSequenceChild(
+								this.identifierExpression(PTHREAD_POOL));
+					}
+				}
+			}
+			process_function_call_of_functionsWtSyncCalls(node);
+		}
+	}
+
+	private void process_nonThread_functions_wt_syncCalls() {
+		Iterator<FunctionDefinitionNode> iterator = this.nonThreadFunctionsWtSyncCalls
+				.iterator();
+
+		while (iterator.hasNext())
+			process_sync_call_function(iterator.next());
+	}
+
+	/**
+	 * modify the function definition to take an extra argument: $pthread_pool_t
+	 * pthread_pool
+	 * 
+	 * @param funcDef
+	 */
+	private void process_sync_call_function(FunctionDefinitionNode funcDef) {
+		FunctionTypeNode funcType = funcDef.getTypeNode();
+		VariableDeclarationNode pthread_pool_param = this
+				.pthread_pool_declaration(false);
+
+		funcType.getParameters().addSequenceChild(pthread_pool_param);
+		if (!this.funcList.contains(funcDef.getName()))
+			syncCallFunctionNames.add(funcDef.getName());
+	}
+
+	private void process_pthread_sync_calls(FunctionDefinitionNode node) {
+		process_pthread_sync_calls(node, node);
+	}
+
+	private void process_pthread_sync_calls(FunctionDefinitionNode funcDef,
+			ASTNode node) {
+		for (ASTNode child : node.children()) {
+			if (child == null)
+				continue;
+			if (child instanceof FunctionCallNode) {
+				process_pthread_sync_call(funcDef, (FunctionCallNode) child);
+			}
+			process_pthread_sync_calls(funcDef, child);
+		}
+	}
+
+	/**
+	 * transforms pthread_mutex_lock(mutex) to pthread_mutex_lock(mutex,
+	 * $pthread_pool) and similar for pthread_cond_wait();
+	 * 
+	 * @param node
+	 */
+	private void process_pthread_sync_call(FunctionDefinitionNode funcDef,
+			FunctionCallNode node) {
+		ExpressionNode function = node.getFunction();
+		boolean hasSyncCall = false;
+
+		if (function instanceof IdentifierExpressionNode) {
+			String funcName = ((IdentifierExpressionNode) function)
+					.getIdentifier().name();
+
+			if (funcName.equals(PTHREAD_MUTEX_LOCK)
+					|| funcName.equals(PTHREAD_COND_WAIT)) {
+				hasSyncCall = true;
+				((IdentifierExpressionNode) function).getIdentifier().setName(
+						"_" + funcName);
+			}
+			if (hasSyncCall) {
+				node.getArguments().addSequenceChild(
+						this.identifierExpression(PTHREAD_POOL));
+				if (!this.funcList.contains(funcDef.getName()))
+					nonThreadFunctionsWtSyncCalls.add(funcDef);
+			}
+		}
+	}
+
+	/**
+	 * Insert pthread pool creation at the beginning of pthread functions
+	 * 
+	 * @param node
+	 */
+	private void process_thread_functions(FunctionDefinitionNode node) {
+		String name = node.getName();
+
+		if (this.funcList.contains(name)) {
+			CompoundStatementNode body = node.getBody();
+			List<BlockItemNode> newBodyNodes = new LinkedList<>();
+			VariableDeclarationNode pthreadPoolVar = this
+					.pthread_pool_declaration(true);
+
+			body.remove();
+			newBodyNodes.add(pthreadPoolVar);
+			newBodyNodes.add(body);
+			node.setBody(this.nodeFactory.newCompoundStatementNode(
+					body.getSource(), newBodyNodes));
+		}
 	}
 
 	/**
@@ -320,9 +494,10 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 * @throws SyntaxException
 	 */
 	private void process_pthread_exits(FunctionDefinitionNode function,
-			ArrayList<String> threadList) throws SyntaxException {
+			List<String> threadList) throws SyntaxException {
 		String name = function.getName();
 		TypeNode returnType = function.getTypeNode().getReturnType();
+		boolean isMain = name.equals("main");
 
 		if (name.equals("main")) {
 			process_pthread_exit(function, true);
@@ -337,10 +512,14 @@ public class Pthread2CIVLWorker extends BaseWorker {
 							nodeFactory.newReturnNode(this.newSource(
 									"return statement", CParser.RETURN), ZERO));
 			}
-			return;
-
+			// return;
 		}
-		if (this.isVoidPointerType(returnType) && threadList.contains(name)) {
+		if (isMain
+				|| (this.isVoidPointerType(returnType) && threadList
+						.contains(name))) {
+			String pthread_exit_name = isMain ? PTHREAD_EXIT_MAIN_NEW
+					: PTHREAD_EXIT_NEW;
+
 			if (function.getTypeNode().getParameters().numChildren() == 0) {
 				function.getTypeNode().setParameters(
 						nodeFactory.newSequenceNode(this.newSource(
@@ -358,16 +537,19 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					nodeFactory.newPointerTypeNode(
 							this.newSource("type void *", CParser.TYPE),
 							this.voidType()), this.integerConstant(0));
-			ExpressionNode isMainArg = this.booleanConstant(false);
+			// ExpressionNode isMainArg = this.booleanConstant(false);
 			FunctionCallNode newPthreadExit = nodeFactory.newFunctionCallNode(
-					this.newSource("function call " + PTHREAD_EXIT_NEW,
-							CParser.CALL), this
-							.identifierExpression(PTHREAD_EXIT_NEW), Arrays
-							.asList(nullNode, isMainArg), null);
+					this.newSource("function call " + pthread_exit_name,
+							CParser.CALL),
+					this.identifierExpression(pthread_exit_name),
+					isMain ? Arrays.asList(nullNode) : Arrays.asList(nullNode,
+							this.identifierExpression(this.newSource(
+									PTHREAD_POOL, CParser.IDENTIFIER),
+									PTHREAD_POOL)), null);
 			StatementNode pthreadExit = nodeFactory
 					.newExpressionStatementNode(newPthreadExit);
 			function.getBody().addSequenceChild(pthreadExit);
-			process_pthread_exit(function, false);
+			process_pthread_exit(function, isMain);
 		}
 	}
 
@@ -376,9 +558,10 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 * other function, translate pthread_exit(arg) to pthread_exit(arg, false).
 	 * 
 	 * @param function
+	 * @throws SyntaxException
 	 */
 	private void process_pthread_exit(FunctionDefinitionNode function,
-			boolean isMain) {
+			boolean isMain) throws SyntaxException {
 		process_pthread_exit_worker(function, isMain);
 	}
 
@@ -387,8 +570,10 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 * 
 	 * @param node
 	 * @param isMain
+	 * @throws SyntaxException
 	 */
-	private void process_pthread_exit_worker(ASTNode node, boolean isMain) {
+	private void process_pthread_exit_worker(ASTNode node, boolean isMain)
+			throws SyntaxException {
 		for (ASTNode child : node.children()) {
 			if (child == null)
 				continue;
@@ -401,28 +586,64 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					String nameString = name.getIdentifier().name();
 
 					if (nameString.equals(PTHREAD_EXIT)) {
-						ExpressionNode isMainArg = this.booleanConstant(isMain);
+						// ExpressionNode isMainArg =
+						// this.booleanConstant(isMain);
 						ExpressionNode oldArg = funcCall.getArgument(0);
 						SequenceNode<ExpressionNode> newArgs;
 
-						name.getIdentifier().setName(PTHREAD_EXIT_NEW);
-						oldArg.parent().removeChild(oldArg.childIndex());
-						newArgs = nodeFactory.newSequenceNode(
-								this.newSource("actual parameter list of "
-										+ nameString, CParser.ARGUMENT_LIST),
-								"Actual parameters",
-								Arrays.asList(oldArg, isMainArg));
-						funcCall.setArguments(newArgs);
+						if (!isMain) {
+							name.getIdentifier().setName(PTHREAD_EXIT_NEW);
+							oldArg.parent().removeChild(oldArg.childIndex());
+							newArgs = nodeFactory
+									.newSequenceNode(
+											this.newSource(
+													"actual parameter list of "
+															+ nameString,
+													CParser.ARGUMENT_LIST),
+											"Actual parameters",
+											Arrays.asList(
+													oldArg,
+													this.identifierExpression(
+															this.newSource(
+																	PTHREAD_POOL,
+																	CParser.IDENTIFIER),
+															PTHREAD_POOL)));
+							funcCall.setArguments(newArgs);
+						} else {
+							name.getIdentifier().setName(PTHREAD_EXIT_MAIN_NEW);
+						}
 					}
 				}
-			} else if (child instanceof ReturnNode && !isMain) {
-				ExpressionNode isMainArg = this.booleanConstant(isMain);
+			} else if (child instanceof ReturnNode) {
+				// ExpressionNode isMainArg = this.booleanConstant(isMain);
+				String pthread_exit_name = isMain ? PTHREAD_EXIT_MAIN_NEW
+						: PTHREAD_EXIT_NEW;
+
 				FunctionCallNode newPthreadExit = nodeFactory
-						.newFunctionCallNode(this.newSource("function call of "
-								+ PTHREAD_EXIT_NEW, CParser.CALL), this
-								.identifierExpression(PTHREAD_EXIT_NEW), Arrays
-								.asList(((ReturnNode) child).getExpression()
-										.copy(), isMainArg), null);
+						.newFunctionCallNode(
+								this.newSource("function call of "
+										+ pthread_exit_name, CParser.CALL),
+								this.identifierExpression(pthread_exit_name),
+								isMain ? Arrays.asList((ExpressionNode) nodeFactory
+										.newCastNode(this
+												.newSource("cast expression",
+														CParser.CAST),
+												nodeFactory.newPointerTypeNode(
+														this.newSource(
+																"type void *",
+																CParser.TYPE),
+														this.voidType()), this
+														.integerConstant(0))
+
+								)
+										: Arrays.asList(
+												((ReturnNode) child)
+														.getExpression().copy(),
+												this.identifierExpression(
+														this.newSource(
+																PTHREAD_POOL,
+																CParser.IDENTIFIER),
+														PTHREAD_POOL)), null);
 				StatementNode pthreadExit = nodeFactory
 						.newExpressionStatementNode(newPthreadExit);
 
@@ -524,7 +745,6 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		return false;
 	}
 
-
 	/* ********************* Methods From BaseTransformer ****************** */
 
 	@Override
@@ -536,6 +756,8 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		ast.release();
 		processRoot(root);
 		this.completeSources(root);
-		return astFactory.newAST(root, ast.getSourceFiles());
+		AST result = astFactory.newAST(root, ast.getSourceFiles());
+		// result.prettyPrint(System.out, true);
+		return result;
 	}
 }

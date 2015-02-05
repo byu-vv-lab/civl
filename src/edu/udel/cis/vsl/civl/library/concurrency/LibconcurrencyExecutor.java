@@ -11,7 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -178,7 +178,8 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression procMapArray;
 		LinkedList<SymbolicExpression> barrierComponents = new LinkedList<>();
 		CIVLSource civlsource = arguments[1].getSource();
-		CIVLType barrierType = modelFactory.getSystemType(Model.BARRIER_TYPE);
+		CIVLType barrierType = modelFactory
+				.getSystemType(ModelConfiguration.BARRIER_TYPE);
 		Evaluation eval;
 		int place_num = ((IntegerNumber) universe
 				.extractNumber((NumericExpression) place)).intValue();
@@ -371,7 +372,8 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		Expression scopeExpression = arguments[0];
 		SymbolicExpression procMapArray;
 		SymbolicExpression inBarrierArray;
-		CIVLType gbarrierType = modelFactory.getSystemType(Model.GBARRIER_TYPE);
+		CIVLType gbarrierType = modelFactory
+				.getSystemType(ModelConfiguration.GBARRIER_TYPE);
 		BooleanExpression context = state.getPathCondition();
 
 		inBarrierArray = symbolicUtil.newArray(context, universe.booleanType(),

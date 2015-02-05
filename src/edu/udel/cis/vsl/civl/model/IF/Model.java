@@ -21,36 +21,6 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  */
 public interface Model extends Sourceable {
 
-	public static final String BARRIER_TYPE = "__barrier__";
-
-	public static final String COMM_TYPE = "__comm__";
-
-	public static final String GBARRIER_TYPE = "__gbarrier__";
-
-	public static final String GCOMM_TYPE = "__gcomm__";
-
-	public static final String INT_ITER_TYPE = "__int_iter__";
-
-	public static final String FILE_SYSTEM_TYPE = "CIVL_filesystem";
-
-	public static final String REAL_FILE_TYPE = "$file";
-
-	public static final String FILE_STREAM_TYPE = "FILE";
-
-	public static final String OMP_GSHARED_TYPE = "__OMP_gshared__";
-
-	public static final String OMP_SHARED_TYPE = "__OMP_shared__";
-
-	public static final String OMP_LOOP_RECORD_TYPE = "OMP_loop_record";
-
-	public static final String OMP_WORK_RECORD_TYPE = "OMP_work_record";
-
-	public static final String OMP_GTEAM_TYPE = "__OMP_gteam__";
-
-	public static final String OMP_TEAM_TYPE = "__OMP_team__";
-
-	public static final String TM_TYPE = "tm";
-
 	/**
 	 * @return The model factory that created this model.
 	 */

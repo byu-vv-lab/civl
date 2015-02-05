@@ -67,16 +67,17 @@ public class MPI2CIVLWorker extends BaseWorker {
 
 	/* ************************** Pthread Constants ********************** */
 
-	private static final String PTHREAD_MUTEX_TRYLOCK = "pthread_mutex_trylock";
-	private static final String PTHREAD_POOL = "pool";
-	private static final String PTHREAD_ROOT = "root";
+	// private static final String PTHREAD_MUTEX_TRYLOCK =
+	// "pthread_mutex_trylock";
+	private static final String PTHREAD_GPOOL = "$pthread_gpool";
+//	private static final String PTHREAD_ROOT = "root";
 	private static final String PTHREAD_PTR = "value_ptr_value";
 	private static final String PTHREAD_JOIN = "pthread_join";
-	private static final String PTHREAD_MUTEX_LOCK = "pthread_mutex_lock";
-	private static final String PTHREAD_MUTEX_UNLOCK = "pthread_mutex_unlock";
-	private static final String PTHREAD_COND_WAIT = "pthread_cond_wait";
+	// private static final String PTHREAD_MUTEX_UNLOCK =
+	// "pthread_mutex_unlock";
+	// private static final String PTHREAD_COND_WAIT = "pthread_cond_wait";
 	private static final String PTHREAD_CREATE = "pthread_create";
-	private static final String PTHREAD_EXIT = "_pthread_exit";
+//	private static final String PTHREAD_EXIT = "_pthread_exit";
 
 	/* ************************** Private Static Fields ********************** */
 
@@ -547,8 +548,8 @@ public class MPI2CIVLWorker extends BaseWorker {
 					VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
 					String varName = variableDeclaration.getName();
 
-					if (varName.equals(PTHREAD_POOL)
-							|| varName.equals(PTHREAD_ROOT)
+					if (varName.equals(PTHREAD_GPOOL)
+					// || varName.equals(PTHREAD_ROOT)
 							|| varName.equals(PTHREAD_PTR))
 						// keep variable declaration nodes for _pool in
 						// pthread.cvl
@@ -562,11 +563,11 @@ public class MPI2CIVLWorker extends BaseWorker {
 					if (name.equals(PTHREAD_JOIN)
 							// || name.equals(PTHREAD_IS_TERMINATED)
 							|| name.equals(PTHREAD_CREATE)
-							|| name.equals(PTHREAD_EXIT)
-							|| name.equals(PTHREAD_MUTEX_LOCK)
-							|| name.equals(PTHREAD_MUTEX_UNLOCK)
-							|| name.equals(PTHREAD_MUTEX_TRYLOCK)
-							|| name.equals(PTHREAD_COND_WAIT))
+							|| name.equals(Pthread2CIVLWorker.PTHREAD_EXIT_NEW)
+							|| name.equals(Pthread2CIVLWorker.PTHREAD_MUTEX_LOCK))
+						// || name.equals(PTHREAD_MUTEX_UNLOCK)
+						// || name.equals(PTHREAD_MUTEX_TRYLOCK)
+						// || name.equals(PTHREAD_COND_WAIT))
 						items.add(functionDef);
 					else
 						includedNodes.add(child);

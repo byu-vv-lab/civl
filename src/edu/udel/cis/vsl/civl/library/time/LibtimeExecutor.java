@@ -7,7 +7,7 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -49,7 +49,8 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 		super(name, primaryExecutor, modelFactory, symbolicUtil,
 				symbolicAnalyzer, civlConfig, libExecutorLoader,
 				libEvaluatorLoader);
-		this.tmType = this.modelFactory.getSystemType(Model.TM_TYPE);
+		this.tmType = this.modelFactory
+				.getSystemType(ModelConfiguration.TM_TYPE);
 		if (tmType != null)
 			this.tmSymbolicType = tmType.getDynamicType(universe);
 		this.stringSymbolicType = (SymbolicArrayType) universe.canonic(universe

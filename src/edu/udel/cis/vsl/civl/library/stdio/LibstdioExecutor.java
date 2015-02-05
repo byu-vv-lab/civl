@@ -17,7 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
-import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -259,17 +259,17 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		createStringToDataFunctions();
 		createDataToStringFunctions();
 		this.filesystemStructType = (CIVLStructOrUnionType) modelFactory
-				.getSystemType(Model.FILE_SYSTEM_TYPE);
+				.getSystemType(ModelConfiguration.FILE_SYSTEM_TYPE);
 		if (filesystemStructType != null)
 			this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
 					.getDynamicType(universe);
 		this.fileType = (CIVLStructOrUnionType) modelFactory
-				.getSystemType(Model.REAL_FILE_TYPE);
+				.getSystemType(ModelConfiguration.REAL_FILE_TYPE);
 		if (fileType != null)
 			this.fileSymbolicType = (SymbolicTupleType) this.fileType
 					.getDynamicType(universe);
 		this.FILEtype = (CIVLStructOrUnionType) modelFactory
-				.getSystemType(Model.FILE_STREAM_TYPE);
+				.getSystemType(ModelConfiguration.FILE_STREAM_TYPE);
 		this.libevaluator = new LibstdioEvaluator(name, evaluator,
 				modelFactory, symbolicUtil, symbolicAnalyzer,
 				this.libEvaluatorLoader);

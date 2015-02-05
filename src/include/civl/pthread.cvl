@@ -3,16 +3,13 @@
 #define __CIVL_PTHREAD__
 
 #include <stdbool.h>
-#include "civl-pthread.cvh"
+#include <civl-pthread.cvh>
 #include <concurrency.cvh>
 #include <pthread.h>
 #include <seq.cvh>
 
-
-
 extern void *value_ptr_value = NULL;
-static pthread_t * pool[];
-
+$pthread_gpool_t $pthread_gpool = $pthread_gpool_create($here);
 
 /* pthread_barrierattr_t
 */
@@ -93,7 +90,7 @@ struct pthread_mutexattr_t{
 
 struct pthread_mutex_t{
   int count;
-  int ownerid;
+  $proc ownerid;
   int lock;
   int prioceiling;
   pthread_mutexattr_t attr;
@@ -142,7 +139,6 @@ struct pthread_cond_t{
 struct pthread_t{
   $proc thr;
   const pthread_attr_t attr;
-  int pid;
   _Bool terminated;
 };
 
@@ -652,7 +648,7 @@ int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr){
   }
   mutex->lock = 0;
   mutex->count = 0;
-  mutex->ownerid = -1;
+  mutex->ownerid = $proc_null;
   return 0;
 }
 
@@ -742,9 +738,8 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
     else{
       thread->attr = *attr;
     }
-    thread->pid = $seq_length(&pool);
     thread->terminated = false;
-    $seq_append(&pool, &thread, 1);
+    $pthread_gpool_add($pthread_gpool, thread);
   }
   return 0;
 }
@@ -792,31 +787,24 @@ int pthread_join(pthread_t thread, void **value_ptr){
   *            The length of the array of threads to be waited upon
   * @return Returns 0 upon successful completion
   */
-
-void _pthread_exit(void *value_ptr, _Bool isMain){
-  int len = $seq_length(&pool);
-  if(isMain){
-    for(int i = 0; i<len; i++){
-      if($proc_defined(pool[i]->thr)){
-        $wait(pool[i]->thr);
-      }
-    }
-    $exit();
-  }
-  else{
-    $atomic{
-      for(int i = 0; i<len; i++){
-        if(!(pool[i]->terminated)){
-          if(pool[i]->thr == $self){
-            pool[i]->terminated = true;
-            break;
-          }
-        }
-      }
-    }
+//Manchun: check me
+void _pthread_exit(void *value_ptr, $pthread_pool_t $pthread_pool){
+   $pthread_pool_terminates($pthread_pool);
     value_ptr_value = value_ptr;
+    $free($pthread_pool);
     $exit();
-  }
+}
+
+void _pthread_exit_main(void *value_ptr){
+  int len = $pthread_gpool_size($pthread_gpool);
+  
+  for(int i = 0; i<len; i++){
+    $proc tid = $pthread_gpool_thread($pthread_gpool, i);
+      
+    $wait(tid);
+  }    
+  $free($pthread_gpool);
+  $exit();
 }
 
 /**
@@ -836,33 +824,36 @@ void _pthread_exit(void *value_ptr, _Bool isMain){
   */
 
 
-int pthread_mutex_lock(pthread_mutex_t *mutex){
-  int len = $seq_length(&pool);
+int _pthread_mutex_lock(pthread_mutex_t *mutex, $pthread_pool_t $pthread_pool){
+  //int len = $seq_length(&pool);
+  _Bool tmp = $pthread_pool_is_terminated($pthread_pool, mutex->ownerid);
   $choose{
     $when(mutex->lock==0){
       $atomic{
-        for(int i = 0; i < len; i++){
+        /*for(int i = 0; i < len; i++){
           if(!(pool[i]->terminated)){
             if(pool[i]->thr == $self){
               mutex->ownerid = i;
               break;
             }
           }
-        }
+        }*/
+        mutex->ownerid = $self;
         mutex->lock = 1;
         mutex->count = 1;
       } 
       return 0;
     }
-    $when((mutex->attr.type == PTHREAD_MUTEX_NORMAL || mutex->attr.type == PTHREAD_MUTEX_ERRORCHECK)  && mutex->lock == 1  && pool[mutex->ownerid]->thr == $self){
+    $when((mutex->attr.type == PTHREAD_MUTEX_NORMAL || mutex->attr.type == PTHREAD_MUTEX_ERRORCHECK)  && mutex->lock == 1  && mutex->ownerid == $self){
       $assert $false : "Deadlock: attempted to relock lock";
       return 0;
     }
-    $when(mutex->lock == 1 && pool[mutex->ownerid]->thr != $self && pool[mutex->ownerid]->terminated == true && mutex->attr.robust != PTHREAD_MUTEX_ROBUST){
+    //_Bool tmp = $pthread_pool_is_terminated($pthread_pool, mutex->ownerid);
+    $when(mutex->lock == 1 && mutex->ownerid != $self && tmp == $true && mutex->attr.robust != PTHREAD_MUTEX_ROBUST){
       $assert $false : "Deadlock: owner terminated without robust mutex";
       return 0;
     }
-    $when(!(mutex->attr.type == PTHREAD_MUTEX_NORMAL || mutex->attr.type == PTHREAD_MUTEX_ERRORCHECK) && mutex->lock == 1 && pool[mutex->ownerid]->thr == $self){
+    $when(!(mutex->attr.type == PTHREAD_MUTEX_NORMAL || mutex->attr.type == PTHREAD_MUTEX_ERRORCHECK) && mutex->lock == 1 && mutex->ownerid == $self){
       mutex->count++;
       return 0;
     }
@@ -880,14 +871,14 @@ int pthread_mutex_lock(pthread_mutex_t *mutex){
   *            The mutex to be locked
   * @return Returns 0 upon successful completion
   */
-
+//Manchun: check me
 int pthread_mutex_trylock(pthread_mutex_t *mutex){
   $atomic{
     if (mutex->attr.type == PTHREAD_MUTEX_NORMAL){
       if (mutex->lock != 0) {
         return EBUSY;
       }
-      pool[mutex->ownerid]->thr = $self;
+      mutex->ownerid = $self;
       mutex->lock = 1;
     } 
     else {
@@ -896,11 +887,11 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex){
       mutex->lock = 1;
       if (tmp == 0) { // Attempts lock and checks for whether lock is already locked
         mutex->count = 1; 
-        pool[mutex->ownerid]->thr = $self;
+        mutex->ownerid = $self;
       } 
       else {
         //Checks for ownership, otherwise returns error
-        if(pool[mutex->ownerid]->thr == $self){
+        if(mutex->ownerid == $self){
           // Checks for recursive mutex, otherwise returns an error 
           if (mutex->attr.type == PTHREAD_MUTEX_RECURSIVE) {
             mutex->count++;
@@ -944,16 +935,16 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex){
       }
       else {
         mutex->lock = 0;
-        mutex->ownerid = -1;
+        mutex->ownerid = $proc_null;
       }
     } 
     else {
       //Checks for ownership of thread, if not, returns error
-      if(pool[mutex->ownerid]->thr == $self)
+      if(mutex->ownerid == $self)
       {
         if (--mutex->count == 0){
           mutex->lock = 0;
-          mutex->ownerid = -1;
+          mutex->ownerid = $proc_null;
         }
       }
       else {
@@ -996,8 +987,8 @@ int pthread_mutex_consistent(pthread_mutex_t *mutex){
   * @return Returns 0 upon successful completion, EINVAL upon non-robust mutex input 
   */
 
-int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex){
-  if(pool[mutex->ownerid]->thr != $self){
+int _pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, $pthread_pool_t $pthread_pool){
+  if(mutex->ownerid != $self){
     $assert($false);
     return 0;
   }
@@ -1009,7 +1000,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex){
   $when(cond->signal);
   cond->signal = false;
   --cond->proccount;
-  $when(mutex->lock == 0){pthread_mutex_lock(mutex);}
+  $when(mutex->lock == 0){_pthread_mutex_lock(mutex, $pthread_pool);}
   return 0;
 }
 

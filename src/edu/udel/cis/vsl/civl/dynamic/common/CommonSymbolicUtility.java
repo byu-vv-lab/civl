@@ -552,6 +552,12 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 		return result;
 	}
+	
+	@Override
+	public SymbolicExpression makePointer(SymbolicExpression oldPointer,
+			ReferenceExpression symRef) {
+		return universe.tupleWrite(oldPointer, this.twoObj, symRef);
+	}
 
 	@Override
 	public SymbolicExpression extendPointer(SymbolicExpression objectPointer,

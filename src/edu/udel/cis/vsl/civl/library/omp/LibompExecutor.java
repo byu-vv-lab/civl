@@ -7,7 +7,7 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -322,7 +322,8 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression team = argumentValues[0], gshared = argumentValues[1];
-		CIVLType sharedType = modelFactory.getSystemType(Model.OMP_SHARED_TYPE);
+		CIVLType sharedType = modelFactory
+				.getSystemType(ModelConfiguration.OMP_SHARED_TYPE);
 		Evaluation eval;
 		SymbolicExpression teamObject, tid, sharedObject;
 		SymbolicExpression teamScope = modelFactory.scopeValue(symbolicUtil
@@ -398,7 +399,7 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 		CIVLType stateType = originalType.copyAs(modelFactory.integerType(),
 				universe); // TODO problem: how to infer heap type correctly?
 		CIVLType gsharedType = modelFactory
-				.getSystemType(Model.OMP_GSHARED_TYPE);
+				.getSystemType(ModelConfiguration.OMP_GSHARED_TYPE);
 		Evaluation eval = evaluator.initialValueOfStateVariable(source, state,
 				pid, stateType);
 		Pair<State, SymbolicExpression> mallocResult;
@@ -460,7 +461,8 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		CIVLType teamType = modelFactory.getSystemType(Model.OMP_TEAM_TYPE);
+		CIVLType teamType = modelFactory
+				.getSystemType(ModelConfiguration.OMP_TEAM_TYPE);
 		SymbolicExpression scope = argumentValues[0];
 		SymbolicExpression gteamHandle = argumentValues[1];
 		SymbolicExpression tid = argumentValues[2];
@@ -518,7 +520,8 @@ public class LibompExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression gws = argumentValues[1];
 		SymbolicExpression gwsObj;
 		SymbolicExpression wsObj;
-		CIVLType wsType = modelFactory.getSystemType(Model.OMP_GTEAM_TYPE);
+		CIVLType wsType = modelFactory
+				.getSystemType(ModelConfiguration.OMP_GTEAM_TYPE);
 		SymbolicType dynamicWsType = wsType.getDynamicType(universe);
 		SymbolicExpression tid = argumentValues[2];
 		SymbolicExpression isInit;
