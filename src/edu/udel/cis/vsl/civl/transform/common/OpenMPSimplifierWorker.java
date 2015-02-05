@@ -224,7 +224,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			boolean isOrphaned = callsMethodWithOmpConstruct(opn.statementNode());
 
 			if (allIndependent && !isOrphaned) {
-		 		System.out.println("Removing OpenMP parallel "+opn);
+		 		//System.out.println("Removing OpenMP parallel "+opn);
 
 				/*
 				 * Remove the nested omp constructs, e.g., workshares, calls to
@@ -638,7 +638,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		 */
 		independent &= noArrayRefDependences(boundingConditions, writeArrayRefs, readArrayRefs);
 		
- 		System.out.println("Found "+(independent?"independent":"dependent")+" OpenMP for "+ompFor);
+ 		//System.out.println("Found "+(independent?"independent":"dependent")+" OpenMP for "+ompFor);
 		
 /*		
 		System.out.println("  writeVars : "+writeVars);
@@ -696,7 +696,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			}
 			
 			if (safeReduction) {
-				System.out.println("Replacing OpenMP for with single");
+				//System.out.println("Replacing OpenMP for with single");
 				ASTNode parent = ompFor.parent();
 				int ompForIndex = getChildIndex(parent, ompFor);
 				assert ompForIndex != -1;
