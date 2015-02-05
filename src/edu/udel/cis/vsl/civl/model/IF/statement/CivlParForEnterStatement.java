@@ -17,4 +17,6 @@ public interface CivlParForEnterStatement extends Statement {
 	Expression parProcsPointer();
 
 	VariableExpression parProcsVar();
+	
+	void setParProcFunction(CIVLFunction function);
 }

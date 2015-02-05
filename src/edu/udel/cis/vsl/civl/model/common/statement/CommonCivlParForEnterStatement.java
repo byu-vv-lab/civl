@@ -109,4 +109,9 @@ public class CommonCivlParForEnterStatement extends CommonStatement implements
 	protected void calculateConstantValueWork(SymbolicUniverse universe) {
 		this.domain.calculateConstantValue(universe);
 	}
+
+	@Override
+	public void setParProcFunction(CIVLFunction function) {
+		this.parProcFunction = function;
+	}
 }

@@ -32,6 +32,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
@@ -68,6 +69,8 @@ public class ModelBuilderWorker {
 	boolean timeLibIncluded = false;
 
 	Map<CIVLFunction, StatementNode> parProcFunctions = new HashMap<>();
+
+	Map<CivlParForEnterStatement, CallOrSpawnStatement> incompleteParForEnters = new HashMap<>();
 
 	/** Used to shortcut checking whether circular types are bundleable. */
 	private List<CIVLType> bundleableEncountered = new LinkedList<>();
@@ -519,6 +522,10 @@ public class ModelBuilderWorker {
 		for (SystemFunctionCallExpression callExpression : this.systemCallExpressions) {
 			callExpression.setExpressionType(callExpression.callStatement()
 					.function().returnType());
+		}
+		for (Entry<CivlParForEnterStatement, CallOrSpawnStatement> entry : this.incompleteParForEnters
+				.entrySet()) {
+			entry.getKey().setParProcFunction(entry.getValue().function());
 		}
 	}
 

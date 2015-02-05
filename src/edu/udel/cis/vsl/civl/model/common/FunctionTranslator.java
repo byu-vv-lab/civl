@@ -92,6 +92,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.NullStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode.StatementKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.WhenNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.EnumerationTypeNode;
@@ -547,6 +548,26 @@ public class FunctionTranslator {
 		return result;
 	}
 
+	private FunctionCallNode isFunctionCall(StatementNode block) {
+		StatementNode statement = block;
+
+		if (block.statementKind() == StatementKind.COMPOUND) {
+			CompoundStatementNode compound = (CompoundStatementNode) block;
+
+			if (compound.numChildren() > 1)
+				return null;
+			statement = (StatementNode) compound.getSequenceChild(0);
+		}
+		if (statement.statementKind() == StatementKind.EXPRESSION) {
+			ExpressionNode expr = ((ExpressionStatementNode) statement)
+					.getExpression();
+
+			if (expr.expressionKind() == ExpressionKind.FUNCTION_CALL)
+				return (FunctionCallNode) expr;
+		}
+		return null;
+	}
+
 	private Fragment translateCivlParForNode(Scope scope,
 			CivlForNode civlForNode) {
 		DeclarationListNode loopInits = civlForNode.getVariables();
@@ -563,39 +584,54 @@ public class FunctionTranslator {
 		VariableExpression parProcs = modelFactory.parProcsVariable(source,
 				procsType, scope);
 		StatementNode bodyNode = civlForNode.getBody();
-		CIVLSource procFuncSource = modelFactory.sourceOf(bodyNode);
-		CIVLSource procFuncStartSource = modelFactory
-				.sourceOfBeginning(bodyNode);
-		List<Variable> loopVars = initResults.third;
-		int numOfLoopVars = loopVars.size();
-		List<Variable> procFuncParameters = new ArrayList<>(numOfLoopVars);
+		FunctionCallNode bodyFuncCall = this.isFunctionCall(bodyNode);
 		CIVLFunction procFunc;
 		CivlParForEnterStatement parForEnter;
 		Fragment result;
 		CallOrSpawnStatement callWaitAll;
 		Location location;
-		Expression domain = this.translateExpressionNode(
-				civlForNode.getDomain(), scope, true);
+		Expression domain ;
+		CallOrSpawnStatement call  = null;
+		
+		if (bodyFuncCall != null) {
+			// $parfor(...) func(); -- no need for _par_for_proc function
+			 call = (CallOrSpawnStatement) this.translateFunctionCall(initResults.first, null,
+					bodyFuncCall, true, parForEndSource);
+			
+//			modelBuilder.callStatements.put(call, value)
+			procFunc = null;
+		} else {
+			CIVLSource procFuncSource = modelFactory.sourceOf(bodyNode);
+			CIVLSource procFuncStartSource = modelFactory
+					.sourceOfBeginning(bodyNode);
+			List<Variable> loopVars = initResults.third;
+			int numOfLoopVars = loopVars.size();
+			List<Variable> procFuncParameters = new ArrayList<>(numOfLoopVars);
+		
+			for (int i = 0; i < numOfLoopVars; i++) {
+				Variable loopVar = loopVars.get(i);
+				Variable parameter = modelFactory.variable(loopVar.getSource(),
+						loopVar.type(), loopVar.name(), i + 1);
 
-		// this.civlParForCount++;
-		for (int i = 0; i < numOfLoopVars; i++) {
-			Variable loopVar = loopVars.get(i);
-			Variable parameter = modelFactory.variable(loopVar.getSource(),
-					loopVar.type(), loopVar.name(), i + 1);
-
-			procFuncParameters.add(parameter);
+				procFuncParameters.add(parameter);
+			}
+			procFunc = modelFactory.function(
+					procFuncSource,
+					modelFactory.identifier(procFuncStartSource, PAR_FUNC_NAME
+							+ modelBuilder.parProcFunctions.size()),
+					procFuncParameters, modelFactory.voidType(), scope, null);
+			scope.addFunction(procFunc);
+			modelBuilder.parProcFunctions.put(procFunc, bodyNode);
 		}
-		procFunc = modelFactory.function(
-				procFuncSource,
-				modelFactory.identifier(procFuncStartSource, PAR_FUNC_NAME
-						+ modelBuilder.parProcFunctions.size()),
-				procFuncParameters, modelFactory.voidType(), scope, null);
-		scope.addFunction(procFunc);
-		modelBuilder.parProcFunctions.put(procFunc, bodyNode);
+		 domain = this.translateExpressionNode(
+				civlForNode.getDomain(), scope, true);
+		// this.civlParForCount++;
 		location = modelFactory.location(parForBeginSource, scope);
 		parForEnter = modelFactory.civlParForEnterStatement(parForBeginSource,
 				location, domain, domSizeVar, parProcs,
 				this.arrayToPointer(parProcs), procFunc);
+		if(procFunc==null)
+			modelBuilder.incompleteParForEnters.put(parForEnter, call);
 		result = new CommonFragment(parForEnter);
 		location = modelFactory.location(parForEndSource, scope);
 		callWaitAll = modelFactory.callOrSpawnStatement(parForEndSource,
