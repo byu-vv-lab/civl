@@ -27,8 +27,13 @@
 #include <stdlib.h>
 #include "cuda.h" 
 
-#define N 2               /* size of square matrix                   */
-#define TILE_WIDTH 1
+#ifdef _CIVL
+$input int N;
+$input int TILE_WIDTH;
+#else
+#define N 1024               /* size of square matrix                   */
+#define TILE_WIDTH 16
+#endif
 
 
 /* MM kernel using global (not shared) memory.                          */
@@ -87,12 +92,12 @@ void myMM_shared (const double * const A, const double * const B, double* C, int
 /************************************************************************/ 
  
 
-int main () {
+int main (int argc, char** argv) {
 
-    int argc = 2;
-    $input char _argv[argc][];
-    char** argv = &(&_argv[0][0]);
-        
+#ifdef _CIVL
+    $assume argc == 2;
+    $assume atoi(argv[1]) == 0;
+#endif
 
     /* Set device based on input from command line            */
     if (argc > 1) {
@@ -109,7 +114,13 @@ int main () {
     }
 
     /* Declare CPU arrays.                                              */
-    double A[N*N],B[N*N],C[N*N];       /* linearized CPU double arrays  */ 
+#ifdef _CIVL
+    $input double A[N*N];
+    $input double B[N*N];
+#else
+    double A[N*N],B[N*N];
+#endif
+    double C[N*N];       /* linearized CPU double arrays  */ 
     int r,c;
 
     /* Declare GPU arrays.                                              */
@@ -127,11 +138,13 @@ int main () {
 
 
     /* 1)  Initialize matrix operands as double-precision arrays on host (CPU). */
+#ifndef _CIVL
     for (r=0;r<N;++r)
     for (c=0;c<N;++c) {
         A[r*N+c] = 1.0;
         B[r*N+c] = 1.0;
     }
+#endif
 
 
 /*-----------------------------------------------------------------------*/
@@ -179,13 +192,13 @@ int main () {
     cudaEventElapsedTime(&GPU_global_elapsedtime,start,stop);
     printf("Elapsed time in GPU (global memory):   %7.1f milliseconds  %5.1f\n",
            GPU_global_elapsedtime,CPU_elapsedtime/GPU_global_elapsedtime);
-/*
+//*
     printf("\nGLOBAL MEMORY:\n");
-    for (r=0;r<10;++r)
-    for (c=0;c<10;++c) {
+    for (r=0;r<N;++r)
+    for (c=0;c<N;++c) {
         printf("%2d,%2d   %g\n", r,c,C[r*N+c]);
 	}
-*/
+//*/
 /*-----------------------------------------------------------------------*/
 
     /* MM on Shared Memory of GPGPU.                                     */
@@ -216,13 +229,13 @@ int main () {
     cudaEventElapsedTime(&GPU_shared_elapsedtime,start,stop);
     printf("Elapsed time in GPU (shared memory):   %7.1f milliseconds  %5.1f\n",
            GPU_shared_elapsedtime,CPU_elapsedtime/GPU_shared_elapsedtime);
-/*
+//*
     printf("\nSHARED MEMORY:\n");
-    for (r=0;r<10;++r)
-    for (c=0;c<10;++c) {
+    for (r=0;r<N;++r)
+    for (c=0;c<N;++c) {
         printf("%2d,%2d   %g\n", r,c,C[r*N+c]);
 	}
-*/
+//*/
 /*-----------------------------------------------------------------------*/ 
 
     /* Deallocate the clock.                                             */

@@ -187,15 +187,11 @@ public class Cuda2CIVLTransformTest {
 	
 	@Test
 	public void matMult() {
-		assertTrue(ui.run("verify", filename("matMult1.cu")));
+		assertTrue(ui.run("verify", "-inputN=2", "-inputTILE_WIDTH=1", filename("matMult1.cu")));
 	}
 	
 	@Test
 	public void cudaOmp() {
 		assertTrue(ui.run("verify", "-inputBLOCK_B=4", "-inputTHREADS_B=2", filename("cuda-omp.cu")));
-	}
-	
-	@Test
-	public void test() {
 	}
 }
