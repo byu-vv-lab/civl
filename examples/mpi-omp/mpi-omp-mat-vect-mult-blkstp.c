@@ -26,7 +26,7 @@
 
 /* Main Program */
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
   int             Numprocs, MyRank, iam;
@@ -109,12 +109,18 @@ main(int argc, char **argv)
   }
   MPI_Bcast(&NoofRows, 1, MPI_INT, Root, MPI_COMM_WORLD);
 
+  #ifdef _CIVL
+  $assume NoofRows >= Numprocs;
+  #endif
   if (NoofRows < Numprocs) {
     if (MyRank == 0)
       printf("No Of Rows Should Be More Than No Of Processors ... \n");
     MPI_Finalize();
     exit(0);
   }
+    #ifdef _CIVL
+  $assume NoofRows % Numprocs == 0;
+  #endif
   if (NoofRows % Numprocs != 0) {
     if (MyRank == 0)
       printf("Matrix Cannot Be Striped Evenly ..... \n");
