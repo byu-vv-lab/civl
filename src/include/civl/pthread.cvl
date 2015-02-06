@@ -745,6 +745,10 @@ int pthread_join(pthread_t thread, void **value_ptr){
   return 0;
 }
 
+void pthread_exit(void *value_ptr){
+  return;
+}
+
 /**
   * Causes current thread to immediately terminate; if currently in the main method as specified by the 
   * isMain parameter, the main method will wait for each thread to terminate before it terminates. The value

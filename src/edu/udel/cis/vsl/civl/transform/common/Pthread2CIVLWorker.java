@@ -96,6 +96,8 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private int numberOfNondetCall = 0;
 
+	private boolean exitMainDone = false;
+
 	/* **************************** Instance Fields ************************* */
 
 	private List<String> funcList = new ArrayList<>();
@@ -610,16 +612,20 @@ public class Pthread2CIVLWorker extends BaseWorker {
 																	CParser.IDENTIFIER),
 															PTHREAD_POOL)));
 							funcCall.setArguments(newArgs);
-						} else {
+						} else if (!exitMainDone) {
+							this.exitMainDone = true;
 							name.getIdentifier().setName(PTHREAD_EXIT_MAIN_NEW);
 						}
 					}
 				}
-			} else if (child instanceof ReturnNode) {
+			} else if (child instanceof ReturnNode
+					&& (!isMain || !exitMainDone)) {
 				// ExpressionNode isMainArg = this.booleanConstant(isMain);
 				String pthread_exit_name = isMain ? PTHREAD_EXIT_MAIN_NEW
 						: PTHREAD_EXIT_NEW;
 
+				if (isMain)
+					exitMainDone = true;
 				FunctionCallNode newPthreadExit = nodeFactory
 						.newFunctionCallNode(
 								this.newSource("function call of "
