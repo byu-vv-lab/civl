@@ -61,9 +61,6 @@ public class MPI_PthreadsTest {
 
 	@Test
 	public void helloWorld() throws ABCException {
-		// ui.run("run", "-input_NPROCS=3", "-showTransitions=false",
-		// filename("helloWorld.c"));
-		// ui.run("show", "-showProgram", filename("helloWorld.c"));
 		assertTrue(ui.run("verify", "-input_NPROCS=2 -showModel=false",
 				"-showSavedStates=false",
 				"-showTransitions=false -showProgram=false",
@@ -72,13 +69,11 @@ public class MPI_PthreadsTest {
 
 	@Test
 	public void hybrid() throws ABCException {
-		// ui.run("run", "-input_NPROCS=3", "-showTransitions=false",
-		// filename("helloWorld.c"));
-		// ui.run("show", "-showProgram", filename("helloWorld.c"));
-		assertFalse(ui.run("verify", "-input_NPROCS=2 -showModel=false",
-				"-showSavedStates=false",
-				"-showTransitions=false -showProgram=false",
-				"-showAmpleSet=false", filename("anl_hybrid.c")));
+		assertFalse(ui.run("verify -input_NPROCS=2 -enablePrintf=false -min",
+				filename("anl_hybrid.c")));
+		assertFalse(ui.run("replay -showTransitions=false -enablePrintf=true",
+				filename("anl_hybrid.c")));
+
 	}
 
 	@AfterClass
