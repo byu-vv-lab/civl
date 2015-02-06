@@ -70,7 +70,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	// private static final String PTHREAD_MUTEX_TRYLOCK =
 	// "pthread_mutex_trylock";
 	// private static final String PTHREAD_GPOOL = "$pthread_gpool";
-	// private static final String PTHREAD_ROOT = "root";
+	private static final String PTHREAD_JOIN = "pthread_join";
 	private static final String PTHREAD_PTR = "value_ptr_value";
 	// private static final String PTHREAD_MUTEX_UNLOCK =
 	// "pthread_mutex_unlock";
@@ -559,9 +559,9 @@ public class MPI2CIVLWorker extends BaseWorker {
 					String name = functionDef.getName();
 
 					if (name.equals(Pthread2CIVLWorker.PTHREAD_EXIT_MAIN_NEW)
-					// || name.equals(PTHREAD_IS_TERMINATED)
-							|| name.equals(Pthread2CIVLWorker.PTHREAD_CREATE))
-						// || name.equals(Pthread2CIVLWorker.PTHREAD_EXIT_NEW)
+							|| name.equals(PTHREAD_JOIN)
+							|| name.equals(Pthread2CIVLWorker.PTHREAD_CREATE)
+							|| name.equals(Pthread2CIVLWorker.PTHREAD_EXIT_NEW))
 						// // ||
 						// name.equals(Pthread2CIVLWorker.PTHREAD_MUTEX_LOCK))
 						// || name.equals(PTHREAD_MUTEX_UNLOCK)
