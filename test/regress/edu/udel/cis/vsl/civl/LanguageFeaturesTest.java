@@ -317,7 +317,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void scoping() throws ABCException {
-		assertTrue(ui.run("verify", filename("scoping.cvl")));
+		assertFalse(ui.run("verify", filename("scoping.cvl")));
 	}
 
 	@Test
