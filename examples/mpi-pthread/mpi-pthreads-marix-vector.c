@@ -141,6 +141,9 @@ int main(int argc, char **argv)
     
     /* Validity checking for negative sizes of Matrix and Vector */
     
+    #ifdef _CIVL
+    $assume NoofRows >= 1 && NoofCols >= 1 && VectorSize >= 1;
+    #endif
     if (NoofRows < 1 || NoofCols < 1 || VectorSize < 1)
     {
         printf("The number of rows,columns or size of Vector should be atleast one\n");
@@ -149,6 +152,9 @@ int main(int argc, char **argv)
     }
     /* Validity checking for minimum number of Rows of Matrix */
     
+    #ifdef _CIVL
+    $assume NoofRows >= Numprocs;
+    #endif
     if (NoofRows < Numprocs)
     {
         printf("The number of rows of Matrix should be greater than number of processors\n");
@@ -156,7 +162,9 @@ int main(int argc, char **argv)
         exit(-1);
     }
     /* Validity checking for suitability of sizes for multiplication */
-    
+    #ifdef _CIVL
+    $assume NoofCols == VectorSize;
+    #endif
     if (NoofCols != VectorSize)
     {
         printf("The number of columns of Matrix should be equal to size of Vector\n");

@@ -79,6 +79,9 @@ void * MyPartOfCalc(int Id)
         
         pthread_mutex_lock(&mutex_Row);
         {
+	    #ifdef _CIVL
+	    $assume currentRow < rowlimit;
+	    #endif
             if (currentRow >= rowlimit)
             {
                 pthread_mutex_unlock(&mutex_Row);
@@ -138,7 +141,9 @@ int main(int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD, &Numprocs);
     
     /* Validity checking for minimum number of processors */
-    
+    #ifdef _CIVL
+    $assume Numprocs >= 2;
+    #endif
     if (Numprocs < 2)
     {
         printf("Invalid Number of Processors ..... \n");
@@ -168,7 +173,9 @@ int main(int argc, char **argv)
     MPI_Bcast(&NoofCols, 1, MPI_INT, Root, MPI_COMM_WORLD);
     
     /* Validity checking for negative sizes of Matrix */
-    
+    #ifdef _CIVL
+    $assume NoofRows >= 1 && NoofCols >= 1;
+    #endif
     if (NoofRows < 1 || NoofCols < 1)
     {
         printf("The number of rows or columns or size of Vector should be atleast one\n");
@@ -176,7 +183,9 @@ int main(int argc, char **argv)
         exit(-1);
     }
     /* Validity checking for minimum number of Rows of Matrix */
-    
+    #ifdef _CIVL
+    $assume NoofRows >= Numprocs;
+    #endif
     if (NoofRows < Numprocs)
     {
         printf("The number of rows of Matrix should be greater than number of processors\n");

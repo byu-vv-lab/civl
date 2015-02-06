@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
 	double          pi, sum, h, x;
 	double          PI25DT = 3.141592653589793238462643;
 	pthread_t      *threads;
-#pragma CIVL $assume 0 < NoInterval && NoInterval < 3;
 
 	/* ....MPI initialisation.... */
 	MPI_Init(&argc, &argv);
@@ -89,7 +88,9 @@ int main(int argc, char *argv[])
 	}
 	/* ....Broadcast the number of subintervals to each processor.... */
 	MPI_Bcast(&NoInterval, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+        #ifdef _CIVL
+	$assume NoInterval > 0;
+	#endif
 	if (NoInterval <= 0) {
 		if (MyRank == Root)
 			printf("Invalid Value for Number of Intervals .....\n");
