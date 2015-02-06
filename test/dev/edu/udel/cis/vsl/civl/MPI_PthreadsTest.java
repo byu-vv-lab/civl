@@ -31,11 +31,6 @@ public class MPI_PthreadsTest {
 
 	@Test
 	public void mpipthreads_both() throws ABCException {
-		// assertTrue(ui.run("verify",
-		// filename("mpi-pthread/mpithreads_both.c"),
-		// "-input__NPROCS=3", "-showInputs", "-enablePrintf=false"));
-		// ui.run("show", "-showProgram",
-		// filename("mpi-pthread", "mpithreads_both.c"));
 		assertTrue(ui.run("verify", "-input_NPROCS=2", "-showInputs=false",
 				"-enablePrintf=false", "-enablePrintf=false",
 				"-showTransitions=false", filename("mpithreads_both.c")));
@@ -44,7 +39,7 @@ public class MPI_PthreadsTest {
 	@Test
 	public void mpi_pthreads_pie_collective() throws ABCException {
 		assertTrue(ui.run("verify", "-input_NPROCS=2", "-enablePrintf=false",
-				"-debug", filename("mpi-pthreads-pie-collective.c")));
+				filename("mpi-pthreads-pie-collective.c")));
 	}
 
 	@Test
