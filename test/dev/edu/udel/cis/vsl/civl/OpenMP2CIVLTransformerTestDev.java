@@ -226,7 +226,7 @@ public class OpenMP2CIVLTransformerTestDev {
 
 	@Test
 	public void pi() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-showProgram",
 				"-inputTHREAD_MAX=2", filename("pi.c")));
 	}
 
