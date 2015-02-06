@@ -519,15 +519,9 @@ public class CommonExecutor implements Executor {
 		List<Expression> argumentExpressions = statement.arguments();
 		int numArgs = argumentExpressions.size();
 		SymbolicExpression[] arguments = new SymbolicExpression[numArgs];
+		int parentDyscopeId = -1;
 
 		assert !statement.isCall();
-		for (int i = 0; i < numArgs; i++) {
-			Evaluation eval = evaluator.evaluate(state, pid,
-					argumentExpressions.get(i));
-
-			state = eval.state;
-			arguments[i] = eval.value;
-		}
 		if (function == null) {
 			Triple<State, CIVLFunction, Integer> eval = evaluator
 					.evaluateFunctionPointer(state, pid,
@@ -536,9 +530,27 @@ public class CommonExecutor implements Executor {
 
 			state = eval.first;
 			function = eval.second;
-			state = stateFactory.addProcess(state, function, eval.third,
+			parentDyscopeId = eval.third;
+		}
+		for (int i = 0; i < numArgs; i++) {
+			CIVLType expectedType = function.parameters().get(i).type();
+			Evaluation eval;
+			Expression actualArg = argumentExpressions.get(i);
+
+			if (!actualArg.getExpressionType().equals(expectedType))
+				eval = evaluator.evaluateCastWorker(state, pid, process,
+						expectedType, actualArg);
+			else
+				eval = evaluator.evaluate(state, pid,
+						argumentExpressions.get(i));
+			state = eval.state;
+			arguments[i] = eval.value;
+		}
+		if (parentDyscopeId >= 0)
+
+			state = stateFactory.addProcess(state, function, parentDyscopeId,
 					arguments, pid);
-		} else
+		else
 			state = stateFactory.addProcess(state, function, arguments, pid);
 		if (statement.lhs() != null)
 			state = assign(state, pid, process, statement.lhs(),
@@ -660,19 +672,18 @@ public class CommonExecutor implements Executor {
 			Expression[] explanation = assertStmt.getExplanation();
 
 			if (explanation != null) {
-				if (civlConfig.enablePrintf()) {
-					SymbolicExpression[] pArgumentValues = new SymbolicExpression[explanation.length];
+				// if (civlConfig.enablePrintf()) {
+				SymbolicExpression[] pArgumentValues = new SymbolicExpression[explanation.length];
 
-					for (int i = 0; i < explanation.length; i++) {
-						eval = this.evaluator.evaluate(state, pid,
-								explanation[i]);
-						state = eval.state;
-						pArgumentValues[i] = eval.value;
-					}
-
-					state = this.execute_printf(source, state, pid, process,
-							null, explanation, pArgumentValues);
+				for (int i = 0; i < explanation.length; i++) {
+					eval = this.evaluator.evaluate(state, pid, explanation[i]);
+					state = eval.state;
+					pArgumentValues[i] = eval.value;
 				}
+				state = this.execute_printf(source, state, pid, process, null,
+						explanation, pArgumentValues, true);
+				civlConfig.out().println();
+				// }
 			}
 
 			// if (arguments.length > 1) {
@@ -948,12 +959,11 @@ public class CommonExecutor implements Executor {
 		return state;
 	}
 
-	@Override
-	public State execute_printf(CIVLSource source, State state, int pid,
+	private State execute_printf(CIVLSource source, State state, int pid,
 			String process, LHSExpression lhs, Expression[] arguments,
-			SymbolicExpression[] argumentValues)
+			SymbolicExpression[] argumentValues, boolean enablePrintf)
 			throws UnsatisfiablePathConditionException {
-		if (!civlConfig.enablePrintf())
+		if (!enablePrintf)
 			return state;
 		else {
 			StringBuffer stringOfSymbolicExpression;
@@ -1015,6 +1025,15 @@ public class CommonExecutor implements Executor {
 					printedContents);
 			return state;
 		}
+	}
+
+	@Override
+	public State execute_printf(CIVLSource source, State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		return this.execute_printf(source, state, pid, process, lhs, arguments,
+				argumentValues, civlConfig.enablePrintf());
 	}
 
 	/**
@@ -1237,21 +1256,21 @@ public class CommonExecutor implements Executor {
 	@Override
 	public void printf(PrintStream printStream, CIVLSource source,
 			List<Format> formats, List<StringBuffer> arguments) {
-		if (this.civlConfig.enablePrintf()) {
-			int argIndex = 0;
+		// if (this.civlConfig.enablePrintf()) {
+		int argIndex = 0;
 
-			for (Format format : formats) {
-				String formatString = format.toString();
+		for (Format format : formats) {
+			String formatString = format.toString();
 
-				switch (format.type) {
-				case VOID:
-					printStream.print(formatString);
-					break;
-				default:
-					printStream.printf("%s", arguments.get(argIndex++));
-				}
+			switch (format.type) {
+			case VOID:
+				printStream.print(formatString);
+				break;
+			default:
+				printStream.printf("%s", arguments.get(argIndex++));
 			}
 		}
+		// }
 	}
 
 	/**

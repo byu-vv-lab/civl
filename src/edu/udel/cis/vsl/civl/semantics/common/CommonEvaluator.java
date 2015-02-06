@@ -969,13 +969,19 @@ public class CommonEvaluator implements Evaluator {
 	private Evaluation evaluateCast(State state, int pid, String process,
 			CastExpression expression)
 			throws UnsatisfiablePathConditionException {
-		Expression arg = expression.getExpression();
+		return this.evaluateCastWorker(state, pid, process,
+				expression.getCastType(), expression.getExpression());
+	}
+
+	@Override
+	public Evaluation evaluateCastWorker(State state, int pid, String process,
+			CIVLType castType, Expression arg)
+			throws UnsatisfiablePathConditionException {
 		CIVLType argType = arg.getExpressionType();
 		Evaluation eval = evaluate(state, pid, arg);
 		SymbolicExpression value = eval.value;
-		CIVLType castType = expression.getCastType();
 		TypeEvaluation typeEval = getDynamicType(eval.state, pid, castType,
-				expression.getSource(), false);
+				arg.getSource(), false);
 		SymbolicType endType = typeEval.type;
 
 		state = typeEval.state;
@@ -1009,7 +1015,7 @@ public class CommonEvaluator implements Evaluator {
 				if (((CIVLPointerType) castType).baseType().isVoidType())
 					eval.value = value;
 				else {
-					state = errorLogger.logError(expression.getSource(), state,
+					state = errorLogger.logError(arg.getSource(), state,
 							process,
 							this.symbolicAnalyzer.stateToString(state), claim,
 							resultType, ErrorKind.INVALID_CAST,
@@ -1042,7 +1048,7 @@ public class CommonEvaluator implements Evaluator {
 			NumericExpression integerValue = (NumericExpression) value;
 			Number concreteValue = null;
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
-			CIVLSource source = expression.getSource();
+			CIVLSource source = arg.getSource();
 
 			// If integerValue is concrete and is inside the range [0, 255],
 			// return corresponding character by using java casting.
@@ -1095,8 +1101,8 @@ public class CommonEvaluator implements Evaluator {
 							certain,
 							process,
 							"Cast operation may involves casting a integer, whose value is larger than UCHAR_MAX or less than UCHAR_MIN, to char type object which is considered as unimplemented feature of CIVL",
-							this.symbolicAnalyzer.stateToString(state),
-							expression.getSource());
+							this.symbolicAnalyzer.stateToString(state), arg
+									.getSource());
 
 					errorLogger.reportError(error);
 					throw new UnsatisfiablePathConditionException();
@@ -1110,8 +1116,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException error = new CIVLExecutionException(
 					ErrorKind.INVALID_CAST, Certainty.NONE, process,
 					"SARL could not cast: " + e,
-					this.symbolicAnalyzer.stateToString(state),
-					expression.getSource());
+					this.symbolicAnalyzer.stateToString(state), arg.getSource());
 
 			errorLogger.reportError(error);
 			throw new UnsatisfiablePathConditionException();
@@ -2770,7 +2775,8 @@ public class CommonEvaluator implements Evaluator {
 			notOver = universe.lessThanEquals(universe.add(index, offset),
 					extent);
 			// Not lower than the bound
-			notDrown = universe.lessThanEquals(zero, universe.add(index, offset));
+			notDrown = universe.lessThanEquals(zero,
+					universe.add(index, offset));
 			// Not exactly equal to the extent
 			notEqual = universe.neq(universe.add(index, offset), extent);
 			// Conditions of out of bound:
@@ -3302,8 +3308,8 @@ public class CommonEvaluator implements Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	@Override
-	public Triple<State, StringBuffer, Boolean> getString(CIVLSource source, State state,
-			String process, SymbolicExpression charPointer)
+	public Triple<State, StringBuffer, Boolean> getString(CIVLSource source,
+			State state, String process, SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException {
 		if (charPointer.operator() == SymbolicOperator.CONCRETE) {
 			SymbolicSequence<?> originalArray = null;
@@ -3330,9 +3336,10 @@ public class CommonEvaluator implements Evaluator {
 						originalArray = (SymbolicSequence<?>) charArray
 								.argument(0);
 					} catch (ClassCastException e) {
-//						 throw new CIVLUnimplementedFeatureException(
-//						 "non-concrete strings", source);
-						return new Triple<>(state, charArray.toStringBuffer(true), false);
+						// throw new CIVLUnimplementedFeatureException(
+						// "non-concrete strings", source);
+						return new Triple<>(state,
+								charArray.toStringBuffer(true), false);
 					} catch (ArrayIndexOutOfBoundsException e) {
 						CIVLExecutionException err = new CIVLExecutionException(
 								ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,

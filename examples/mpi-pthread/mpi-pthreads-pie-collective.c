@@ -85,7 +85,11 @@ int main(int argc, char *argv[])
 	if (MyRank == Root) {
 		printf("\nEnter the number of intervals : ");
 		scanf("%d", &NoInterval);
+	       	#ifdef _CIVL
+		$assume NoInterval < 10;
+                #endif
 	}
+
 	/* ....Broadcast the number of subintervals to each processor.... */
 	MPI_Bcast(&NoInterval, 1, MPI_INT, 0, MPI_COMM_WORLD);
         #ifdef _CIVL
@@ -129,6 +133,8 @@ int main(int argc, char *argv[])
 		printf("pi is approximately %.16f, Error is %.16f\n",
 		       pi, fabs(pi - PI25DT));
 	}
+	free(threads);
+	free(MyIntervals);
 	MPI_Finalize();
 
 }
