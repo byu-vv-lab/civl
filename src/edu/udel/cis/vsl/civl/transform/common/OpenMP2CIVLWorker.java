@@ -2032,13 +2032,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				ifBody = nodeFactory.newCompoundStatementNode(
 						newSource(singlePlace, CParser.COMPOUND_STATEMENT),
 						ifItems);
-
-				IfNode ifStatement = nodeFactory.newIfNode(
-						newSource(singlePlace, CParser.IF), nodeFactory
-								.newOperatorNode(
-										newSource(singlePlace, CParser.EQUALS),
-										Operator.EQUALS, operands), ifBody);
-				items.add(ifStatement);
+				
 				if (copyPrivateList != null) {
 					for (ASTNode child : copyPrivateList.children()) {
 						IdentifierNode c = ((IdentifierExpressionNode)child).getIdentifier();
@@ -2052,9 +2046,32 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 														c.name() + "$omp_private")));
 						ExpressionStatementNode statement = nodeFactory
 								.newExpressionStatementNode(expression);
-						items.add(statement);
+
+						int ifChildren = ifBody.numChildren();
+						ASTNode lastChild = ifBody.child(ifChildren-1);
+						
+						Pair<VariableDeclarationNode, ExpressionStatementNode> tempPair = new Pair<>(
+								null, statement);
+						if (sharedWrite.containsKey(lastChild)) {
+							ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> nodeToAdd = sharedRead
+									.get(lastChild);
+							nodeToAdd.add(tempPair);
+						} else {
+							ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> tempPairs = new ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>>();
+							tempPairs.add(tempPair);
+							sharedWrite.put(lastChild, tempPairs);
+						}
+						
+						//ifItems.add(statement);
 					}
 				}
+
+				IfNode ifStatement = nodeFactory.newIfNode(
+						newSource(singlePlace, CParser.IF), nodeFactory
+								.newOperatorNode(
+										newSource(singlePlace, CParser.EQUALS),
+										Operator.EQUALS, operands), ifBody);
+				items.add(ifStatement);
 				items.add(barrierAndFlush(TEAM));
 				body = nodeFactory.newCompoundStatementNode(
 						newSource(singlePlace, CParser.COMPOUND_STATEMENT),
@@ -2200,7 +2217,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					if (c.name().equals(((IdentifierNode) node).name())) {
 						ASTNode parent = getParentOfID((IdentifierNode) node);
 						boolean sameName = false;
-						// TODO ADD name +"_local"
 						for (Triple<String, StatementNode, String> tempName : sharedReplaced) {
 							if (tempName.first.equals(((IdentifierNode) node)
 									.name())) {
