@@ -757,7 +757,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		processRoot(root);
 		this.completeSources(root);
 		AST result = astFactory.newAST(root, ast.getSourceFiles());
-		// result.prettyPrint(System.out, true);
+		result.prettyPrint(System.out, false);
 		return result;
 	}
 }

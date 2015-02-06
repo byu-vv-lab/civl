@@ -303,12 +303,15 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		poolObj = eval.value;
 		state = eval.state;
 		threadPointer = universe.tupleRead(poolObj, this.twoObject);
-		threadTermPointer = this.symbolicUtil.makePointer(
-				threadPointer,
-				universe.tupleComponentReference(
-						symbolicUtil.getSymRef(threadPointer), this.twoObject));
-		return this.primaryExecutor.assign(source, state, process,
-				threadTermPointer, trueValue);
+		if (this.symbolicUtil.isValidPointer(threadPointer)) {
+			threadTermPointer = this.symbolicUtil.makePointer(threadPointer,
+					universe.tupleComponentReference(
+							symbolicUtil.getSymRef(threadPointer),
+							this.twoObject));
+			state = this.primaryExecutor.assign(source, state, process,
+					threadTermPointer, trueValue);
+		}
+		return state;
 	}
 
 	// * int $pthread_pool_get_oid($pthread_pool pool);
@@ -482,7 +485,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			if (threadId_int == tid)
 				return new Evaluation(state, threadPointer);
 		}
-		return new Evaluation(state, universe.nullExpression());
+		return new Evaluation(state, symbolicUtil.nullPointer());
 	}
 
 	/**
