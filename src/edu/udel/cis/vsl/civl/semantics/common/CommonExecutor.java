@@ -953,57 +953,68 @@ public class CommonExecutor implements Executor {
 			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		StringBuffer stringOfSymbolicExpression;
-		StringBuffer formatBuffer;
-		List<StringBuffer> printedContents = new ArrayList<>();
-		Triple<State, StringBuffer, Boolean> concreteString;
-		List<Format> formats;
-		List<Format> nonVoidFormats = new ArrayList<>();
+		if (!civlConfig.enablePrintf())
+			return state;
+		else {
+			StringBuffer stringOfSymbolicExpression;
+			StringBuffer formatBuffer;
+			List<StringBuffer> printedContents = new ArrayList<>();
+			Triple<State, StringBuffer, Boolean> concreteString;
+			List<Format> formats;
+			List<Format> nonVoidFormats = new ArrayList<>();
 
-		concreteString = this.evaluator.getString(arguments[0].getSource(),
-				state, process, argumentValues[0]);
-		formatBuffer = concreteString.second;
-		state = concreteString.first;
-		formats = this.splitFormat(arguments[0].getSource(), formatBuffer);
-		for (Format format : formats) {
-			if (format.type != ConversionType.VOID)
-				nonVoidFormats.add(format);
-		}
-		assert nonVoidFormats.size() == argumentValues.length - 1;
-		for (int i = 1; i < argumentValues.length; i++) {
-			SymbolicExpression argumentValue = argumentValues[i];
-			CIVLType argumentType = arguments[i].getExpressionType();
+			concreteString = this.evaluator.getString(arguments[0].getSource(),
+					state, process, argumentValues[0]);
+			formatBuffer = concreteString.second;
+			state = concreteString.first;
+			formats = this.splitFormat(arguments[0].getSource(), formatBuffer);
+			for (Format format : formats) {
+				if (format.type != ConversionType.VOID)
+					nonVoidFormats.add(format);
+			}
+			assert nonVoidFormats.size() == argumentValues.length - 1;
+			for (int i = 1; i < argumentValues.length; i++) {
+				SymbolicExpression argumentValue = argumentValues[i];
+				CIVLType argumentType = arguments[i].getExpressionType();
 
-			if (argumentType instanceof CIVLPointerType
-					&& ((CIVLPointerType) argumentType).baseType().isCharType()
-					&& argumentValue.operator() == SymbolicOperator.CONCRETE) {
-				Format myFormat = nonVoidFormats.get(i - 1);
+				if (argumentType instanceof CIVLPointerType
+						&& ((CIVLPointerType) argumentType).baseType()
+								.isCharType()
+						&& argumentValue.operator() == SymbolicOperator.CONCRETE) {
+					Format myFormat = nonVoidFormats.get(i - 1);
 
-				if (myFormat.type == ConversionType.STRING) {
-					concreteString = this.evaluator.getString(
-							arguments[i].getSource(), state, process,
-							argumentValue);
-					stringOfSymbolicExpression = concreteString.second;
-					state = concreteString.first;
-					printedContents.add(stringOfSymbolicExpression);
-				} else if (myFormat.type == ConversionType.POINTER) {
-					printedContents.add(new StringBuffer(symbolicAnalyzer
+					if (myFormat.type == ConversionType.STRING) {
+						concreteString = this.evaluator.getString(
+								arguments[i].getSource(), state, process,
+								argumentValue);
+						stringOfSymbolicExpression = concreteString.second;
+						state = concreteString.first;
+						printedContents.add(stringOfSymbolicExpression);
+					} else if (myFormat.type == ConversionType.POINTER) {
+						printedContents.add(new StringBuffer(symbolicAnalyzer
+								.symbolicExpressionToString(
+										arguments[i].getSource(), state,
+										argumentValue)));
+					} else {
+						throw new CIVLSyntaxException(
+								"Array pointer unaccepted",
+								arguments[i].getSource());
+					}
+
+				} else if (argumentType instanceof CIVLPointerType
+						&& this.symbolicUtil.isNullPointer(argumentValue)
+						&& nonVoidFormats.get(i).type == ConversionType.INT) {
+					printedContents.add(new StringBuffer("0"));
+				} else
+					printedContents.add(new StringBuffer(this.symbolicAnalyzer
 							.symbolicExpressionToString(
 									arguments[i].getSource(), state,
 									argumentValue)));
-				} else {
-					throw new CIVLSyntaxException("Array pointer unaccepted",
-							arguments[i].getSource());
-				}
-
-			} else
-				printedContents.add(new StringBuffer(this.symbolicAnalyzer
-						.symbolicExpressionToString(arguments[i].getSource(),
-								state, argumentValue)));
+			}
+			this.printf(civlConfig.out(), arguments[0].getSource(), formats,
+					printedContents);
+			return state;
 		}
-		this.printf(civlConfig.out(), arguments[0].getSource(), formats,
-				printedContents);
-		return state;
 	}
 
 	/**

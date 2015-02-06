@@ -287,6 +287,7 @@ public class UserInterface {
 		Program specProgram, implProgram, compositeProgram;
 		Combiner combiner = Transform.compareCombiner();
 		Model model;
+		@SuppressWarnings("unused")
 		boolean showShortFileName = showShortFileNameList(specWorker.cmdConfig);
 		ModelBuilder modelBuilder = Models.newModelBuilder(specWorker.universe);
 		AST combinedAST;
@@ -308,8 +309,8 @@ public class UserInterface {
 				|| specWorker.config.showProgram()) {
 			compositeProgram.prettyPrint(out);
 		}
-		if (showShortFileName)
-			specWorker.preprocessor.printSourceFiles(out);
+		// if (showShortFileName)
+		// specWorker.preprocessor.printSourceFiles(out);
 		if (specWorker.config.debugOrVerbose())
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(
@@ -477,7 +478,7 @@ public class UserInterface {
 			printStats(out, modelTranslator.universe);
 			replayer.printStats();
 			out.println();
-			modelTranslator.preprocessor.printSourceFiles(out);
+			// modelTranslator.preprocessor.printSourceFiles(out);
 			return result;
 		}
 		return false;
@@ -492,8 +493,8 @@ public class UserInterface {
 
 		model = modelTranslator.translate();
 		if (model != null) {
-			if (showShortFileNameList(modelTranslator.cmdConfig))
-				modelTranslator.preprocessor.printSourceFiles(out);
+			// if (showShortFileNameList(modelTranslator.cmdConfig))
+			// modelTranslator.preprocessor.printSourceFiles(out);
 			// modelTranslator.cmdConfig.setScalarValue(showTransitionsO, true);
 			player = TracePlayer.randomPlayer(modelTranslator.cmdConfig, model,
 					out, err, modelTranslator.preprocessor);
@@ -525,8 +526,8 @@ public class UserInterface {
 		if (modelTranslator.config.web())
 			this.createWebLogs(model.program());
 		if (model != null) {
-			if (showShortFileName)
-				modelTranslator.preprocessor.printSourceFiles(out);
+			// if (showShortFileName)
+			// modelTranslator.preprocessor.printSourceFiles(out);
 			verifier = new Verifier(modelTranslator.cmdConfig, model, out, err,
 					startTime, showShortFileName, modelTranslator.preprocessor);
 			try {
@@ -535,12 +536,12 @@ public class UserInterface {
 				verifier.terminateUpdater();
 				out.println();
 				out.println("Error: " + unimplemented.toString());
-				modelTranslator.preprocessor.printSourceFiles(out);
+				// modelTranslator.preprocessor.printSourceFiles(out);
 				return false;
 			} catch (CIVLSyntaxException syntax) {
 				verifier.terminateUpdater();
 				err.println(syntax);
-				modelTranslator.preprocessor.printSourceFiles(err);
+				// modelTranslator.preprocessor.printSourceFiles(err);
 				return false;
 			} catch (Exception e) {
 				verifier.terminateUpdater();
@@ -661,7 +662,7 @@ public class UserInterface {
 		printStats(out, specWorker.universe);
 		replayer.printStats();
 		out.println();
-		specWorker.preprocessor.printSourceFiles(out);
+		// specWorker.preprocessor.printSourceFiles(out);
 		return result;
 	}
 
