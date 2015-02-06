@@ -19,12 +19,12 @@ void MPI_Process (int __rank) {
     
     $when(tStart);
     for (int j=0; j<2; j++) {
-      if (rank == 1) {
+      if (rank == 0) {
         for (int i=0; i<2; i++)
           MPI_Send(&x, 1, MPI_INT, 1, TAG, MPI_COMM_WORLD);
         for (int i=0; i<2; i++)
           MPI_Recv(&y, 1, MPI_INT, 1, TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      } else {
+      } else if (rank == 1) {
         for (int i=0; i<2; i++)
           MPI_Recv(&y, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         for (int i=0; i<2; i++)
