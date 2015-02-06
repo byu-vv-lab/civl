@@ -15,7 +15,8 @@ public class LibpthreadEnabler extends BaseLibraryEnabler implements
 
 	public LibpthreadEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer, LibraryEnablerLoader libEnablerLoader,
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
+			LibraryEnablerLoader libEnablerLoader,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil,
 				symbolicAnalyzer, libEnablerLoader, libEvaluatorLoader);

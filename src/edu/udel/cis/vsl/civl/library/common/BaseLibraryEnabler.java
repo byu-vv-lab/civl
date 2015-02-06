@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -150,14 +151,23 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 		MemoryUnitSet handleObjMemUnits = memUnitFactory.newMemoryUnitSet();
 		BitSet ampleSet = new BitSet();
 		int numProcs = state.numProcs();
+		// Evaluation eval = evaluator.evaluate(state, pid, handleObj);
+		CIVLSource source = handleObj.getSource();
 
-		try {
-			handleObjMemUnits = evaluator.memoryUnitsOfExpression(state, pid,
-					handleObj, handleObjMemUnits);
-		} catch (UnsatisfiablePathConditionException e) {
-			memUnitFactory.add(handleObjMemUnits, handleObjValue);
-			// handleObjMemUnits.add(handleObjValue);
-		}
+		handleObjMemUnits.add(memUnitFactory.newMemoryUnit(
+				symbolicUtil.getDyscopeId(source, handleObjValue),
+				symbolicUtil.getVariableId(source, handleObjValue),
+				symbolicUtil.getSymRef(handleObjValue)));
+		// try {
+		// handleObjMemUnits = evaluator.memoryUnitsOfExpression(state, pid,
+		// handleObj, handleObjMemUnits);
+		//
+		// dd
+		//
+		// } catch (UnsatisfiablePathConditionException e) {
+		// memUnitFactory.add(handleObjMemUnits, handleObjValue);
+		// // handleObjMemUnits.add(handleObjValue);
+		// }
 		for (int otherPid = 0; otherPid < numProcs; otherPid++) {
 			if (otherPid == pid || ampleSet.get(otherPid))
 				continue;

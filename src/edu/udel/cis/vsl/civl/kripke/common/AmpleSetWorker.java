@@ -12,6 +12,7 @@ import java.util.Stack;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
@@ -1000,7 +1001,20 @@ public class AmpleSetWorker {
 				int varID = memUnitExpr.variableId();
 				MemoryUnit mu = memUnitFactory.newMemoryUnit(dyscopeID, varID,
 						identity);
+				Variable variable = memUnitExpr.variable();
 
+				if (variable.type().isHandleType()) {
+					SymbolicExpression value = state.getVariableValue(
+							dyscopeID, varID);
+					CIVLSource source = variable.getSource();
+
+					if (!value.isNull() && symbolicUtil.isValidPointer(value))
+						memUnitFactory.add(nonPtrReadonly, memUnitFactory
+								.newMemoryUnit(symbolicUtil.getDyscopeId(
+										source, value), symbolicUtil
+										.getVariableId(source, value),
+										symbolicUtil.getSymRef(value)));
+				}
 				if (writableVars.contains(memUnitExpr.variable()))
 					memUnitFactory.add(nonPtrWritable, mu);
 				else
