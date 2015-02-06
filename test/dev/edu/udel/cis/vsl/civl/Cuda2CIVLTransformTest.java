@@ -177,12 +177,12 @@ public class Cuda2CIVLTransformTest {
 	
 	@Test
 	public void sum() {
-		assertTrue(ui.run("verify", "-inputN_B=8", "-inputNBLOCKS_B=4", filename("sum.cu")));
+		assertTrue(ui.run("verify", "-inputN=8", "-inputNBLOCKS=4", filename("sum.cu")));
 	}
 	
 	@Test
 	public void dot() {
-		assertTrue(ui.run("verify", "-inputB=6", "-inputTHREADS_B=4", filename("dot.cu")));
+		assertTrue(ui.run("verify", "-inputN_B=6", "-inputthreadsPerBlock_B=4", filename("dot.cu")));
 	}
 	
 	@Test
