@@ -380,4 +380,16 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
   }
 }
 
+int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                  void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                  MPI_Comm comm){
+  int nprocs = $comm_size(comm.col);
+
+  MPI_Gather(sendbuf, sendcount, sendtype,
+	     recvbuf, recvcount, recvtype,
+	     0, comm);
+  MPI_Bcast(recvbuf, recvcount*nprocs, recvtype, 0, comm);
+  return 0;
+}
+
 #endif
