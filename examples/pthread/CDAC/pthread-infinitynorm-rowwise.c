@@ -78,7 +78,7 @@ void  * doRowWise(int myId)
 }
  
 /* Main function starts*/
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 /* variable declaration */
   int            i, j,p,q,CLASS_SIZE,THREADS;

@@ -19,10 +19,11 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 
 int myglobal;                                        // declaration of global variable
-pthread_mutex_t mymutex = {0,-1,0,0,{0,0,0,0,0}};  // initialization of MUTEX variable
+pthread_mutex_t mymutex = PTHREAD_MUTEX_INITIALIZER;  // initialization of MUTEX variable
  
  
 void *thread_function_datarace(void *arg)       // Function which operates on myglobal without using mutex

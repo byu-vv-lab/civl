@@ -98,14 +98,14 @@ void* thr1(void* arg)
 	__VERIFIER_atomic_acquire();
 	switch(state)
 	{
-	case STATE_UNINITIALIZED: 
+	case (STATE_UNINITIALIZED): 
 		PseudoRandomUsingAtomic_constructor(1);
 		state = STATE_INITIALIZED;
 		__VERIFIER_atomic_release();
 		
 		PseudoRandomUsingAtomic_monitor(); //never returns
 		break;
-	case STATE_INITIALIZED: 
+	case (STATE_INITIALIZED): 
 		__VERIFIER_atomic_release();
 		
 		PseudoRandomUsingAtomic__threadmain();

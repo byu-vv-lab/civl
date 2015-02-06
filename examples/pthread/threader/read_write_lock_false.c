@@ -1,4 +1,6 @@
- /* Testcase from Threader's distribution. For details see:
+ extern void __VERIFIER_error();
+
+/* Testcase from Threader's distribution. For details see:
    http://www.model.in.tum.de/~popeea/research/threader
 
    This file is adapted from the example introduced in the paper:
@@ -9,7 +11,7 @@
 #include <pthread.h>
 #define assert(e) if (!(e)) ERROR: goto ERROR;
 
-int w=0, r=0, x=0, y=0;
+int w=0, r=0, x, y;
 
 void __VERIFIER_atomic_take_write_lock() {
   __VERIFIER_assume(w==0 && r==0);

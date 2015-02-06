@@ -21,8 +21,9 @@
 #include<pthread.h>
 #include<sys/time.h>
 #include<stdlib.h>
+#include<string.h>
  
-#define  MAX_ITERATIONS 1000
+#define  MAX_ITERATIONS 100
 #define MAXTHREADS 8
  
 double   Distance(double *X_Old, double *X_New, int matrix_size);
@@ -34,7 +35,7 @@ double   *X_New, *X_Old, *Bloc_X, rno,sum;
 int Number;
 void jacobi(int);
  
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
  
         double diag_dominant_factor  = 4.0000;
@@ -72,12 +73,12 @@ main(int argc, char **argv)
             exit(-1);
         }
         else {
-            CLASS = argv[1];
-            THREADS = atoi(argv[2]);
+            CLASS = "A";
+            THREADS = 2;
         }
     if (THREADS > MAXTHREADS ){
         printf("\n Number of Threads must be less than or equal to 8. Aborting ...\n");
-        return;
+        return 0;
     }
         if( strcmp(CLASS, "A" )==0){
             CLASS_SIZE = 1024;

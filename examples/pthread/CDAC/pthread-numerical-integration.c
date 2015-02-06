@@ -65,7 +65,7 @@ void myPartOfCalc(int myID)
 }
  
 /* Main function starts */
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
  {
         /*variable declartion */
                 int i,Iteration,ret_count;
@@ -105,14 +105,14 @@ main(int argc, char *argv[])
                  
                   printf("\t\t Very Few Arguments\n ");
                   printf("\t\t Syntax : exec <Number of Intervals>\n");
-                  return;
+                  return 0;
                 }
                 else {
                   numberOfIntervals = atoi(argv[1]);
                 }
         if(numberOfIntervals > MAX_THREADS) {
                     printf("\n Number Of Intervals should be less than or equal to 8.Aborting\n");
-            return;
+            return 0;
         }  
  
                 num_threads = numberOfIntervals ;

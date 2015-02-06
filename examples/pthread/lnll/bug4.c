@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unistd.h>
 
 /* Define and scope what needs to be seen by everyone */
 #define NUM_THREADS  3

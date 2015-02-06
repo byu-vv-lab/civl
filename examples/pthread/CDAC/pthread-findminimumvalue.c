@@ -23,6 +23,7 @@
 #include<stdio.h>
 #include<sys/time.h>
 #include<stdlib.h>
+#include<string.h>
  
 #define MIN_INT 0
 #define MAXTHREADS 8

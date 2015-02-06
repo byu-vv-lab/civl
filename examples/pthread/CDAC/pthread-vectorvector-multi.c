@@ -56,7 +56,7 @@ void * doMyWork(int myId)
      
 }
 /*Main function start */
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
      
         /*variable declaration */

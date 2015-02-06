@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include<sys/time.h>
  
-#define ARRAYSIZE   100000000
+#define ARRAYSIZE   1000
 #define MAXTHREADS 8
  
 /* global declaration */
@@ -83,15 +83,15 @@ int main(int argc, char *argv[]) {
         }
     if (argc != 3) {
         printf ("Syntax : exec <Number to be search> <Number of thread>\n");
-        return ;
+        return 0;
     }
  
-        search_no = atoi(argv[1]);
-        num_threads = atoi(argv[2]);
+        search_no = 50;
+        num_threads = 2;
  
     if (num_threads > MAXTHREADS) {
         printf ("Number of thread should be less than or equal to 8\n");
-        return ;
+        return 0;
     }
  
     iterations = ARRAYSIZE/num_threads;
@@ -168,4 +168,6 @@ int main(int argc, char *argv[]) {
         printf("\n ERROR : Return code from pthread_mutex_destroy() is %d ",ret_count);
         exit(-1);
         }
+	free(threads);
+	free(tids);
 }

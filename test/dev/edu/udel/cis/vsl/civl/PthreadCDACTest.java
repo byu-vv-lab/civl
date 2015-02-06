@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -26,7 +27,9 @@ public class PthreadCDACTest {
 	
 	/* **************************** Test Methods *************************** */
 
-	
+	// Yes
+	// None
+	@Ignore
 	@Test
 	public void pthread_demo_datarace() throws ABCException {
 		assertTrue(ui.run("verify", filename("pthread-demo-datarace.c") ));
@@ -34,7 +37,7 @@ public class PthreadCDACTest {
 	
 	@Test
 	public void pthread_finding_k_matches() throws ABCException {
-		assertTrue(ui.run("verify", filename("pthread-finding-k-matches.c") ));
+		assertTrue(ui.run("verify", "-inputCIVL_argc=3", "-errorBound=2", filename("pthread-finding-k-matches.c") ));
 	}
 
 	@Test
@@ -54,7 +57,7 @@ public class PthreadCDACTest {
 	
 	@Test
 	public void pthread_jacobi() throws ABCException {
-		assertTrue(ui.run("verify", filename("pthread-jacobi.c") ));
+		assertTrue(ui.run("verify", "-inputCIVL_argc=3", filename("pthread-jacobi.c") ));
 	}
 	
 	@Test

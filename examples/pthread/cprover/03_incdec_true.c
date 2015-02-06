@@ -1,3 +1,4 @@
+//Command: civl verify -svcomp -procBound=3 03_incdec_true.c
 //http://www.ibm.com/developerworks/java/library/j-jtp04186/index.html
 //Listing 2. A counter using locks
 

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -27,19 +28,22 @@ public class PthreadCProverTest {
 
 	/* **************************** Test Methods *************************** */
 
-	
+	// Yes
+	// None
 	@Test
 	public void inc_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp", "-procBound=3", filename("01_inc_true.c") ));
 	}
 
-	
+	// Yes
+	// None
 	@Test
 	public void inc_cas_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp", "-procBound=3", filename("02_inc_cas_true.c")));
 	}
 
-	
+	// Yes
+	// None
 	@Test
 	public void incdec_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp", "-procBound=3", filename("03_incdec_true.c")));
@@ -70,13 +74,15 @@ public class PthreadCProverTest {
 		assertTrue(ui.run("verify", "-svcomp", "-procBound=3", filename("07_rand_true.c")));
 	}
 
-	
+	// Yes
+	// Changes: Requires parentheses around case statements
 	@Test
 	public void rand_cas_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp", "-procBound=3", filename("08_rand_cas_true.c")));
 	}
 
-	
+	// No
+	// Uses assume on local variables, maybe see if implementation is possible?
 	@Test
 	public void fmaxsym_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp", "-procBound=3", filename("09_fmaxsym_true.c")));
@@ -173,7 +179,8 @@ public class PthreadCProverTest {
 		assertFalse(ui.run("verify", "-svcomp", "-procBound=3", filename("27_Boop_simple_vf_false.c")));
 	}
 
-	
+	// Uses uninitialized local variables
+	@Ignore
 	@Test
 	public void buggy_simple_loop1_vf_false() throws ABCException {
 		assertFalse(ui.run("verify", "-svcomp", "-procBound=3",
