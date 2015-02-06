@@ -8,7 +8,7 @@
 #include <pthread.h>
 #include <seq.cvh>
 
-extern void *value_ptr_value = NULL;
+void *value_ptr_value = NULL;
 $pthread_gpool_t $pthread_gpool = $pthread_gpool_create($here);
 
 /* pthread_barrierattr_t
@@ -69,32 +69,6 @@ struct pthread_attr_t{
           prioceiling: defines the lowest priority the mutex's critical section can be at
 */
 
-struct pthread_mutexattr_t{
-  int robust;
-  int pshared;
-  int protocol;
-  int type;
-  int prioceiling;
-};
-
-/* pthread_mutex_t struct definition
-  Description: The pthread_mutex_t is a locking mechanism for threads to interact with in order to control the scheduling
-  of the threads. It can be locked, which allows for blocking of other threads waiting on the mutex and unlocked, allowing
-  access. It has a pthread_mutexattr_t which defines its behavior.
-  Fields: count - used for recursive mutex, incremented when locked, decremented when unlocked, mutex released when count is 0
-  owner - current process owner of the mutex
-  lock - int of 0 or 1, respectively 0 if unlocked, 1 if locked
-  prioceiling - allows locking without adherence to the priority ceiling
-  attr - see above
-*/
-
-struct pthread_mutex_t{
-  int count;
-  $proc ownerid;
-  int lock;
-  int prioceiling;
-  pthread_mutexattr_t attr;
-};
 
 /* pthread_rwlockattr_t
 */
