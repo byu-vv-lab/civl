@@ -174,10 +174,10 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-		if (this.isSystemCall()) {
-			this.purelyLocal = false;
-			return;
-		}
+//		if (this.isSystemCall()) {
+//			this.purelyLocal = false;
+//			return;
+//		}
 		this.guard().purelyLocalAnalysis();
 		if (this.lhs != null) {
 			this.lhs.purelyLocalAnalysis();

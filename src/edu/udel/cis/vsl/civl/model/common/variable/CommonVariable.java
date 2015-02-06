@@ -194,9 +194,11 @@ public class CommonVariable extends CommonSourceable implements Variable {
 	@Override
 	public void setPurelyLocal(boolean pl) {
 		// a constant or an input variable is always considered as purely local
-		if (this.isConst() || this.isInput()) {
+		if (this.isConst() || this.isInput())
 			this.purelyLocal = true;
-		} else
+		if (this.type.isPointerType() || this.type.isHandleType())
+			this.purelyLocal = false;
+		else
 			this.purelyLocal = pl;
 	}
 
