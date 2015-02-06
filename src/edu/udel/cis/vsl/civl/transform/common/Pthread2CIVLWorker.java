@@ -100,6 +100,8 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private List<String> funcList = new ArrayList<>();
 
+	// private FunctionDefinitionNode mainFunction;
+
 	private Set<FunctionDefinitionNode> nonThreadFunctionsWtSyncCalls = new HashSet<>();
 
 	private List<String> syncCallFunctionNames = new ArrayList<>();
@@ -500,7 +502,6 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		boolean isMain = name.equals("main");
 
 		if (name.equals("main")) {
-			process_pthread_exit(function, true);
 			ExpressionNode ZERO = this.integerConstant(0);
 			if (!hasReturn(function)) {
 				if (returnType.getType().kind() == TypeKind.VOID)
@@ -512,15 +513,15 @@ public class Pthread2CIVLWorker extends BaseWorker {
 							nodeFactory.newReturnNode(this.newSource(
 									"return statement", CParser.RETURN), ZERO));
 			}
+			process_pthread_exit(function, true);
 			// return;
 		}
-		if (isMain
-				|| (this.isVoidPointerType(returnType) && threadList
-						.contains(name))) {
+		if ((this.isVoidPointerType(returnType) && threadList.contains(name))) {
 			String pthread_exit_name = isMain ? PTHREAD_EXIT_MAIN_NEW
 					: PTHREAD_EXIT_NEW;
 
-			if (function.getTypeNode().getParameters().numChildren() == 0) {
+			if (!isMain
+					&& function.getTypeNode().getParameters().numChildren() == 0) {
 				function.getTypeNode().setParameters(
 						nodeFactory.newSequenceNode(this.newSource(
 								"parameter declaration of "

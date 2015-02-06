@@ -124,13 +124,6 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			state = execute_pthread_pool_exit(state, pid, process, arguments,
 					argumentValues, source);
 			break;
-		/*
-		 * *
-		 * $proc $pthread_pool_get_pid_of_thread($pthread_pool pool, int tid);
-		 * 
-		 * _Bool $pthread_pool_get_terminated_of_thread($pthread_pool pool, int
-		 * tid);
-		 */
 		case "$pthread_pool_get_terminated":
 			state = execute_pthread_pool_get_terminated(state, pid, process,
 					lhs, arguments, argumentValues, source);
@@ -264,16 +257,21 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression gpool = argumentValues[0];
-		SymbolicExpression gpoolObject;
+		SymbolicExpression gpoolObject, result;
 		Evaluation eval;
 
-		eval = this.evaluator.dereference(source, state, process, gpool, false);
-		gpoolObject = eval.value;
-		state = eval.state;
+		if (symbolicUtil.isValidPointer(gpool)) {
+			eval = this.evaluator.dereference(source, state, process, gpool,
+					false);
+			gpoolObject = eval.value;
+			state = eval.state;
+			result = universe.length(universe
+					.tupleRead(gpoolObject, zeroObject));
+		} else
+			result = zero;
 		if (lhs != null)
-			state = this.primaryExecutor
-					.assign(state, pid, process, lhs, universe.length(universe
-							.tupleRead(gpoolObject, zeroObject)));
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					result);
 		return state;
 	}
 

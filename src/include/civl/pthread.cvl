@@ -804,7 +804,7 @@ void _pthread_exit_main(void *value_ptr){
     $wait(tid);
   }    
   $free($pthread_gpool);
-  $exit();
+  //$exit();
 }
 
 /**
