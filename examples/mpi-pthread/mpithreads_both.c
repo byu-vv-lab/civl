@@ -172,5 +172,6 @@ MPI_Finalize();
 free (a);
 free (b);
 pthread_mutex_destroy(&mutexsum);
-exit (0);
+//exit (0);
+return 0;
 }   
