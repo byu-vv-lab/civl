@@ -42,6 +42,10 @@
 #include "mpi.h"
 #include <pthread.h>
 
+#ifdef _CIVL
+$input int NUM_INTERVAL_BOUND = 4;
+#endif
+
 double  intervalWidth, mypi = 0.0;
 int     *MyIntervals;
 int     MyRank, Numprocs, Root = 0, MyCount = 0;
@@ -86,7 +90,7 @@ int main(int argc, char *argv[])
 		printf("\nEnter the number of intervals : ");
 		scanf("%d", &NoInterval);
 	       	#ifdef _CIVL
-		$assume NoInterval < 10;
+		$assume NoInterval <= NUM_INTERVAL_BOUND;
                 #endif
 	}
 
