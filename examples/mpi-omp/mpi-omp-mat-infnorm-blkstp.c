@@ -20,6 +20,10 @@
 #include "mpi.h"
 #include <omp.h>
 
+#ifdef _CIVL
+$input int NUM_ROWS_BOUND = 4;
+$input int NUM_COLS_BOUND = 4;
+#endif
 
 /* Main Program */
 
@@ -50,6 +54,11 @@ int main(int argc, char **argv) // "int" inserted manually
     }
     if (MatrixFileStatus != 0) {
       fscanf(fp, "%d %d\n", &NoofRows, &NoofCols);
+
+      #ifdef _CIVL
+      $assume NoofRows <= NUM_ROWS_BOUND;
+      $assume NoofRows <= NoofCols;
+      #endif
 
       /* .......Allocate Memory For Matrix ..... */
       InputMatrix = (float **) malloc(NoofRows * sizeof(float *));
