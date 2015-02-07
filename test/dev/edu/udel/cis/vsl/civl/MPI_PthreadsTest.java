@@ -64,6 +64,15 @@ public class MPI_PthreadsTest {
 	}
 
 	@Test
+	public void mpi_pthreads() throws ABCException {
+		assertTrue(ui
+				.run("verify",
+						"-input_NPROCS=2",
+						"-showProgram=false -enablePrintf=false -showTransitions=false",
+						filename("mpi-pthreads.c")));
+	}
+
+	@Test
 	public void helloWorld() throws ABCException {
 		assertTrue(ui.run("verify",
 				"-input_NPROCS=2 -showModel=false -enablePrintf=false",
