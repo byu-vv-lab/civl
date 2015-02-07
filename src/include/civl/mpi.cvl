@@ -384,7 +384,12 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm){
   int nprocs = $comm_size(comm.col);
+  __MPI_Sys_status__ curr_status;
 
+  curr_status = CMPI_Get_status();
+  $assert curr_status == __INIT :
+  "MPI_Allgather() cannot be invoked without "
+    "MPI_Init() being called before.\n";
   MPI_Gather(sendbuf, sendcount, sendtype,
 	     recvbuf, recvcount, recvtype,
 	     0, comm);
