@@ -1710,8 +1710,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			LinkedList<BlockItemNode> items = new LinkedList<>();
 			if (workshareKind.equals("SECTIONS")) {
 				String sectionsPlace = "sections";
-				privateIDs = ((OmpWorksharingNode) node).privateList();
-				removeNodeFromParent(privateIDs);
+				SequenceNode<IdentifierExpressionNode> privateList = ((OmpWorksharingNode) node).privateList();
+				removeNodeFromParent(privateList);
 				firstPrivateIDs = ((OmpWorksharingNode) node)
 						.firstprivateList();
 				removeNodeFromParent(firstPrivateIDs);
@@ -1783,8 +1783,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				items.add(my_secs);
 
 				// Declare local copies of the private variables
-				if (privateIDs != null) {
-					for (ASTNode child : privateIDs.children()) {
+				if (privateList != null) {
+					for (ASTNode child : privateList.children()) {
 						VariableDeclarationNode localPrivate = addPrivateVariable(
 								(IdentifierExpressionNode) child, "regular");
 						items.add(localPrivate);
@@ -1889,6 +1889,16 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 				children = forBody.children();
 
+				if (privateList != null) {
+					for (ASTNode child : privateList.children()) {
+						if (child != null) {
+							child.remove();
+							privateIDs
+									.addSequenceChild((IdentifierExpressionNode) child);
+						}
+					}
+				}
+				
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
 							reductionIDs, firstPrivateIDs);
