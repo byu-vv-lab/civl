@@ -173,10 +173,10 @@ void $omp_shared_destroy($omp_shared shared) {
 }
 
 void $omp_read($omp_shared shared, void *result, void *ref) {
-  if($is_identity_ref(ref)){
-    $copy(ref, shared->gshared->original); // copy shared to local
-    $set_leaf_nodes(shared->status, FULL);
-  }else{
+  if(!$is_identity_ref(ref)){
+    //$copy(ref, shared->gshared->original); // copy shared to local
+    //$set_leaf_nodes(shared->status, FULL);
+  //}else{
     int *status_ref = (int*)$translate_ptr(ref, shared->status);
     int status = *status_ref;
 
