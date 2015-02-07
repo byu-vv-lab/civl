@@ -1817,7 +1817,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 																newSource(
 																		civlFor,
 																		CParser.IDENTIFIER),
-																"i"),
+																"i$omp"),
 												nodeFactory.newBasicTypeNode(
 														newSource(civlFor,
 																CParser.INT),
@@ -1857,7 +1857,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				forItems.add(nodeFactory.newSwitchNode(
 						newSource(civlFor, CParser.SWITCH),
 						this.identifierExpression(
-								newSource(civlFor, CParser.IDENTIFIER), "i"),
+								newSource(civlFor, CParser.IDENTIFIER), "i$omp"),
 						switchBody));
 				forBody = nodeFactory.newCompoundStatementNode(
 						newSource(civlFor, CParser.COMPOUND_STATEMENT),
