@@ -13,7 +13,7 @@ void MPI_Process(int place){
   __MPI_Sys_status__ _my_status = __UNINIT;
   $assert _my_status == __UNINIT;
 
-  __MPI_Init();
+  _MPI_Init();
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
   if(rank != 0){

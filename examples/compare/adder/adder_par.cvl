@@ -62,7 +62,7 @@ void MPI_Process(int place){
     int i;
 
     MPI_COMM_WORLD = CMPI_Comm_create($here, __MPI_COMM_WORLD, place);
-    __MPI_Init();
+    _MPI_Init();
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &PID);
     first = N * PID / nprocs;
@@ -76,7 +76,7 @@ void MPI_Process(int place){
     } else {
       MPI_Send(&localSum, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
-    __MPI_Finalize();
+    _MPI_Finalize();
     CMPI_Comm_destroy(MPI_COMM_WORLD);
     return 0;
   }
