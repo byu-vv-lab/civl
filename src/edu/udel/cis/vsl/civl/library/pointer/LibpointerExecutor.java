@@ -103,12 +103,79 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			state = executeLeafNodePointers(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$is_identity_ref":
+			state = executeIsIdentityRef(state, pid, process, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
+		case "$set_leaf_nodes":
+			state = execute_set_leaf_nodes(state, pid, process, arguments,
+					argumentValues, call.getSource());
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("the function " + name
 					+ " of library pointer.cvh", call.getSource());
 		}
 		state = stateFactory.setLocation(state, pid, call.target(),
 				call.lhs() != null);
+		return state;
+	}
+
+	/**
+	 * 
+	 updates the leaf nodes of the given objects to with the given integer
+	 * value
+	 * 
+	 * void $set_leaf_nodes(void *obj, int value);
+	 * @throws UnsatisfiablePathConditionException 
+	 */
+
+	private State execute_set_leaf_nodes(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		// TODO Auto-generated method stub
+		
+		CIVLType objectType = symbolicAnalyzer.typeOfObjByPointer(
+				arguments[1].getSource(), state, argumentValues[0]);
+		List<ReferenceExpression> leafs = this.evaluator
+				.leafNodeReferencesOfType(arguments[0].getSource(), state, pid,
+						objectType);
+		List<SymbolicExpression> leafPointers = new ArrayList<>();
+		SymbolicExpression objectPointer = argumentValues[0];
+//		SymbolicExpression result;
+
+		for (ReferenceExpression ref : leafs) 
+			leafPointers.add(this.symbolicUtil.setSymRef(objectPointer, ref));
+		for(SymbolicExpression leafPtr: leafPointers)
+			state = this.primaryExecutor.assign(source, state, process, leafPtr, argumentValues[1]);
+		return state;
+	}
+
+	/**
+	 * _Bool $is_identity_ref(void *obj);
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param lhs
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeIsIdentityRef(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression result = falseValue, objetPointer = argumentValues[0];
+
+		if (!symbolicUtil.isHeapPointer(objetPointer)) {
+			if (symbolicUtil.getSymRef(objetPointer).isIdentityReference())
+				result = trueValue;
+		}
+		if (lhs != null)
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					result);
 		return state;
 	}
 

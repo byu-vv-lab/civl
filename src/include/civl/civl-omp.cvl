@@ -173,15 +173,19 @@ void $omp_shared_destroy($omp_shared shared) {
 }
 
 void $omp_read($omp_shared shared, void *result, void *ref) {
-  int tid = shared->tid;
-  int *status_ref = (int*)$translate_ptr(ref, shared->status);
-  int status = *status_ref;
+  if($is_identity_ref(ref)){
+    $copy(ref, shared->gshared->original); // copy shared to local
+    $set_leaf_nodes(shared->status, FULL);
+  }else{
+    int *status_ref = (int*)$translate_ptr(ref, shared->status);
+    int status = *status_ref;
 
-  if(status == EMPTY){
-    void *global = $translate_ptr(ref, shared->gshared->original);
+    if(status == EMPTY){
+      void *global = $translate_ptr(ref, shared->gshared->original);
  
-    $copy(ref, global); // copy shared to local
-    *status_ref = FULL; // set status to FULL
+      $copy(ref, global); // copy shared to local
+      *status_ref = FULL; // set status to FULL
+    }
   }
   // read local
   $copy(result, ref);
@@ -189,10 +193,14 @@ void $omp_read($omp_shared shared, void *result, void *ref) {
 
 void $omp_write($omp_shared shared, void *ref, void *value) {
   int tid = shared->tid;
-  int *status_ref = (int*)$translate_ptr(ref, shared->status);
   
   $copy(ref, value);
-  *status_ref = MODIFIED;
+  if($is_identity_ref(ref)){
+     $set_leaf_nodes(shared->status, MODIFIED);
+  }else{
+    int *status_ref = (int*)$translate_ptr(ref, shared->status);
+    *status_ref = MODIFIED;
+  }
 }
 
 /* Only applicable to scalar type? */
