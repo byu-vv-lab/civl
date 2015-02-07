@@ -90,12 +90,12 @@ void CMPI_Comm_destroy(MPI_Comm comm) {
   $barrier_destroy(comm.barrier);
 }
 
-int __MPI_Init(void) {
+int _MPI_Init(void) {
   CMPI_Set_status(__INIT);
   return 0;
 }
 
-int __MPI_Finalize(void) {
+int _MPI_Finalize(void) {
   CMPI_Set_status(__FINALIZED);
   return 0;
 }

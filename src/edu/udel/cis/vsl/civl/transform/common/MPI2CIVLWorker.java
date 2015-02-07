@@ -150,7 +150,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the function translating MPI_Init in the final CIVL-C
 	 * program.
 	 */
-	private final static String MPI_INIT_NEW = "__MPI_Init";
+	private final static String MPI_INIT_NEW = "_MPI_Init";
 
 	/**
 	 * The name of the function MPI_Init in the original MPI program.
@@ -161,7 +161,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the function translating MPI_Init in the final CIVL-C
 	 * program.
 	 */
-	private final static String MPI_FINALIZE_NEW = "__MPI_Finalize";
+	private final static String MPI_FINALIZE_NEW = "_MPI_Finalize";
 
 	/**
 	 * The name of the variable representing the status of an MPI process, which
