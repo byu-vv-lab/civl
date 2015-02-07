@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <mpi.h>
+#include <stdio.h>
 
 #define TAG 99
 
@@ -12,15 +13,23 @@ void * Thread(void * tid) {
   x = 2*rank + (int)tid;
   for (int j=0; j<2; j++) {
     if (rank == 0) {
-     for (int i=0; i<2; i++)
+     for (int i=0; i<2; i++){
+       printf("thread %d of rank %d sends at iteration %d.\n", tid, rank, j);
        MPI_Send(&x, 1, MPI_INT, 1, TAG, MPI_COMM_WORLD);
-     for (int i=0; i<2; i++)
+     }
+     for (int i=0; i<2; i++){
+       printf("thread %d of rank %d receives at iteration %d.\n", tid, rank, j);
        MPI_Recv(&y, 1, MPI_INT, 1, TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+     }
     } else if (rank == 1) {
-      for (int i=0; i<2; i++)
+      for (int i=0; i<2; i++){
+        printf("thread %d of rank %d receives at iteration %d.\n", tid, rank, j);
         MPI_Recv(&y, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      for (int i=0; i<2; i++)
+      }
+      for (int i=0; i<2; i++){
+        printf("thread %d of rank %d sends at iteration %d.\n", tid, rank, j);
         MPI_Send(&x, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD);
+      }
     }
   }
   pthread_exit(NULL);
