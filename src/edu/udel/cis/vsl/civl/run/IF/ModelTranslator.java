@@ -68,16 +68,20 @@ public class ModelTranslator {
 	private TransformerFactory transformerFactory;
 	SymbolicUniverse universe;
 	String userFileCoreName;
+	File userFile;
 
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
-			GMCConfiguration cmdConfig, String[] filenames, String coreName) {
+			GMCConfiguration cmdConfig, String[] filenames, String coreName,
+			File coreFile) {
 		this(transformerFactory, frontEnd, frontEnd.getPreprocessor(),
-				cmdConfig, filenames, coreName, SARL.newStandardUniverse());
+				cmdConfig, filenames, coreName, coreFile, SARL
+						.newStandardUniverse());
 	}
 
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
 			Preprocessor preprocessor, GMCConfiguration cmdConfig,
-			String[] filenames, String coreName, SymbolicUniverse universe) {
+			String[] filenames, String coreName, File coreFile,
+			SymbolicUniverse universe) {
 		this.transformerFactory = transformerFactory;
 		this.cmdConfig = cmdConfig;
 		this.userFileCoreName = coreName;
@@ -89,6 +93,7 @@ public class ModelTranslator {
 		config = new CIVLConfiguration(cmdConfig);
 		this.filenames = filenames;
 		userFileName = filenames[0];
+		this.userFile = coreFile;
 		this.frontEnd = frontEnd;
 		this.preprocessor = preprocessor;
 		systemIncludes = this.getSysIncludes(cmdConfig);

@@ -9,18 +9,13 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 
 	public enum NormalCommandKind {
-		CONFIG,
-		SHOW,
-		VERIFY,
-		REPLAY,
-		GUI,
-		HELP,
-		RUN
+		CONFIG, SHOW, VERIFY, REPLAY, GUI, HELP, RUN
 	}
 
 	private NormalCommandKind command;
 	private GMCConfiguration config;
 	private String[] files;
+	private File coreFile;
 	private String coreFileName;
 
 	public NormalCommandLine() {
@@ -64,11 +59,15 @@ public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 	}
 
 	public void complete() {
-		this.coreFileName = coreName(files[0]);
+		this.computeCoreFile();
 	}
 
 	public String getCoreFileName() {
 		return this.coreFileName;
+	}
+
+	public File getCoreFile() {
+		return this.coreFile;
 	}
 
 	/**
@@ -82,18 +81,20 @@ public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 	 *            a filename
 	 * @return the core part of that filename
 	 */
-	private static String coreName(String filename) {
-		String result = filename;
+	private void computeCoreFile() {
+		String result = this.files[0];
 		char sep = File.separatorChar;
-		int lastSep = filename.lastIndexOf(sep);
+		int lastSep = result.lastIndexOf(sep);
 		int lastDot;
 
-		if (lastSep >= 0)
+		this.coreFile = new File(result);
+		if (lastSep >= 0) {
 			result = result.substring(lastSep + 1);
+		}
 		lastDot = result.lastIndexOf('.');
 		if (lastDot >= 0)
 			result = result.substring(0, lastDot);
-		return result;
+		this.coreFileName = result;
 	}
 
 }

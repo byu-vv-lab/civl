@@ -249,7 +249,8 @@ public class UserInterface {
 		else {
 			ModelTranslator modelTranslator = new ModelTranslator(
 					transformerFactory, frontEnd, commandLine.configuration(),
-					commandLine.files(), commandLine.getCoreFileName());
+					commandLine.files(), commandLine.getCoreFileName(),
+					commandLine.getCoreFile());
 
 			if (commandLine.configuration().isTrue(echoO))
 				out.println(commandLine.getCommandString());
@@ -280,10 +281,10 @@ public class UserInterface {
 				.implementation();
 		ModelTranslator specWorker = new ModelTranslator(transformerFactory,
 				frontEnd, spec.configuration(), spec.files(),
-				spec.getCoreFileName()), implWorker = new ModelTranslator(
+				spec.getCoreFileName(), spec.getCoreFile()), implWorker = new ModelTranslator(
 				transformerFactory, frontEnd, specWorker.preprocessor,
 				impl.configuration(), impl.files(), impl.getCoreFileName(),
-				specWorker.universe);
+				impl.getCoreFile(), specWorker.universe);
 		Program specProgram, implProgram, compositeProgram;
 		Combiner combiner = Transform.compareCombiner();
 		Model model;
@@ -447,10 +448,12 @@ public class UserInterface {
 		// sourceFilename = coreName(modelTranslator.filenames[0]);
 		traceFilename = (String) modelTranslator.cmdConfig.getValue(traceO);
 		if (traceFilename == null) {
+			File parent = modelTranslator.userFile.getParentFile();
+			
 			traceFilename = modelTranslator.userFileCoreName + "_"
 					+ modelTranslator.cmdConfig.getValueOrDefault(idO)
 					+ ".trace";
-			traceFile = new File(new File(CIVLConstants.CIVLREP), traceFilename);
+			traceFile = new File(new File(parent, CIVLConstants.CIVLREP), traceFilename);
 		} else
 			traceFile = new File(traceFilename);
 		newConfig = parser.newConfig();
