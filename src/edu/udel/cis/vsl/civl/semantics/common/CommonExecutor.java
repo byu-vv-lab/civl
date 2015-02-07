@@ -1021,7 +1021,7 @@ public class CommonExecutor implements Executor {
 									arguments[i].getSource(), state,
 									argumentValue)));
 			}
-			this.printf(civlConfig.out(), arguments[0].getSource(), formats,
+			this.printf(enablePrintf, civlConfig.out(), arguments[0].getSource(), formats,
 					printedContents);
 			return state;
 		}
@@ -1256,21 +1256,28 @@ public class CommonExecutor implements Executor {
 	@Override
 	public void printf(PrintStream printStream, CIVLSource source,
 			List<Format> formats, List<StringBuffer> arguments) {
-		// if (this.civlConfig.enablePrintf()) {
-		int argIndex = 0;
+		this.printf(civlConfig.enablePrintf(), printStream, source, formats,
+				arguments);
+	}
 
-		for (Format format : formats) {
-			String formatString = format.toString();
+	private void printf(boolean enablePrintf, PrintStream printStream,
+			CIVLSource source, List<Format> formats,
+			List<StringBuffer> arguments) {
+		if (enablePrintf) {
+			int argIndex = 0;
 
-			switch (format.type) {
-			case VOID:
-				printStream.print(formatString);
-				break;
-			default:
-				printStream.printf("%s", arguments.get(argIndex++));
+			for (Format format : formats) {
+				String formatString = format.toString();
+
+				switch (format.type) {
+				case VOID:
+					printStream.print(formatString);
+					break;
+				default:
+					printStream.printf("%s", arguments.get(argIndex++));
+				}
 			}
 		}
-		// }
 	}
 
 	/**
