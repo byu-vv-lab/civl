@@ -129,8 +129,6 @@ int main(int argc, char *argv[])
 
 	for (interval = 0; interval < MyCount; interval++)
 		pthread_join(threads[interval], NULL);
-	free(threads);
-	free(MyIntervals);
 
 	/* ....Collect the areas calculated in P0.... */
 	MPI_Reduce(&mypi, &pi, 1, MPI_DOUBLE, MPI_SUM, Root, MPI_COMM_WORLD);

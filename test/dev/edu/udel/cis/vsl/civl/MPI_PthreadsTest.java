@@ -54,7 +54,6 @@ public class MPI_PthreadsTest {
 						filename("mpi-pthreads-infinity-norm.c")));
 	}
 
-	// requires MPI_Allgather
 	@Test
 	public void mpi_pthreads_matrix_vector() throws ABCException {
 		assertTrue(ui
@@ -66,7 +65,8 @@ public class MPI_PthreadsTest {
 
 	@Test
 	public void helloWorld() throws ABCException {
-		assertTrue(ui.run("verify", "-input_NPROCS=2 -showModel=false",
+		assertTrue(ui.run("verify",
+				"-input_NPROCS=2 -showModel=false -enablePrintf=false",
 				"-showSavedStates=false",
 				"-showTransitions=false -showProgram=false",
 				"-showAmpleSet=false", filename("helloWorld.c")));

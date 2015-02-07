@@ -261,7 +261,15 @@ int main(int argc, char **argv)
             printf("Row  %d : %f \n", irow, Results[irow]);
     }
     printf("\n");
-    
+    for (irow = 0; irow < NoofRows; irow++)
+      free(Matrix[irow]);
+    free(Matrix);
+    free(Vector);
+    free(ArrayNoofRows);
+    free(Displacement);
+    free(MyResult);
+    free(threads);
+    free(Results);
     MPI_Finalize();
     return 0;
 }
