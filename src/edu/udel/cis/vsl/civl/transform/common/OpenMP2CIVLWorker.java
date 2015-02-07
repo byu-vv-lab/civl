@@ -2849,7 +2849,9 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						writeCall = write(this.identifierExpression(
 								newSource(place, CParser.IDENTIFIER),
 								triple.second.name()), name,
-								(ExpressionNode) parentOfID.copy());
+								this.identifierExpression(
+										newSource(place, CParser.IDENTIFIER), "tmpRead"
+												+ String.valueOf(tmpCount-1)));
 
 						directParent
 								.setChild(index, this.identifierExpression(
