@@ -45,6 +45,11 @@
 #include <pthread.h>
 #include <math.h>
 
+#ifdef _CIVL
+$input int NUM_ROWS_BOUND;
+$input int NUM_COLS_BOUND;
+#endif
+
 int  MyRank, currentRow, MyNoofRows, NoofCols, GlobalIndex = -1;
 int  flag = 0, maxflag = 0, rowlimit;
 float **Matrix, *Vector, max;
@@ -164,6 +169,11 @@ int main(int argc, char **argv)
     
     fscanf(fp, "%d", &NoofRows);
     fscanf(fp, "%d", &NoofCols);
+
+    #ifdef _CIVL
+    $assume NoofRows <= NUM_ROWS_BOUND;
+    $assume NoofCols <= NUM_COLS_BOUND;
+    #endif
     
     printf("\n Rows: %d  Col:%d.", NoofRows, NoofCols);
     

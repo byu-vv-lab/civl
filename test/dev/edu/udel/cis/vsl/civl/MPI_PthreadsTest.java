@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import org.junit.AfterClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -39,19 +38,22 @@ public class MPI_PthreadsTest {
 
 	@Test
 	public void mpi_pthreads_pie_collective() throws ABCException {
-		assertTrue(ui.run("verify",
-				"-showModel=false -showProgram=false -input_NPROCS=2 -inputNUM_INTERVAL_BOUND=3",
-				"-enablePrintf=false",
-				filename("mpi-pthreads-pie-collective.c")));
+		assertTrue(ui
+				.run("verify",
+						"-showModel=false -showProgram=false -input_NPROCS=2 -inputNUM_INTERVAL_BOUND=3",
+						"-enablePrintf=false",
+						filename("mpi-pthreads-pie-collective.c")));
 	}
 
 	@Test
 	public void mpi_pthreads_infinity_norm() throws ABCException {
-		assertTrue(ui.run("verify", "-input_NPROCS=2", "-enablePrintf=false",
-				filename("mpi-pthreads-infinity-norm.c")));
+		assertTrue(ui
+				.run("verify",
+						"-input_NPROCS=2 -inputNUM_ROWS_BOUND=2 -inputNUM_COLS_BOUND=2",
+						"-enablePrintf=false",
+						filename("mpi-pthreads-infinity-norm.c")));
 	}
 
-	@Ignore
 	// requires MPI_Allgather
 	@Test
 	public void mpi_pthreads_matrix_vector() throws ABCException {
