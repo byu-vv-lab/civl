@@ -58,7 +58,8 @@ public class MPI_PthreadsTest {
 	public void mpi_pthreads_matrix_vector() throws ABCException {
 		assertTrue(ui
 				.run("verify",
-						"-input_NPROCS=2",
+						"-input_NPROCS=2 -inputNUM_ROWS_BOUND=2",
+						"-inputNUM_COLS_BOUND=2",
 						"-showProgram=false -enablePrintf=false -showTransitions=false",
 						filename("mpi-pthreads-marix-vector.c")));
 	}

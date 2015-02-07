@@ -42,6 +42,11 @@
 #include "mpi.h"
 #include <stdio.h>
 
+#ifdef _CIVL
+$input int NUM_ROWS_BOUND = 6;
+$input int NUM_COLS_BOUND = 6;
+#endif
+
 int  MyRank, currentRow, MyNoofRows, NoofCols, GlobalIndex = -1;
 float  **Matrix, *Vector, *MyResult;
 int  flag = 0, rowlimit;
@@ -132,6 +137,10 @@ int main(int argc, char **argv)
         scanf("%d %d", &NoofRows, &NoofCols);
         printf("Enter the size of Vector\n");
         scanf("%d", &VectorSize);
+        #ifdef _CIVL
+        $assume NoofRows <= NUM_ROWS_BOUND;
+        $assume NoofCols <= NUM_COLS_BOUND;
+        #endif
     }
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -177,7 +186,8 @@ int main(int argc, char **argv)
     for (irow = 0; irow < NoofRows; irow++)
         Matrix[irow] = (float *) malloc(NoofCols * sizeof(float));
     
-    Vector = (float *) malloc(NoofRows * sizeof(float));
+    //Vector = (float *) malloc(NoofRows * sizeof(float));
+    Vector = (float *) malloc(NoofCols * sizeof(float));
     
     for (icol = 0; icol < NoofCols; icol++)
     {
