@@ -449,15 +449,14 @@ public class UserInterface {
 		// sourceFilename = coreName(modelTranslator.filenames[0]);
 		traceFilename = (String) modelTranslator.cmdConfig.getValue(traceO);
 		if (traceFilename == null) {
-			File parent = modelTranslator.userFile.getParentFile();
-
+			// File parent = modelTranslator.userFile.getParentFile();
 			traceFilename = modelTranslator.userFileCoreName + "_"
 					+ modelTranslator.cmdConfig.getValueOrDefault(idO)
 					+ ".trace";
-			traceFile = new File(new File(parent, CIVLConstants.CIVLREP),
-					traceFilename);
-			if (!traceFile.exists())
-				traceFile = new File(CIVLConstants.CIVLREP, traceFilename);
+			// traceFile = new File(new File(parent, CIVLConstants.CIVLREP),
+			// traceFilename);
+			// if (!traceFile.exists())
+			traceFile = new File(CIVLConstants.CIVLREP, traceFilename);
 		} else
 			traceFile = new File(traceFilename);
 		newConfig = parser.newConfig();
