@@ -193,9 +193,22 @@ cudaError_t cudaSetDevice(int device_id) {
   return cudaSuccess;
 }
 
+/* Returns the message string from an error code
+ */
+const char* cudaGetErrorString(cudaError_t error) {
+  return "test";
+}
+
 /* Returns the last error that has been produced by any of the runtime calls
  * in the same host thread and resets it to cudaSuccess
  */
 cudaError_t cudaGetLastError() {
   return cudaSuccess;
 } 
+
+/* DEPRECATED. DO NOT USE
+ */
+cudaError_t cudaThreadExit() {
+  return cudaSuccess;
+}
+
