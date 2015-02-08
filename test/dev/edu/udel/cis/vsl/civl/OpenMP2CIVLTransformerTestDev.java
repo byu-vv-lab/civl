@@ -26,6 +26,12 @@ public class OpenMP2CIVLTransformerTestDev {
 
 	/* **************************** Test Methods *************************** */
 
+	@Test
+	public void vecAdd_fix() {
+		assertTrue(ui.run("verify ", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2", filename("vecAdd_fix.c")));
+	}
+	
 	@Ignore
 	@Test
 	public void dotProduct1() {
