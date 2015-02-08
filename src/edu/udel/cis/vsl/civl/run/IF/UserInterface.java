@@ -73,6 +73,7 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.Combiner;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
@@ -449,11 +450,14 @@ public class UserInterface {
 		traceFilename = (String) modelTranslator.cmdConfig.getValue(traceO);
 		if (traceFilename == null) {
 			File parent = modelTranslator.userFile.getParentFile();
-			
+
 			traceFilename = modelTranslator.userFileCoreName + "_"
 					+ modelTranslator.cmdConfig.getValueOrDefault(idO)
 					+ ".trace";
-			traceFile = new File(new File(parent, CIVLConstants.CIVLREP), traceFilename);
+			traceFile = new File(new File(parent, CIVLConstants.CIVLREP),
+					traceFilename);
+			if (!traceFile.exists())
+				traceFile = new File(CIVLConstants.CIVLREP, traceFilename);
 		} else
 			traceFile = new File(traceFilename);
 		newConfig = parser.newConfig();
@@ -468,6 +472,8 @@ public class UserInterface {
 		newConfig.setScalarValue(collectProcessesO, false);
 		newConfig.setScalarValue(collectHeapsO, false);
 
+		modelTranslator.cmdConfig = newConfig;
+		modelTranslator.config = new CIVLConfiguration(newConfig);
 		model = modelTranslator.translate();
 		if (model != null) {
 			replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile,
