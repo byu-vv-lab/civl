@@ -2850,8 +2850,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 								newSource(place, CParser.IDENTIFIER),
 								triple.second.name()), name,
 								this.identifierExpression(
-										newSource(place, CParser.IDENTIFIER), "tmpRead"
-												+ String.valueOf(tmpCount-1)));
+										newSource(place, CParser.IDENTIFIER), triple.third));
 
 						directParent
 								.setChild(index, this.identifierExpression(
