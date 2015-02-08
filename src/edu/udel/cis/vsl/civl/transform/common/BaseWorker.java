@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
+import edu.udel.cis.vsl.abc.ast.type.IF.EnumerationType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
@@ -487,6 +488,9 @@ public abstract class BaseWorker {
 		case POINTER:
 			return nodeFactory.newPointerTypeNode(source,
 					this.typeNode(((PointerType) type).referencedType()));
+		case ENUMERATION:
+			return nodeFactory.newEnumerationTypeNode(source,
+					this.identifier(((EnumerationType) type).getTag()), null);
 		default:
 		}
 		return null;

@@ -322,21 +322,25 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		final String place = variable + "_gsharedDeclaration";
 
 		TypeNode currentType = ((VariableDeclarationNode) ((Variable) variable
-				.getEntity()).getFirstDeclaration())
-				.getTypeNode().copy();
-		
-		ExpressionNode addressOf = nodeFactory.newOperatorNode(
-				newSource(place, CParser.AMPERSAND),
-				Operator.ADDRESSOF,
-				Arrays.asList(this.identifierExpression(
-						newSource(place, CParser.IDENTIFIER), variable.name())));
+				.getEntity()).getFirstDeclaration()).getTypeNode().copy();
+
+		ExpressionNode addressOf = nodeFactory
+				.newOperatorNode(
+						newSource(place, CParser.AMPERSAND),
+						Operator.ADDRESSOF,
+						Arrays.asList(this.identifierExpression(
+								newSource(place, CParser.IDENTIFIER),
+								variable.name())));
 
 		gsharedType = nodeFactory.newTypedefNameNode(
 				nodeFactory.newIdentifierNode(newSource(place, CParser.TYPE),
 						GSHARED_TYPE), null);
-		
-		if(currentType.isRestrictQualified()){
-			addressOf = nodeFactory.newCastNode(source, nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source)), addressOf);
+
+		if (currentType.isRestrictQualified()) {
+			addressOf = nodeFactory.newCastNode(
+					source,
+					nodeFactory.newPointerTypeNode(source,
+							nodeFactory.newVoidTypeNode(source)), addressOf);
 		}
 
 		gsharedCreate = nodeFactory.newFunctionCallNode(
@@ -368,9 +372,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		final String place = variable + "_sharedDeclaration";
 
 		TypeNode currentType = ((VariableDeclarationNode) ((Variable) variable
-				.getEntity()).getFirstDeclaration())
-				.getTypeNode().copy();
-		
+				.getEntity()).getFirstDeclaration()).getTypeNode().copy();
+
 		sharedType = nodeFactory.newTypedefNameNode(
 				nodeFactory.newIdentifierNode(newSource(place, CParser.TYPE),
 						SHARED_TYPE), null);
@@ -386,11 +389,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				Arrays.asList(this.identifierExpression(
 						newSource(place, CParser.IDENTIFIER), variable.name()
 								+ "_status")));
-		
-		if(currentType.isRestrictQualified()){
-			addressOfLocalVar = nodeFactory.newCastNode(source, nodeFactory.newPointerTypeNode(source, nodeFactory.newVoidTypeNode(source)), addressOfLocalVar);
+
+		if (currentType.isRestrictQualified()) {
+			addressOfLocalVar = nodeFactory.newCastNode(
+					source,
+					nodeFactory.newPointerTypeNode(source,
+							nodeFactory.newVoidTypeNode(source)),
+					addressOfLocalVar);
 		}
-		
+
 		sharedCreate = nodeFactory.newFunctionCallNode(
 				newSource(place, CParser.CALL), this.identifierExpression(
 						newSource(place, CParser.IDENTIFIER), SHARED_CREATE),
@@ -398,10 +405,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						this.identifierExpression(
 								newSource(place, CParser.IDENTIFIER), TEAM),
 						this.identifierExpression(
-								newSource(place, CParser.IDENTIFIER), variable.name()
-										+ "_gshared"), addressOfLocalVar,
-						addressOfStatusVar), null);
-		
+								newSource(place, CParser.IDENTIFIER),
+								variable.name() + "_gshared"),
+						addressOfLocalVar, addressOfStatusVar), null);
+
 		return nodeFactory.newVariableDeclarationNode(
 				newSource(place, CParser.DECLARATION),
 				nodeFactory.newIdentifierNode(
@@ -625,7 +632,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					insertChildAt(index + i, key.parent(), pair.left);
 					i++;
 				}
-				if(pair.right != null){
+				if (pair.right != null) {
 					insertChildAt(index + i, key.parent(), pair.right);
 					i++;
 				}
@@ -668,7 +675,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 		newAst = this.combineASTs(civlcOmpAST, newAst);
 		newAst = this.combineASTs(civlcAST, newAst);
-		//newAst.prettyPrint(System.out, true);
+		// newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
@@ -970,21 +977,26 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 												+ "_status");
 						Type currentType = ((Variable) c.getEntity()).getType();
 
-						if(privateType instanceof ArrayTypeNode && currentType instanceof PointerType){					
-							if(!(((PointerType) currentType).referencedType() instanceof ArrayType)){
-								currentType = ((PointerType) currentType).referencedType();
+						if (privateType instanceof ArrayTypeNode
+								&& currentType instanceof PointerType) {
+							if (!(((PointerType) currentType).referencedType() instanceof ArrayType)) {
+								currentType = ((PointerType) currentType)
+										.referencedType();
 								while (currentType instanceof ArrayType) {
-									currentType = ((ArrayType) currentType).getElementType();
+									currentType = ((ArrayType) currentType)
+											.getElementType();
 								}
 								BasicTypeKind baseTypeKind = ((StandardBasicType) currentType)
 										.getBasicTypeKind();
 
 								privateType = nodeFactory.newPointerTypeNode(
-										source, nodeFactory.newBasicTypeNode(newSource(localDeclaration, 
-												CParser.TYPE), baseTypeKind));
+										source, nodeFactory.newBasicTypeNode(
+												newSource(localDeclaration,
+														CParser.TYPE),
+												baseTypeKind));
 							}
 						}
-						
+
 						localSharedVar = nodeFactory
 								.newVariableDeclarationNode(
 										newSource(localDeclaration,
@@ -1398,9 +1410,9 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 											CParser.INTEGER_CONSTANT), "1")),
 					cln);
 			items.add(loopDomain);
-			
+
 			int loopDecomp = config.ompLoopDecomp();
-			
+
 			// ($domain(1))$omp_arrive_loop(team, int, loop_domain, strategy)
 			String myItersPlace = "myItersDeclaration";
 			ExpressionNode ompArriveLoop = nodeFactory
@@ -1449,7 +1461,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 															newSource(
 																	myItersPlace,
 																	CParser.INTEGER_CONSTANT),
-															String.valueOf(loopDecomp))), null));
+															String.valueOf(loopDecomp))),
+									null));
 			this.ompArriveLoopCounter++;
 			// Get correct level "n" for domain(n)
 			IntegerConstantNode domainLevel = nodeFactory
@@ -1710,7 +1723,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			LinkedList<BlockItemNode> items = new LinkedList<>();
 			if (workshareKind.equals("SECTIONS")) {
 				String sectionsPlace = "sections";
-				SequenceNode<IdentifierExpressionNode> privateList = ((OmpWorksharingNode) node).privateList();
+				SequenceNode<IdentifierExpressionNode> privateList = ((OmpWorksharingNode) node)
+						.privateList();
 				removeNodeFromParent(privateList);
 				firstPrivateIDs = ((OmpWorksharingNode) node)
 						.firstprivateList();
@@ -1855,10 +1869,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						newSource(civlFor, CParser.COMPOUND_STATEMENT),
 						switchItems);
 				forItems.add(nodeFactory.newSwitchNode(
-						newSource(civlFor, CParser.SWITCH),
-						this.identifierExpression(
-								newSource(civlFor, CParser.IDENTIFIER), "i$omp"),
-						switchBody));
+						newSource(civlFor, CParser.SWITCH), this
+								.identifierExpression(
+										newSource(civlFor, CParser.IDENTIFIER),
+										"i$omp"), switchBody));
 				forBody = nodeFactory.newCompoundStatementNode(
 						newSource(civlFor, CParser.COMPOUND_STATEMENT),
 						forItems);
@@ -1898,7 +1912,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						}
 					}
 				}
-				
+
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
 							reductionIDs, firstPrivateIDs);
@@ -1928,7 +1942,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						}
 					}
 					if (copyPrivateList != null) {
-						for (ASTNode childPrivateList : copyPrivateList.children()) {
+						for (ASTNode childPrivateList : copyPrivateList
+								.children()) {
 							IdentifierExpressionNode privateIdexp = (IdentifierExpressionNode) childPrivateList;
 							IdentifierNode privateId = privateIdexp
 									.getIdentifier();
@@ -1981,40 +1996,58 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 									.getTypeNode().copy();
 							IdentifierNode localSharedIdentifer = nodeFactory
 									.newIdentifierNode(
-											newSource(c.name() + localDeclaration,
-													CParser.IDENTIFIER), c.name()
-													+ "$omp_private");
-							Type currentType = ((Variable) c.getEntity()).getType();
+											newSource(c.name()
+													+ localDeclaration,
+													CParser.IDENTIFIER),
+											c.name() + "$omp_private");
+							Type currentType = ((Variable) c.getEntity())
+									.getType();
 
-							if(privateType instanceof ArrayTypeNode && currentType instanceof PointerType){					
-								if(!(((PointerType) currentType).referencedType() instanceof ArrayType)){
-									currentType = ((PointerType) currentType).referencedType();
+							if (privateType instanceof ArrayTypeNode
+									&& currentType instanceof PointerType) {
+								if (!(((PointerType) currentType)
+										.referencedType() instanceof ArrayType)) {
+									currentType = ((PointerType) currentType)
+											.referencedType();
 									while (currentType instanceof ArrayType) {
-										currentType = ((ArrayType) currentType).getElementType();
+										currentType = ((ArrayType) currentType)
+												.getElementType();
 									}
 									BasicTypeKind baseTypeKind = ((StandardBasicType) currentType)
 											.getBasicTypeKind();
 
-									privateType = nodeFactory.newPointerTypeNode(
-											newSource(c.name() + localDeclaration,
-													CParser.IDENTIFIER), nodeFactory.newBasicTypeNode(newSource(localDeclaration, 
-													CParser.TYPE), baseTypeKind));
+									privateType = nodeFactory
+											.newPointerTypeNode(
+													newSource(c.name()
+															+ localDeclaration,
+															CParser.IDENTIFIER),
+													nodeFactory
+															.newBasicTypeNode(
+																	newSource(
+																			localDeclaration,
+																			CParser.TYPE),
+																	baseTypeKind));
 								}
 							}
-							
-							ExpressionNode localCopyPrivate = this.identifierExpression(newSource(c.name() + localDeclaration,
-									CParser.IDENTIFIER), c.name());
-							
+
+							ExpressionNode localCopyPrivate = this
+									.identifierExpression(
+											newSource(c.name()
+													+ localDeclaration,
+													CParser.IDENTIFIER), c
+													.name());
+
 							localSharedVar = nodeFactory
 									.newVariableDeclarationNode(
 											newSource(localDeclaration,
 													CParser.DECLARATION),
-											localSharedIdentifer, privateType, localCopyPrivate);
+											localSharedIdentifer, privateType,
+											localCopyPrivate);
 							items.add(localSharedVar);
 						}
 					}
 				}
-				
+
 				List<ExpressionNode> operands = new ArrayList<ExpressionNode>();
 				operands.add(this.identifierExpression(
 						newSource(singlePlace, CParser.IDENTIFIER), "owner"));
@@ -2042,24 +2075,29 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				ifBody = nodeFactory.newCompoundStatementNode(
 						newSource(singlePlace, CParser.COMPOUND_STATEMENT),
 						ifItems);
-				
+
 				if (copyPrivateList != null) {
 					for (ASTNode child : copyPrivateList.children()) {
-						IdentifierNode c = ((IdentifierExpressionNode)child).getIdentifier();
-						
+						IdentifierNode c = ((IdentifierExpressionNode) child)
+								.getIdentifier();
+
 						ExpressionNode expression = nodeFactory
-								.newOperatorNode(source, Operator.ASSIGN,
-										Arrays.asList(this
-												.identifierExpression(source,
-														c.name()), this
-												.identifierExpression(source,
-														c.name() + "$omp_private")));
+								.newOperatorNode(
+										source,
+										Operator.ASSIGN,
+										Arrays.asList(
+												this.identifierExpression(
+														source, c.name()),
+												this.identifierExpression(
+														source,
+														c.name()
+																+ "$omp_private")));
 						ExpressionStatementNode statement = nodeFactory
 								.newExpressionStatementNode(expression);
 
 						int ifChildren = ifBody.numChildren();
-						ASTNode lastChild = ifBody.child(ifChildren-1);
-						
+						ASTNode lastChild = ifBody.child(ifChildren - 1);
+
 						Pair<VariableDeclarationNode, ExpressionStatementNode> tempPair = new Pair<>(
 								null, statement);
 						if (sharedWrite.containsKey(lastChild)) {
@@ -2071,8 +2109,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 							tempPairs.add(tempPair);
 							sharedWrite.put(lastChild, tempPairs);
 						}
-						
-						//ifItems.add(statement);
+
+						// ifItems.add(statement);
 					}
 				}
 
@@ -2102,7 +2140,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						}
 					}
 				}
-				
+
 				if (copyPrivateList != null) {
 					for (ASTNode child : copyPrivateList.children()) {
 						if (child != null) {
@@ -2137,8 +2175,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				}
 				if (nestedFunctionCall) {
 					Type currentType = ((FunctionCallNode) node).getType();
-					BasicTypeKind baseTypeKind = ((StandardBasicType) currentType)
-							.getBasicTypeKind();
+					// BasicTypeKind baseTypeKind = ((StandardBasicType)
+					// currentType)
+					// .getBasicTypeKind();
+					TypeNode tempVarType = this.typeNode(currentType);
 					String tempFuncCall = "tempFuncCall";
 					ASTNode nodeDirectParent = node.parent();
 					int index = node.childIndex();
@@ -2151,24 +2191,33 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 									nodeFactory.newIdentifierNode(
 											newSource(tempFuncCall,
 													CParser.IDENTIFIER),
-											"tempFuncCall"), nodeFactory
-											.newBasicTypeNode(
-													newSource(tempFuncCall,
-															CParser.INT),
-													baseTypeKind),
+											"tempFuncCall"), tempVarType,
 									(InitializerNode) node);
+					// VariableDeclarationNode tempNode = nodeFactory
+					// .newVariableDeclarationNode(
+					// newSource(tempFuncCall, CParser.DECLARATION),
+					// nodeFactory.newIdentifierNode(
+					// newSource(tempFuncCall,
+					// CParser.IDENTIFIER),
+					// "tempFuncCall"), nodeFactory
+					// .newBasicTypeNode(
+					// newSource(tempFuncCall,
+					// CParser.INT),
+					// baseTypeKind),
+					// (InitializerNode) node);
 
-					while(!(parent instanceof StatementNode)){
+					while (!(parent instanceof StatementNode)) {
 						parent = parent.parent();
 					}
-					
+
 					ASTNode parentOfParent = parent.parent();
-					
-					if (parentOfParent instanceof ForLoopNode || parentOfParent instanceof IfNode) {
+
+					if (parentOfParent instanceof ForLoopNode
+							|| parentOfParent instanceof IfNode) {
 						createBody(parent);
 						parentOfParent = parent.parent();
 					}
-					
+
 					Pair<VariableDeclarationNode, ExpressionStatementNode> tempPair = new Pair<>(
 							tempNode, null);
 					if (sharedRead.containsKey(parent)) {
@@ -2265,18 +2314,21 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 							.getIdentifier();
 					if (c.name().equals(((IdentifierNode) lhs).name())) {
 						boolean isInReduction = false;
-						if(reductionIDs != null){
-							for(ASTNode childReduction : reductionIDs.children()){
+						if (reductionIDs != null) {
+							for (ASTNode childReduction : reductionIDs
+									.children()) {
 								IdentifierNode cReduction = ((IdentifierExpressionNode) childReduction)
 										.getIdentifier();
-								if (cReduction.name().equals(((IdentifierNode) lhs).name())) {
+								if (cReduction.name().equals(
+										((IdentifierNode) lhs).name())) {
 									isInReduction = true;
 								}
 							}
 						}
-						if(!isInReduction){ 
+						if (!isInReduction) {
 							sharedWrite((IdentifierNode) lhs, privateIDs,
-									sharedIDs, reductionIDs, firstPrivateIDs, op);
+									sharedIDs, reductionIDs, firstPrivateIDs,
+									op);
 						}
 					}
 				}
@@ -2850,7 +2902,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 								newSource(place, CParser.IDENTIFIER),
 								triple.second.name()), name,
 								this.identifierExpression(
-										newSource(place, CParser.IDENTIFIER), triple.third));
+										newSource(place, CParser.IDENTIFIER),
+										triple.third));
 
 						directParent
 								.setChild(index, this.identifierExpression(
