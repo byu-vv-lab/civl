@@ -12,7 +12,7 @@ struct omp_lock_t{
 /************************** OMP LIB Implementations *******************************/
 
 void omp_init_lock(omp_lock_t *slock){
-  slock->lock = true;
+  slock->lock = false;
 }
 
 void omp_destroy_lock(omp_lock_t *slock){
