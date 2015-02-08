@@ -76,9 +76,9 @@ public class PthreadTest {
 	}
 
 	@Test
-	public void queue_ok_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", "-inputSIZE=5",
-				"-inputEMPTY=-1", "-inputFULL=-2", filename("queue_ok_true-unreach-call.c")));
+	public void queue_ok_longest_true() throws ABCException {
+		assertTrue(ui.run("verify", "-svcomp", "-inputSIZE=800",
+				"-inputEMPTY=-1", "-inputFULL=-2", filename("queue_ok_longest_true-unreach-call.c")));
 	}
 
 	@Test
