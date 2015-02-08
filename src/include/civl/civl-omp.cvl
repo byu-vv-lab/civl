@@ -144,8 +144,8 @@ $omp_shared $omp_shared_create($omp_team team,
                                $omp_gshared gshared, void *local, void *status) {
   $omp_shared result =
     ($omp_shared)$malloc(team->scope, sizeof(struct OMP_shared));
-  void *statusRefs[];
-  int numStatusRefs;
+  //void *statusRefs[];
+  //int numStatusRefs;
   int sharedLength;
 
   $assert !gshared->init[team->tid] :
@@ -158,10 +158,11 @@ $omp_shared $omp_shared_create($omp_team team,
   $copy(local, gshared->original);
   result->status = status;
   // set all leaf nodes of status to FULL
-  $leaf_node_ptrs(&statusRefs, status);
-  numStatusRefs = $seq_length(&statusRefs);
-  for(int i = 0; i < numStatusRefs; i++)
-    *((int*)(statusRefs[i])) = FULL;
+  $set_leaf_nodes(status, FULL);
+  //$leaf_node_ptrs(&statusRefs, status);
+  //numStatusRefs = $seq_length(&statusRefs);
+  //for(int i = 0; i < numStatusRefs; i++)
+    //*((int*)(statusRefs[i])) = FULL;
   sharedLength = $seq_length(&team->shared);
   $seq_insert(&team->shared, sharedLength, &result, 1);
   //$seq_append(&team->shared, &result, 1);
