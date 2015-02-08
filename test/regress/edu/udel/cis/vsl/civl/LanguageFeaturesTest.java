@@ -515,6 +515,11 @@ public class LanguageFeaturesTest {
 				"-showSavedStates=false", filename("procBound.cvl")));
 	}
 
+	@Test
+	public void not() {
+		assertTrue(ui.run("verify", filename("not.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
