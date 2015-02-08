@@ -107,6 +107,10 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			state = executeIsIdentityRef(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$leaf_nodes_equal_to":
+			state = execute_leaf_nodes_equal_to(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
+			break;
 		case "$set_leaf_nodes":
 			state = execute_set_leaf_nodes(state, pid, process, arguments,
 					argumentValues, call.getSource());
@@ -121,19 +125,15 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 	}
 
 	/**
+	 * _Bool $leaf_nodes_equal_to(void *obj, int value);
 	 * 
-	 updates the leaf nodes of the given objects to with the given integer
-	 * value
-	 * 
-	 * void $set_leaf_nodes(void *obj, int value);
-	 * @throws UnsatisfiablePathConditionException 
+	 * @throws UnsatisfiablePathConditionException
 	 */
 
-	private State execute_set_leaf_nodes(State state, int pid, String process,
-			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
-		// TODO Auto-generated method stub
-		
+	private State execute_leaf_nodes_equal_to(State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		CIVLType objectType = symbolicAnalyzer.typeOfObjByPointer(
 				arguments[1].getSource(), state, argumentValues[0]);
 		List<ReferenceExpression> leafs = this.evaluator
@@ -141,12 +141,61 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 						objectType);
 		List<SymbolicExpression> leafPointers = new ArrayList<>();
 		SymbolicExpression objectPointer = argumentValues[0];
-//		SymbolicExpression result;
+		Evaluation eval;
+		SymbolicExpression result = trueValue;
 
-		for (ReferenceExpression ref : leafs) 
+		for (ReferenceExpression ref : leafs)
 			leafPointers.add(this.symbolicUtil.setSymRef(objectPointer, ref));
-		for(SymbolicExpression leafPtr: leafPointers)
-			state = this.primaryExecutor.assign(source, state, process, leafPtr, argumentValues[1]);
+		for (SymbolicExpression leafPtr : leafPointers) {
+			eval = this.evaluator.dereference(source, state, process, leafPtr,
+					false);
+			state = eval.state;
+			if (universe.equals(eval.value, argumentValues[1]).isFalse()) {
+				result = falseValue;
+				break;
+			}
+		}
+		if (lhs != null)
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					result);
+		return state;
+	}
+
+	/**
+	 * 
+	 updates the leaf nodes of the given objects to with the given integer
+	 * value
+	 * 
+	 * void $set_leaf_nodes(void *obj, int value);
+	 * 
+	 * @throws UnsatisfiablePathConditionException
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State execute_set_leaf_nodes(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		CIVLType objectType = symbolicAnalyzer.typeOfObjByPointer(
+				arguments[1].getSource(), state, argumentValues[0]);
+		List<ReferenceExpression> leafs = this.evaluator
+				.leafNodeReferencesOfType(arguments[0].getSource(), state, pid,
+						objectType);
+		List<SymbolicExpression> leafPointers = new ArrayList<>();
+		SymbolicExpression objectPointer = argumentValues[0];
+		// SymbolicExpression result;
+
+		for (ReferenceExpression ref : leafs)
+			leafPointers.add(this.symbolicUtil.setSymRef(objectPointer, ref));
+		for (SymbolicExpression leafPtr : leafPointers)
+			state = this.primaryExecutor.assign(source, state, process,
+					leafPtr, argumentValues[1]);
 		return state;
 	}
 
