@@ -325,7 +325,7 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * The symbolic numeric expression that has the value of either zero or one.
 	 */
-	private NumericExpression zeroOrOne;
+//	private NumericExpression zeroOrOne;
 
 	/**
 	 * The symbolic analyzer to be used.
@@ -413,8 +413,8 @@ public class CommonEvaluator implements Evaluator {
 				.stringObject("shiftright"), universe.functionType(
 				Arrays.asList(universe.integerType(), universe.integerType()),
 				universe.integerType()));
-		this.zeroOrOne = (NumericExpression) universe.symbolicConstant(
-				universe.stringObject("ZeroOrOne"), universe.integerType());
+		// this.zeroOrOne = (NumericExpression) universe.symbolicConstant(
+		// universe.stringObject("ZeroOrOne"), universe.integerType());
 	}
 
 	/* ************************** Private Methods ************************** */
@@ -993,15 +993,18 @@ public class CommonEvaluator implements Evaluator {
 			else if (value.isFalse())
 				eval.value = universe.integer(0);
 			else {
-				BooleanExpression assumption = universe.or(
-						universe.equals(this.zeroOrOne, this.zero),
-						universe.equals(this.zeroOrOne, this.one));
-				Reasoner reasoner = universe.reasoner(state.getPathCondition());
-
-				if (reasoner.valid(assumption).getResultType() != ResultType.YES)
-					eval.state = state.setPathCondition(universe.and(
-							state.getPathCondition(), assumption));
-				eval.value = this.zeroOrOne;
+				// BooleanExpression assumption = universe.or(
+				// universe.equals(this.zeroOrOne, this.zero),
+				// universe.equals(this.zeroOrOne, this.one));
+				// Reasoner reasoner =
+				// universe.reasoner(state.getPathCondition());
+				//
+				// if (reasoner.valid(assumption).getResultType() !=
+				// ResultType.YES)
+				// eval.state = state.setPathCondition(universe.and(
+				// state.getPathCondition(), assumption));
+				eval.value = this.universe.cond((BooleanExpression) value,
+						universe.integer(1), universe.integer(0));
 			}
 			return eval;
 		} else if (argType.isIntegerType() && castType.isPointerType()) {
