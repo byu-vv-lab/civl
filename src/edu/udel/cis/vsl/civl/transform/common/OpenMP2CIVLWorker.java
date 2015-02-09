@@ -2219,80 +2219,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 			}
 		} else if (node instanceof FunctionCallNode) {
-			ASTNode parent = node.parent();
-			boolean nestedFunctionCall = false;
 			boolean replaced = replaceOmpFunction((FunctionCallNode) node);
 			if (!replaced) {
-				while (!(parent instanceof ExpressionStatementNode)) {
-					if (parent instanceof FunctionCallNode) {
-						nestedFunctionCall = true;
-						break;
-					}
-					if (parent.parent() != null) {
-						parent = parent.parent();
-					} else {
-						break;
-					}
-				}
-				if (nestedFunctionCall) {
-					Type currentType = ((FunctionCallNode) node).getType();
-					// BasicTypeKind baseTypeKind = ((StandardBasicType)
-					// currentType)
-					// .getBasicTypeKind();
-					TypeNode tempVarType = this.typeNode(currentType);
-					String tempFuncCall = "tempFuncCall";
-					ASTNode nodeDirectParent = node.parent();
-					int index = node.childIndex();
-					nodeDirectParent.setChild(index, this.identifierExpression(
-							newSource(tempFuncCall, CParser.IDENTIFIER),
-							"tempFuncCall"));
-					VariableDeclarationNode tempNode = nodeFactory
-							.newVariableDeclarationNode(
-									newSource(tempFuncCall, CParser.DECLARATION),
-									nodeFactory.newIdentifierNode(
-											newSource(tempFuncCall,
-													CParser.IDENTIFIER),
-											"tempFuncCall"), tempVarType,
-									(InitializerNode) node);
-					// VariableDeclarationNode tempNode = nodeFactory
-					// .newVariableDeclarationNode(
-					// newSource(tempFuncCall, CParser.DECLARATION),
-					// nodeFactory.newIdentifierNode(
-					// newSource(tempFuncCall,
-					// CParser.IDENTIFIER),
-					// "tempFuncCall"), nodeFactory
-					// .newBasicTypeNode(
-					// newSource(tempFuncCall,
-					// CParser.INT),
-					// baseTypeKind),
-					// (InitializerNode) node);
-
-					while (!(parent instanceof StatementNode)) {
-						parent = parent.parent();
-					}
-
-					ASTNode parentOfParent = parent.parent();
-
-					if (parentOfParent instanceof ForLoopNode
-							|| parentOfParent instanceof IfNode) {
-						createBody(parent);
-						parentOfParent = parent.parent();
-					}
-
-					Pair<VariableDeclarationNode, ExpressionStatementNode> tempPair = new Pair<>(
-							tempNode, null);
-					if (sharedRead.containsKey(parent)) {
-						ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> nodeToAdd = sharedRead
-								.get(parent);
-						nodeToAdd.add(tempPair);
-					} else {
-						ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> tempPairs = new ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>>();
-						tempPairs.add(tempPair);
-						sharedRead.put(parent, tempPairs);
-					}
-
-				}
-
 				for (ASTNode child : node.children()) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
 							reductionIDs, firstPrivateIDs);
