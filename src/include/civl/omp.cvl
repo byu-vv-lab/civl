@@ -20,6 +20,11 @@ void omp_destroy_lock(omp_lock_t *slock){
   *slock = blank;
 }
 
+/* These are replaced by $omp_set_lock and
+ * $omp_unset_lock.  Those functionsn do the
+ * flush on the whole team, as required by
+ * the OpenMP Standard...
+ 
 void omp_set_lock(omp_lock_t *slock){
   $atomic{
     $when(!slock->lock){
@@ -33,6 +38,7 @@ void omp_unset_lock(omp_lock_t *slock){
     slock->lock = false;
   }
 }
+*/
 
 $abstract double OMP_time(int time_count);
 
