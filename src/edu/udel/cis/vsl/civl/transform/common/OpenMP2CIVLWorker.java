@@ -937,8 +937,14 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						child.remove();
 						removed = true;
 					}
+				} else if (currentType instanceof QualifiedObjectType) {
+					if(((QualifiedObjectType) currentType).isInputQualified()){
+						child.remove();
+						removed = true;
+					}
 				}
 			}
+			
 
 			if (removed) {
 				List<IdentifierExpressionNode> list = new LinkedList<IdentifierExpressionNode>();
