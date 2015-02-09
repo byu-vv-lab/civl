@@ -56,21 +56,25 @@ public class MPI_PthreadsTest {
 
 	@Test
 	public void mpi_pthreads_matrix_vector() throws ABCException {
-		assertTrue(ui
+		assertFalse(ui
 				.run("verify",
-						"-input_NPROCS=2 -inputNUM_ROWS_BOUND=2",
-						"-inputNUM_COLS_BOUND=2",
+						"-input_NPROCS=2 -inputNUM_ROWS_BOUND=3",
+						"-inputNUM_COLS_BOUND=3",
 						"-showProgram=false -enablePrintf=false -showTransitions=false",
 						filename("mpi-pthreads-marix-vector.c")));
+		assertTrue(ui
+				.run("verify",
+						"-input_NPROCS=2 -inputNUM_ROWS_BOUND=3",
+						"-inputNUM_COLS_BOUND=3",
+						"-showProgram=false -enablePrintf=false -showTransitions=false",
+						filename("mpi-pthreads-marix-vector_fix.c")));
 	}
 
 	@Test
 	public void mpi_pthreads() throws ABCException {
-		assertTrue(ui
-				.run("verify",
-						"-input_NPROCS=2",
-						"-showProgram=false -enablePrintf=false -showTransitions=false",
-						filename("mpi-pthreads.c")));
+		assertFalse(ui.run("verify", "-input_NPROCS=2 -showTransitions=false",
+				"-showProgram=false -enablePrintf=false",
+				filename("mpi-pthreads.c")));
 	}
 
 	@Test

@@ -10,21 +10,21 @@ int rank;
 void *run_test(void * arg)
 {
     MPI_Status  reqstat;
-    int i, j;
+    int i, j, x, y;
     int peer = rank ? 0 : 1;
 
     for (j = 0; j < 2; j++) {
 	if (rank % 2) {
 	    for (i = 0; i < 3; i++)
-		MPI_Send(NULL, 0, MPI_CHAR, peer, 0, MPI_COMM_WORLD);
+		MPI_Send(&x, 0, MPI_CHAR, peer, 0, MPI_COMM_WORLD);
 	    for (i = 0; i < 3; i++)
-		MPI_Recv(NULL, 0, MPI_CHAR, peer, 0, MPI_COMM_WORLD, &reqstat);
+		MPI_Recv(&y, 0, MPI_CHAR, peer, 0, MPI_COMM_WORLD, &reqstat);
 	}
 	else {
 	    for (i = 0; i < 3; i++)
-		MPI_Recv(NULL, 0, MPI_CHAR, peer, 0, MPI_COMM_WORLD, &reqstat);
+		MPI_Recv(&y, 0, MPI_CHAR, peer, 0, MPI_COMM_WORLD, &reqstat);
 	    for (i = 0; i < 3; i++)
-		MPI_Send(NULL, 0, MPI_CHAR, peer, 0, MPI_COMM_WORLD);
+		MPI_Send(&x, 0, MPI_CHAR, peer, 0, MPI_COMM_WORLD);
 	}
     }
     return 0;

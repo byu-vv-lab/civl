@@ -192,7 +192,7 @@ int $omp_modified_tid($omp_shared shared, void *ref){
       $omp_var_status other_status;
       _Bool segFault = $false;
 
-      if(other == NULL)
+      if(!$is_valid_pointer(other))
 	continue;
       if(isIdentityRef){
 	segFault = $has_leaf_node_equal_to(other->status, MODIFIED);

@@ -119,6 +119,10 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			state = execute_set_leaf_nodes(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$is_valid_pointer":
+			state = execute_is_valid_pointer(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("the function " + name
 					+ " of library pointer.cvh", call.getSource());
@@ -128,18 +132,35 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
+	private State execute_is_valid_pointer(State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		// TODO Auto-generated method stub
+		SymbolicExpression result = this.falseValue;
+
+		if (symbolicUtil.isValidPointer(argumentValues[0]))
+			result = this.trueValue;
+		if (lhs != null)
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					result);
+		return state;
+	}
+
 	/**
 	 * 
 	 returns true iff at least one leaf nodes of the given object equal to the
 	 * given value
 	 * 
 	 * _Bool $has_leaf_node_equal_to(void *obj, int value);
-	 * @throws UnsatisfiablePathConditionException 
+	 * 
+	 * @throws UnsatisfiablePathConditionException
 	 */
 
 	private State execute_has_leaf_node_equal_to(State state, int pid,
 			String process, LHSExpression lhs, Expression[] arguments,
-			SymbolicExpression[] argumentValues, CIVLSource source) throws UnsatisfiablePathConditionException {
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		CIVLType objectType = symbolicAnalyzer.typeOfObjByPointer(
 				arguments[1].getSource(), state, argumentValues[0]);
 		List<ReferenceExpression> leafs = this.evaluator
