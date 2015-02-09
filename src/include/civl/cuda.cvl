@@ -195,8 +195,11 @@ cudaError_t cudaSetDevice(int device_id) {
 
 /* Returns the message string from an error code
  */
+char _cudaErrorString[10];
+
 const char* cudaGetErrorString(cudaError_t error) {
-  return "test";
+  strcpy(_cudaErrorString, "test");
+  return _cudaErrorString;
 }
 
 /* Returns the last error that has been produced by any of the runtime calls

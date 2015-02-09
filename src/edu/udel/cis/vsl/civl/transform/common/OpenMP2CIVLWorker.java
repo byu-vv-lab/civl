@@ -2170,6 +2170,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 			}
 		} else if (node instanceof FunctionCallNode) {
+			System.out.println(node);
 			ASTNode parent = node.parent();
 			boolean nestedFunctionCall = false;
 			boolean replaced = replaceOmpFunction((FunctionCallNode) node);
