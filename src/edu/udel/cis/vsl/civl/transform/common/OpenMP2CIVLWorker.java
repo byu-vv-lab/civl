@@ -1682,7 +1682,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				int index = node.childIndex();
 				ASTNode parent = node.parent();
 				parent.setChild(index, barrierAndFlush);
-			} else if (syncKind.equals("CRITICAL")) {
+			} else if (syncKind.equals("CRITICAL")) {// TODO add flush call
 				// For an omp critical, check if there is a name for the
 				// critical
 				// If there is a name, get the name. Else, give it noname
@@ -1730,6 +1730,11 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					items.add((BlockItemNode) child);
 					i++;
 				}
+				items.add(nodeFactory.newExpressionStatementNode(nodeFactory
+						.newFunctionCallNode(source,
+								this.identifierExpression("$omp_flush_all"),
+								Arrays.asList(this.identifierExpression(TEAM)),
+								null)));
 				// Make the critical variable false now
 				ExpressionStatementNode criticalFalse = nodeFactory
 						.newExpressionStatementNode(nodeFactory.newOperatorNode(

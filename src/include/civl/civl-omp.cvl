@@ -178,7 +178,43 @@ void $omp_shared_destroy($omp_shared shared) {
   $free(shared);
 }
 
+int $omp_modified_tid($omp_shared shared, void *ref){
+  int tid = shared->tid;
+  $omp_gshared gshared = shared->gshared;
+  int nthreads = gshared->nthreads;
+  _Bool isIdentityRef = $is_identity_ref(ref);
+  
+  for(int i=0; i < nthreads;i++){
+    if(i == tid)
+      continue;
+    else{
+      $omp_shared other = gshared->shares[i];
+      $omp_var_status other_status;
+      _Bool segFault = $false;
+
+      if(other == NULL)
+	continue;
+      if(isIdentityRef){
+	segFault = $has_leaf_node_equal_to(other->status, MODIFIED);
+      }else{
+	int *other_status_ref = (int*)$translate_ptr(ref, other->status);
+
+	segFault = (*other_status_ref) == MODIFIED;
+      }
+      if(segFault)
+	return i;
+    }
+  }
+  return -1;
+}
+
 void $omp_read($omp_shared shared, void *result, void *ref) {
+  //$atomic{
+  //int otherTid = $omp_modified_tid(shared, ref);
+
+  //$assert otherTid < 0 :
+  //"Thread %d can't perform $omp_read because thread %d has written to the same variable and hasn't flushed yet.\n",
+  //shared->tid, otherTid;
   if($is_identity_ref(ref)){
     if($leaf_nodes_equal_to(shared->status, EMPTY)){
       $copy(ref, shared->gshared->original); // copy shared to local
@@ -197,42 +233,23 @@ void $omp_read($omp_shared shared, void *result, void *ref) {
   }
   // read local
   $copy(result, ref);
+  //}
 }
 
 void $omp_write($omp_shared shared, void *ref, void *value) {
-  int tid = shared->tid;
-  $omp_gshared gshared = shared->gshared;
-  int nthreads = gshared->nthreads;
-  _Bool isIdentityRef = $is_identity_ref(ref);
+  $atomic{
+  int otherTid = $omp_modified_tid(shared, ref);
 
-  for(int i=0; i < nthreads;i++){
-    if(i == tid)
-      continue;
-    else{
-      $omp_shared other = gshared->shares[i];
-      $omp_var_status other_status;
-      _Bool segFault = $false;
-
-      if(other == NULL)
-	continue;
-      if(isIdentityRef){
-	segFault = $has_leaf_node_equal_to(other->status, MODIFIED);
-      }else{
-	int *other_status_ref = (int*)$translate_ptr(ref, other->status);
-
-	segFault = (*other_status_ref) == MODIFIED;
-      }
-      $assert !segFault :
-      "Thread %d can't perform $omp_write because thread %d has written to the same variable and hasn't flushed yet.\n",
-       tid, i; 
-    }
-  }
+  $assert otherTid < 0 :
+  "Thread %d can't perform $omp_write because thread %d has written to the same variable and hasn't flushed yet.\n",
+    shared->tid, otherTid;
   $copy(ref, value);
-  if(isIdentityRef){
+  if($is_identity_ref(ref)){
      $set_leaf_nodes(shared->status, MODIFIED);
   }else{
     int *status_ref = (int*)$translate_ptr(ref, shared->status);
     *status_ref = MODIFIED;
+  }
   }
 }
 
