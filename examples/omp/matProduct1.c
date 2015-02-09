@@ -16,9 +16,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NRA 8                 /* number of rows in matrix A */
+#ifdef _CIVL
+#define NRA 4               /* number of rows in matrix A */
+#define NCA 4                 /* number of columns in matrix A */
+#define NCB 4                  /* number of columns in matrix B */
+#else
+#define NRA 8               /* number of rows in matrix A */
 #define NCA 8                 /* number of columns in matrix A */
 #define NCB 8                  /* number of columns in matrix B */
+#endif
 
 int main (int argc, char *argv[]) 
 {

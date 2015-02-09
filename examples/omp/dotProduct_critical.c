@@ -10,7 +10,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef _CIVL 
+#define N 10
+#else
 #define N 100
+#endif
 
 int main (int argc, char *argv[]) {
   
@@ -18,7 +22,7 @@ int main (int argc, char *argv[]) {
   double localsum, sum = 0.0;
   int i, tid, nthreads;
   
-#pragma omp parallel shared(a,b,sum) private(i, localsum)
+#pragma omp parallel shared(a,b,sum) private(i, localsum, tid)
   {
     /* Get thread number */
     tid = omp_get_thread_num();
