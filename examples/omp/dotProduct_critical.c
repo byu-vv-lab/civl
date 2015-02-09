@@ -22,7 +22,7 @@ int main (int argc, char *argv[]) {
   double localsum, sum = 0.0;
   int i, tid, nthreads;
   
-#pragma omp parallel shared(a,b,sum) private(i, localsum, tid)
+#pragma omp parallel shared(a,b,sum) private(i, localsum)
   {
     /* Get thread number */
     tid = omp_get_thread_num();
