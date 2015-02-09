@@ -370,7 +370,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				nodeFactory.newIdentifierNode(newSource(place, CParser.TYPE),
 						GSHARED_TYPE), null);
 
-		if (currentType.isRestrictQualified()) {
+		if (currentType.isRestrictQualified() || currentType.isInputQualified()) {
 			addressOf = nodeFactory.newCastNode(
 					source,
 					nodeFactory.newPointerTypeNode(source,
@@ -1012,6 +1012,9 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						TypeNode privateType = ((VariableDeclarationNode) ((Variable) c
 								.getEntity()).getFirstDeclaration())
 								.getTypeNode().copy();
+						if(privateType.isInputQualified()){
+							privateType.setInputQualified(false);
+						}
 						IdentifierNode localSharedIdentifer = nodeFactory
 								.newIdentifierNode(
 										newSource(c.name() + localDeclaration,
@@ -2876,7 +2879,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 		while (currentType instanceof PointerType) {
 			currentType = ((PointerType) currentType).referencedType();
-			nodesDeep++;
 			pointer = true;
 		}
 		while (currentType instanceof ArrayType) {
@@ -2909,6 +2911,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			StructureOrUnionTypeNode copy = stn.copy();
 			declarationTypeNode = copy;
 			write = true;
+		} else if(pointer){ 
+			declarationTypeNode = nodeFactory.newPointerTypeNode(source,
+					nodeFactory.newBasicTypeNode(
+							newSource(place, CParser.TYPE), baseTypeKind));
 		} else {
 			declarationTypeNode = nodeFactory.newBasicTypeNode(
 					newSource(place, CParser.TYPE), baseTypeKind);
@@ -2977,7 +2983,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			node.setName(node.name() + "_local");
 			ExpressionStatementNode readCall = null;
 			statementParent = node.parent();
-			while (!(statementParent instanceof StatementNode)) {
+			while (!(statementParent instanceof StatementNode || statementParent instanceof VariableDeclarationNode)) {
 				statementParent = statementParent.parent();
 			}
 			if (nodesDeep == 0) {
