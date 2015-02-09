@@ -892,6 +892,18 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 				}
 			}
+			
+			for(IdentifierExpressionNode child : sharedList){
+				IdentifierNode id  = child.getIdentifier();
+				Type currentType = ((Variable) id.getEntity()).getType();
+				if(currentType instanceof StructureOrUnionType){
+					String tag = ((StructureOrUnionType) currentType).getTag();
+					if(tag.equals("omp_lock_t")){
+						child.remove();
+						removed = true;
+					}
+				}
+			}
 
 			if (removed) {
 				List<IdentifierExpressionNode> list = new LinkedList<IdentifierExpressionNode>();
@@ -1878,7 +1890,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						forItems);
 
 				cfn = nodeFactory.newCivlForNode(
-						newSource(sectionsPlace, CParser.CIVLFOR), true,
+						newSource(sectionsPlace, CParser.CIVLFOR), false,
 						(DeclarationListNode) initializerNode, nodeFactory
 								.newIdentifierExpressionNode(
 										newSource(civlFor, CParser.IDENTIFIER),
