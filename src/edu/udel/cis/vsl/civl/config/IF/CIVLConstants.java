@@ -34,13 +34,13 @@ public class CIVLConstants {
 			File.separator + "include"), "civl");
 
 	/** The version of this release of CIVL. */
-	public final static String version = "0.16";
+	public final static String version = "0.17";
 
 	/**
 	 * The date of this release of CIVL. Format: YYYY-MM-DD in accordance with
 	 * ISO 8601.
 	 */
-	public final static String date = "2015-1-6";
+	public final static String date = "2015-02-08";
 
 	/**
 	 * The prefix of the full name of the class of a library enabler/executor.
