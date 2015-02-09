@@ -20,6 +20,26 @@ void omp_destroy_lock(omp_lock_t *slock){
   *slock = blank;
 }
 
+/* Waits for the lock to available and grabs it,
+ * AND performs a flush_all on the team, as mandated
+ * by the OpenMP Standard. */
+void $omp_set_lock(omp_lock_t *slock, $omp_team team) {
+  $atomic {
+    $when(!slock->lock) slock->lock = true;
+    $omp_flush_all(team);
+  }
+}
+
+/* Releases the lock 
+ * AND performs a flush_all on the team, as mandated
+ * by the OpenMP Standard. */
+void $omp_unset_lock(omp_lock_t *slock, $omp_team team) {
+  $atomic {
+    slock->lock = false;
+    $omp_flush_all(team);
+  }
+}
+
 /* These are replaced by $omp_set_lock and
  * $omp_unset_lock.  Those functionsn do the
  * flush on the whole team, as required by

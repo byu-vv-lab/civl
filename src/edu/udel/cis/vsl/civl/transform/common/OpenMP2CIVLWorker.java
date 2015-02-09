@@ -74,6 +74,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 	/* ************************** Private Static Fields ********************** */
 
+	private static String OMP_SET_LOCK = "omp_set_lock";
+
+	private static String OMP_UNSET_LOCK = "omp_unset_lock";
+
 	/**
 	 * The name of the identifier of the $omp_gteam variable in the final CIVL
 	 * program.
@@ -213,6 +217,36 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	}
 
 	/* *************************** Private Methods ************************* */
+
+	private void processOmpLockCalls(ASTNode node) {
+		for (ASTNode child : node.children()) {
+			if (child == null)
+				continue;
+			if (child instanceof FunctionCallNode) {
+				FunctionCallNode funcCall = (FunctionCallNode) child;
+
+				SequenceNode<ExpressionNode> newArgs;
+				IdentifierNode name = ((IdentifierExpressionNode) funcCall
+						.getFunction()).getIdentifier();
+
+				if (name.name().equals(OMP_SET_LOCK)
+						|| name.name().equals(OMP_UNSET_LOCK)) {
+					ExpressionNode oldArg = funcCall.getArgument(0);
+
+					name.setName("$" + name.name());
+					oldArg.parent().removeChild(oldArg.childIndex());
+					newArgs = nodeFactory.newSequenceNode(this.newSource(
+							"actual parameter list of " + name,
+							CParser.ARGUMENT_LIST), "Actual parameters", Arrays
+							.asList(oldArg, this.identifierExpression(
+									this.newSource(TEAM, CParser.IDENTIFIER),
+									TEAM)));
+					funcCall.setArguments(newArgs);
+				}
+			}
+			processOmpLockCalls(child);
+		}
+	}
 
 	/**
 	 * Creates the declaration node for the input variable
@@ -672,6 +706,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		newRootNode = nodeFactory.newSequenceNode(null, "TranslationUnit",
 				externalList);
 		completeSources(newRootNode);
+		this.processOmpLockCalls(newRootNode);
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 		newAst = this.combineASTs(civlcOmpAST, newAst);
 		newAst = this.combineASTs(civlcAST, newAst);
@@ -892,13 +927,13 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 				}
 			}
-			
-			for(IdentifierExpressionNode child : sharedList){
-				IdentifierNode id  = child.getIdentifier();
+
+			for (IdentifierExpressionNode child : sharedList) {
+				IdentifierNode id = child.getIdentifier();
 				Type currentType = ((Variable) id.getEntity()).getType();
-				if(currentType instanceof StructureOrUnionType){
+				if (currentType instanceof StructureOrUnionType) {
 					String tag = ((StructureOrUnionType) currentType).getTag();
-					if(tag.equals("omp_lock_t")){
+					if (tag.equals("omp_lock_t")) {
 						child.remove();
 						removed = true;
 					}
@@ -2170,7 +2205,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 			}
 		} else if (node instanceof FunctionCallNode) {
-			System.out.println(node);
 			ASTNode parent = node.parent();
 			boolean nestedFunctionCall = false;
 			boolean replaced = replaceOmpFunction((FunctionCallNode) node);
