@@ -111,6 +111,10 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			state = execute_leaf_nodes_equal_to(state, pid, process, lhs,
 					arguments, argumentValues, call.getSource());
 			break;
+		case "$has_leaf_node_equal_to":
+			state = execute_has_leaf_node_equal_to(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
+			break;
 		case "$set_leaf_nodes":
 			state = execute_set_leaf_nodes(state, pid, process, arguments,
 					argumentValues, call.getSource());
@@ -121,6 +125,45 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		}
 		state = stateFactory.setLocation(state, pid, call.target(),
 				call.lhs() != null);
+		return state;
+	}
+
+	/**
+	 * 
+	 returns true iff at least one leaf nodes of the given object equal to the
+	 * given value
+	 * 
+	 * _Bool $has_leaf_node_equal_to(void *obj, int value);
+	 * @throws UnsatisfiablePathConditionException 
+	 */
+
+	private State execute_has_leaf_node_equal_to(State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source) throws UnsatisfiablePathConditionException {
+		CIVLType objectType = symbolicAnalyzer.typeOfObjByPointer(
+				arguments[1].getSource(), state, argumentValues[0]);
+		List<ReferenceExpression> leafs = this.evaluator
+				.leafNodeReferencesOfType(arguments[0].getSource(), state, pid,
+						objectType);
+		List<SymbolicExpression> leafPointers = new ArrayList<>();
+		SymbolicExpression objectPointer = argumentValues[0];
+		Evaluation eval;
+		SymbolicExpression result = falseValue;
+
+		for (ReferenceExpression ref : leafs)
+			leafPointers.add(this.symbolicUtil.setSymRef(objectPointer, ref));
+		for (SymbolicExpression leafPtr : leafPointers) {
+			eval = this.evaluator.dereference(source, state, process, leafPtr,
+					false);
+			state = eval.state;
+			if (universe.equals(eval.value, argumentValues[1]).isTrue()) {
+				result = trueValue;
+				break;
+			}
+		}
+		if (lhs != null)
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					result);
 		return state;
 	}
 

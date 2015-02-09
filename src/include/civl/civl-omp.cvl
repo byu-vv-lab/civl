@@ -10,7 +10,9 @@
 /* Completes the definition of struct OMP_gshared given in civlc-omp.cvh.
  */
 struct OMP_gshared {
+  int nthreads;
   _Bool init[]; // which threads have joined
+  $omp_shared shares[];
   void * original; // pointer to original variable
 };
 
@@ -126,9 +128,12 @@ $omp_gshared $omp_gshared_create($omp_gteam gteam,
   $omp_gshared result =
     ($omp_gshared)$malloc(gteam->scope, sizeof(struct OMP_gshared));
   _Bool f = $false;
- 
+  $omp_shared null = NULL;
+
+  result->nthreads = gteam->nthreads;
   $seq_init(&result->init, gteam->nthreads, &f);
   result->original = original;
+  $seq_init(&result->shares, gteam->nthreads, &null);
   //result->status = status;
   return result;
 }
@@ -166,6 +171,7 @@ $omp_shared $omp_shared_create($omp_team team,
   sharedLength = $seq_length(&team->shared);
   $seq_insert(&team->shared, sharedLength, &result, 1);
   //$seq_append(&team->shared, &result, 1);
+  gshared->shares[team->tid] = result;
   return result;
 }
 
@@ -196,9 +202,34 @@ void $omp_read($omp_shared shared, void *result, void *ref) {
 
 void $omp_write($omp_shared shared, void *ref, void *value) {
   int tid = shared->tid;
-  
+  $omp_gshared gshared = shared->gshared;
+  int nthreads = gshared->nthreads;
+  _Bool isIdentityRef = $is_identity_ref(ref);
+
+  for(int i=0; i < nthreads;i++){
+    if(i == tid)
+      continue;
+    else{
+      $omp_shared other = gshared->shares[i];
+      $omp_var_status other_status;
+      _Bool segFault = $false;
+
+      if(other == NULL)
+	continue;
+      if(isIdentityRef){
+	segFault = $has_leaf_node_equal_to(other->status, MODIFIED);
+      }else{
+	int *other_status_ref = (int*)$translate_ptr(ref, other->status);
+
+	segFault = (*other_status_ref) == MODIFIED;
+      }
+      $assert !segFault :
+      "Thread %d can't perform $omp_write because thread %d has written to the same variable and hasn't flushed yet.\n",
+       tid, i; 
+    }
+  }
   $copy(ref, value);
-  if($is_identity_ref(ref)){
+  if(isIdentityRef){
      $set_leaf_nodes(shared->status, MODIFIED);
   }else{
     int *status_ref = (int*)$translate_ptr(ref, shared->status);
