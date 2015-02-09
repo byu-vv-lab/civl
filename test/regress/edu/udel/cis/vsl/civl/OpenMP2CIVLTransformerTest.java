@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -27,64 +28,46 @@ public class OpenMP2CIVLTransformerTest {
 
 	@Test
 	public void dotProduct1() {
-		assertTrue(ui.run("verify ", "-ompNoSimplify",
-				"-inputTHREAD_MAX=2", filename("dotProduct1.c")));
+		assertTrue(ui.run("verify ", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+				filename("dotProduct1.c")));
 	}
-	
+
 	@Test
 	public void dotProduct1Simplify() {
-		assertTrue(ui.run("verify ",
-				"-inputTHREAD_MAX=2", filename("dotProduct1.c")));
+		assertTrue(ui.run("verify ", "-inputTHREAD_MAX=2",
+				filename("dotProduct1.c")));
 	}
 
 	@Test
 	public void dotProductCritical() {
-		assertTrue(ui.run("verify ", "-ompNoSimplify",
-				"-inputTHREAD_MAX=2", filename("dotProduct_critical.c")));
-	}
-	
-	@Test
-	public void dotProductCriticalSimplify() {
-		assertTrue(ui.run("verify ",
-				"-inputTHREAD_MAX=2", filename("dotProduct_critical.c")));
+		assertFalse(ui.run("verify ", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+				filename("dotProduct_critical.c")));
 	}
 
 	@Test
-	public void matProduct1() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
-				"-inputTHREAD_MAX=2", filename("matProduct1.c")));
+	public void dotProductCriticalSimplify() {
+		assertFalse(ui.run("verify ", "-inputTHREAD_MAX=2",
+				filename("dotProduct_critical.c")));
 	}
-	
+
 	@Test
 	public void matProduct1Simplify() {
-		assertTrue(ui.run("verify",
-				"-inputTHREAD_MAX=2", filename("matProduct1.c")));
+		assertTrue(ui.run("verify", "-inputTHREAD_MAX=2",
+				filename("matProduct1.c")));
 	}
 
 	@Test
 	public void parallelfor() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
-				"-inputTHREAD_MAX=2", filename("parallelfor.c")));
-	}
-	
-	@Test
-	public void parallelforSimplify() {
-		assertTrue(ui.run("verify",
-				"-inputTHREAD_MAX=2", filename("parallelfor.c")));
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+				filename("parallelfor.c")));
 	}
 
 	@Test
-	public void raceCond1() {
-		assertTrue(ui.run("verify", "-ompNoSimplify",
-				"-inputTHREAD_MAX=2", filename("raceCond1.c")));
+	public void parallelforSimplify() {
+		assertTrue(ui.run("verify", "-inputTHREAD_MAX=2",
+				filename("parallelfor.c")));
 	}
-	
-	@Test
-	public void raceCond1Simplify() {
-		assertTrue(ui.run("verify",
-				"-inputTHREAD_MAX=2", filename("raceCond1.c")));
-	}
-	
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
