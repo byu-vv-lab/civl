@@ -40,7 +40,7 @@ public class CIVLConstants {
 	 * The date of this release of CIVL. Format: YYYY-MM-DD in accordance with
 	 * ISO 8601.
 	 */
-	public final static String date = "2015-02-08";
+	public final static String date = "2015-02-09";
 
 	/**
 	 * The prefix of the full name of the class of a library enabler/executor.

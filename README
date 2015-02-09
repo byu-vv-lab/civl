@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v0.16
+                               v0.17
 
 ------------------------------ Overview -------------------------------
 
@@ -26,7 +26,9 @@ For more information, visit http://vsl.cis.udel.edu/civl
 Developers:
 
 Matthew B. Dwyer
+John Edenhofner
 Ziqing Luo
+Andre Marianiello
 Michael Rogers
 Stephen F. Siegel
 Manchun Zheng
@@ -39,18 +41,15 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.15 -------------------------
+-------------------------- Updates from v 0.16 -------------------------
 
-1. Implementing commandline translator for CVC3, CVC4 and Z3. So CIVL has three good theorem provers now and gets 
-   rid of using dynamic libraries which makes SARL more robust.
+1. Transformers for CUDA, Pthreads, MPI, OpenMP and hybrid (MPI+OpeMP, MPI+Pthreads) programs
+   are now ready. Refer to examples folder for more information.
 
-2. CIVL front-end can work with more library headers: completed math.h , completed string.h, complex.h and ctype.h.
-
-3. More MPI examples can both work as regular MPI program and be verified by comparing with sequential versions.
-
-4. CIVL support for math.h
-
+2. Improving the performance of partial order reduction by applying more static analysis and
+   re-implementing dynamic computations.
    
+3. Fixing various bugs.
    
 ------------------------- Binary Installation -------------------------
 
