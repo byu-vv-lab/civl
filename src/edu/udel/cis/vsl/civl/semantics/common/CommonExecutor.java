@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
@@ -35,9 +36,9 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.NextInDomainStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
@@ -107,6 +108,11 @@ public class CommonExecutor implements Executor {
 	private ModelFactory modelFactory;
 
 	/**
+	 * The unique model factory used in the system.
+	 */
+	private CIVLTypeFactory typeFactory;
+
+	/**
 	 * The number of steps that have been executed by this executor. A "step" is
 	 * defined to be a call to method
 	 * {@link #executeWork(State, int, Statement)}.
@@ -169,6 +175,7 @@ public class CommonExecutor implements Executor {
 		this.universe = modelFactory.universe();
 		this.stateFactory = stateFactory;
 		this.modelFactory = modelFactory;
+		this.typeFactory = modelFactory.typeFactory();
 		this.evaluator = evaluator;
 		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.loader = loader;
@@ -643,7 +650,7 @@ public class CommonExecutor implements Executor {
 					null);
 		case CIVL_FOR_ENTER:
 			return executeNextInDomain(state, pid,
-					(NextInDomainStatement) statement);
+					(CivlForEnterStatement) statement);
 		case CIVL_PAR_FOR_ENTER:
 			return executeCivlParFor(state, pid,
 					(CivlParForEnterStatement) statement);
@@ -846,7 +853,7 @@ public class CommonExecutor implements Executor {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeNextInDomain(State state, int pid,
-			NextInDomainStatement nextInDomain)
+			CivlForEnterStatement nextInDomain)
 			throws UnsatisfiablePathConditionException {
 		List<Variable> loopVars = nextInDomain.loopVariables();
 		Expression domain = nextInDomain.domain();
@@ -1021,8 +1028,8 @@ public class CommonExecutor implements Executor {
 									arguments[i].getSource(), state,
 									argumentValue)));
 			}
-			this.printf(enablePrintf, civlConfig.out(), arguments[0].getSource(), formats,
-					printedContents);
+			this.printf(enablePrintf, civlConfig.out(),
+					arguments[0].getSource(), formats, printedContents);
 			return state;
 		}
 	}
@@ -1442,7 +1449,7 @@ public class CommonExecutor implements Executor {
 			SymbolicExpression scopeValue, CIVLType objectType,
 			SymbolicExpression objectValue)
 			throws UnsatisfiablePathConditionException {
-		int mallocId = modelFactory.getHeapFieldId(objectType);
+		int mallocId = typeFactory.getHeapFieldId(objectType);
 		int dyscopeID;
 		SymbolicExpression heapObject;
 		CIVLSource scopeSource = scopeExpression == null ? source

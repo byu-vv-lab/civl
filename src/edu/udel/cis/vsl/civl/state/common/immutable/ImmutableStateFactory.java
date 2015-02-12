@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -76,6 +77,8 @@ public class ImmutableStateFactory implements StateFactory {
 	 * The model factory.
 	 */
 	private ModelFactory modelFactory;
+
+	private CIVLTypeFactory typeFactory;
 
 	/**
 	 * The map of canonic process states. The key and the corresponding value
@@ -172,6 +175,7 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicUtility symbolicUtil, MemoryUnitFactory memFactory,
 			GMCConfiguration config) {
 		this.modelFactory = modelFactory;
+		this.typeFactory = modelFactory.typeFactory();
 		this.symbolicUtil = symbolicUtil;
 		this.universe = modelFactory.universe();
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
@@ -253,7 +257,7 @@ public class ImmutableStateFactory implements StateFactory {
 			Set<SymbolicExpression> reachable = this
 					.reachableHeapObjectsOfState(theState);
 			int numDyscopes = theState.numDyscopes();
-			int numHeapFields = modelFactory.heapType().getNumMallocs();
+			int numHeapFields = typeFactory.heapType().getNumMallocs();
 			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapMemUnits = new HashMap<>();
 			// Map<SymbolicExpression, SymbolicExpression> oldToNewExpressions =
 			// new HashMap<>();
@@ -903,7 +907,7 @@ public class ImmutableStateFactory implements StateFactory {
 		NumericExpression heapLength;
 
 		if (heapValue.isNull())
-			heapValue = modelFactory.heapType().getInitialValue();
+			heapValue = typeFactory.heapType().getInitialValue();
 		heapField = universe.tupleRead(heapValue, indexObj);
 		heapLength = universe.length(heapField);
 		heapField = universe.append(heapField, heapObject);
@@ -923,7 +927,7 @@ public class ImmutableStateFactory implements StateFactory {
 			int dyscopeId, int mallocId, SymbolicType elementType,
 			NumericExpression elementCount) {
 		DynamicScope dyscope = state.getDyscope(dyscopeId);
-		SymbolicExpression heapValue = dyscope.getValue(0).isNull() ? modelFactory
+		SymbolicExpression heapValue = dyscope.getValue(0).isNull() ? typeFactory
 				.heapType().getInitialValue() : dyscope.getValue(0);
 		IntObject index = universe.intObject(mallocId);
 		SymbolicExpression heapField = universe.tupleRead(heapValue, index);
@@ -1611,7 +1615,7 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	private boolean isPointer(SymbolicExpression value) {
-		if (value.type().equals(modelFactory.pointerSymbolicType()))
+		if (value.type().equals(typeFactory.pointerSymbolicType()))
 			return true;
 		return false;
 	}
@@ -1741,7 +1745,7 @@ public class ImmutableStateFactory implements StateFactory {
 		int numDyscopes = theState.numDyscopes();
 		int nameId = 0;
 		Map<SymbolicExpression, SymbolicExpression> oldName2NewName = new HashMap<>();
-		int numHeapFields = this.modelFactory.heapType().getNumMallocs();
+		int numHeapFields = this.typeFactory.heapType().getNumMallocs();
 		Pair<Integer, Map<SymbolicExpression, SymbolicExpression>> nameMappingResult;
 
 		for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {

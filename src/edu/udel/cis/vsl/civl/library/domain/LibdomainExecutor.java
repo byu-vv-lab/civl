@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.library.domain;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -188,9 +187,8 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 			List<SymbolicExpression> result = new LinkedList<>();
 			Iterator<List<SymbolicExpression>> domIter = symbolicUtil
 					.getDomainIterator(domain);
-			CIVLType rangeType = this.modelFactory.rangeType();
-			CIVLDomainType civlDomType = this.modelFactory
-					.domainType(rangeType);
+			CIVLType rangeType = this.typeFactory.rangeType();
+			CIVLDomainType civlDomType = this.typeFactory.domainType(rangeType);
 			SymbolicTupleType domType = (SymbolicTupleType) civlDomType
 					.getDynamicType(universe);
 			SymbolicUnionType domUnionType = civlDomType
@@ -222,6 +220,7 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 			for (int i = 0; i < number; i++) {
 				List<SymbolicExpression> myPartition = partitions.get(i);
 				SymbolicExpression elementsArray;
+
 				if (myPartition != null)
 					elementsArray = universe.array(domainElementType,
 							myPartition);
@@ -234,85 +233,7 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 						Arrays.asList(dim, one, myLiterals));
 				result.add(myDomain);
 			}
-
 			return result;
 		}
-	}
-
-	/**
-	 * Execute the domain partition with a given partition plan. This function
-	 * is suppose to be used by DECOMP_ALL strategy which will call this as many
-	 * times as the total number of possible distribution plans.
-	 * 
-	 * @param domain
-	 *            The domain object
-	 * @param number
-	 *            The number of the partitions.
-	 * @param distribution
-	 *            The partition plan
-	 * @return
-	 */
-
-	@SuppressWarnings("unused")
-	private List<SymbolicExpression> domain_partition_allWorker(
-			SymbolicExpression domain, int number,
-			Map<Integer, List<Integer>> distribution) {
-		CIVLType rangeType = modelFactory.rangeType();
-		CIVLDomainType civlDomType = modelFactory.domainType(rangeType);
-		SymbolicTupleType domType = (SymbolicTupleType) civlDomType
-				.getDynamicType(universe);
-		SymbolicUnionType domUnionType = civlDomType
-				.getDynamicSubTypesUnion(universe);
-		SymbolicType domElementType = symbolicUtil.getDomainElementType(domain);
-		NumericExpression dim = (NumericExpression) universe.tupleRead(domain,
-				zeroObject);
-		List<SymbolicExpression> domElement;
-		int counter = 0;
-		Map<Integer, Integer> dictionary = new HashMap<>();
-		Iterator<List<SymbolicExpression>> domIter = symbolicUtil
-				.getDomainIterator(domain);
-		List<List<SymbolicExpression>> subDomainComponents = new ArrayList<>(
-				number);
-		List<SymbolicExpression> result = new LinkedList<>();
-
-		assert distribution.size() == number;
-		// Convert the distribution collection for conveniences
-		for (int i = 0; i < number; i++) {
-			List<Integer> list = distribution.get(i);
-
-			for (int j = 0; j < list.size(); j++) {
-				dictionary.put(list.get(j), i);
-			}
-		}
-		while (domIter.hasNext()) {
-			int thread;
-			SymbolicExpression domElementValue;
-			List<SymbolicExpression> list = null;
-
-			domElement = domIter.next();
-			// look up dictionary
-			thread = dictionary.get(counter);
-			domElementValue = universe
-					.array(universe.integerType(), domElement);
-			if (subDomainComponents.contains(thread)) {
-				list = subDomainComponents.get(thread);
-				list.add(domElementValue);
-				subDomainComponents.set(thread, list);
-			} else
-				subDomainComponents.set(thread, Arrays.asList(domElementValue));
-		}
-		// Making all integer-elements entries be a literal domain
-		for (int i = 0; i < number; i++) {
-			SymbolicExpression elementsArray = universe.array(domElementType,
-					subDomainComponents.get(i));
-			SymbolicExpression myLiterals, myDomain;
-
-			myLiterals = universe.unionInject(domUnionType, oneObject,
-					elementsArray);
-			myDomain = universe.tuple(domType,
-					Arrays.asList(dim, one, myLiterals));
-			result.add(myDomain);
-		}
-		return result;
 	}
 }

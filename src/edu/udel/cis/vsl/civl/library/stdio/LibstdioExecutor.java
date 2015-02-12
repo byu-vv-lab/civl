@@ -258,18 +258,18 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 								universe.integerType())));
 		createStringToDataFunctions();
 		createDataToStringFunctions();
-		this.filesystemStructType = (CIVLStructOrUnionType) modelFactory
-				.getSystemType(ModelConfiguration.FILE_SYSTEM_TYPE);
+		this.filesystemStructType = (CIVLStructOrUnionType) typeFactory
+				.systemType(ModelConfiguration.FILE_SYSTEM_TYPE);
 		if (filesystemStructType != null)
 			this.filesystemStructSymbolicType = (SymbolicTupleType) this.filesystemStructType
 					.getDynamicType(universe);
-		this.fileType = (CIVLStructOrUnionType) modelFactory
-				.getSystemType(ModelConfiguration.REAL_FILE_TYPE);
+		this.fileType = (CIVLStructOrUnionType) typeFactory
+				.systemType(ModelConfiguration.REAL_FILE_TYPE);
 		if (fileType != null)
 			this.fileSymbolicType = (SymbolicTupleType) this.fileType
 					.getDynamicType(universe);
-		this.FILEtype = (CIVLStructOrUnionType) modelFactory
-				.getSystemType(ModelConfiguration.FILE_STREAM_TYPE);
+		this.FILEtype = (CIVLStructOrUnionType) typeFactory
+				.systemType(ModelConfiguration.FILE_STREAM_TYPE);
 		this.libevaluator = new LibstdioEvaluator(name, evaluator,
 				modelFactory, symbolicUtil, symbolicAnalyzer,
 				this.libEvaluatorLoader);
@@ -309,7 +309,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				.symbolicConstant(universe.stringObject("pointerToString"),
 						universe.functionType(
 								Arrays.asList(stringSymbolicType,
-										modelFactory.pointerSymbolicType()),
+										typeFactory.pointerSymbolicType()),
 								stringSymbolicType)));
 	}
 
@@ -339,7 +339,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		stringToPointerFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("stringToPointer"),
 						universe.functionType(Arrays.asList(stringSymbolicType,
-								stringSymbolicType), modelFactory
+								stringSymbolicType), typeFactory
 								.pointerSymbolicType())));
 	}
 
@@ -760,7 +760,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		}
 		outputArray = universe.array(this.fileSymbolicType, files);
 		arrayPointer = universe.tuple(
-				modelFactory.pointerSymbolicType(),
+				typeFactory.pointerSymbolicType(),
 				Arrays.asList(scopeField, varField,
 						universe.identityReference()));
 		state = primaryExecutor.assign(arraySource, state, process,

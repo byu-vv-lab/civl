@@ -25,6 +25,7 @@ import edu.udel.cis.vsl.abc.token.IF.SourceFile;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
@@ -248,6 +249,8 @@ public class ModelBuilderWorker {
 	 */
 	Scope systemScope;
 
+	CIVLTypeFactory typeFactory;
+
 	/**
 	 * Mapping from ABC types to corresponding CIVL types.
 	 */
@@ -277,9 +280,10 @@ public class ModelBuilderWorker {
 		this.factory = factory;
 		this.program = program;
 		this.factory.setTokenFactory(program.getTokenFactory());
+		typeFactory = factory.typeFactory();
 		this.modelName = name;
-		this.heapType = factory.heapType(name);
-		this.bundleType = factory.newBundleType();
+		this.heapType = typeFactory.heapType(name);
+		this.bundleType = typeFactory.initBundleType();
 		this.universe = factory.universe();
 		((CommonModelFactory) factory).modelBuilder = this;
 		this.debugging = debugging;
@@ -345,7 +349,7 @@ public class ModelBuilderWorker {
 
 	private void completeHeapType() {
 		completeHandleObjectTypes();
-		factory.completeHeapType(heapType, mallocStatements);
+		typeFactory.completeHeapType(heapType, mallocStatements);
 	}
 
 	private void completeHandleObjectTypes() {
@@ -356,7 +360,7 @@ public class ModelBuilderWorker {
 					handleObjectType, null,
 					factory.sizeofTypeExpression(null, handleObjectType),
 					mallocId, null));
-			factory.addHeapFieldType(handleObjectType, mallocId);
+			typeFactory.addHeapFieldObjectType(handleObjectType, mallocId);
 		}
 	}
 
@@ -496,7 +500,7 @@ public class ModelBuilderWorker {
 			}
 			((CommonType) type).setDynamicTypeIndex(id);
 		}
-		factory.completeBundleType(bundleType, bundleableTypeList,
+		typeFactory.completeBundleType(bundleType, bundleableTypeList,
 				dynamicTypeMap.keySet());
 	}
 
@@ -629,7 +633,7 @@ public class ModelBuilderWorker {
 			// checked for being purely local or not
 			for (Location loc : f.locations()) {
 				loc.purelyLocalAnalysis();
-				factory.setImpactScopeOfLocation(loc);
+				factory.computeImpactScopeOfLocation(loc);
 			}
 		}
 		memUnitAnalyzer.memoryUnitAnalysis(model);
@@ -696,8 +700,8 @@ public class ModelBuilderWorker {
 		Variable brokenTimeVar = this.factory.brokenTimeVariable();
 
 		if (brokenTimeVar != null) {
-			CIVLType tmType = this.factory
-					.getSystemType(ModelConfiguration.TM_TYPE);
+			CIVLType tmType = this.typeFactory
+					.systemType(ModelConfiguration.TM_TYPE);
 
 			if (tmType != null)// tmType may be null because of the pruner
 				brokenTimeVar.setType(tmType);

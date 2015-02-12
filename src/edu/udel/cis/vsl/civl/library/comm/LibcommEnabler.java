@@ -371,9 +371,9 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 					BigInteger.valueOf(int_newSource)));
 			newLocation = modelFactory.location(civlsource, containingScope);
 			callWorker = modelFactory.callOrSpawnStatement(civlsource,
-					newLocation, true, newArgs, callGuard);
+					newLocation, true, dequeueWorkPointer, newArgs, callGuard);
 			callWorker.setTargetTemp(callTarget);
-			callWorker.setFunction(dequeueWorkPointer);
+			// callWorker.setFunction(dequeueWorkPointer);
 			callWorker.setLhs(lhs);
 			if (assignAtomicLock != null) {
 				transitionStatement = modelFactory.statmentList(

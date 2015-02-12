@@ -11,6 +11,7 @@ import java.util.Map;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -53,6 +54,11 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	 * The model factory of the CIVL model.
 	 */
 	private ModelFactory modelFactory;
+
+	/**
+	 * The type factory of the CIVL model.
+	 */
+	private CIVLTypeFactory typeFactory;
 
 	/**
 	 * Integer object 0.
@@ -138,8 +144,9 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 		this.universe = universe;
 		this.modelFactory = modelFactory;
+		this.typeFactory = modelFactory.typeFactory();
 		this.heapAnalyzer = new HeapAnalyzer(universe, this);
-		dynamicType = modelFactory.dynamicSymbolicType();
+		dynamicType = typeFactory.dynamicSymbolicType();
 		dynamicToIntType = universe.functionType(new Singleton<SymbolicType>(
 				dynamicType), universe.integerType());
 		sizeofFunction = universe.symbolicConstant(
@@ -154,7 +161,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				.falseExpression());
 		this.trueValue = (BooleanExpression) universe.canonic(universe
 				.trueExpression());
-		this.pointerType = this.modelFactory.pointerSymbolicType();
+		this.pointerType = this.typeFactory.pointerSymbolicType();
 		this.nullPointer = universe.canonic(this.makePointer(-1, -1,
 				universe.nullReference()));
 		this.undefinedPointer = universe.canonic(this.makePointer(-2, -2,
@@ -552,7 +559,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 		return result;
 	}
-	
+
 	@Override
 	public SymbolicExpression makePointer(SymbolicExpression oldPointer,
 			ReferenceExpression symRef) {
@@ -663,19 +670,19 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		if (result == null) {
 
 			if (type.isBoolean())
-				result = modelFactory.booleanType().getSizeof();
-			else if (type == modelFactory.dynamicSymbolicType())
-				result = modelFactory.dynamicType().getSizeof();
+				result = typeFactory.booleanType().getSizeof();
+			else if (type == typeFactory.dynamicSymbolicType())
+				result = typeFactory.dynamicType().getSizeof();
 			else if (type.isInteger())
-				result = modelFactory.integerType().getSizeof();
-			else if (type == modelFactory.processSymbolicType())
-				result = modelFactory.processType().getSizeof();
+				result = typeFactory.integerType().getSizeof();
+			else if (type == typeFactory.processSymbolicType())
+				result = typeFactory.processType().getSizeof();
 			else if (type.isReal())
-				result = modelFactory.realType().getSizeof();
+				result = typeFactory.realType().getSizeof();
 			else if (type.typeKind() == SymbolicTypeKind.CHAR)
-				result = modelFactory.charType().getSizeof();
-			else if (type == modelFactory.scopeSymbolicType())
-				result = modelFactory.scopeType().getSizeof();
+				result = typeFactory.charType().getSizeof();
+			else if (type == typeFactory.scopeSymbolicType())
+				result = typeFactory.scopeType().getSizeof();
 			else if (type instanceof SymbolicCompleteArrayType) {
 				SymbolicCompleteArrayType arrayType = (SymbolicCompleteArrayType) type;
 
@@ -1295,7 +1302,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 					"A domain object is neither a rectangular domain nor a literal domain",
 					source);
 	}
-	
+
 	/* ********************** Domain private helpers ************************** */
 	/**
 	 * Get the element in literal domain pointed by the given index.

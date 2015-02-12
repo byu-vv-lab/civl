@@ -128,6 +128,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
@@ -223,6 +224,11 @@ public class FunctionTranslator {
 	private ModelFactory modelFactory;
 
 	/**
+	 * The unique type factory to be used in the system.
+	 */
+	private CIVLTypeFactory typeFactory;
+
+	/**
 	 * The unique model builder of the system.
 	 */
 	private ModelBuilderWorker modelBuilder;
@@ -270,6 +276,7 @@ public class FunctionTranslator {
 			CIVLFunction function) {
 		this.modelBuilder = modelBuilder;
 		this.modelFactory = modelFactory;
+		this.typeFactory = modelFactory.typeFactory();
 		this.functionBodyNode = bodyNode;
 		this.setFunction(function);
 		this.functionInfo = new FunctionInfo(function);
@@ -302,6 +309,7 @@ public class FunctionTranslator {
 			ModelFactory modelFactory, CIVLFunction function) {
 		this.modelBuilder = modelBuilder;
 		this.modelFactory = modelFactory;
+		this.typeFactory = modelFactory.typeFactory();
 		this.setFunction(function);
 		this.functionInfo = new FunctionInfo(function);
 		this.accuracyAssumptionBuilder = new CommonAccuracyAssumptionBuilder(
@@ -543,7 +551,7 @@ public class FunctionTranslator {
 		modelFactory.popConditionaExpressionStack();
 		if (!modelFactory.anonFragment().isEmpty()) {
 			result = modelFactory.anonFragment().combineWith(result);
-			modelFactory.resetAnonFragment();
+			modelFactory.clearAnonFragment();
 		}
 		return result;
 	}
@@ -579,8 +587,8 @@ public class FunctionTranslator {
 		CIVLSource parForEndSource = modelFactory.sourceOfEnd(civlForNode);
 		VariableExpression domSizeVar = modelFactory.domSizeVariable(source,
 				scope);
-		CIVLArrayType procsType = modelFactory.completeArrayType(
-				modelFactory.processType(), domSizeVar);
+		CIVLArrayType procsType = typeFactory.completeArrayType(
+				typeFactory.processType(), domSizeVar);
 		VariableExpression parProcs = modelFactory.parProcsVariable(source,
 				procsType, scope);
 		StatementNode bodyNode = civlForNode.getBody();
@@ -590,15 +598,16 @@ public class FunctionTranslator {
 		Fragment result;
 		CallOrSpawnStatement callWaitAll;
 		Location location;
-		Expression domain ;
-		CallOrSpawnStatement call  = null;
-		
+		Expression domain;
+		CallOrSpawnStatement call = null;
+
 		if (bodyFuncCall != null) {
 			// $parfor(...) func(); -- no need for _par_for_proc function
-			 call = (CallOrSpawnStatement) this.translateFunctionCall(initResults.first, null,
-					bodyFuncCall, true, parForEndSource);
-			
-//			modelBuilder.callStatements.put(call, value)
+			call = (CallOrSpawnStatement) this.translateFunctionCall(
+					initResults.first, null, bodyFuncCall, true,
+					parForEndSource);
+
+			// modelBuilder.callStatements.put(call, value)
 			procFunc = null;
 		} else {
 			CIVLSource procFuncSource = modelFactory.sourceOf(bodyNode);
@@ -607,7 +616,7 @@ public class FunctionTranslator {
 			List<Variable> loopVars = initResults.third;
 			int numOfLoopVars = loopVars.size();
 			List<Variable> procFuncParameters = new ArrayList<>(numOfLoopVars);
-		
+
 			for (int i = 0; i < numOfLoopVars; i++) {
 				Variable loopVar = loopVars.get(i);
 				Variable parameter = modelFactory.variable(loopVar.getSource(),
@@ -619,18 +628,18 @@ public class FunctionTranslator {
 					procFuncSource,
 					modelFactory.identifier(procFuncStartSource, PAR_FUNC_NAME
 							+ modelBuilder.parProcFunctions.size()),
-					procFuncParameters, modelFactory.voidType(), scope, null);
+					procFuncParameters, typeFactory.voidType(), scope, null);
 			scope.addFunction(procFunc);
 			modelBuilder.parProcFunctions.put(procFunc, bodyNode);
 		}
-		 domain = this.translateExpressionNode(
-				civlForNode.getDomain(), scope, true);
+		domain = this.translateExpressionNode(civlForNode.getDomain(), scope,
+				true);
 		// this.civlParForCount++;
 		location = modelFactory.location(parForBeginSource, scope);
 		parForEnter = modelFactory.civlParForEnterStatement(parForBeginSource,
 				location, domain, domSizeVar, parProcs,
 				this.arrayToPointer(parProcs), procFunc);
-		if(procFunc==null)
+		if (procFunc == null)
 			modelBuilder.incompleteParForEnters.put(parForEnter, call);
 		result = new CommonFragment(parForEnter);
 		location = modelFactory.location(parForEndSource, scope);
@@ -658,7 +667,7 @@ public class FunctionTranslator {
 
 		scope = initResults.first;
 		// Create a loop counter variable for the for loop.
-		literalDomCounter = modelFactory.variable(source, modelFactory
+		literalDomCounter = modelFactory.variable(source, typeFactory
 				.integerType(), modelFactory.getLiteralDomCounterIdentifier(
 				source, this.literalDomForCounterCount), scope.numVariables());
 		this.literalDomForCounterCount++;
@@ -683,7 +692,7 @@ public class FunctionTranslator {
 				literalDomCounter, domain);
 		location = modelFactory.location(
 				modelFactory.sourceOfBeginning(civlForNode), scope);
-		nextInDomain = modelFactory.nextInDomain(
+		nextInDomain = modelFactory.civlForEnterFragment(
 				modelFactory.sourceOfBeginning(civlForNode), location, domain,
 				initResults.third, literalDomCounter);
 		result = this.composeLoopFragmentWorker(scope,
@@ -765,7 +774,6 @@ public class FunctionTranslator {
 		} else {
 			Expression rhs;
 
-			modelFactory.setCurrentScope(scope);
 			rhs = arrayToPointer(translateExpressionNode(rhsNode, scope, true));
 			location = modelFactory.location(lhs.getSource(), scope);
 			result = modelFactory.assignStatement(source, location, lhs, rhs,
@@ -813,11 +821,12 @@ public class FunctionTranslator {
 			case FUNCTION:
 				callee = (Function) entity;
 				result = modelFactory.callOrSpawnStatement(source, location,
-						isCall, arguments, null);
+						isCall, null, arguments, null);
 				break;
 			case VARIABLE:
 				Expression function = this.translateExpressionNode(
 						functionExpression, scope, true);
+
 				callee = null;
 				result = modelFactory.callOrSpawnStatement(source, location,
 						isCall, function, arguments, null);
@@ -837,7 +846,6 @@ public class FunctionTranslator {
 			throw new CIVLUnimplementedFeatureException(
 					"Function call must use identifier for now: "
 							+ functionExpression.getSource());
-
 		result.setLhs(lhs);
 		if (callee != null)
 			modelBuilder.callStatements.put(result, callee);
@@ -874,7 +882,6 @@ public class FunctionTranslator {
 		Location loopEntranceLocation, continueLocation;
 		Pair<Fragment, Expression> refineConditional;
 
-		modelFactory.setCurrentScope(loopScope);
 		refineConditional = modelFactory.refineConditionalExpression(loopScope,
 				condition, condStartSource, condStartSource);
 		beforeCondition = refineConditional.left;
@@ -977,7 +984,6 @@ public class FunctionTranslator {
 		Fragment incrementer = null;
 		CIVLSource conditionStart, conditionEnd;
 
-		modelFactory.setCurrentScope(loopScope);
 		if (conditionNode == null) {
 			conditionStart = modelFactory.sourceOfBeginning(loopBodyNode);
 			conditionEnd = modelFactory.sourceOfBeginning(loopBodyNode);
@@ -1214,7 +1220,6 @@ public class FunctionTranslator {
 							+ "such as (double*)$malloc($here, n*sizeof(double))",
 					source);
 		}
-		modelFactory.setCurrentScope(scope);
 		if (callNode.getNumberOfArguments() == 1) {
 			scopeExpression = modelFactory.hereOrRootExpression(source, true);
 			sizeExpression = translateExpressionNode(callNode.getArgument(0),
@@ -1250,7 +1255,6 @@ public class FunctionTranslator {
 		Expression leftExpression;
 		Statement assignStatement;
 
-		modelFactory.setCurrentScope(scope);
 		// this.isLHS = true;
 		leftExpression = translateExpressionNode(lhs, scope, true);
 		// this.isLHS = false;
@@ -1290,7 +1294,6 @@ public class FunctionTranslator {
 		Location location;
 		Fragment result;
 
-		modelFactory.setCurrentScope(scope);
 		expression = translateExpressionNode(assumeNode.getExpression(), scope,
 				true);
 		location = modelFactory.location(
@@ -1320,7 +1323,6 @@ public class FunctionTranslator {
 		SequenceNode<ExpressionNode> explanationNode = assertNode
 				.getExplanation();
 
-		modelFactory.setCurrentScope(scope);
 		expression = translateExpressionNode(assertNode.getCondition(), scope,
 				true);
 		try {
@@ -1375,7 +1377,7 @@ public class FunctionTranslator {
 						(VariableDeclarationNode) node);
 				if (!modelFactory.anonFragment().isEmpty()) {
 					result = modelFactory.anonFragment().combineWith(result);
-					modelFactory.resetAnonFragment();
+					modelFactory.clearAnonFragment();
 				}
 			} catch (CommandLineException e) {
 				throw new CIVLInternalException(
@@ -1471,7 +1473,7 @@ public class FunctionTranslator {
 			valueMap.put(member, value);
 			currentValue = value.add(BigInteger.ONE);
 		}
-		return modelFactory.enumType(name, valueMap);
+		return typeFactory.enumType(name, valueMap);
 	}
 
 	private Fragment translateScopeParameterizedDeclarationNode(Scope scope,
@@ -1490,7 +1492,7 @@ public class FunctionTranslator {
 						decl.getName());
 
 				scopeParameters.add(modelFactory.variable(source,
-						modelFactory.scopeType(), variableName,
+						typeFactory.scopeType(), variableName,
 						scopeParameters.size()));
 			}
 			translateFunctionDeclarationNode(
@@ -1920,7 +1922,6 @@ public class FunctionTranslator {
 			throw new CIVLUnimplementedFeatureException(
 					"Function call must use identifier for now: "
 							+ functionExpression.getSource());
-		modelFactory.setCurrentScope(scope);
 		for (int i = 0; i < functionCallNode.getNumberOfArguments(); i++) {
 			Expression actual = translateExpressionNode(
 					functionCallNode.getArgument(i), scope, true);
@@ -2108,7 +2109,6 @@ public class FunctionTranslator {
 			Expression precondition = result.precondition();
 			Expression postcondition = result.postcondition();
 
-			modelFactory.setCurrentScope(scope);
 			for (int i = 0; i < contract.numChildren(); i++) {
 				ContractNode contractComponent = contract.getSequenceChild(i);
 				Expression componentExpression;
@@ -2395,7 +2395,7 @@ public class FunctionTranslator {
 						modelFactory.trueExpression(location.getSource()),
 						false, modelFactory.atomicLockVariableExpression(),
 						new CommonUndefinedProcessExpression(modelFactory
-								.systemSource(), modelFactory.processType(),
+								.systemSource(), typeFactory.processType(),
 								modelFactory.undefinedProcessValue()));
 				atomicReleaseFragment.addNewStatement(leaveAtomic);
 			}
@@ -2651,7 +2651,6 @@ public class FunctionTranslator {
 		Fragment initFragment = null;
 		InitializerNode init = node.getInitializer();
 
-		modelFactory.setCurrentScope(scope);
 		if (init != null) {
 			Statement assignStatement, anonStatement = null;
 			Expression rhs;
@@ -2682,7 +2681,7 @@ public class FunctionTranslator {
 					if (variableType.isPointerType()) {
 						Variable anonVariable = modelFactory
 								.newAnonymousVariableForArrayLiteral(
-										initSource, scope,
+										initSource,
 										(CIVLArrayType) rhs.getExpressionType());
 
 						anonStatement = modelFactory.assignStatement(
@@ -2702,7 +2701,6 @@ public class FunctionTranslator {
 				if (variableType.isPointerType()) {
 					Variable anonVariable = modelFactory
 							.newAnonymousVariableForArrayLiteral(initSource,
-									scope,
 									(CIVLArrayType) rhs.getExpressionType());
 
 					anonStatement = modelFactory.assignStatement(initSource,
@@ -2724,7 +2722,7 @@ public class FunctionTranslator {
 			if (!modelFactory.anonFragment().isEmpty()) {
 				initFragment = modelFactory.anonFragment().combineWith(
 						initFragment);
-				modelFactory.resetAnonFragment();
+				modelFactory.clearAnonFragment();
 			}
 			if (modelFactory.hasConditionalExpressions()) {
 				initFragment = modelFactory
@@ -2768,7 +2766,7 @@ public class FunctionTranslator {
 		}
 		for (int i = 0; i < size; i++)
 			expressions.add(translateInitializerNode(compoundInit
-					.getSequenceChild(i).getRight(), scope, modelFactory
+					.getSequenceChild(i).getRight(), scope, typeFactory
 					.rangeType()));
 		return modelFactory.recDomainLiteralExpression(source, expressions,
 				type);
@@ -2791,7 +2789,7 @@ public class FunctionTranslator {
 
 			if (type.isArrayType() || type.isPointerType()) {
 				if (type.isPointerType()) {
-					finalType = modelFactory.completeArrayType(
+					finalType = typeFactory.completeArrayType(
 							((CIVLPointerType) type).baseType(), modelFactory
 									.integerLiteralExpression(null,
 											BigInteger.valueOf(size)));
@@ -2924,7 +2922,6 @@ public class FunctionTranslator {
 		Expression castExpression, result;
 		CIVLSource source = modelFactory.sourceOf(castNode);
 
-		modelFactory.setCurrentScope(scope);
 		castExpression = translateExpressionNode(argumentNode, scope, true);
 		castExpression = arrayToPointer(castExpression);
 		result = modelFactory.castExpression(source, castType, castExpression);
@@ -2939,7 +2936,8 @@ public class FunctionTranslator {
 	 * 
 	 * @return a CIVL literal expression representing the constant node
 	 */
-	private Expression translateConstantNode(ConstantNode constantNode) {
+	private Expression translateConstantNode(Scope scope,
+			ConstantNode constantNode) {
 		CIVLSource source = modelFactory.sourceOf(constantNode);
 		Type convertedType = constantNode.getConvertedType();
 		Expression result;
@@ -3105,9 +3103,10 @@ public class FunctionTranslator {
 			boolean isSupportedChar = false;
 
 			if (constantNode.getStringRepresentation().equals("0")) {
-				result = modelFactory.nullPointerExpression(
-						modelFactory.pointerType(modelFactory.voidType()),
-						source);
+				result = modelFactory
+						.nullPointerExpression(
+								typeFactory.pointerType(typeFactory.voidType()),
+								source);
 				break;
 			} else if (constantNode instanceof StringLiteralNode) {
 				Type elementType = null;
@@ -3153,8 +3152,8 @@ public class FunctionTranslator {
 					StringLiteralNode stringLiteralNode = (StringLiteralNode) constantNode;
 					StringLiteral stringValue = stringLiteralNode
 							.getConstantValue().getLiteral();
-					CIVLArrayType arrayType = modelFactory.completeArrayType(
-							modelFactory.charType(), modelFactory
+					CIVLArrayType arrayType = typeFactory.completeArrayType(
+							typeFactory.charType(), modelFactory
 									.integerLiteralExpression(source,
 											BigInteger.valueOf(stringValue
 													.getNumCharacters())));
@@ -3163,9 +3162,7 @@ public class FunctionTranslator {
 					VariableExpression anonVariable = modelFactory
 							.variableExpression(source, modelFactory
 									.newAnonymousVariableForArrayLiteral(
-											source,
-											modelFactory.currentScope(),
-											arrayType));
+											source, arrayType));
 					Statement anonAssign;
 
 					for (int i = 0; i < stringValue.getNumCharacters(); i++) {
@@ -3174,14 +3171,11 @@ public class FunctionTranslator {
 							chars.add(modelFactory.charLiteralExpression(
 									source, c));
 						}
-
 					}
 					stringLiteral = modelFactory.arrayLiteralExpression(source,
 							arrayType, chars);
-					anonAssign = modelFactory.assignStatement(
-							source,
-							modelFactory.location(source,
-									modelFactory.currentScope()), anonVariable,
+					anonAssign = modelFactory.assignStatement(source,
+							modelFactory.location(source, scope), anonVariable,
 							stringLiteral, true);
 					modelFactory.addAnonStatement(anonAssign);
 					result = arrayToPointer(anonVariable);
@@ -3242,7 +3236,7 @@ public class FunctionTranslator {
 					(CompoundLiteralNode) expressionNode, scope);
 			break;
 		case CONSTANT:
-			result = translateConstantNode((ConstantNode) expressionNode);
+			result = translateConstantNode(scope, (ConstantNode) expressionNode);
 			break;
 		case DERIVATIVE_EXPRESSION:
 			result = translateDerivativeExpressionNode(
@@ -3488,7 +3482,6 @@ public class FunctionTranslator {
 		abstractFunction = modelBuilder.functionMap.get(callee);
 		assert abstractFunction != null;
 		if (abstractFunction instanceof AbstractFunction) {
-			modelFactory.setCurrentScope(scope);
 			for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
 				Expression actual = translateExpressionNode(
 						callNode.getArgument(i), scope, true);
@@ -4097,7 +4090,6 @@ public class FunctionTranslator {
 			ExpressionNode variableSize = arrayType.getVariableSize();
 
 			if (variableSize != null) {
-				modelFactory.setCurrentScope(scope);
 				result = translateExpressionNode(variableSize, scope, true);
 			} else {
 				IntegerValue constantSize = arrayType.getConstantSize();
@@ -4157,16 +4149,16 @@ public class FunctionTranslator {
 		case UNSIGNED_LONG:
 		case LONG_LONG:
 		case UNSIGNED_LONG_LONG:
-			return modelFactory.integerType();
+			return typeFactory.integerType();
 		case FLOAT:
 		case DOUBLE:
 		case LONG_DOUBLE:
 		case REAL:
-			return modelFactory.realType();
+			return typeFactory.realType();
 		case BOOL:
-			return modelFactory.booleanType();
+			return typeFactory.booleanType();
 		case CHAR:
-			return modelFactory.charType();
+			return typeFactory.charType();
 		case DOUBLE_COMPLEX:
 		case FLOAT_COMPLEX:
 		case LONG_DOUBLE_COMPLEX:
@@ -4206,16 +4198,16 @@ public class FunctionTranslator {
 		// civlc.h defines $proc as struct __proc__, etc.
 		switch (tag) {
 		case PROC_TYPE:
-			return modelFactory.processType();
+			return typeFactory.processType();
 		case HEAP_TYPE:
 			return modelBuilder.heapType;
 		case DYNAMIC_TYPE:
-			return modelFactory.dynamicType();
+			return typeFactory.dynamicType();
 		case BUNDLE_TYPE:
 			return modelBuilder.bundleType;
 		default:
 		}
-		result = modelFactory.structOrUnionType(
+		result = typeFactory.structOrUnionType(
 				modelFactory.identifier(source, tag), type.isStruct());
 		numFields = type.getNumFields();
 		civlFields = new StructOrUnionField[numFields];
@@ -4227,7 +4219,7 @@ public class FunctionTranslator {
 			CIVLType civlFieldType = translateABCType(source, scope, fieldType);
 			Identifier identifier = modelFactory.identifier(modelFactory
 					.sourceOf(field.getDefinition().getIdentifier()), name);
-			StructOrUnionField civlField = modelFactory.structField(identifier,
+			StructOrUnionField civlField = typeFactory.structField(identifier,
 					civlFieldType);
 
 			civlFields[i] = civlField;
@@ -4243,47 +4235,47 @@ public class FunctionTranslator {
 		case ModelConfiguration.PTHREAD_POOL:
 		case ModelConfiguration.PTHREAD_GPOOL:
 			result.setHandleObjectType(true);
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case ModelConfiguration.BARRIER_TYPE:
 			result.setHandleObjectType(true);
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			modelBuilder.barrierType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case ModelConfiguration.GBARRIER_TYPE:
 			result.setHandleObjectType(true);
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			modelBuilder.gbarrierType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case OMP_GWS_TYPE:
 			result.setHandleObjectType(true);
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			modelBuilder.ompGwsType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case OMP_WS_TYPE:
 			result.setHandleObjectType(true);
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			modelBuilder.ompWsType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case ModelConfiguration.INT_ITER_TYPE:
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			// result.setHandleObjectType(true);
 			modelBuilder.intIterType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case ModelConfiguration.COMM_TYPE:
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			result.setHandleObjectType(true);
 			modelBuilder.commType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case ModelConfiguration.GCOMM_TYPE:
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			result.setHandleObjectType(true);
 			modelBuilder.gcommType = result;
 			modelBuilder.handledObjectTypes.add(result);
@@ -4291,21 +4283,21 @@ public class FunctionTranslator {
 		case ModelConfiguration.FILE_SYSTEM_TYPE:
 			// result.setHandleObjectType(true);
 			modelBuilder.basedFilesystemType = result;
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case ModelConfiguration.REAL_FILE_TYPE:
 			modelBuilder.fileType = result;
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			break;
 		case ModelConfiguration.FILE_STREAM_TYPE:
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			modelBuilder.FILEtype = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case ModelConfiguration.TM_TYPE:
 			// modelBuilder.handledObjectTypes.add(result);
-			modelFactory.addSystemType(tag, result);
+			typeFactory.addSystemType(tag, result);
 			break;
 		default:
 		}
@@ -4338,10 +4330,9 @@ public class FunctionTranslator {
 				Expression extent = arrayExtent(source, arrayType, scope);
 
 				if (extent != null)
-					result = modelFactory
-							.completeArrayType(elementType, extent);
+					result = typeFactory.completeArrayType(elementType, extent);
 				else
-					result = modelFactory.incompleteArrayType(elementType);
+					result = typeFactory.incompleteArrayType(elementType);
 				break;
 			}
 			case BASIC:
@@ -4349,10 +4340,10 @@ public class FunctionTranslator {
 						(StandardBasicType) abcType);
 				break;
 			case HEAP:
-				result = modelFactory.pointerType(modelBuilder.heapType);
+				result = typeFactory.pointerType(modelBuilder.heapType);
 				break;
 			case OTHER_INTEGER:
-				result = modelFactory.integerType();
+				result = typeFactory.integerType();
 				break;
 			case POINTER: {
 				PointerType pointerType = (PointerType) abcType;
@@ -4360,14 +4351,14 @@ public class FunctionTranslator {
 				CIVLType baseType = translateABCType(source, scope,
 						referencedType);
 
-				result = modelFactory.pointerType(baseType);
+				result = typeFactory.pointerType(baseType);
 				break;
 			}
 			case PROCESS:
-				result = modelFactory.processType();
+				result = typeFactory.processType();
 				break;
 			case SCOPE:
-				result = modelFactory.scopeType();
+				result = typeFactory.scopeType();
 				break;
 			case QUALIFIED:
 				result = translateABCType(source, scope,
@@ -4379,7 +4370,7 @@ public class FunctionTranslator {
 				// type already entered into map, so just return:
 				return result;
 			case VOID:
-				result = modelFactory.voidType();
+				result = typeFactory.voidType();
 				break;
 			case ENUMERATION:
 				return translateABCEnumerationType(source, scope,
@@ -4388,7 +4379,7 @@ public class FunctionTranslator {
 				return translateABCFunctionType(source, scope,
 						(FunctionType) abcType);
 			case RANGE:
-				return modelFactory.rangeType();
+				return typeFactory.rangeType();
 			case DOMAIN:
 				return translateABCDomainType(source, scope,
 						(DomainType) abcType);
@@ -4407,10 +4398,10 @@ public class FunctionTranslator {
 	private CIVLType translateABCDomainType(CIVLSource source, Scope scope,
 			DomainType domainType) {
 		if (domainType.hasDimension())
-			return modelFactory.completeDomainType(modelFactory.rangeType(),
+			return typeFactory.completeDomainType(typeFactory.rangeType(),
 					domainType.getDimension());
 		else
-			return modelFactory.domainType(modelFactory.rangeType());
+			return typeFactory.domainType(typeFactory.rangeType());
 	}
 
 	/**
@@ -4435,7 +4426,7 @@ public class FunctionTranslator {
 			paraTypes[i] = translateABCType(source, scope,
 					abcType.getParameterType(i));
 		}
-		return modelFactory.functionType(returnType, paraTypes);
+		return typeFactory.functionType(returnType, paraTypes);
 	}
 
 	/**
@@ -4506,7 +4497,7 @@ public class FunctionTranslator {
 					type);
 
 			variable = modelFactory.variable(civlSource,
-					modelFactory.dynamicType(), identifier, vid);
+					typeFactory.dynamicType(), identifier, vid);
 			lhs = modelFactory.variableExpression(civlSource, variable);
 			scope.addVariable(variable);
 			type.setStateVariable(variable);

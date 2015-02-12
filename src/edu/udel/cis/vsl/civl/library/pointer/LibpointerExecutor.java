@@ -327,8 +327,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		for (ReferenceExpression ref : leafs) {
 			leafPointers.add(this.symbolicUtil.setSymRef(objectPointer, ref));
 		}
-		result = universe.array(modelFactory.pointerSymbolicType(),
-				leafPointers);
+		result = universe
+				.array(typeFactory.pointerSymbolicType(), leafPointers);
 		state = this.primaryExecutor.assign(source, state, process,
 				argumentValues[0], result);
 		return state;

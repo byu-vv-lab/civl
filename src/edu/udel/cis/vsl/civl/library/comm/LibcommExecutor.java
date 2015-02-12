@@ -195,8 +195,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression isInitArray;
 		LinkedList<SymbolicExpression> commComponents = new LinkedList<SymbolicExpression>();
 		CIVLSource civlsource = arguments[0].getSource();
-		CIVLType commType = modelFactory
-				.getSystemType(ModelConfiguration.COMM_TYPE);
+		CIVLType commType = typeFactory
+				.systemType(ModelConfiguration.COMM_TYPE);
 		Evaluation eval;
 
 		eval = this.evaluator.dereference(civlsource, state, process,
@@ -641,8 +641,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression emptyMessages;
 		CIVLType queueType = model.queueType();
 		CIVLType messageType = model.mesageType();
-		CIVLType gcommType = modelFactory
-				.getSystemType(ModelConfiguration.GCOMM_TYPE);
+		CIVLType gcommType = typeFactory
+				.systemType(ModelConfiguration.GCOMM_TYPE);
 		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
 		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
 		BooleanExpression context = state.getPathCondition();
@@ -861,7 +861,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 	private SymbolicExpression getEmptyMessage(State state) {
 		SymbolicExpression message;
 		CIVLType messageType = model.mesageType();
-		CIVLBundleType bundleType = modelFactory.bundleType();
+		CIVLBundleType bundleType = typeFactory.bundleType();
 		LinkedList<SymbolicExpression> emptyMessageComponents = new LinkedList<SymbolicExpression>();
 		StringObject name;
 		SymbolicExpression bundle;

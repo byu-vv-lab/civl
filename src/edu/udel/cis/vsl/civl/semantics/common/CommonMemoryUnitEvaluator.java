@@ -5,6 +5,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -46,6 +47,8 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
 
 	private ModelFactory modelFactory;
 
+	private CIVLTypeFactory typeFactory;
+
 	/**
 	 * The symbolic utility to be used.
 	 */
@@ -72,6 +75,7 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
 		this.universe = universe;
 		this.muFactory = muFactory;
 		this.modelFactory = evaluator.modelFactory();
+		this.typeFactory = this.modelFactory.typeFactory();
 	}
 
 	/**
@@ -219,10 +223,10 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
 		SymbolicType type = expr.type();
 
 		// TODO check comm type
-		if (type != null && !type.equals(modelFactory.heapSymbolicType())
-				&& !type.equals(modelFactory.bundleSymbolicType())) {
+		if (type != null && !type.equals(typeFactory.heapSymbolicType())
+				&& !type.equals(typeFactory.bundleSymbolicType())) {
 			// need to eliminate heap type as well. each proc has its own.
-			if (modelFactory.pointerSymbolicType().equals(type)) {
+			if (typeFactory.pointerSymbolicType().equals(type)) {
 				SymbolicExpression pointerValue;
 				Evaluation eval;
 
@@ -255,7 +259,7 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
 						if (pointerValue.operator() == SymbolicOperator.CONCRETE
 								&& pointerValue.type() != null
 								&& pointerValue.type().equals(
-										modelFactory.pointerSymbolicType()))
+										typeFactory.pointerSymbolicType()))
 							if (this.symbolicUtil.isNullPointer(pointerValue))
 								return;
 						findPointersInExpression(pointerValue, set, state,

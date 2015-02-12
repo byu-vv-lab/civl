@@ -6,7 +6,10 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -143,6 +146,20 @@ public abstract class LibraryComponent {
 	protected LibraryEvaluatorLoader libEvaluatorLoader;
 
 	/**
+	 * The model factory of the system.
+	 */
+	protected ModelFactory modelFactory;
+
+	/**
+	 * The static model of the program.
+	 */
+	protected Model model;
+
+	// protected boolean statelessPrintf;
+
+	protected CIVLTypeFactory typeFactory;
+
+	/**
 	 * Creates a new instance of a library.
 	 * 
 	 * @param universe
@@ -154,7 +171,7 @@ public abstract class LibraryComponent {
 	 */
 	protected LibraryComponent(String name, SymbolicUniverse universe,
 			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
-			LibraryEvaluatorLoader libEvaluatorLoader) {
+			LibraryEvaluatorLoader libEvaluatorLoader, ModelFactory modelFactory) {
 		this.name = name;
 		this.universe = universe;
 		this.zero = universe.zeroInt();
@@ -170,6 +187,9 @@ public abstract class LibraryComponent {
 		this.trueValue = universe.trueExpression();
 		this.falseValue = universe.falseExpression();
 		this.libEvaluatorLoader = libEvaluatorLoader;
+		this.modelFactory = modelFactory;
+		this.model = modelFactory.model();
+		this.typeFactory = modelFactory.typeFactory();
 	}
 
 	/**

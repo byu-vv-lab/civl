@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
@@ -179,6 +180,8 @@ public class AmpleSetWorker {
 
 	private ModelFactory modelFactory;
 
+	private CIVLTypeFactory typeFactory;
+
 	/**
 	 * map of process ID's and their impact memory units (NULL impact memory
 	 * units means that the computation is incomplete and all active processes
@@ -259,6 +262,7 @@ public class AmpleSetWorker {
 			PrintStream debugOut) {
 		this.memUnitEvaluator = evaluator.memoryUnitEvaluator();
 		this.modelFactory = evaluator.modelFactory();
+		this.typeFactory = this.modelFactory.typeFactory();
 		this.state = state;
 		this.enabler = enabler;
 		// this.evaluator = evaluator;
@@ -1068,11 +1072,10 @@ public class AmpleSetWorker {
 		SymbolicType type = expr.type();
 		MemoryUnitSet result = muSet;
 
-		// TODO check comm type
-		if (type != null && !type.equals(modelFactory.heapSymbolicType())
-				&& !type.equals(modelFactory.bundleSymbolicType())) {
+		if (type != null && !type.equals(typeFactory.heapSymbolicType())
+				&& !type.equals(typeFactory.bundleSymbolicType())) {
 			// need to eliminate heap type as well. each proc has its own.
-			if (modelFactory.pointerSymbolicType().equals(type)) {
+			if (typeFactory.pointerSymbolicType().equals(type)) {
 				SymbolicExpression pointerValue;
 				SymbolicExpression eval;
 				Variable variable;
@@ -1110,7 +1113,7 @@ public class AmpleSetWorker {
 					if (pointerValue.operator() == SymbolicOperator.CONCRETE
 							&& pointerValue.type() != null
 							&& pointerValue.type().equals(
-									modelFactory.pointerSymbolicType()))
+									typeFactory.pointerSymbolicType()))
 						findPointersInExpression(pointerValue, result, state);
 				}
 			} else {

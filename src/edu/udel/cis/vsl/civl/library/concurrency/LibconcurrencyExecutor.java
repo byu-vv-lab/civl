@@ -178,8 +178,8 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression procMapArray;
 		LinkedList<SymbolicExpression> barrierComponents = new LinkedList<>();
 		CIVLSource civlsource = arguments[1].getSource();
-		CIVLType barrierType = modelFactory
-				.getSystemType(ModelConfiguration.BARRIER_TYPE);
+		CIVLType barrierType = typeFactory
+				.systemType(ModelConfiguration.BARRIER_TYPE);
 		Evaluation eval;
 		int place_num = ((IntegerNumber) universe
 				.extractNumber((NumericExpression) place)).intValue();
@@ -372,14 +372,14 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		Expression scopeExpression = arguments[0];
 		SymbolicExpression procMapArray;
 		SymbolicExpression inBarrierArray;
-		CIVLType gbarrierType = modelFactory
-				.getSystemType(ModelConfiguration.GBARRIER_TYPE);
+		CIVLType gbarrierType = typeFactory
+				.systemType(ModelConfiguration.GBARRIER_TYPE);
 		BooleanExpression context = state.getPathCondition();
 
 		inBarrierArray = symbolicUtil.newArray(context, universe.booleanType(),
 				nprocs, this.falseValue);
 		procMapArray = symbolicUtil.newArray(context,
-				modelFactory.processSymbolicType(), nprocs,
+				typeFactory.processSymbolicType(), nprocs,
 				modelFactory.nullProcessValue());
 		gbarrierObj = universe.tuple((SymbolicTupleType) gbarrierType
 				.getDynamicType(universe), Arrays.asList(nprocs, procMapArray,

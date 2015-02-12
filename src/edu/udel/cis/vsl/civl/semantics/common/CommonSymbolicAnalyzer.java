@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -58,6 +59,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 	private ModelFactory modelFactory;
 
+	private CIVLTypeFactory typeFactory;
+
 	/**
 	 * The pointer value is a triple <s,v,r> where s identifies the dynamic
 	 * scope, v identifies the variable within that scope, and r identifies a
@@ -94,15 +97,16 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 	public CommonSymbolicAnalyzer(SymbolicUniverse universe,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
-		pointerType = modelFactory.pointerSymbolicType();
 		this.universe = universe;
 		this.modelFactory = modelFactory;
+		this.typeFactory = modelFactory.typeFactory();
 		this.symbolicUtil = symbolicUtil;
-		this.heapType = modelFactory.heapType();
-		this.dynamicHeapType = modelFactory.heapSymbolicType();
-		this.procType = this.modelFactory.processSymbolicType();
-		this.scopeType = this.modelFactory.scopeSymbolicType();
-		this.functionPointerType = modelFactory.functionPointerSymbolicType();
+		pointerType = typeFactory.pointerSymbolicType();
+		this.heapType = typeFactory.heapType();
+		this.dynamicHeapType = typeFactory.heapSymbolicType();
+		this.procType = this.typeFactory.processSymbolicType();
+		this.scopeType = this.typeFactory.scopeSymbolicType();
+		this.functionPointerType = typeFactory.functionPointerSymbolicType();
 		this.oneObj = (IntObject) universe.canonic(universe.intObject(1));
 		this.twoObj = (IntObject) universe.canonic(universe.intObject(2));
 		zero = (NumericExpression) universe.canonic(universe.integer(0));
@@ -791,8 +795,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			String prefix, String separate) {
 		StringBuffer result = new StringBuffer();
 		SymbolicType type = symbolicExpression.type();
-		SymbolicType charType = modelFactory.charType()
-				.getDynamicType(universe);
+		SymbolicType charType = typeFactory.charType().getDynamicType(universe);
 
 		if (type == null)
 			return "NULL";
@@ -1196,7 +1199,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	private String heapValueToString(CIVLSource source, State state,
 			SymbolicExpression heapValue, String prefix, String separate) {
 		StringBuffer result = new StringBuffer();
-		int numFields = modelFactory.heapType().getNumMallocs();
+		int numFields = typeFactory.heapType().getNumMallocs();
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		String fieldPrefix = prefix + separate;
 		String objectPrefix = fieldPrefix + separate;
@@ -1251,7 +1254,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			CIVLType parentType = typeOfObjByRef(type, arrayEleRef.getParent());
 
 			if (parentType.isDomainType())
-				return modelFactory.rangeType();
+				return typeFactory.rangeType();
 			return ((CIVLArrayType) parentType).elementType();
 		} else {
 			int index;
@@ -1272,11 +1275,11 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			parentType = typeOfObjByRef(type, parent);
 			if (parentType.isHeapType()) {
-				CIVLArrayType heapTupleType = modelFactory
+				CIVLArrayType heapTupleType = typeFactory
 						.incompleteArrayType(((CIVLHeapType) parentType)
 								.getMalloc(index).getStaticElementType());
 
-				heapTupleType = modelFactory.incompleteArrayType(heapTupleType);
+				heapTupleType = typeFactory.incompleteArrayType(heapTupleType);
 				return heapTupleType;
 			}
 			return ((CIVLStructOrUnionType) parentType).getField(index).type();

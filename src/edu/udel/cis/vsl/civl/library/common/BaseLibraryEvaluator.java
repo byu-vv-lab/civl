@@ -49,11 +49,6 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	protected Evaluator evaluator;
 
 	/**
-	 * The model factory of the system.
-	 */
-	protected ModelFactory modelFactory;
-
-	/**
 	 * The state factory for state-related computation.
 	 */
 	protected StateFactory stateFactory;
@@ -81,10 +76,9 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 			SymbolicAnalyzer symbolicAnalyzer,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer,
-				libEvaluatorLoader);
+				libEvaluatorLoader, modelFactory);
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
-		this.modelFactory = modelFactory;
 		this.errorLogger = evaluator.errorLogger();
 	}
 

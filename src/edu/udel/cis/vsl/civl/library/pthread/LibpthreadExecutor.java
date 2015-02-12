@@ -52,12 +52,12 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		super(name, primaryExecutor, modelFactory, symbolicUtil,
 				symbolicAnalyzer, civlConfig, libExecutorLoader,
 				libEvaluatorLoader);
-		this.gpoolType = this.modelFactory
-				.getSystemType(ModelConfiguration.PTHREAD_GPOOL);
+		this.gpoolType = this.typeFactory
+				.systemType(ModelConfiguration.PTHREAD_GPOOL);
 		this.gpoolSymbolicType = (SymbolicTupleType) this.gpoolType
 				.getDynamicType(universe);
-		this.poolType = this.modelFactory
-				.getSystemType(ModelConfiguration.PTHREAD_POOL);
+		this.poolType = this.typeFactory
+				.systemType(ModelConfiguration.PTHREAD_POOL);
 		this.poolSymbolicType = (SymbolicTupleType) this.poolType
 				.getDynamicType(universe);
 		pthreadArrayType = (CIVLArrayType) ((CIVLStructOrUnionType) this.gpoolType)

@@ -7,6 +7,7 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.AccuracyAssumptionBuilder;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.Fragment;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -33,6 +34,11 @@ public class CommonAccuracyAssumptionBuilder implements
 	/** The model factory used to create new model components. */
 	private ModelFactory factory;
 
+	/**
+	 * The type factory used to create types.
+	 */
+	private CIVLTypeFactory typeFactory;
+
 	/** Keep track of all abstract function calls in this assumption. */
 	private List<AbstractFunctionCallExpression> calls = new LinkedList<AbstractFunctionCallExpression>();
 
@@ -41,6 +47,7 @@ public class CommonAccuracyAssumptionBuilder implements
 
 	public CommonAccuracyAssumptionBuilder(ModelFactory factory) {
 		this.factory = factory;
+		this.typeFactory = factory.typeFactory();
 	}
 
 	@Override
@@ -568,14 +575,13 @@ public class CommonAccuracyAssumptionBuilder implements
 			lhsOp = BINARY_OPERATOR.MINUS;
 		}
 		// Make this f(...,(i+1)*x,...)
-		lhsArguments
-				.set(arg, factory.binaryExpression(source,
-						BINARY_OPERATOR.TIMES, factory.castExpression(source,
-								factory.realType(), factory.binaryExpression(
-										source, lhsOp, boundVariableExpression,
-										factory.integerLiteralExpression(
-												source, BigInteger.ONE))),
-						separatedExpression));
+		lhsArguments.set(arg, factory.binaryExpression(source,
+				BINARY_OPERATOR.TIMES, factory.castExpression(source,
+						typeFactory.realType(), factory.binaryExpression(
+								source, lhsOp, boundVariableExpression, factory
+										.integerLiteralExpression(source,
+												BigInteger.ONE))),
+				separatedExpression));
 		lhs = factory.abstractFunctionCallExpression(source, function,
 				lhsArguments);
 		for (int i = 0; i < numExpansions; i++) {
@@ -605,7 +611,7 @@ public class CommonAccuracyAssumptionBuilder implements
 										numerator,
 										factory.castExpression(
 												source,
-												factory.realType(),
+												typeFactory.realType(),
 												factory.integerLiteralExpression(
 														source,
 														BigInteger
@@ -652,14 +658,13 @@ public class CommonAccuracyAssumptionBuilder implements
 			lhsOp = BINARY_OPERATOR.MINUS;
 		}
 		// Make this f(...,(i+1)*x,...)
-		lhsArguments
-				.set(arg, factory.binaryExpression(source,
-						BINARY_OPERATOR.TIMES, factory.castExpression(source,
-								factory.realType(), factory.binaryExpression(
-										source, lhsOp, variableExpression,
-										factory.integerLiteralExpression(
-												source, BigInteger.ONE))),
-						separatedExpression));
+		lhsArguments.set(arg, factory.binaryExpression(source,
+				BINARY_OPERATOR.TIMES, factory.castExpression(source,
+						typeFactory.realType(), factory.binaryExpression(
+								source, lhsOp, variableExpression, factory
+										.integerLiteralExpression(source,
+												BigInteger.ONE))),
+				separatedExpression));
 		lhs = factory.abstractFunctionCallExpression(source, function,
 				lhsArguments);
 		for (int i = 0; i < numExpansions; i++) {
@@ -689,7 +694,7 @@ public class CommonAccuracyAssumptionBuilder implements
 										numerator,
 										factory.castExpression(
 												source,
-												factory.realType(),
+												typeFactory.realType(),
 												factory.integerLiteralExpression(
 														source,
 														BigInteger

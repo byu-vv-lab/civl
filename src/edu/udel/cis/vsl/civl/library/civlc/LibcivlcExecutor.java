@@ -352,8 +352,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		LinkedList<SymbolicExpression> intArrayComponents = new LinkedList<>();
 		List<SymbolicExpression> intIterComponents = new LinkedList<>();
 		int int_size;
-		CIVLType intIterType = modelFactory
-				.getSystemType(ModelConfiguration.INT_ITER_TYPE);
+		CIVLType intIterType = typeFactory
+				.systemType(ModelConfiguration.INT_ITER_TYPE);
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		IntegerNumber number_size = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) size);
@@ -389,7 +389,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			intArrayComponents.add(eval.value);
 		}
 		intArray = universe.array(
-				modelFactory.integerType().getDynamicType(universe),
+				typeFactory.integerType().getDynamicType(universe),
 				intArrayComponents);
 		intIterComponents.add(size);
 		intIterComponents.add(intArray);

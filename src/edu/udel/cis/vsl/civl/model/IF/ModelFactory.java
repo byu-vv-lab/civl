@@ -5,9 +5,7 @@ package edu.udel.cis.vsl.civl.model.IF;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -68,26 +66,14 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
-import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.model.IF.type.StructOrUnionField;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.ModelFactoryException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
 
 /**
  * The factory to create all model components. Usually this is the only way
@@ -118,100 +104,18 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
  */
 public interface ModelFactory {
 
-	// /**
-	// * The name of the atomic lock variable
-	// */
-	// public static final String ATOMIC_LOCK_VARIABLE = "__atomic_lock_var";
-
 	/* *********************************************************************
-	 * CIVL Types
+	 * Utility
 	 * *********************************************************************
 	 */
+	CIVLTypeFactory typeFactory();
 
 	/**
-	 * Get the boolean primitive type.
+	 * Returns the CIVL model built by this model factory.
 	 * 
-	 * @return The boolean primitive type.
+	 * @return the CIVL model built by this model factory.
 	 */
-	CIVLPrimitiveType booleanType();
-
-	CIVLBundleType bundleType();
-
-	SymbolicUnionType bundleSymbolicType();
-
-	/**
-	 * Get the char primitive type.
-	 * 
-	 * @return The char primitive type.
-	 */
-	CIVLPrimitiveType charType();
-
-	/**
-	 * Returns a new complete array type with specified extent (length
-	 * expression) and element type.
-	 * 
-	 * @param elementType
-	 *            the type of each element in the array
-	 * @param extent
-	 *            the expression of integer type specifying the length of the
-	 *            array
-	 * @return the complete array type, as specified
-	 */
-	CIVLCompleteArrayType completeArrayType(CIVLType elementType,
-			Expression extent);
-
-	/**
-	 * Completes the bundle type by specifying the list of all dynamic types
-	 * which can occur as bundle elements. If the collections yields a sequence
-	 * of types t_i, then the bundlesymbolic type is union_i(array(t_i)).
-	 * 
-	 * @param bundleType
-	 *            an incomplete bundle type
-	 * @param types
-	 *            the set of all dynamic types which occur as bundle elements
-	 */
-	void completeBundleType(CIVLBundleType bundleType, List<CIVLType> eleTypes,
-			Collection<SymbolicType> types);
-
-	/**
-	 * Completes the heap type.
-	 * 
-	 * @param heapType
-	 *            an incomplete heap type
-	 * @param mallocs
-	 *            sequence of malloc statements that can access heaps of that
-	 *            type
-	 */
-	void completeHeapType(CIVLHeapType heapType,
-			Collection<MallocStatement> mallocs);
-
-	/**
-	 * Get the dynamic type.
-	 * 
-	 * @return The dynamic type.
-	 */
-	CIVLPrimitiveType dynamicType();
-
-	/**
-	 * Returns a new, incomplete heap type. The heap type must be completed
-	 * later by specifying a sequence of malloc statements in method
-	 * {@link #completeHeapType}.
-	 * 
-	 * @param name
-	 *            a name to give to the new heap type
-	 * 
-	 * @return a new incomplete heap type
-	 */
-	CIVLHeapType heapType(String name);
-
-	/**
-	 * Get a new incomplete array type.
-	 * 
-	 * @param elementType
-	 *            The type of each element in the array.
-	 * @return A new array type with the given base type.
-	 */
-	CIVLArrayType incompleteArrayType(CIVLType elementType);
+	Model model();
 
 	/**
 	 * Generate an abstract function.
@@ -234,118 +138,6 @@ public interface ModelFactory {
 	AbstractFunction abstractFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, int continuity);
-
-	/**
-	 * Create a new location. ======= Get the integer primitive type. >>>>>>>
-	 * .r497
-	 * 
-	 * @return The integer primitive type.
-	 */
-	CIVLPrimitiveType integerType();
-
-	CIVLHeapType heapType();
-
-	SymbolicTupleType heapSymbolicType();
-
-	/**
-	 * Create a new bundle type.
-	 * 
-	 * @return The new bundle type.
-	 */
-	CIVLBundleType newBundleType();
-
-	/**
-	 * Get a new pointer type.
-	 * 
-	 * @param baseType
-	 *            The type pointed to by the pointer.
-	 * @return A new pointer type with the given base type.
-	 */
-	CIVLPointerType pointerType(CIVLType baseType);
-
-	/**
-	 * Get the process type.
-	 * 
-	 * @return The process type.
-	 */
-	CIVLPrimitiveType processType();
-
-	/**
-	 * Get the real primitive type.
-	 * 
-	 * @return The real primitive type.
-	 */
-	CIVLPrimitiveType realType();
-
-	/**
-	 * Get the scope primitive type.
-	 * 
-	 * @return The scope primitive type.
-	 */
-	CIVLPrimitiveType scopeType();
-
-	/**
-	 * Returns new incomplete struct or union type with given name. Type can be
-	 * completed later using one of the "complete" methods in
-	 * CIVLStructOrUnionType.
-	 * 
-	 * The struct or union returned is a new instance of struct or union type
-	 * that will never be equal to another struct or union type, regardless of
-	 * identifier or fields.
-	 * 
-	 * @param name
-	 *            identifier, usually the "tag" for this struct or union type
-	 * @return a new incomplete struct or union type with given name
-	 */
-	CIVLStructOrUnionType structOrUnionType(Identifier name, boolean isStruct);
-
-	/**
-	 * Returns the void type. Used in places where a type is required
-	 * syntactically but there is no type, such as function which does not
-	 * return a value.
-	 * 
-	 * @return The CIVL void type
-	 */
-	CIVLPrimitiveType voidType();
-
-	void addSystemType(String name, CIVLType type);
-
-	CIVLType getSystemType(String name);
-
-	/* *********************************************************************
-	 * SARL symbolic types
-	 * *********************************************************************
-	 */
-
-	/**
-	 * Returns the symbolic type used to represent values of type
-	 * CIVLDynamicType
-	 * 
-	 * @return the symbolic type used to represent values of type
-	 *         CIVLDynamicType
-	 */
-	SymbolicTupleType dynamicSymbolicType();
-
-	/**
-	 * Returns the symbolic type used to represent pointers.
-	 * 
-	 * @return he symbolic type used to represent pointers
-	 */
-	SymbolicTupleType pointerSymbolicType();
-
-	/**
-	 * Returns the symbolic type used to represent process reference values
-	 * 
-	 * @return the symbolic type used to represent process reference values
-	 */
-	SymbolicTupleType processSymbolicType();
-
-	/**
-	 * Returns the symbolic type used to represent scope values
-	 * 
-	 * @return the symbolic type used to represent scope values
-	 */
-	SymbolicTupleType scopeSymbolicType();
 
 	/* *********************************************************************
 	 * CIVL Expressions
@@ -843,23 +635,27 @@ public interface ModelFactory {
 			Location start, Location end);
 
 	/**
-	 * A fork statement. Used to spawn a new process.
+	 * Creates a call or spawn statement. In the case of call, it could be a
+	 * normal function call, or a system function call.
 	 * 
-	 * @param civlSource
-	 *            The CIVL source of the fork statement
-	 * @param source
-	 *            The source location for this fork statement.
+	 * @param sourceOf
+	 *            The CIVL source of the call or spawn statement
+	 * @param location
+	 *            The source location for the call or spawn statement.
 	 * @param isCall
 	 *            is this a call statement (not spawn statement)?
+	 * @param function
+	 *            The function identifier expression, null if the function is
+	 *            not a variable.
 	 * @param arguments
 	 *            The arguments to the function.
 	 * @param guard
-	 *            The guard
-	 * @return A new fork statement.
+	 *            The guard of the statement
+	 * @return the new call or spawn statement
 	 */
-	CallOrSpawnStatement callOrSpawnStatement(CIVLSource civlSource,
-			Location source, boolean isCall, List<Expression> arguments,
-			Expression guard);
+	CallOrSpawnStatement callOrSpawnStatement(CIVLSource sourceOf,
+			Location location, boolean isCall, Expression function,
+			List<Expression> arguments, Expression guard);
 
 	/**
 	 * A goto branch statement is of the form <code> goto label; </code>. When a
@@ -990,22 +786,32 @@ public interface ModelFactory {
 			Expression expression, CIVLFunction function);
 
 	/**
+	 * Creates a switch branch statement for the default case, which is a
+	 * subclass of no-op statement.
 	 * 
 	 * @param civlSource
+	 *            The CIVL source of the default case
 	 * @param source
+	 *            The source location for this statement
 	 * @param guard
-	 * @return
+	 *            The guard of the branch statement
+	 * @return the new switch branch statement for the default case
 	 */
 	NoopStatement switchBranchStatement(CIVLSource civlSource, Location source,
 			Expression guard);
 
 	/**
+	 * Creates a switch branch statement for a labeled case.
 	 * 
 	 * @param civlSource
+	 *            The CIVL source of the default case
 	 * @param source
+	 *            The source location for this statement
 	 * @param guard
+	 *            The guard of the branch statement
 	 * @param label
-	 * @return
+	 *            The label of the case
+	 * @return the new switch branch statement for the specified case
 	 */
 	NoopStatement switchBranchStatement(CIVLSource civlSource, Location source,
 			Expression guard, Expression label);
@@ -1250,7 +1056,8 @@ public interface ModelFactory {
 			Scope containingScope, Location startLocation);
 
 	/**
-	 * Translate a symbolic process id into an integer TODO: explain
+	 * Translate a symbolic process id into an integer. A symbolic process id is
+	 * a tuple with one element of integer type.
 	 * 
 	 * @param source
 	 *            The CIVL source information of the symbolic process id
@@ -1261,9 +1068,9 @@ public interface ModelFactory {
 	int getProcessId(CIVLSource source, SymbolicExpression processValue);
 
 	/**
-	 * Translate a symbolic scope id into an integer
-	 * 
-	 * TODO: what kind of exception is thrown if you can't do it???
+	 * Translate a symbolic scope id into an integer. A symbolic scope id is a
+	 * tuple with one element of integer type. A CIVL internal exception is
+	 * thrown if the value can't be computed.
 	 * 
 	 * @param source
 	 *            The CIVL source information of the symbolic process id
@@ -1358,7 +1165,14 @@ public interface ModelFactory {
 	 */
 	SymbolicExpression scopeValue(int sid);
 
-	void setImpactScopeOfLocation(Location location);
+	/**
+	 * Computes the impact scope of a location, which is the highest scope that
+	 * the location accesses. This method has side effect on the location.
+	 * 
+	 * @param location
+	 *            The location whose impact scope is to be computed.
+	 */
+	void computeImpactScopeOfLocation(Location location);
 
 	/**
 	 * Set the token factory
@@ -1368,18 +1182,13 @@ public interface ModelFactory {
 	 */
 	void setTokenFactory(TokenFactory tokens);
 
-	void setSystemScope(Scope scope);
-
 	/**
-	 * Returns a new struct field, used to complete a struct type.
+	 * Set the system scope, which is the root (static) scope of the model.
 	 * 
-	 * @param name
-	 *            Identifier for the name of this struct member.
-	 * @param type
-	 *            The type of this struct member.
-	 * @return A struct field with the given name and type.
+	 * @param scope
+	 *            The system scope of the model
 	 */
-	StructOrUnionField structField(Identifier name, CIVLType type);
+	void setSystemScope(Scope scope);
 
 	/**
 	 * Generate the system function
@@ -1410,6 +1219,11 @@ public interface ModelFactory {
 	 */
 	CIVLSource systemSource();
 
+	/**
+	 * returns the symbolic undefined process id.
+	 * 
+	 * @return the symbolic undefined process id
+	 */
 	SymbolicExpression undefinedProcessValue();
 
 	/**
@@ -1432,24 +1246,70 @@ public interface ModelFactory {
 	 */
 	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
 
+	/**
+	 * Creates a character literal expression with the given character value.
+	 * 
+	 * @param sourceOf
+	 *            The source of the new expression
+	 * @param value
+	 *            The character value of the expression
+	 * @return a new character literal expression with the given character
+	 *         value.
+	 */
 	CharLiteralExpression charLiteralExpression(CIVLSource sourceOf, char value);
 
+	/**
+	 * Creates an anonymous variable of array type in a certain scope. An
+	 * anonymous variable has the name "_anon_i", like "_anon_0", "_anon_1",
+	 * etc.
+	 * 
+	 * @param sourceOf
+	 *            The source of the variable
+	 * @param scope
+	 *            The scope of the new anonymous variable
+	 * @param type
+	 *            The type of the new anonymous variable
+	 * @return the new anonymous variable
+	 */
 	Variable newAnonymousVariableForArrayLiteral(CIVLSource sourceOf,
-			Scope scope, CIVLArrayType type);
+			CIVLArrayType type);
 
-	Scope currentScope();
-
-	void setCurrentScope(Scope scope);
-
+	/**
+	 * Returns the current fragment of an assignment statement for an anonymous
+	 * variable initialization. When translating a string literal or an array
+	 * literal of characters, if it is used as the initializer of a variable of
+	 * pointer type, then an anonymous (constant) variable of array of character
+	 * is created in the top scope (i.e., system scope).
+	 * 
+	 * @return
+	 */
 	Fragment anonFragment();
 
-	void resetAnonFragment();
+	/**
+	 * Clear the current anonymous fragment. See {@link #anonFragment()} for
+	 * more about anonymous fragments.
+	 */
+	void clearAnonFragment();
 
+	/**
+	 * Add the given statement to the anonymous fragment.
+	 * 
+	 * @param statment
+	 *            The statement to be added to the anonymous fragment.
+	 */
 	void addAnonStatement(Statement statment);
 
-	Expression systemGuardExpression(CallOrSpawnStatement call);
-
-	Model model();
+	/**
+	 * Creates the system guard expression for the given system call statement.
+	 * <p>
+	 * Precondition:
+	 * <code>sysCall.isCall == true && sysCall.isSystemCall() == true</code>.
+	 * 
+	 * @param sysCall
+	 *            The system call statement.
+	 * @return
+	 */
+	Expression systemGuardExpression(CallOrSpawnStatement sysCall);
 
 	/**
 	 * Creates a new $scopeof expression using the given argument.
@@ -1462,36 +1322,6 @@ public interface ModelFactory {
 	 */
 	ScopeofExpression scopeofExpression(CIVLSource source,
 			LHSExpression argument);
-
-	void addHeapFieldType(CIVLType type, int id);
-
-	int getHeapFieldId(CIVLType type);
-
-	/**
-	 * Creates a new instance of enumeration type with the specified name.
-	 * 
-	 * @param name
-	 *            The name of the enumeration type to be created.
-	 * @param valueMap
-	 *            The map of enumerator names and their values.
-	 * @return The new enumeration type.
-	 */
-	CIVLEnumType enumType(String name, Map<String, BigInteger> valueMap);
-
-	/**
-	 * Creates a new instance of function type.
-	 * 
-	 * @param returnType
-	 * @param paraTypes
-	 * @return
-	 */
-	CIVLFunctionType functionType(CIVLType returnType, CIVLType[] paraTypes);
-
-	CallOrSpawnStatement callOrSpawnStatement(CIVLSource sourceOf,
-			Location location, boolean isCall, Expression function,
-			List<Expression> arguments, Expression guard);
-
-	SymbolicTupleType functionPointerSymbolicType();
 
 	SymbolicExpression undefinedScopeValue();
 
@@ -1536,9 +1366,7 @@ public interface ModelFactory {
 	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
 
 	/**
-	 * TODO: what the heck does "nextInDomain" mean ?! This returns a new
-	 * fragment containing a CivlForStatement. Someone really need to look at
-	 * this and figure out a better name for it.
+	 * Returns a new fragment containing a CivlForStatement.
 	 * 
 	 * @param source
 	 * @param src
@@ -1546,23 +1374,11 @@ public interface ModelFactory {
 	 * @param variables
 	 * @return
 	 */
-	Fragment nextInDomain(CIVLSource source, Location src, Expression dom,
-			List<Variable> variables, Variable counter);
+	Fragment civlForEnterFragment(CIVLSource source, Location src,
+			Expression dom, List<Variable> variables, Variable counter);
 
 	RegularRangeExpression regularRangeExpression(CIVLSource source,
 			Expression low, Expression high, Expression step);
-
-	CIVLType rangeType();
-
-	/**
-	 * This returns the universal domain type (<code>$domain</code>). It
-	 * includes all the complete domain types (<code>$domain(n)</code>).
-	 * 
-	 * @return the universal domain type
-	 */
-	CIVLDomainType domainType(CIVLType rangeType);
-
-	CIVLCompleteDomainType completeDomainType(CIVLType rangeType, int dim);
 
 	/**
 	 * Create a rectangular domain expression

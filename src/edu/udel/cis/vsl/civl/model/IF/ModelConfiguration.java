@@ -26,6 +26,8 @@ public final class ModelConfiguration {
 	public static final int heapVariableIndex = 0;
 
 	/* Types */
+	public static final String RANGE_TYPE = "$range";
+	public static final String CHAR_TYPE = "char";
 	public static final String PTHREAD_GPOOL = "_pthread_gpool_t";
 
 	public static final String PTHREAD_POOL = "_pthread_pool_t";

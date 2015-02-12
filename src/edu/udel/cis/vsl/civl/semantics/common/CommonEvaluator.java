@@ -18,6 +18,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
+import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
@@ -325,7 +326,7 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * The symbolic numeric expression that has the value of either zero or one.
 	 */
-//	private NumericExpression zeroOrOne;
+	// private NumericExpression zeroOrOne;
 
 	/**
 	 * The symbolic analyzer to be used.
@@ -335,6 +336,8 @@ public class CommonEvaluator implements Evaluator {
 	private MemoryUnitEvaluator memUnitEvaluator;
 
 	private MemoryUnitFactory memUnitFactory;
+
+	private CIVLTypeFactory typeFactory;
 
 	/* ***************************** Constructors ************************** */
 
@@ -363,15 +366,16 @@ public class CommonEvaluator implements Evaluator {
 		this.symbolicUtil = symbolicUtil;
 		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.modelFactory = modelFactory;
+		this.typeFactory = modelFactory.typeFactory();
 		this.stateFactory = stateFactory;
 		this.memUnitFactory = stateFactory.memUnitFactory();
 		this.universe = stateFactory.symbolicUniverse();
 		this.memUnitEvaluator = new CommonMemoryUnitEvaluator(symbolicUtil,
 				this, memUnitFactory, universe);
-		pointerType = modelFactory.pointerSymbolicType();
-		functionPointerType = modelFactory.functionPointerSymbolicType();
-		heapType = modelFactory.heapSymbolicType();
-		bundleType = modelFactory.bundleSymbolicType();
+		pointerType = typeFactory.pointerSymbolicType();
+		functionPointerType = typeFactory.functionPointerSymbolicType();
+		heapType = typeFactory.heapSymbolicType();
+		bundleType = typeFactory.bundleSymbolicType();
 		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
 		oneObj = (IntObject) universe.canonic(universe.intObject(1));
 		twoObj = (IntObject) universe.canonic(universe.intObject(2));
@@ -782,7 +786,7 @@ public class CommonEvaluator implements Evaluator {
 			// numeric expression like +,-,*,/,%,etc
 			if (expression.left().getExpressionType() != null
 					&& expression.left().getExpressionType()
-							.equals(modelFactory.scopeType())) {
+							.equals(typeFactory.scopeType())) {
 				return evaluateScopeOperations(state, pid, expression);
 			} else {
 				return evaluateNumericOperations(state, pid, process,
@@ -1358,8 +1362,8 @@ public class CommonEvaluator implements Evaluator {
 			ranges.add(eval.value);
 		}
 		rangeType = ranges.get(0).type();
-		civlRangeType = modelFactory.rangeType();
-		civlDomType = modelFactory.domainType(civlRangeType);
+		civlRangeType = typeFactory.rangeType();
+		civlDomType = typeFactory.domainType(civlRangeType);
 		domainType = civlDomType.getDynamicType(universe);
 		assert domainType instanceof SymbolicTupleType : "Dynamic $domain type is not a tuple type";
 		assert rangeType instanceof SymbolicTupleType : "Dynamic $range type is not a tuple type";
@@ -2638,7 +2642,7 @@ public class CommonEvaluator implements Evaluator {
 		CIVLSource source = expression.getSource();
 		CIVLType expressionType = expression.getExpressionType();
 
-		if (expressionType.equals(modelFactory.scopeType())) {
+		if (expressionType.equals(typeFactory.scopeType())) {
 			if (expressionValue.equals(modelFactory.undefinedScopeValue())) {
 				errorLogger.logSimpleError(source, state, process,
 						symbolicAnalyzer.stateToString(state),
@@ -2646,7 +2650,7 @@ public class CommonEvaluator implements Evaluator {
 						"Attempt to evaluate an invalid scope reference");
 				throw new UnsatisfiablePathConditionException();
 			}
-		} else if (expressionType.equals(modelFactory.processType())) {
+		} else if (expressionType.equals(typeFactory.processType())) {
 			if (expressionValue.equals(modelFactory.undefinedProcessValue())) {
 				errorLogger.logSimpleError(source, state, process,
 						symbolicAnalyzer.stateToString(state),

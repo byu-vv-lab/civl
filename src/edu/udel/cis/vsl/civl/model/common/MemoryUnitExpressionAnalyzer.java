@@ -38,7 +38,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.NextInDomainStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
@@ -274,7 +274,7 @@ public class MemoryUnitExpressionAnalyzer {
 		}
 		case CIVL_FOR_ENTER:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((NextInDomainStatement) statement).domain(), result);
+					((CivlForEnterStatement) statement).domain(), result);
 			break;
 		case CIVL_PAR_FOR_ENTER:
 			computeImpactMemoryUnitsOfExpression(writableVars,

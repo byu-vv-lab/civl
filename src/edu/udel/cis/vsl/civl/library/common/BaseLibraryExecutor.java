@@ -11,7 +11,6 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -55,11 +54,6 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	protected Evaluator evaluator;
 
 	/**
-	 * The model factory of the system.
-	 */
-	protected ModelFactory modelFactory;
-
-	/**
 	 * The primary executor of the system.
 	 */
 	protected Executor primaryExecutor;
@@ -69,10 +63,10 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	 */
 	protected StateFactory stateFactory;
 
-	/**
-	 * The static model of the program.
-	 */
-	protected Model model;
+	// /**
+	// * The static model of the program.
+	// */
+	// protected Model model;
 
 	// protected boolean statelessPrintf;
 
@@ -112,15 +106,13 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			LibraryExecutorLoader libExecutorLoader,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, primaryExecutor.evaluator().universe(), symbolicUtil,
-				symbolicAnalyzer, libEvaluatorLoader);
+				symbolicAnalyzer, libEvaluatorLoader, modelFactory);
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.stateFactory = evaluator.stateFactory();
-		this.civlConfig = civlConfig;
-		this.modelFactory = modelFactory;
-		this.model = modelFactory.model();
 		this.errorLogger = primaryExecutor.errorLogger();
 		this.libExecutorLoader = libExecutorLoader;
+		this.civlConfig = civlConfig;
 		numbers = new HashSet<Character>(10);
 		for (int i = 0; i < 10; i++) {
 			numbers.add(Character.forDigit(i, 10));

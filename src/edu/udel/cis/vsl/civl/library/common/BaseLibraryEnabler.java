@@ -44,11 +44,6 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 	protected Evaluator evaluator;
 
 	/**
-	 * The model factory of the system.
-	 */
-	protected ModelFactory modelFactory;
-
-	/**
 	 * The enabler for normal CIVL execution.
 	 */
 	protected Enabler primaryEnabler;
@@ -82,11 +77,10 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 			LibraryEnablerLoader libEnablerLoader,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer,
-				libEvaluatorLoader);
+				libEvaluatorLoader, modelFactory);
 		this.primaryEnabler = primaryEnabler;
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
-		this.modelFactory = modelFactory;
 		this.memUnitFactory = stateFactory.memUnitFactory();
 
 	}

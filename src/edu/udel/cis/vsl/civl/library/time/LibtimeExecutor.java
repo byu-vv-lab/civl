@@ -49,8 +49,7 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 		super(name, primaryExecutor, modelFactory, symbolicUtil,
 				symbolicAnalyzer, civlConfig, libExecutorLoader,
 				libEvaluatorLoader);
-		this.tmType = this.modelFactory
-				.getSystemType(ModelConfiguration.TM_TYPE);
+		this.tmType = this.typeFactory.systemType(ModelConfiguration.TM_TYPE);
 		if (tmType != null)
 			this.tmSymbolicType = tmType.getDynamicType(universe);
 		this.stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
@@ -72,7 +71,7 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 					.symbolicConstant(universe.stringObject("strftime"),
 							universe.functionType(Arrays.asList(
 									universe.integerType(),
-									modelFactory.pointerSymbolicType(),
+									typeFactory.pointerSymbolicType(),
 									this.tmSymbolicType),
 									this.stringSymbolicType)));
 		if (tmType != null)
@@ -80,7 +79,7 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 					.symbolicConstant(universe.stringObject("strftimeSize"),
 							universe.functionType(Arrays.asList(
 									universe.integerType(),
-									modelFactory.pointerSymbolicType(),
+									typeFactory.pointerSymbolicType(),
 									this.tmSymbolicType), universe
 									.integerType())));
 	}

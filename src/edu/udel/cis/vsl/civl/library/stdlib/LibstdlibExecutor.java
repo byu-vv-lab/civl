@@ -66,7 +66,7 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 				libEvaluatorLoader);
 
 		SymbolicType stringSymbolicType;
-		stringSymbolicType = modelFactory.pointerType(modelFactory.charType())
+		stringSymbolicType = typeFactory.pointerType(typeFactory.charType())
 				.getDynamicType(universe);
 		atoiFunction = (SymbolicConstant) universe.canonic(universe
 				.symbolicConstant(universe.stringObject("atoi"), universe
