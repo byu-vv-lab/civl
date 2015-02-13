@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF;
 
 import java.io.PrintStream;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -30,8 +31,21 @@ public interface Fragment {
 	 */
 	void addGuardToStartLocation(Expression guard, ModelFactory factory);
 
-	void addLastStatement(Statement statement);
+	/**
+	 * Add a statement to the final statement set
+	 * 
+	 * @param statement
+	 *            the new statement to be added to the final statement set
+	 */
+	void addFinalStatement(Statement statement);
 
+	/**
+	 * Add a new statement to the fragment, which will be considered the
+	 * subsequent statement of the current final statements.s
+	 * 
+	 * @param statement
+	 *            the new statement to be added to the fragment
+	 */
 	void addNewStatement(Statement statement);
 
 	/**
@@ -53,9 +67,16 @@ public interface Fragment {
 
 	/**
 	 * 
-	 * @return The last statement of this fragment
+	 * @return The set of final statementss of this fragment
 	 */
-	Statement lastStatement();
+	Set<Statement> finalStatements();
+
+	/**
+	 * Precondition: finalStatements().size() == 1
+	 * 
+	 * @return The unique final statement of this fragment
+	 */
+	Statement uniqueFinalStatement();
 
 	/**
 	 * Combine this fragment and another fragment in parallel, i.e., merge the
@@ -94,7 +115,7 @@ public interface Fragment {
 	 * @param statement
 	 *            The new last statement
 	 */
-	void setLastStatement(Statement statement);
+	void setFinalStatements(Set<Statement> statements);
 
 	/**
 	 * 

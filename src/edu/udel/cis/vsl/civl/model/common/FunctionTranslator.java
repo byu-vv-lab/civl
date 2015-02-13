@@ -167,7 +167,6 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonUndefinedProcessExpression;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 import edu.udel.cis.vsl.gmc.CommandLineException;
@@ -542,7 +541,7 @@ public class FunctionTranslator {
 		}
 		if (modelFactory.hasConditionalExpressions() == true) {
 			result = modelFactory.refineConditionalExpressionOfStatement(
-					result.lastStatement(), result.startLocation());
+					result.uniqueFinalStatement(), result.startLocation());
 		}
 		modelFactory.popConditionaExpressionStack();
 		if (!modelFactory.anonFragment().isEmpty()) {
@@ -873,7 +872,7 @@ public class FunctionTranslator {
 			CIVLSource condStartSource, CIVLSource condEndSource,
 			Expression condition, Fragment bodyPrefix,
 			StatementNode loopBodyNode, Fragment incrementer, boolean isDoWhile) {
-		Set<Statement> continues, breaks;
+		Set<Statement> continues, breaks, switchExits;
 		Fragment beforeCondition, loopEntrance, loopBody, loopExit, result;
 		Location loopEntranceLocation, continueLocation;
 		Pair<Fragment, Expression> refineConditional;
@@ -938,20 +937,9 @@ public class FunctionTranslator {
 		// break statements will go out of the loop, and thus is considered as
 		// one of the last statement of the fragment
 		breaks = functionInfo.popBreakStack();
-		if (breaks.size() > 0) {
-			// The set of all statements that exit the loop. This is the loop
-			// exit statement, plus any breaks. All of these statements will be
-			// set to the same target later when this fragment is combined with
-			// the next fragment.
-			StatementSet lastStatements = new StatementSet();
-
-			lastStatements.add(loopExit.lastStatement());
-			for (Statement s : breaks)
-				lastStatements.add(s);
-			result.setLastStatement(lastStatements);
-		} else {
-			result.setLastStatement(loopExit.lastStatement());
-		}
+		switchExits = breaks;
+		switchExits.addAll(loopExit.finalStatements());
+		result.setFinalStatements(switchExits);
 		return result;
 	}
 
@@ -1085,22 +1073,21 @@ public class FunctionTranslator {
 	 *         statement.
 	 */
 	private boolean containsReturn(Fragment functionBody) {
+		Set<Statement> lastStatements = functionBody.finalStatements();
+		Statement uniqueLastStatement;
+
 		if (functionBody == null || functionBody.isEmpty())
 			return false;
-		if (functionBody.lastStatement() instanceof ReturnStatement)
-			return true;
-		if (functionBody.lastStatement() instanceof StatementSet) {
-			StatementSet lastStatements = (StatementSet) functionBody
-					.lastStatement();
-
-			for (Statement statement : lastStatements.statements()) {
+		if (lastStatements.size() > 1) {
+			for (Statement statement : lastStatements) {
 				if (!(statement instanceof ReturnStatement))
 					return false;
 			}
 			return true;
 		}
-		if (functionBody.lastStatement().source().getNumOutgoing() == 1) {
-			Location lastLocation = functionBody.lastStatement().source();
+		uniqueLastStatement = functionBody.uniqueFinalStatement();
+		if (uniqueLastStatement.source().getNumOutgoing() == 1) {
+			Location lastLocation = uniqueLastStatement.source();
 			Set<Integer> locationIds = new HashSet<Integer>();
 
 			while (lastLocation.atomicKind() == AtomicKind.ATOMIC_EXIT
@@ -1725,7 +1712,6 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(expressionNode), scope);
 
 		switch (expressionNode.expressionKind()) {
-
 		case CAST: {
 			CastNode castNode = (CastNode) expressionNode;
 			CIVLType castType = translateABCType(
@@ -2170,7 +2156,7 @@ public class FunctionTranslator {
 		// label to the corresponding location. When functionInfo.complete() is
 		// called, it will get the label for each goto noop from the map and set
 		// the target to the corresponding location.
-		functionInfo.putToGotoStatements(noop, label);
+		functionInfo.putToGotoStatement(noop, label);
 		return new CommonFragment(noop);
 	}
 
@@ -2392,7 +2378,8 @@ public class FunctionTranslator {
 						false, modelFactory.atomicLockVariableExpression(),
 						new CommonUndefinedProcessExpression(modelFactory
 								.systemSource(), typeFactory.processType(),
-								modelFactory.undefinedProcessValue()));
+								modelFactory.undefinedValue(typeFactory
+										.processSymbolicType())));
 				atomicReleaseFragment.addNewStatement(leaveAtomic);
 			}
 		}
@@ -2473,7 +2460,8 @@ public class FunctionTranslator {
 					modelFactory.sourceOf(caseStatement), location, caseGuard,
 					labelExpression));
 			result = result.parallelCombineWith(caseGoto);
-			functionInfo.putToGotoStatements(caseGoto.lastStatement(), label);
+			for (Statement stmt : caseGoto.finalStatements())
+				functionInfo.putToGotoStatement(stmt, label);
 		}
 		if (switchNode.getDefaultCase() != null) {
 			LabelNode label = switchNode.getDefaultCase().getLabel();
@@ -2486,8 +2474,8 @@ public class FunctionTranslator {
 									UNARY_OPERATOR.NOT, combinedCaseGuards)));
 
 			result = result.parallelCombineWith(defaultGoto);
-			functionInfo
-					.putToGotoStatements(defaultGoto.lastStatement(), label);
+			for (Statement stmt : defaultGoto.finalStatements())
+				functionInfo.putToGotoStatement(stmt, label);
 		} else {
 			defaultExit = modelFactory.noopStatement(modelFactory
 					.sourceOfBeginning(switchNode), location, modelFactory
@@ -2510,11 +2498,11 @@ public class FunctionTranslator {
 		breaks = functionInfo.popBreakStack();
 		if (breaks.size() > 0) {
 			for (Statement s : breaks) {
-				result.addLastStatement(s);
+				result.addFinalStatement(s);
 			}
 		}
 		if (defaultExit != null)
-			result.addLastStatement(defaultExit);
+			result.addFinalStatement(defaultExit);
 		return result;
 	}
 

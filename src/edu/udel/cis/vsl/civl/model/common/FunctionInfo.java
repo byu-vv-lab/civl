@@ -154,8 +154,8 @@ public class FunctionInfo {
 		Stack<Location> working = new Stack<>();
 		Set<Location> visited = new HashSet<>();
 
-		for (Statement s : gotoStatements.keySet()) {
-			s.setTarget(labeledLocations.get(gotoStatements.get(s)));
+		for (Statement stmt : gotoStatements.keySet()) {
+			stmt.setTarget(labeledLocations.get(gotoStatements.get(stmt)));
 		}
 		// start from the start location of the fragment
 		location = functionBody.startLocation();
@@ -282,7 +282,7 @@ public class FunctionInfo {
 	 * @param labelNode
 	 *            The label node of the target of the goto statement
 	 */
-	public void putToGotoStatements(Statement statement, LabelNode labelNode) {
+	public void putToGotoStatement(Statement statement, LabelNode labelNode) {
 		this.gotoStatements.put(statement, labelNode);
 	}
 

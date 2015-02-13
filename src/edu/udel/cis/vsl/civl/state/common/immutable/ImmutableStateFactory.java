@@ -119,6 +119,8 @@ public class ImmutableStateFactory implements StateFactory {
 	private Map<ImmutableState, ImmutableState> stateMap = new HashMap<>(
 			1000000);
 
+	private SymbolicExpression undefinedProcessValue;
+
 	/**
 	 * Class used to wrap integer arrays so they can be used as keys in hash
 	 * maps. This is used to map dyscope ID substitution maps to SARL
@@ -181,6 +183,8 @@ public class ImmutableStateFactory implements StateFactory {
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
 		this.simplify = config.isTrue(simplifyO);
 		this.memUnitFactory = (ImmutableMemoryUnitFactory) memFactory;
+		this.undefinedProcessValue = modelFactory.undefinedValue(typeFactory
+				.processSymbolicType());
 	}
 
 	/* ********************** Methods from StateFactory ******************** */
@@ -494,10 +498,11 @@ public class ImmutableStateFactory implements StateFactory {
 		// reachableMUs.put(0, new HashMap<SymbolicExpression, Boolean>());
 		state = new ImmutableState(new ImmutableProcessState[0],
 				new ImmutableDynamicScope[0], universe.trueExpression());
-		// TODO: how to initialize the arguments to system function?
+		// system function doesn't have any argument, because the General
+		// transformer has translated away all parameters of the main function.
 		state = addProcess(state, function, arguments, -1);
 		state = this.setVariable(state, atomicVar.vid(), 0,
-				modelFactory.undefinedProcessValue());
+				undefinedProcessValue);
 		if (timeCountVar != null)
 			state = this.setVariable(state, timeCountVar.vid(), 0,
 					universe.zeroInt());

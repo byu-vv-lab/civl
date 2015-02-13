@@ -534,8 +534,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression result = modelFactory.isProcessDefined(
-				arguments[0].getSource(), argumentValues[0]);
+		int procValue = modelFactory.getProcessId(arguments[0].getSource(),
+				argumentValues[0]);
+		SymbolicExpression result = modelFactory.isPocessIdDefined(procValue) ? trueValue
+				: falseValue;
 
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs, result);
@@ -562,8 +564,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression result = modelFactory.isScopeDefined(
-				arguments[0].getSource(), argumentValues[0]);
+		int scopeValue = modelFactory.getScopeId(arguments[0].getSource(),
+				argumentValues[0]);
+		SymbolicExpression result = modelFactory.isScopeIdDefined(scopeValue) ? trueValue
+				: falseValue;
 
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs, result);

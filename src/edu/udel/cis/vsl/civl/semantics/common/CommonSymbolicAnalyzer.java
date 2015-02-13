@@ -398,8 +398,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			if (varName.equals(ModelConfiguration.HEAP_VAR) && value.isNull()) {
 				continue;
 			} else if (varName.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE)
-					&& (value.isNull() || modelFactory.isProcessDefined(
-							variable.getSource(), value).isFalse())) {
+					&& (value.isNull() || !modelFactory
+							.isPocessIdDefined(modelFactory.getProcessId(
+									variable.getSource(), value)))) {
 				continue;
 			}
 			result.append(prefix + "| | " + variable.name() + " = ");

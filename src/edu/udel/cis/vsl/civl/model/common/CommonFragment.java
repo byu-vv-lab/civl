@@ -11,7 +11,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATO
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 
 /**
  * A fragment of a CIVL model. Consists of a start location and a last
@@ -28,7 +27,7 @@ public class CommonFragment implements Fragment {
 	/**
 	 * The last statement of the fragment
 	 */
-	public Statement lastStatement;//Set<Statement> lastStatements
+	public Set<Statement> finalStatements;// Set<Statement> lastStatements
 
 	/**
 	 * The start location of the fragment
@@ -41,6 +40,7 @@ public class CommonFragment implements Fragment {
 	 * create an empty fragment
 	 */
 	public CommonFragment() {
+		this.finalStatements = new HashSet<>();
 	}
 
 	/**
@@ -54,7 +54,20 @@ public class CommonFragment implements Fragment {
 	public CommonFragment(Statement first, Statement second) {
 		this.startLocation = first.source();
 		first.setTarget(second.source());
-		this.lastStatement = second;
+		this.finalStatements = new HashSet<>();
+		this.finalStatements.add(second);
+	}
+
+	/**
+	 * 
+	 * @param startLocation
+	 *            the start location
+	 * @param lastStatement
+	 *            the last statement
+	 */
+	public CommonFragment(Location startLocation, Set<Statement> lastStatements) {
+		this.startLocation = startLocation;
+		this.finalStatements = lastStatements;
 	}
 
 	/**
@@ -66,7 +79,8 @@ public class CommonFragment implements Fragment {
 	 */
 	public CommonFragment(Location startLocation, Statement lastStatement) {
 		this.startLocation = startLocation;
-		this.lastStatement = lastStatement;
+		this.finalStatements = new HashSet<>();
+		this.finalStatements.add(lastStatement);
 	}
 
 	/**
@@ -79,7 +93,8 @@ public class CommonFragment implements Fragment {
 	 */
 	public CommonFragment(Statement statement) {
 		this.startLocation = statement.source();
-		this.lastStatement = statement;
+		this.finalStatements = new HashSet<>();
+		this.finalStatements.add(statement);
 	}
 
 	/* *********************** Methods from Fragment *********************** */
@@ -111,52 +126,41 @@ public class CommonFragment implements Fragment {
 			return this;
 		if (this.isEmpty())
 			return next;
-		this.lastStatement.setTarget(next.startLocation());
-		return new CommonFragment(this.startLocation, next.lastStatement());
+		for (Statement stmt : this.finalStatements) {
+			stmt.setTarget(next.startLocation());
+		}
+		return new CommonFragment(this.startLocation, next.finalStatements());
 	}
 
 	@Override
 	public boolean isEmpty() {
-		if (startLocation == null && lastStatement == null)
+		if (startLocation == null
+				&& (finalStatements == null || finalStatements.isEmpty()))
 			return true;
 		return false;
 	}
 
 	@Override
-	public Statement lastStatement() {
-		return lastStatement;
+	public Set<Statement> finalStatements() {
+		return finalStatements;
 	}
 
 	@Override
 	public Fragment parallelCombineWith(Fragment parallel) {
-		StatementSet newLastStatement = new StatementSet();
+		Set<Statement> newLastStatements = new HashSet<>();
 
 		if (parallel == null || parallel.isEmpty())
 			return this;
 		if (this.isEmpty())
 			return parallel;
 		assert this.startLocation.id() == parallel.startLocation().id();
-		if (lastStatement instanceof StatementSet) {
-			Set<Statement> statements = ((StatementSet) lastStatement)
-					.statements();
-
-			for (Statement s : statements) {
-				newLastStatement.add(s);
-			}
-		} else {
-			newLastStatement.add(lastStatement);
+		for (Statement s : finalStatements) {
+			newLastStatements.add(s);
 		}
-		if (parallel.lastStatement() instanceof StatementSet) {
-			Set<Statement> statements = ((StatementSet) parallel
-					.lastStatement()).statements();
-
-			for (Statement s : statements) {
-				newLastStatement.add(s);
-			}
-		} else {
-			newLastStatement.add(parallel.lastStatement());
+		for (Statement s : parallel.finalStatements()) {
+			newLastStatements.add(s);
 		}
-		return new CommonFragment(this.startLocation, newLastStatement);
+		return new CommonFragment(this.startLocation, newLastStatements);
 	}
 
 	@Override
@@ -165,8 +169,8 @@ public class CommonFragment implements Fragment {
 	}
 
 	@Override
-	public void setLastStatement(Statement statement) {
-		this.lastStatement = statement;
+	public void setFinalStatements(Set<Statement> statements) {
+		this.finalStatements = statements;
 	}
 
 	@Override
@@ -255,33 +259,57 @@ public class CommonFragment implements Fragment {
 				result += "\r\n";
 			}
 		}
-		result += "last statement: " + this.lastStatement + " at Location "
-				+ this.lastStatement.source().id() + " "
-				+ this.lastStatement.getSource() + "\r\n";
+		result += "last statement: "
+				+ this.lastStatementsToStringBuffer().toString();
 		return result;
 	}
 
 	@Override
-	public void addLastStatement(Statement statement) {
-		if (this.lastStatement == null)
-			this.lastStatement = statement;
-		if (this.lastStatement instanceof StatementSet) {
-			((StatementSet) lastStatement).add(statement);
-		} else {
-			StatementSet lastStatementSet = new StatementSet();
-			lastStatementSet.add(this.lastStatement);
-			lastStatementSet.add(statement);
-			this.lastStatement = lastStatementSet;
-		}
+	public void addFinalStatement(Statement statement) {
+		this.finalStatements.add(statement);
 	}
 
 	@Override
 	public void addNewStatement(Statement statement) {
-		if (this.lastStatement != null)
-			this.lastStatement.setTarget(statement.source());
-		else
+		Set<Statement> newLastStatements = new HashSet<>();
+
+		if (this.finalStatements.isEmpty())
 			this.startLocation = statement.source();
-		this.lastStatement = statement;
+		for (Statement stmt : finalStatements) {
+			stmt.setTarget(statement.source());
+		}
+		newLastStatements.add(statement);
+		this.finalStatements = newLastStatements;
+	}
+
+	@Override
+	public Statement uniqueFinalStatement() {
+		assert this.finalStatements.size() == 1;
+		for (Statement stmt : this.finalStatements)
+			return stmt;
+		return null;
+	}
+
+	/* ************************** Private Methods ************************** */
+
+	/**
+	 * Gets the string representation of the set of final statements of this
+	 * fragment.
+	 * 
+	 * @return
+	 */
+	private StringBuffer lastStatementsToStringBuffer() {
+		StringBuffer result = new StringBuffer();
+
+		for (Statement stmt : finalStatements) {
+			result.append("\r\n");
+			result.append(stmt);
+			result.append(" at location ");
+			result.append(stmt.source().id());
+			result.append(" ");
+			result.append(stmt.getSource());
+		}
+		return result;
 	}
 
 }

@@ -104,44 +104,9 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  */
 public interface ModelFactory {
 
-	/* *********************************************************************
-	 * Utility
-	 * *********************************************************************
-	 */
-	CIVLTypeFactory typeFactory();
-
-	/**
-	 * Returns the CIVL model built by this model factory.
-	 * 
-	 * @return the CIVL model built by this model factory.
-	 */
-	Model model();
-
-	/**
-	 * Generate an abstract function.
-	 * 
-	 * @param source
-	 *            The CIVL source of the function.
-	 * @param name
-	 *            The function name.
-	 * @param parameters
-	 *            The parameters of the function.
-	 * @param returnType
-	 *            The CIVL return type
-	 * @param containingScope
-	 *            The scope that contains the function.
-	 * @param continuity
-	 *            The total number of partial derivatives of this function that
-	 *            may be taken.
-	 * @return The abstract function.
-	 */
-	AbstractFunction abstractFunction(CIVLSource source, Identifier name,
-			List<Variable> parameters, CIVLType returnType,
-			Scope containingScope, int continuity);
-
-	/* *********************************************************************
+	/* ************************************************************************
 	 * CIVL Expressions
-	 * *********************************************************************
+	 * ************************************************************************
 	 */
 
 	/**
@@ -228,6 +193,18 @@ public interface ModelFactory {
 			Identifier name, CIVLType type);
 
 	/**
+	 * Creates a character literal expression with the given character value.
+	 * 
+	 * @param sourceOf
+	 *            The source of the new expression
+	 * @param value
+	 *            The character value of the expression
+	 * @return a new character literal expression with the given character
+	 *         value.
+	 */
+	CharLiteralExpression charLiteralExpression(CIVLSource sourceOf, char value);
+
+	/**
 	 * The ternary conditional expression ("?" in C).
 	 * 
 	 * @param source
@@ -299,8 +276,8 @@ public interface ModelFactory {
 	DynamicTypeOfExpression dynamicTypeOfExpression(CIVLSource source,
 			CIVLType type);
 
-	FunctionIdentifierExpression functionIdentifierExpression(CIVLSource source,
-			CIVLFunction function);
+	FunctionIdentifierExpression functionIdentifierExpression(
+			CIVLSource source, CIVLFunction function);
 
 	HereOrRootExpression hereOrRootExpression(CIVLSource source, boolean isRoot);
 
@@ -340,6 +317,15 @@ public interface ModelFactory {
 	 */
 	Expression nullPointerExpression(CIVLPointerType pointerType,
 			CIVLSource source);
+
+	/**
+	 * Creates a <code>$proc_null</code> constant expression.
+	 * 
+	 * @param source
+	 *            The source of the <code>$proc_null</code>
+	 * @return the new <code>$proc_null</code> constant expression
+	 */
+	ProcnullExpression procnullExpression(CIVLSource source);
 
 	/**
 	 * Returns a new quantified expression.
@@ -405,6 +391,44 @@ public interface ModelFactory {
 			BigDecimal value);
 
 	/**
+	 * Creates a regular range expression, which has the syntax <code></code>.
+	 * 
+	 * @param source
+	 * @param low
+	 * @param high
+	 * @param step
+	 * @return
+	 */
+	RegularRangeExpression regularRangeExpression(CIVLSource source,
+			Expression low, Expression high, Expression step);
+
+	/**
+	 * Create a rectangular domain expression
+	 * 
+	 * @param source
+	 * @param ranges
+	 * @param type
+	 * @return
+	 */
+	RecDomainLiteralExpression recDomainLiteralExpression(CIVLSource source,
+			List<Expression> ranges, CIVLType type);
+
+	/**
+	 * Returns a domain guard expression which is boolean expression whose
+	 * arguments consists of loop variables in a civl for loop and the original
+	 * domain associate to the loop. It evaluates it to true if and only if the
+	 * values of those variables are such that at least one more iteration
+	 * exists.
+	 * 
+	 * @param source
+	 * @param vars
+	 * @param domain
+	 * @return
+	 */
+	DomainGuardExpression domainGuard(CIVLSource source, List<Variable> vars,
+			Variable counter, Expression domain);
+
+	/**
 	 * This expression is only used in an ensures clause of a function contract
 	 * to refer to the returned value.
 	 * 
@@ -413,6 +437,18 @@ public interface ModelFactory {
 	 * @return A result expression.
 	 */
 	ResultExpression resultExpression(CIVLSource source);
+
+	/**
+	 * Creates a new $scopeof expression using the given argument.
+	 * 
+	 * @param source
+	 *            The source code element to be used for error report.
+	 * @param argument
+	 *            The argument of the scope of expression.
+	 * @return The new $scopeof expression.
+	 */
+	ScopeofExpression scopeofExpression(CIVLSource source,
+			LHSExpression argument);
 
 	/**
 	 * A self expression. Used to referenced the current process.
@@ -490,6 +526,20 @@ public interface ModelFactory {
 	SystemFunctionCallExpression systemFunctionCallExpression(
 			CallOrSpawnStatement callStatement);
 
+	Expression trueExpression(CIVLSource source);
+
+	/**
+	 * Creates the system guard expression for the given system call statement.
+	 * <p>
+	 * Precondition:
+	 * <code>sysCall.isCall == true && sysCall.isSystemCall() == true</code>.
+	 * 
+	 * @param sysCall
+	 *            The system call statement.
+	 * @return
+	 */
+	Expression systemGuardExpression(CallOrSpawnStatement sysCall);
+
 	/**
 	 * A unary expression. One of {-,!}.
 	 * 
@@ -551,6 +601,10 @@ public interface ModelFactory {
 			List<Pair<Variable, IntegerLiteralExpression>> partials,
 			List<Expression> arguments);
 
+	/* ************************************************************************
+	 * Memory Unit Expressions
+	 * ************************************************************************
+	 */
 	ArraySliceReference arraySliceReference(ArraySliceKind sliceKind,
 			Expression index);
 
@@ -563,9 +617,9 @@ public interface ModelFactory {
 			MemoryUnitReference reference, boolean writable,
 			boolean hasPinterRef);
 
-	/* *********************************************************************
+	/* ************************************************************************
 	 * Fragments and Statements
-	 * *********************************************************************
+	 * ************************************************************************
 	 */
 
 	/**
@@ -656,6 +710,11 @@ public interface ModelFactory {
 	CallOrSpawnStatement callOrSpawnStatement(CIVLSource sourceOf,
 			Location location, boolean isCall, Expression function,
 			List<Expression> arguments, Expression guard);
+
+	CivlParForEnterStatement civlParForEnterStatement(CIVLSource source,
+			Location location, Expression domain, VariableExpression domSize,
+			VariableExpression procsVar, Expression parProcs,
+			CIVLFunction parProcFunc);
 
 	/**
 	 * A goto branch statement is of the form <code> goto label; </code>. When a
@@ -899,6 +958,14 @@ public interface ModelFactory {
 	 */
 	CIVLSource sourceOfSpan(CIVLSource source1, CIVLSource source2);
 
+	/**
+	 * Returns a source object representing a system-defined object with no link
+	 * to actual source code. Used for built-in functions, types, etc.
+	 * 
+	 * @return a system source object
+	 */
+	CIVLSource systemSource();
+
 	/* *********************************************************************
 	 * Translating away conditional expressions
 	 * *********************************************************************
@@ -957,12 +1024,6 @@ public interface ModelFactory {
 	 * @return True iff the latest queue is not empty
 	 */
 	boolean hasConditionalExpressions();
-
-	/**
-	 * @return The earliest conditional expression in the latest queue in the
-	 *         stack of conditional expression queues
-	 */
-	ConditionalExpression pollConditionaExpression();
 
 	/**
 	 * Pop the queue of conditional expressions from the stack. This is invoked
@@ -1033,6 +1094,33 @@ public interface ModelFactory {
 	 */
 	AssignStatement assignAtomicLockVariable(Integer pid, Location target);
 
+	/* *********************************************************************
+	 * Identifier, Function, Location, Model, Scope, Variable
+	 * *********************************************************************
+	 */
+
+	/**
+	 * Generate an abstract function.
+	 * 
+	 * @param source
+	 *            The CIVL source of the function.
+	 * @param name
+	 *            The function name.
+	 * @param parameters
+	 *            The parameters of the function.
+	 * @param returnType
+	 *            The CIVL return type
+	 * @param containingScope
+	 *            The scope that contains the function.
+	 * @param continuity
+	 *            The total number of partial derivatives of this function that
+	 *            may be taken.
+	 * @return The abstract function.
+	 */
+	AbstractFunction abstractFunction(CIVLSource source, Identifier name,
+			List<Variable> parameters, CIVLType returnType,
+			Scope containingScope, int continuity);
+
 	/**
 	 * Create a new function. When the function is constructed, its outermost
 	 * scope will be created.
@@ -1056,31 +1144,6 @@ public interface ModelFactory {
 			Scope containingScope, Location startLocation);
 
 	/**
-	 * Translate a symbolic process id into an integer. A symbolic process id is
-	 * a tuple with one element of integer type.
-	 * 
-	 * @param source
-	 *            The CIVL source information of the symbolic process id
-	 * @param processValue
-	 *            The symbolic object of the process id
-	 * @return The integer of the process id
-	 */
-	int getProcessId(CIVLSource source, SymbolicExpression processValue);
-
-	/**
-	 * Translate a symbolic scope id into an integer. A symbolic scope id is a
-	 * tuple with one element of integer type. A CIVL internal exception is
-	 * thrown if the value can't be computed.
-	 * 
-	 * @param source
-	 *            The CIVL source information of the symbolic process id
-	 * @param scopeValue
-	 *            The symbolic object of the scope id
-	 * @return The concrete scope id
-	 */
-	int getScopeId(CIVLSource source, SymbolicExpression scopeValue);
-
-	/**
 	 * Get an identifier with the given name.
 	 * 
 	 * @param source
@@ -1090,15 +1153,6 @@ public interface ModelFactory {
 	 * @return The new identifier
 	 */
 	Identifier identifier(CIVLSource source, String name);
-
-	/**
-	 * Check if a certain expression is TRUE.
-	 * 
-	 * @param expression
-	 *            The expression to be checked
-	 * @return True iff the expression is TRUE
-	 */
-	boolean isTrue(Expression expression);
 
 	/**
 	 * Create a new location.
@@ -1122,21 +1176,6 @@ public interface ModelFactory {
 	 */
 	Model model(CIVLSource source, CIVLFunction system, Program program);
 
-	/* *********************************************************************
-	 * Other helper methods
-	 * *********************************************************************
-	 */
-
-	/**
-	 * Translate a process id into symbolic expression. When
-	 * <code>pid < 0</code>, returns undefinedProcessValue.
-	 * 
-	 * @param pid
-	 *            The process id to be translated
-	 * @return The symbolic expression of the process id
-	 */
-	SymbolicExpression processValue(int pid);
-
 	/**
 	 * Create a new scope. This is not used for the outermost scope of a
 	 * function, because the outermost scope of a function is created when the
@@ -1155,40 +1194,6 @@ public interface ModelFactory {
 	 */
 	Scope scope(CIVLSource source, Scope parent, Set<Variable> variables,
 			CIVLFunction function);
-
-	/**
-	 * Translate an integer scope id into a symbolic expression
-	 * 
-	 * @param sid
-	 *            The scope id to be translated
-	 * @return The symbolic expression representing the scope id
-	 */
-	SymbolicExpression scopeValue(int sid);
-
-	/**
-	 * Computes the impact scope of a location, which is the highest scope that
-	 * the location accesses. This method has side effect on the location.
-	 * 
-	 * @param location
-	 *            The location whose impact scope is to be computed.
-	 */
-	void computeImpactScopeOfLocation(Location location);
-
-	/**
-	 * Set the token factory
-	 * 
-	 * @param tokens
-	 *            The token factory
-	 */
-	void setTokenFactory(TokenFactory tokens);
-
-	/**
-	 * Set the system scope, which is the root (static) scope of the model.
-	 * 
-	 * @param scope
-	 *            The system scope of the model
-	 */
-	void setSystemScope(Scope scope);
 
 	/**
 	 * Generate the system function
@@ -1212,26 +1217,6 @@ public interface ModelFactory {
 			Scope containingScope, String libraryName);
 
 	/**
-	 * Returns a source object representing a system-defined object with no link
-	 * to actual source code. Used for built-in functions, types, etc.
-	 * 
-	 * @return a system source object
-	 */
-	CIVLSource systemSource();
-
-	/**
-	 * returns the symbolic undefined process id.
-	 * 
-	 * @return the symbolic undefined process id
-	 */
-	SymbolicExpression undefinedProcessValue();
-
-	/**
-	 * @return The symbolic universe
-	 */
-	SymbolicUniverse universe();
-
-	/**
 	 * Create a new variable.
 	 * 
 	 * @param source
@@ -1246,17 +1231,160 @@ public interface ModelFactory {
 	 */
 	Variable variable(CIVLSource source, CIVLType type, Identifier name, int vid);
 
-	/**
-	 * Creates a character literal expression with the given character value.
-	 * 
-	 * @param sourceOf
-	 *            The source of the new expression
-	 * @param value
-	 *            The character value of the expression
-	 * @return a new character literal expression with the given character
-	 *         value.
+	/* *********************************************************************
+	 * Setters and Getters
+	 * *********************************************************************
 	 */
-	CharLiteralExpression charLiteralExpression(CIVLSource sourceOf, char value);
+
+	/**
+	 * Returns the CIVL model built by this model factory.
+	 * 
+	 * @return the CIVL model built by this model factory.
+	 */
+	Model model();
+
+	Variable timeCountVariable();
+
+	Variable brokenTimeVariable();
+
+	/**
+	 * Set the token factory
+	 * 
+	 * @param tokens
+	 *            The token factory
+	 */
+	void setTokenFactory(TokenFactory tokens);
+
+	/**
+	 * Set the system scope, which is the root (static) scope of the model.
+	 * 
+	 * @param scope
+	 *            The system scope of the model
+	 */
+	void setSystemScope(Scope scope);
+
+	/**
+	 * Gets the CIVL type factory associates with this model factory.
+	 * 
+	 * @return the CIVL type factory
+	 */
+	CIVLTypeFactory typeFactory();
+
+	/**
+	 * @return The symbolic universe
+	 */
+	SymbolicUniverse universe();
+	
+	/* ************************************************************************
+	 * Symbolic Expressions: Dyscope References
+	 * ************************************************************************
+	 */
+	
+	/**
+	 * Translate a symbolic scope id into an integer. A symbolic scope id is a
+	 * tuple with one element of integer type. A CIVL internal exception is
+	 * thrown if the value can't be computed.
+	 * 
+	 * @param source
+	 *            The CIVL source information of the symbolic process id
+	 * @param scopeValue
+	 *            The symbolic object of the scope id
+	 * @return The concrete scope id
+	 */
+	int getScopeId(CIVLSource source, SymbolicExpression scopeValue);
+	
+	boolean isScopeIdDefined(int scopeId);
+	
+	SymbolicExpression nullScopeValue();
+		
+	/**
+	 * Translate an integer scope id into a symbolic expression
+	 * 
+	 * @param sid
+	 *            The scope id to be translated
+	 * @return The symbolic expression representing the scope id
+	 */
+	SymbolicExpression scopeValue(int sid);
+	
+	
+	/* ************************************************************************
+	 * Symbolic Expressions: Process References
+	 * ************************************************************************
+	 */
+	
+	/**
+	 * Translate a symbolic process id into an integer. A symbolic process id is
+	 * a tuple with one element of integer type.
+	 * 
+	 * @param source
+	 *            The CIVL source information of the symbolic process id
+	 * @param processValue
+	 *            The symbolic object of the process id
+	 * @return The integer of the process id
+	 */
+	int getProcessId(CIVLSource source, SymbolicExpression processValue);
+	
+	/**
+	 * Checks if the given process value equals to the $proc_null constant. An
+	 * error is reported if the given process value is not of $proc type.
+	 * 
+	 * @param source
+	 *            The source code element for error report.
+	 * @param procValue
+	 *            The process value to be checked.
+	 * @return True iff the given process value equals to the $proc_null
+	 *         constant.
+	 */
+	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
+	
+
+	
+	SymbolicExpression nullProcessValue();
+	
+	boolean isPocessIdDefined(int pid);
+
+	boolean isProcessIdNull(int pid);
+
+	/**
+	 * Translate a process id into symbolic expression. When
+	 * <code>pid < 0</code>, returns undefinedProcessValue.
+	 * 
+	 * @param pid
+	 *            The process id to be translated
+	 * @return The symbolic expression of the process id
+	 */
+	SymbolicExpression processValue(int pid);
+
+	/**
+	 * generate undefined value of a certain type
+	 * 
+	 * @param type
+	 * @return
+	 */
+	SymbolicExpression undefinedValue(SymbolicType type);
+
+	/* ************************************************************************
+	 * Malicious
+	 * ************************************************************************
+	 */
+
+	/**
+	 * Check if a certain expression is TRUE.
+	 * 
+	 * @param expression
+	 *            The expression to be checked
+	 * @return True iff the expression is TRUE
+	 */
+	boolean isTrue(Expression expression);
+
+	/**
+	 * Computes the impact scope of a location, which is the highest scope that
+	 * the location accesses. This method has side effect on the location.
+	 * 
+	 * @param location
+	 *            The location whose impact scope is to be computed.
+	 */
+	void computeImpactScopeOfLocation(Location location);
 
 	/**
 	 * Creates an anonymous variable of array type in a certain scope. An
@@ -1299,71 +1427,15 @@ public interface ModelFactory {
 	 */
 	void addAnonStatement(Statement statment);
 
-	/**
-	 * Creates the system guard expression for the given system call statement.
-	 * <p>
-	 * Precondition:
-	 * <code>sysCall.isCall == true && sysCall.isSystemCall() == true</code>.
-	 * 
-	 * @param sysCall
-	 *            The system call statement.
-	 * @return
-	 */
-	Expression systemGuardExpression(CallOrSpawnStatement sysCall);
-
-	/**
-	 * Creates a new $scopeof expression using the given argument.
-	 * 
-	 * @param source
-	 *            The source code element to be used for error report.
-	 * @param argument
-	 *            The argument of the scope of expression.
-	 * @return The new $scopeof expression.
-	 */
-	ScopeofExpression scopeofExpression(CIVLSource source,
-			LHSExpression argument);
-
-	SymbolicExpression undefinedScopeValue();
 
 	Expression functionGuardExpression(CIVLSource source, Expression function,
 			List<Expression> arguments);
-
-	SymbolicExpression nullProcessValue();
-
-	boolean isPocessIdDefined(int pid);
-
-	boolean isProcessIdNull(int pid);
-
-	SymbolicExpression isProcessDefined(CIVLSource source,
-			SymbolicExpression processValue);
-
-	boolean isScopeIdDefined(int scopeId);
-
-	SymbolicExpression isScopeDefined(CIVLSource source,
-			SymbolicExpression scopeValue);
-
-	SymbolicExpression nullScopeValue();
-
-	ProcnullExpression procnullExpression(CIVLSource source);
 
 	VariableExpression civlFilesystemVariableExpression();
 
 	StatementList statmentList(Statement stmt);
 
 	StatementList statmentList(Statement stmt1, Statement stmt2);
-
-	/**
-	 * Checks if the given process value equals to the $proc_null constant. An
-	 * error is reported if the given process value is not of $proc type.
-	 * 
-	 * @param source
-	 *            The source code element for error report.
-	 * @param procValue
-	 *            The process value to be checked.
-	 * @return True iff the given process value equals to the $proc_null
-	 *         constant.
-	 */
-	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
 
 	/**
 	 * Returns a new fragment containing a CivlForStatement.
@@ -1377,54 +1449,12 @@ public interface ModelFactory {
 	Fragment civlForEnterFragment(CIVLSource source, Location src,
 			Expression dom, List<Variable> variables, Variable counter);
 
-	RegularRangeExpression regularRangeExpression(CIVLSource source,
-			Expression low, Expression high, Expression step);
-
-	/**
-	 * Create a rectangular domain expression
-	 * 
-	 * @param source
-	 * @param ranges
-	 * @param type
-	 * @return
-	 */
-	RecDomainLiteralExpression recDomainLiteralExpression(CIVLSource source,
-			List<Expression> ranges, CIVLType type);
-
-	/**
-	 * Returns a domain guard expression which is boolean expression whose
-	 * arguments consists of loop variables in a civl for loop and the original
-	 * domain associate to the loop. It evaluates it to true if and only if the
-	 * values of those variables are such that at least one more iteration
-	 * exists.
-	 * 
-	 * @param source
-	 * @param vars
-	 * @param domain
-	 * @return
-	 */
-	DomainGuardExpression domainGuard(CIVLSource source, List<Variable> vars,
-			Variable counter, Expression domain);
-
 	VariableExpression domSizeVariable(CIVLSource source, Scope scope);
 
 	VariableExpression parProcsVariable(CIVLSource source, CIVLType type,
 			Scope scope);
 
-	CivlParForEnterStatement civlParForEnterStatement(CIVLSource source,
-			Location location, Expression domain, VariableExpression domSize,
-			VariableExpression procsVar, Expression parProcs,
-			CIVLFunction parProcFunc);
-
 	FunctionIdentifierExpression waitallFunctionPointer();
-
-	/**
-	 * generate undefined value of a certain type
-	 * 
-	 * @param type
-	 * @return
-	 */
-	SymbolicExpression undefinedValue(SymbolicType type);
 
 	/**
 	 * Get the name of the counter variable for the for loop on a literal domain
@@ -1433,9 +1463,4 @@ public interface ModelFactory {
 	 */
 	Identifier getLiteralDomCounterIdentifier(CIVLSource source, int count);
 
-	Expression trueExpression(CIVLSource source);
-
-	Variable timeCountVariable();
-
-	Variable brokenTimeVariable();
 }

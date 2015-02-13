@@ -151,7 +151,6 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonStatementList;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonSwitchBranchStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.StatementSet;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
@@ -1088,7 +1087,7 @@ public class CommonModelFactory implements ModelFactory {
 		Expression ifValue = expression.getTrueBranch(), elseValue = expression
 				.getFalseBranch();
 		Fragment result = new CommonFragment();
-		StatementSet lastStatement = new StatementSet();
+		Set<Statement> lastStatements = new HashSet<>();
 
 		assert ifGuard.getExpressionType().isBoolType();
 		elseGuard = unaryExpression(ifGuard.getSource(), UNARY_OPERATOR.NOT,
@@ -1137,10 +1136,10 @@ public class CommonModelFactory implements ModelFactory {
 			elseBranch = statement.replaceWith(expression, elseValue);
 			ifBranch.setGuard(ifGuard);
 			elseBranch.setGuard(elseGuard);
-			lastStatement.add(ifBranch);
-			lastStatement.add(elseBranch);
+			lastStatements.add(ifBranch);
+			lastStatements.add(elseBranch);
 			result.setStartLocation(startLocation);
-			result.setLastStatement(lastStatement);
+			result.setFinalStatements(lastStatements);
 		}
 		startLocation.removeOutgoing(statement);
 		return result;
@@ -1157,7 +1156,7 @@ public class CommonModelFactory implements ModelFactory {
 		Expression ifValue = expression.getTrueBranch(), elseValue = expression
 				.getFalseBranch();
 		Fragment result = new CommonFragment();
-		StatementSet lastStatement = new StatementSet();
+		Set<Statement> lastStatements = new HashSet<>();
 
 		assert ifGuard.getExpressionType().isBoolType();
 		elseGuard = unaryExpression(ifGuard.getSource(), UNARY_OPERATOR.NOT,
@@ -1175,13 +1174,13 @@ public class CommonModelFactory implements ModelFactory {
 		ifAssign = assignStatement(ifValue.getSource(), startLocation,
 				variable, ifValue, false);
 		ifAssign.setGuard(ifGuard);
-		lastStatement.add(ifAssign);
+		lastStatements.add(ifAssign);
 		elseAssign = assignStatement(elseValue.getSource(), startLocation,
 				variable, elseValue, false);
 		elseAssign.setGuard(elseGuard);
-		lastStatement.add(elseAssign);
+		lastStatements.add(elseAssign);
 		result.setStartLocation(startLocation);
-		result.setLastStatement(lastStatement);
+		result.setFinalStatements(lastStatements);
 		return result;
 	}
 
@@ -1198,7 +1197,7 @@ public class CommonModelFactory implements ModelFactory {
 		Fragment beforeConditionFragment = new CommonFragment();
 
 		while (hasConditionalExpressions()) {
-			ConditionalExpression conditionalExpression = pollConditionaExpression();
+			ConditionalExpression conditionalExpression = pollFirstConditionaExpression();
 			VariableExpression variable = tempVariable(
 					TempVariableKind.CONDITIONAL, scope,
 					conditionalExpression.getSource(),
@@ -1230,9 +1229,9 @@ public class CommonModelFactory implements ModelFactory {
 
 		if (sizeofTopConditionalExpressionQueue() == 1)
 			return this.conditionalExpressionToIf(
-					this.pollConditionaExpression(), statement);
+					this.pollFirstConditionaExpression(), statement);
 		while (hasConditionalExpressions()) {
-			ConditionalExpression conditionalExpression = pollConditionaExpression();
+			ConditionalExpression conditionalExpression = pollFirstConditionaExpression();
 			VariableExpression variable = tempVariable(
 					TempVariableKind.CONDITIONAL, scope,
 					conditionalExpression.getSource(),
@@ -1249,11 +1248,6 @@ public class CommonModelFactory implements ModelFactory {
 				this.location(statementSource, scope));
 		result = result.combineWith(new CommonFragment(statement));
 		return result;
-	}
-
-	@Override
-	public ConditionalExpression pollConditionaExpression() {
-		return conditionalExpressions.peek().pollFirst();
 	}
 
 	@Override
@@ -1294,48 +1288,6 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Variable brokenTimeVariable() {
 		return this.brokenTimeVariable;
-	}
-
-	/**
-	 * An atomic lock variable is used to keep track of the process that
-	 * executes an $atomic block which prevents interleaving with other
-	 * processes. This variable is maintained as a global variable
-	 * {@link ComonModelFactory#ATOMIC_LOCK_VARIABLE} of <code>$proc</code> type
-	 * in the root scope in the CIVL model (always with index 0).
-	 * 
-	 * @param scope
-	 *            The scope of the atomic lock variable, and should always be
-	 *            the root scope.
-	 */
-	private void createAtomicLockVariable(Scope scope) {
-		// Since the atomic lock variable is not declared explicitly in the CIVL
-		// model specification, the system source will be used here.
-		Variable variable = this.variable(this.systemSource,
-				typeFactory.processType, this.identifier(this.systemSource,
-						ModelConfiguration.ATOMIC_LOCK_VARIABLE), scope
-						.numVariables());
-
-		this.atomicLockVariableExpression = this.variableExpression(
-				this.systemSource, variable);
-		scope.addVariable(variable);
-	}
-
-	private void createTimeVariables(Scope scope) {
-		// Since the atomic lock variable is not declared explicitly in the CIVL
-		// model specification, the system source will be used here.
-		timeCountVariable = this.variable(this.systemSource,
-				typeFactory.integerType, this.identifier(this.systemSource,
-						ModelConfiguration.TIME_COUNT_VARIABLE), scope
-						.numVariables());
-		timeCountVariable.setStatic(true);
-		scope.addVariable(timeCountVariable);
-		if (modelBuilder.timeLibIncluded) {
-			brokenTimeVariable = this.variable(this.systemSource,
-					typeFactory.integerType, this.identifier(systemSource,
-							ModelConfiguration.BROKEN_TIME_VARIABLE), scope
-							.numVariables());
-			scope.addVariable(brokenTimeVariable);
-		}
 	}
 
 	/* *********************************************************************
@@ -1412,11 +1364,6 @@ public class CommonModelFactory implements ModelFactory {
 			location.setImpactScopeOfAtomicOrAtomBlock(impactScope);
 			return;
 		}
-	}
-
-	@Override
-	public SymbolicExpression undefinedProcessValue() {
-		return this.undefinedProcessValue;
 	}
 
 	@Override
@@ -1572,16 +1519,6 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public SymbolicExpression isProcessDefined(CIVLSource source,
-			SymbolicExpression processValue) {
-		int pid = extractIntField(source, processValue, zeroObj);
-
-		if (pid == -1)
-			return universe.falseExpression();
-		return universe.trueExpression();
-	}
-
-	@Override
 	public SymbolicExpression scopeValue(int sid) {
 		SymbolicExpression result;
 
@@ -1602,23 +1539,8 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public SymbolicExpression undefinedScopeValue() {
-		return this.undefinedScopeValue;
-	}
-
-	@Override
 	public SymbolicExpression nullScopeValue() {
 		return this.nullScopeValue;
-	}
-
-	@Override
-	public SymbolicExpression isScopeDefined(CIVLSource source,
-			SymbolicExpression scopeValue) {
-		int scopeId = extractIntField(source, scopeValue, zeroObj);
-
-		if (scopeId == -1)
-			return universe.falseExpression();
-		return universe.trueExpression();
 	}
 
 	@Override
@@ -1633,210 +1555,19 @@ public class CommonModelFactory implements ModelFactory {
 
 	/* *************************** Private Methods ************************* */
 
-	/**
-	 * Gets a Java conrete int from a symbolic expression or throws exception.
-	 * 
-	 * @param source
-	 * 
-	 * @param expression
-	 *            a numeric expression expected to hold concrete int value
-	 * @return the concrete int
-	 * @throws CIVLInternalException
-	 *             if a concrete integer value cannot be extracted
-	 */
-	private int extractInt(CIVLSource source, NumericExpression expression) {
-		IntegerNumber result = (IntegerNumber) universe
-				.extractNumber(expression);
-
-		if (result == null)
-			throw new CIVLInternalException(
-					"Unable to extract concrete int from " + expression, source);
-		return result.intValue();
-	}
-
-	/**
-	 * Gets a concrete Java int from the field of a symbolic expression of tuple
-	 * type or throws exception.
-	 * 
-	 * @param source
-	 * 
-	 * @param tuple
-	 *            symbolic expression of tuple type
-	 * @param fieldIndex
-	 *            index of a field in that tuple
-	 * @return the concrete int value of that field
-	 */
-	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
-			IntObject fieldIndex) {
-		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
-				fieldIndex);
-
-		return extractInt(source, field);
-	}
-
-	/**
-	 * @param s0
-	 *            A scope. May be null.
-	 * @param s1
-	 *            A scope. May be null.
-	 * @return The scope that is the join, or least common ancestor in the scope
-	 *         tree, of s0 and s1. Null if both are null. If exactly one of s0
-	 *         and s1 are null, returns the non-null scope.
-	 */
-	protected Scope join(Scope s0, Scope s1) {
-		Set<Scope> s0Ancestors = new HashSet<Scope>();
-		Scope s0Ancestor = s0;
-		Scope s1Ancestor = s1;
-
-		if (s0 == null) {
-			return s1;
-		} else if (s1 == null) {
-			return s0;
-		}
-		s0Ancestors.add(s0Ancestor);
-		while (s0Ancestor.parent() != null) {
-			s0Ancestor = s0Ancestor.parent();
-			s0Ancestors.add(s0Ancestor);
-		}
-		while (true) {
-			if (s0Ancestors.contains(s1Ancestor)) {
-				return s1Ancestor;
-			}
-			s1Ancestor = s1Ancestor.parent();
-		}
-	}
-
-	/**
-	 * Returns the lower scope. Precondition: one of the scope must be the
-	 * ancestor of the other if they are not the same.
-	 * 
-	 * @param s0
-	 * @param s1
-	 * @return
-	 */
-	private Scope getLower(Scope s0, Scope s1) {
-		if (s0 == null)
-			return s1;
-		if (s1 == null)
-			return s0;
-		if (s0.id() != s1.id()) {
-			Scope sParent0 = s0, sParent1 = s1;
-
-			while (sParent0.id() > 0 && sParent1.id() > 0) {
-				sParent0 = sParent0.parent();
-				sParent1 = sParent1.parent();
-			}
-			if (sParent0.id() == 0)
-				return s1;
-			return s0;
-		}
-		return s0;
-	}
-
-	private Scope getLower(Expression[] expressions) {
-		if (expressions == null)
-			return null;
-		return getLower(Arrays.asList(expressions));
-	}
-
-	private Scope getLower(List<Expression> expressions) {
-		Scope scope = null;
-
-		for (Expression expression : expressions) {
-			if (expression != null)
-				scope = getLower(scope, expression.lowestScope());
-		}
-		return scope;
-	}
-
-	/**
-	 * Calculate the join scope (the most local common scope) of a list of
-	 * expressions.
-	 * 
-	 * @param expressions
-	 *            The list of expressions whose join scope is to be computed.
-	 * @return The join scope of the list of expressions.
-	 */
-	protected Scope joinScope(List<Expression> expressions) {
-		Scope scope = null;
-
-		for (Expression expression : expressions) {
-			scope = join(scope, expression.expressionScope());
-		}
-		return scope;
-	}
-
-	/**
-	 * Calculate the join scope (the most local common scope) of an array of
-	 * expressions.
-	 * 
-	 * @param expressions
-	 *            The array of expressions whose join scope is to be computed.
-	 * @return The join scope of the array of expressions.
-	 */
-	protected Scope joinScope(Expression[] expressions) {
-		Scope scope = null;
-
-		for (Expression expression : expressions) {
-			scope = join(scope, expression.expressionScope());
-		}
-		return scope;
-	}
-
-	/**
-	 * 
-	 * @return The size of the top conditional expression queue
-	 */
-	private int sizeofTopConditionalExpressionQueue() {
-		if (conditionalExpressions.isEmpty())
-			return 0;
-		return conditionalExpressions.peek().size();
-	}
-
-	/**
-	 * Generate a temporal variable for translating away conditional expression
-	 * 
-	 * @param kind
-	 *            The temporal variable kind
-	 * @param scope
-	 *            The scope of the temporal variable
-	 * @param source
-	 *            The CIVL source of the conditional expression
-	 * @param type
-	 *            The CIVL type of the conditional expression
-	 * @return The variable expression referring to the temporal variable
-	 */
-	private VariableExpression tempVariable(TempVariableKind kind, Scope scope,
-			CIVLSource source, CIVLType type) {
-		String name = "";
-		int vid = scope.numVariables();
-		StringObject stringObject;
-		Variable variable;
-		VariableExpression result;
-
-		switch (kind) {
-		case CONDITIONAL:
-			name = CONDITIONAL_VARIABLE_PREFIX
-					+ this.conditionalExpressionCounter++;
-			break;
-		default:
-		}
-		stringObject = (StringObject) universe.canonic(universe
-				.stringObject(name));
-		variable = new CommonVariable(source, type, new CommonIdentifier(
-				source, stringObject), vid);
-		result = new CommonVariableExpression(source, variable);
-		scope.addVariable(variable);
-		return result;
-	}
-
 	@Override
 	public SymbolicExpression undefinedValue(SymbolicType type) {
-		SymbolicExpression result = universe.symbolicConstant(
-				universe.stringObject("UNDEFINED"), type);
+		if (type.equals(typeFactory.processSymbolicType))
+			return this.undefinedProcessValue;
+		else if (type.equals(typeFactory.scopeSymbolicType))
+			return this.undefinedScopeValue;
+		else {
+			SymbolicExpression result = universe.symbolicConstant(
+					universe.stringObject("UNDEFINED"), type);
 
-		result = universe.canonic(result);
-		return result;
+			result = universe.canonic(result);
+			return result;
+		}
 	}
 
 	@Override
@@ -2082,5 +1813,239 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public CIVLTypeFactory typeFactory() {
 		return this.typeFactory;
+	}
+
+	/* *************************** Private Methods ************************* */
+
+	/**
+	 * An atomic lock variable is used to keep track of the process that
+	 * executes an $atomic block which prevents interleaving with other
+	 * processes. This variable is maintained as a global variable
+	 * {@link ComonModelFactory#ATOMIC_LOCK_VARIABLE} of <code>$proc</code> type
+	 * in the root scope in the CIVL model (always with index 0).
+	 * 
+	 * @param scope
+	 *            The scope of the atomic lock variable, and should always be
+	 *            the root scope.
+	 */
+	private void createAtomicLockVariable(Scope scope) {
+		// Since the atomic lock variable is not declared explicitly in the CIVL
+		// model specification, the system source will be used here.
+		Variable variable = this.variable(this.systemSource,
+				typeFactory.processType, this.identifier(this.systemSource,
+						ModelConfiguration.ATOMIC_LOCK_VARIABLE), scope
+						.numVariables());
+
+		this.atomicLockVariableExpression = this.variableExpression(
+				this.systemSource, variable);
+		scope.addVariable(variable);
+	}
+
+	private void createTimeVariables(Scope scope) {
+		// Since the atomic lock variable is not declared explicitly in the CIVL
+		// model specification, the system source will be used here.
+		timeCountVariable = this.variable(this.systemSource,
+				typeFactory.integerType, this.identifier(this.systemSource,
+						ModelConfiguration.TIME_COUNT_VARIABLE), scope
+						.numVariables());
+		timeCountVariable.setStatic(true);
+		scope.addVariable(timeCountVariable);
+		if (modelBuilder.timeLibIncluded) {
+			brokenTimeVariable = this.variable(this.systemSource,
+					typeFactory.integerType, this.identifier(systemSource,
+							ModelConfiguration.BROKEN_TIME_VARIABLE), scope
+							.numVariables());
+			scope.addVariable(brokenTimeVariable);
+		}
+	}
+
+	/* *************************** Private Methods ************************* */
+
+	/**
+	 * Gets a Java conrete int from a symbolic expression or throws exception.
+	 * 
+	 * @param source
+	 * 
+	 * @param expression
+	 *            a numeric expression expected to hold concrete int value
+	 * @return the concrete int
+	 * @throws CIVLInternalException
+	 *             if a concrete integer value cannot be extracted
+	 */
+	private int extractInt(CIVLSource source, NumericExpression expression) {
+		IntegerNumber result = (IntegerNumber) universe
+				.extractNumber(expression);
+
+		if (result == null)
+			throw new CIVLInternalException(
+					"Unable to extract concrete int from " + expression, source);
+		return result.intValue();
+	}
+
+	/**
+	 * Gets a concrete Java int from the field of a symbolic expression of tuple
+	 * type or throws exception.
+	 * 
+	 * @param source
+	 * 
+	 * @param tuple
+	 *            symbolic expression of tuple type
+	 * @param fieldIndex
+	 *            index of a field in that tuple
+	 * @return the concrete int value of that field
+	 */
+	private int extractIntField(CIVLSource source, SymbolicExpression tuple,
+			IntObject fieldIndex) {
+		NumericExpression field = (NumericExpression) universe.tupleRead(tuple,
+				fieldIndex);
+
+		return extractInt(source, field);
+	}
+
+	/**
+	 * @param s0
+	 *            A scope. May be null.
+	 * @param s1
+	 *            A scope. May be null.
+	 * @return The scope that is the join, or least common ancestor in the scope
+	 *         tree, of s0 and s1. Null if both are null. If exactly one of s0
+	 *         and s1 are null, returns the non-null scope.
+	 */
+	private Scope join(Scope s0, Scope s1) {
+		Set<Scope> s0Ancestors = new HashSet<Scope>();
+		Scope s0Ancestor = s0;
+		Scope s1Ancestor = s1;
+
+		if (s0 == null) {
+			return s1;
+		} else if (s1 == null) {
+			return s0;
+		}
+		s0Ancestors.add(s0Ancestor);
+		while (s0Ancestor.parent() != null) {
+			s0Ancestor = s0Ancestor.parent();
+			s0Ancestors.add(s0Ancestor);
+		}
+		while (true) {
+			if (s0Ancestors.contains(s1Ancestor)) {
+				return s1Ancestor;
+			}
+			s1Ancestor = s1Ancestor.parent();
+		}
+	}
+
+	/**
+	 * Returns the lower scope. Precondition: one of the scope must be the
+	 * ancestor of the other if they are not the same.
+	 * 
+	 * @param s0
+	 * @param s1
+	 * @return
+	 */
+	private Scope getLower(Scope s0, Scope s1) {
+		if (s0 == null)
+			return s1;
+		if (s1 == null)
+			return s0;
+		if (s0.id() != s1.id()) {
+			Scope sParent0 = s0, sParent1 = s1;
+
+			while (sParent0.id() > 0 && sParent1.id() > 0) {
+				sParent0 = sParent0.parent();
+				sParent1 = sParent1.parent();
+			}
+			if (sParent0.id() == 0)
+				return s1;
+			return s0;
+		}
+		return s0;
+	}
+
+	private Scope getLower(Expression[] expressions) {
+		if (expressions == null)
+			return null;
+		return getLower(Arrays.asList(expressions));
+	}
+
+	private Scope getLower(List<Expression> expressions) {
+		Scope scope = null;
+
+		for (Expression expression : expressions) {
+			if (expression != null)
+				scope = getLower(scope, expression.lowestScope());
+		}
+		return scope;
+	}
+
+	/**
+	 * Calculate the join scope (the most local common scope) of a list of
+	 * expressions.
+	 * 
+	 * @param expressions
+	 *            The list of expressions whose join scope is to be computed.
+	 * @return The join scope of the list of expressions.
+	 */
+	private Scope joinScope(List<Expression> expressions) {
+		Scope scope = null;
+
+		for (Expression expression : expressions) {
+			scope = join(scope, expression.expressionScope());
+		}
+		return scope;
+	}
+
+	/**
+	 * 
+	 * @return The size of the top conditional expression queue
+	 */
+	private int sizeofTopConditionalExpressionQueue() {
+		if (conditionalExpressions.isEmpty())
+			return 0;
+		return conditionalExpressions.peek().size();
+	}
+
+	/**
+	 * Generate a temporal variable for translating away conditional expression
+	 * 
+	 * @param kind
+	 *            The temporal variable kind
+	 * @param scope
+	 *            The scope of the temporal variable
+	 * @param source
+	 *            The CIVL source of the conditional expression
+	 * @param type
+	 *            The CIVL type of the conditional expression
+	 * @return The variable expression referring to the temporal variable
+	 */
+	private VariableExpression tempVariable(TempVariableKind kind, Scope scope,
+			CIVLSource source, CIVLType type) {
+		String name = "";
+		int vid = scope.numVariables();
+		StringObject stringObject;
+		Variable variable;
+		VariableExpression result;
+
+		switch (kind) {
+		case CONDITIONAL:
+			name = CONDITIONAL_VARIABLE_PREFIX
+					+ this.conditionalExpressionCounter++;
+			break;
+		default:
+		}
+		stringObject = (StringObject) universe.canonic(universe
+				.stringObject(name));
+		variable = new CommonVariable(source, type, new CommonIdentifier(
+				source, stringObject), vid);
+		result = new CommonVariableExpression(source, variable);
+		scope.addVariable(variable);
+		return result;
+	}
+
+	/**
+	 * @return The earliest conditional expression in the latest queue in the
+	 *         stack of conditional expression queues
+	 */
+	private ConditionalExpression pollFirstConditionaExpression() {
+		return conditionalExpressions.peek().pollFirst();
 	}
 }

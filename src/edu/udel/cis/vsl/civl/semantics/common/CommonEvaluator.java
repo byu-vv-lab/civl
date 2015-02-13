@@ -2634,7 +2634,8 @@ public class CommonEvaluator implements Evaluator {
 		CIVLType expressionType = expression.getExpressionType();
 
 		if (expressionType.equals(typeFactory.scopeType())) {
-			if (expressionValue.equals(modelFactory.undefinedScopeValue())) {
+			if (expressionValue.equals(modelFactory.undefinedValue(typeFactory
+					.scopeSymbolicType()))) {
 				errorLogger.logSimpleError(source, state, process,
 						symbolicAnalyzer.stateToString(state),
 						ErrorKind.MEMORY_LEAK,
@@ -2642,7 +2643,8 @@ public class CommonEvaluator implements Evaluator {
 				throw new UnsatisfiablePathConditionException();
 			}
 		} else if (expressionType.equals(typeFactory.processType())) {
-			if (expressionValue.equals(modelFactory.undefinedProcessValue())) {
+			if (expressionValue.equals(modelFactory.undefinedValue(typeFactory
+					.processSymbolicType()))) {
 				errorLogger.logSimpleError(source, state, process,
 						symbolicAnalyzer.stateToString(state),
 						ErrorKind.MEMORY_LEAK,
@@ -3120,7 +3122,9 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateUnary(state, pid, (UnaryExpression) expression);
 			break;
 		case UNDEFINED_PROC:
-			result = new Evaluation(state, modelFactory.undefinedProcessValue());
+			result = new Evaluation(state,
+					modelFactory.undefinedValue(typeFactory
+							.processSymbolicType()));
 			break;
 		case VARIABLE:
 			result = evaluateVariable(state, pid, process,
