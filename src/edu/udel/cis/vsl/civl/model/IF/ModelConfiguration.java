@@ -48,17 +48,5 @@ public final class ModelConfiguration {
 
 	public static final String FILE_STREAM_TYPE = "FILE";
 
-	public static final String OMP_GSHARED_TYPE = "__OMP_gshared__";
-
-	public static final String OMP_SHARED_TYPE = "__OMP_shared__";
-
-	public static final String OMP_LOOP_RECORD_TYPE = "OMP_loop_record";
-
-	public static final String OMP_WORK_RECORD_TYPE = "OMP_work_record";
-
-	public static final String OMP_GTEAM_TYPE = "__OMP_gteam__";
-
-	public static final String OMP_TEAM_TYPE = "__OMP_team__";
-
 	public static final String TM_TYPE = "tm";
 }

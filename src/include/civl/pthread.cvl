@@ -8,8 +8,21 @@
 #include <pthread.h>
 #include <seq.cvh>
 
-void *value_ptr_value = NULL;
-$pthread_gpool_t $pthread_gpool = $pthread_gpool_create($here);
+struct pthread_mutexattr_t{
+  int robust;
+  int pshared;
+  int protocol;
+  int type;
+  int prioceiling;
+};
+
+struct pthread_mutex_t{
+  int count;
+  $proc ownerid;
+  int lock;
+  int prioceiling;
+  pthread_mutexattr_t attr;
+};
 
 /* pthread_barrierattr_t
 */
@@ -115,6 +128,10 @@ struct pthread_t{
   const pthread_attr_t attr;
   _Bool terminated;
 };
+
+extern pthread_mutex_t PTHREAD_MUTEX_INITIALIZER = {0,$proc_null,0,0,{0,0,0,PTHREAD_MUTEX_NORMAL,0}};
+void *value_ptr_value = NULL;
+$pthread_gpool_t $pthread_gpool = $pthread_gpool_create($here);
 
 /**
   * Initializes a spinlock with the default values defined for it by an implementation

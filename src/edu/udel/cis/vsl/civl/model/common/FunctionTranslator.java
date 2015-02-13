@@ -191,10 +191,6 @@ public class FunctionTranslator {
 
 	private static final String MESSAGE_TYPE = "__message__";
 
-	private static final String OMP_GWS_TYPE = "__omp_gws__";
-
-	private static final String OMP_WS_TYPE = "__omp_ws__";
-
 	private static final String PROC_TYPE = "__proc__";
 
 	private static final String QUEUE_TYPE = "__queue__";
@@ -4248,18 +4244,6 @@ public class FunctionTranslator {
 			result.setHandleObjectType(true);
 			typeFactory.addSystemType(tag, result);
 			modelBuilder.gbarrierType = result;
-			modelBuilder.handledObjectTypes.add(result);
-			break;
-		case OMP_GWS_TYPE:
-			result.setHandleObjectType(true);
-			typeFactory.addSystemType(tag, result);
-			modelBuilder.ompGwsType = result;
-			modelBuilder.handledObjectTypes.add(result);
-			break;
-		case OMP_WS_TYPE:
-			result.setHandleObjectType(true);
-			typeFactory.addSystemType(tag, result);
-			modelBuilder.ompWsType = result;
 			modelBuilder.handledObjectTypes.add(result);
 			break;
 		case ModelConfiguration.INT_ITER_TYPE:
