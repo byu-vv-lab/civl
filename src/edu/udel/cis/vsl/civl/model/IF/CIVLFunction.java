@@ -28,6 +28,13 @@ public interface CIVLFunction extends Sourceable {
 	public Identifier name();
 
 	/**
+	 * The id of this function in its containing scope
+	 * 
+	 * @return the id of this function
+	 */
+	public int fid();
+
+	/**
 	 * @return The list of parameters.
 	 */
 	public List<Variable> parameters();

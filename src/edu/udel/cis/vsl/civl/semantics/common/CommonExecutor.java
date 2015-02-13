@@ -296,7 +296,7 @@ public class CommonExecutor implements Executor {
 			}
 			if (function == null) {
 				Triple<State, CIVLFunction, Integer> eval = evaluator
-						.evaluateFunctionPointer(state, pid,
+						.evaluateFunctionIdentifier(state, pid,
 								statement.functionExpression(),
 								statement.getSource());
 
@@ -531,7 +531,7 @@ public class CommonExecutor implements Executor {
 		assert !statement.isCall();
 		if (function == null) {
 			Triple<State, CIVLFunction, Integer> eval = evaluator
-					.evaluateFunctionPointer(state, pid,
+					.evaluateFunctionIdentifier(state, pid,
 							statement.functionExpression(),
 							statement.getSource());
 

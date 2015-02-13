@@ -33,9 +33,9 @@ public class CommonSystemFunction extends CommonFunction implements
 	 */
 	public CommonSystemFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
-			Scope containingScope, Location startLocation,
+			Scope containingScope, int fid, Location startLocation,
 			ModelFactory factory, String libraryName) {
-		super(source, name, parameters, returnType, containingScope,
+		super(source, name, parameters, returnType, containingScope, fid,
 				startLocation, factory);
 		this.isSystem = true;
 		this.library = libraryName;
@@ -67,9 +67,9 @@ public class CommonSystemFunction extends CommonFunction implements
 	public String toString() {
 		return this.name().name() + " : system function call";
 	}
-	
+
 	@Override
-	public boolean isLibraryFunction(){
+	public boolean isLibraryFunction() {
 		return true;
 	}
 

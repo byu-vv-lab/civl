@@ -36,6 +36,11 @@ public interface Scope extends Sourceable {
 	int numVariables();
 
 	/**
+	 * @return The number of functions contained in this scope.
+	 */
+	int numFunctions();
+
+	/**
 	 * @return The id of this scope. This id is unique within the model.
 	 */
 	int id();
@@ -190,6 +195,8 @@ public interface Scope extends Sourceable {
 	CIVLFunction getFunction(Identifier name);
 
 	CIVLFunction getFunction(String name);
+
+	CIVLFunction getFunction(int fid);
 
 	void complete();
 

@@ -79,6 +79,9 @@ public class CommonCIVLTypeFactory implements CIVLTypeFactory {
 	 */
 	CIVLPrimitiveType charType;
 
+	/**
+	 * The CIVL domain type.
+	 */
 	CIVLDomainType domainType = null;
 
 	/**
@@ -92,7 +95,10 @@ public class CommonCIVLTypeFactory implements CIVLTypeFactory {
 	CIVLPrimitiveType dynamicType;
 
 	/**
-	 * The unique symbolic function pointer type used in the system.
+	 * The unique symbolic function pointer type used in the system. Function
+	 * pointer type need to be different from pointer type, because there is
+	 * analysis particularly for pointers, like heap object reachability,
+	 * reachable memory units, etc.
 	 */
 	SymbolicTupleType functionPointerSymbolicType;
 
@@ -216,7 +222,7 @@ public class CommonCIVLTypeFactory implements CIVLTypeFactory {
 				.canonic(universe.tupleType(universe.stringObject("pointer"),
 						pointerComponents));
 		fpointerComponents.add(scopeType.getDynamicType(universe));
-		fpointerComponents.add(universe.arrayType(universe.characterType()));
+		fpointerComponents.add(universe.integerType());
 		functionPointerSymbolicType = (SymbolicTupleType) universe
 				.canonic(universe.tupleType(universe.stringObject("fpointer"),
 						fpointerComponents));

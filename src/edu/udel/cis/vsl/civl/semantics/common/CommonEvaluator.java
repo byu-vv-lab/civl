@@ -210,13 +210,6 @@ public class CommonEvaluator implements Evaluator {
 	private NumericExpression one;
 
 	/**
-	 * The symbolic "int object" 1. This is a kind of SARL symbolic object, but
-	 * is not a symbolic expression. It is needed as an argument to certain SARL
-	 * functions that require concrete (as opposed to symbolic) Java ints.
-	 */
-	private IntObject oneObj;
-
-	/**
 	 * The pointer value is a triple <s,v,r> where s identifies the dynamic
 	 * scope, v identifies the variable within that scope, and r identifies a
 	 * point within that variable. The type of s is scopeType, which is just a
@@ -227,13 +220,12 @@ public class CommonEvaluator implements Evaluator {
 	private SymbolicTupleType pointerType;
 
 	/**
-	 * TODO make function pointer type normal pointer type.
-	 * 
-	 * The function pointer value is a pair <s,n> where s identifies the dynamic
-	 * scope, n identifies the name of the function that the pointer points to.
-	 * The type of s is scopeType, which is just a tuple wrapping a single
-	 * integer which is the dynamic scope ID number. The type of n is array of
-	 * characters.
+	 * The function pointer value is a pair <s,i> where s identifies the dynamic
+	 * scope, i is the function id in the scope. The type of s is scopeType,
+	 * which is just a tuple wrapping a single integer which is the dynamic
+	 * scope ID number. The type of i is integer. Function pointer type need to
+	 * be different from pointer type, because there is analysis particularly
+	 * for pointers, like heap object reachability, reachable memory units, etc.
 	 */
 	private SymbolicTupleType functionPointerType;
 
@@ -377,7 +369,7 @@ public class CommonEvaluator implements Evaluator {
 		heapType = typeFactory.heapSymbolicType();
 		bundleType = typeFactory.bundleSymbolicType();
 		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
-		oneObj = (IntObject) universe.canonic(universe.intObject(1));
+		// oneObj = (IntObject) universe.canonic(universe.intObject(1));
 		twoObj = (IntObject) universe.canonic(universe.intObject(2));
 		identityReference = (ReferenceExpression) universe.canonic(universe
 				.identityReference());
@@ -1456,7 +1448,7 @@ public class CommonEvaluator implements Evaluator {
 			String process, FunctionGuardExpression expression)
 			throws UnsatisfiablePathConditionException {
 		Triple<State, CIVLFunction, Integer> eval = this
-				.evaluateFunctionPointer(state, pid,
+				.evaluateFunctionIdentifier(state, pid,
 						expression.functionExpression(), expression.getSource());
 		CIVLFunction function;
 
@@ -1478,16 +1470,15 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, universe.trueExpression());
 	}
 
-	private Evaluation evaluateFunctionPointer(State state, int pid,
-			FunctionIdentifierExpression expression) {
+	private Evaluation evaluateFunctionIdentifierExpression(State state,
+			int pid, FunctionIdentifierExpression expression) {
 		Scope scope = expression.scope();
-		String function = expression.function().name().name();
 		SymbolicExpression dyScopeId = modelFactory.scopeValue(state
 				.getDyscope(pid, scope));
 		SymbolicExpression functionPointer = universe.tuple(
 				this.functionPointerType,
-				Arrays.asList(new SymbolicExpression[] { dyScopeId,
-						universe.stringExpression(function) }));
+				Arrays.asList(dyScopeId,
+						universe.integer(expression.function().fid())));
 
 		return new Evaluation(state, functionPointer);
 	}
@@ -3064,7 +3055,7 @@ public class CommonEvaluator implements Evaluator {
 					(DynamicTypeOfExpression) expression);
 			break;
 		case FUNCTION_POINTER:
-			result = evaluateFunctionPointer(state, pid,
+			result = evaluateFunctionIdentifierExpression(state, pid,
 					(FunctionIdentifierExpression) expression);
 			break;
 		case FUNCTION_GUARD:
@@ -3192,35 +3183,29 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public Triple<State, CIVLFunction, Integer> evaluateFunctionPointer(
-			State state, int pid, Expression functionPointer, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
+	public Triple<State, CIVLFunction, Integer> evaluateFunctionIdentifier(
+			State state, int pid, Expression functionIdentifier,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
 		CIVLFunction function;
-		Evaluation eval = this.evaluate(state, pid, functionPointer);
-		int scopeId = modelFactory.getScopeId(functionPointer.getSource(),
-				universe.tupleRead(eval.value, this.zeroObj));
-		SymbolicExpression symFuncName = universe.tupleRead(eval.value,
-				this.oneObj);
-		SymbolicSequence<?> originalArray = (SymbolicSequence<?>) symFuncName
-				.argument(0);
-		String funcName = "";
+		Evaluation eval = this.evaluate(state, pid, functionIdentifier);
+		int scopeId = symbolicUtil.getDyscopeId(source, eval.value);
+		int fid = symbolicUtil.getVariableId(source, eval.value);
+		// String funcName = "";
+		Scope containingScope;
 
 		if (scopeId < 0) {
 			ProcessState procState = state.getProcessState(pid);
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE,
 					procState.name() + "(id=" + pid + ")",
-					"Invalid function pointer: " + functionPointer,
+					"Invalid function pointer: " + functionIdentifier,
 					symbolicAnalyzer.stateToString(state), source);
 
 			errorLogger.reportError(err);
 		}
 		state = eval.state;
-		for (int j = 0; j < originalArray.size(); j++) {
-			funcName += originalArray.get(j).toString().charAt(1);
-		}
-		function = state.getDyscope(scopeId).lexicalScope()
-				.getFunction(funcName);
+		containingScope = state.getDyscope(scopeId).lexicalScope();
+		function = containingScope.getFunction(fid);
 		return new Triple<>(state, function, scopeId);
 	}
 

@@ -42,6 +42,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	 */
 	private Scope parent;
 	private Variable[] variables;
+	private String[] functionNames;
 	private Map<String, CIVLFunction> functions;
 	private Set<Scope> children = new LinkedHashSet<Scope>();
 	private Collection<Variable> procRefs = new HashSet<Variable>();
@@ -67,6 +68,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 		this.parent = parent;
 		this.variables = new Variable[variables.size()];
 		this.functions = new HashMap<>();
+		this.functionNames = new String[0];
 		for (Variable v : variables) {
 			assert this.variables[v.vid()] == null;
 			this.variables[v.vid()] = v;
@@ -154,7 +156,14 @@ public class CommonScope extends CommonSourceable implements Scope {
 
 	@Override
 	public void addFunction(CIVLFunction function) {
+		String[] oldFunctionNames = this.functionNames;
+
 		this.functions.put(function.name().name(), function);
+		this.functionNames = new String[oldFunctionNames.length + 1];
+		for (int i = 0; i < oldFunctionNames.length; i++)
+			functionNames[i] = oldFunctionNames[i];
+		assert function.fid() == oldFunctionNames.length;
+		functionNames[oldFunctionNames.length] = function.name().name();
 	}
 
 	/**
@@ -578,5 +587,15 @@ public class CommonScope extends CommonSourceable implements Scope {
 	@Override
 	public boolean hasVariableWtPointer() {
 		return this.pointerRefs != null && this.pointerRefs.size() > 0;
+	}
+
+	@Override
+	public int numFunctions() {
+		return this.functionNames.length;
+	}
+
+	@Override
+	public CIVLFunction getFunction(int fid) {
+		return this.functions.get(functionNames[fid]);
 	}
 }

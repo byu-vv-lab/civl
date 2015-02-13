@@ -363,7 +363,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			dequeueWorkFunction = modelFactory.systemFunction(civlsource,
 					modelFactory.identifier(civlsource, dequeueWork),
 					parameters, returnType, containingScope, this.name);
-			dequeueWorkPointer = modelFactory.functionPointerExpression(
+			dequeueWorkPointer = modelFactory.functionIdentifierExpression(
 					civlsource, dequeueWorkFunction);
 			newArgs = new LinkedList<Expression>(arguments);
 			newArgs.set(1, modelFactory.integerLiteralExpression(

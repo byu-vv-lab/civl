@@ -113,7 +113,7 @@ public interface Evaluator {
 	 *         of the function that the given function pointer refers to.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	Triple<State, CIVLFunction, Integer> evaluateFunctionPointer(State state,
+	Triple<State, CIVLFunction, Integer> evaluateFunctionIdentifier(State state,
 			int pid, Expression functionPointer, CIVLSource source)
 			throws UnsatisfiablePathConditionException;
 

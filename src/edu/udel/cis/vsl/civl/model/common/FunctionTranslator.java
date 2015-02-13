@@ -3537,7 +3537,7 @@ public class FunctionTranslator {
 
 			result = varExpression;
 		} else if (scope.getFunction(name) != null) {
-			result = modelFactory.functionPointerExpression(source,
+			result = modelFactory.functionIdentifierExpression(source,
 					scope.getFunction(name));
 		} else {
 			throw new CIVLInternalException("No such variable ", source);

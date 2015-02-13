@@ -299,7 +299,7 @@ public interface ModelFactory {
 	DynamicTypeOfExpression dynamicTypeOfExpression(CIVLSource source,
 			CIVLType type);
 
-	FunctionIdentifierExpression functionPointerExpression(CIVLSource source,
+	FunctionIdentifierExpression functionIdentifierExpression(CIVLSource source,
 			CIVLFunction function);
 
 	HereOrRootExpression hereOrRootExpression(CIVLSource source, boolean isRoot);

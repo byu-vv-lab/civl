@@ -64,6 +64,8 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 	private Set<Statement> statements;
 
+	private int fid;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -86,9 +88,11 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 */
 	public CommonFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
-			Scope containingScope, Location startLocation, ModelFactory factory) {
+			Scope containingScope, int fid, Location startLocation,
+			ModelFactory factory) {
 		super(source);
 		this.name = name;
+		this.fid = fid;
 		this.parameters = parameters;
 		if (parameters != null) {
 			int number = parameters.size();
@@ -522,6 +526,11 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	@Override
 	public void setParameterTypes(CIVLType[] types) {
 		this.functionType.setParameterTypes(types);
+	}
+
+	@Override
+	public int fid() {
+		return this.fid;
 	}
 
 }

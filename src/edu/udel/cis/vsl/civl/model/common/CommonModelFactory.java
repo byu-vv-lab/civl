@@ -591,7 +591,7 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public FunctionIdentifierExpression functionPointerExpression(
+	public FunctionIdentifierExpression functionIdentifierExpression(
 			CIVLSource source, CIVLFunction function) {
 		FunctionIdentifierExpression expression = new CommonFunctionIdentifierExpression(
 				source, function, typeFactory.pointerSymbolicType);
@@ -1440,7 +1440,8 @@ public class CommonModelFactory implements ModelFactory {
 			Identifier name, List<Variable> parameters, CIVLType returnType,
 			Scope containingScope, int continuity) {
 		return new CommonAbstractFunction(source, name, parameters, returnType,
-				containingScope, continuity, this);
+				containingScope, containingScope.numFunctions(), continuity,
+				this);
 	}
 
 	@Override
@@ -1453,7 +1454,9 @@ public class CommonModelFactory implements ModelFactory {
 			}
 		}
 		return new CommonFunction(source, name, parameters, returnType,
-				containingScope, startLocation, this);
+				containingScope,
+				containingScope != null ? containingScope.numFunctions() : -1,
+				startLocation, this);
 	}
 
 	@Override
@@ -1522,7 +1525,8 @@ public class CommonModelFactory implements ModelFactory {
 			libraryName = "civlc";
 		}
 		return new CommonSystemFunction(source, name, parameters, returnType,
-				containingScope, (Location) null, this, libraryName);
+				containingScope, containingScope.numFunctions(),
+				(Location) null, this, libraryName);
 	}
 
 	@Override
@@ -2038,7 +2042,7 @@ public class CommonModelFactory implements ModelFactory {
 			function = this.systemFunction(systemSource,
 					this.identifier(systemSource, "$waitall"), parameters,
 					typeFactory.voidType, systemScope, "civlc");
-			this.waitallFuncPointer = this.functionPointerExpression(
+			this.waitallFuncPointer = this.functionIdentifierExpression(
 					systemSource, function);
 		}
 		return this.waitallFuncPointer;

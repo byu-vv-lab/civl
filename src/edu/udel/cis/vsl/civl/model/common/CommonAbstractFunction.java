@@ -38,8 +38,8 @@ public class CommonAbstractFunction extends CommonFunction implements
 	 */
 	public CommonAbstractFunction(CIVLSource source, Identifier name,
 			List<Variable> parameters, CIVLType returnType,
-			Scope containingScope, int continuity, ModelFactory factory) {
-		super(source, name, parameters, returnType, containingScope, null,
+			Scope containingScope, int fid, int continuity, ModelFactory factory) {
+		super(source, name, parameters, returnType, containingScope, fid, null,
 				factory);
 		this.continuity = continuity;
 	}
@@ -71,12 +71,12 @@ public class CommonAbstractFunction extends CommonFunction implements
 		this.outerScope().print(prefix + "| ", out, isDebug);
 		out.flush();
 	}
-	
+
 	@Override
-	public boolean isAbstract(){
+	public boolean isAbstract() {
 		return true;
 	}
-	
+
 	@Override
 	public boolean isNormal() {
 		return false;
