@@ -4,8 +4,8 @@ import edu.udel.cis.vsl.civl.gui.IF.GUIs;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
 /**
- * Main CIVL class, containing main method and a few static methods for running
- * CIVL.
+ * The main CIVL class, containing the main method, which provides the command
+ * line interface for using CIVL.
  * 
  * @author Stephen F. Siegel, University of Delaware
  * 

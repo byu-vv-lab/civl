@@ -8,13 +8,49 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
+/**
+ * A CIVLConfiguration object encompasses all the parameters used to configure
+ * CIVL for the execution of one or more tasks. It provides methods to get and
+ * set these parameters. The types of the parameters are all simple Java types,
+ * such as boolean or int, so this class does not use any other CIVL classes
+ * 
+ * @author siegel
+ *
+ */
 public class CIVLConfiguration {
 
+	/**
+	 * What kind of deadlocks should CIVL search for?
+	 */
 	private DeadlockKind deadlock = DeadlockKind.ABSOLUTE;
+
+	/**
+	 * Should CIVL run in "debug" mode, printing lots and lots of output?
+	 */
 	private boolean debug = false;
+
+	/**
+	 * Should CIVL actually print the stuff that the program it is analyzing
+	 * sends to <code>stdout</code>? Could lead to a lot of printing, esp. when
+	 * searching a state space, which may entail executing the same statement
+	 * over and over again.
+	 */
 	private boolean enablePrintf = true;
+
+	/**
+	 * Should CIVL save some states as it searches, as opposed to doing a
+	 * "stateless" search? Even if this is true, CIVL will not necessarily save
+	 * every state, only important ones that have a chance of being encountered
+	 * again in the search.
+	 */
 	private boolean saveStates = true;
+
+	/**
+	 * Should CIVL show the Abstract Syntax Tree (AST) that it produces from
+	 * parsing the source code (before any transformations)?
+	 */
 	private boolean showAST = false;
+
 	private boolean showAmpleSet = false;
 	private boolean showAmpleSetWtStates = false;
 	private boolean showModel = false;
@@ -27,7 +63,6 @@ public class CIVLConfiguration {
 	private boolean svcomp = false;
 	private boolean showProgram = false;
 	private boolean ompNoSimplify = false;
-	// private String deadlock;
 	private PrintStream out;
 	private PrintStream err;
 	private boolean showPathConditon = false;
@@ -41,7 +76,7 @@ public class CIVLConfiguration {
 	private boolean showMemoryUnits = false;
 	private int procBound = -1;
 	private int ompLoopDecomp = ModelConfiguration.DECOMP_ROUND_ROBIN;
-	
+
 	public CIVLConfiguration(GMCConfiguration config) {
 		String deadlockString = (String) config
 				.getValue(CIVLConstants.deadlockO);
