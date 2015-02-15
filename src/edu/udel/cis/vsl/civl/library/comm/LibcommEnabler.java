@@ -32,6 +32,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -90,17 +91,17 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 	@Override
 	public List<Transition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
-			int pid, int processIdentifier, Statement assignAtomicLock)
+			int pid, int processIdentifier, AtomicLockAction atomicLockAction)
 			throws UnsatisfiablePathConditionException {
 		String functionName = call.function().name().name();
 
 		switch (functionName) {
 		case "$comm_dequeue":
 			return this.enabledCommDequeueTransitions(state, call,
-					pathCondition, pid, processIdentifier, assignAtomicLock);
+					pathCondition, pid, processIdentifier, atomicLockAction);
 		default:
 			return super.enabledTransitions(state, call, pathCondition, pid,
-					processIdentifier, assignAtomicLock);
+					processIdentifier, atomicLockAction);
 		}
 	}
 
@@ -204,7 +205,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 	 */
 	private List<Transition> enabledCommDequeueTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
-			int pid, int processIdentifier, Statement assignAtomicLock)
+			int pid, int processIdentifier, AtomicLockAction atomicLockAction)
 			throws UnsatisfiablePathConditionException {
 		List<Expression> arguments = call.arguments();
 		List<Transition> localTransitions = new LinkedList<>();
@@ -287,13 +288,14 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 					sourceExpr, tagExpr, possibleSources, call.getSource(),
 					call.function().parameters(), arguments, call.function()
 							.returnType(), call.statementScope(), call.guard(),
-					call.target(), call.lhs(), assignAtomicLock);
+					call.target(), call.lhs());
 			for (int j = 0; j < callWorkers.size(); j++)
 				localTransitions.add(Semantics.newTransition(pathCondition,
-						pid, processIdentifier, callWorkers.get(j)));
+						pid, processIdentifier, callWorkers.get(j),
+						atomicLockAction));
 		} else
 			localTransitions.add(Semantics.newTransition(pathCondition, pid,
-					processIdentifier, call));
+					processIdentifier, call, atomicLockAction));
 		return localTransitions;
 	}
 
@@ -338,10 +340,9 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			List<NumericExpression> possibleSources, CIVLSource civlsource,
 			List<Variable> parameters, List<Expression> arguments,
 			CIVLType returnType, Scope containingScope, Expression callGuard,
-			Location callTarget, LHSExpression lhs, Statement assignAtomicLock)
+			Location callTarget, LHSExpression lhs)
 			throws UnsatisfiablePathConditionException {
 		CallOrSpawnStatement callWorker;
-		Statement transitionStatement;
 		List<Statement> transitionStatements = new LinkedList<>();
 		List<Expression> newArgs;
 		SystemFunction dequeueWorkFunction;
@@ -375,13 +376,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			callWorker.setTargetTemp(callTarget);
 			// callWorker.setFunction(dequeueWorkPointer);
 			callWorker.setLhs(lhs);
-			if (assignAtomicLock != null) {
-				transitionStatement = modelFactory.statmentList(
-						assignAtomicLock, callWorker);
-			} else {
-				transitionStatement = callWorker;
-			}
-			transitionStatements.add(transitionStatement);
+			transitionStatements.add(callWorker);
 		}
 
 		return transitionStatements;

@@ -1712,24 +1712,24 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(expressionNode), scope);
 
 		switch (expressionNode.expressionKind()) {
-		case CAST: {
-			CastNode castNode = (CastNode) expressionNode;
-			CIVLType castType = translateABCType(
-					modelFactory.sourceOf(castNode.getCastType()), scope,
-					castNode.getCastType().getType());
-
-			if (castType.isVoidType()) {
-				Statement noopStatement = modelFactory.noopStatement(
-						modelFactory.sourceOf(castNode), location);
-
-				result = new CommonFragment(noopStatement);
-			} else
-				throw new CIVLUnimplementedFeatureException(
-						"expression statement of a cast expression with the cast type "
-								+ castType,
-						modelFactory.sourceOf(expressionNode));
-			break;
-		}
+		// case CAST: {
+		// CastNode castNode = (CastNode) expressionNode;
+		// CIVLType castType = translateABCType(
+		// modelFactory.sourceOf(castNode.getCastType()), scope,
+		// castNode.getCastType().getType());
+		//
+		// if (castType.isVoidType()) {
+		// Statement noopStatement = modelFactory.noopStatement(
+		// modelFactory.sourceOf(castNode), location);
+		//
+		// result = new CommonFragment(noopStatement);
+		// } else
+		// throw new CIVLUnimplementedFeatureException(
+		// "expression statement of a cast expression with the cast type "
+		// + castType,
+		// modelFactory.sourceOf(expressionNode));
+		// break;
+		// }
 		case OPERATOR: {
 			OperatorNode operatorNode = (OperatorNode) expressionNode;
 
@@ -1759,8 +1759,11 @@ public class FunctionTranslator {
 			default: {// since side-effects have been removed,
 						// the only expressions remaining with side-effects
 						// are assignments. all others are equivalent to no-op
+				Expression expression = this.translateExpressionNode(
+						expressionNode, scope, true);
 				Statement noopStatement = modelFactory.noopStatement(
-						modelFactory.sourceOf(operatorNode), location);
+						modelFactory.sourceOf(operatorNode), location,
+						expression);
 
 				result = new CommonFragment(noopStatement);
 			}
@@ -1778,16 +1781,24 @@ public class FunctionTranslator {
 		case CONSTANT:
 		case IDENTIFIER_EXPRESSION: {
 			Statement noopStatement = modelFactory.noopStatement(
-					modelFactory.sourceOf(expressionNode), location);
+					modelFactory.sourceOf(expressionNode), location, null);
 
 			result = new CommonFragment(noopStatement);
 		}
 			break;
-		default:
-			throw new CIVLUnimplementedFeatureException(
-					"expression statement of this kind "
-							+ expressionNode.expressionKind(),
-					modelFactory.sourceOf(expressionNode));
+		default: {
+			Expression expression = this.translateExpressionNode(
+					expressionNode, scope, true);
+			Statement noopStatement = modelFactory
+					.noopStatement(modelFactory.sourceOf(expressionNode),
+							location, expression);
+
+			result = new CommonFragment(noopStatement);
+			// throw new CIVLUnimplementedFeatureException(
+			// "expression statement of this kind "
+			// + expressionNode.expressionKind(),
+			// modelFactory.sourceOf(expressionNode));
+		}
 		}
 		return result;
 	}
@@ -2226,7 +2237,7 @@ public class FunctionTranslator {
 		Location location = modelFactory.location(
 				modelFactory.sourceOfBeginning(jumpNode), scope);
 		Statement result = modelFactory.noopStatement(
-				modelFactory.sourceOf(jumpNode), location);
+				modelFactory.sourceOf(jumpNode), location, null);
 		JumpKind kind = jumpNode.getKind();
 
 		switch (kind) {
@@ -2310,7 +2321,7 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(nullStatementNode), scope);
 
 		return new CommonFragment(modelFactory.noopStatement(
-				modelFactory.sourceOf(nullStatementNode), location));
+				modelFactory.sourceOf(nullStatementNode), location, null));
 	}
 
 	/**
@@ -2477,7 +2488,7 @@ public class FunctionTranslator {
 			for (Statement stmt : defaultGoto.finalStatements())
 				functionInfo.putToGotoStatement(stmt, label);
 		} else {
-			defaultExit = modelFactory.noopStatement(modelFactory
+			defaultExit = modelFactory.noopStatementWtGuard(modelFactory
 					.sourceOfBeginning(switchNode), location, modelFactory
 					.unaryExpression(
 							modelFactory.sourceOfBeginning(switchNode),

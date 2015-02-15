@@ -26,7 +26,7 @@ public class CommonLoopBranchStatement extends CommonNoopStatement {
 	 */
 	public CommonLoopBranchStatement(CIVLSource civlSource, Location source,
 			Expression guard, boolean isTrue) {
-		super(civlSource, source, guard);
+		super(civlSource, source, guard, null);
 		this.noopKind = NoopKind.LOOP;
 		this.isTrueBranch = isTrue;
 		this.statementScope = guard.expressionScope();

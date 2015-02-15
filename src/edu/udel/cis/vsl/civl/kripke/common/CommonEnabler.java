@@ -20,13 +20,13 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -279,14 +279,13 @@ public abstract class CommonEnabler implements Enabler {
 		ProcessState p = state.getProcessState(pid);
 		Location pLocation = p.getLocation();
 		LinkedList<Transition> transitions = new LinkedList<>();
-		Statement assignAtomicLock = null;
 		int numOutgoing;
+		AtomicLockAction atomicLockAction = AtomicLockAction.NONE;
 
 		if (pLocation == null)
 			return transitions;
 		if (stateFactory.processInAtomic(state) != pid && p.atomicCount() > 0) {
-			assignAtomicLock = modelFactory.assignAtomicLockVariable(pid,
-					pLocation);
+			atomicLockAction = AtomicLockAction.GRAB;
 		}
 		numOutgoing = pLocation.getNumOutgoing();
 		for (int i = 0; i < numOutgoing; i++) {
@@ -296,7 +295,7 @@ public abstract class CommonEnabler implements Enabler {
 
 			if (!newPathCondition.isFalse()) {
 				transitions.addAll(enabledTransitionsOfStatement(state,
-						statement, newPathCondition, pid, assignAtomicLock));
+						statement, newPathCondition, pid, atomicLockAction));
 			}
 		}
 		return transitions;
@@ -363,40 +362,28 @@ public abstract class CommonEnabler implements Enabler {
 	 * @return The set of enabled transitions.
 	 */
 	private List<Transition> enabledTransitionsOfStatement(State state,
-			Statement s, BooleanExpression pathCondition, int pid,
-			Statement assignAtomicLock) {
+			Statement statement, BooleanExpression pathCondition, int pid,
+			AtomicLockAction atomicLockAction) {
 		List<Transition> localTransitions = new LinkedList<>();
 		int processIdentifier = state.getProcessState(pid).identifier();
 
 		try {
-			if (s instanceof CallOrSpawnStatement) {
-				CallOrSpawnStatement call = (CallOrSpawnStatement) s;
+			if (statement instanceof CallOrSpawnStatement) {
+				CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
 				// TODO think about optimization of system functions
 				if (call.isSystemCall()) { // TODO check function pointer
 					return this.getEnabledTransitionsOfSystemCall(
 							call.getSource(), state, call, pathCondition, pid,
-							processIdentifier, assignAtomicLock);
+							processIdentifier, atomicLockAction);
 				} else if (procBound > 0 && call.isSpawn()
 						&& state.numLiveProcs() >= procBound) {
 					// empty set: spawn is disabled due to procBound
 					return localTransitions;
 				}
 			}
-
-			Statement transitionStatement;
-
-			if (assignAtomicLock != null) {
-				StatementList statementList = modelFactory
-						.statmentList(assignAtomicLock);
-
-				statementList.add(s);
-				transitionStatement = statementList;
-			} else {
-				transitionStatement = s;
-			}
 			localTransitions.add(Semantics.newTransition(pathCondition, pid,
-					processIdentifier, transitionStatement));
+					processIdentifier, statement, atomicLockAction));
 		} catch (UnsatisfiablePathConditionException e) {
 			// nothing to do: don't add this transition
 		}
@@ -419,7 +406,7 @@ public abstract class CommonEnabler implements Enabler {
 	private List<Transition> getEnabledTransitionsOfSystemCall(
 			CIVLSource source, State state, CallOrSpawnStatement call,
 			BooleanExpression pathCondition, int pid, int processIdentifier,
-			Statement assignAtomicLock)
+			AtomicLockAction atomicLockAction)
 			throws UnsatisfiablePathConditionException {
 		String libraryName = ((SystemFunction) call.function()).getLibrary();
 
@@ -427,7 +414,7 @@ public abstract class CommonEnabler implements Enabler {
 			LibraryEnabler libEnabler = libraryEnabler(source, libraryName);
 
 			return libEnabler.enabledTransitions(state, call, pathCondition,
-					pid, processIdentifier, assignAtomicLock);
+					pid, processIdentifier, atomicLockAction);
 		} catch (LibraryLoaderException exception) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
 					+ ")";

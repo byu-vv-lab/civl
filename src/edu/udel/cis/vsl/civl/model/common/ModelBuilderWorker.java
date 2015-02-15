@@ -16,6 +16,9 @@ import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.program.IF.Program;
@@ -68,7 +71,17 @@ public class ModelBuilderWorker {
 	 */
 	int anonymousStructCounter = 0;
 
+	/**
+	 * Does the source file include time.h? If yes, then the time count variable
+	 * and the broken time variable need to be created.
+	 */
 	boolean timeLibIncluded = false;
+
+	/**
+	 * Does the source file contains any function call to $next_time_count? If
+	 * yes, then the time count variable needs to be created.
+	 */
+	boolean hasNextTimeCountCall = false;
 
 	Map<CIVLFunction, StatementNode> parProcFunctions = new HashMap<>();
 
@@ -324,15 +337,53 @@ public class ModelBuilderWorker {
 		ASTNode root = program.getAST().getRootNode();
 
 		this.timeLibIncluded = this.hasTimeLibrary(root);
+		this.hasNextTimeCountCall = this.hasNextTimeCountCall(root);
 	}
 
+	/**
+	 * Does the AST node contains any function call node to $next_time_count()?
+	 * If yes, then the model will need the time count variable; otherwise, no
+	 * need to create that variable.
+	 * 
+	 * @param node
+	 *            an node from the AST
+	 * @return true iff the node contains a function call node to
+	 *         $next_time_count.
+	 */
+	private boolean hasNextTimeCountCall(ASTNode node) {
+		for (ASTNode child : node.children()) {
+			if (child == null)
+				continue;
+			if (child instanceof FunctionCallNode) {
+				ExpressionNode functionExpr = ((FunctionCallNode) child)
+						.getFunction();
+
+				if (functionExpr instanceof IdentifierExpressionNode) {
+					if (((IdentifierExpressionNode) functionExpr)
+							.getIdentifier().name()
+							.equals(ModelConfiguration.NEXT_TIME_COUNT))
+						return true;
+				}
+			}
+			if (hasNextTimeCountCall(child))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Does the source file include the time library (time.h)? If yes
+	 * 
+	 * @param node
+	 * @return
+	 */
 	private boolean hasTimeLibrary(ASTNode node) {
 		Source source = node.getSource();
 		CToken token = source == null ? null : node.getSource().getFirstToken();
 		SourceFile file = token == null ? null : token.getFormation()
 				.getLastFile();
 
-		if (file != null && file.getName().equals("time.h"))
+		if (file != null && file.getName().equals(ModelConfiguration.TIME_LIB))
 			return true;
 		else {
 			for (ASTNode child : node.children()) {

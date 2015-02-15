@@ -4,8 +4,8 @@ import java.util.BitSet;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -82,6 +82,6 @@ public interface LibraryEnabler {
 	 */
 	List<Transition> enabledTransitions(State state, CallOrSpawnStatement call,
 			BooleanExpression pathCondition, int pid, int processIdentifier,
-			Statement assignAtomicLock)
+			AtomicLockAction atomicLockAction)
 			throws UnsatisfiablePathConditionException;
 }

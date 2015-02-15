@@ -5,6 +5,7 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.semantics.common.CommonEvaluator;
 import edu.udel.cis.vsl.civl.semantics.common.CommonExecutor;
 import edu.udel.cis.vsl.civl.semantics.common.CommonLibraryEvaluatorLoader;
@@ -139,9 +140,9 @@ public class Semantics {
 	 */
 	public static CommonTransition newTransition(
 			BooleanExpression pathCondition, int pid, int processIdentifier,
-			Statement statement) {
+			Statement statement, AtomicLockAction atomicLockAction) {
 		return new CommonTransition(pathCondition, pid, processIdentifier,
-				statement);
+				statement, atomicLockAction);
 	}
 
 	/**

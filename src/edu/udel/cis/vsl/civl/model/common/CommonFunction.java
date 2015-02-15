@@ -392,7 +392,8 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 				Statement s = loc.getOutgoing(0);
 
 				// The only statement of loc is a no-op statement
-				if (s instanceof NoopStatement) {
+				if (s instanceof NoopStatement
+						&& ((NoopStatement) s).expression() == null) {
 					Expression guard = s.guard();
 
 					// The guard of the no-op is true

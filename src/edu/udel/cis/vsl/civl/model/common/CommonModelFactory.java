@@ -966,9 +966,10 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public NoopStatement noopStatement(CIVLSource civlSource, Location source) {
+	public NoopStatement noopStatement(CIVLSource civlSource, Location source,
+			Expression expression) {
 		return new CommonNoopStatement(civlSource, source,
-				this.trueExpression(civlSource));
+				this.trueExpression(civlSource), expression);
 	}
 
 	/**
@@ -979,10 +980,10 @@ public class CommonModelFactory implements ModelFactory {
 	 * @return A new noop statement.
 	 */
 	@Override
-	public NoopStatement noopStatement(CIVLSource civlSource, Location source,
-			Expression guard) {
+	public NoopStatement noopStatementWtGuard(CIVLSource civlSource,
+			Location source, Expression guard) {
 		return new CommonNoopStatement(civlSource, source,
-				guard != null ? guard : this.trueExpression(civlSource));
+				guard != null ? guard : this.trueExpression(civlSource), null);
 	}
 
 	@Override
@@ -1844,12 +1845,14 @@ public class CommonModelFactory implements ModelFactory {
 	private void createTimeVariables(Scope scope) {
 		// Since the atomic lock variable is not declared explicitly in the CIVL
 		// model specification, the system source will be used here.
-		timeCountVariable = this.variable(this.systemSource,
-				typeFactory.integerType, this.identifier(this.systemSource,
-						ModelConfiguration.TIME_COUNT_VARIABLE), scope
-						.numVariables());
-		timeCountVariable.setStatic(true);
-		scope.addVariable(timeCountVariable);
+		if (modelBuilder.hasNextTimeCountCall) {
+			timeCountVariable = this.variable(this.systemSource,
+					typeFactory.integerType, this.identifier(this.systemSource,
+							ModelConfiguration.TIME_COUNT_VARIABLE), scope
+							.numVariables());
+			timeCountVariable.setStatic(true);
+			scope.addVariable(timeCountVariable);
+		}
 		if (modelBuilder.timeLibIncluded) {
 			brokenTimeVariable = this.variable(this.systemSource,
 					typeFactory.integerType, this.identifier(systemSource,
@@ -1862,7 +1865,7 @@ public class CommonModelFactory implements ModelFactory {
 	/* *************************** Private Methods ************************* */
 
 	/**
-	 * Gets a Java conrete int from a symbolic expression or throws exception.
+	 * Gets a Java concrete int from a symbolic expression or throws exception.
 	 * 
 	 * @param source
 	 * 

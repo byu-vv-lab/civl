@@ -21,13 +21,13 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -81,13 +81,12 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	@Override
 	public List<Transition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
-			int pid, int processIdentifier, Statement assignAtomicLock)
+			int pid, int processIdentifier, AtomicLockAction atomicLockAction)
 			throws UnsatisfiablePathConditionException {
 		String functionName = call.function().name().name();
 		AssignStatement assignmentCall;
 		List<Expression> arguments = call.arguments();
 		List<Transition> localTransitions = new LinkedList<>();
-		Statement transitionStatement;
 		Evaluation eval;
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
@@ -119,19 +118,14 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 						(call.lhs() instanceof InitialValueExpression));
 				assignmentCall.setTargetTemp(call.target());
 				assignmentCall.setTarget(call.target());
-				if (assignAtomicLock != null) {
-					transitionStatement = modelFactory.statmentList(
-							assignAtomicLock, assignmentCall);
-				} else {
-					transitionStatement = assignmentCall;
-				}
 				localTransitions.add(Semantics.newTransition(pathCondition,
-						pid, processIdentifier, transitionStatement));
+						pid, processIdentifier, assignmentCall,
+						atomicLockAction));
 			}
 			break;
 		default:
 			return super.enabledTransitions(state, call, pathCondition, pid,
-					processIdentifier, assignAtomicLock);
+					processIdentifier, atomicLockAction);
 		}
 		return localTransitions;
 	}

@@ -467,6 +467,7 @@ public class ImmutableStateFactory implements StateFactory {
 		Variable atomicVar = modelFactory.atomicLockVariableExpression()
 				.variable();
 
+		//assert state.getVariableValue(0, atomicVar.vid())
 		return this.setVariable(state, atomicVar.vid(), 0,
 				modelFactory.processValue(pid));
 	}

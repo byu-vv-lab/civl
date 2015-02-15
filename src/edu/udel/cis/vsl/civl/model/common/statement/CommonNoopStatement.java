@@ -26,6 +26,8 @@ public class CommonNoopStatement extends CommonStatement implements
 
 	protected NoopKind noopKind;
 
+	protected Expression expression;
+
 	/**
 	 * A noop statement.
 	 * 
@@ -33,9 +35,10 @@ public class CommonNoopStatement extends CommonStatement implements
 	 *            The source location for this noop.
 	 */
 	public CommonNoopStatement(CIVLSource civlSource, Location source,
-			Expression guard) {
+			Expression guard, Expression expression) {
 		super(civlSource, null, null, source, guard);
 		noopKind = NoopKind.NONE;
+		this.expression = expression;
 	}
 
 	public CommonNoopStatement() {
@@ -53,9 +56,17 @@ public class CommonNoopStatement extends CommonStatement implements
 		Expression newGuard = guardReplaceWith(oldExpression, newExpression);
 		CommonNoopStatement newStatement = null;
 
-		if (newGuard != null)
+		if (newGuard != null) {
 			newStatement = new CommonNoopStatement(this.getSource(),
-					this.source(), newGuard);
+					this.source(), newGuard, expression);
+
+		}
+		Expression newExpressionArg = expression.replaceWith(oldExpression,
+				newExpression);
+
+		if (newExpressionArg != null)
+			newStatement = new CommonNoopStatement(this.getSource(),
+					this.source(), this.guard(), newExpressionArg);
 		return newStatement;
 	}
 
@@ -81,6 +92,11 @@ public class CommonNoopStatement extends CommonStatement implements
 
 	@Override
 	protected void calculateConstantValueWork(SymbolicUniverse universe) {
+	}
+
+	@Override
+	public Expression expression() {
+		return this.expression;
 	}
 
 }

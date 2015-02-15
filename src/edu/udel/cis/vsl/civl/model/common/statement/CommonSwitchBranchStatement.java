@@ -35,7 +35,7 @@ public class CommonSwitchBranchStatement extends CommonNoopStatement {
 	 */
 	public CommonSwitchBranchStatement(CIVLSource civlSource, Location source,
 			Expression guard, Expression label) {
-		super(civlSource, source, guard);
+		super(civlSource, source, guard, null);
 		this.noopKind = NoopKind.SWITCH;
 		this.label = label;
 		this.statementScope = guard.expressionScope();

@@ -3,6 +3,7 @@
  */
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 
 /**
  * Marker interface for a noop statement.
@@ -23,4 +24,6 @@ public interface NoopStatement extends Statement {
 	 * @return The kind of this noop statement
 	 */
 	NoopKind noopKind();
+
+	Expression expression();
 }

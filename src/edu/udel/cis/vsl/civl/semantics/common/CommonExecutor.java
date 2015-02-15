@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
@@ -39,6 +40,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
@@ -57,6 +59,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -640,8 +643,17 @@ public class CommonExecutor implements Executor {
 		case MALLOC:
 			return executeMalloc(state, pid, process,
 					(MallocStatement) statement);
-		case NOOP:
+		case NOOP: {
+			Expression expression = ((NoopStatement) statement).expression();
+
+			if (expression != null) {
+				Evaluation eval = this.evaluator.evaluate(state, pid,
+						expression);
+
+				state = eval.state;
+			}
 			return stateFactory.setLocation(state, pid, statement.target());
+		}
 		case RETURN:
 			return executeReturn(state, pid, process,
 					(ReturnStatement) statement);
@@ -1469,6 +1481,23 @@ public class CommonExecutor implements Executor {
 	@Override
 	public State execute(State state, int pid, Transition transition)
 			throws UnsatisfiablePathConditionException {
+		AtomicLockAction atomicLockAction = transition.atomicLockAction();
+
+		switch (atomicLockAction) {
+		case GRAB:
+			state = stateFactory.getAtomicLock(state, pid);
+			break;
+		case RELEASE:
+			state = stateFactory.releaseAtomicLock(state);
+			break;
+		case NONE:
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"Executing a transition with the atomic lock action "
+							+ atomicLockAction.toString(), transition
+							.statement().getSource());
+		}
 		state = state.setPathCondition(transition.pathCondition());
 		return this.executeStatement(state, pid, transition.statement());
 	}

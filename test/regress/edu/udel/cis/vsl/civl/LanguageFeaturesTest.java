@@ -520,6 +520,11 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", filename("not.cvl")));
 	}
 
+	@Test
+	public void noopBad() {
+		assertFalse(ui.run("verify ", filename("noopBad.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

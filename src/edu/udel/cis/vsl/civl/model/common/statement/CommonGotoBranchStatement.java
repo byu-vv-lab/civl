@@ -37,7 +37,7 @@ public class CommonGotoBranchStatement extends CommonNoopStatement {
 	 */
 	public CommonGotoBranchStatement(CIVLSource civlSource, Location source,
 			Expression guard, String label) {
-		super(civlSource, source, guard);
+		super(civlSource, source, guard, null);
 		this.labelName = label;
 		this.noopKind = NoopKind.GOTO;
 	}

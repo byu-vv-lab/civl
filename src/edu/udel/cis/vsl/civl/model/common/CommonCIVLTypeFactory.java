@@ -235,7 +235,6 @@ public class CommonCIVLTypeFactory implements CIVLTypeFactory {
 				universe.realType());
 		this.charType = primitiveType(PrimitiveTypeKind.CHAR,
 				universe.characterType());
-		this.systemTypes.put(ModelConfiguration.CHAR_TYPE, charType);
 		this.rangeType = new CommonRegularRangeType(new CommonIdentifier(
 				this.systemSource, (StringObject) universe.canonic(universe
 						.stringObject("$regular_range"))), universe,

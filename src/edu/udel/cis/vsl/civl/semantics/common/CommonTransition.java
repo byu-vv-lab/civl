@@ -11,8 +11,11 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 /**
  * A CIVL transition involves a single atomic statement in one process. It is to
  * be contrasted with a synchronous transition, which involves two statements
- * executing together in two different processes.
+ * executing together in two different processes. It also contains an atomic
+ * lock action, which denotes that whether the process is going to grab/release
+ * the atomic lock.
  * 
+ * @author Manchun Zheng
  * @author Timothy K. Zirkel (zirkel)
  * 
  */
@@ -41,6 +44,8 @@ public class CommonTransition implements Transition {
 	 */
 	private Statement statement;
 
+	private AtomicLockAction atomicLockAction;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -65,11 +70,13 @@ public class CommonTransition implements Transition {
 	 *            The statement of the transition.
 	 */
 	public CommonTransition(BooleanExpression pathCondition, int pid,
-			int processIdentifier, Statement statement) {
+			int processIdentifier, Statement statement,
+			AtomicLockAction atomicLockAction) {
 		this.pathCondition = pathCondition;
 		this.pid = pid;
 		this.statement = statement;
 		this.processIdentifier = processIdentifier;
+		this.atomicLockAction = atomicLockAction;
 	}
 
 	/* *********************** Methods from Transition ********************* */
@@ -99,5 +106,10 @@ public class CommonTransition implements Transition {
 
 		result += statement.toStepString(AtomicKind.NONE, pid, false);
 		return result;
+	}
+
+	@Override
+	public AtomicLockAction atomicLockAction() {
+		return this.atomicLockAction;
 	}
 }

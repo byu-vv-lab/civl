@@ -12,13 +12,12 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.Semantics;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -101,22 +100,12 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 	@Override
 	public List<Transition> enabledTransitions(State state,
 			CallOrSpawnStatement call, BooleanExpression pathCondition,
-			int pid, int processIdentifier, Statement assignAtomicLock)
+			int pid, int processIdentifier, AtomicLockAction atomicLockAction)
 			throws UnsatisfiablePathConditionException {
-		Statement transitionStatement;
 		List<Transition> localTransitions = new LinkedList<>();
 
-		if (assignAtomicLock != null) {
-			StatementList statementList = modelFactory
-					.statmentList(assignAtomicLock);
-
-			statementList.add(call);
-			transitionStatement = statementList;
-		} else {
-			transitionStatement = call;
-		}
 		localTransitions.add(Semantics.newTransition(pathCondition, pid,
-				processIdentifier, transitionStatement));
+				processIdentifier, call, atomicLockAction));
 		return localTransitions;
 	}
 

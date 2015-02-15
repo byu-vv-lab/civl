@@ -36,7 +36,7 @@ public class CommonIfElseBranchStatement extends CommonNoopStatement {
 	 */
 	public CommonIfElseBranchStatement(CIVLSource civlSource, Location source,
 			Expression guard, boolean isIf) {
-		super(civlSource, source, guard);
+		super(civlSource, source, guard, null);
 		this.noopKind = NoopKind.IF_ELSE;
 		this.isIfBranch = isIf;
 		this.statementScope = guard.expressionScope();

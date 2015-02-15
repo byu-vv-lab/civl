@@ -45,7 +45,7 @@ public class CommonAtomBranchStatement extends CommonNoopStatement {
 	 */
 	public CommonAtomBranchStatement(CIVLSource civlSource, Location source,
 			Expression guard, boolean isEntering) {
-		super(civlSource, source, guard);
+		super(civlSource, source, guard, null);
 		this.noopKind = NoopKind.ATOMIC_ATOM;
 		this.enter = isEntering;
 	}

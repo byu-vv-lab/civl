@@ -808,9 +808,12 @@ public interface ModelFactory {
 	 *            The CIVL source of the no-op statement
 	 * @param source
 	 *            The source location for this noop statement.
+	 * @param expression
+	 *            The expression associates with this noop statement.
 	 * @return A new noop statement with the default guard of true.
 	 */
-	NoopStatement noopStatement(CIVLSource civlSource, Location source);
+	NoopStatement noopStatement(CIVLSource civlSource, Location source,
+			Expression expression);
 
 	/**
 	 * A noop statement with an explicit guard expression.
@@ -825,7 +828,7 @@ public interface ModelFactory {
 	 *            {@link #noopStatement(CIVLSource, Location)}.
 	 * @return A new noop statement.
 	 */
-	NoopStatement noopStatement(CIVLSource civlSource, Location source,
+	NoopStatement noopStatementWtGuard(CIVLSource civlSource, Location source,
 			Expression guard);
 
 	/**
@@ -1274,12 +1277,12 @@ public interface ModelFactory {
 	 * @return The symbolic universe
 	 */
 	SymbolicUniverse universe();
-	
+
 	/* ************************************************************************
 	 * Symbolic Expressions: Dyscope References
 	 * ************************************************************************
 	 */
-	
+
 	/**
 	 * Translate a symbolic scope id into an integer. A symbolic scope id is a
 	 * tuple with one element of integer type. A CIVL internal exception is
@@ -1292,11 +1295,11 @@ public interface ModelFactory {
 	 * @return The concrete scope id
 	 */
 	int getScopeId(CIVLSource source, SymbolicExpression scopeValue);
-	
+
 	boolean isScopeIdDefined(int scopeId);
-	
+
 	SymbolicExpression nullScopeValue();
-		
+
 	/**
 	 * Translate an integer scope id into a symbolic expression
 	 * 
@@ -1305,13 +1308,12 @@ public interface ModelFactory {
 	 * @return The symbolic expression representing the scope id
 	 */
 	SymbolicExpression scopeValue(int sid);
-	
-	
+
 	/* ************************************************************************
 	 * Symbolic Expressions: Process References
 	 * ************************************************************************
 	 */
-	
+
 	/**
 	 * Translate a symbolic process id into an integer. A symbolic process id is
 	 * a tuple with one element of integer type.
@@ -1323,7 +1325,7 @@ public interface ModelFactory {
 	 * @return The integer of the process id
 	 */
 	int getProcessId(CIVLSource source, SymbolicExpression processValue);
-	
+
 	/**
 	 * Checks if the given process value equals to the $proc_null constant. An
 	 * error is reported if the given process value is not of $proc type.
@@ -1336,11 +1338,9 @@ public interface ModelFactory {
 	 *         constant.
 	 */
 	boolean isProcNull(CIVLSource source, SymbolicExpression procValue);
-	
 
-	
 	SymbolicExpression nullProcessValue();
-	
+
 	boolean isPocessIdDefined(int pid);
 
 	boolean isProcessIdNull(int pid);
@@ -1426,7 +1426,6 @@ public interface ModelFactory {
 	 *            The statement to be added to the anonymous fragment.
 	 */
 	void addAnonStatement(Statement statment);
-
 
 	Expression functionGuardExpression(CIVLSource source, Expression function,
 			List<Expression> arguments);

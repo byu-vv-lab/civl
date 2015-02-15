@@ -13,6 +13,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  */
 public interface Transition {
 
+	public enum AtomicLockAction {
+		NONE, /** no action to the atomic lock */
+		GRAB, /** attempts to grab the atomic lock */
+		RELEASE
+		/** releases the atomic lock */
+	}
+
 	/**
 	 * The path condition of the new state after this transition is executed.
 	 * 
@@ -43,4 +50,11 @@ public interface Transition {
 	 */
 	int processIdentifier();
 
+	/**
+	 * The atomic lock action associates with this transition. See
+	 * {@link AtomicLockAction} for more details.
+	 * 
+	 * @return the atomic lock action associates with this transition.
+	 */
+	AtomicLockAction atomicLockAction();
 }
