@@ -1695,9 +1695,14 @@ public class FunctionTranslator {
 
 	/**
 	 * Takes an expression statement and converts it to a fragment of that
-	 * statement. Currently supported expressions for expression statements are
-	 * spawn, assign, function call, increment, decrement. Any other expressions
-	 * have no side effects and thus result in a no-op.
+	 * statement. For spawn, assign, function call, increment and decrement,
+	 * they are translated into spawn or call statement, and assignment,
+	 * respectively. Any other expressions are translated into a noop statement,
+	 * and the original expression becomes one field of the noop statement,
+	 * which will be evaluated when executing the noop, and the result of
+	 * evaluating the expression is discarded but any side effect error during
+	 * evaluation will be reported, like array index out of bound, division by
+	 * zero, etc.
 	 * 
 	 * @param scope
 	 *            The scope containing this statement.
