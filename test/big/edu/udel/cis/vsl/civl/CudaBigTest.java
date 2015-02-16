@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
-public class CudaTest {
+public class CudaBigTest {
 
 	/* *************************** Static Fields *************************** */
 
@@ -24,17 +24,17 @@ public class CudaTest {
 	/* *************************** Test Methods **************************** */
 
 	@Test
-	public void sum() {
-		assertTrue(ui.run(
-				"verify -enablePrintf=false -inputN=8 -inputNBLOCKS=4",
-				filename("sum.cu")));
+	public void dot() {
+		assertTrue(ui
+				.run("verify -enablePrintf=false -inputN_B=6 -inputthreadsPerBlock_B=4",
+						filename("dot.cu")));
 	}
 
 	@Test
-	public void matMult1() {
+	public void cudaOmp() {
 		assertTrue(ui.run(
-				"verify -enablePrintf=false -inputN=2 -inputTILE_WIDTH=1 ",
-				filename("matMult1.cu")));
+				"verify -enablePrintf=false -inputBLOCK_B=4 -inputTHREADS_B=2",
+				filename("cuda-omp.cu")));
 	}
 
 	@AfterClass

@@ -1,7 +1,14 @@
 CIVL=civl
 VERIFY=$(CIVL) verify
 
-all: mat-infnorm
+all: mat-pie3 mat-pie100
 	
-mat-infnorm: mpi-omp-mat-infnorm-blkstp.c
-	$(VERIFY) -input_NPROCS=2 -inputTHREAD_MAX=2 -ompNoSimplify mpi-omp-mat-infnorm-blkstp.c
+mat-pie3: mpi-omp-pie-calculation.c
+	$(VERIFY) -DMATH_ELABORATE_ASSUMPTIONS -input_NPROCS=2 -inputTHREAD_MAX=3 -ompLoopDecomp=ALL mpi-omp-pie-calculation.c
+	
+mat-pie100: mpi-omp-pie-calculation100.c
+	$(VERIFY) -DMATH_ELABORATE_ASSUMPTIONS -input_NPROCS=2 -inputTHREAD_MAX=10 -ompLoopDecomp=ALL mpi-omp-pie-calculation100.c
+
+clean: 
+	rm -f -r CIVLREP
+	rm -f *~

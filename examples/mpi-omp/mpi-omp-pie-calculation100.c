@@ -21,7 +21,7 @@
 #include "mpi.h"
 #include <omp.h>
 
-#define INTERVALS 6 //Originally 1000
+#define INTERVALS 1000 //Originally 1000
 
 
 double 

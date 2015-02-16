@@ -1012,6 +1012,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		return -1;
 	}
 
+	@Override
 	public List<SymbolicExpression> getNextInRecDomain(
 			SymbolicExpression recDom, List<SymbolicExpression> varValues,
 			int concreteDim) {
