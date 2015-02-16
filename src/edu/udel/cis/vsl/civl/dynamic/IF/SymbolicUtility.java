@@ -25,15 +25,28 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  */
 public interface SymbolicUtility {
 	/**
-	 * Constructs the string representation of an array of characters. TODO
-	 * complete javadocs
+	 * Constructs the string representation of an array of characters, which
+	 * contains at least one '\0' character, starting from the given index and
+	 * ending at the index of '\0' minus one. If the result is to be printed,
+	 * then special characters like '\r', '\t', etc, will be replaced as the
+	 * actual string representation "\\r", "\\t", etc.
+	 * 
+	 * For example, given an character array {'a', 'b', '\t', 'c', 'd', '\n',
+	 * '\0'}, if starting index is 1, and is it not for print, then the result
+	 * string will be "b\tcd\n"; if it is for print, then the result string is
+	 * "b\\tcd\\n".
+	 *
 	 * 
 	 * @param source
 	 *            The source code information for error report.
 	 * @param charArray
+	 *            The character array in the representation of symbolic sequence
 	 * @param startIndex
+	 *            The index in the character array where the string starts
 	 * @param forPrint
-	 * @return
+	 *            Will the result be printed? If yes, then special characters
+	 *            need to be handled specifically, e.g., '\n' becomes "\\n".
+	 * @return the string representation from the given character array with
 	 */
 	StringBuffer charArrayToString(CIVLSource source,
 			SymbolicSequence<?> charArray, int startIndex, boolean forPrint);
@@ -127,43 +140,6 @@ public interface SymbolicUtility {
 	int getDyscopeId(CIVLSource source, SymbolicExpression pointer);
 
 	/**
-	 * Computes the upper bound of a regular range.
-	 * 
-	 * @param range
-	 *            The regular range.
-	 * @return The upper bound of the regular range.
-	 */
-	NumericExpression getRegRangeMax(SymbolicExpression range);
-
-	/**
-	 * Computes the lower bound of a regular range.
-	 * 
-	 * @param regRange
-	 *            The regular range.
-	 * @return The lower bound of the range.
-	 */
-	NumericExpression getRegRangeMin(SymbolicExpression regRange);
-
-	/**
-	 * Computes the step of a regular range.
-	 * 
-	 * @param range
-	 *            The regular range.
-	 * @return The step of the regular range.
-	 */
-	NumericExpression getRegRangeStep(SymbolicExpression range);
-
-	/**
-	 * Computes the size of a regular range, that is the number of values
-	 * covered by the range.
-	 * 
-	 * @param range
-	 *            The regular range.
-	 * @return The number of values covered by the regular range
-	 */
-	NumericExpression getRegRangeSize(SymbolicExpression range);
-
-	/**
 	 * Given a pointer value, returns the symbolic reference component of that
 	 * value. The "symRef" refers to a sub-structure of the variable pointed to.
 	 * 
@@ -208,23 +184,6 @@ public interface SymbolicUtility {
 	 * @return A pointer to a heap object that is involved by the given pointer.
 	 */
 	SymbolicExpression heapMemUnit(SymbolicExpression pointer);
-
-	/**
-	 * Computes the initial value of the index-th range of a given rectangular
-	 * domain.
-	 * 
-	 * @param domain
-	 *            The rectangular domain value.
-	 * @param index
-	 *            The index of the range.
-	 * @param dimension
-	 *            TODO get rid of me The number of ranges that the rectangular
-	 *            domain contains.
-	 * @return The initial value of the index-th range of a given rectangular
-	 *         domain.
-	 */
-	SymbolicExpression initialValueOfRange(SymbolicExpression domain,
-			int index, int dimension);
 
 	/**
 	 * Constructs an invalid heap object of a certain type. A heap object
@@ -374,13 +333,25 @@ public interface SymbolicUtility {
 	SymbolicExpression makePointer(int dyscopeId, int varId,
 			ReferenceExpression symRef);
 
+	/**
+	 * Constructs a new pointer by replacing the reference expression of a given
+	 * pointer. For example, given a pointer &a[5] and a reference [0], the
+	 * result will be &a[0]. The given pointer can refer to a heap object, in
+	 * which case, the heap object reference is considered the old "variable"
+	 * and will remain the same.
+	 * 
+	 * @param oldPointer
+	 *            The old pointer whose reference expression will be changed.
+	 * @param symRef
+	 *            The new reference expression to be used for the new pointer.
+	 * @return the new pointer which refers to the same variable/heap object as
+	 *         the given pointer, but with a new reference expression.
+	 */
 	SymbolicExpression makePointer(SymbolicExpression oldPointer,
 			ReferenceExpression symRef);
 
 	/**
-	 * TODO a better name?
-	 * 
-	 * Constructs a pointer by combining a pointer to a component, either an
+	 * * Constructs a pointer by combining a pointer to a component, either an
 	 * object (a heap atomic object or a normal object) or a sub-component of an
 	 * object, and a reference expression w.r.t that component.
 	 * 
@@ -434,40 +405,6 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression parentPointer(CIVLSource source,
 			SymbolicExpression pointer);
-
-	/**
-	 * Increments a certain value based on the step of a given regular range.
-	 * 
-	 * @param value
-	 *            The value to be incremented.
-	 * @param range
-	 *            The range whose step is to be used.
-	 * @return The new value after the incremental.
-	 */
-	SymbolicExpression incrementRegularRange(SymbolicExpression value,
-			SymbolicExpression range);
-
-	/**
-	 * <p>
-	 * Computes the range of the i-th element of a given domain. For example, if
-	 * domain is {(1, 4, 1), (9, 4, -2)} and index is 1, then the returned value
-	 * should be (9, 4, -2).
-	 * </p>
-	 * 
-	 * <p>
-	 * Precondition: domain must be a valid domain value, and index must be
-	 * greater or equal to 0 and less than the size of domain.
-	 * </p>
-	 * 
-	 * @param domain
-	 *            The domain whose index-th range is to be computed.
-	 * @param index
-	 *            The index of the range to be computed in the domain.
-	 * @return The index-th range of the domain, which has the form (low, high,
-	 *         step).
-	 */
-	SymbolicExpression rangeOfRectangularDomainAt(SymbolicExpression domain,
-			int index);
 
 	/**
 	 * Computes the reference expression of a pointer. If the pointer is
