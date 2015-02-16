@@ -70,63 +70,121 @@ public class CIVLConstants {
 	 */
 	public final static int webUpdatePeriod = 1;
 
+	/**
+	 * Debug option, false by default.
+	 */
 	public final static Option debugO = Option.newScalarOption("debug",
 			BOOLEAN, "debug mode: print very detailed information", false);
 
+	/**
+	 * Prints the command line? false by default.
+	 */
 	public final static Option echoO = Option.newScalarOption("echo", BOOLEAN,
 			"print the command line", false);
 
+	/**
+	 * Enables printf? true by default. When false, nothing is printed for
+	 * printf function.
+	 */
 	public final static Option enablePrintfO = Option.newScalarOption(
 			"enablePrintf", BOOLEAN, "enable printf function", true);
 
+	/**
+	 * The maximal number of errors allowed before terminating CIVL. 1 by
+	 * default.
+	 */
 	public final static Option errorBoundO = Option.newScalarOption(
 			"errorBound", INTEGER, "stop after finding this many errors", 1);
 
+	/**
+	 * User guided simulation?
+	 */
 	public final static Option guidedO = Option.newScalarOption("guided",
 			BOOLEAN, "user guided simulation; applies only to run, ignored\n"
 					+ "    for all other commands", null);
 
+	/**
+	 * The id of the trace for replay, 0 by default.
+	 */
 	public final static Option idO = Option.newScalarOption("id", INTEGER,
 			"ID number of trace to replay; applies only to replay command", 0);
 
+	/**
+	 * Specify values of input variables.
+	 */
 	public final static Option inputO = Option
 			.newMapOption("input",
 					"initialize input variable KEY to VALUE; applies only to run and verify");
 
+	/**
+	 * The maximal depth for search. Infinite by default.
+	 */
 	public final static Option maxdepthO = Option.newScalarOption("maxdepth",
 			INTEGER, "bound on search depth", Integer.MAX_VALUE);
 
+	/**
+	 * Search for the minimum counterexample? false by default.
+	 */
 	public final static Option minO = Option.newScalarOption("min", BOOLEAN,
 			"search for minimal counterexample", false);
 
+	/**
+	 * The bound on number of live processes (no bound if negative). No bound by
+	 * default.
+	 */
 	public final static Option procBoundO = Option.newScalarOption("procBound",
 			INTEGER,
 			"bound on number of live processes (no bound if negative)", -1);
 
+	/**
+	 * TODO can it be cleaned up? Select enabled transitions randomly? Default
+	 * for run.
+	 */
 	public final static Option randomO = Option.newScalarOption("random",
 			BOOLEAN, "select enabled transitions randomly; default for run,\n"
 					+ "    ignored for all other commands", null);
 
+	/**
+	 * Save states during depth-first search? true by default.
+	 */
 	public final static Option saveStatesO = Option.newScalarOption(
 			"saveStates", BOOLEAN, "save states during depth-first search",
 			true);
 
+	/**
+	 * Set the random seed for run mode.
+	 */
 	public final static Option seedO = Option.newScalarOption("seed", STRING,
 			"set the random seed; applies only to run", null);
 
+	/**
+	 * Show the AST of the program? false by default.
+	 */
 	public final static Option astO = Option.newScalarOption("ast", BOOLEAN,
 			"print the AST of the program", false);
 
+	/**
+	 * Print the ample set when it contains more than one processes? false by
+	 * default.
+	 */
 	public final static Option showAmpleSetO = Option.newScalarOption(
 			"showAmpleSet", BOOLEAN,
 			"print the ample set when it contains more than one processes",
 			false);
 
+	/**
+	 * Print ample set and state when ample set contains more than one
+	 * processes? false by default.
+	 */
 	public final static Option showAmpleSetWtStatesO = Option.newScalarOption(
 			"showAmpleSetWtStates", BOOLEAN,
-			"print ample set and state when ample set contains >1 process",
+			"print ample set and state when ample set contains >1 processes",
 			false);
 
+	/**
+	 * Print the impact/reachable memory units when the state contains more than
+	 * one processes? false by default.
+	 */
 	public final static Option showMemoryUnitsO = Option
 			.newScalarOption(
 					"showMemoryUnits",
@@ -134,102 +192,200 @@ public class CIVLConstants {
 					"print the impact/reachable memory units when the state contains more than one processes",
 					false);
 
+	/**
+	 * Show the CIVL model of the program? false by default.
+	 */
 	public final static Option showModelO = Option.newScalarOption("showModel",
 			BOOLEAN, "print the model", false);
 
+	/**
+	 * Show theorem prover queries? false by default.
+	 */
 	public final static Option showProverQueriesO = Option.newScalarOption(
 			"showProverQueries", BOOLEAN, "print theorem prover queries only",
 			false);
 
+	/**
+	 * Show all SARL queries? false by default.
+	 */
 	public final static Option showQueriesO = Option.newScalarOption(
 			"showQueries", BOOLEAN, "print all queries", false);
 
+	/**
+	 * Show all states that are saved? false by default.
+	 */
 	public final static Option showSavedStatesO = Option.newScalarOption(
 			"showSavedStates", BOOLEAN, "print saved states only", false);
 
+	/**
+	 * Show all states? false by default.
+	 */
 	public final static Option showStatesO = Option.newScalarOption(
 			"showStates", BOOLEAN, "print all states", false);
 
+	/**
+	 * Show the time used by each translation phase? false by default.
+	 */
 	public final static Option showTimeO = Option.newScalarOption("showTime",
 			BOOLEAN, "print timings", false);
 
+	/**
+	 * Show all transitions? false by default;
+	 */
 	public final static Option showTransitionsO = Option.newScalarOption(
 			"showTransitions", BOOLEAN, "print transitions", false);
 
+	/**
+	 * Simplify states using path conditions? true by default.
+	 */
 	public final static Option simplifyO = Option.newScalarOption("simplify",
 			BOOLEAN, "simplify states?", true);
 
+	/**
+	 * Try to solve for concrete counterexample? false by default.
+	 */
 	public final static Option solveO = Option.newScalarOption("solve",
 			BOOLEAN, "try to solve for concrete counterexample", false);
 
+	/**
+	 * Don't modify file system when running printf? true by default.
+	 */
 	public final static Option statelessPrintfO = Option.newScalarOption(
 			"statelessPrintf", BOOLEAN,
 			"prevent printf function modifying the file system", true);
 
+	/**
+	 * Set the system include path.
+	 */
 	public final static Option sysIncludePathO = Option.newScalarOption(
 			"sysIncludePath", STRING, "set the system include path", null);
 
+	/**
+	 * File name of trace to replay
+	 */
 	public final static Option traceO = Option.newScalarOption("trace", STRING,
 			"filename of trace to replay", null);
 
+	/**
+	 * Sets user include path.
+	 */
 	public final static Option userIncludePathO = Option.newScalarOption(
 			"userIncludePath", STRING, "set the user include path", null);
 
+	/**
+	 * Verbose mode? false by default
+	 */
 	public final static Option verboseO = Option.newScalarOption("verbose",
 			BOOLEAN, "verbose mode", false);
 
+	/**
+	 * Launch gui? false by default.
+	 */
 	public final static Option guiO = Option.newScalarOption("gui", BOOLEAN,
 			"launch GUI? (under development, only works with replay)", false);
 
+	/**
+	 * What kind of deadlock is to be checked, potential, absolute or none?
+	 * absolute by default.
+	 */
 	public final static Option deadlockO = Option.newScalarOption("deadlock",
 			STRING, "deadlock kind? (potential|absolute|none)", "absolute");
 
+	/**
+	 * Perform svcomp transformation? false by default.
+	 */
 	public final static Option svcompO = Option.newScalarOption("svcomp",
 			BOOLEAN, "translate program for sv-comp?", false);
 
+	/**
+	 * Show the input variables of this model? false by default.
+	 */
 	public final static Option showInputVarsO = Option
 			.newScalarOption("showInputs", BOOLEAN,
 					"show input variables of my program?", false);
 
+	/**
+	 * Show the preprocessing result? false by default.
+	 */
 	public final static Option preprocO = Option.newScalarOption("preproc",
 			BOOLEAN, "show the preprocessing result?", false);
 
+	/**
+	 * Show the program after all applicable transformations? false by default.
+	 */
 	public final static Option showProgramO = Option.newScalarOption(
 			"showProgram", BOOLEAN, "show my program after transformations?",
 			false);
 
+	/**
+	 * Show the path condition of each state? false by default.
+	 */
 	public final static Option showPathConditionO = Option.newScalarOption(
 			"showPathCondition", BOOLEAN,
 			"show the path condition of each state?", false);
 
+	/**
+	 * Don't simplify OpenMP pragmas? false by default.
+	 */
 	public final static Option ompNoSimplifyO = Option.newScalarOption(
 			"ompNoSimplify", BOOLEAN, "don't simplify omp pragmas", false);
 
+	/**
+	 * Collect processes? true by default.
+	 */
 	public final static Option collectProcessesO = Option.newScalarOption(
 			"collectProcesses", BOOLEAN, "collect processes?", true);
 
+	/**
+	 * Collect scopes? true by default.
+	 */
 	public final static Option collectScopesO = Option.newScalarOption(
 			"collectScopes", BOOLEAN, "collect dyscopes?", true);
 
+	/**
+	 * Collect heaps? true by default.
+	 */
 	public final static Option collectHeapsO = Option.newScalarOption(
 			"collectHeaps", BOOLEAN, "collect heaps?", true);
 
+	/**
+	 * Link a source file with the target program.
+	 */
 	public final static Option linkO = Option.newScalarOption("link", STRING,
 			"link a source file with the target program", null);
 
+	/**
+	 * Define macros.
+	 */
 	public final static Option macroO = Option.newMapOption("D",
 			"macro definitions: <macro> or <macro>=<object>");
 
+	/**
+	 * Write output for web app? false by default.
+	 */
 	public final static Option webO = Option.newScalarOption("web", BOOLEAN,
 			"write output for web app?", false);
 
+	/**
+	 * Set the loop decomposition strategy for OpenMP transformer. Round robin
+	 * by default.
+	 */
 	public final static Option ompLoopDecompO = Option.newScalarOption(
 			"ompLoopDecomp", STRING,
 			"loop decomposition strategy? (ALL|ROUND_ROBIN|RANDOM)",
 			"ROUND_ROBIN");
 
+	/**
+	 * The name of the CIVL system function, which is the starting point of a
+	 * CIVL model.
+	 */
 	public final static String civlSystemFunction = "_CIVL_system";
 
+	/**
+	 * Returns all options defined for CIVL in alphabetic order.
+	 * 
+	 * @return all options defined for CIVL in alphabetic order.
+	 */
 	public final static Option[] getAllOptions() {
 		return new Option[] { astO, collectHeapsO, collectProcessesO,
 				collectScopesO, deadlockO, debugO, echoO, enablePrintfO,

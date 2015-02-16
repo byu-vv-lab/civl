@@ -1,5 +1,5 @@
 /**
- * Module <strong>config</strong> provides static configurations of the system.
+ * Module <strong>config</strong> provides static configurations of the CIVL tool.
  * 
  * @author zmanchun
  *

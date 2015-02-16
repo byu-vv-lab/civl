@@ -51,32 +51,144 @@ public class CIVLConfiguration {
 	 */
 	private boolean showAST = false;
 
+	/**
+	 * Should CIVL show the ample set when there are more than one processes in
+	 * the ample set?
+	 */
 	private boolean showAmpleSet = false;
+
+	/**
+	 * Should CIVL show the ample set with the state when there are more than
+	 * one processes in the ample set?
+	 */
 	private boolean showAmpleSetWtStates = false;
+
+	/**
+	 * Should CIVL show the CIVL model of the program?
+	 */
 	private boolean showModel = false;
+
+	/**
+	 * Should CIVL show states that are saved?
+	 */
 	private boolean showSavedStates = false;
+
+	/**
+	 * Should CIVL show all states, including saved states and intermediate
+	 * states?
+	 */
 	private boolean showStates = false;
+
+	/**
+	 * Should CIVL show all transitions?
+	 */
 	private boolean showTransitions = false;
+
+	/**
+	 * Should CIVL simplify states using the path condition?
+	 */
 	private boolean simplify = true;
+
+	/**
+	 * Is printf stateless?
+	 */
 	private boolean statelessPrintf = true;
+
+	/**
+	 * verbose mode?
+	 */
 	private boolean verbose = false;
+
+	/**
+	 * Is svcomp transformation needed?
+	 */
 	private boolean svcomp = false;
+
+	/**
+	 * Should CIVL show the program after all applicable transformations?
+	 */
 	private boolean showProgram = false;
+
+	/**
+	 * Disable OpenMP simplifier?
+	 */
 	private boolean ompNoSimplify = false;
+
+	/**
+	 * The output stream
+	 */
 	private PrintStream out;
+
+	/**
+	 * The print stream for errors.
+	 */
 	private PrintStream err;
+
+	/**
+	 * Should CIVL show the path condition of each state?
+	 */
 	private boolean showPathConditon = false;
+
+	/**
+	 * Should CIVL delete terminated processes and renumber all processes?
+	 */
 	private boolean collectProcesses = true;
+
+	/**
+	 * Should CIVL delete invalid dyscopes and renumber all dyscopes?
+	 */
 	private boolean collectScopes = true;
+
+	/**
+	 * Should CIVL collect heap objects?
+	 */
 	private boolean collectHeaps = true;
+
+	/**
+	 * Is this run for CIVL web interface?
+	 */
 	private boolean web = false;
+
+	/**
+	 * Should CIVL show the preprocessing result?
+	 */
 	private boolean showPreproc = false;
+
+	/**
+	 * Should CIVL show the list of input variables of the model?
+	 */
 	private boolean showInputVars = false;
+
+	/**
+	 * Should CIVL show the time usage for each translation phase?
+	 */
 	private boolean showTime = false;
+
+	/**
+	 * Should CIVL show the impact/reachable memory units of processes at each
+	 * state?
+	 */
 	private boolean showMemoryUnits = false;
+
+	/**
+	 * The maximal number of processes allowed in a state. -1 means infinitely
+	 * many processes are allowed.
+	 */
 	private int procBound = -1;
+
+	/**
+	 * The loop decomposition strategy for OpenMP transformer, round robin by
+	 * default.
+	 */
 	private int ompLoopDecomp = ModelConfiguration.DECOMP_ROUND_ROBIN;
 
+	/**
+	 * Constructs a new CIVL configuration object from the command line
+	 * configuration.
+	 * 
+	 * @param config
+	 *            The command line configuration.
+	 */
 	public CIVLConfiguration(GMCConfiguration config) {
 		String deadlockString = (String) config
 				.getValue(CIVLConstants.deadlockO);
