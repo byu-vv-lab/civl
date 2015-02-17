@@ -77,7 +77,6 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	protected TransitionSequence enabledTransitionsPOR(State state) {
 		TransitionSequence transitions = Semantics.newTransitionSequence(state);
 		List<ProcessState> processStates;
-
 		// if (this.testNewAmpleSet) {
 		AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this, evaluator,
 				memUnitFactory, this.procBound, debugging

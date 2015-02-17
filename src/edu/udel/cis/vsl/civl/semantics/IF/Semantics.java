@@ -157,7 +157,7 @@ public class Semantics {
 		return new CommonTransitionSequence(state);
 	}
 
-	public static MemoryUnitEvaluator newMemoryUnitEvaluator(
+	public static MemoryUnitExpressionEvaluator newMemoryUnitEvaluator(
 			Evaluator evaluator, MemoryUnitFactory memUnitFactory) {
 		return new CommonMemoryUnitEvaluator(evaluator.symbolicUtility(),
 				evaluator, memUnitFactory, evaluator.universe());

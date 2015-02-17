@@ -391,7 +391,7 @@ public interface Evaluator {
 	Pair<State, SymbolicArrayType> evaluateCIVLArrayType(State state, int pid,
 			CIVLArrayType type) throws UnsatisfiablePathConditionException;
 
-	MemoryUnitEvaluator memoryUnitEvaluator();
+	MemoryUnitExpressionEvaluator memoryUnitEvaluator();
 
 	Evaluation evaluateCastWorker(State state, int pid, String process,
 			CIVLType castType, Expression arg)

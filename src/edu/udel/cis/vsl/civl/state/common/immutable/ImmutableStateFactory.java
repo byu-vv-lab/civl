@@ -227,7 +227,6 @@ public class ImmutableStateFactory implements StateFactory {
 
 		// performance experiment: seems to make no difference
 		// theState = flyweight(theState);
-
 		if (collectProcesses)
 			theState = collectProcesses(theState);
 		if (collectScopes)
@@ -467,7 +466,7 @@ public class ImmutableStateFactory implements StateFactory {
 		Variable atomicVar = modelFactory.atomicLockVariableExpression()
 				.variable();
 
-		//assert state.getVariableValue(0, atomicVar.vid())
+		// assert state.getVariableValue(0, atomicVar.vid())
 		return this.setVariable(state, atomicVar.vid(), 0,
 				modelFactory.processValue(pid));
 	}

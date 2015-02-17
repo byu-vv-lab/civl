@@ -11,6 +11,7 @@ import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
+import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler.SymbolicValue;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
@@ -23,7 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
-import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitExpressionEvaluator;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnit;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
@@ -134,24 +135,33 @@ public class AmpleSetWorker {
 	 * @author Manchun Zheng (zmanchun)
 	 * 
 	 */
-	// private enum MemoryUnitsStatus {
-	// NORMAL, INCOMPLETE
-	// };
 
 	/* *************************** Instance Fields ************************* */
 
-	Map<Integer, Map<Statement, SymbolicExpression>> newGuardMap;
-
-	BitSet waitMap[];
-
-	BitSet nonEmptyProcesses = new BitSet();
-	// Set<Integer> allProcesses = new LinkedHashSet<>();
+	/**
+	 * The value of the guards of the statements of all processes. Key is PID,
+	 * value is a map of statement and the guard value. This caches the results
+	 * of evaluating guards for later usage of generating new path condition, so
+	 * as to avoid duplicate/redundant valid calls.
+	 */
+	Map<Integer, Map<Statement, SymbolicValue>> newGuardMap;
 
 	/**
-	 * The map of active processes (i.e., non-null processes with non-empty
-	 * stack that have at least one enabled statement)
+	 * The processes being waited for of each process. Index is PID, bit set for
+	 * the PID of the processes being waited for.
 	 */
-	BitSet activeProcesses = new BitSet();
+	private BitSet waitMap[];
+
+	/**
+	 * Bit set for the PID of processes that has a non-empty call stack.
+	 */
+	private BitSet nonEmptyProcesses = new BitSet();
+
+	/**
+	 * Bit set for the PID of active processes (i.e., non-null processes with
+	 * non-empty stack that have at least one enabled statements)
+	 */
+	private BitSet activeProcesses = new BitSet();
 
 	/**
 	 * The unique enabler used in the system. Used here for evaluating the guard
@@ -159,13 +169,10 @@ public class AmpleSetWorker {
 	 */
 	private CommonEnabler enabler;
 
-	// /**
-	// * The unique evaluator of the system. Used to evaluate expressions and
-	// * variables for calculating impact or reachable memory units and so on.
-	// */
-	// private Evaluator evaluator;
-
-	private MemoryUnitEvaluator memUnitEvaluator;
+	/**
+	 * The evaluator for memory unit expressions.
+	 */
+	private MemoryUnitExpressionEvaluator memUnitExprEvaluator;
 
 	/**
 	 * Turn on/off the printing of debugging information for the ample set
@@ -178,65 +185,79 @@ public class AmpleSetWorker {
 	 */
 	private PrintStream debugOut = System.out;
 
+	/**
+	 * The CIVL model factory
+	 */
 	private ModelFactory modelFactory;
 
+	/**
+	 * The CIVL type factory
+	 */
 	private CIVLTypeFactory typeFactory;
 
 	/**
-	 * map of process ID's and their impact memory units (NULL impact memory
-	 * units means that the computation is incomplete and all active processes
-	 * should be included in the ample set)
+	 * Impact memory units of processes. Index is PID, content is the impact
+	 * memory unit set. A null impact memory unit set means that the computation
+	 * is incomplete and all active processes should be included in the ample
+	 * set.
 	 */
-	// Map<Integer, Set<SymbolicExpression>> impactMemUnitsMap = new
-	// HashMap<>();
-	MemoryUnitSet[] impactMemUnits;
-
-	int procBound = -1;
+	private MemoryUnitSet[] impactMemUnits;
 
 	/**
-	 * map of process ID's and their reachable memory units with information
-	 * that whether the memory unit is to be written.
+	 * The maximal number of live processes allowed at a state. Negative means
+	 * infinite. If non-negative, then executing $spawn statements becomes
+	 * dependent with other $spawn statements.
 	 */
-	// Map<Integer, Map<SymbolicExpression, Boolean>> reachableMemUnitsMap = new
-	// HashMap<>();
+	private int procBound = -1;
 
-	// /**
-	// * map of communicators and the sets of process ID's with different ranks
-	// of
-	// * the communicator
-	// */
-	// Map<SymbolicExpression, Map<Integer, Set<Integer>>> processesInCommMap =
-	// new HashMap<>();
-	//
-	// /**
-	// * map of process ID's and its rank id in each communicator.
-	// */
-	// Map<Integer, Map<SymbolicExpression, Integer>> processRankMap = new
-	// HashMap<>();
-
-	// /**
-	// * map of process ID's and the set of enabled system call statements.
-	// */
-	Map<Integer, Set<CallOrSpawnStatement>> enabledSystemCallMap = new HashMap<>();
+	/**
+	 * map of process ID's and the set of enabled system call statements.
+	 */
+	private Map<Integer, Set<CallOrSpawnStatement>> enabledSystemCallMap = new HashMap<>();
 
 	/**
 	 * The current state at which the ample set is to be computed.
 	 */
 	private State state;
 
-	SymbolicUtility symbolicUtil;
+	/**
+	 * The symbolic utility
+	 */
+	private SymbolicUtility symbolicUtil;
 
-	SymbolicUniverse universe;
+	/**
+	 * The symbolic universe
+	 */
+	private SymbolicUniverse universe;
 
-	MemoryUnitFactory memUnitFactory;
+	/**
+	 * The memory unit factory for operations on memory units
+	 */
+	private MemoryUnitFactory memUnitFactory;
 
-	MemoryUnitSet[] reachableNonPtrReadonly;
+	/**
+	 * The reachable memory unit sets of processes which have no pointers and
+	 * are read-only. Index is PID.
+	 */
+	private MemoryUnitSet[] reachableNonPtrReadonly;
 
-	MemoryUnitSet[] reachableNonPtrWritable;
+	/**
+	 * The reachable memory unit sets of processes which have no pointers and
+	 * are writable. Index is PID.
+	 */
+	private MemoryUnitSet[] reachableNonPtrWritable;
 
-	MemoryUnitSet[] reachablePtrReadonly;
+	/**
+	 * The reachable memory unit sets of processes which have some pointers and
+	 * are read-only. Index is PID.
+	 */
+	private MemoryUnitSet[] reachablePtrReadonly;
 
-	MemoryUnitSet[] reachablePtrWritable;
+	/**
+	 * The reachable memory unit sets of processes which have some pointers and
+	 * are writable. Index is PID.
+	 */
+	private MemoryUnitSet[] reachablePtrWritable;
 
 	/* ***************************** Constructors ************************** */
 
@@ -260,12 +281,11 @@ public class AmpleSetWorker {
 	AmpleSetWorker(State state, CommonEnabler enabler, Evaluator evaluator,
 			MemoryUnitFactory muFactory, int procBound, boolean debug,
 			PrintStream debugOut) {
-		this.memUnitEvaluator = evaluator.memoryUnitEvaluator();
+		this.memUnitExprEvaluator = evaluator.memoryUnitEvaluator();
 		this.modelFactory = evaluator.modelFactory();
 		this.typeFactory = this.modelFactory.typeFactory();
 		this.state = state;
 		this.enabler = enabler;
-		// this.evaluator = evaluator;
 		this.debugging = debug;
 		this.debugOut = debugOut;
 		this.symbolicUtil = evaluator.symbolicUtility();
@@ -347,16 +367,10 @@ public class AmpleSetWorker {
 			int pid = workingProcessIDs.pop();
 			ProcessState procState = state.getProcessState(pid);
 			MemoryUnitSet impactMUSet = impactMemUnits[pid];
-			// Map<SymbolicExpression, Boolean> reachableMemUnitsMapOfThis =
-			// reachableMemUnitsMap
-			// .get(pid);
 			Set<CallOrSpawnStatement> systemCalls = this.enabledSystemCallMap
 					.get(pid);
 
 			if (impactMUSet == null) {
-				// The current process is entering an atomic/atom block
-				// whose impact memory units can't be computed
-				// completely
 				ampleProcessIDs = activeProcesses;
 				return ampleProcessIDs;
 			}
@@ -395,7 +409,6 @@ public class AmpleSetWorker {
 						}
 					}
 				}
-
 			}
 			if (systemCalls != null && !systemCalls.isEmpty()) {
 				for (CallOrSpawnStatement call : systemCalls) {
@@ -538,45 +551,6 @@ public class AmpleSetWorker {
 		return result;
 	}
 
-	// /**
-	// * Given two collections of memory units, computes all the non-disjoint
-	// * memory units from both collections. Two memory units are disjoint if
-	// they
-	// * don't share any common memory space. For example, <code>&a</code> and
-	// * <code>&b</code> are disjoint if <code>a</code> and <code>b</code> are
-	// * variables; <code>&a[0]</code> and <code>&a</code> are not disjoint
-	// * because the latter contains the former.
-	// *
-	// * @param memSet1
-	// * The first memory unit set.
-	// * @param memSet2
-	// * The second memory unit set.
-	// * @return All non-disjoint memory units from the specified two sets.
-	// */
-	// private List<Pair<SymbolicExpression, SymbolicExpression>>
-	// commonMemUnitPairs(
-	// Iterable<SymbolicExpression> memSet1,
-	// Iterable<SymbolicExpression> memSet2) {
-	// List<Pair<SymbolicExpression, SymbolicExpression>> result = new
-	// LinkedList<>();
-	//
-	// for (SymbolicExpression unit1 : memSet1) {
-	// // ReferenceExpression myRef = symbolicUtil.getSymRef(unit1);
-	// // SymbolicExpression unit1Obj = unit1;
-	// //
-	// // if (!myRef.isIdentityReference()) {
-	// // unit1Obj = universe.tupleWrite(unit1, universe.intObject(2),
-	// // universe.identityReference());
-	// // }
-	// for (SymbolicExpression unit2 : memSet2) {
-	// if (!evaluator.symbolicUtility().isDisjointWith(unit1, unit2)) {
-	// result.add(new Pair<>(unit1, unit2));
-	// }
-	// }
-	// }
-	// return result;
-	// }
-
 	/**
 	 * Computes active processes at the current state, i.e., non-null processes
 	 * with non-empty stack that have at least one enabled statements.
@@ -586,26 +560,31 @@ public class AmpleSetWorker {
 		for (ProcessState p : state.getProcessStates()) {
 			boolean active = false;
 			int pid;
-			Map<Statement, SymbolicExpression> myGuards = new HashMap<>();
+			Map<Statement, SymbolicValue> myGuards = new HashMap<>();
 
 			if (p == null || p.hasEmptyStack())
 				continue;
-
 			pid = p.getPid();
 			this.nonEmptyProcesses.set(pid);
 			for (Statement s : p.getLocation().outgoing()) {
 				SymbolicExpression myGuard;
+				SymbolicValue myGuardValue;
+				boolean isFalse = true;
 
 				if (this.procBound > 0 && s instanceof CallOrSpawnStatement
 						&& ((CallOrSpawnStatement) s).isSpawn()
 						&& state.numLiveProcs() >= this.procBound)
 					continue;
+				// side-effect of evaluating the guard is ignored here
 				myGuard = enabler.getGuard(s, pid, state).value;
 				if (!myGuard.isFalse()) {
-					myGuards.put(s, myGuard);
 					active = true;
-					break;
+					isFalse = false;
 				}
+				myGuardValue = enabler.newSymbolicValue(myGuard, isFalse);
+				myGuards.put(s, myGuardValue);
+				if (active)
+					break;
 			}
 			if (active) {
 				activeProcesses.set(pid);
@@ -724,7 +703,7 @@ public class AmpleSetWorker {
 			systemCalls.addAll(currentLocation.systemCalls());
 			for (MemoryUnitExpression memUnitExpr : impactMemUnitExprs) {
 				try {
-					muSet = this.memUnitEvaluator.evaluates(state, pid,
+					muSet = this.memUnitExprEvaluator.evaluates(state, pid,
 							memUnitExpr, muSet);
 				} catch (UnsatisfiablePathConditionException e) {
 					// do nothing
@@ -757,8 +736,8 @@ public class AmpleSetWorker {
 			// Set<SymbolicExpression> subResult = new HashSet<>();
 
 			try {
-				impactMemUnits = this.memUnitEvaluator.evaluates(state, pid,
-						memUnitExpr, impactMemUnits);
+				impactMemUnits = this.memUnitExprEvaluator.evaluates(state,
+						pid, memUnitExpr, impactMemUnits);
 			} catch (UnsatisfiablePathConditionException e) {
 				// do nothing
 			}

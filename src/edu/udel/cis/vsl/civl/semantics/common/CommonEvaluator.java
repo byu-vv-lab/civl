@@ -80,7 +80,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
-import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitExpressionEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
@@ -325,7 +325,7 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	private SymbolicAnalyzer symbolicAnalyzer;
 
-	private MemoryUnitEvaluator memUnitEvaluator;
+	private MemoryUnitExpressionEvaluator memUnitEvaluator;
 
 	private MemoryUnitFactory memUnitFactory;
 
@@ -4045,7 +4045,7 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public MemoryUnitEvaluator memoryUnitEvaluator() {
+	public MemoryUnitExpressionEvaluator memoryUnitEvaluator() {
 		return this.memUnitEvaluator;
 	}
 }

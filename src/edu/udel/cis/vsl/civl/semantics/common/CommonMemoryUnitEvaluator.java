@@ -20,7 +20,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
-import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitEvaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitExpressionEvaluator;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -43,7 +43,7 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicCollection;
  * @author Manchun Zheng
  *
  */
-public class CommonMemoryUnitEvaluator implements MemoryUnitEvaluator {
+public class CommonMemoryUnitEvaluator implements MemoryUnitExpressionEvaluator {
 
 	private ModelFactory modelFactory;
 
