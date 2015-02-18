@@ -33,6 +33,12 @@ public class MPITranslationTest {
 	}
 
 	@Test
+	public void ring1NotSaveStates() {
+		assertTrue(ui.run("verify", "-input_NPROCS=2 -saveStates=false",
+				filename("ring1.c")));
+	}
+
+	@Test
 	public void reduce() {
 		assertTrue(ui.run("verify", "-input_NPROCS=4", "-enablePrintf=true",
 				filename("routines/reduce.c")));
