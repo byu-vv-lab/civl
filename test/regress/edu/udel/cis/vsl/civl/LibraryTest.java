@@ -18,17 +18,36 @@ public class LibraryTest {
 
 	private static UserInterface ui = new UserInterface();
 
+	private final static String CIVLC = "civlc";
+
+	// private final static String OMP = "omp";
+
+	private final static String STDIO = "stdio";
+
+	private final static String STDLIB = "stdlib";
+	private final static String STRING = "string";
+	private final static String TIME = "time";
+
 	/* *************************** Helper Methods *************************** */
 
+	private static String filename(String subfolder, String name) {
+		return new File(new File(rootDir, subfolder), name).getPath();
+	}
+
 	private static String filename(String name) {
-		return new File(rootDir, name).getPath();
+		return filename(".", name);
 	}
 
 	/* **************************** Test Methods *************************** */
 
 	@Test
 	public void string() throws ABCException {
-		assertTrue(ui.run("verify", filename("string_test.cvl")));
+		assertTrue(ui.run("verify", filename(STRING, "string_test.cvl")));
+	}
+
+	@Test
+	public void memset() throws ABCException {
+		assertTrue(ui.run("verify", filename(STRING, "memset.cvl")));
 	}
 
 	@Test
@@ -39,135 +58,135 @@ public class LibraryTest {
 	@Test
 	public void printf() throws ABCException {
 		assertTrue(ui.run("verify", "-enablePrintf=false",
-				filename("stdio/printf.cvl")));
+				filename(STDIO, "printf.cvl")));
 	}
 
 	@Test
 	public void printfBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("stdio/printfBad.cvl")));
+		assertFalse(ui.run("verify", filename(STDIO, "printfBad.cvl")));
 	}
 
 	@Test
 	public void communicatorFeatures() {
 		assertTrue(ui.run("verify", "-inputNPROCS_BOUND=2", "-inputN_BOUND=2",
 				"-enablePrintf=false",
-				filename("civlc/communicatorFeatures.cvl")));
+				filename(CIVLC, "communicatorFeatures.cvl")));
 	}
 
 	@Test
 	public void commBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("civlc/commBad.cvl")));
+		assertFalse(ui.run("verify", filename(CIVLC, "commBad.cvl")));
 	}
 
 	@Test
 	public void malloc1() throws ABCException {
-		assertTrue(ui.run("verify", new File(rootDir, new File(new File(
-				"stdlib"), "malloc.cvl").getPath()).getPath()));
+		assertTrue(ui.run("verify", filename(STDLIB, "malloc.vl")));
 	}
 
 	@Test
 	public void mallocForSturct() throws ABCException {
-		assertTrue(ui.run("verify", new File(rootDir, new File(new File(
-				"stdlib"), "mallocForStruct.cvl").getPath()).getPath()));
+		assertTrue(ui.run("verify", filename(STDLIB, "mallocForStruct.cvl")));
+
 	}
 
 	@Test
 	public void memcpy() throws ABCException {
-		assertTrue(ui.run("verify", filename("memcpy.cvl")));
+		assertTrue(ui.run("verify", filename(STRING, "memcpy.cvl")));
 	}
 
 	@Test
 	public void messageUnpackBad1() throws ABCException {
-		assertFalse(ui.run("verify", filename("civlc/messageUnpackBad1.cvl")));
+		assertFalse(ui.run("verify", filename(CIVLC, "messageUnpackBad1.cvl")));
 	}
 
 	@Test
 	public void messageUnpackBad2() throws ABCException {
-		assertFalse(ui.run("verify", filename("civlc/messageUnpackBad2.cvl")));
+		assertFalse(ui.run("verify", filename(CIVLC, "messageUnpackBad2.cvl")));
 	}
 
 	@Test
 	public void barrier() throws ABCException {
-		assertTrue(ui.run("verify", "-inputB=5", filename("civlc/barrier.cvl")));
+		assertTrue(ui
+				.run("verify", "-inputB=5", filename(CIVLC, "barrier.cvl")));
 	}
 
 	@Test
 	public void chooseInt() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/chooseInt.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "chooseInt.cvl")));
 	}
 
 	@Test
 	public void exit() {
-		assertTrue(ui.run("verify", filename("civlc/exit.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "exit.cvl")));
 	}
 
 	@Test
 	public void exitBad() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/exitBad.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "exitBad.cvl")));
 	}
 
 	@Test
 	public void intIter() throws ABCException {
 		assertTrue(ui.run("verify", "-inputB=5", "-enablePrintf=false",
-				filename("civlc/intIter.cvl")));
+				filename(CIVLC, "intIter.cvl")));
 	}
 
 	@Test
 	public void contains() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/contains.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "contains.cvl")));
 	}
 
 	@Test
 	public void equals() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/equals.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "equals.cvl")));
 	}
 
 	@Test
 	public void translatePointer() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/translate_ptr.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "translate_ptr.cvl")));
 	}
 
 	@Test
 	public void copy() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/copy.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "copy.cvl")));
 	}
 
 	@Test
 	public void seq() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/seq.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "seq.cvl")));
 	}
 
 	@Test
 	public void freeBad1() throws ABCException {
-		assertFalse(ui.run("verify", filename("civlc/freeBad1.cvl")));
+		assertFalse(ui.run("verify", filename(CIVLC, "freeBad1.cvl")));
 	}
 
 	@Test
 	public void freeBad2() throws ABCException {
-		assertFalse(ui.run("verify", filename("civlc/freeBad2.cvl")));
+		assertFalse(ui.run("verify", filename(CIVLC, "freeBad2.cvl")));
 	}
 
 	@Test
 	public void bundleAndHeap() throws ABCException {
-		assertTrue(ui.run("verify", filename("civlc/bundleAndHeap.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "bundleAndHeap.cvl")));
 	}
 
 	@Test
 	public void random() throws ABCException {
-		assertFalse(ui.run("verify", filename("stdlib/random.cvl")));
+		assertFalse(ui.run("verify", filename(STDLIB, "random.cvl")));
 	}
 
 	@Test
 	public void domainDecomp() throws ABCException {
 		assertTrue(ui.run("verify", "-inputn=4", "-enablePrintf=false",
-				filename("civlc/domainDecomposition.cvl")));
+				filename(CIVLC, "domainDecomposition.cvl")));
 	}
 
 	@Test
 	public void timeTest() throws ABCException {
 		assertTrue(ui.run("verify", "-inputN=10",
 				"-enablePrintf=false -showProgram=false",
-				filename("time/timeTest.cvl")));
+				filename(TIME, "timeTest.cvl")));
 	}
 
 	@AfterClass
