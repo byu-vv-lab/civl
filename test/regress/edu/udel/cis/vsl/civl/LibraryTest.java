@@ -80,7 +80,7 @@ public class LibraryTest {
 
 	@Test
 	public void malloc1() throws ABCException {
-		assertTrue(ui.run("verify", filename(STDLIB, "malloc.vl")));
+		assertTrue(ui.run("verify", filename(STDLIB, "malloc.cvl")));
 	}
 
 	@Test
