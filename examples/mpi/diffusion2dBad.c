@@ -18,6 +18,8 @@
 #define comm MPI_COMM_WORLD
 
 #ifdef _CIVL
+#include <civlc.cvh>
+
 $input long NXB = 5;               // nx upper bound
 $input long nx;                    // global number of columns in matrix
 $assume 1 <= nx && nx <= NXB;

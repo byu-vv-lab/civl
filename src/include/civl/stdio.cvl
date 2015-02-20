@@ -7,6 +7,9 @@
  #ifdef __STDIO_CVL__
  #else
  #define __STDIO_CVL__
+ 
+ #include <civlc.cvh>
+ #include <stdio.h>
 
 /* ******************************* Types ******************************* */
 
@@ -32,9 +35,9 @@ typedef enum CIVL_File_mode {
 } CIVL_File_mode;
 
 /* Needed from stdarg.h: what is it for? */
-typedef struct _ABC_va_list {
+struct _ABC_va_list {
   int x;
-} va_list;
+};
 
 typedef unsigned long int size_t;
 
@@ -81,33 +84,14 @@ typedef struct CIVL_filesystem {
  * reading the file, this FILE object changes since it contains a reference
  * to the point of file you just read.  
  */
-typedef struct FILE {
+struct FILE {
   $file *file;    // the actual file to which this refers 
   $filesystem fs; // file system to which this FILE is associated
   int pos1;       // the chunk index (first index) in the contents
   int pos2;       // the character index (second index) in the contents
   CIVL_File_mode mode;  // stream mode
   int isOpen;     // is this FILE open (0 or 1)?
-} FILE;
-
-typedef int fpos_t;
-
-/* Macros */
-
-#define NULL ((void*)0)
-#define _IOFBF 1
-#define _IOLBF 2
-#define _IONBF 3
-#define BUFSIZ 100
-#define EOF (-100)
-#define FOPEN_MAX 100
-#define FILENAME_MAX 500
-#define L_tmpnam 500
-#define SEEK_CUR 1
-#define SEEK_END 2
-#define SEEK_SET 3
-#define TMP_MAX 100
-
+};
 
 /* Functions */
 
@@ -176,6 +160,23 @@ FILE * $fopen($filesystem fs, const char * restrict filename,
  */
 void $filesystem_copy_output($filesystem fs, $file * output);
 
-int $textFileLength(char* file);
+$filesystem CIVL_filesystem = $filesystem_create($here);
+
+/* The files which were modified or created are written here
+ * at the end of the program.   They constitute outputs of
+ * the program.  The files will be sorted in some canonical
+ * way.
+ */
+$output $file CIVL_output_filesystem[];
+
+extern FILE * stdout = $fopen(CIVL_filesystem, "CIVL_stdout", CIVL_FILE_MODE_WX);
+
+extern FILE * stderr = $fopen(CIVL_filesystem, "CIVL_stderr", CIVL_FILE_MODE_WX);
+
+extern FILE * stdin = $fopen(CIVL_filesystem, "CIVL_stdin", CIVL_FILE_MODE_R);
+
+void _fflush(void){
+  return;
+}
 
 #endif

@@ -755,6 +755,8 @@ public class ModelTranslator {
 			return "string.cvl";
 		case "svcomp.h":
 			return "svcomp.cvl";
+		case "stdio.h":
+			return "stdio.cvl";
 		case "stdlib.h":
 			return "stdlib.cvl";
 		case "sys/time.h":

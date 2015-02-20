@@ -12,6 +12,7 @@
 
 #define comm MPI_COMM_WORLD
 #ifdef _CIVL
+#include <civlc.cvh>
 $input int _NPROCS_LOWER_BOUND = 1;
 $input int _NPROCS_UPPER_BOUND = 4;
 /* Dimensions of 2 matrices: a[N][L] * b[L][M] */

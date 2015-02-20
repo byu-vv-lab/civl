@@ -6,6 +6,6 @@ int main(){
 
   memset(a, 0, 3);
   printf("%c, %c, %c, %c, %c\n", a[0], a[1],a[2],a[3],a[4]);
-  //$assert $forall {i= 0 .. 2} a[i]==0;
-  $assert a[0]==0;
+  $assert ($forall  {int k | 0<=k && k<=4 }  a[k]==0);
+  // $assert a[0]==0;
 }

@@ -556,7 +556,7 @@ public class IOWorker extends BaseWorker {
 		String sourceFile = node.getSource().getFirstToken().getSourceFile()
 				.getName();
 
-		if (sourceFile.equals("stdio-c.cvl")) {
+		if (sourceFile.equals("stdio.cvl")) {
 			node.parent().removeChild(node.childIndex());
 		} else {
 			for (ASTNode child : node.children()) {

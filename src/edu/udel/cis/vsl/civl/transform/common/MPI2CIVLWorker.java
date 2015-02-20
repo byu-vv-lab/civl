@@ -572,9 +572,12 @@ public class MPI2CIVLWorker extends BaseWorker {
 						includedNodes.add(child);
 				} else
 					includedNodes.add(child);
-			} else if (sourceFile.equals("stdio.h")
-					|| sourceFile.equals("stdio-c.cvl")) {
-				// keep variable declaration nodes from stdio, i.e.,
+			} else if (sourceFile.equals("stdio.h")) {
+				// ignore the variable declaration in stdio.h
+				if (child.nodeKind() != NodeKind.VARIABLE_DECLARATION)
+					includedNodes.add(child);
+			} else if (sourceFile.equals("stdio.cvl")) {
+				// keep variable declaration nodes from stdio.cvl, i.e.,
 				// stdout, stdin, stderr, etc.
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION)
 					items.add((BlockItemNode) child);

@@ -1,5 +1,7 @@
 #include<civlc.cvh>
 #include<stdio.h>
+#include<civl-stdio.cvh>
+
 int fooLength = $textFileLength("foo");
 
 $assume fooLength == 5;

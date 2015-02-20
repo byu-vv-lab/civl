@@ -25,16 +25,16 @@ public class CudaTest {
 
 	@Test
 	public void sum() {
-		assertTrue(ui.run(
-				"verify -enablePrintf=false -inputN=8 -inputNBLOCKS=4",
-				filename("sum.cu")));
+		assertTrue(ui
+				.run("verify -debug=false -enablePrintf=false -inputN=8 -inputNBLOCKS=4",
+						filename("sum.cu")));
 	}
 
 	@Test
 	public void matMult1() {
-		assertTrue(ui.run(
-				"verify -enablePrintf=false -inputN=2 -inputTILE_WIDTH=1 ",
-				filename("matMult1.cu")));
+		assertTrue(ui
+				.run("verify -debug=false -enablePrintf=false -inputN=2 -inputTILE_WIDTH=1 ",
+						filename("matMult1.cu")));
 	}
 
 	@AfterClass

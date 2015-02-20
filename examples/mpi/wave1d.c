@@ -20,6 +20,7 @@
 
 /* Input parameters */
 #ifdef _CIVL
+#include <civlc.cvh>
 
 $input int NXB = 5;               /* upper bound on nx */
 $input int nx;                    /* number of discrete points including endpoints */

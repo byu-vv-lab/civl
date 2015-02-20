@@ -2548,6 +2548,10 @@ public class FunctionTranslator {
 			Scope scope, VariableDeclarationNode node)
 			throws CommandLineException {
 		Variable variable = translateVariableDeclarationNode(node, scope);
+		
+		if(variable == null)
+			return new CommonFragment();
+		
 		CIVLType type = variable.type();
 		Fragment result = null, initialization = null;
 		IdentifierNode identifier = node.getIdentifier();
@@ -2606,6 +2610,11 @@ public class FunctionTranslator {
 	 */
 	private Variable translateVariableDeclarationNode(
 			VariableDeclarationNode node, Scope scope) {
+		edu.udel.cis.vsl.abc.ast.entity.IF.Variable varEntity = node
+				.getEntity();
+		if (!varEntity.getDefinition().equals(node))
+			return null;
+
 		TypeNode typeNode = node.getTypeNode();
 		CIVLType type = translateABCType(modelFactory.sourceOf(typeNode),
 				scope, typeNode.getType());
