@@ -4,16 +4,27 @@ import edu.udel.cis.vsl.civl.run.IF.CommandLine;
 
 public class CompareCommandLine extends BaseCommandLine implements CommandLine {
 
+	/**
+	 * The name of the specification section of the command line
+	 */
+	public final static String SPEC = "spec";
+
+	/**
+	 * The name of the specification section of the command line
+	 */
+	public final static String IMPL = "impl";
+
 	private NormalCommandLine specification;
 
 	private NormalCommandLine implementation;
-	
+
 	private boolean isReplay;
 
-//	public CompareCommandLine(NormalCommandLine spec, NormalCommandLine impl) {
-//		this.specification = spec;
-//		this.implementation = impl;
-//	}
+	// public CompareCommandLine(NormalCommandLine spec, NormalCommandLine impl)
+	// {
+	// this.specification = spec;
+	// this.implementation = impl;
+	// }
 
 	public CompareCommandLine(boolean isReplay) {
 		this.specification = new NormalCommandLine();
@@ -49,5 +60,4 @@ public class CompareCommandLine extends BaseCommandLine implements CommandLine {
 	public void setReplay(boolean isReplay) {
 		this.isReplay = isReplay;
 	}
-
 }

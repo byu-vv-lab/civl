@@ -6,7 +6,7 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConstants.DeadlockKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
-import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GMCSection;
 
 /**
  * A CIVLConfiguration object encompasses all the parameters used to configure
@@ -189,7 +189,7 @@ public class CIVLConfiguration {
 	 * @param config
 	 *            The command line configuration.
 	 */
-	public CIVLConfiguration(GMCConfiguration config) {
+	public CIVLConfiguration(GMCSection config) {
 		String deadlockString = (String) config
 				.getValue(CIVLConstants.deadlockO);
 		String ompLoopDecompString = (String) config

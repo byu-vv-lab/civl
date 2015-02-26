@@ -97,9 +97,11 @@ import edu.udel.cis.vsl.civl.transform.IF.Transforms;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GMCSection;
 import edu.udel.cis.vsl.gmc.MisguidedExecutionException;
 import edu.udel.cis.vsl.gmc.Option;
 import edu.udel.cis.vsl.gmc.Trace;
+import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.config.Configurations;
 
@@ -151,8 +153,7 @@ public class UserInterface {
 			.newTransformerFactory(frontEnd.getASTFactory());
 
 	/* ************************** Static Code ***************************** */
-
-	// TODO maxdepth, saveStates,
+	// initializes the command line options
 	static {
 		for (Option option : CIVLConstants.getAllOptions())
 			definedOptions.put(option.name(), option);
@@ -192,6 +193,9 @@ public class UserInterface {
 
 	/* ************************** Constructors ***************************** */
 
+	/**
+	 * Creates a new instance of user interface.
+	 */
 	public UserInterface() {
 		parser = new CommandLineParser(definedOptions.values());
 	}
@@ -240,6 +244,18 @@ public class UserInterface {
 		return run(args);
 	}
 
+	/**
+	 * Run a non-compare command line, which could be
+	 * show/run/replay/verify/help/config.
+	 * 
+	 * @param commandLine
+	 *            The command line to be run.
+	 * @return the result of running the command line
+	 * @throws CommandLineException
+	 * @throws ABCException
+	 * @throws IOException
+	 * @throws MisguidedExecutionException
+	 */
 	public boolean runNormalCommand(NormalCommandLine commandLine)
 			throws CommandLineException, ABCException, IOException,
 			MisguidedExecutionException {
@@ -248,20 +264,50 @@ public class UserInterface {
 		else if (commandLine.normalCommandKind() == NormalCommandKind.CONFIG)
 			Configurations.makeConfigFile();
 		else {
+			NormalCommandKind kind = commandLine.normalCommandKind();
+			GMCConfiguration gmcConfig = commandLine.gmcConfig();
+			GMCSection gmcSection = gmcConfig.getAnonymousSection();
+			File traceFile = null;
+
+			if (kind == NormalCommandKind.REPLAY) {
+				String traceFilename;
+
+				traceFilename = (String) gmcConfig.getAnonymousSection()
+						.getValue(traceO);
+				if (traceFilename == null) {
+					traceFilename = commandLine.getCoreFileName()
+							+ "_"
+							+ gmcConfig.getAnonymousSection()
+									.getValueOrDefault(idO) + ".trace";
+					traceFile = new File(CIVLConstants.CIVLREP, traceFilename);
+				} else
+					traceFile = new File(traceFilename);
+				gmcConfig = parser.newConfig();
+				parser.parse(gmcConfig, traceFile);
+				gmcSection = gmcConfig.getAnonymousSection();
+				setToDefault(gmcSection, Arrays.asList(showModelO, verboseO,
+						debugO, showStatesO, showSavedStatesO, showQueriesO,
+						showProverQueriesO, enablePrintfO, statelessPrintfO));
+				gmcSection.setScalarValue(showTransitionsO, true);
+				gmcSection.setScalarValue(collectScopesO, false);
+				gmcSection.setScalarValue(collectProcessesO, false);
+				gmcSection.setScalarValue(collectHeapsO, false);
+				gmcSection.read(commandLine.gmcConfig().getAnonymousSection());
+			}
 			ModelTranslator modelTranslator = new ModelTranslator(
-					transformerFactory, frontEnd, commandLine.configuration(),
+					transformerFactory, frontEnd, gmcConfig, gmcSection,
 					commandLine.files(), commandLine.getCoreFileName(),
 					commandLine.getCoreFile());
 
-			if (commandLine.configuration().isTrue(echoO))
+			if (commandLine.gmcSection().isTrue(echoO))
 				out.println(commandLine.getCommandString());
-			switch (commandLine.normalCommandKind()) {
+			switch (kind) {
 			case SHOW:
 				return runShow(modelTranslator);
 			case VERIFY:
 				return runVerify(modelTranslator);
 			case REPLAY:
-				return runReplay(modelTranslator);
+				return runReplay(modelTranslator, traceFile);
 			case RUN:
 				return runRun(modelTranslator);
 			default:
@@ -274,75 +320,105 @@ public class UserInterface {
 		return true;
 	}
 
-	// TODO add replay
+	/**
+	 * Run a compare command, which is either compare verify or compare replay.
+	 * 
+	 * @param compareCommand
+	 *            The compare command to be run
+	 * @return the result of running the command
+	 * @throws CommandLineException
+	 * @throws ABCException
+	 * @throws IOException
+	 * @throws MisguidedExecutionException
+	 */
 	public boolean runCompareCommand(CompareCommandLine compareCommand)
 			throws CommandLineException, ABCException, IOException,
 			MisguidedExecutionException {
+		GMCConfiguration gmcConfig = compareCommand.gmcConfig();
+		GMCSection anonymousSection = gmcConfig.getAnonymousSection(), specSection = gmcConfig
+				.getSection(CompareCommandLine.SPEC), implSection = gmcConfig
+				.getSection(CompareCommandLine.IMPL);
 		NormalCommandLine spec = compareCommand.specification(), impl = compareCommand
 				.implementation();
+		SymbolicUniverse universe = SARL.newStandardUniverse();
+		File traceFile = null;
+
+		if (compareCommand.isReplay()) {
+			String traceFilename;
+
+			traceFilename = (String) anonymousSection.getValue(traceO);
+			if (traceFilename == null) {
+				traceFilename = "Composite_" + spec.getCoreFileName() + "_"
+						+ impl.getCoreFileName() + "_"
+						+ anonymousSection.getValueOrDefault(idO) + ".trace";
+				traceFile = new File(new File(CIVLConstants.CIVLREP),
+						traceFilename);
+			} else
+				traceFile = new File(traceFilename);
+			gmcConfig = parser.newConfig();
+			parser.parse(gmcConfig, traceFile);
+			anonymousSection = gmcConfig.getAnonymousSection();
+			setToDefault(anonymousSection, Arrays.asList(showModelO, verboseO,
+					debugO, showStatesO, showSavedStatesO, showQueriesO,
+					showProverQueriesO, enablePrintfO, statelessPrintfO));
+			anonymousSection.setScalarValue(showTransitionsO, true);
+			if (anonymousSection.isTrue(showProverQueriesO))
+				universe.setShowProverQueries(true);
+			if (anonymousSection.isTrue(showQueriesO))
+				universe.setShowQueries(true);
+			anonymousSection.setScalarValue(collectScopesO, false);
+			anonymousSection.setScalarValue(collectProcessesO, false);
+			anonymousSection.setScalarValue(collectHeapsO, false);
+		}
+		specSection = gmcConfig.getSection(CompareCommandLine.SPEC);
+		implSection = gmcConfig.getSection(CompareCommandLine.IMPL);
+		anonymousSection = this.readInputs(
+				this.readInputs(anonymousSection, specSection), implSection);
+
 		ModelTranslator specWorker = new ModelTranslator(transformerFactory,
-				frontEnd, spec.configuration(), spec.files(),
-				spec.getCoreFileName(), spec.getCoreFile()), implWorker = new ModelTranslator(
-				transformerFactory, frontEnd, specWorker.preprocessor,
-				impl.configuration(), impl.files(), impl.getCoreFileName(),
-				impl.getCoreFile(), specWorker.universe);
+				frontEnd, gmcConfig, specSection, spec.files(),
+				spec.getCoreFileName(), spec.getCoreFile(), universe), implWorker = new ModelTranslator(
+				transformerFactory, frontEnd, gmcConfig, implSection,
+				impl.files(), impl.getCoreFileName(), impl.getCoreFile(),
+				universe);
 		Program specProgram, implProgram, compositeProgram;
 		Combiner combiner = Transform.compareCombiner();
 		Model model;
-		@SuppressWarnings("unused")
-		boolean showShortFileName = showShortFileNameList(specWorker.cmdConfig);
 		ModelBuilder modelBuilder = Models.newModelBuilder(specWorker.universe);
 		AST combinedAST;
+		CIVLConfiguration civlConfig = new CIVLConfiguration(anonymousSection);
 
-		if (spec.configuration().isTrue(echoO)
-				|| impl.configuration().isTrue(echoO))
+		if (anonymousSection.isTrue(echoO))
 			out.println(compareCommand.getCommandString());
 		specProgram = specWorker.buildProgram();
 		implProgram = implWorker.buildProgram();
-		if (specWorker.config.debugOrVerbose())
+		if (civlConfig.debugOrVerbose())
 			out.println("Generating composite program...");
 		combinedAST = combiner.combine(specProgram.getAST(),
 				implProgram.getAST());
 		compositeProgram = frontEnd.getProgramFactory(
 				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
 				combinedAST);
-		// this.applyDefaultTransformers(compositeProgram, civlConfig);
-		if (specWorker.config.debugOrVerbose()
-				|| specWorker.config.showProgram()) {
+		if (civlConfig.debugOrVerbose() || civlConfig.showProgram()) {
 			compositeProgram.prettyPrint(out);
 		}
-		// if (showShortFileName)
-		// specWorker.preprocessor.printSourceFiles(out);
-		if (specWorker.config.debugOrVerbose())
+		if (civlConfig.debugOrVerbose())
 			out.println("Extracting CIVL model...");
 		model = modelBuilder.buildModel(
-				this.combineConfigurations(specWorker.cmdConfig,
-						implWorker.cmdConfig),
+				anonymousSection,
 				compositeProgram,
 				"Composite_" + spec.getCoreFileName() + "_"
 						+ impl.getCoreFileName(), debug, out);
-		if (specWorker.config.debugOrVerbose() || specWorker.config.showModel()) {
+		if (civlConfig.debugOrVerbose() || civlConfig.showModel()) {
 			out.println(bar + " Model " + bar + "\n");
-			model.print(out, specWorker.config.debugOrVerbose());
+			model.print(out, civlConfig.debugOrVerbose());
 		}
 		if (compareCommand.isReplay())
-			return this.runCompareReplay(specWorker, implWorker, model);
-		if (specWorker.config.web())
+			return this.runCompareReplay(gmcConfig, traceFile, model, universe);
+		if (civlConfig.web())
 			this.createWebLogs(model.program());
-		return this.runCompareVerify(specWorker.cmdConfig, model,
+		return this.runCompareVerify(compareCommand.gmcConfig(), model,
 				specWorker.preprocessor, specWorker.universe);
-	}
-
-	private GMCConfiguration combineConfigurations(GMCConfiguration config1,
-			GMCConfiguration config2) {
-		GMCConfiguration result = config1.clone();
-		Map<String, Object> inputs2 = config2.getMapValue(inputO);
-
-		if (inputs2 != null)
-			for (Map.Entry<String, Object> entry : inputs2.entrySet()) {
-				result.putMapEntry(inputO, entry.getKey(), entry.getValue());
-			}
-		return result;
 	}
 
 	/* ************************* Private Methods *************************** */
@@ -374,19 +450,15 @@ public class UserInterface {
 			CommandLine commandLine = CIVLCommandFactory.parseCommand(
 					definedOptions.values(), args);
 
-			// TODO
-			// if (config.isTrue(echoO))
-			// printCommand(config);
-			// if (config.isTrue(showQueriesO))
-			// universe.setShowQueries(true);
-			// if (config.isTrue(showProverQueriesO))
-			// universe.setShowProverQueries(true);
 			try {
 				switch (commandLine.commandLineKind()) {
 				case NORMAL:
 					return runNormalCommand((NormalCommandLine) commandLine);
-				default:// case COMPARE:
+				case COMPARE:
 					return runCompareCommand((CompareCommandLine) commandLine);
+				default:
+					throw new CIVLUnimplementedFeatureException("command of "
+							+ commandLine.commandLineKind() + " kind");
 				}
 			} catch (ABCException e) {
 				err.println(e);
@@ -434,49 +506,19 @@ public class UserInterface {
 	 * @throws ABCException
 	 * @throws MisguidedExecutionException
 	 */
-	private boolean runReplay(ModelTranslator modelTranslator)
+	private boolean runReplay(ModelTranslator modelTranslator, File traceFile)
 			throws CommandLineException, FileNotFoundException, IOException,
 			ABCException, MisguidedExecutionException {
 		boolean result;
-		String traceFilename;
-		File traceFile;
-		GMCConfiguration newConfig;
 		Model model;
 		TracePlayer replayer;
-		boolean guiMode = modelTranslator.cmdConfig.isTrue(guiO);
+		boolean guiMode = modelTranslator.cmdSection.isTrue(guiO);
 		Trace<Transition, State> trace;
 
-		// sourceFilename = coreName(modelTranslator.filenames[0]);
-		traceFilename = (String) modelTranslator.cmdConfig.getValue(traceO);
-		if (traceFilename == null) {
-			// File parent = modelTranslator.userFile.getParentFile();
-			traceFilename = modelTranslator.userFileCoreName + "_"
-					+ modelTranslator.cmdConfig.getValueOrDefault(idO)
-					+ ".trace";
-			// traceFile = new File(new File(parent, CIVLConstants.CIVLREP),
-			// traceFilename);
-			// if (!traceFile.exists())
-			traceFile = new File(CIVLConstants.CIVLREP, traceFilename);
-		} else
-			traceFile = new File(traceFilename);
-		newConfig = parser.newConfig();
-		// get the original config and overwrite it with new options...
-		parser.parse(newConfig, traceFile); // gets free args verify filename
-		setToDefault(newConfig, Arrays.asList(showModelO, verboseO, debugO,
-				showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, enablePrintfO, statelessPrintfO));
-		newConfig.setScalarValue(showTransitionsO, true);
-		newConfig.read(modelTranslator.cmdConfig);
-		newConfig.setScalarValue(collectScopesO, false);
-		newConfig.setScalarValue(collectProcessesO, false);
-		newConfig.setScalarValue(collectHeapsO, false);
-
-		modelTranslator.cmdConfig = newConfig;
-		modelTranslator.config = new CIVLConfiguration(newConfig);
 		model = modelTranslator.translate();
 		if (model != null) {
-			replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile,
-					out, err, modelTranslator.preprocessor);
+			replayer = TracePlayer.guidedPlayer(modelTranslator.gmcConfig,
+					model, traceFile, out, err);
 			trace = replayer.run();
 			result = trace.result();
 			if (guiMode) {
@@ -486,7 +528,6 @@ public class UserInterface {
 			printStats(out, modelTranslator.universe);
 			replayer.printStats();
 			out.println();
-			// modelTranslator.preprocessor.printSourceFiles(out);
 			return result;
 		}
 		return false;
@@ -501,11 +542,8 @@ public class UserInterface {
 
 		model = modelTranslator.translate();
 		if (model != null) {
-			// if (showShortFileNameList(modelTranslator.cmdConfig))
-			// modelTranslator.preprocessor.printSourceFiles(out);
-			// modelTranslator.cmdConfig.setScalarValue(showTransitionsO, true);
-			player = TracePlayer.randomPlayer(modelTranslator.cmdConfig, model,
-					out, err, modelTranslator.preprocessor);
+			player = TracePlayer.randomPlayer(modelTranslator.gmcConfig, model,
+					out, err);
 			out.println("\nRunning random simulation with seed "
 					+ player.getSeed() + " ...");
 			out.flush();
@@ -523,33 +561,27 @@ public class UserInterface {
 		boolean result;
 		Model model;
 		Verifier verifier;
-		boolean showShortFileName = showShortFileNameList(modelTranslator.cmdConfig);
 
-		if (modelTranslator.cmdConfig.isTrue(showProverQueriesO))
+		if (modelTranslator.cmdSection.isTrue(showProverQueriesO))
 			modelTranslator.universe.setShowProverQueries(true);
-		if (modelTranslator.cmdConfig.isTrue(showQueriesO))
+		if (modelTranslator.cmdSection.isTrue(showQueriesO))
 			modelTranslator.universe.setShowQueries(true);
-		// checkFilenames(1, modelTranslator.cmdConfig);
 		model = modelTranslator.translate();
 		if (modelTranslator.config.web())
 			this.createWebLogs(model.program());
 		if (model != null) {
-			// if (showShortFileName)
-			// modelTranslator.preprocessor.printSourceFiles(out);
-			verifier = new Verifier(modelTranslator.cmdConfig, model, out, err,
-					startTime, showShortFileName, modelTranslator.preprocessor);
+			verifier = new Verifier(modelTranslator.gmcConfig, model, out, err,
+					startTime);
 			try {
 				result = verifier.run();
 			} catch (CIVLUnimplementedFeatureException unimplemented) {
 				verifier.terminateUpdater();
 				out.println();
 				out.println("Error: " + unimplemented.toString());
-				// modelTranslator.preprocessor.printSourceFiles(out);
 				return false;
 			} catch (CIVLSyntaxException syntax) {
 				verifier.terminateUpdater();
 				err.println(syntax);
-				// modelTranslator.preprocessor.printSourceFiles(err);
 				return false;
 			} catch (Exception e) {
 				verifier.terminateUpdater();
@@ -600,8 +632,7 @@ public class UserInterface {
 	private boolean runCompareVerify(GMCConfiguration cmdConfig, Model model,
 			Preprocessor preprocessor, SymbolicUniverse universe)
 			throws CommandLineException, ABCException, IOException {
-		Verifier verifier = new Verifier(cmdConfig, model, out, err, startTime,
-				showShortFileNameList(cmdConfig), preprocessor);
+		Verifier verifier = new Verifier(cmdConfig, model, out, err, startTime);
 		boolean result = false;
 
 		try {
@@ -623,54 +654,39 @@ public class UserInterface {
 		return result;
 	}
 
-	private boolean runCompareReplay(ModelTranslator specWorker,
-			ModelTranslator implWorker, Model model)
+	private boolean runCompareReplay(GMCConfiguration gmcConfig,
+			File traceFile, Model model, SymbolicUniverse universe)
 			throws CommandLineException, FileNotFoundException, IOException,
 			SyntaxException, PreprocessorException, ParseException,
 			MisguidedExecutionException {
-		String traceFilename;
-		File traceFile;
-		GMCConfiguration newConfig;
-		boolean guiMode = specWorker.cmdConfig.isTrue(guiO);
+		boolean guiMode = gmcConfig.getAnonymousSection().isTrue(guiO);
 		TracePlayer replayer;
 		Trace<Transition, State> trace;
 		boolean result;
 
-		traceFilename = (String) specWorker.cmdConfig.getValue(traceO);
-		if (traceFilename == null) {
-			traceFilename = "Composite_" + specWorker.userFileCoreName + "_"
-					+ implWorker.userFileCoreName + "_"
-					+ specWorker.cmdConfig.getValueOrDefault(idO) + ".trace";
-			traceFile = new File(new File(CIVLConstants.CIVLREP), traceFilename);
-		} else
-			traceFile = new File(traceFilename);
-		newConfig = parser.newConfig();
-		// get the original config and overwrite it with new options...
-		parser.parse(newConfig, traceFile); // gets free args verify filename
-		setToDefault(newConfig, Arrays.asList(showModelO, verboseO, debugO,
-				showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, enablePrintfO, statelessPrintfO));
-		newConfig.setScalarValue(showTransitionsO, true);
-		newConfig.read(specWorker.cmdConfig);
-		if (newConfig.isTrue(showProverQueriesO))
-			specWorker.universe.setShowProverQueries(true);
-		if (newConfig.isTrue(showQueriesO))
-			specWorker.universe.setShowQueries(true);
-		newConfig.setScalarValue(collectScopesO, false);
-		newConfig.setScalarValue(collectProcessesO, false);
-		newConfig.setScalarValue(collectHeapsO, false);
-		replayer = TracePlayer.guidedPlayer(newConfig, model, traceFile, out,
-				err, specWorker.preprocessor);
+		replayer = TracePlayer.guidedPlayer(gmcConfig, model, traceFile, out,
+				err);
 		trace = replayer.run();
 		result = trace.result();
 		if (guiMode) {
 			@SuppressWarnings("unused")
 			CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
 		}
-		printStats(out, specWorker.universe);
+		printStats(out, universe);
 		replayer.printStats();
 		out.println();
-		// specWorker.preprocessor.printSourceFiles(out);
+		return result;
+	}
+
+	private GMCSection readInputs(GMCSection lhs, GMCSection rhs) {
+		GMCSection result = lhs.clone();
+		Map<String, Object> inputs = rhs.getMapValue(CIVLConstants.inputO);
+
+		if (inputs != null)
+			for (Map.Entry<String, Object> entry : inputs.entrySet()) {
+				result.putMapEntry(CIVLConstants.inputO, entry.getKey(),
+						entry.getValue());
+			}
 		return result;
 	}
 
@@ -809,27 +825,12 @@ public class UserInterface {
 		out.println(time);
 	}
 
-	private void setToDefault(GMCConfiguration config,
-			Collection<Option> options) {
+	private void setToDefault(GMCSection config, Collection<Option> options) {
 		for (Option option : options)
 			setToDefault(config, option);
 	}
 
-	private void setToDefault(GMCConfiguration config, Option option) {
+	private void setToDefault(GMCSection config, Option option) {
 		config.setScalarValue(option, option.defaultValue());
-	}
-
-	private boolean showShortFileNameList(GMCConfiguration config) {
-		boolean debug = config.isTrue(debugO);
-		boolean verbose = config.isTrue(verboseO);
-		boolean showModel = config.isTrue(showModelO);
-		boolean showSavedStates = config.isTrue(showSavedStatesO);
-		boolean showStates = config.isTrue(showStatesO);
-		boolean showTransitions = config.isTrue(showTransitionsO);
-
-		if (debug || verbose || showModel || showSavedStates || showStates
-				|| showTransitions)
-			return true;
-		return false;
 	}
 }

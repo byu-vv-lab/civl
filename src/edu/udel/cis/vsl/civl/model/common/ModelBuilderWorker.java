@@ -51,7 +51,7 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.type.CommonType;
 //import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.gmc.CommandLineException;
-import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GMCSection;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
@@ -167,7 +167,7 @@ public class ModelBuilderWorker {
 	/**
 	 * Configuration information for the generic model checker.
 	 */
-	private GMCConfiguration config;
+	private GMCSection config;
 
 	private boolean debugging = false;
 
@@ -285,7 +285,7 @@ public class ModelBuilderWorker {
 	 * @param debugOut
 	 * @param debugging
 	 */
-	public ModelBuilderWorker(GMCConfiguration config, ModelFactory factory,
+	public ModelBuilderWorker(GMCSection config, ModelFactory factory,
 			Program program, String name, boolean debugging,
 			PrintStream debugOut) {
 		this.config = config;
@@ -769,7 +769,7 @@ public class ModelBuilderWorker {
 	/**
 	 * @return the configuration
 	 */
-	public GMCConfiguration getConfiguration() {
+	public GMCSection getConfiguration() {
 		return config;
 	}
 

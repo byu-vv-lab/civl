@@ -42,6 +42,7 @@ import edu.udel.cis.vsl.civl.model.IF.Models;
 import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GMCSection;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
@@ -53,7 +54,8 @@ public class ModelTranslator {
 
 	private final static File[] civlSysPathArray = new File[] { CIVLConstants.CIVL_INCLUDE_PATH };
 
-	GMCConfiguration cmdConfig;// = commandLine.configuration();
+	GMCConfiguration gmcConfig;
+	GMCSection cmdSection;// = commandLine.configuration();
 	CIVLConfiguration config;// = new CIVLConfiguration(cmdConfig);
 	String[] filenames;// = commandLine.files();
 	Preprocessor preprocessor;// = this.frontEnd.getPreprocessor();
@@ -71,34 +73,34 @@ public class ModelTranslator {
 	File userFile;
 
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
-			GMCConfiguration cmdConfig, String[] filenames, String coreName,
-			File coreFile) {
-		this(transformerFactory, frontEnd, frontEnd.getPreprocessor(),
-				cmdConfig, filenames, coreName, coreFile, SARL
-						.newStandardUniverse());
+			GMCConfiguration gmcConfig, GMCSection gmcSection,
+			String[] filenames, String coreName, File coreFile) {
+		this(transformerFactory, frontEnd, gmcConfig, gmcSection, filenames,
+				coreName, coreFile, SARL.newStandardUniverse());
 	}
 
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
-			Preprocessor preprocessor, GMCConfiguration cmdConfig,
+			GMCConfiguration gmcConfig, GMCSection cmdSection,
 			String[] filenames, String coreName, File coreFile,
 			SymbolicUniverse universe) {
 		this.transformerFactory = transformerFactory;
-		this.cmdConfig = cmdConfig;
+		this.cmdSection = cmdSection;
+		this.gmcConfig = gmcConfig;
 		this.userFileCoreName = coreName;
 		this.universe = universe;
-		if (cmdConfig.isTrue(showProverQueriesO))
+		if (cmdSection.isTrue(showProverQueriesO))
 			universe.setShowProverQueries(true);
-		if (cmdConfig.isTrue(showQueriesO))
+		if (cmdSection.isTrue(showQueriesO))
 			universe.setShowQueries(true);
-		config = new CIVLConfiguration(cmdConfig);
+		config = new CIVLConfiguration(cmdSection);
 		this.filenames = filenames;
 		userFileName = filenames[0];
 		this.userFile = coreFile;
 		this.frontEnd = frontEnd;
-		this.preprocessor = preprocessor;
-		systemIncludes = this.getSysIncludes(cmdConfig);
-		userIncludes = this.getUserIncludes(cmdConfig);
-		macroMaps = getMacroMaps(preprocessor, cmdConfig);
+		this.preprocessor = frontEnd.getPreprocessor();
+		systemIncludes = this.getSysIncludes(cmdSection);
+		userIncludes = this.getUserIncludes(cmdSection);
+		macroMaps = getMacroMaps(preprocessor);
 	}
 
 	Program buildProgram() throws PreprocessorException {
@@ -117,19 +119,10 @@ public class ModelTranslator {
 					+ "ms:\tSUMARRY ANTLR preprocessor parsing to form preproc tree for "
 					+ tokenSources.length + " translation units");
 		}
-		if (tokenSources != null) {
-			// startTime = System.currentTimeMillis();
+		if (tokenSources != null)
 			asts = this.parseTokens(tokenSources);
-			// endTime = System.currentTimeMillis();
-			// if (config.showTime()) {
-			// totalTime = (endTime - startTime) / 1000;
-			// out.println(totalTime + "s:\tSUMARRY parsing "
-			// + tokenSources.length + " preproc trees into ASTs");
-			// }
-		}
-		if (asts != null) {
+		if (asts != null)
 			program = this.link(asts);
-		}
 		if (program != null) {
 			startTime = System.currentTimeMillis();
 			if (!this.applyAllTransformers(program))
@@ -242,7 +235,7 @@ public class ModelTranslator {
 			boolean hasFscanf = TransformerFactory.hasFunctionCalls(
 					program.getAST(), Arrays.asList("scanf", "fscanf"));
 
-			model = modelBuilder.buildModel(cmdConfig, program, modelName,
+			model = modelBuilder.buildModel(cmdSection, program, modelName,
 					config.debugOrVerbose(), out);
 			model.setHasFscanf(hasFscanf);
 		} catch (CommandLineException e) {
@@ -573,9 +566,8 @@ public class ModelTranslator {
 		return tokenSources.toArray(new CTokenSource[filenames.length]);
 	}
 
-	private Map<String, Macro> getMacroMaps(Preprocessor preprocessor,
-			GMCConfiguration config) {
-		Map<String, Object> macroDefMap = config.getMapValue(macroO);
+	private Map<String, Macro> getMacroMaps(Preprocessor preprocessor) {
+		Map<String, Object> macroDefMap = cmdSection.getMapValue(macroO);
 		Map<String, String> macroDefs = new HashMap<String, String>();
 
 		macroDefs.put(CIVL_MACRO, "");
@@ -615,7 +607,7 @@ public class ModelTranslator {
 		}
 	}
 
-	private File[] getUserIncludes(GMCConfiguration config) {
+	private File[] getUserIncludes(GMCSection config) {
 		return extractPaths((String) config.getValue(userIncludePathO));
 	}
 
@@ -627,7 +619,7 @@ public class ModelTranslator {
 	 *         line) config object with the default CIVL include directory
 	 *         tacked on at the end
 	 */
-	private File[] getSysIncludes(GMCConfiguration config) {
+	private File[] getSysIncludes(GMCSection config) {
 		File[] sysIncludes = extractPaths((String) config
 				.getValue(sysIncludePathO));
 		int numIncludes = sysIncludes.length;

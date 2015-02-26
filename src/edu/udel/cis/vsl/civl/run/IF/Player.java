@@ -10,7 +10,6 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
 import java.io.File;
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.Dynamics;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -89,8 +88,6 @@ public abstract class Player {
 
 	protected boolean gui; // false by default, only works with Replay mode.
 
-	protected Preprocessor preprocessor;
-
 	protected SymbolicUtility symbolicUtil;
 
 	protected SymbolicAnalyzer symbolicAnalyzer;
@@ -100,23 +97,23 @@ public abstract class Player {
 	protected CIVLConfiguration civlConfig;
 
 	public Player(GMCConfiguration config, Model model, PrintStream out,
-			PrintStream err, Preprocessor preprocessor)
-			throws CommandLineException {
+			PrintStream err) throws CommandLineException {
 		SymbolicUniverse universe;
 
-		this.preprocessor = preprocessor;
 		this.config = config;
 		this.model = model;
-		civlConfig = new CIVLConfiguration(config);
+		civlConfig = new CIVLConfiguration(config.getAnonymousSection());
 		civlConfig.setOut(out);
 		civlConfig.setErr(err);
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
-		this.solve = (Boolean) config.getValueOrDefault(solveO);
+		this.solve = (Boolean) config.getAnonymousSection().getValueOrDefault(
+				solveO);
 		this.log = new CIVLErrorLogger(new File("CIVLREP"), sessionName, out,
 				config, universe, solve);
-		this.log.setErrorBound((int) config.getValueOrDefault(errorBoundO));
+		this.log.setErrorBound((int) config.getAnonymousSection()
+				.getValueOrDefault(errorBoundO));
 		this.symbolicUtil = Dynamics.newSymbolicUtility(universe, modelFactory);
 		this.memUnitFactory = States.newImmutableMemoryUnitFactory(universe,
 				modelFactory);
@@ -128,15 +125,16 @@ public abstract class Player {
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
 				libraryEvaluatorLoader, symbolicUtil, symbolicAnalyzer,
 				memUnitFactory, log);
-		this.gui = (Boolean) config.getValueOrDefault(guiO);
+		this.gui = (Boolean) config.getAnonymousSection().getValueOrDefault(guiO);
 		this.libraryExecutorLoader = Semantics
 				.newLibraryExecutorLoader(this.libraryEvaluatorLoader);
 		this.executor = Semantics.newExecutor(modelFactory, stateFactory, log,
 				libraryExecutorLoader, evaluator, symbolicAnalyzer, log,
 				civlConfig);
-		this.random = config.isTrue(randomO);
-		this.minimize = config.isTrue(minO);
-		this.maxdepth = (int) config.getValueOrDefault(maxdepthO);
+		this.random = config.getAnonymousSection().isTrue(randomO);
+		this.minimize = config.getAnonymousSection().isTrue(minO);
+		this.maxdepth = (int) config.getAnonymousSection().getValueOrDefault(
+				maxdepthO);
 
 		this.libraryEnablerLoader = Kripkes
 				.newLibraryEnablerLoader(this.libraryEvaluatorLoader);

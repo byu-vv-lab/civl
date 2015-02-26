@@ -10,7 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.gmc.CommandLineException;
-import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GMCSection;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
@@ -66,7 +66,7 @@ public class CommonModelBuilder implements ModelBuilder {
 	// Exported Methods................................................
 
 	@Override
-	public Model buildModel(GMCConfiguration config, Program program,
+	public Model buildModel(GMCSection config, Program program,
 			String name, boolean debugging, PrintStream debugOut)
 			throws CommandLineException {
 		ModelBuilderWorker worker;

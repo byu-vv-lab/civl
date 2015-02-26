@@ -10,7 +10,6 @@ import java.io.PrintStream;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.log.IF.CIVLLogEntry;
@@ -204,7 +203,7 @@ public class Verifier extends Player {
 	 */
 	private DfsSearcher<State, Transition, TransitionSequence> searcher;
 
-	private boolean shortFileNamesShown;
+	// private boolean shortFileNamesShown;
 
 	/**
 	 * The time at which execution started, as a double.
@@ -212,9 +211,8 @@ public class Verifier extends Player {
 	private double startTime;
 
 	public Verifier(GMCConfiguration config, Model model, PrintStream out,
-			PrintStream err, double startTime, boolean shortFileNamesShown,
-			Preprocessor preprocessor) throws CommandLineException {
-		super(config, model, out, err, preprocessor);
+			PrintStream err, double startTime) throws CommandLineException {
+		super(config, model, out, err);
 		if (random) {
 			throw new CommandLineException(
 					"\"-random\" mode is incompatible with civl verify command.");
@@ -228,9 +226,9 @@ public class Verifier extends Player {
 		log.setSearcher(searcher);
 		if (minimize)
 			log.setMinimize(true);
-		if (config.getValue(maxdepthO) != null)
+		if (config.getAnonymousSection().getValue(maxdepthO) != null)
 			searcher.boundDepth(maxdepth);
-		if (config.isTrue(CIVLConstants.webO)) {
+		if (config.getAnonymousSection().isTrue(CIVLConstants.webO)) {
 			updatePeriod = CIVLConstants.webUpdatePeriod;
 			updater = new WebUpdater(new File(CIVLConstants.CIVLREP), "update");
 		} else {
@@ -238,7 +236,7 @@ public class Verifier extends Player {
 			updater = new SearchUpdater();
 		}
 		stateManager.setUpdater(updater);
-		this.shortFileNamesShown = shortFileNamesShown;
+		// this.shortFileNamesShown = shortFileNamesShown;
 	}
 
 	/**
@@ -300,11 +298,11 @@ public class Verifier extends Player {
 				}
 			} catch (ExcessiveErrorException e) {
 				violationFound = true;
-				if (!shortFileNamesShown) {
-					// preprocessor.printShorterFileNameMap(civlConfig.out());
-					// TODO
-					civlConfig.out().println();
-				}
+				// if (!shortFileNamesShown) {
+				// // preprocessor.printShorterFileNameMap(civlConfig.out());
+				// // TODO
+				// civlConfig.out().println();
+				// }
 				civlConfig.out().println(
 						"Error bound exceeded: search terminated");
 			}

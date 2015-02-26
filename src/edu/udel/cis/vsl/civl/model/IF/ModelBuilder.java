@@ -7,7 +7,7 @@ import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.gmc.CommandLineException;
-import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GMCSection;
 
 /**
  * Class to provide translation from an AST to a model.
@@ -39,7 +39,7 @@ public interface ModelBuilder {
 	 *             line has a type which is not compatible with the type of the
 	 *             variable
 	 */
-	Model buildModel(GMCConfiguration config, Program program, String name,
+	Model buildModel(GMCSection config, Program program, String name,
 			boolean debugging, PrintStream debugOut)
 			throws CommandLineException;
 

@@ -181,7 +181,7 @@ public class ImmutableStateFactory implements StateFactory {
 		this.symbolicUtil = symbolicUtil;
 		this.universe = modelFactory.universe();
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
-		this.simplify = config.isTrue(simplifyO);
+		this.simplify = config.getAnonymousSection().isTrue(simplifyO);
 		this.memUnitFactory = (ImmutableMemoryUnitFactory) memFactory;
 		this.undefinedProcessValue = modelFactory.undefinedValue(typeFactory
 				.processSymbolicType());

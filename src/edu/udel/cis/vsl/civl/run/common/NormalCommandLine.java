@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Collection;
 
 import edu.udel.cis.vsl.civl.run.IF.CommandLine;
-import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GMCSection;
 
 public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 
@@ -13,7 +13,7 @@ public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 	}
 
 	private NormalCommandKind command;
-	private GMCConfiguration config;
+	private GMCSection cmdSection;
 	private String[] files;
 	private File coreFile;
 	private String coreFileName;
@@ -22,9 +22,9 @@ public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 	}
 
 	public NormalCommandLine(NormalCommandKind command,
-			GMCConfiguration config, String[] files) {
+			GMCSection cmdSection, String[] files) {
 		this.command = command;
-		this.config = config;
+		this.cmdSection = cmdSection;
 		this.files = files;
 	}
 
@@ -36,12 +36,12 @@ public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 		return this.command;
 	}
 
-	public GMCConfiguration configuration() {
-		return this.config;
+	public GMCSection gmcSection() {
+		return this.cmdSection;
 	}
 
-	public void setConfiguration(GMCConfiguration config) {
-		this.config = config;
+	public void setGMCSection(GMCSection config) {
+		this.cmdSection = config;
 	}
 
 	public void setFiles(Collection<String> files) {
