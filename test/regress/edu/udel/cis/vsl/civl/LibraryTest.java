@@ -56,6 +56,11 @@ public class LibraryTest {
 	}
 
 	@Test
+	public void assume() throws ABCException {
+		assertFalse(ui.run("verify -showTransitions", filename("assume.cvl")));
+	}
+	
+	@Test
 	public void assertH() throws ABCException {
 		assertTrue(ui.run("verify", filename("assert_test.cvl")));
 	}
