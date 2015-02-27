@@ -22,8 +22,6 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
@@ -32,7 +30,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 public class LibtimeExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
 
-	private SymbolicConstant timeFunc;
+//	private SymbolicConstant timeFunc;
 	private SymbolicConstant localtimeFunc;
 	private CIVLType tmType;
 	private SymbolicType tmSymbolicType;
@@ -54,12 +52,12 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 			this.tmSymbolicType = tmType.getDynamicType(universe);
 		this.stringSymbolicType = (SymbolicArrayType) universe.canonic(universe
 				.arrayType(universe.characterType()));
-		this.timeFunc = (SymbolicConstant) universe.canonic(universe
-				.symbolicConstant(
-						universe.stringObject("time"),
-						universe.functionType(
-								Arrays.asList(universe.integerType()),
-								universe.realType())));
+		// this.timeFunc = (SymbolicConstant) universe.canonic(universe
+		// .symbolicConstant(
+		// universe.stringObject("time"),
+		// universe.functionType(
+		// Arrays.asList(universe.integerType()),
+		// universe.realType())));
 		if (tmType != null)
 			this.localtimeFunc = (SymbolicConstant) universe.canonic(universe
 					.symbolicConstant(universe.stringObject("localtime"),
@@ -107,10 +105,10 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 			state = eval.state;
 		}
 		switch (name.name()) {
-		case "time":
-			state = this.executeTime(state, pid, call.lhs(), arguments,
-					argumentValues);
-			break;
+//		case "time":
+//			state = this.executeTime(state, pid, call.lhs(), arguments,
+//					argumentValues);
+//			break;
 		case "localtime":
 			state = this.executeLocalTime(state, pid, call.lhs(), arguments,
 					argumentValues);
@@ -226,39 +224,39 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
-	private State executeTime(State state, int pid, LHSExpression lhs,
-			Expression[] arguments, SymbolicExpression[] argumentValues)
-			throws UnsatisfiablePathConditionException {
-		Variable timeCountVar = this.modelFactory.timeCountVariable();
-		NumericExpression timeCountValue = (NumericExpression) state.valueOf(
-				pid, timeCountVar);
-		NumericExpression timeValue = (NumericExpression) universe.apply(
-				timeFunc, Arrays.asList(timeCountValue));
-		BooleanExpression timeValueAssumption, newPathCondition;
-
-		state = this.stateFactory.setVariable(state, timeCountVar, pid,
-				universe.add(timeCountValue, this.one));
-		// if(time_count == 0) $assume timeValue > 0;
-		if (timeCountValue.isZero()) {
-			timeValueAssumption = universe.lessThan(universe.zeroReal(),
-					timeValue);
-		} else {
-			// if(time_count > 0) $assume timeValue > time(time_count - 1);
-			timeValueAssumption = universe.lessThan(
-					(NumericExpression) universe.apply(timeFunc, Arrays
-							.asList(universe.subtract(timeCountValue, one))),
-					timeValue);
-		}
-		if (lhs != null)
-			state = this.primaryExecutor.assign(state, pid, state
-					.getProcessState(pid).name(), lhs, timeValue);
-		if (!symbolicUtil.isNullPointer(argumentValues[0]))
-			state = this.primaryExecutor.assign(arguments[0].getSource(),
-					state, state.getProcessState(pid).name(),
-					argumentValues[0], timeValue);
-		newPathCondition = universe.and(state.getPathCondition(),
-				timeValueAssumption);
-		state = state.setPathCondition(newPathCondition);
-		return state;
-	}
+	// private State executeTime(State state, int pid, LHSExpression lhs,
+	// Expression[] arguments, SymbolicExpression[] argumentValues)
+	// throws UnsatisfiablePathConditionException {
+	// Variable timeCountVar = this.modelFactory.timeCountVariable();
+	// NumericExpression timeCountValue = (NumericExpression) state.valueOf(
+	// pid, timeCountVar);
+	// NumericExpression timeValue = (NumericExpression) universe.apply(
+	// timeFunc, Arrays.asList(timeCountValue));
+	// BooleanExpression timeValueAssumption, newPathCondition;
+	//
+	// state = this.stateFactory.setVariable(state, timeCountVar, pid,
+	// universe.add(timeCountValue, this.one));
+	// // if(time_count == 0) $assume timeValue > 0;
+	// if (timeCountValue.isZero()) {
+	// timeValueAssumption = universe.lessThan(universe.zeroReal(),
+	// timeValue);
+	// } else {
+	// // if(time_count > 0) $assume timeValue > time(time_count - 1);
+	// timeValueAssumption = universe.lessThan(
+	// (NumericExpression) universe.apply(timeFunc, Arrays
+	// .asList(universe.subtract(timeCountValue, one))),
+	// timeValue);
+	// }
+	// if (lhs != null)
+	// state = this.primaryExecutor.assign(state, pid, state
+	// .getProcessState(pid).name(), lhs, timeValue);
+	// if (!symbolicUtil.isNullPointer(argumentValues[0]))
+	// state = this.primaryExecutor.assign(arguments[0].getSource(),
+	// state, state.getProcessState(pid).name(),
+	// argumentValues[0], timeValue);
+	// newPathCondition = universe.and(state.getPathCondition(),
+	// timeValueAssumption);
+	// state = state.setPathCondition(newPathCondition);
+	// return state;
+	// }
 }

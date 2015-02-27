@@ -54,11 +54,6 @@ public class LibraryTest {
 	public void memset() throws ABCException {
 		assertTrue(ui.run("verify", filename(STRING, "memset.cvl")));
 	}
-
-	@Test
-	public void assume() throws ABCException {
-		assertFalse(ui.run("verify -showTransitions", filename("assume.cvl")));
-	}
 	
 	@Test
 	public void assertH() throws ABCException {
@@ -197,6 +192,12 @@ public class LibraryTest {
 		assertTrue(ui.run("verify", "-inputN=10",
 				"-enablePrintf=false -showProgram=false",
 				filename(TIME, "timeTest.cvl")));
+	}
+
+	@Test
+	public void localTime() throws ABCException {
+		assertTrue(ui.run("verify -enablePrintf=false",
+				filename(TIME, "localTime.c")));
 	}
 
 	@AfterClass

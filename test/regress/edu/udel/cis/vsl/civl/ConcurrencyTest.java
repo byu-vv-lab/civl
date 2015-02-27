@@ -133,7 +133,8 @@ public class ConcurrencyTest {
 
 	@Test
 	public void hybrid() {
-		assertFalse(ui.run("verify", "-inputNPROCS=2", filename("hybrid.cvl")));
+		assertFalse(ui.run("verify", "-inputNPROCS=2 -showModel -debug=false",
+				filename("hybrid.cvl")));
 	}
 
 	@Test
@@ -179,7 +180,7 @@ public class ConcurrencyTest {
 				filename("wildcardBad.cvl")));
 		ui.run("replay", filename("wildcardBad.cvl"));
 	}
-	
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
