@@ -22,13 +22,13 @@ grammar Command;
 start
     :
       'help' (REPLAY | COMMAND | 'help' | 'config')? NEWLINE # help
-    | 'compare' commonOption? specOrImplCommand NEWLINE #compare
+    | 'compare' commonOption? specAndImplCommand NEWLINE #compare
     | (REPLAY | COMMAND) commandBody NEWLINE #normal
     | 'config' NEWLINE #config
-    | REPLAY commonOption? specOrImplCommand NEWLINE #replayCompare
+    | REPLAY commonOption? specAndImplCommand NEWLINE #replayCompare
     ;
 
-specOrImplCommand
+specAndImplCommand
     : specCommand implCommand
     | implCommand specCommand
     ;
@@ -161,7 +161,7 @@ VAR
 
 PATH
     :
-    ([_a-zA-Z0-9\.\/])([_a-zA-Z0-9\-\.\/])*
+    ([_a-zA-Z0-9\.\/])([_:a-zA-Z0-9\-\.\/])*
     ;
 
 NEWLINE
