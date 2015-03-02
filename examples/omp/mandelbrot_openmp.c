@@ -156,7 +156,7 @@ int main ( void )
 /*
   Write data to an ASCII PPM file.
 */
-  output_unit = fopen ( output_filename, "wt" );
+  output_unit = fopen ( output_filename, "w" );
 
   fprintf ( output_unit, "P3\n" );
   fprintf ( output_unit, "%d  %d\n", n, m );
