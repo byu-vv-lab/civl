@@ -710,7 +710,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 		newAst = this.combineASTs(civlcOmpAST, newAst);
 		newAst = this.combineASTs(civlcAST, newAst);
-		// newAst.prettyPrint(System.out, true);
+		newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
@@ -2814,6 +2814,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		while (currentType instanceof PointerType) {
 			currentType = ((PointerType) currentType).referencedType();
 			pointer = true;
+			nodesDeep++;
 		}
 		while (currentType instanceof ArrayType) {
 			currentType = ((ArrayType) currentType).getElementType();
@@ -2845,11 +2846,13 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			StructureOrUnionTypeNode copy = stn.copy();
 			declarationTypeNode = copy;
 			write = true;
-		} else if(pointer){ 
-			declarationTypeNode = nodeFactory.newPointerTypeNode(source,
-					nodeFactory.newBasicTypeNode(
-							newSource(place, CParser.TYPE), baseTypeKind));
-		} else {
+		} 
+//		else if(pointer){ 
+//			declarationTypeNode = nodeFactory.newPointerTypeNode(source,
+//					nodeFactory.newBasicTypeNode(
+//							newSource(place, CParser.TYPE), baseTypeKind));
+//		} 
+		else {
 			declarationTypeNode = nodeFactory.newBasicTypeNode(
 					newSource(place, CParser.TYPE), baseTypeKind);
 		}

@@ -73,7 +73,7 @@ int main ( void )
   test01 ( n );
   test02 ( n );
   test03 ( n );
-
+/*
   printf ( "\n" );
   n = 100;
   test01 ( n );
@@ -85,7 +85,7 @@ int main ( void )
   test01 ( n );
   test02 ( n );
   test03 ( n );
-
+*/
   printf ( "\n" );
   printf ( "SGEFA_OPENMP\n" );
   printf ( "  Normal end of execution.\n" );
@@ -1510,12 +1510,12 @@ void timestamp ( void )
   size_t len;
   time_t now;
 
-  now = time ( NULL );
-  tm = localtime ( &now );
+  //now = time ( NULL );
+  //tm = localtime ( &now );
 
-  len = strftime ( time_buffer, TIME_SIZE, "%d %B %Y %I:%M:%S %p", tm );
+  //len = strftime ( time_buffer, TIME_SIZE, "%d %B %Y %I:%M:%S %p", tm );
 
-  printf ( "%s\n", time_buffer );
+  //printf ( "%s\n", time_buffer );
 
   return;
 # undef TIME_SIZE
