@@ -515,15 +515,20 @@ public class ImmutableState implements State {
 	 * @return the "innermost" dynamic scope containing the variable
 	 */
 	ImmutableDynamicScope getScope(int pid, Variable variable) {
-		int scopeId = getProcessState(pid).getDyscopeId();
+		ImmutableProcessState proc = this.getProcessState(pid);
+		int numStackEntries = proc.stackSize();
 		Scope variableScope = variable.scope();
 		ImmutableDynamicScope scope;
 
-		while (scopeId >= 0) {
-			scope = getDyscope(scopeId);
-			if (scope.lexicalScope() == variableScope)
-				return scope;
-			scopeId = getParentId(scopeId);
+		for (int i = 0; i < numStackEntries; i++) {
+			int scopeId = proc.getStackEntry(i).scope();
+
+			while (scopeId >= 0) {
+				scope = getDyscope(scopeId);
+				if (scope.lexicalScope() == variableScope)
+					return scope;
+				scopeId = getParentId(scopeId);
+			}
 		}
 		throw new IllegalArgumentException("Variable not in scope: " + variable);
 	}

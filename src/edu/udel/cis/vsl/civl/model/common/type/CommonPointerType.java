@@ -35,7 +35,7 @@ public class CommonPointerType extends CommonType implements CIVLPointerType {
 
 	@Override
 	public String toString() {
-		return "(" + baseType  + ")*";
+		return "(" + baseType + ")*";
 	}
 
 	@Override
@@ -71,5 +71,17 @@ public class CommonPointerType extends CommonType implements CIVLPointerType {
 	@Override
 	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
 		return type;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj instanceof CIVLPointerType) {
+			CIVLPointerType that = (CIVLPointerType) obj;
+
+			return this.baseType.equals(that.baseType());
+		}
+		return false;
 	}
 }

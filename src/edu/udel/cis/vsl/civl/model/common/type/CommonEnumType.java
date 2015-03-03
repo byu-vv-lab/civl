@@ -88,4 +88,12 @@ public class CommonEnumType extends CommonType implements CIVLEnumType {
 	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
 		return type;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof CIVLEnumType)
+			return true;
+		return false;
+	}
+
 }

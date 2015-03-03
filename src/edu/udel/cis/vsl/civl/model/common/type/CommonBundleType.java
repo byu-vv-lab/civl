@@ -111,4 +111,12 @@ public class CommonBundleType extends CommonType implements CIVLBundleType {
 	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
 		return this;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		// only one bundle type for a model
+		if (obj instanceof CIVLBundleType)
+			return true;
+		return false;
+	}
 }

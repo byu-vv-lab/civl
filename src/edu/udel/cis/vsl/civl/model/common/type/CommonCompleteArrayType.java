@@ -33,6 +33,19 @@ public class CommonCompleteArrayType extends CommonArrayType implements
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj instanceof CIVLCompleteArrayType) {
+			CIVLCompleteArrayType that = (CIVLCompleteArrayType) obj;
+
+			return this.elementType().equals(that.elementType())
+					&& this.extent.equals(that.extent());
+		}
+		return false;
+	}
+
+	@Override
 	public boolean isComplete() {
 		return true;
 	}

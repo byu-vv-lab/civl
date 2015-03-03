@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.type;
 
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
@@ -73,6 +74,19 @@ public class CommonArrayType extends CommonType implements CIVLArrayType {
 	@Override
 	public TypeKind typeKind() {
 		return TypeKind.ARRAY;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj instanceof CIVLCompleteArrayType) {
+			return false;
+		}
+		if (obj instanceof CIVLArrayType) {
+			return this.elementType.equals(((CIVLArrayType) obj).elementType());
+		}
+		return false;
 	}
 
 	@Override
