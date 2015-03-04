@@ -359,16 +359,14 @@ public class UserInterface {
 			parser.parse(gmcConfig, traceFile);
 			anonymousSection = gmcConfig.getAnonymousSection();
 			setToDefault(anonymousSection, Arrays.asList(showModelO, verboseO,
-					debugO, showStatesO, showSavedStatesO, showQueriesO,
-					showProverQueriesO, enablePrintfO, statelessPrintfO));
+					debugO, showStatesO, showQueriesO, showProverQueriesO,
+					enablePrintfO, statelessPrintfO));
 			anonymousSection.setScalarValue(showTransitionsO, true);
-			if (anonymousSection.isTrue(showProverQueriesO))
-				universe.setShowProverQueries(true);
-			if (anonymousSection.isTrue(showQueriesO))
-				universe.setShowQueries(true);
 			anonymousSection.setScalarValue(collectScopesO, false);
 			anonymousSection.setScalarValue(collectProcessesO, false);
 			anonymousSection.setScalarValue(collectHeapsO, false);
+			anonymousSection.read(compareCommand.gmcConfig()
+					.getAnonymousSection());
 		}
 		specSection = gmcConfig.getSection(CompareCommandLine.SPEC);
 		implSection = gmcConfig.getSection(CompareCommandLine.IMPL);

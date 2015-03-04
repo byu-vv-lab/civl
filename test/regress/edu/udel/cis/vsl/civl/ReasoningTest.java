@@ -31,10 +31,10 @@ public class ReasoningTest {
 	public void neqZero() throws ABCException {
 		assertTrue(ui.run("verify", filename("neqZero.cvl")));
 	}
-	
+
 	@Test
 	public void evaluatePc() throws ABCException {
-		assertFalse(ui.run("verify -showTransitions", filename("evaluatePc.cvl")));
+		assertFalse(ui.run("verify", filename("evaluatePc.cvl")));
 	}
 
 	@AfterClass
