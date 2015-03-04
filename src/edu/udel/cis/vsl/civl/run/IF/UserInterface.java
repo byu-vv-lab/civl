@@ -390,6 +390,9 @@ public class UserInterface {
 
 		if (anonymousSection.isTrue(echoO))
 			out.println(compareCommand.getCommandString());
+		universe.setShowQueries(anonymousSection.isTrue(showQueriesO));
+		universe.setShowProverQueries(anonymousSection
+				.isTrue(showProverQueriesO));
 		specProgram = specWorker.buildProgram();
 		implProgram = implWorker.buildProgram();
 		if (civlConfig.debugOrVerbose())
