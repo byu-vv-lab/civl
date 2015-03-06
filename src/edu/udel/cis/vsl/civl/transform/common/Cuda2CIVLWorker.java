@@ -11,7 +11,6 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
-import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
@@ -51,7 +50,7 @@ public class Cuda2CIVLWorker extends BaseWorker {
 
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
-		SequenceNode<ExternalDefinitionNode> root = ast.getRootNode();
+		SequenceNode<BlockItemNode> root = ast.getRootNode();
 
 		ast.release();
 		removeBuiltinDefinitions(root);
@@ -60,8 +59,8 @@ public class Cuda2CIVLWorker extends BaseWorker {
 		translateMainDefinition(root);
 		translateKernelDefinitions(root);
 
-		//root.prettyPrint(System.out);
-		//System.out.println();
+		// root.prettyPrint(System.out);
+		// System.out.println();
 		return astFactory.newAST(root, ast.getSourceFiles());
 	}
 

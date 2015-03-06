@@ -10,12 +10,12 @@ import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.NodeFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
 import edu.udel.cis.vsl.abc.ast.type.IF.EnumerationType;
@@ -568,15 +568,15 @@ public abstract class BaseWorker {
 	 * @throws SyntaxException
 	 */
 	protected AST combineASTs(AST first, AST second) throws SyntaxException {
-		SequenceNode<ExternalDefinitionNode> rootNode;
-		List<ExternalDefinitionNode> firstNodes = new ArrayList<>(), secondNodes = new ArrayList<>(), allNodes = new ArrayList<>();
+		SequenceNode<BlockItemNode> rootNode;
+		List<BlockItemNode> firstNodes = new ArrayList<>(), secondNodes = new ArrayList<>(), allNodes = new ArrayList<>();
 		List<SourceFile> sourceFiles = new ArrayList<>();
 
-		for (ExternalDefinitionNode child : first.getRootNode()) {
+		for (BlockItemNode child : first.getRootNode()) {
 			if (child != null)
 				firstNodes.add(child.copy());
 		}
-		for (ExternalDefinitionNode child : second.getRootNode()) {
+		for (BlockItemNode child : second.getRootNode()) {
 			// avoid identical nodes introduced by same "includes"
 			if (child != null && !this.existNode(firstNodes, child))
 				secondNodes.add(child.copy());
@@ -591,7 +591,7 @@ public abstract class BaseWorker {
 	}
 
 	/**
-	 * Checks if a list of nodes contains an identical node of a given node.
+	 * Checks if a list of nodes contains an equivalent node of a given node.
 	 * 
 	 * @param nodes
 	 *            the list of nodes
@@ -600,8 +600,7 @@ public abstract class BaseWorker {
 	 * @return true iff the list of nodes contains an identical node of the
 	 *         specified node.
 	 */
-	private boolean existNode(List<ExternalDefinitionNode> nodes,
-			ExternalDefinitionNode theNode) {
+	private boolean existNode(List<? extends ASTNode> nodes, ASTNode theNode) {
 		for (ASTNode node : nodes) {
 			if (node.diff(theNode) == null)
 				return true;

@@ -11,7 +11,6 @@ import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.entity.IF.OrdinaryEntity;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.DeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
@@ -42,7 +41,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 public class GeneralWorker extends BaseWorker {
 
 	private final static String MALLOC = "malloc";
-	 final static String GENERAL_ROOT = "$gen_root";
+	final static String GENERAL_ROOT = "$gen_root";
 	private final static String MAX_ARGC = "10";
 
 	private final static String INPUT_PREFIX = "CIVL_";
@@ -59,10 +58,10 @@ public class GeneralWorker extends BaseWorker {
 
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
-		SequenceNode<ExternalDefinitionNode> root = unit.getRootNode();
+		SequenceNode<BlockItemNode> root = unit.getRootNode();
 		AST newAst;
 		List<VariableDeclarationNode> inputVars = new ArrayList<>();
-		List<ExternalDefinitionNode> newExternalList = new ArrayList<>();
+		List<BlockItemNode> newExternalList = new ArrayList<>();
 		Map<String, VariableDeclarationNode> macroVars = new HashMap<>();
 
 		OrdinaryEntity mainEntity = unit.getInternalOrExternalEntity("main");
@@ -91,15 +90,15 @@ public class GeneralWorker extends BaseWorker {
 		this.mainSource = mainDef.getSource();
 		inputVars = processMainFunction(mainDef);
 		processArgvRefs(mainDef.getBody());
-		for (ExternalDefinitionNode inputVar : macroVars.values())
+		for (BlockItemNode inputVar : macroVars.values())
 			newExternalList.add(inputVar);
-		for (ExternalDefinitionNode inputVar : inputVars)
+		for (BlockItemNode inputVar : inputVars)
 			newExternalList.add(inputVar);
 		if (this.argcAssumption != null)
 			newExternalList.add(argcAssumption);
 		// add my root
 		newExternalList.add(this.myRootNode());
-		for (ExternalDefinitionNode child : root) {
+		for (BlockItemNode child : root) {
 			if (child != null) {
 				newExternalList.add(child);
 				child.parent().removeChild(child.childIndex());

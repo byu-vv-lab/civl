@@ -9,7 +9,6 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
-import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
@@ -489,9 +488,9 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 *         (i.e., the file scope of the final AST) and become $input
 	 *         variables of the final AST.
 	 */
-	private Triple<FunctionDefinitionNode, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> mpiProcess(
-			SequenceNode<ExternalDefinitionNode> root) {
-		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
+	private Triple<FunctionDefinitionNode, List<BlockItemNode>, List<VariableDeclarationNode>> mpiProcess(
+			SequenceNode<BlockItemNode> root) {
+		List<BlockItemNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> vars = new ArrayList<>();
 		List<BlockItemNode> items;
 		int number;
@@ -517,7 +516,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 		items.add(mpiStatusDePruneAssertion());
 		items.add(commVar);
 		for (int i = 0; i < number; i++) {
-			ExternalDefinitionNode child = root.getSequenceChild(i);
+			BlockItemNode child = root.getSequenceChild(i);
 			String sourceFile;
 
 			if (child == null)
@@ -898,17 +897,17 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 */
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
-		SequenceNode<ExternalDefinitionNode> root = ast.getRootNode();
+		SequenceNode<BlockItemNode> root = ast.getRootNode();
 		AST newAst;
 		FunctionDefinitionNode mpiProcess, mainFunction;
 		VariableDeclarationNode gcommWorld;
-		List<ExternalDefinitionNode> externalList;
-		SequenceNode<ExternalDefinitionNode> newRootNode;
-		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
+		List<BlockItemNode> externalList;
+		SequenceNode<BlockItemNode> newRootNode;
+		List<BlockItemNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> mainParameters = new ArrayList<>();
 		int count;
 		AssumeNode nprocsAssumption = null;
-		Triple<FunctionDefinitionNode, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> result;
+		Triple<FunctionDefinitionNode, List<BlockItemNode>, List<VariableDeclarationNode>> result;
 		VariableDeclarationNode nprocsVar = this.getVariabledeclaration(root,
 				NPROCS);
 		VariableDeclarationNode nprocsUpperBoundVar = this

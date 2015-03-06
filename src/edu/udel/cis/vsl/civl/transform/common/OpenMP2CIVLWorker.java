@@ -13,7 +13,6 @@ import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Variable;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
-import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.PairNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
@@ -598,15 +597,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 */
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
-		SequenceNode<ExternalDefinitionNode> root = ast.getRootNode();
+		SequenceNode<BlockItemNode> root = ast.getRootNode();
 		AST newAst;
-		List<ExternalDefinitionNode> externalList;
+		List<BlockItemNode> externalList;
 		VariableDeclarationNode threadMax;
-		SequenceNode<ExternalDefinitionNode> newRootNode;
-		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
+		SequenceNode<BlockItemNode> newRootNode;
+		List<BlockItemNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> mainParameters = new ArrayList<>();
 		int count;
-		Triple<List<ExternalDefinitionNode>, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> result;
+		Triple<List<BlockItemNode>, List<BlockItemNode>, List<VariableDeclarationNode>> result;
 		String criticalDeclaration = "criticalDeclarations";
 		AST civlcAST = this.parseSystemLibrary("civlc.cvh");
 		AST civlcOmpAST = this.parseSystemLibrary("civl-omp.cvh");
@@ -710,7 +709,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 		newAst = this.combineASTs(civlcOmpAST, newAst);
 		newAst = this.combineASTs(civlcAST, newAst);
-		//newAst.prettyPrint(System.out, true);
+		// newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
@@ -938,13 +937,12 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						removed = true;
 					}
 				} else if (currentType instanceof QualifiedObjectType) {
-					if(((QualifiedObjectType) currentType).isInputQualified()){
+					if (((QualifiedObjectType) currentType).isInputQualified()) {
 						child.remove();
 						removed = true;
 					}
 				}
 			}
-			
 
 			if (removed) {
 				List<IdentifierExpressionNode> list = new LinkedList<IdentifierExpressionNode>();
@@ -1018,7 +1016,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						TypeNode privateType = ((VariableDeclarationNode) ((Variable) c
 								.getEntity()).getFirstDeclaration())
 								.getTypeNode().copy();
-						if(privateType.isInputQualified()){
+						if (privateType.isInputQualified()) {
 							privateType.setInputQualified(false);
 						}
 						IdentifierNode localSharedIdentifer = nodeFactory
@@ -2846,12 +2844,12 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			StructureOrUnionTypeNode copy = stn.copy();
 			declarationTypeNode = copy;
 			write = true;
-		} 
-//		else if(pointer){ 
-//			declarationTypeNode = nodeFactory.newPointerTypeNode(source,
-//					nodeFactory.newBasicTypeNode(
-//							newSource(place, CParser.TYPE), baseTypeKind));
-//		} 
+		}
+		// else if(pointer){
+		// declarationTypeNode = nodeFactory.newPointerTypeNode(source,
+		// nodeFactory.newBasicTypeNode(
+		// newSource(place, CParser.TYPE), baseTypeKind));
+		// }
 		else {
 			declarationTypeNode = nodeFactory.newBasicTypeNode(
 					newSource(place, CParser.TYPE), baseTypeKind);
@@ -3121,11 +3119,11 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 *         list of variable declaration nodes.
 	 * @throws SyntaxException
 	 */
-	private Triple<List<ExternalDefinitionNode>, List<ExternalDefinitionNode>, List<VariableDeclarationNode>> program(
-			SequenceNode<ExternalDefinitionNode> root) throws SyntaxException {
-		List<ExternalDefinitionNode> includedNodes = new ArrayList<>();
+	private Triple<List<BlockItemNode>, List<BlockItemNode>, List<VariableDeclarationNode>> program(
+			SequenceNode<BlockItemNode> root) throws SyntaxException {
+		List<BlockItemNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> vars = new ArrayList<>();
-		List<ExternalDefinitionNode> items;
+		List<BlockItemNode> items;
 		int number;
 		items = new LinkedList<>();
 		number = root.numChildren();
@@ -3141,15 +3139,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						newSource(place, CParser.IDENTIFIER), "THREAD_MAX")));
 
 		for (ASTNode node : structsDefsToAdd) {
-			items.add((ExternalDefinitionNode) node);
+			items.add((BlockItemNode) node);
 		}
 
 		for (ASTNode node : structsToAdd) {
-			items.add((ExternalDefinitionNode) node);
+			items.add((BlockItemNode) node);
 		}
 
 		for (int i = 0; i < number; i++) {
-			ExternalDefinitionNode child = root.getSequenceChild(i);
+			BlockItemNode child = root.getSequenceChild(i);
 			String sourceFile;
 
 			if (child == null)

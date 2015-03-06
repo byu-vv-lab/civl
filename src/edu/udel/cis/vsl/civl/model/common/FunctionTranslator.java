@@ -2083,12 +2083,23 @@ public class FunctionTranslator {
 						throw new CIVLInternalException("Malformed file name "
 								+ fileName + " containing system function "
 								+ functionName, nodeSource);
-					if (functionIdentifier.name().equals("$assert"))
+					switch (functionIdentifier.name()) {
+					case "$assert":
+					case "$defined":
 						libName = "civlc";
-					else if (functionIdentifier.name().equals("$equals"))
+						break;
+					case "$equals":
 						libName = "pointer";
-					else
+						break;
+					default:
 						libName = fileNameWithoutExtension(fileName);
+					}
+					// if (functionIdentifier.name().equals("$assert"))
+					// libName = "civlc";
+					// else if (functionIdentifier.name().equals("$equals"))
+					// libName = "pointer";
+					// else
+					// libName = fileNameWithoutExtension(fileName);
 					result = modelFactory.systemFunction(nodeSource,
 							functionIdentifier, parameters, returnType, scope,
 							libName);
@@ -2548,10 +2559,10 @@ public class FunctionTranslator {
 			Scope scope, VariableDeclarationNode node)
 			throws CommandLineException {
 		Variable variable = translateVariableDeclarationNode(node, scope);
-		
-		if(variable == null)
+
+		if (variable == null)
 			return new CommonFragment();
-		
+
 		CIVLType type = variable.type();
 		Fragment result = null, initialization = null;
 		IdentifierNode identifier = node.getIdentifier();

@@ -9,10 +9,10 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
-import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
@@ -32,9 +32,9 @@ public class MacroWorker extends BaseWorker {
 
 	@Override
 	public AST transform(AST unit) throws SyntaxException {
-		SequenceNode<ExternalDefinitionNode> root = unit.getRootNode();
+		SequenceNode<BlockItemNode> root = unit.getRootNode();
 		AST newAst;
-		List<ExternalDefinitionNode> newExternalList = new ArrayList<>();
+		List<BlockItemNode> newExternalList = new ArrayList<>();
 		Map<String, VariableDeclarationNode> macroVars = new HashMap<>();
 
 		unit.release();
@@ -42,9 +42,9 @@ public class MacroWorker extends BaseWorker {
 			if (child != null)
 				recoverMacro(child, macroVars);
 		}
-		for (ExternalDefinitionNode inputVar : macroVars.values())
+		for (BlockItemNode inputVar : macroVars.values())
 			newExternalList.add(inputVar);
-		for (ExternalDefinitionNode child : root) {
+		for (BlockItemNode child : root) {
 			if (child != null) {
 				newExternalList.add(child);
 				child.parent().removeChild(child.childIndex());

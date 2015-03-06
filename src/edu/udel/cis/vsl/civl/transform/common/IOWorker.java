@@ -7,7 +7,6 @@ import java.util.List;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.ExternalDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
@@ -680,7 +679,7 @@ public class IOWorker extends BaseWorker {
 		// boolean hasFflush = TransformerFactory.hasFunctionCalls(unit,
 		// Arrays.asList(FFLUSH));
 		boolean transformationNeeded = this.isTransformationNeeded(unit);
-		SequenceNode<ExternalDefinitionNode> rootNode = unit.getRootNode();
+		SequenceNode<BlockItemNode> rootNode = unit.getRootNode();
 
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();

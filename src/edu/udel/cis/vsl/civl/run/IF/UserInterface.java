@@ -118,8 +118,14 @@ import edu.udel.cis.vsl.sarl.IF.config.Configurations;
  */
 public class UserInterface {
 
+	/**
+	 * Running in debug mode (which prints debugging information)?
+	 */
 	public final static boolean debug = false;
 
+	/**
+	 * All options defined for CIVL. Key is the name of the option.
+	 */
 	public final static SortedMap<String, Option> definedOptions = new TreeMap<>();
 
 	/* ************************* Instance fields *************************** */
@@ -149,6 +155,9 @@ public class UserInterface {
 	 */
 	private FrontEnd frontEnd = new FrontEnd();
 
+	/**
+	 * The transformer factory that provides CIVL transformers.
+	 */
 	private TransformerFactory transformerFactory = Transforms
 			.newTransformerFactory(frontEnd.getASTFactory());
 
