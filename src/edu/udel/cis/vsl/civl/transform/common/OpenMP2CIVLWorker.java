@@ -34,7 +34,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpReductionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpExecutableNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSymbolReductionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode;
@@ -2992,7 +2992,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		for (ASTNode child : node.children()) {
 			if (child != null) {
 				if (child instanceof OmpForNode) {
-					StatementNode forLoopNode = ((OmpStatementNode) child)
+					StatementNode forLoopNode = ((OmpExecutableNode) child)
 							.statementNode();
 					if (forLoopNode instanceof ForLoopNode) {
 						ForLoopInitializerNode flin = ((ForLoopNode) forLoopNode)

@@ -27,7 +27,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpReductionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpExecutableNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSymbolReductionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode.OmpSyncNodeKind;
@@ -257,7 +257,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				parent.setChild(parentIndex, stmt);
 			}
 
-		} else if (node instanceof OmpStatementNode) {
+		} else if (node instanceof OmpExecutableNode) {
 			transformOmpWorkshare(node);
 
 		} else if (node != null) {
@@ -279,9 +279,9 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	 * can be safely removed or transformed into non-OMP equivalents.
 	 */
 	private void removeOmpConstruct(ASTNode node) {
-		if (node instanceof OmpStatementNode) {
+		if (node instanceof OmpExecutableNode) {
 			// Remove "statement" node from "omp statement" node
-			StatementNode stmt = ((OmpStatementNode) node).statementNode();
+			StatementNode stmt = ((OmpExecutableNode) node).statementNode();
 			int stmtIndex = getChildIndex(node, stmt);
 			assert stmtIndex != -1;
 			node.removeChild(stmtIndex);
