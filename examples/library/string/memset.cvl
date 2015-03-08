@@ -5,7 +5,6 @@ int main(){
   char a[5];
 
   memset(a, 0, 3);
-  printf("%c, %c, %c, %c, %c\n", a[0], a[1],a[2],a[3],a[4]);
-  $assert ($forall  {int k | 0<=k && k<=4 }  a[k]==0);
-  // $assert a[0]==0;
+  for(int i=0; i<5; i++) printf("a[%d] = %c ", i, a[i]);
+  $assert ($forall  {int k | 0<=k && k<=2 } a[k] == '\0');
 }
