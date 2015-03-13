@@ -38,6 +38,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpExecutableNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSymbolReductionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CivlForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
@@ -1355,7 +1356,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			ASTNode body = null;
 			ArrayList<Triple<ASTNode, ASTNode, ASTNode>> ranges = new ArrayList<>();
 			ArrayList<IdentifierNode> loopVariables = new ArrayList<IdentifierNode>();
-			SequenceNode<IdentifierExpressionNode> firstPrivateList;
+			SequenceNode<IdentifierExpressionNode> firstPrivateList, lastPrivateList;
 			ForLoopNode currentLoop = null;
 			ForLoopInitializerNode initializer;
 			OmpSymbolReductionNode reductionNode = null;
@@ -1371,9 +1372,13 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						.child(0);
 			}
 
-			// Get the list of first privates varaibles in the OmpForNode
+			// Get the list of first private variables in the OmpForNode
 			firstPrivateList = ((OmpForNode) node).firstprivateList();
 			removeNodeFromParent(firstPrivateList);
+			
+			// Get the list of last private variables in the OmpForNode
+			lastPrivateList = ((OmpForNode) node).lastprivateList();
+			removeNodeFromParent(lastPrivateList);
 
 			for (int i = 0; i < collapseLevel; i++) {
 				Triple<ASTNode, ASTNode, ASTNode> lo_hi_step;
@@ -1624,6 +1629,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			if (!((OmpForNode) node).nowait()) {
 				items.add(barrierAndFlush(TEAM));
 			}
+			
+			//Do lastprivate vars
 
 			// Insert the CompoundStatementNode where the OmpForNode used to be
 			pragmaBody = nodeFactory.newCompoundStatementNode(
@@ -1683,6 +1690,44 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 							reductionIDs, firstPrivateIDs);
 				}
 
+			} else if(syncKind.equals("OMPATOMIC")){
+				String atomicSrc = "ompAtomic";
+				AtomicNode atomicNode;
+				
+				int i = 0;
+				for (ASTNode child : node.children()) {
+					if(child instanceof CompoundStatementNode){
+						int j = 0;
+						for (ASTNode child2 : child.children()) {
+							child.removeChild(j);
+							items.add((BlockItemNode) child2);
+							j++;
+						}
+						node.removeChild(i);
+						i++;
+					} else {
+						node.removeChild(i);
+						items.add((BlockItemNode) child);
+						i++;
+					}
+				}
+				
+				body = nodeFactory.newCompoundStatementNode(
+						newSource(atomicSrc, CParser.COMPOUND_STATEMENT), items);
+				
+				atomicNode = nodeFactory.newAtomicStatementNode(newSource(atomicSrc, CParser.ATOMIC), false, body);
+				
+				int index = node.childIndex();
+				ASTNode parent = node.parent();
+				parent.setChild(index, atomicNode);
+				
+				Iterable<ASTNode> children = body.children();
+
+				// Visit all the child to check for omp code
+				for (ASTNode child : children) {
+					replaceOMPPragmas(child, privateIDs, sharedIDs,
+							reductionIDs, firstPrivateIDs);
+				}
 			} else if (syncKind.equals("BARRIER")) {
 				// Replace omp barrier with $omp_barrier_and_flush
 				ExpressionStatementNode barrierAndFlush = barrierAndFlush(TEAM);
@@ -1985,6 +2030,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				SequenceNode<IdentifierExpressionNode> copyPrivateList = ((OmpWorksharingNode) node)
 						.copyprivateList();
 				removeNodeFromParent(copyPrivateList);
+				
 				boolean removed = false;
 				for (ASTNode child : sharedIDs.children()) {
 					IdentifierExpressionNode idexp = (IdentifierExpressionNode) child;
