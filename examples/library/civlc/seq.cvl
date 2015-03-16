@@ -11,21 +11,21 @@ void main(){
 
   $seq_init(&a, 0, NULL);
   length = $seq_length(&a); 
-  $assert(length == 0);
+  $assert((length == 0));
   $seq_insert(&a, 0, &b, 1);
   length = $seq_length(&a); 
-  $assert(length == 1);
-  $assert(a[0] == b);
+  $assert((length == 1));
+  $assert((a[0] == b));
   $seq_init(&a, N, &b);
   length = $seq_length(&a);
-  $assert(length == N);
+  $assert((length == N));
   $seq_insert(&a, 2, &c, 1);
   length = $seq_length(&a);
-  $assert(length == N + 1);
-  $assert(a[2] == c);
+  $assert((length == N + 1));
+  $assert((a[2] == c));
   $seq_remove(&a, 2, t, 2);
   length = $seq_length(&a);
-  $assert(length == N - 1);
-  $assert(t[0] == c);
-  $assert(t[1] == b);
+  $assert((length == N - 1));
+  $assert((t[0] == c));
+  $assert((t[1] == b));
 }

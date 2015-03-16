@@ -7,10 +7,10 @@
 #include<civlc.cvh>
 $input double x;
 $input double y;
-$assume y!=0;
+$assume(y!=0);
 
 void main() {
   double z = x/y;
 
-  $assert(y*z==x);
+  $assert((y*z==x));
 }

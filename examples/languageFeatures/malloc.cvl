@@ -8,6 +8,6 @@ void main() {
   double *p = (double *) $malloc(s, 5*sizeof(double));
   
   p[4]=3.14;
-  $assert(p[4]==3.14);
+  $assert((p[4]==3.14));
   $free(p);
 }   

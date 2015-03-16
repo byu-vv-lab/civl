@@ -131,6 +131,6 @@ void calc_path() {
 }
 
 void main() {
-  $assert BLOCK_SIZE > pyramid_height*2;
+  $assert(BLOCK_SIZE > pyramid_height*2);
   calc_path();
 }

@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 $input int num;
-$assume num > 0 && num < 255;
+$assume(num > 0 && num < 255);
 void main(){
   char c[3];
   char * pc;
@@ -17,10 +17,10 @@ void main(){
   pc[1] = b - 1;
   pc[2] = 97;
   //test symbolic int to char
-  $assert(c[0] == pc[0]);
+  $assert((c[0] == pc[0]));
   //test if (char)(b-1) == 'a'
-  $assert(c[1] == pc[1]);
+  $assert((c[1] == pc[1]));
   //test if (char)(98 - 1) == (char)97 
-  $assert(c[2] == pc[2]);
+  $assert((c[2] == pc[2]));
   $free(pc);
 }

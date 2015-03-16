@@ -5,7 +5,7 @@
 
 $input int B = 4; // upper bound on number of threads
 $input int N;     // number of threads
-$assume 1<=N && N<=B;
+$assume(1<=N && N<=B);
 $proc threads[N]; // the threads
 int lock = 0; // 0=available
 int in_barrier[N]; // am I inside the barrier?
@@ -31,11 +31,11 @@ void barrier(int tid) {
 
 void run(int tid) {
   while ($true) {
-    $assert(counter == 0);
+    $assert((counter == 0));
     barrier(tid);
     counter++;
     barrier(tid);
-    $assert(counter == N);
+    $assert((counter == N));
     barrier(tid);
     counter--;
     barrier(tid);

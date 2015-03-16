@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /*
  * Copyright 1993-2010 NVIDIA Corporation.  All rights reserved.
  *
@@ -37,10 +40,10 @@ _Bool isPowerOfTwo(int x) {
 $input int N;
 // upper bound on N
 $input int N_B;
-$assume(0 <= N && N <= N_B);
+$assume((0 <= N && N <= N_B));
 $input int threadsPerBlock; // thread number per block: must be a power of 2, due to the while loop at the end of gpuThread();
 $input int threadsPerBlock_B; 
-$assume(1 <= threadsPerBlock && threadsPerBlock <= threadsPerBlock_B);
+$assume((1 <= threadsPerBlock && threadsPerBlock <= threadsPerBlock_B));
 #else
 const int N = 33 * 1024;
 const int threadsPerBlock = 256;
@@ -80,7 +83,7 @@ __global__ void dot( float *a, float *b, float *c ) {
 int main( void ) {
 #ifdef _CIVL
     elaborate(threadsPerBlock);
-    $assume(isPowerOfTwo(threadsPerBlock));
+    $assume((isPowerOfTwo(threadsPerBlock)));
 #endif
 
     float   *a, *b, c, *partial_c;
@@ -129,7 +132,7 @@ int main( void ) {
     printf( "Does GPU value %.6g = %.6g?\n", c,
              2 * sum_squares( (float)(N - 1) ) );
 #ifdef _CIVL
-    $assert(c == 2 * sum_squares( (float)(N - 1) ) );
+    $assert((c == 2 * sum_squares( (float)(N - 1) ) ));
 #endif
 
     // free memory on the gpu side

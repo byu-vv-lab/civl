@@ -13,6 +13,6 @@ void main() {
   
   bun = $bundle_pack(&a[0], N*sizeof(double));
   size = $bundle_size(bun);
-  $assert(size == N*sizeof(double));
-  $assert(size / sizeof(double) == N);
+  $assert((size == N*sizeof(double)));
+  $assert((size / sizeof(double) == N));
 }

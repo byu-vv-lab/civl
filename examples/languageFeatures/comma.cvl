@@ -9,5 +9,5 @@ void main() {
   for (i=0, j=1; i<=n; i++,j++) {
     k += i*j;
   }
-  $assert(k == n*(n+1)*(n+2)/3);
+  $assert((k == n*(n+1)*(n+2)/3));
 }

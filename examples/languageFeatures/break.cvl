@@ -15,6 +15,6 @@ void main() {
       break;
     }
   }
-  $assert(i == 3);
-  $assert(j == 6);
+  $assert((i == 3));
+  $assert((j == 6));
 }

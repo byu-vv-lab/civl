@@ -1,11 +1,12 @@
+#include <civlc.cvh>
 /* Commandline execution:
  *		civl verify multInLoopCond.cvl
  * */
 $input int N;
 $input int M;
-$assume N > 0 && N < 3;
-$assume M > 0 && M < 3;
-$assume N*M<=4;
+$assume(N > 0 && N < 3);
+$assume(M > 0 && M < 3);
+$assume(N*M<=4);
 
 void main() {
   int k = M*N;

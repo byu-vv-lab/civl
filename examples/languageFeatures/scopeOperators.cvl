@@ -13,8 +13,8 @@ void main(){
     $scope fs = $here;
     $scope sum = fs + s;// compute the lowest common ancestors of fs and s.
     
-    $assert(s > fs);
-    $assert(sum == s);
+    $assert((s > fs));
+    $assert((sum == s));
     printf("foo done.\n");
   }
   
@@ -28,13 +28,13 @@ void main(){
       int *p = &x;
       double *q = &a[4];
       
-      $assert($scopeof(x)==s1);
-      $assert($scopeof(p)==s2);
-      $assert($scopeof(*p)==s1);
-      $assert($scopeof(a)==s1);
-      $assert($scopeof(a[5])==s1);
-      $assert($scopeof(q)==s2);
-      $assert($scopeof(*q)==s1);
+      $assert(($scopeof(x)==s1));
+      $assert(($scopeof(p)==s2));
+      $assert(($scopeof(*p)==s1));
+      $assert(($scopeof(a)==s1));
+      $assert(($scopeof(a[5])==s1));
+      $assert(($scopeof(q)==s2));
+      $assert(($scopeof(*q)==s1));
       printf("goo done.\n");
     }
   }
@@ -43,12 +43,12 @@ void main(){
   g = f;
   foo();
   goo();
-  $assert($scopeof(g) == $scopeof(f));
-  $assert(s == t);
-  $assert(s != p);
-  $assert(s <= p);// s is equal to p or s is strictly a descendant of p.
+  $assert(($scopeof(g) == $scopeof(f)));
+  $assert((s == t));
+  $assert((s != p));
+  $assert((s <= p));// s is equal to p or s is strictly a descendant of p.
   $assert(s < p);// s is strictly a descendant of p 
-  $assert(p >= s);// p is equal to s or p is strictly an ancestor of s.
+  $assert((p >= s));// p is equal to s or p is strictly an ancestor of s.
   $assert(p > s);// p is strictly a ancestor of s.
   $gcomm_destroy(g);
 }

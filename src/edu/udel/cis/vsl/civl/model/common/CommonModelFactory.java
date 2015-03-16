@@ -135,9 +135,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonArraySliceR
 import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonSelfReference;
 import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonStructOrUnionFieldReference;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonAssertStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonAssumeStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
@@ -825,38 +823,29 @@ public class CommonModelFactory implements ModelFactory {
 		return this.booleanLiteralExpression(civlSource, true);
 	}
 
-	/**
-	 * An assume statement.
-	 * 
-	 * @param source
-	 *            The source location for this statement.
-	 * @param expression
-	 *            The expression being added to the path condition.
-	 * @return A new assume statement.
-	 */
-	@Override
-	public Fragment assumeFragment(CIVLSource civlSource, Location source,
-			Expression expression) {
-		return new CommonFragment(new CommonAssumeStatement(civlSource, source,
-				this.trueExpression(civlSource), expression));
-	}
-
-	@Override
-	public Fragment assertFragment(CIVLSource civlSource, Location source,
-			Expression condition, Expression[] explanation) {
-		Scope statementScope = condition.expressionScope();
-		Scope lowestScope = condition.lowestScope();
-		Scope lowestScopeExplanation = getLower(explanation);
-
-		if (explanation != null)
-			for (Expression arg : explanation) {
-				statementScope = join(statementScope, arg.expressionScope());
-			}
-		return new CommonFragment(
-				new CommonAssertStatement(civlSource, statementScope, getLower(
-						lowestScope, lowestScopeExplanation), source, this
-						.trueExpression(civlSource), condition, explanation));
-	}
+	// @Override
+	// public Fragment assumeFragment(CIVLSource civlSource, Location source,
+	// Expression expression) {
+	// return new CommonFragment(new CommonAssumeStatement(civlSource, source,
+	// this.trueExpression(civlSource), expression));
+	// }
+	//
+	// @Override
+	// public Fragment assertFragment(CIVLSource civlSource, Location source,
+	// Expression condition, Expression[] explanation) {
+	// Scope statementScope = condition.expressionScope();
+	// Scope lowestScope = condition.lowestScope();
+	// Scope lowestScopeExplanation = getLower(explanation);
+	//
+	// if (explanation != null)
+	// for (Expression arg : explanation) {
+	// statementScope = join(statementScope, arg.expressionScope());
+	// }
+	// return new CommonFragment(
+	// new CommonAssertStatement(civlSource, statementScope, getLower(
+	// lowestScope, lowestScopeExplanation), source, this
+	// .trueExpression(civlSource), condition, explanation));
+	// }
 
 	@Override
 	public Fragment atomicFragment(boolean deterministic, Fragment fragment,
@@ -1964,6 +1953,7 @@ public class CommonModelFactory implements ModelFactory {
 		return s0;
 	}
 
+	@SuppressWarnings("unused")
 	private Scope getLower(Expression[] expressions) {
 		if (expressions == null)
 			return null;

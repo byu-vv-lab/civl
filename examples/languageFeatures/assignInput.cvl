@@ -5,7 +5,7 @@ $input int N;
 void main(){
   int x = N;
   
-  $assert(x == N);
+  $assert((x == N));
   N = x + 1;
-  $assert(x+1 == N);
+  $assert((x+1 == N));
 }

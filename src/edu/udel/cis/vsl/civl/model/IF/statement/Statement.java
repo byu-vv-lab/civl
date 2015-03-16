@@ -33,9 +33,9 @@ public interface Statement extends Sourceable {
 	 * 
 	 */
 	public enum StatementKind {
-		ASSERT, /** Assertion */
+		// ASSERT, /** Assertion */
 		ASSIGN, /** Assignment */
-		ASSUME, /** Assumption */
+		// ASSUME, /** Assumption */
 		CALL_OR_SPAWN, /** Function call or process spawn */
 		// CHOOSE, /** Non-deterministic choice */
 		CIVL_FOR_ENTER, /** CIVL for loop ($for) enter statement */

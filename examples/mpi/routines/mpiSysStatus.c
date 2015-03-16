@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 #include <mpi.h>
 #include <civl-mpi.cvh>
 #include <assert.h>
@@ -13,7 +16,7 @@ int main(int argc, char * argv[]) {
   MPI_Init(&argc, &argv);
 #ifdef _CIVL
   curr_status = CMPI_Get_status();
-  $assert __INIT == curr_status;
+  $assert(__INIT == curr_status);
 #endif
   MPI_Finalize();
 }

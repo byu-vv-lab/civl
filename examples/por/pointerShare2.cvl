@@ -19,7 +19,7 @@ void main() {
   p = x;
   *x = 0;
   fp = $spawn f(); 
-  $assert(*p==0);
+  $assert((*p==0));
   $wait(fp);
   $free(x);
 }

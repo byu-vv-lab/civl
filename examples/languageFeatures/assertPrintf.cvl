@@ -10,5 +10,5 @@ void main(){
   int b = 2;
 
   printf("hello!");
-  $assert b > a : "%d is smaller than %d!", b, a;
+  $assert(b > a, "%d is smaller than %d!", b, a);
 }

@@ -85,8 +85,7 @@ $omp_gteam $omp_gteam_create($scope scope, int nthreads) {
 void $omp_gteam_destroy($omp_gteam gteam) {
   int length = $seq_length(&gteam->work);
   
-  $assert length == 0 : 
-    "There are still %d queued worksharing events.", length;
+  $assert(length == 0, "There are still %d queued worksharing events.", length);
   $free(gteam->gbarrier);
   $free(gteam);
 }
@@ -95,9 +94,8 @@ void $omp_gteam_destroy($omp_gteam gteam) {
 $omp_team $omp_team_create($scope scope, $omp_gteam gteam, int tid) {
   $omp_team result = ($omp_team)$malloc(scope, sizeof(struct OMP_team));
 
-  $assert !gteam->init[tid] :
-          "Thread %d has already joined gteam",
-          tid;
+  $assert(!gteam->init[tid], "Thread %d has already joined gteam",
+          tid);
   gteam->init[tid] = $true;
   result->gteam = gteam;
   result->scope = scope;
@@ -152,9 +150,8 @@ $omp_shared $omp_shared_create($omp_team team,
   //int numStatusRefs;
   int sharedLength;
 
-  $assert !gshared->init[team->tid] :
-  "Thread %d has already created its local copy for %p.\n", 
-    team->tid, gshared;
+  $assert(!gshared->init[team->tid], "Thread %d has already created its local copy for %p.\n", 
+    team->tid, gshared);
   result->gshared = gshared;
   result->tid = team->tid;
   result->local = local;
@@ -212,9 +209,8 @@ void $omp_read($omp_shared shared, void *result, void *ref) {
   //$atomic{
   //int otherTid = $omp_modified_tid(shared, ref);
 
-  //$assert otherTid < 0 :
-  //"Thread %d can't perform $omp_read because thread %d has written to the same variable and hasn't flushed yet.\n",
-  //shared->tid, otherTid;
+  //$assert(otherTid < 0, //"Thread %d can't perform $omp_read because thread %d has written to the same variable and hasn't flushed yet.\n",
+  //shared->tid, otherTid);
   if($is_identity_ref(ref)){
     if($leaf_nodes_equal_to(shared->status, EMPTY)){
       $copy(ref, shared->gshared->original); // copy shared to local
@@ -240,9 +236,8 @@ void $omp_write($omp_shared shared, void *ref, void *value) {
   $atomic{
   int otherTid = $omp_modified_tid(shared, ref);
 
-  $assert otherTid < 0 :
-  "Thread %d can't perform $omp_write because thread %d has written to the same variable and hasn't flushed yet.\n",
-    shared->tid, otherTid;
+  $assert(otherTid < 0, "Thread %d can't perform $omp_write because thread %d has written to the same variable and hasn't flushed yet.\n",
+    shared->tid, otherTid);
   $copy(ref, value);
   if($is_identity_ref(ref)){
      $set_leaf_nodes(shared->status, MODIFIED);
@@ -331,19 +326,16 @@ void $omp_check_workrecords($omp_gteam gteam, int location, $omp_worksharing_kin
   int numWorkrecords;
   
   numWorkrecords = $seq_length(&gteam->work[index]);
-  $assert numWorkrecords == nthreads : "The %d-th workshared entry has length %d while the expected length should be %d.", index, numWorkrecords, nthreads;
+  $assert(numWorkrecords == nthreads, "The %d-th workshared entry has length %d while the expected length should be %d.", index, numWorkrecords, nthreads);
   for(int i = 0; i < nthreads; i++){
     $omp_work_record workrecord = gteam->work[index][i];
 
-    $assert workrecord.arrived : 
-            "The workshared event of location %d for thread %d hasn't been arrived yet.",
-	    location, i;
-    $assert workrecord.location == location :
-            "Wrong workshared location of thread %d: expected %d, but saw %d.", 
-	    i, location, workrecord.location;
-    $assert workrecord.kind == kind : 
-            "Wrong workshared kind of thread %d: expected %d but saw %d", 
-            i, kind, workrecord.kind;
+    $assert(workrecord.arrived, "The workshared event of location %d for thread %d hasn't been arrived yet.",
+	    location, i);
+    $assert(workrecord.location == location, "Wrong workshared location of thread %d: expected %d, but saw %d.", 
+	    i, location, workrecord.location);
+    $assert(workrecord.kind == kind, "Wrong workshared kind of thread %d: expected %d but saw %d", 
+            i, kind, workrecord.kind);
   }
 }
 
@@ -382,15 +374,13 @@ _Bool all_arrived($omp_gteam gteam, int index){
 
 void arrive($omp_gteam gteam, int tid, int index,
 $omp_work_record workrecord, $omp_worksharing_kind kind, int location){
-  $assert !workrecord.arrived : 
-          "The loop at location %d has been arrived before by thread %d!", 
-	  location, tid;
-  $assert workrecord.kind == kind : 
-	  "Wrong workshare kind of thread %d: expected LOOP", 
-	  tid;
+  $assert(!workrecord.arrived, "The loop at location %d has been arrived before by thread %d!", 
+	  location, tid);
+  $assert(workrecord.kind == kind, "Wrong workshare kind of thread %d: expected LOOP", 
+	  tid);
   (gteam->work[index][tid]).arrived = $true;
   if(all_arrived(gteam, index)){//this is the last thread 
-    $assert index == 0 : "Inconsistent order or worksharing events.";
+    $assert(index == 0, "Inconsistent order or worksharing events.");
     $omp_check_workrecords(gteam, location, kind, index);
     $seq_remove(&gteam->work, index, NULL, 1);
   }
@@ -408,17 +398,16 @@ $domain $omp_arrive_loop($omp_team team, int location, $domain loop_dom,
     int index;
     $omp_work_record workrecord;
     
-    $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+    $assert(gteam->init[tid], "The current thread %d has not joined the gteam!", tid);
     if(nthreads == 1)
       return loop_dom;
     index = find_work_record(gteam, tid, location, &workrecord);
     if(index >= 0){//workrecord found
-      $assert $equals(&gteam->work[index][0].loop_domain, &loop_dom) : 
-              "The loop domain at location %d is changed when thread %d arrives it. \n Expected %s but saw %s.",
+      $assert($equals(&gteam->work[index][0].loop_domain, &loop_dom), "The loop domain at location %d is changed when thread %d arrives it. \n Expected %s but saw %s.",
 	      location, 
 	      tid, 
 	      gteam->work[index][0].loop_domain, 
-	      loop_dom;
+	      loop_dom);
       arrive(gteam, tid, index, workrecord, LOOP, location);
       return workrecord.subdomain;
     }else{//workrecord not found, this should be the first thread
@@ -449,7 +438,7 @@ $domain(1) $omp_arrive_sections($omp_team team, int location, int numSections){
     int index;
     $omp_work_record workrecord;
 
-    $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+    $assert(gteam->init[tid], "The current thread %d has not joined the gteam!", tid);
     if(nthreads == 1)
       return ($domain(1)) {0 .. numSections - 1 # 1};
     index = find_work_record(gteam, tid, location, &workrecord);
@@ -485,7 +474,7 @@ $domain(1) $omp_arrive_sections($omp_team team, int location, int numSections){
     int index;
     $omp_work_record workrecord;
 
-    $assert gteam->init[tid] : "The current thread %d has not joined the gteam!", tid;
+    $assert(gteam->init[tid], "The current thread %d has not joined the gteam!", tid);
     if(nthreads == 1)
       return tid;
     index = find_work_record(gteam, tid, location, &workrecord);

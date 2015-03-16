@@ -10,5 +10,5 @@ void main() {
 
   printf("y=%f\n", y);
   printf("z=%f\n", z);
-  $assert(y==z);
+  $assert((y==z));
 }

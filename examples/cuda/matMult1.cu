@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /***********************************************************************
 * FILENAME:  MM.cu
 *            Matrix Multiplication
@@ -95,8 +98,8 @@ void myMM_shared (const double * const A, const double * const B, double* C, int
 int main (int argc, char** argv) {
 
 #ifdef _CIVL
-    $assume argc == 2;
-    $assume atoi(argv[1]) == 0;
+    $assume(argc == 2);
+    $assume(atoi(argv[1]) == 0);
 #endif
 
     /* Set device based on input from command line            */

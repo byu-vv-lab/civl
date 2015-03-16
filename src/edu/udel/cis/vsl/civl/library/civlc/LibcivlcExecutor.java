@@ -33,6 +33,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
@@ -124,6 +125,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = this.executeAssert(state, pid, process, arguments,
 					argumentValues, call.getSource(), call);
 			break;
+		case "$assume":
+			state = this.executeAssume(state, pid, process, arguments,
+					argumentValues, call.getSource(), call);
+			break;
 		case "$choose_int_work":
 			if (lhs != null)
 				state = primaryExecutor.assign(state, pid, process, lhs,
@@ -185,6 +190,18 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
+
+	private State executeAssume(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source, CallOrSpawnStatement call) {
+		BooleanExpression assumeValue = (BooleanExpression) argumentValues[0];
+		BooleanExpression oldPathCondition, newPathCondition;
+
+		oldPathCondition = state.getPathCondition();
+		newPathCondition = universe.and(oldPathCondition, assumeValue);
+		state = state.setPathCondition(newPathCondition);
+		return state;
+	}
 
 	private State executeNextTimeCount(State state, int pid, String process,
 			LHSExpression lhs, Expression[] arguments,

@@ -27,9 +27,9 @@ $input int N;
 $input int NB;
 $input double a[N];
 $output double SUM;
-$assume 0 < N && N < NB;
-$assume 0 < NPROCS && NPROCS <= NPROCSB;
-$assume NPROCS <= N;
+$assume(0 < N && N < NB);
+$assume(0 < NPROCS && NPROCS <= NPROCSB);
+$assume(NPROCS <= N);
 
 CMPI_Gcomm __MPI_COMM_WORLD;
 
@@ -41,7 +41,7 @@ void MPI_Process(int place){
   MPI_Comm MPI_COMM_WORLD;
   __MPI_Sys_status__ _my_status = __UNINIT;
 
-  $assert _my_status == __UNINIT;
+  $assert(_my_status == __UNINIT);
   double computeGlobalSum() {
     double result = localSum;
     double buffer;

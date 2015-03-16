@@ -10,7 +10,7 @@ void main() {
   $proc fp = $spawn f();
   
   $atomic {
-    $assert(x==0); // false
+    $assert((x==0)); // false
   }
   $wait(fp);
 }

@@ -19,6 +19,6 @@ void main() {
   $proc fp = $spawn f();
   
   *p = 5; 
-  $assert(*p==5);
+  $assert((*p==5));
   $wait(fp);
 }

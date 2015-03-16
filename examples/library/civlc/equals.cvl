@@ -10,8 +10,8 @@ void main(){
   *data = 1;
   *(data + 1) = 2;
   result = $equals(data, data+1); 
-  $assert(!result);
+  $assert((!result));
   result = $equals(data, &a); 
-  $assert(result);
+  $assert((result));
   $free(data);
 }

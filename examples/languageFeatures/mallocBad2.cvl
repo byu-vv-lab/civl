@@ -8,6 +8,6 @@ void main() {
   
   // Uses pointer without malloc.
   p[4]=3.14;
-  $assert(p[4]==3.14);
+  $assert((p[4]==3.14));
   $free(p);
 }   

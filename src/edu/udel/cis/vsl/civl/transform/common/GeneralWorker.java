@@ -22,9 +22,9 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
@@ -48,7 +48,7 @@ public class GeneralWorker extends BaseWorker {
 
 	private String argvName;
 	private String newArgvName;
-	private AssumeNode argcAssumption = null;
+	private StatementNode argcAssumption = null;
 	private Source mainSource;
 
 	public GeneralWorker(ASTFactory astFactory) {
@@ -94,8 +94,11 @@ public class GeneralWorker extends BaseWorker {
 			newExternalList.add(inputVar);
 		for (BlockItemNode inputVar : inputVars)
 			newExternalList.add(inputVar);
-		if (this.argcAssumption != null)
+		if (this.argcAssumption != null) {
+			newExternalList.add(this.assumeFunctionDeclaration(argcAssumption
+					.getSource()));
 			newExternalList.add(argcAssumption);
+		}
 		// add my root
 		newExternalList.add(this.myRootNode());
 		for (BlockItemNode child : root) {
@@ -360,8 +363,8 @@ public class GeneralWorker extends BaseWorker {
 	 * @return
 	 * @throws SyntaxException
 	 */
-	private AssumeNode argcAssumption(Source source, String argcName)
-			throws SyntaxException {
+	private ExpressionStatementNode argcAssumption(Source source,
+			String argcName) throws SyntaxException {
 		ExpressionNode lowerBound = nodeFactory.newOperatorNode(source,
 				Operator.LT, Arrays.asList(
 						nodeFactory.newIntegerConstantNode(source, "0"),
@@ -371,10 +374,10 @@ public class GeneralWorker extends BaseWorker {
 						this.identifierExpression(source, argcName),
 						nodeFactory.newIntegerConstantNode(source, MAX_ARGC)));
 
-		return nodeFactory.newAssumeNode(
-				source,
-				nodeFactory.newOperatorNode(source, Operator.LAND,
-						Arrays.asList(lowerBound, upperBound)));
+		return nodeFactory.newExpressionStatementNode(this.functionCall(source,
+				ASSUME, Arrays.asList((ExpressionNode) nodeFactory
+						.newOperatorNode(source, Operator.LAND,
+								Arrays.asList(lowerBound, upperBound)))));
 	}
 
 	/**

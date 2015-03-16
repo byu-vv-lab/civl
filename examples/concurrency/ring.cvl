@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 /* Create NPROCS processes.  Have them exchange data in a cycle.
  * Command line verification example:
  *     civl verify -inputNPROCS_BOUND=10 -inputN_BOUND=5 ring.cvl
@@ -7,10 +8,10 @@
 
 $input int NPROCS_BOUND = 10; // upper bound of the number of MPI processes
 $input int NPROCS; // number of MPI processes
-$assume 0 < NPROCS && NPROCS <= NPROCS_BOUND;
+$assume(0 < NPROCS && NPROCS <= NPROCS_BOUND);
 $input int N_BOUND = 5; // upper bound on number times to loop
 $input int N; // number of times to loop
-$assume 0 < N && N <= N_BOUND;
+$assume(0 < N && N <= N_BOUND);
 $gcomm GCOMM_WORLD  = $gcomm_create($here, NPROCS); // global comm object
 
 void MPI_Process (int rank) {
@@ -26,11 +27,11 @@ void MPI_Process (int rank) {
       $comm_enqueue(comm, out);
       in = $comm_dequeue(comm, left, TAG);
       $message_unpack(in, &y, sizeof(int));
-      $assert(y==left);
+      $assert((y==left));
     } else { // recv first, then send
       in = $comm_dequeue(comm, left, TAG);
       $message_unpack(in, &y, sizeof(int));
-      $assert(y==left);
+      $assert((y==left));
       out = $message_pack(rank, right, TAG, &x, sizeof(int));
       $comm_enqueue(comm, out);
     }

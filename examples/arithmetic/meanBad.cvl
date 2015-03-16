@@ -6,7 +6,7 @@
 #include<civlc.cvh>
 $input int B = 10;
 $input int n;
-$assume 1<=n && n<=B;
+$assume(1<=n && n<=B);
 $input double a[n];
 double s;
 
@@ -27,5 +27,5 @@ void main() {
   }
   double result1 = mean1();
   double result2 = mean2();
-  $assert(result1==result2); 
+  $assert((result1==result2)); 
 }

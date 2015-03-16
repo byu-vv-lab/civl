@@ -72,8 +72,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.StringLiteralNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssertNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ChooseStatementNode;
@@ -242,6 +240,7 @@ public class FunctionTranslator {
 	 * The accuracy assumption builder, which performs Taylor expansions after
 	 * assumptions involving abstract functions.
 	 */
+	@SuppressWarnings("unused")
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
 
 	/* **************************** Constructors *************************** */
@@ -468,12 +467,12 @@ public class FunctionTranslator {
 
 		modelFactory.addConditionalExpressionQueue();
 		switch (statementNode.statementKind()) {
-		case ASSUME:
-			result = translateAssumeNode(scope, (AssumeNode) statementNode);
-			break;
-		case ASSERT:
-			result = translateAssertNode(scope, (AssertNode) statementNode);
-			break;
+		// case ASSUME:
+		// result = translateAssumeNode(scope, (AssumeNode) statementNode);
+		// break;
+		// case ASSERT:
+		// result = translateAssertNode(scope, (AssertNode) statementNode);
+		// break;
 		case ATOMIC:
 			result = translateAtomicNode(scope, (AtomicNode) statementNode);
 			break;
@@ -714,6 +713,8 @@ public class FunctionTranslator {
 	protected Expression arrayToPointer(Expression array) {
 		CIVLType type = array.getExpressionType();
 
+		if (array instanceof ArrayLiteralExpression)
+			return array;
 		if (type.isArrayType()) {
 			CIVLSource source = array.getSource();
 			Expression zero = modelFactory.integerLiteralExpression(source,
@@ -738,13 +739,15 @@ public class FunctionTranslator {
 	 *            Model expression for the left hand side of the assignment.
 	 * @param rhsNode
 	 *            AST expression for the right hand side of the assignment.
+	 * @param isInitializer
+	 *            is this assignment part of a variable initializer?
 	 * @param scope
 	 *            The scope containing this assignment.
 	 * @return The model representation of the assignment, which might also be a
 	 *         fork statement or function call.
 	 */
 	private Statement assignStatement(CIVLSource source, LHSExpression lhs,
-			ExpressionNode rhsNode, Scope scope) {
+			ExpressionNode rhsNode, boolean isInitializer, Scope scope) {
 		Statement result = null;
 		Location location;
 
@@ -772,7 +775,7 @@ public class FunctionTranslator {
 			rhs = arrayToPointer(translateExpressionNode(rhsNode, scope, true));
 			location = modelFactory.location(lhs.getSource(), scope);
 			result = modelFactory.assignStatement(source, location, lhs, rhs,
-					false);
+					isInitializer);
 		}
 		return result;
 	}
@@ -1259,86 +1262,88 @@ public class FunctionTranslator {
 								+ leftExpression, modelFactory.sourceOf(lhs));
 		}
 		assignStatement = assignStatement(modelFactory.sourceOfSpan(lhs, rhs),
-				(LHSExpression) leftExpression, rhs, scope);
+				(LHSExpression) leftExpression, rhs, false, scope);
 		return new CommonFragment(assignStatement);
 	}
 
-	/**
-	 * Translate an assume node into a fragment of CIVL statements
-	 * 
-	 * @param scope
-	 *            The scope containing this statement.
-	 * @param assumeNode
-	 *            The assume node to be translated.
-	 * @return the fragment
-	 */
-	private Fragment translateAssumeNode(Scope scope, AssumeNode assumeNode) {
-		Expression expression;
-		Location location;
-		Fragment result;
+	// /**
+	// * Translate an assume node into a fragment of CIVL statements
+	// *
+	// * @param scope
+	// * The scope containing this statement.
+	// * @param assumeNode
+	// * The assume node to be translated.
+	// * @return the fragment
+	// */
+	// private Fragment translateAssumeNode(Scope scope, AssumeNode assumeNode)
+	// {
+	// Expression expression;
+	// Location location;
+	// Fragment result;
+	//
+	// expression = translateExpressionNode(assumeNode.getExpression(), scope,
+	// true);
+	// location = modelFactory.location(
+	// modelFactory.sourceOfBeginning(assumeNode), scope);
+	// result = modelFactory.assumeFragment(modelFactory.sourceOf(assumeNode),
+	// location, expression);
+	// result = result.combineWith(accuracyAssumptionBuilder
+	// .accuracyAssumptions(expression, scope));
+	// return result;
+	// }
 
-		expression = translateExpressionNode(assumeNode.getExpression(), scope,
-				true);
-		location = modelFactory.location(
-				modelFactory.sourceOfBeginning(assumeNode), scope);
-		result = modelFactory.assumeFragment(modelFactory.sourceOf(assumeNode),
-				location, expression);
-		result = result.combineWith(accuracyAssumptionBuilder
-				.accuracyAssumptions(expression, scope));
-		return result;
-	}
-
-	/**
-	 * 
-	 * Translate an assert node into a fragment of CIVL statements
-	 * 
-	 * @param scope
-	 *            The scope containing this statement.
-	 * @param assertNode
-	 *            The assert node to be translated.
-	 * @return the result fragment
-	 */
-	private Fragment translateAssertNode(Scope scope, AssertNode assertNode) {
-		Expression expression;
-		Location location;
-		Fragment result;
-		Expression[] explanation = null;
-		SequenceNode<ExpressionNode> explanationNode = assertNode
-				.getExplanation();
-
-		expression = translateExpressionNode(assertNode.getCondition(), scope,
-				true);
-		try {
-			expression = modelFactory.booleanExpression(expression);
-		} catch (ModelFactoryException e) {
-			throw new CIVLSyntaxException(
-					"The expression of the $assert statement "
-							+ expression
-							+ " is of "
-							+ expression.getExpressionType()
-							+ " type which cannot be converted to boolean type.",
-					assertNode.getSource());
-		}
-		location = modelFactory.location(
-				modelFactory.sourceOfBeginning(assertNode), scope);
-		if (explanationNode != null) {
-			int numArgs = explanationNode.numChildren();
-			List<Expression> args = new ArrayList<>(numArgs);
-
-			explanation = new Expression[numArgs];
-			for (int i = 0; i < numArgs; i++) {
-				Expression arg = translateExpressionNode(
-						explanationNode.getSequenceChild(i), scope, true);
-
-				arg = this.arrayToPointer(arg);
-				args.add(arg);
-			}
-			args.toArray(explanation);
-		}
-		result = modelFactory.assertFragment(modelFactory.sourceOf(assertNode),
-				location, expression, explanation);
-		return result;
-	}
+	// /**
+	// *
+	// * Translate an assert node into a fragment of CIVL statements
+	// *
+	// * @param scope
+	// * The scope containing this statement.
+	// * @param assertNode
+	// * The assert node to be translated.
+	// * @return the result fragment
+	// */
+	// private Fragment translateAssertNode(Scope scope, AssertNode assertNode)
+	// {
+	// Expression expression;
+	// Location location;
+	// Fragment result;
+	// Expression[] explanation = null;
+	// SequenceNode<ExpressionNode> explanationNode = assertNode
+	// .getExplanation();
+	//
+	// expression = translateExpressionNode(assertNode.getCondition(), scope,
+	// true);
+	// try {
+	// expression = modelFactory.booleanExpression(expression);
+	// } catch (ModelFactoryException e) {
+	// throw new CIVLSyntaxException(
+	// "The expression of the $assert statement "
+	// + expression
+	// + " is of "
+	// + expression.getExpressionType()
+	// + " type which cannot be converted to boolean type.",
+	// assertNode.getSource());
+	// }
+	// location = modelFactory.location(
+	// modelFactory.sourceOfBeginning(assertNode), scope);
+	// if (explanationNode != null) {
+	// int numArgs = explanationNode.numChildren();
+	// List<Expression> args = new ArrayList<>(numArgs);
+	//
+	// explanation = new Expression[numArgs];
+	// for (int i = 0; i < numArgs; i++) {
+	// Expression arg = translateExpressionNode(
+	// explanationNode.getSequenceChild(i), scope, true);
+	//
+	// arg = this.arrayToPointer(arg);
+	// args.add(arg);
+	// }
+	// args.toArray(explanation);
+	// }
+	// result = modelFactory.assertFragment(modelFactory.sourceOf(assertNode),
+	// location, expression, explanation);
+	// return result;
+	// }
 
 	/**
 	 * @param node
@@ -1784,13 +1789,13 @@ public class FunctionTranslator {
 					modelFactory.sourceOf(expressionNode));
 			break;
 		case CONSTANT:
-		case IDENTIFIER_EXPRESSION: {
-			Statement noopStatement = modelFactory.noopStatement(
-					modelFactory.sourceOf(expressionNode), location, null);
-
-			result = new CommonFragment(noopStatement);
-		}
-			break;
+//		case IDENTIFIER_EXPRESSION: {
+//			Statement noopStatement = modelFactory.noopStatement(
+//					modelFactory.sourceOf(expressionNode), location, null);
+//
+//			result = new CommonFragment(noopStatement);
+//		}
+//			break;
 		default: {
 			Expression expression = this.translateExpressionNode(
 					expressionNode, scope, true);
@@ -1867,6 +1872,10 @@ public class FunctionTranslator {
 			for (int i = 0; i < ((DeclarationListNode) initNode).numChildren(); i++) {
 				VariableDeclarationNode declaration = ((DeclarationListNode) initNode)
 						.getSequenceChild(i);
+
+				if (declaration == null)
+					continue;
+
 				Variable variable = translateVariableDeclarationNode(
 						declaration, newScope);
 				Fragment fragment;
@@ -2085,6 +2094,7 @@ public class FunctionTranslator {
 								+ functionName, nodeSource);
 					switch (functionIdentifier.name()) {
 					case "$assert":
+					case "$assume":
 					case "$defined":
 						libName = "civlc";
 						break;
@@ -2670,6 +2680,8 @@ public class FunctionTranslator {
 			Scope scope) {
 		Fragment initFragment = null;
 		InitializerNode init = node.getInitializer();
+		LHSExpression lhs = modelFactory.variableExpression(
+				modelFactory.sourceOf(node), variable);
 
 		if (init != null) {
 			Statement assignStatement, anonStatement = null;
@@ -2684,34 +2696,29 @@ public class FunctionTranslator {
 			if (location == null)
 				location = modelFactory.location(
 						modelFactory.sourceOfBeginning(node), scope);
-
 			if (init instanceof ExpressionNode) {
-				rhs = translateExpressionNode((ExpressionNode) init, scope,
-						true);
-				if (rhs instanceof SystemFunctionCallExpression) {
-					CallOrSpawnStatement callStatement = ((SystemFunctionCallExpression) rhs)
-							.callStatement();
+				if (init instanceof CompoundLiteralNode
+						&& variable.type().isPointerType()) {
+					rhs = translateExpressionNode((ExpressionNode) init, scope,
+							true);
 
-					callStatement.setLhs(modelFactory.variableExpression(
-							modelFactory.sourceOf(init), variable));
-					return new CommonFragment(callStatement);
-				} else if (init instanceof CompoundLiteralNode) {
-					CIVLType variableType = variable.type();
+					Variable anonVariable = modelFactory
+							.newAnonymousVariableForArrayLiteral(initSource,
+									(CIVLArrayType) rhs.getExpressionType());
 
-					if (variableType.isPointerType()) {
-						Variable anonVariable = modelFactory
-								.newAnonymousVariableForArrayLiteral(
-										initSource,
-										(CIVLArrayType) rhs.getExpressionType());
-
-						anonStatement = modelFactory.assignStatement(
-								initSource, modelFactory.location(initSource,
-										scope), modelFactory
-										.variableExpression(initSource,
-												anonVariable), rhs, true);
-						rhs = arrayToPointer(modelFactory.variableExpression(
-								initSource, anonVariable));
-					}
+					anonStatement = modelFactory.assignStatement(initSource,
+							modelFactory.location(initSource, scope),
+							modelFactory.variableExpression(initSource,
+									anonVariable), rhs, true);
+					rhs = arrayToPointer(modelFactory.variableExpression(
+							initSource, anonVariable));
+					assignStatement = modelFactory.assignStatement(
+							modelFactory.sourceOf(node), location, lhs, rhs,
+							true);
+				} else {
+					assignStatement = this.assignStatement(
+							modelFactory.sourceOf(node), lhs,
+							(ExpressionNode) init, true, scope);
 				}
 			} else {
 				CIVLType variableType = variable.type();
@@ -2730,10 +2737,9 @@ public class FunctionTranslator {
 					rhs = arrayToPointer(modelFactory.variableExpression(
 							initSource, anonVariable));
 				}
+				assignStatement = modelFactory.assignStatement(
+						modelFactory.sourceOf(node), location, lhs, rhs, true);
 			}
-			assignStatement = modelFactory.assignStatement(modelFactory
-					.sourceOf(node), location, modelFactory.variableExpression(
-					modelFactory.sourceOf(init), variable), rhs, true);
 			initFragment = new CommonFragment(assignStatement);
 			if (anonStatement != null) {
 				initFragment = new CommonFragment(anonStatement)

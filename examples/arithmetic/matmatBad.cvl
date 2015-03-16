@@ -13,13 +13,13 @@
 
 $input int BOUND = 3;
 $input int L;
-$assume 1<=L && L<=BOUND;
+$assume(1<=L && L<=BOUND);
 $input int M;
-$assume 1<=M && M<=BOUND;
+$assume(1<=M && M<=BOUND);
 $input int N;
-$assume 1<=N && N<=BOUND;
+$assume(1<=N && N<=BOUND);
 $input int TILE_SIZE;
-$assume 1<=TILE_SIZE && TILE_SIZE<=BOUND;
+$assume(1<=TILE_SIZE && TILE_SIZE<=BOUND);
 $input double A[L][M];
 $input double B[M][N];
 double C[L][N];  // A*B computed by standard algorithm
@@ -65,7 +65,7 @@ void main() {
   rowdist();
   for (int i = 0; i < L; i++) {
     for (int j = 0; j < N; j++) {
-      $assert(C[i][j] == D[i][j]);
+      $assert((C[i][j] == D[i][j]));
     }
   }
 }

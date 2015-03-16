@@ -22,5 +22,5 @@ void main() {
 
   $wait(proc1);
   $wait(proc2);
-  $assert(x==3); // false
+  $assert((x==3)); // false
 }

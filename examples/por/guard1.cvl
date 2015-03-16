@@ -9,7 +9,7 @@ void f(){
     $when($true);
     $when(y==1) v = 1;
   }
-  $assert(v == 0);
+  $assert((v == 0));
 }
 
 void g(){

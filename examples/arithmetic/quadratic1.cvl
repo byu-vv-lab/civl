@@ -1,9 +1,10 @@
+#include <civlc.cvh>
 #include <assert.h>
 
 $input int x;
-$assume 1 < x && x <= 3;
+$assume(1 < x && x <= 3);
 $input int y;
-$assume 1 < y && y <= 3;
+$assume(1 < y && y <= 3);
 $input int n = x * y;
 
 int main(){

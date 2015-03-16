@@ -18,6 +18,6 @@ void main() {
   interval0.right = 1;
   bun = $bundle_pack(&interval0, sizeof(Interval));
   $bundle_unpack(bun, &interval1);
-  $assert(interval0.left==interval1.left);
-  $assert(interval0.right==interval1.right);
+  $assert((interval0.left==interval1.left));
+  $assert((interval0.right==interval1.right));
 }

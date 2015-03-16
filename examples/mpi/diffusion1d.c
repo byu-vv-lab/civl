@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /* diffusion1d.c: parallel 1d-diffusion solver with constant boundary.
  * To execute: mpicc diffusion1d.c ; mpiexec -n 4 ./a.out
  * Or replace "4" with however many procs you want to use.
@@ -13,15 +16,15 @@
 
 $input int NXB = 5;           // upper bound on nx
 $input int nx;               // global number of points excl. boundary
-$assume 1<=nx && nx<=NXB;
+$assume(1<=nx && nx<=NXB);
 $input double U_INIT[nx+2];  // initial values for temperature incl. boundary
 $input double k;             // the constant D*dt/(dx*dx)
-$assume k>0 && k<.5;
+$assume(k>0 && k<.5);
 $input int NSTEPS_BOUND=5;    // upper bound on nsteps
 $input int nsteps;           // number of time steps
-$assume 1<=nsteps && nsteps<=NSTEPS_BOUND;
+$assume(1<=nsteps && nsteps<=NSTEPS_BOUND);
 $input int wstep;            // write frame every this many time steps
-$assume 1<=wstep && wstep<=nsteps;
+$assume(1<=wstep && wstep<=nsteps);
 double oracle[nsteps][nx+2]; // solution computed sequentially, proc 0 only
 int _NPROCS_LOWER_BOUND = 1;
 int _NPROCS_UPPER_BOUND = 3;
@@ -138,9 +141,9 @@ void print_time_header() {
 /* Prints one cell.  Called by proc 0 only. */
 void print_cell(double value) {
   //printf("%7.2f\n", value);
-#pragma CIVL $assert value == oracle[time][print_pos] :                 \
+#pragma CIVL $assert(value == oracle[time][print_pos], \
   "Error: disagreement at time %d position %d: saw %lf, expected %lf",  \
-  time, print_pos, value, oracle[time][print_pos];
+  time, print_pos, value, oracle[time][print_pos]);
   print_pos++;
 }
 

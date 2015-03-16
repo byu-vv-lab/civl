@@ -9,6 +9,6 @@ void f() {
 void main() {
   $spawn f();
   $atomic {
-    $assert(x==1); // false
+    $assert((x==1)); // false
   }
 }

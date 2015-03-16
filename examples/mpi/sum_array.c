@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /* sum_array.c : parallel adder for an array of 
  * floating-point numbers.
  * To execute: mpicc sum_array.c ; mpiexec -n 4 ./a.out
@@ -15,7 +18,7 @@ $input int _NPROCS_LOWER_BOUND = 1;
 $input int _NPROCS_UPPER_BOUND = 5;
 $input long NB = 20;               // upper bound of N
 $input long N;                     // length of the array
-$assume 0 < N && N <= NB;
+$assume(0 < N && N <= NB);
 double oracle;
 #else
 #define N 100000
@@ -65,8 +68,8 @@ void master (void) {
   for (i = 1; i < size; mysum += tmpsum, i++)
     MPI_Recv (&tmpsum, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MSG_RESULT, MPI_COMM_WORLD, &status);
 #ifdef _CIVL
-  $assert oracle == mysum : "The sum of %d array elements "
-    "is %f but the expected one is %f.\n", N, mysum, oracle;
+  $assert(oracle == mysum, "The sum of %d array elements "
+    "is %f but the expected one is %f.\n", N, mysum, oracle);
 #endif
   printf ("%lf\n", mysum);
 }

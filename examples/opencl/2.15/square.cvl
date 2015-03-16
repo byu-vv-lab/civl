@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 //Forget the program
 
 #include "cl.cvl"
@@ -8,15 +9,15 @@
 
 $input int NUM_DEVICES;
 $input int MAX_NUM_DEVICES;
-$assume 0 < NUM_DEVICES && NUM_DEVICES < MAX_NUM_DEVICES;
+$assume(0 < NUM_DEVICES && NUM_DEVICES < MAX_NUM_DEVICES);
 
 $input int DATA_SIZE;
 $input int MAX_DATA_SIZE;
-$assume 0 < DATA_SIZE && DATA_SIZE < MAX_NUM_DEVICES;
+$assume(0 < DATA_SIZE && DATA_SIZE < MAX_NUM_DEVICES);
 
 $input int LOCAL;
 $input int MAX_LOCAL;
-$assume 0 < LOCAL && LOCAL < MAX_LOCAL;
+$assume(0 < LOCAL && LOCAL < MAX_LOCAL);
 //this args struct will hold all the parameters of for the kernel function
 typedef struct
 {
@@ -120,7 +121,7 @@ void workfunc(size_t local, size_t global, cl_kernel param)
 int clEnqueueNDRangeKernel(cl_kernel kernel, size_t global, size_t local)
 {
 
-  $assert(global % local == 0);
+  $assert((global % local == 0));
   int numworkgroups = global/local;
   cl_kernel param[numworkgroups];
   $proc procs[numworkgroups];

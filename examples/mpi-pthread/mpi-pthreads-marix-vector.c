@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 
 /********************************************************************
  
@@ -138,8 +141,8 @@ int main(int argc, char **argv)
         printf("Enter the size of Vector\n");
         scanf("%d", &VectorSize);
         #ifdef _CIVL
-        $assume NoofRows <= NUM_ROWS_BOUND;
-        $assume NoofCols <= NUM_COLS_BOUND;
+        $assume(NoofRows <= NUM_ROWS_BOUND);
+        $assume(NoofCols <= NUM_COLS_BOUND);
         #endif
     }
     MPI_Barrier(MPI_COMM_WORLD);
@@ -151,7 +154,7 @@ int main(int argc, char **argv)
     /* Validity checking for negative sizes of Matrix and Vector */
     
     #ifdef _CIVL
-    $assume NoofRows >= 1 && NoofCols >= 1 && VectorSize >= 1;
+    $assume(NoofRows >= 1 && NoofCols >= 1 && VectorSize >= 1);
     #endif
     if (NoofRows < 1 || NoofCols < 1 || VectorSize < 1)
     {
@@ -162,7 +165,7 @@ int main(int argc, char **argv)
     /* Validity checking for minimum number of Rows of Matrix */
     
     #ifdef _CIVL
-    $assume NoofRows >= Numprocs;
+    $assume(NoofRows >= Numprocs);
     #endif
     if (NoofRows < Numprocs)
     {
@@ -172,7 +175,7 @@ int main(int argc, char **argv)
     }
     /* Validity checking for suitability of sizes for multiplication */
     #ifdef _CIVL
-    $assume NoofCols == VectorSize;
+    $assume(NoofCols == VectorSize);
     #endif
     if (NoofCols != VectorSize)
     {

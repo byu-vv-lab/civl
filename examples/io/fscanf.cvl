@@ -4,8 +4,8 @@
 
 int fooLength = $textFileLength("foo");
 
-$assume fooLength == 5;
-//$assume $textFileLength("foo") == 5;
+$assume(fooLength == 5);
+//$assume($textFileLength("foo") == 5);
 
 void main(){
   FILE *file = fopen("foo", "r");

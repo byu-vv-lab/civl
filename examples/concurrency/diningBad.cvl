@@ -8,7 +8,7 @@
 
 $input int B = 4; // upper bound on number of philosophers
 $input int n;     // number of philosophers
-$assume 2<=n && n<=B;
+$assume(2<=n && n<=B);
 
 int forks[n]; // Each fork will be on the table (0) or in a hand (1).
 

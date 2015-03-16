@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 #include <omp.h>
 #include <stdio.h>
 
@@ -34,9 +37,9 @@ int main (int argc, char * argv[]){
   
   //Properties checking
   for(int j = 0; j<three; j++){
-    $assert a[j] == b[j];
-    $assert b[j] == j;
-    $assert c[j] == b[j];
+    $assert(a[j] == b[j]);
+    $assert(b[j] == j);
+    $assert(c[j] == b[j]);
   }
   return 0;
 }

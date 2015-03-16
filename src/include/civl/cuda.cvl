@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 
 /* Functions in this file are meant to serve as drop-in CIVL replacements
  * for the Cuda function of the same name. Because of this, much of the
@@ -145,7 +146,7 @@ cudaError_t cudaStreamSynchronize(cudaStream_t stream) {
 /* Destroys and cleans up the asynchronous stream specified by stream.
  */
 cudaError_t cudaStreamDestroy(cudaStream_t pStream) {
-  $assert(pStream->usable);
+  $assert((pStream->usable));
   pStream->usable = $false;
   return cudaSuccess;
 }

@@ -18,13 +18,13 @@ $input int _NPROCS_UPPER_BOUND = 4;
 /* Dimensions of 2 matrices: a[N][L] * b[L][M] */
 $input int NB = 3;              // upper bound of N
 $input int N;
-$assume 0 < N && N <= NB;
+$assume(0 < N && N <= NB);
 $input int LB = 3;              // upper bound of L
 $input int L;
-$assume 0 < L && L <= LB;
+$assume(0 < L && L <= LB);
 $input int MB = 3;              // upper bound of M
 $input int M;
-$assume 0 < M && M <= MB;
+$assume(0 < M && M <= MB);
 $input double a[N][L];          // input data for matrix a
 $input double b[L][M];          // input data for matrix b
 double oracle[N][M];            // matrix stores results of a sequential run
@@ -42,9 +42,8 @@ void printMatrix(int numRows, int numCols, double *m) {
     for (j = 0; j < numCols; j++) {
       printf("%f ", m[i*numCols + j]);
 #ifdef _CIVL
-      $assert m[i*numCols + j] == oracle[i][j] : 
-      "The calculated value at position [%d][%d] is %f"
-	" but the expected one is %f", i, j, m[i*numCols+j], oracle[i][j];
+      $assert(m[i*numCols + j] == oracle[i][j], "The calculated value at position [%d][%d] is %f"
+	" but the expected one is %f", i, j, m[i*numCols+j], oracle[i][j]);
 #endif
     }
     printf("\n");

@@ -89,32 +89,32 @@ void main() {
   int barrier_array[N];
   
   void run_proc0(int tid) {    
-    $assert(counter == 0);
+    $assert((counter == 0));
     CIVL_barrier_exit(&b, tid);
   }
 
   void run_proc1(int tid) {
-    $assert(counter == 0);
+    $assert((counter == 0));
     CIVL_barrier(&b, tid);
     counter++;
     CIVL_barrier_exit(&b, tid);
   }
 
   void run_proc2(int tid) {    
-    $assert counter == 0;
+    $assert(counter == 0);
     CIVL_barrier(&b, tid);
     counter++;
     CIVL_barrier(&b, tid);
-    $assert counter == 3;
+    $assert(counter == 3);
     CIVL_barrier_exit(&b, tid);    
   }
 
   void run_proc3(int tid) {
-    $assert counter == 0;
+    $assert(counter == 0);
     CIVL_barrier(&b, tid);
     counter++;
     CIVL_barrier(&b, tid);
-    $assert counter == 3;
+    $assert(counter == 3);
     CIVL_barrier(&b, tid);
     counter--;
     CIVL_barrier_exit(&b, tid);
@@ -134,5 +134,5 @@ void main() {
   $wait(proc2);
   $wait(proc3);
 
-  $assert counter == 2;
+  $assert(counter == 2);
 }

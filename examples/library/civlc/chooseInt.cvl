@@ -16,5 +16,5 @@ void main(){
 	int k = $choose_int(5);
 	int result = sum(k);
 	
-	$assert(result == k*(k+1)/2);
+	$assert((result == k*(k+1)/2));
 }

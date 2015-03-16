@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 /***********************************************************************
 * FILENAME:  MM.cu
 *            Matrix Multiplication
@@ -286,12 +287,12 @@ int main (int argc, char** argv) {
 		/* Deallocate the clock.                                             */
 		cudaEventDestroy(start);
 		cudaEventDestroy(stop);
-        //$assert($forall {int i | i >= 0 && i < N*N} cpuResult[i] == gpuGlobalResult[i] && cpuResult[i] == gpuSharedResult[i]);
+        //$assert(($forall {int i | i >= 0 && i < N*N} cpuResult[i] == gpuGlobalResult[i] && cpuResult[i] == gpuSharedResult[i]));
         for (int i = 0; i < N*N; i ++) {
             printf("i = %d\n", i);
             printf("cpu = %f, gpuGlobal = %f, gpuShared = %f\n", cpuResult[i], gpuGlobalResult[i], gpuSharedResult[i]);
-            $assert(cpuResult[i] == gpuGlobalResult[i]);
-            $assert(cpuResult[i] == gpuSharedResult[i]);
+            $assert((cpuResult[i] == gpuGlobalResult[i]));
+            $assert((cpuResult[i] == gpuSharedResult[i]));
         }
 
 		return 0; 

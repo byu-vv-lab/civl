@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 
 #define N 4
 $input float x[N];
@@ -87,7 +88,7 @@ void main() {
   int test;
 
   emptyInterval = makeInterval(0,-1);
-  $assume epsilon>0 && epsilon<0.1;
+  $assume(epsilon>0 && epsilon<0.1);
   for (int i=0; i<N; i++) {
     a[i].left = x[i];
     a[i].right = x[i];
@@ -95,5 +96,5 @@ void main() {
   r1 = fplus(fplus(fplus(a[0],a[1]),a[2]),a[3]);
   r2 = fplus(fplus(a[0],a[1]), fplus(a[2],a[3]));
   test = subset(r2, r1);
-  $assert test;
+  $assert(test);
 }

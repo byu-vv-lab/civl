@@ -12,7 +12,7 @@ $input int y;
 void main(){
   $choose {
     $when(x/y > 10) {
-      $assert(y != 0);
+      $assert((y != 0));
     }
     default:
       ;

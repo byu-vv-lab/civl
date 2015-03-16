@@ -17,9 +17,9 @@ time_t time(time_t *timer) {
   double result = _time(time_count);
   
   if (time_count > 0) {
-    $assume result > _time(time_count-1);
+    $assume(result > _time(time_count-1));
   } else {
-    $assume result > 0;
+    $assume(result > 0);
   }
   if(timer != NULL)
     *timer = result;

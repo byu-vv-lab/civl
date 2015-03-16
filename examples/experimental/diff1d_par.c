@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -6,16 +9,16 @@
 
 $input int NXB = 5;           // upper bound on nx
 $input int nx;               // global number of points excl. boundary
-$assume 1<=nx && nx<=NXB;
+$assume(1<=nx && nx<=NXB);
 $input double U_INIT[nx+2];  // initial values for temperature incl. boundary
 $input double k;             // the constant D*dt/(dx*dx)
-$assume k>0 && k<.5;
+$assume(k>0 && k<.5);
 $input int NSTEPS_BOUND=5;    // upper bound on nsteps
 $input int nsteps;           // number of time steps
-$assume 1<=nsteps && nsteps<=NSTEPS_BOUND;
+$assume(1<=nsteps && nsteps<=NSTEPS_BOUND);
 $input int wstep = 1;        // write frame every this many time steps
-//$assume 1<=wstep && wstep<=nsteps;
-//$assume nsteps%wstep == 0 && wstep != 0;
+//$assume(1<=wstep && wstep<=nsteps);
+//$assume(nsteps%wstep == 0 && wstep != 0);
 $output double output[nsteps][nx+2]; // solution computed sequentially, proc 0 only
 
 int _NPROCS_LOWER_BOUND = 1;

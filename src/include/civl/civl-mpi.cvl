@@ -55,7 +55,7 @@ int sizeofDatatype(MPI_Datatype datatype) {
   case MPI_UNSIGNED_LONG_LONG:
     return sizeof(unsigned long long);
   default:
-    $assert 0 : "Unreachable";
+    $assert(0, "Unreachable");
   }
 }
 

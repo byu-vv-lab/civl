@@ -8,5 +8,5 @@ void main() {
   p[4]=3.14;
   $free(p);
   // Uses pointer after free.
-  $assert(p[4]==3.14);
+  $assert((p[4]==3.14));
 }   

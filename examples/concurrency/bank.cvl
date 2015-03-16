@@ -48,9 +48,9 @@ int withdraw( int account_num, int amount )
 {
    int result;
 	
-   $assume 0 <= account_num;
-   $assume account_num <= NUM_ACCOUNTS;
-   $assume amount >= 0;
+   $assume(0 <= account_num);
+   $assume(account_num <= NUM_ACCOUNTS);
+   $assume(amount >= 0);
    // begin transaction
    lock_account( account_num );
    if ( account_balance[account_num] >= amount )  {
@@ -69,9 +69,9 @@ int deposit( int account_num, int amount )
 /* Return value: false if success, true if an error occurred 
  */
 {
-   $assume 0 <= account_num;
-   $assume account_num <= NUM_ACCOUNTS;
-   $assume amount >= 0;
+   $assume(0 <= account_num);
+   $assume(account_num <= NUM_ACCOUNTS);
+   $assume(amount >= 0);
    // begin transaction 
    lock_account( account_num );
    account_balance[account_num]= account_balance[account_num]+ amount;
@@ -87,8 +87,8 @@ int balance( int account_num )
 {
    int balance= 0;
    
-   $assume 0 <= account_num;
-   $assume account_num <= NUM_ACCOUNTS;
+   $assume(0 <= account_num);
+   $assume(account_num <= NUM_ACCOUNTS);
    // begin transaction
    lock_account( account_num );
    balance= account_balance[account_num];
@@ -104,12 +104,12 @@ int transfer( int to_account_num, int from_account_num, int amount )
 {
    int result= false;
 	
-   $assume 0 <= to_account_num;
-   $assume to_account_num <= NUM_ACCOUNTS;
-   $assume 0 <= from_account_num;
-   $assume from_account_num <= NUM_ACCOUNTS;
-   $assume from_account_num != to_account_num;
-   $assume amount >= 0;
+   $assume(0 <= to_account_num);
+   $assume(to_account_num <= NUM_ACCOUNTS);
+   $assume(0 <= from_account_num);
+   $assume(from_account_num <= NUM_ACCOUNTS);
+   $assume(from_account_num != to_account_num);
+   $assume(amount >= 0);
    // begin transaction
    if ( from_account_num < to_account_num )  {
       lock_account( from_account_num );
@@ -173,8 +173,8 @@ void main()
 /* ======================================================================== */
 void lock_account( int account_num )
 {
-   $assume 0 <= account_num;
-   $assume account_num <= NUM_ACCOUNTS;
+   $assume(0 <= account_num);
+   $assume(account_num <= NUM_ACCOUNTS);
    // this needs to happen atomically -- does it?
    $when (account_locked[account_num] == false) account_locked[account_num]= true;
 }
@@ -182,8 +182,8 @@ void lock_account( int account_num )
 /* ======================================================================== */
 void unlock_account( int account_num )
 {
-   $assume 0 <= account_num;
-   $assume account_num <= NUM_ACCOUNTS;
+   $assume(0 <= account_num);
+   $assume(account_num <= NUM_ACCOUNTS);
 
    account_locked[ account_num ]= false;
 }

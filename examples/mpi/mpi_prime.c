@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /*
  * mpi_prime.c: parallel prime numbers generator within a limited
  * numbers.  
@@ -20,7 +23,7 @@ $input int _NPROCS_LOWER_BOUND = 1;
 $input int _NPROCS_UPPER_BOUND = 4;
 $input int LIMITB = 15;                     // upper bound of LIMITS
 $input int LIMIT;                           // upper bound of searching numbers
-$assume 10 < LIMIT && LIMIT <= LIMITB;
+$assume(10 < LIMIT && LIMIT <= LIMITB);
 /* results of sequential run with initializers. The first element
    stores the number of found prime numbers, the second element stores
    the largest found prime number. */
@@ -108,10 +111,10 @@ int main (int argc, char *argv[])
     MPI_Reduce(&foundone,&maxprime,1,MPI_INT,MPI_MAX,FIRST,MPI_COMM_WORLD);
     end_time=MPI_Wtime();
 #ifdef _CIVL
-  $assert(pcsum == oracle[0]) : "The calculated number of prime numbers is %d"
-      " but the expected number is %d with a limit of %d\n",pcsum, oracle[0], LIMIT;
-  $assert(maxprime == oracle[1]) : "The Largest prime is %d but the expected "
-      "one is %d with a limit of %d\n",maxprime, oracle[1], LIMIT;
+  $assert((pcsum == oracle[0]), "The calculated number of prime numbers is %d"
+      " but the expected number is %d with a limit of %d\n",pcsum, oracle[0], LIMIT);
+  $assert((maxprime == oracle[1]), "The Largest prime is %d but the expected "
+      "one is %d with a limit of %d\n",maxprime, oracle[1], LIMIT);
 #endif
     printf("Done. Largest prime is %d Total primes %d\n",maxprime,pcsum);
     printf("Wallclock time elapsed: %.2lf seconds\n",end_time-start_time);

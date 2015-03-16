@@ -24,5 +24,5 @@ void main() {
 
   $wait(p);
   $wait(q);
-  $assert(s1==s2);
+  $assert((s1==s2));
 }

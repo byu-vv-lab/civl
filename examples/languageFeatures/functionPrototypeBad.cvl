@@ -6,7 +6,7 @@ void main(){
   int x = 0;
   
   x = f();
-  $assert(x == 10);
+  $assert((x == 10));
 }
 
 int f(){

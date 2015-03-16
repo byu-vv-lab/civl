@@ -1,19 +1,20 @@
+#include <civlc.cvh>
 #include <stdio.h>
 
 $input int x, y, z, w;
 $input int N, M, L, K;
 $input int offset;
 
-$assume 0< N && N <= 2;
-$assume 0< M && M <= 2;
-$assume 0< L && L <= 2;
-$assume 0< K && K <= 2;
-$assume 0 <= x && x < N;
-$assume 0 <= y && y < M;
-$assume 0 <= z && z < L;
-$assume 0 <= w && w < K;
-$assume 0 <= offset ;
-$assume (offset + x*M*L*K + y*L*K + z*K + w) < M*N*L*K;
+$assume(0< N && N <= 2);
+$assume(0< M && M <= 2);
+$assume(0< L && L <= 2);
+$assume(0< K && K <= 2);
+$assume(0 <= x && x < N);
+$assume(0 <= y && y < M);
+$assume(0 <= z && z < L);
+$assume(0 <= w && w < K);
+$assume(0 <= offset );
+$assume((offset + x*M*L*K + y*L*K + z*K + w) < M*N*L*K);
 
 void main(){
 
@@ -29,8 +30,8 @@ void main(){
   W = finalIndex - Z * K;
 
   printf("X=%d, Y=%d, Z=%d, W=%d\n", X,Y,Z,W);
-  $assert X < N;
-  $assert Y < M;
-  $assert Z < L;
-  $assert W < K;
+  $assert(X < N);
+  $assert(Y < M);
+  $assert(Z < L);
+  $assert(W < K);
 }

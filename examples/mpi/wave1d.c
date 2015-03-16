@@ -24,12 +24,12 @@
 
 $input int NXB = 5;               /* upper bound on nx */
 $input int nx;                    /* number of discrete points including endpoints */
-$assume 2 <= nx && nx <= NXB;     /* setting bounds */
+$assume(2 <= nx && nx <= NXB);     /* setting bounds */
 $input double c;                  /* physical constant to do with string */
-$assume c > 0.0;       
+$assume(c > 0.0);       
 $input int NSTEPSB = 5;        
 $input int nsteps;                /* number of time steps */
-$assume 0 < nsteps && nsteps <= NSTEPSB;
+$assume(0 < nsteps && nsteps <= NSTEPSB);
 $input int wstep = 1;             /* number of time steps between printing */
 $input int _NPROCS_LOWER_BOUND = 1;
 $input int _NPROCS_UPPER_BOUND = 4;
@@ -190,9 +190,9 @@ void printData (int time, int first, int length, double * buf) {
     printf("u_curr[%d]=%8.8f   ", first + i, buf[i]);
 #ifdef _CIVL
 
-     $assert (oracle[time + 1][first + i + 1] == buf[i]):		\
+     $assert((oracle[time + 1][first + i + 1] == buf[i]), \
     "Error: disagreement at time %d position %d: saw %lf, expected %lf", \
-    time, first + i, buf[i], oracle[time + 1][first + i + 1];
+    time, first + i, buf[i], oracle[time + 1][first + i + 1]);
 
 #endif
     printf("\n");

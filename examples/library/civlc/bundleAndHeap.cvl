@@ -2,7 +2,7 @@
 #include <bundle.cvh>
 
 $input int N;
-$assume N > 2;
+$assume(N > 2);
 $input int a[N];
 
 int main(){
@@ -12,7 +12,7 @@ int main(){
   b = (int *)$malloc($root, N * sizeof(int));
   bun = $bundle_pack(a, sizeof(int) * N);
   $bundle_unpack(bun, b);
-  $assert b[0] == a[0];
+  $assert(b[0] == a[0]);
   $free(b);
   return 0;
 }

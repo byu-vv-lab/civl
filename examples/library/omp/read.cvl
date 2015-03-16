@@ -17,7 +17,7 @@ void main(){
     printf("Hello from thread %d\n", tid);
     // private = data;
     $omp_read(shared, &private, &data_local);
-    $assert private == data;
+    $assert(private == data);
     $omp_shared_destroy(shared);
     $omp_team_destroy(team);
   }
@@ -25,7 +25,7 @@ void main(){
   $parfor (int i: ($domain){ 0 .. 2 }) {
     thread(i);
   }
-  $assert data == 123;
+  $assert(data == 123);
   $omp_gshared_destroy(gshared);
   $omp_gteam_destroy(gteam);
 }

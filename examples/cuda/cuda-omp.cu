@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 //http://www.arc.vt.edu/resources/software/cuda/docs/cuda-omp.cu
 
 #include <omp.h>
@@ -9,10 +12,10 @@
 #ifdef _CIVL
 $input int BLOCKS;
 $input int BLOCK_B;
-$assume 1 <= BLOCKS && BLOCKS <= BLOCK_B;
+$assume(1 <= BLOCKS && BLOCKS <= BLOCK_B);
 $input int THREADS_PER_BLOCK;
 $input int THREADS_B;
-$assume 1 <= THREADS_PER_BLOCK && THREADS_PER_BLOCK <= THREADS_B;
+$assume(1 <= THREADS_PER_BLOCK && THREADS_PER_BLOCK <= THREADS_B);
 #else
 #define BLOCKS 64
 #define THREADS_PER_BLOCK 128
@@ -137,7 +140,7 @@ int main(int argc, char *argv[])
 	//Check for correctness of the result
     	if(correctResult(a, n, b)) {
 #ifdef _CIVL
-		$assert($true);
+		$assert(($true));
 #endif
         	printf("Test PASSED\n");
     	} else

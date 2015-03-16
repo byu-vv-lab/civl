@@ -7,7 +7,7 @@
  
 $input int N;
 $input int B = 5;
-$assume N > 0 && N < B;
+$assume(N > 0 && N < B);
 $gbarrier gbarrier = $gbarrier_create($here, N);
 int counter = 0;
  
@@ -15,11 +15,11 @@ void process(int id) {
   $barrier barrier = $barrier_create($here, gbarrier, id);
 
   while($true){
-    $assert(counter == 0);
+    $assert((counter == 0));
     $barrier_call(barrier);
     counter++;
     $barrier_call(barrier);
-    $assert(counter == N);
+    $assert((counter == N));
     $barrier_call(barrier);
     counter--;
     $barrier_call(barrier);

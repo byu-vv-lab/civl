@@ -11,19 +11,19 @@ $input int num_elements = 5;
 $input double initial[num_elements];
 double working[num_elements];
 $abstract $contin(4) $real rho($real x);
-$assume h > 0;
+$assume(h > 0);
 
 void secondDerivative(double h, int n, double y[], double result[]){
 	int i;
 	
-	$assume $forall {m=0 .. n-1} y[m] == rho(m*h);
+	$assume($forall {m=0 .. n-1} y[m] == rho(m*h));
 	for(i = 1; i < n-1; i++)
 	{
 		result[i] = (y[i+1]-2*y[i]+y[i-1])/(h*h);
 	}
 	result[0] = (y[2]-2*y[1]+y[0])/h; 
 	result[n-1] = (y[n-3] - 2*y[n-2]-y[n-1])/h;
-	$assert($uniform {k=1 .. n-2} result[k]-$D[rho,{x,2}](k*h) == $O(h*h));
+	$assert(($uniform {k=1 .. n-2} result[k]-$D[rho,{x,2}](k*h) == $O(h*h)));
 }
 
 void main() {

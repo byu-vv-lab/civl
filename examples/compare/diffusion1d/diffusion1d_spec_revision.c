@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /* FEVS: A Functional Equivalence Verification Suite for High-Performance
  * Scientific Computing
  *
@@ -38,8 +41,8 @@
 #pragma CIVL $input int NSTEPSB;
 #pragma CIVL $input int WSTEP;
 #pragma CIVL $output double u_output[NX];
-#pragma CIVL $assume 2 < NX && NX <= NXB;
-#pragma CIVL $assume 0 < NSTEPS && NSTEPS <= NSTEPSB;
+#pragma CIVL $assume(2 < NX && NX <= NXB);
+#pragma CIVL $assume(0 < NSTEPS && NSTEPS <= NSTEPSB);
 
 /* Parameters: These are defined at the beginning of the input file:
  *
@@ -93,11 +96,11 @@ void readint(FILE *file, char *keyword, int *ptr) {
   // we can ignore the transition of executing "quit()". For concurrent programs,
   // ,especially for mpi programs, any one of processes terminated exceptionally
   // will make the some rest processes go into a dead lock (e.g.MPI_Recv forever).
-#pragma CIVL $assume strcmp(keyword, buf) == 0;
+#pragma CIVL $assume(strcmp(keyword, buf) == 0);
   if (strcmp(keyword, buf) != 0) quit(file);
   returnval = fscanf(file, "%10s", buf);
   if (returnval != 1) quit(file);
-#pragma CIVL $assume strcmp("=", buf) == 0;
+#pragma CIVL $assume(strcmp("=", buf) == 0);
   if (strcmp("=", buf) != 0) quit(file);
   returnval = fscanf(file, "%d", ptr);
   if (returnval != 1) quit(file);
@@ -110,11 +113,11 @@ void readdouble(FILE *file, char *keyword, double *ptr) {
 
   returnval = fscanf(file, "%100s", buf);
   if (returnval != 1) quit(file);
-#pragma CIVL $assume strcmp(keyword, buf) == 0;
+#pragma CIVL $assume(strcmp(keyword, buf) == 0);
   if (strcmp(keyword, buf) != 0) quit(file);
   returnval = fscanf(file, "%10s", buf);
   if (returnval != 1) quit(file);
-#pragma CIVL $assume strcmp("=", buf) == 0;
+#pragma CIVL $assume(strcmp("=", buf) == 0);
   if (strcmp("=", buf) != 0) quit(file);
   returnval = fscanf(file, "%lf", ptr);
   if (returnval != 1) quit(file);
@@ -133,10 +136,10 @@ void init(char* infilename) {
   readdouble(infile, "k", &k);
   readint(infile, "nsteps", &nsteps);
   readint(infile, "wstep", &wstep);
-#pragma CIVL $assume nx == NX;
-#pragma CIVL $assume nsteps == NSTEPS;
-#pragma CIVL $assume wstep == WSTEP;
-#pragma CIVL $assume 0.0 < k && k < 0.5;
+#pragma CIVL $assume(nx == NX);
+#pragma CIVL $assume(nsteps == NSTEPS);
+#pragma CIVL $assume(wstep == WSTEP);
+#pragma CIVL $assume(0.0 < k && k < 0.5);
   printf("Diffusion1d with nx=%d, k=%f, nsteps=%d, wstep=%d\n",
 	 nx, k, nsteps, wstep);
   fflush(stdout);
@@ -180,7 +183,7 @@ void update() {
 int main(int argc, char *argv[]) {
   int iter;
 
-#pragma CIVL $assume (argc == 2);
+#pragma CIVL $assume((argc == 2));
   assert(argc==2);
   init(argv[1]);
   write_plain(0);

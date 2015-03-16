@@ -33,9 +33,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
@@ -43,6 +41,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
@@ -71,7 +70,6 @@ import edu.udel.cis.vsl.gmc.ErrorLog;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
-import edu.udel.cis.vsl.sarl.IF.ValidityResult;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -218,30 +216,6 @@ public class CommonExecutor implements Executor {
 		state = assign(eval.state, pid, process, statement.getLhs(),
 				eval.value, statement.isInitialization());
 		state = stateFactory.setLocation(state, pid, statement.target(), true);
-		return state;
-	}
-
-	/**
-	 * TODO javadocs
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param statement
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State executeAssume(State state, int pid, AssumeStatement statement)
-			throws UnsatisfiablePathConditionException {
-		Evaluation eval = evaluator.evaluate(state, pid,
-				statement.getExpression());
-		BooleanExpression assumeValue = (BooleanExpression) eval.value;
-		BooleanExpression oldPathCondition, newPathCondition;
-
-		state = eval.state;
-		oldPathCondition = state.getPathCondition();
-		newPathCondition = universe.and(oldPathCondition, assumeValue);
-		state = state.setPathCondition(newPathCondition);
-		state = stateFactory.setLocation(state, pid, statement.target());
 		return state;
 	}
 
@@ -623,16 +597,17 @@ public class CommonExecutor implements Executor {
 			throws UnsatisfiablePathConditionException {
 		int processIdentifier = state.getProcessState(pid).identifier();
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
+		StatementKind kind = statement.statementKind();
 
 		numSteps++;
-		switch (statement.statementKind()) {
+		switch (kind) {
 		case ASSIGN:
 			return executeAssign(state, pid, process,
 					(AssignStatement) statement);
-		case ASSUME:
-			return executeAssume(state, pid, (AssumeStatement) statement);
-		case ASSERT:
-			return executeAssert(state, pid, (AssertStatement) statement);
+			// case ASSUME:
+			// return executeAssume(state, pid, (AssumeStatement) statement);
+			// case ASSERT:
+			// return executeAssert(state, pid, (AssertStatement) statement);
 		case CALL_OR_SPAWN:
 			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
@@ -667,65 +642,68 @@ public class CommonExecutor implements Executor {
 			return executeCivlParFor(state, pid,
 					(CivlParForEnterStatement) statement);
 		default:
-			throw new CIVLInternalException("Unknown statement kind", statement);
+			throw new CIVLInternalException("Unknown statement kind: " + kind,
+					statement);
 		}
 	}
 
-	private State executeAssert(State state, int pid, AssertStatement assertStmt)
-			throws UnsatisfiablePathConditionException {
-		BooleanExpression assertValue;
-		Evaluation eval;
-		Reasoner reasoner;
-		ValidityResult valid;
-		ResultType resultType;
-		CIVLSource source = assertStmt.getSource();
-		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
-
-		eval = evaluator.evaluate(state, pid, assertStmt.getCondition());
-		assertValue = (BooleanExpression) eval.value;
-		state = eval.state;
-		reasoner = universe.reasoner(state.getPathCondition());
-		valid = reasoner.valid(assertValue);
-		resultType = valid.getResultType();
-		if (resultType != ResultType.YES) {
-			Expression[] explanation = assertStmt.getExplanation();
-
-			if (explanation != null) {
-				// if (civlConfig.enablePrintf()) {
-				SymbolicExpression[] pArgumentValues = new SymbolicExpression[explanation.length];
-
-				for (int i = 0; i < explanation.length; i++) {
-					eval = this.evaluator.evaluate(state, pid, explanation[i]);
-					state = eval.state;
-					pArgumentValues[i] = eval.value;
-				}
-				state = this.execute_printf(source, state, pid, process, null,
-						explanation, pArgumentValues, true);
-				civlConfig.out().println();
-				// }
-			}
-
-			// if (arguments.length > 1) {
-			// if (civlConfig.enablePrintf()) {
-			// Expression[] pArguments = Arrays.copyOfRange(arguments, 1,
-			// arguments.length);
-			// SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
-			// argumentValues, 1, argumentValues.length);
-			//
-			// state = this.execute_printf(source, state, pid, process,
-			// null, pArguments, pArgumentValues);
-			// }
-			// }
-			state = errorLogger.logError(source, state, process,
-					symbolicAnalyzer.stateToString(state), assertValue,
-					resultType, ErrorKind.ASSERTION_VIOLATION,
-					"Cannot prove assertion holds: " + assertStmt.toString()
-							+ "\n  Path condition: " + state.getPathCondition()
-							+ "\n  Assertion: " + assertValue + "\n");
-		}
-		state = stateFactory.setLocation(state, pid, assertStmt.target());
-		return state;
-	}
+	// private State executeAssert(State state, int pid, AssertStatement
+	// assertStmt)
+	// throws UnsatisfiablePathConditionException {
+	// BooleanExpression assertValue;
+	// Evaluation eval;
+	// Reasoner reasoner;
+	// ValidityResult valid;
+	// ResultType resultType;
+	// CIVLSource source = assertStmt.getSource();
+	// String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+	//
+	// eval = evaluator.evaluate(state, pid, assertStmt.getCondition());
+	// assertValue = (BooleanExpression) eval.value;
+	// state = eval.state;
+	// reasoner = universe.reasoner(state.getPathCondition());
+	// valid = reasoner.valid(assertValue);
+	// resultType = valid.getResultType();
+	// if (resultType != ResultType.YES) {
+	// Expression[] explanation = assertStmt.getExplanation();
+	//
+	// if (explanation != null) {
+	// // if (civlConfig.enablePrintf()) {
+	// SymbolicExpression[] pArgumentValues = new
+	// SymbolicExpression[explanation.length];
+	//
+	// for (int i = 0; i < explanation.length; i++) {
+	// eval = this.evaluator.evaluate(state, pid, explanation[i]);
+	// state = eval.state;
+	// pArgumentValues[i] = eval.value;
+	// }
+	// state = this.execute_printf(source, state, pid, process, null,
+	// explanation, pArgumentValues, true);
+	// civlConfig.out().println();
+	// // }
+	// }
+	//
+	// // if (arguments.length > 1) {
+	// // if (civlConfig.enablePrintf()) {
+	// // Expression[] pArguments = Arrays.copyOfRange(arguments, 1,
+	// // arguments.length);
+	// // SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
+	// // argumentValues, 1, argumentValues.length);
+	// //
+	// // state = this.execute_printf(source, state, pid, process,
+	// // null, pArguments, pArgumentValues);
+	// // }
+	// // }
+	// state = errorLogger.logError(source, state, process,
+	// symbolicAnalyzer.stateToString(state), assertValue,
+	// resultType, ErrorKind.ASSERTION_VIOLATION,
+	// "Cannot prove assertion holds: " + assertStmt.toString()
+	// + "\n  Path condition: " + state.getPathCondition()
+	// + "\n  Assertion: " + assertValue + "\n");
+	// }
+	// state = stateFactory.setLocation(state, pid, assertStmt.target());
+	// return state;
+	// }
 
 	/**
 	 * When the domain is empty, this is equivalent to a noop.

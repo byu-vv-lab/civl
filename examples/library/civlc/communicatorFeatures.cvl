@@ -9,10 +9,10 @@
 
 $input int NPROCS_BOUND = 2; // upper bound of the number of mpi processes
 $input int NPROCS; // number of mpi processes
-$assume 0 < NPROCS && NPROCS <= NPROCS_BOUND;
+$assume(0 < NPROCS && NPROCS <= NPROCS_BOUND);
 $input int N_BOUND = 2; // upper bound on number times to loop
 $input int N; // number of times to loop
-$assume 0 < N && N <= N_BOUND;
+$assume(0 < N && N <= N_BOUND);
 _Bool initialized = $false;
 $gcomm MPI_COMM_WORLD; // the default MPI communicator
 
@@ -45,7 +45,7 @@ void MPI_Process (int rank) {
       printf("matchedMessage is %s\n", matchedMessage);
       in = $comm_dequeue(myComm, left, TAG);
       $message_unpack(in, &y, sizeof(int));
-      $assert(y==left);
+      $assert((y==left));
     } else { // recv first, then send
       hasMessage = $comm_probe(myComm, left, TAG);
       comm_size = $comm_size(myComm);
@@ -57,7 +57,7 @@ void MPI_Process (int rank) {
       printf("matchedMessage is %s\n", matchedMessage);
       in = $comm_dequeue(myComm, left, TAG);
       $message_unpack(in, &y, sizeof(int));
-      $assert(y==left);
+      $assert((y==left));
       out = $message_pack(rank, right, TAG, &x, sizeof(int));
       $comm_enqueue(myComm, out);
     }

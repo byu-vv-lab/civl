@@ -20,5 +20,5 @@ void main() {
   s.b = 25;
   bun = $bundle_pack(&(s.a), 6*sizeof(int));  // There may be padding, so this should fail.
   $bundle_unpack(bun, &c);
-  $assert(c[5] == 25);
+  $assert((c[5] == 25));
 }

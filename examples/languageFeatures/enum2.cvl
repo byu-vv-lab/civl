@@ -11,12 +11,12 @@ int main(){
     enum hf { A=10 };
     int k = A;
 
-    $assert(k == 10);
+    $assert((k == 10));
   }
-  $assert(a == 0);
-  $assert(b == 4);
-  $assert(c == 5);
-  $assert(d == 4);
-  $assert(h == 2);
-  $assert(y == 14);
+  $assert((a == 0));
+  $assert((b == 4));
+  $assert((c == 5));
+  $assert((d == 4));
+  $assert((h == 2));
+  $assert((y == 14));
 }

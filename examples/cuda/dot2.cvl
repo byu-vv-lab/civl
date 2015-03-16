@@ -34,10 +34,10 @@ _Bool isPowerOfTwo(int x) {
 $input int N;
 // upper bound on N
 $input int B;
-$assume(0 <= N && N <= B);
+$assume((0 <= N && N <= B));
 $input int THREADS_PER_BLOCK; // thread number per block: must be a power of 2, due to the while loop at the end of gpuThread();
 $input int THREADS_B; 
-$assume(1 <= THREADS_PER_BLOCK && THREADS_PER_BLOCK <= THREADS_B);
+$assume((1 <= THREADS_PER_BLOCK && THREADS_PER_BLOCK <= THREADS_B));
 
 const int threadsPerBlock = THREADS_PER_BLOCK;
 // the number of blocks to create
@@ -152,7 +152,7 @@ int main ( void ) {
     #define sum_squares(x)  (x*(x+1)*(2*x+1)/6)
     printf( "Does GPU value %.6g = %.6g?\n", c,
          2 * sum_squares( (float)(N - 1) ) );
-    $assert(c == 2 * sum_squares( (float)(N - 1) ) );
+    $assert((c == 2 * sum_squares( (float)(N - 1) ) ));
 
     // free memory on the gpu side
     cudaFree( dev_a ); // civl versionof cudaFree will check memory correctness, then call regular free
@@ -167,7 +167,7 @@ int main ( void ) {
   }
 
 	_Bool valid = isPowerOfTwo(THREADS_PER_BLOCK);
-	$assume(valid);
+	$assume((valid));
 
   _cudaInit();
   _main();

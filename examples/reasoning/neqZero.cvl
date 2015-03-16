@@ -11,7 +11,7 @@ int main(){
   double a = 11547/10000 * (x[1]*x[3] - x[1]*x[5] - x[2]*x[3] + x[2]*x[4] - x[4]*x[0] + x[5]*x[0]);
   double b = -x[1]*x[3] + x[1]*x[5] + x[2]*x[3] - x[2]*x[4] + x[4]*x[0] - x[5]*x[0] - 1/115470000000000;
 
-  $assume 0 < b;
-  $assume 0 != a;
-  $assert (a*a) != 0;
+  $assume(0 < b);
+  $assume(0 != a);
+  $assert((a*a) != 0);
 }

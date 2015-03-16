@@ -13,6 +13,6 @@ void main() {
   $proc wp = $spawn waiter();
   
   $when(target != $proc_null);
-  $assert(wp == target);
+  $assert((wp == target));
   $wait(target);
 }

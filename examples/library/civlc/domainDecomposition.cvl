@@ -17,7 +17,7 @@ void decomp($domain domain){
       sum+=1;
     }
   }
-  $assert(sum == 45);
+  $assert((sum == 45));
 }
 
 void main(){

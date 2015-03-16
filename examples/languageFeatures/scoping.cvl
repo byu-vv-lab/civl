@@ -24,8 +24,8 @@ void main() {
   {
     qs = $here;
   }
-  $assert(ms == (ps + qs));
-  $assert(ps != qs);
+  $assert((ms == (ps + qs)));
+  $assert((ps != qs));
   $free(p);
   $free(q);
 }

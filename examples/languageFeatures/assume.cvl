@@ -6,6 +6,6 @@
 $input int a[];
 
 void main() {  
-  $assume a[0] > 1;
-  $assert(a[0] > 0); 
+  $assume(a[0] > 1);
+  $assert((a[0] > 0)); 
 }

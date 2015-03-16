@@ -4,7 +4,7 @@
 #include<civlc.cvh>
 
 $input int N;
-$assume N > 0 && N <= 5;
+$assume(N > 0 && N <= 5);
 
 typedef struct Node {
   double value;
@@ -31,8 +31,8 @@ void main() {
   while (final.next != NULL) {
     final = *(final.next);
   }
-  $assert(final.value == (N-1)*2.71828);
-  $assert(final.value == current->value);
+  $assert((final.value == (N-1)*2.71828));
+  $assert((final.value == current->value));
   while (head->next != NULL) {
     Node* tmp = head;
     

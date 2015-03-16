@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,6 +25,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
@@ -433,10 +435,18 @@ public class CommonAccuracyAssumptionBuilder implements
 		return result;
 	}
 
+	// TODO fix me
 	private Fragment createAssumption(CIVLSource source, Scope scope,
 			Expression expression) {
-		return factory.assumeFragment(source, factory.location(source, scope),
-				createAssumptionExpression(source, 0, expression));
+		// Statement assumeCall = factory.callOrSpawnStatement(source,
+		// factory.location(source, scope), true, function,
+		// Arrays.asList(createAssumptionExpression(source, 0, expression)),
+		// null);
+
+		return new CommonFragment();
+		// return factory.assumeFragment(source, factory.location(source,
+		// scope),
+		// createAssumptionExpression(source, 0, expression));
 	}
 
 	/**
@@ -454,6 +464,7 @@ public class CommonAccuracyAssumptionBuilder implements
 	 * @return A fragment containing the (possibly nested) quantified
 	 *         expression.
 	 */
+	@SuppressWarnings("unused")
 	private Expression createAssumptionExpression(CIVLSource source, int index,
 			Expression expression) {
 		Expression result;
@@ -536,9 +547,19 @@ public class CommonAccuracyAssumptionBuilder implements
 
 			rhs = factory.binaryExpression(source, BINARY_OPERATOR.TIMES,
 					hMultiple, bigOh);
-			result = result.combineWith(factory.assumeFragment(source, factory
-					.location(source, scope), factory.binaryExpression(source,
-					BINARY_OPERATOR.EQUAL, lhs, rhs)));
+
+			CallOrSpawnStatement assumeCall = factory.callOrSpawnStatement(
+					source, factory.location(source, scope), true, null, Arrays
+							.asList((Expression) factory.binaryExpression(
+									source, BINARY_OPERATOR.EQUAL, lhs, rhs)),
+					null);
+
+			assumeCall.setFunction(factory.functionIdentifierExpression(source,
+					factory.systemFunction(source,
+							factory.identifier(source, "$assume"),
+							new LinkedList<Variable>(), typeFactory.voidType(),
+							expression.expressionScope(), "civlc")));
+			result.addNewStatement(assumeCall);
 		}
 		return result;
 	}

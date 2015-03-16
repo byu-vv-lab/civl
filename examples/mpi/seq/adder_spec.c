@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /* FEVS: A Functional Equivalence Verification Suite for High-Performance
  * Scientific Computing
  *
@@ -30,7 +33,7 @@
 int main(int argc, char *argv[]) {
   double result = 0.0;
   int n = atoi(argv[1]);
-  #pragma CIVL $assume 0 < n && n <= NB;
+  #pragma CIVL $assume(0 < n && n <= NB);
   int i;
   double a[n];
   FILE *fp = fopen("data","r");

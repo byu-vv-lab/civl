@@ -11,7 +11,7 @@
 $input int THREADS_PER_BLOCK = 4; // thread number per block: must be a power of 2, due to the while loop at the end of gpuThread();
 $input int N_BOUND = 8;
 $input int N;
-$assume 0 < N && N <= N_BOUND;
+$assume(0 < N && N <= N_BOUND);
 int const threadsPerBlock = THREADS_PER_BLOCK;
 int const blocksPerGrid =
             imin(32, (N+threadsPerBlock-1) / threadsPerBlock );     
@@ -95,7 +95,7 @@ int main( void ) {
   }
   #define sum_squares(x)  (x*(x+1)*(2*x+1)/6)
   // check result
-  $assert(c == 2 * sum_squares( (double)(N - 1) ));
+  $assert((c == 2 * sum_squares( (double)(N - 1) )));
   $free(a);
   $free(b);
   $free(partial_c);

@@ -22,26 +22,26 @@
 
 $input long NXB = 5;               // nx upper bound
 $input long nx;                    // global number of columns in matrix
-$assume 1 <= nx && nx <= NXB;
+$assume(1 <= nx && nx <= NXB);
 $input long NYB = 5;               // ny upper bound
 $input long ny;                    // global number of rows of matrix
-$assume 1 <= ny && ny <= NYB;
+$assume(1 <= ny && ny <= NYB);
 $input double u_init[ny+2][nx+2];  // initial value of temperatures, including boundaries
 $input double k;                   // constant coefficient  
-$assume k > 0.0 && k < 0.5;
+$assume(k > 0.0 && k < 0.5);
 $input int NSTEPSB = 3;            // upper bound for nsteps
 $input int nsteps;                 // number of steps
-$assume 1<=nsteps && nsteps<=NSTEPSB;
+$assume(1<=nsteps && nsteps<=NSTEPSB);
 $input int wstep = 1;              // write frame every this many time steps
 double oracle[nsteps][ny+2][nx+2]; // solution computed sequentially, done by proc 0 only
 $input int NPROCSXB = 2;               // upper bound for NPROCSX
 $input int NPROCSX;            // number of procs in x direction
-$assume NPROCSX >= 1 && NPROCSX <= NPROCSXB;
+$assume(NPROCSX >= 1 && NPROCSX <= NPROCSXB);
 $input int NPROCSYB = 2;               // upper bound for NPROCSY
 $input int NPROCSY;            // number of procs in y direction
-$assume NPROCSY >= 1 && NPROCSY <= NPROCSYB;
+$assume(NPROCSY >= 1 && NPROCSY <= NPROCSYB);
 $input int _NPROCS = NPROCSX * NPROCSY;
-$assume _NPROCS == NPROCSX * NPROCSY;
+$assume(_NPROCS == NPROCSX * NPROCSY);
 #else
 long nx, ny;
 int nsteps, wstep;
@@ -295,10 +295,10 @@ void printData(int time, int firstCol, int nxl, int currRow, double * buf) {
   for (int i=0; i<nxl; i++) {
     printf("%6.2f", *(buf + i));
 #ifdef _CIVL
-  $assert(*(buf + i) == oracle[time][currRow + 1][firstCol + i + 1]) : \
+  $assert((*(buf + i) == oracle[time][currRow + 1][firstCol + i + 1]), \
     "Error: disagreement at time %d position [%d][%d]: saw %lf, expected %lf", \
       time, currRow, firstCol + i, 
-      *(buf + i), oracle[time][currRow + 1][firstCol + i + 1];
+      *(buf + i), oracle[time][currRow + 1][firstCol + i + 1]);
 #endif
   }
 }

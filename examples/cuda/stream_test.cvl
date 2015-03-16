@@ -4,7 +4,7 @@
 
 $input int N;
 $input int B;
-$assume(0 <= N && N <= B);
+$assume((0 <= N && N <= B));
 
 int sum = 0;
 
@@ -48,7 +48,7 @@ int main ( void ) {
     }
     cudaStreamSynchronize(0);
     printf("sum = %d, expected = %d\n", sum, expected);
-    $assert(sum == expected);
+    $assert((sum == expected));
     cudaStreamDestroy(s);
     _cudaFinalize();
     return 0;

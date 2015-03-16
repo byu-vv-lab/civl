@@ -18,8 +18,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssertNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AssumeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
@@ -241,14 +239,16 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 *         variable.
 	 * @throws SyntaxException
 	 */
-	private AssumeNode boundAssumption(String lowerBound, String variable,
-			String upperBound) throws SyntaxException {
+	private ExpressionStatementNode boundAssumption(String lowerBound,
+			String variable, String upperBound) throws SyntaxException {
 		ExpressionNode variableExpression = this.identifierExpression(variable);
 		ExpressionNode upperBoundExpression = this
 				.identifierExpression(upperBound);
 		ExpressionNode lowerBoundExpression = this
 				.identifierExpression(lowerBound);
 		ExpressionNode lowerPart, upperPart;
+		Source source = this.newSource("assumption on the bound of variable "
+				+ variable, CParser.ASSUME);
 
 		lowerPart = nodeFactory.newOperatorNode(this.newSource(
 				"lower bound of variable " + variable, CParser.EXPR),
@@ -259,11 +259,12 @@ public class MPI2CIVLWorker extends BaseWorker {
 				"upper bound of variable " + variable, CParser.EXPR),
 				Operator.LTE, Arrays.asList(variableExpression,
 						upperBoundExpression));
-		return nodeFactory.newAssumeNode(this.newSource(
-				"assumption on the bound of variable " + variable,
-				CParser.ASSUME), nodeFactory.newOperatorNode(
-				this.newSource("logical and ", CParser.EXPR), Operator.LAND,
-				Arrays.asList(lowerPart, upperPart)));
+		return nodeFactory.newExpressionStatementNode(this.functionCall(source,
+				ASSUME, Arrays.asList((ExpressionNode) nodeFactory
+						.newOperatorNode(
+								this.newSource("logical and ", CParser.EXPR),
+								Operator.LAND,
+								Arrays.asList(lowerPart, upperPart)))));
 	}
 
 	/**
@@ -578,9 +579,12 @@ public class MPI2CIVLWorker extends BaseWorker {
 			} else if (sourceFile.equals("stdio.cvl")) {
 				// keep variable declaration nodes from stdio.cvl, i.e.,
 				// stdout, stdin, stderr, etc.
-				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION)
-					items.add((BlockItemNode) child);
-				else
+				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
+					VariableDeclarationNode varDecl = (VariableDeclarationNode) child;
+
+					varDecl.setExternStorage(false);
+					items.add(varDecl);
+				} else
 					includedNodes.add(child);
 			} else if (sourceFile.equals("mpi.h")) {
 				if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
@@ -777,7 +781,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 *         already contains NPROCS.
 	 * @throws SyntaxException
 	 */
-	private AssumeNode nprocsAssumption() throws SyntaxException {
+	private ExpressionStatementNode nprocsAssumption() throws SyntaxException {
 		// if (this.inputVariableNames.contains(NPROCS))
 		// return null;
 		// if (this.inputVariableNames.contains(NPROCS_LOWER_BOUND))
@@ -906,7 +910,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 		List<BlockItemNode> includedNodes = new ArrayList<>();
 		List<VariableDeclarationNode> mainParameters = new ArrayList<>();
 		int count;
-		AssumeNode nprocsAssumption = null;
+		StatementNode nprocsAssumption = null;
 		Triple<FunctionDefinitionNode, List<BlockItemNode>, List<VariableDeclarationNode>> result;
 		VariableDeclarationNode nprocsVar = this.getVariabledeclaration(root,
 				NPROCS);
@@ -1034,7 +1038,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * 
 	 * @return
 	 */
-	private AssertNode mpiStatusDePruneAssertion() {
+	private ExpressionStatementNode mpiStatusDePruneAssertion() {
 		List<ExpressionNode> assertionNodesList = new LinkedList<>();
 		Source assertSrc = newSource("_my_status initial value assertion",
 				CParser.ASSERT);
@@ -1047,8 +1051,9 @@ public class MPI2CIVLWorker extends BaseWorker {
 				.newEnumerationConstantNode(nodeFactory.newIdentifierNode(
 						newSource("__UNINIT", CParser.ENUMERATION_CONSTANT),
 						"__UNINIT")));
-		return nodeFactory.newAssertNode(assertSrc,
-				nodeFactory.newOperatorNode(assertSrc, Operator.EQUALS,
-						assertionNodesList), null);
+		return nodeFactory.newExpressionStatementNode(this.functionCall(
+				assertSrc, ASSERT, Arrays.asList((ExpressionNode) nodeFactory
+						.newOperatorNode(assertSrc, Operator.EQUALS,
+								assertionNodesList))));
 	}
 }

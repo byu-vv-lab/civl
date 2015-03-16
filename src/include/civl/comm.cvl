@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 /* This file completes the definitions of some types and functions
  * for communication, which are declared in comm-common.cvh.
  */
@@ -79,8 +80,7 @@ int $message_size($message message) {
  * size exceeds specified size */ 
 void $message_unpack($message message, void *buf, int size) {
   $bundle_unpack(message.data, buf);
-  $assert message.size <= size :
-    "Message of size %d exceeds the specified size %d.", message.size, size;
+  $assert(message.size <= size, "Message of size %d exceeds the specified size %d.", message.size, size);
 }
 
 /* Returns the place of the local communicator.  This is the same as the

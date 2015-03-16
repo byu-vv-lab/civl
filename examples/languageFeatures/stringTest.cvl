@@ -20,12 +20,12 @@ int main(){
   memcpy(memstr, strin, (sizeof(char) * 4));
 
   ret = strcmp(cpystr, strin);
-  $assert(ret == 0);
+  $assert((ret == 0));
   ret = strcmp(memstr, strin);
-  $assert(ret == 0);
+  $assert((ret == 0));
   // Following statements are waiting for int2char bug fixing
   //  ret = strcmp("add", strin);
-  //  $assert(ret == 0);
+  //  $assert((ret == 0));
   $free(strin);
   $free(cpystr);
   $free(memstr);

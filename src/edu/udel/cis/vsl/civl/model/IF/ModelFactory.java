@@ -641,33 +641,33 @@ public interface ModelFactory {
 	AssignStatement assignStatement(CIVLSource civlSource, Location source,
 			LHSExpression lhs, Expression rhs, boolean isInitialization);
 
-	/**
-	 * Create a one-statement fragment that contains the assume statement.
-	 * 
-	 * @param civlSource
-	 *            The CIVL source of the assume statement
-	 * @param source
-	 *            The source location for this statement.
-	 * @param expression
-	 *            The expression being added to the path condition.
-	 * @return A new fragment containing the assume statement.
-	 */
-	Fragment assumeFragment(CIVLSource civlSource, Location source,
-			Expression expression);
-
-	/**
-	 * Create a one-statement fragment that contains the assert statement.
-	 * 
-	 * @param civlSource
-	 *            The CIVL source of the assume statement
-	 * @param source
-	 *            The source location for this statement.
-	 * @param condition
-	 *            The expression being added to the path condition.
-	 * @return A new fragment containing the assert statement.
-	 */
-	Fragment assertFragment(CIVLSource civlSource, Location source,
-			Expression condition, Expression[] explanation);
+	// /**
+	// * Create a one-statement fragment that contains the assume statement.
+	// *
+	// * @param civlSource
+	// * The CIVL source of the assume statement
+	// * @param source
+	// * The source location for this statement.
+	// * @param expression
+	// * The expression being added to the path condition.
+	// * @return A new fragment containing the assume statement.
+	// */
+	// Fragment assumeFragment(CIVLSource civlSource, Location source,
+	// Expression expression);
+	//
+	// /**
+	// * Create a one-statement fragment that contains the assert statement.
+	// *
+	// * @param civlSource
+	// * The CIVL source of the assume statement
+	// * @param source
+	// * The source location for this statement.
+	// * @param condition
+	// * The expression being added to the path condition.
+	// * @return A new fragment containing the assert statement.
+	// */
+	// Fragment assertFragment(CIVLSource civlSource, Location source,
+	// Expression condition, Expression[] explanation);
 
 	/**
 	 * Generate an atomic fragment based on a certain fragment, by adding one

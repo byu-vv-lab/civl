@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 
 /**********************************************************************
  C-DAC Tech Workshop : hyPACK-2013
@@ -85,7 +88,7 @@ void * MyPartOfCalc(int Id)
         pthread_mutex_lock(&mutex_Row);
         {
 	    #ifdef _CIVL
-	    $assume currentRow < rowlimit;
+	    $assume(currentRow < rowlimit);
 	    #endif
             if (currentRow >= rowlimit)
             {
@@ -147,7 +150,7 @@ int main(int argc, char **argv)
     
     /* Validity checking for minimum number of processors */
     #ifdef _CIVL
-    $assume Numprocs >= 2;
+    $assume(Numprocs >= 2);
     #endif
     if (Numprocs < 2)
     {
@@ -171,8 +174,8 @@ int main(int argc, char **argv)
     fscanf(fp, "%d", &NoofCols);
 
     #ifdef _CIVL
-    $assume NoofRows <= NUM_ROWS_BOUND;
-    $assume NoofCols <= NUM_COLS_BOUND;
+    $assume(NoofRows <= NUM_ROWS_BOUND);
+    $assume(NoofCols <= NUM_COLS_BOUND);
     #endif
     
     printf("\n Rows: %d  Col:%d.", NoofRows, NoofCols);
@@ -184,7 +187,7 @@ int main(int argc, char **argv)
     
     /* Validity checking for negative sizes of Matrix */
     #ifdef _CIVL
-    $assume NoofRows >= 1 && NoofCols >= 1;
+    $assume(NoofRows >= 1 && NoofCols >= 1);
     #endif
     if (NoofRows < 1 || NoofCols < 1)
     {
@@ -194,7 +197,7 @@ int main(int argc, char **argv)
     }
     /* Validity checking for minimum number of Rows of Matrix */
     #ifdef _CIVL
-    $assume NoofRows >= Numprocs;
+    $assume(NoofRows >= Numprocs);
     #endif
     if (NoofRows < Numprocs)
     {

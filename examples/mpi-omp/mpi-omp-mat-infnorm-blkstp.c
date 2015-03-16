@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /*************************************************************************
               C-DAC Tech Workshop : HeGaPa-2012
                      July 16-20,2012
@@ -56,8 +59,8 @@ int main(int argc, char **argv) // "int" inserted manually
       fscanf(fp, "%d %d\n", &NoofRows, &NoofCols);
 
       #ifdef _CIVL
-      $assume NoofRows <= NUM_ROWS_BOUND;
-      $assume NoofRows <= NoofCols;
+      $assume(NoofRows <= NUM_ROWS_BOUND);
+      $assume(NoofRows <= NoofCols);
       #endif
 
       /* .......Allocate Memory For Matrix ..... */
@@ -98,7 +101,7 @@ int main(int argc, char **argv) // "int" inserted manually
   MPI_Bcast(&NoofRows, 1, MPI_INT, Root, MPI_COMM_WORLD);
 
   #ifdef _CIVL
-  $assume NoofRows >= Numprocs;
+  $assume(NoofRows >= Numprocs);
   #endif
   if (NoofRows < Numprocs) {
     MPI_Finalize();
@@ -107,7 +110,7 @@ int main(int argc, char **argv) // "int" inserted manually
     exit(0);
   }
   #ifdef _CIVL
-  $assume NoofRows % Numprocs == 0;
+  $assume(NoofRows % Numprocs == 0);
   #endif
   if (NoofRows % Numprocs != 0) {
     MPI_Finalize();

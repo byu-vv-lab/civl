@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /*****************************************************************************
 * FILE: bug3.c
 * DESCRIPTION:
@@ -16,7 +19,7 @@ void *PrintHello(void *threadid)
    long taskid = *((long*)threadid);
    //sleep(1);
    printf("Hello from thread %ld\n", taskid);
-   #pragma CIVL $assert(taskid != NUM_THREADS);
+   #pragma CIVL $assert((taskid != NUM_THREADS));
    pthread_exit(NULL);
 }
 

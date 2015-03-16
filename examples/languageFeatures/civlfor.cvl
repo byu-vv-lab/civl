@@ -12,5 +12,5 @@ void main(){
     printf("i, j, k: %d, %d, %d\n", i, j, k);
     sum += 1;
   }
-  $assert(sum == 45);
+  $assert((sum == 45));
 }

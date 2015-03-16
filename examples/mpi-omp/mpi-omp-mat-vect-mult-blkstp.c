@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /*********************************************************************
               C-DAC Tech Workshop : HeGaPa-2012
                      July 16-20,2012
@@ -110,7 +113,7 @@ int main(int argc, char **argv)
   MPI_Bcast(&NoofRows, 1, MPI_INT, Root, MPI_COMM_WORLD);
 
   #ifdef _CIVL
-  $assume NoofRows >= Numprocs;
+  $assume(NoofRows >= Numprocs);
   #endif
   if (NoofRows < Numprocs) {
     if (MyRank == 0)
@@ -119,7 +122,7 @@ int main(int argc, char **argv)
     exit(0);
   }
     #ifdef _CIVL
-  $assume NoofRows % Numprocs == 0;
+  $assume(NoofRows % Numprocs == 0);
   #endif
   if (NoofRows % Numprocs != 0) {
     if (MyRank == 0)

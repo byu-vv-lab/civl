@@ -7,7 +7,7 @@
 
 $input int B = 4; // upper bound on number of threads
 $input int N;     // number of threads
-$assume 1<=N && N<=B;
+$assume(1<=N && N<=B);
 
 struct _CIVL_Barrier {
   int numProcs;
@@ -51,11 +51,11 @@ void main() {
   
   void run(int tid) {
     while ($true) {
-      $assert(counter == 0);
+      $assert((counter == 0));
       CIVL_barrier(&b, tid);
       counter++;
       CIVL_barrier(&b, tid);
-      $assert(counter == N);
+      $assert((counter == N));
       CIVL_barrier(&b, tid);
       counter--;
       CIVL_barrier(&b, tid);
@@ -66,7 +66,5 @@ void main() {
     CIVL_Barrier_init(N, &b, barrier_array);
     for (int i=0; i<N; i++) threads[i] = $spawn run(i);
   }
-  $atomic {
-    for (int i=0; i<N; i++) $wait(threads[i]);
-  }
+  $waitall(threads, N);
 }

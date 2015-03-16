@@ -8,8 +8,8 @@ void main(){
   col = burgundy;
   
   cp = &col;
-  $assert(*cp == 1);
+  $assert((*cp == 1));
   if (*cp != claret)
     *cp = claret;
-  $assert(col == 20);
+  $assert((col == 20));
 }

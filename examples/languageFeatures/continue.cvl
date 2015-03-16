@@ -10,16 +10,16 @@ void main() {
         if (k < 4) {
           continue;
         }
-        $assert(k >= 4);
+        $assert((k >= 4));
       }
       if (j > 3) {
        continue;
       }
-      $assert(j <= 3);
+      $assert((j <= 3));
     }
     if (i <= 2) {
       continue;
     }
-    $assert(i > 2);
+    $assert((i > 2));
   }
 }

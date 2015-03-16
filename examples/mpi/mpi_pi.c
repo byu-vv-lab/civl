@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /* FILENAME: mpi_pi.c */
 /* Calculating value of pi using a "dartboard" algorithm. In CIVL
  * mode, the program will first let process of rank 0 do a sequential
@@ -20,10 +23,10 @@
 #ifdef _CIVL
 const int DARTSB = 2;         // upper bound of DARTS
 $input int DARTS;             // number of darts will be throwed
-$assume 0 < DARTS && DARTS <= DARTSB;
+$assume(0 < DARTS && DARTS <= DARTSB);
 const int ROUNDSB = 2;        // upper bound of ROUNDS
 $input int ROUNDS;            // number of rounds of throwing darts
-$assume 0 < ROUNDS && ROUNDS <= ROUNDSB;
+$assume(0 < ROUNDS && ROUNDS <= ROUNDSB);
 $input int _NPROCS = 2;
 $input int N;                 // length of random data array
 $input double RANDOM[N];      // random data array
@@ -96,7 +99,7 @@ void initialization() {
 
   elaborate(DARTS);
   elaborate(ROUNDS);
-  $assume N == DARTSB * _NPROCS * ROUNDSB * 2;
+  $assume(N == DARTSB * _NPROCS * ROUNDSB * 2);
   if(taskid == 0) {
     for(curr_round=0; curr_round < ROUNDS; curr_round++) {
       for(int j=0; j < tasks; j++)
@@ -156,8 +159,8 @@ int main(int argc, char * argv[]) {
       printf("   After %8d throws, average value of pi = %10.8f\n",
       (DARTS * (curr_round + 1)),avepi);
 #ifdef _CIVL
-    $assert(avepi == oracle[curr_round]) : "avepi is %f but oracle[%d]"
-        " is %f\n", avepi, curr_round, oracle[curr_round];
+    $assert((avepi == oracle[curr_round]), "avepi is %f but oracle[%d]"
+        " is %f\n", avepi, curr_round, oracle[curr_round]);
 #endif
     }
   }

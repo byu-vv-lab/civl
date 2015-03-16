@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 #ifdef __PTHREAD_FUNCTIONS__
 #else
 #define __PTHREAD_FUNCTIONS__
@@ -765,7 +766,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 int pthread_join(pthread_t thread, void **value_ptr){
   if(&thread.attr != NULL){
     if(thread.attr.detachstate == PTHREAD_CREATE_DETACHED){
-      $assert $false : "Thread is designated as unjoinable";
+      $assert($false, "Thread is designated as unjoinable");
       return 1;
     }
   }
@@ -853,11 +854,11 @@ int pthread_mutex_lock(pthread_mutex_t *mutex){
       return 0;
     }
     $when((mutex->attr.type == PTHREAD_MUTEX_NORMAL || mutex->attr.type == PTHREAD_MUTEX_ERRORCHECK)  && mutex->lock == 1  && _pool.threads[mutex->ownerid]->thr == $self){
-      $assert $false : "Deadlock: attempted to relock lock";
+      $assert($false, "Deadlock: attempted to relock lock");
       return 0;
     }
     $when(mutex->lock == 1 && _pool.threads[mutex->ownerid]->thr != $self && _pool.threads[mutex->ownerid]->terminated == true && mutex->attr.robust != PTHREAD_MUTEX_ROBUST){
-      $assert $false : "Deadlock: owner terminated without robust mutex";
+      $assert($false, "Deadlock: owner terminated without robust mutex");
       return 0;
     }
     $when(!(mutex->attr.type == PTHREAD_MUTEX_NORMAL || mutex->attr.type == PTHREAD_MUTEX_ERRORCHECK) && mutex->lock == 1 && _pool.threads[mutex->ownerid]->thr == $self){
@@ -904,7 +905,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex){
             mutex->count++;
           }
           else {
-            $assert($false);
+            $assert(($false));
             return 0;
           }
         }
@@ -937,7 +938,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex){
     if (mutex->attr.type == PTHREAD_MUTEX_NORMAL || mutex->attr.type == PTHREAD_MUTEX_ERRORCHECK) {
       // Attempts unlock, if already unlocked, returns error
       if (mutex->lock == 0) {
-        $assert $false : "Attempting to unlock unlocked lock\n";
+        $assert($false, "Attempting to unlock unlocked lock\n");
         return 0;
       }
       else {
@@ -955,7 +956,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex){
         }
       }
       else {
-        $assert($false);
+        $assert(($false));
         return 0;
       }
     }
@@ -978,7 +979,7 @@ int pthread_mutex_consistent(pthread_mutex_t *mutex){
     mutex->lock = 0;
     return 0;
   }
-  $assert($false);
+  $assert(($false));
   return EINVAL;
 }
 
@@ -997,7 +998,7 @@ int pthread_mutex_consistent(pthread_mutex_t *mutex){
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex){
   if(_pool.threads[mutex->ownerid]->thr != $self){
     printf("Mutex not owned by thread");
-    $assert($false);
+    $assert(($false));
     return 0;
   }
   

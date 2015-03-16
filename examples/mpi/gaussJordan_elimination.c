@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /* FILE: gaussJordan_elimination.c A gaussian-jordan elimination
  * solver that converts a given matrix to a reduce row echelon form
  * matrix
@@ -18,10 +21,10 @@ $input int _NPROCS_UPPER_BOUND=3;
 $input int _NPROCS_LOWER_BOUND=1;   
 $input int ROWB = 4;                      // upper bound of numRow
 $input int numRow;                        // number of rows in the matrix
-$assume 0 < numRow && numRow <= ROWB;
+$assume(0 < numRow && numRow <= ROWB);
 $input int COLB = 2;                      // upper bound of numCol
 $input int numCol;                        // number of columns in the matrix
-$assume 0 < numCol && numCol <= COLB;
+$assume(0 < numCol && numCol <= COLB);
 $input long double data[numRow][numCol];  // input matrix
 long double oracle[numRow][numCol];       // results of sequential run
 #else
@@ -88,8 +91,7 @@ void printSystem(long double * a) {
 	printRow(recvbuf);
 #ifdef _CIVL
 	for(int j=0; j < numCol; j++) {
-	$assert(recvbuf[j] == oracle[i][j]) : 
-	  "Get %Lf while expecting %Lf at position [%d][%d]\n", recvbuf[j], oracle[i][j], i, j;
+	$assert((recvbuf[j] == oracle[i][j]), "Get %Lf while expecting %Lf at position [%d][%d]\n", recvbuf[j], oracle[i][j], i, j);
 	}
 #endif
       }
@@ -97,9 +99,8 @@ void printSystem(long double * a) {
 	printRow(&a[(idx[i]-first)*numCol]);
 #ifdef _CIVL
 	for(int j=0; j < numCol; j++) {
-	$assert(a[(idx[i]-first)*numCol + j] == oracle[i][j]):
-	  "Get %Lf while expecting %Lf at position [%d][%d]\n", 
-	    a[(idx[i]-first)*numCol + j], oracle[i][j], i, j;
+	$assert((a[(idx[i]-first)*numCol + j] == oracle[i][j]), "Get %Lf while expecting %Lf at position [%d][%d]\n", 
+	    a[(idx[i]-first)*numCol + j], oracle[i][j], i, j);
 	}
 #endif
       }

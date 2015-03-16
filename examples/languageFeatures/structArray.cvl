@@ -18,6 +18,6 @@ void main() {
   bar[0].a = baz;
   bar[1].a = &baz[1];
   
-  $assert(bar[0].a[0] == 0);
-  $assert(bar[1].a[0] == 1);
+  $assert((bar[0].a[0] == 0));
+  $assert((bar[1].a[0] == 1));
 }

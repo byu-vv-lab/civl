@@ -2,7 +2,7 @@
 #include<stdio.h>
 
 $input int N;
-$assume N>2;
+$assume(N>2);
 $abstract int colorOf(double x);
 
 void main() {

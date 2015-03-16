@@ -1,8 +1,9 @@
+#include <civlc.cvh>
 #include <math.h>
 #include <assert.h>
 
 $input double x;
-$assume x >= 0.0;
+$assume(x >= 0.0);
 
 int main() {
   double y = sqrt(x) + 1;

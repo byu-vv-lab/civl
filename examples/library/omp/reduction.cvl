@@ -21,7 +21,7 @@ void main(){
     $omp_apply_assoc(shared, _SUM, &_sum);
     $omp_barrier_and_flush(team);
     $omp_read(shared, &private, &sum_local);
-    $assert private == 6;
+    $assert(private == 6);
     $omp_shared_destroy(shared);
     $omp_team_destroy(team);
   }
@@ -29,7 +29,7 @@ void main(){
   $parfor (int i: ($domain){ 0 .. 2 }) {
     thread(i);
   }
-  $assert sum == 6;
+  $assert(sum == 6);
   $omp_gshared_destroy(gshared);
   $omp_gteam_destroy(gteam);
 }

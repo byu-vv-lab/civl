@@ -39,7 +39,7 @@ $proc proc_create(void (*f)(int), int x){
 
 void foo(int id) {
   printf("I'm spawned with id %d.\n", id);
-  $assert(procs[id] == $self);
+  $assert((procs[id] == $self));
   scopes[id] = $here;
   if($scope_defined(scopes[id]))
     printf("I own scope with id %d.\n", scopes[id]);
@@ -67,8 +67,8 @@ void main(){
   for(int i = 0; i < NPROCS; i++){
     _Bool defined = $proc_defined(procs[i]);
     
-    $assert(!defined);
+    $assert((!defined));
     defined = $scope_defined(scopes[i]);
-    $assert(!defined);
+    $assert((!defined));
   }
 }

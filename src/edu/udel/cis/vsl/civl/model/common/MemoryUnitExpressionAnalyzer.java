@@ -32,13 +32,11 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.reference.SelfReference;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssertStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.AssumeStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
@@ -232,18 +230,18 @@ public class MemoryUnitExpressionAnalyzer {
 		computeImpactMemoryUnitsOfExpression(writableVars, statement.guard(),
 				result);
 		switch (statementKind) {
-		case ASSERT: {
-			AssertStatement assertStatement = (AssertStatement) statement;
-			Expression[] explanation = assertStatement.getExplanation();
-
-			computeImpactMemoryUnitsOfExpression(writableVars,
-					assertStatement.getCondition(), result);
-			if (explanation != null)
-				for (Expression arg : explanation)
-					computeImpactMemoryUnitsOfExpression(writableVars, arg,
-							result);
-			break;
-		}
+		// case ASSERT: {
+		// AssertStatement assertStatement = (AssertStatement) statement;
+		// Expression[] explanation = assertStatement.getExplanation();
+		//
+		// computeImpactMemoryUnitsOfExpression(writableVars,
+		// assertStatement.getCondition(), result);
+		// if (explanation != null)
+		// for (Expression arg : explanation)
+		// computeImpactMemoryUnitsOfExpression(writableVars, arg,
+		// result);
+		// break;
+		// }
 		case ASSIGN: {
 			AssignStatement assignStatement = (AssignStatement) statement;
 
@@ -254,10 +252,10 @@ public class MemoryUnitExpressionAnalyzer {
 					assignStatement.rhs(), result);
 			break;
 		}
-		case ASSUME:
-			computeImpactMemoryUnitsOfExpression(writableVars,
-					((AssumeStatement) statement).getExpression(), result);
-			break;
+		// case ASSUME:
+		// computeImpactMemoryUnitsOfExpression(writableVars,
+		// ((AssumeStatement) statement).getExpression(), result);
+		// break;
 		case CALL_OR_SPAWN: {
 			CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 

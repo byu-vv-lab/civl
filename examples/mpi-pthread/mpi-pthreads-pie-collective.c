@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /**********************************************************************
 			ProMCore 2008 
 		    February 05 - 09, 2008
@@ -90,14 +93,14 @@ int main(int argc, char *argv[])
 		printf("\nEnter the number of intervals : ");
 		scanf("%d", &NoInterval);
 	       	#ifdef _CIVL
-		$assume NoInterval <= NUM_INTERVAL_BOUND;
+		$assume(NoInterval <= NUM_INTERVAL_BOUND);
                 #endif
 	}
 
 	/* ....Broadcast the number of subintervals to each processor.... */
 	MPI_Bcast(&NoInterval, 1, MPI_INT, 0, MPI_COMM_WORLD);
         #ifdef _CIVL
-	$assume NoInterval > 0;
+	$assume(NoInterval > 0);
 	#endif
 	if (NoInterval <= 0) {
 		if (MyRank == Root)

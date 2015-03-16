@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 /* This header file contains useful helper functions for manipulating
  * the CIVL versions of various Cuda objects.
  */
@@ -159,7 +160,7 @@ _cudaStreamNode *_streamNodeCreate() {
 /* cleanup and free a given _cudaStreamNode
  */
 void _streamNodeDestroy(_cudaStreamNode *node) {
-  $assert(!node->stream->usable);
+  $assert((!node->stream->usable));
   _streamDestroy(node->stream);
   //printf("freeing cuda stream node\n");
   $free(node);
@@ -261,7 +262,7 @@ void _enqueueKernel(cudaStream_t stream, void (*k)(_kernelInstance*, cudaEvent_t
     e->instances[1] = _context.nullStream->mostRecent->instance;
     s = stream;
   }
-  $assert(s->usable);
+  $assert((s->usable));
   newNode->instance = _kernelInstanceCreate();
   newNode->next = s->mostRecent;
   s->mostRecent = newNode;

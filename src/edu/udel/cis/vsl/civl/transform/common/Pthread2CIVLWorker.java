@@ -456,13 +456,15 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	}
 
 	private StatementNode assumeNode(ExpressionNode expression) {
-		return nodeFactory.newAssumeNode(
-				this.newSource("assumption", CParser.ASSUME), expression);
+		return nodeFactory.newExpressionStatementNode(this.functionCall(
+				this.newSource("assumption", CParser.ASSUME), ASSUME,
+				Arrays.asList(expression)));
 	}
 
 	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
-		return nodeFactory.newAssertNode(
-				this.newSource("assertion", CParser.ASSERT), expression, null);
+		return nodeFactory.newExpressionStatementNode(this.functionCall(
+				this.newSource("assertion", CParser.ASSERT), ASSERT,
+				Arrays.asList(expression)));
 		// FunctionCallNode functionCall =
 		// nodeFactory.newFunctionCallNode(source,
 		// this.identifierExpression(mySource, ASSERT),

@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 
 #include "openCLshared.cvl"
 #include <stdio.h>
@@ -90,7 +91,7 @@ void workfunc(size_t local, size_t global, cl_kernel param)
 
 int clEnqueueNDRangeKernel(cl_command_queue commands, cl_kernel kernel, int global, int local)
 {
-  $assert(global % local == 0);
+  $assert((global % local == 0));
   cl_kernel param[global/local];
   $proc procs[global/local];
   for(int i = 0; i < global/local; i++)

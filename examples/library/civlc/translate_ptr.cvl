@@ -29,13 +29,13 @@ void main(){
   double (*p1)[] = &a[1][2]; // p has type pointer-to-array-of-double
   
   q = (int*)$translate_ptr(p1, &b);
-  $assert(q == &b[1][2]);
+  $assert((q == &b[1][2]));
   list = (node*)$malloc($here, sizeof(node)*5);
   q = & (list+2)->y;
   p = (double*)$translate_ptr(q, &t);
-  $assert(p == &t.b);
+  $assert((p == &t.b));
   p = & t.a;
   q = (int*)$translate_ptr(p, list);
-  $assert(q == &list->x);
+  $assert((q == &list->x));
   $free(list);
 }

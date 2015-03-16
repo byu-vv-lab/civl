@@ -64,7 +64,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 	private Scope lexicalScope;
 
 	/**
-	 * The dyscope ID of the parent of this dynamic scope in the dynamic scope
+	 * The dyscope ID of the parent of this dyscope in the dynamic scope
 	 * tree, or -1 if this is the root (and therefore has no parent).
 	 */
 	private int parent;

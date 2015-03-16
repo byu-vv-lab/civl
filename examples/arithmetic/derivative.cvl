@@ -23,8 +23,8 @@ void differentiate(double h, int n, double y[], double result[]){
 void main() {
 	int i;
 
-    $assume h > 0;
-    $assume num_elements > 2 && num_elements <= 5;
+    $assume(h > 0);
+    $assume(num_elements > 2 && num_elements <= 5);
 	differentiate(h, num_elements, initial, working);
 	for(i=0; i < num_elements; i++) {
 		final[i] = working[i];

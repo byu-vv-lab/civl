@@ -67,9 +67,9 @@ double omp_get_wtime() {
   double result = OMP_time(OMP_time_count);
   
   if (OMP_time_count > 0) {
-    $assume result > OMP_time(OMP_time_count-1);
+    $assume(result > OMP_time(OMP_time_count-1));
   } else {
-    $assume result > 0;
+    $assume(result > 0);
   }
   return result;
 }

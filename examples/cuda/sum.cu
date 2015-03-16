@@ -1,3 +1,6 @@
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
 /**
 * This is an example from the paper "Formal Semantics of Heterogeneous CUDA-C: 
 * A Modular Approach with Applications" by Chris Hathhorn et al. 
@@ -9,14 +12,14 @@
 #ifdef _CIVL
 $input int N;
 $input int N_B;
-$assume 1 <= N && N <= N_B;
+$assume(1 <= N && N <= N_B);
 $input int NBLOCKS;
 $input int NBLOCKS_B;
-$assume 1 <= NBLOCKS && NBLOCKS <= NBLOCKS_B;
-$assume NBLOCKS <= N;
-$assume N % NBLOCKS == 0;
-$assume N % 2 == 0;
-$assume NBLOCKS % 2 == 0;
+$assume(1 <= NBLOCKS && NBLOCKS <= NBLOCKS_B);
+$assume(NBLOCKS <= N);
+$assume(N % NBLOCKS == 0);
+$assume(N % 2 == 0);
+$assume(NBLOCKS % 2 == 0);
 #else
 #define N 8
 #define NBLOCKS 4
@@ -76,7 +79,7 @@ int main(void) {
   
   printf("OUTPUT: %u\n", *host);
 #ifdef _CIVL
-  $assert *host == seqSum;
+  $assert(*host == seqSum);
 #endif
 
   cudaFree(dev_in);

@@ -1,3 +1,4 @@
+#include <civlc.cvh>
 /*
  * Command line execution:
  *     civl verify -inputTHREADS_BOUND=10 -inputN_BOUND=40 fig4.98-threadprivate.cvl -enablePrintf=false
@@ -6,10 +7,10 @@
 #include<stdio.h>
 $input int THREADS_BOUND; // upper bound of number of threads 
 $input int NTHREADS;// number of threads
-$assume 0 < NTHREADS && NTHREADS <=THREADS_BOUND;
+$assume(0 < NTHREADS && NTHREADS <=THREADS_BOUND);
 $input int N_BOUND; // upper bound of N
 $input int N; // the value of the variable n
-$assume 0 < N && N <=N_BOUND;
+$assume(0 < N && N <=N_BOUND);
 #define OWNS(numIters, threadId, index) ((index)%NTHREADS==threadId)
 $proc threads[NTHREADS];
 
@@ -41,7 +42,7 @@ void main() {
         _sum = calculate_sum(length[_i], _pglobal);
       printf("TID %d: value of sum for i = %d is %8d (check = %8d)\n",
                _TID, _i, _sum, check[_i]);
-      $assert(_sum == check[_i]);
+      $assert((_sum == check[_i]));
       $free(_pglobal);
     }
 
