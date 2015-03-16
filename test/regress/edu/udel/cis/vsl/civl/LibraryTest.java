@@ -27,6 +27,7 @@ public class LibraryTest {
 	private final static String STDLIB = "stdlib";
 	private final static String STRING = "string";
 	private final static String TIME = "time";
+	private final static String POINTER = "pointer";
 
 	/* *************************** Helper Methods *************************** */
 
@@ -54,7 +55,7 @@ public class LibraryTest {
 	public void memset() throws ABCException {
 		assertTrue(ui.run("verify", filename(STRING, "memset.cvl")));
 	}
-	
+
 	@Test
 	public void assertH() throws ABCException {
 		assertTrue(ui.run("verify", filename("assert_test.cvl")));
@@ -198,6 +199,18 @@ public class LibraryTest {
 	public void localTime() throws ABCException {
 		assertTrue(ui.run("verify -enablePrintf=false",
 				filename(TIME, "localTime.c")));
+	}
+
+	@Test
+	public void assertEquals() throws ABCException {
+		assertTrue(ui.run("verify -enablePrintf=false",
+				filename(POINTER, "simpleAssertEquals.cvl")));
+		assertTrue(ui.run("verify -enablePrintf=false",
+				filename(POINTER, "simpleAssertEquals2.cvl")));
+		assertFalse(ui.run("verify -enablePrintf=false",
+				filename(POINTER, "simpleAssertEqualsFail.cvl")));
+		assertFalse(ui.run("verify -enablePrintf=false",
+				filename(POINTER, "simpleAssertEqualsFail2.cvl")));
 	}
 
 	@AfterClass

@@ -25,8 +25,12 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 
 public class LibpointerExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
@@ -93,6 +97,10 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			break;
 		case "$equals":
 			state = executeEquals(state, pid, process, lhs, arguments,
+					argumentValues, call.getSource());
+			break;
+		case "$assert_equals":
+			state = executeAssertEquals(state, pid, process, call, arguments,
 					argumentValues, call.getSource());
 			break;
 		case "$translate_ptr":
@@ -461,6 +469,109 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs,
 					universe.equals(first, second));
+		return state;
+	}
+
+	/**
+	 * Executing an assertion that objects pointed by two pointers are equal.
+	 * The statement will have such a form:<br>
+	 * <code>void $assert_equals(void *x, void *y, ...);</code>
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param process
+	 *            The identifier string of the process
+	 * @param arguments
+	 *            Expressions of arguments
+	 * @param argumentValues
+	 *            Symbolic expressions of arguments
+	 * @param source
+	 *            CIVL source of the statement
+	 * @return the new state after executing the statement
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeAssertEquals(State state, int pid, String process,
+			CallOrSpawnStatement call, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression firstPtr, secondPtr;
+		SymbolicExpression first, second;
+		BooleanExpression claim;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		ResultType resultType;
+		Evaluation eval;
+		boolean firstPtrDefined, secPtrDefined, firstInit, secondInit;
+
+		firstPtrDefined = secPtrDefined = true;
+		firstInit = secondInit = true;
+		firstPtr = argumentValues[0];
+		secondPtr = argumentValues[1];
+		if (firstPtr.operator() != SymbolicOperator.CONCRETE)
+			firstPtrDefined = false;
+		if (secondPtr.operator() != SymbolicOperator.CONCRETE)
+			secPtrDefined = false;
+		if (!firstPtrDefined || !secPtrDefined) {
+			String msg = new String();
+
+			if (!firstPtrDefined)
+				msg += symbolicAnalyzer.symbolicExpressionToString(
+						arguments[0].getSource(), state, firstPtr);
+			if (!secPtrDefined) {
+				msg += (!firstPtrDefined) ? ", " : "";
+				msg += symbolicAnalyzer.symbolicExpressionToString(
+						arguments[1].getSource(), state, secondPtr);
+			}
+			errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateToString(state),
+					ErrorKind.DEREFERENCE,
+					"Attempt to dereference a invalid pointer:" + msg);
+		}
+		eval = evaluator.dereference(arguments[0].getSource(), state, process,
+				argumentValues[0], false);
+		state = eval.state;
+		first = eval.value;
+		eval = evaluator.dereference(arguments[1].getSource(), state, process,
+				argumentValues[1], false);
+		state = eval.state;
+		second = eval.value;
+		if (!symbolicUtil.isInitialized(first))
+			firstInit = false;
+		if (!symbolicUtil.isInitialized(second))
+			secondInit = false;
+		if (!firstInit || !secondInit) {
+			String ptrMsg = new String();
+			String objMsg = new String();
+
+			if (!firstInit) {
+				ptrMsg += symbolicAnalyzer.symbolicExpressionToString(
+						arguments[0].getSource(), state, firstPtr);
+				objMsg += symbolicAnalyzer.symbolicExpressionToString(
+						arguments[0].getSource(), state, first);
+			}
+			if (!secondInit) {
+				String comma = (!firstInit) ? ", " : "";
+
+				ptrMsg += comma;
+				objMsg += comma;
+				ptrMsg += symbolicAnalyzer.symbolicExpressionToString(
+						arguments[1].getSource(), state, secondPtr);
+				objMsg += symbolicAnalyzer.symbolicExpressionToString(
+						arguments[1].getSource(), state, second);
+			}
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
+					"The object that " + ptrMsg
+							+ " points to is undefined, which has the value "
+							+ objMsg, symbolicAnalyzer.stateToString(state),
+					source);
+			this.errorLogger.reportError(err);
+		}
+		claim = universe.equals(first, second);
+		resultType = reasoner.valid(claim).getResultType();
+		state = this.reportAssertionFailure(state, pid, process, resultType,
+				arguments, argumentValues, source, call, claim, 2);
 		return state;
 	}
 

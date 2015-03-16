@@ -133,25 +133,8 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 		reasoner = universe.reasoner(state.getPathCondition());
 		valid = reasoner.valid(assertValue);
 		resultType = valid.getResultType();
-		if (resultType != ResultType.YES) {
-			if (arguments.length > 1) {
-				if (civlConfig.enablePrintf()) {
-					Expression[] pArguments = Arrays.copyOfRange(arguments, 1,
-							arguments.length);
-					SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
-							argumentValues, 1, argumentValues.length);
-
-					state = this.primaryExecutor.execute_printf(source, state,
-							pid, process, null, pArguments, pArgumentValues);
-				}
-			}
-			state = errorLogger.logError(source, state, process,
-					symbolicAnalyzer.stateToString(state), assertValue,
-					resultType, ErrorKind.ASSERTION_VIOLATION,
-					"Cannot prove assertion holds: " + statement.toString()
-							+ "\n  Path condition: " + state.getPathCondition()
-							+ "\n  Assertion: " + assertValue + "\n");
-		}
+		state = this.reportAssertionFailure(state, pid, process, resultType,
+				arguments, argumentValues, source, statement, assertValue, 1);
 		return state;
 	}
 
@@ -225,6 +208,63 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 		}
 	}
 
+	/**
+	 * A helper function for reporting runtime assertion failure. The helper
+	 * function is aiming to be re-used by both execution implementations of
+	 * $assert() and $assert_equal();
+	 * 
+	 * @author ziqing luo
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param process
+	 *            The string identifier of the process
+	 * @param resultType
+	 *            The {@link ResultType} of the failure assertion
+	 * @param arguments
+	 *            The expressions of the arguments
+	 * @param argumentValues
+	 *            The symbolic expressions of the arguments
+	 * @param source
+	 *            The CIVL source of the assertion statement
+	 * @param statement
+	 *            The model of the statement expression
+	 * @param assertValue
+	 *            The boolean expression of the value of the assertion claim
+	 * @param msgOffset
+	 *            the start index in arguments list of the assertion failure
+	 *            messages.
+	 * @return the new state after reporting the assertion failure
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	protected State reportAssertionFailure(State state, int pid,
+			String process, ResultType resultType, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source,
+			CallOrSpawnStatement statement, BooleanExpression assertValue,
+			int msgOffset) throws UnsatisfiablePathConditionException {
+		if (resultType != ResultType.YES) {
+			if (arguments.length > msgOffset) {
+				if (civlConfig.enablePrintf()) {
+					Expression[] pArguments = Arrays.copyOfRange(arguments,
+							msgOffset, arguments.length);
+					SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
+							argumentValues, msgOffset, argumentValues.length);
+
+					state = this.primaryExecutor.execute_printf(source, state,
+							pid, process, null, pArguments, pArgumentValues);
+				}
+			}
+			state = errorLogger.logError(source, state, process,
+					symbolicAnalyzer.stateToString(state), assertValue,
+					resultType, ErrorKind.ASSERTION_VIOLATION,
+					"Cannot prove assertion holds: " + statement.toString()
+							+ "\n  Path condition: " + state.getPathCondition()
+							+ "\n  Assertion: " + assertValue + "\n");
+		}
+		return state;
+	}
+
 	/* ************************** Private Methods ************************** */
 
 	/**
@@ -251,5 +291,4 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 
 		return new Pair<>(mallocId, mallocIndex);
 	}
-
 }
