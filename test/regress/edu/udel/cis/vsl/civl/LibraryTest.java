@@ -207,6 +207,10 @@ public class LibraryTest {
 				filename(POINTER, "simpleAssertEquals.cvl")));
 		assertTrue(ui.run("verify -enablePrintf=false",
 				filename(POINTER, "simpleAssertEquals2.cvl")));
+	}
+
+	@Test
+	public void assertEqualsFail() throws ABCException {
 		assertFalse(ui.run("verify -enablePrintf=false",
 				filename(POINTER, "simpleAssertEqualsFail.cvl")));
 		assertFalse(ui.run("verify -enablePrintf=false",
