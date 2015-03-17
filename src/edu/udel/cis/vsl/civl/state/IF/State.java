@@ -328,17 +328,11 @@ public interface State {
 	 */
 	void print(PrintStream out);
 
-	//
-	// Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer(int pid);
-	//
-	// Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer(int pid);
-
-	// MemoryUnitSet reachableMemUnitsPtrReadonly(int pid);
-	//
-	// MemoryUnitSet reachableMemUnitsNonPtrReadonly(int pid);
-	//
-	// MemoryUnitSet reachableMemUnitsPtrWritable(int pid);
-	//
-	// MemoryUnitSet reachableMemUnitsNonPtrWritable(int pid);
+	/**
+	 * Returns the number of symbolic constants appearing in the state.
+	 * 
+	 * @return the number of symbolic constants appearing in the state.
+	 */
+	// int numSymbolicConstants();
 
 }

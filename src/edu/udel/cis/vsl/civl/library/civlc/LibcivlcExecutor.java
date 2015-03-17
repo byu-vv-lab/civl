@@ -134,6 +134,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				state = primaryExecutor.assign(state, pid, process, lhs,
 						argumentValues[0]);
 			break;
+		case "$defined":
+			state = executeDefined(state, pid, process, lhs, arguments,
+					argumentValues, call.getSource(), call);
+			break;
 		case "$exit":// return immediately since no transitions needed after an
 			// exit, because the process no longer exists.
 			return executeExit(state, pid);
@@ -190,6 +194,25 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
+
+	private State executeDefined(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source,
+			CallOrSpawnStatement call)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression pointer = argumentValues[0], result = trueValue;
+		Evaluation eval = this.evaluator.dereference(arguments[0].getSource(),
+				state, process, pointer, false);
+
+		state = eval.state;
+		if (eval.value.isNull()) {
+			result = falseValue;
+		}
+		if (lhs != null)
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					result);
+		return state;
+	}
 
 	private State executeAssume(State state, int pid, String process,
 			Expression[] arguments, SymbolicExpression[] argumentValues,

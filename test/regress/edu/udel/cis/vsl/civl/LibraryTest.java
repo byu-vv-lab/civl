@@ -217,6 +217,12 @@ public class LibraryTest {
 				filename(POINTER, "simpleAssertEqualsFail2.cvl")));
 	}
 
+	@Test
+	public void defined() throws ABCException {
+		assertTrue(ui.run("verify -enablePrintf=false",
+				filename(CIVLC, "defined.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
