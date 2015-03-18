@@ -8,6 +8,7 @@
 #include <bundle.cvh>
 #include <mpi.h>
 #include <civl-mpi.cvh>
+#include <string.h>
 
 /**************************** Duplicated Part *************************************/
 /* Duplicated definition with the same struct in mpi.h.
@@ -127,5 +128,125 @@ int CMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
   }
   return 0;
 }
+
+int CMPI_Collective_recv(void *buf, int count, MPI_Datatype datatype, 
+			 int source, int tag, $comm comm, 
+			 MPI_Status * status) {
+  if(source >= 0 || source == MPI_ANY_SOURCE) {
+    $message in = $comm_dequeue(comm, source, MPI_ANY_TAG);
+    int size = count*sizeofDatatype(datatype);
+    int recvTag;
+
+    recvTag = $message_tag(in);
+    $assert (recvTag == tag , "Collective routine receives a "
+	     "message with a mismatched tag\n");
+    $message_unpack(in, buf, size);
+    if (status != MPI_STATUS_IGNORE) {
+      status->size = $message_size(in);
+      status->MPI_SOURCE = $message_source(in);
+      status->MPI_TAG = recvTag;
+      status->MPI_ERROR = 0;
+    }
+  }
+  return 0;
+}
+
+/* Broadcast helper function that uses any specified message tag */
+int CMPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root, int tag,
+	      MPI_Comm comm) {
+  if ($comm_place(comm.col) == root) {
+    int nprocs = $comm_size(comm.col);
+
+    for (int i=0; i<nprocs; i++)
+      if (i != root)
+	CMPI_Send(buf, count, datatype, i, tag, comm.col);
+  } else {
+    CMPI_Collective_recv(buf, count, datatype, root, tag, comm.col,
+	      MPI_STATUS_IGNORE);
+  }
+  return 0;
+}
+
+/* Reduction helper function that uses any specified message tag */
+int CMPI_Reduce(const void* sendbuf, void* recvbuf, int count,
+		MPI_Datatype datatype, MPI_Op op, int root, int tag,
+		MPI_Comm comm) {
+  int rank;
+
+  rank = $comm_place(comm.col);
+  if (rank != root)
+    CMPI_Send(sendbuf, count, datatype, root, tag, comm.col);
+  else {
+    int nprocs = $comm_size(comm.col);
+    int size;
+
+    size = count * sizeofDatatype(datatype);
+    for (int i = 0; i<nprocs; i++) {
+      if(i == root)
+	memcpy(recvbuf, sendbuf, size);
+      else{
+	int colTag;
+	$message in = $comm_dequeue(comm.col, i, MPI_ANY_TAG);
+
+	colTag = $message_tag(in);
+	$assert (colTag == tag , "Collective routine receives a "
+		 "message with a mismatched tag\n");
+	/* the third argument "count" indicates the number of cells needs doing the
+	   operation. */
+	$bundle_unpack_apply(in.data, recvbuf, count, op);
+	$assert (in.size <= size ,
+		 "Message of size %d exceeds the specified size %d.", in.size, size);
+      }
+    }
+  }
+  return 0;
+}
+
+/* Gathering helper function that uses any specified message tag */
+int CMPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, 
+	       void* recvbuf, int recvcount, MPI_Datatype recvtype, 
+		int root, int tag, MPI_Comm comm){
+  int rank, nprocs;
+  _Bool rootInPlace = $false;
+  MPI_Status status;
+
+  rank = $comm_place(comm.col);
+  nprocs = $comm_size(comm.col);
+  if(sendbuf == MPI_IN_PLACE){// Sendbuf is ignored at root
+    $assert (root == rank,
+	     "Only root can replace 'sendbuf' with 'MPI_IN_PLACE'.");
+    rootInPlace = $true;
+  }
+  else 
+    CMPI_Send(sendbuf, sendcount, sendtype, root, tag, comm.col);
+  // sendbuf cannot be ignored
+  if(rank == root){
+    int real_recvcount;
+    int offset;
+
+    // For root process, check if sendtype is equal to 
+    // recvtype which is required by MPI standard.
+    $assert (sendtype == recvtype,
+    "MPI_Gather() asks for equality "
+	     "between 'sendtype' and 'recvtype'.");
+    for(int i=0; i<nprocs; i++){
+      // Since currently we don't support pointer addition 
+      // on non-array type obejcts, we don't need 
+      // to care about datatype extent.
+      offset = i * recvcount; 
+      if(!rootInPlace || i != root) {
+	CMPI_Collective_recv(recvbuf + offset, recvcount, recvtype, 
+			     i, tag, comm.col, &status);
+	MPI_Get_count(&status, recvtype, &real_recvcount);
+	$assert(real_recvcount == recvcount,
+	"MPI_Gather() asks for equality between"
+	  " the amount of data sent and the "
+		"amount of data received.");
+      }
+    }
+  }
+  return 0;
+}
+
 #endif
 
