@@ -169,7 +169,12 @@ public class GUI_revamp extends JFrame {
 					newConfigsNum++;
 				}
 			}
-		}		
+		}
+		RunConfigDataNode n = savedConfigs.get("c");
+		Object[] o = n.getValues();
+		for(int i = 0; i < o.length; i++){
+			System.out.println(o[i]);
+		}
 	}
 
 	/**
@@ -725,7 +730,7 @@ public class GUI_revamp extends JFrame {
 						File selectedFile = chooser.getSelectedFile();
 						currConfig.setSelectedFile(selectedFile);
 						tf_chooseFile.setText(selectedFile.getName());
-						currConfig.parseInputs();
+						//currConfig.parseInputs();
 					}
 				});
 				chooser.showOpenDialog(null);
