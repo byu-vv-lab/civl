@@ -8,10 +8,8 @@
 #include<assert.h>
 #include<stdio.h>
 
-int main() 
+int main(int argc, char * argv[]) 
 { 
-    int argc;
-    char** argv;
     int rank;
     int procs;
     int* sendBuf;
@@ -30,7 +28,7 @@ int main()
 	sum[i] = 0;
       }
     }else{
-      sum = (int*)malloc(sizeof(int));
+      sum = (int*)malloc(sizeof(int)*procs);
       sendBuf = (int*)malloc(sizeof(int));
     }
     rcvBuf = (int*)malloc(sizeof(int)*procs);
@@ -42,7 +40,7 @@ int main()
     if(rank % 2)
       MPI_Allgather(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, MPI_COMM_WORLD);
     else
-      MPI_Scatter(sum, 1, MPI_INT, sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     printf("Vector process %d is: (", rank);
     for(int i=0; i<procs; i++){
@@ -53,7 +51,7 @@ int main()
     printf(")\n");
 
     if(rank%2)
-      MPI_Scatter(sum, 1, MPI_INT, sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
     else
       MPI_Allgather(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, MPI_COMM_WORLD);
       

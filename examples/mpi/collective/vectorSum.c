@@ -8,12 +8,8 @@
 #include<assert.h>
 #include<stdio.h>
 
-#define SIZE 5
-
-int main() 
+int main(int argc, char * argv[]) 
 { 
-    int argc;
-    char** argv;
     int rank;
     int procs;
     int* sendBuf;
@@ -43,7 +39,7 @@ int main()
 
     MPI_Allgather(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, MPI_COMM_WORLD);
     
-    printf("Vector process %d is: (", rank);
+    printf("Vector of process %d is: (", rank);
     for(int i=0; i<procs; i++){
       printf("%d", rcvBuf[i]);
       if(i != procs-1)
@@ -52,7 +48,7 @@ int main()
     }
     printf(")\n");
     
-    MPI_Scatter(sum, 1, MPI_INT, sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     MPI_Reduce(rcvBuf, sum, procs, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
