@@ -166,9 +166,10 @@ public class GUI_revamp extends JFrame {
 				temp.setSerializeDestination(serializePath);
 				if (!(fileEntry.getName().equals("entries"))) {
 					savedConfigs.put(fileEntry.getName(), temp.deserialize());
+					newConfigsNum++;
 				}
 			}
-		}
+		}		
 	}
 
 	/**
@@ -770,7 +771,7 @@ public class GUI_revamp extends JFrame {
 				File folder = new File(serializePath);
 				savedConfigs.remove(currConfig.getName());
 				DefaultTreeModel model = (DefaultTreeModel) jt_commands.getModel();
-                TreePath[] paths = jt_commands.getSelectionPaths();
+                TreePath[] paths = jt_commands.getSelectionPaths();                
                 for (TreePath path : paths) {
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
                     if (node.getParent() != null) {
@@ -782,6 +783,8 @@ public class GUI_revamp extends JFrame {
                 currConfig = null;
                 cachedConfig = null;
                 jt_commands.setSelectionRow(0);
+                revalidate();
+				repaint();
             }
 		};
 		
@@ -879,7 +882,8 @@ public class GUI_revamp extends JFrame {
 					if(cachedConfig != null)
 						cachedConfig.setTemp_name(tf_name.getText());
 				else
-					currConfig.setTemp_name(tf_name.getText());
+					if(currConfig != null)
+						currConfig.setTemp_name(tf_name.getText());
 			}
 
 			@Override
