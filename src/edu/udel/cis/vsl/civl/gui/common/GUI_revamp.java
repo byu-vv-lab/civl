@@ -280,6 +280,21 @@ public class GUI_revamp extends JFrame {
 			new ButtonColumn(tbl_optionTable, defaultize, 2);
 		}
 	}
+	
+	/*
+	 * Sets the inputs based on the current RunConfiguration's selected file.
+	 */
+	public void setInputs() {
+		CIVLTable tbl_inputTable = (CIVLTable) getComponentByName("tbl_inputTable");
+		DefaultTableModel inputModel = (DefaultTableModel) tbl_inputTable
+				.getModel();
+		CIVL_Input[] inputs = currConfig.getInputs();
+		for (int i = 0; i < currConfig.getValues().length; i++) {
+			inputModel.addRow(new Object[] { inputs[i],
+					""});
+			new ButtonColumn(tbl_inputTable, defaultize, 2);
+		}
+	}
 
 	/**
 	 * Draws the view for the selected {@link RunConfigDataNode}.
@@ -698,7 +713,6 @@ public class GUI_revamp extends JFrame {
 
 		ActionListener browseFile = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// TODO: fix this so it points to the user's home dir
 				String examplesPath = "/Users/noyes/Documents/workspace/CIVL/examples";
 				File start = new File(examplesPath);
 				final JFileChooser chooser = new JFileChooser();
@@ -711,6 +725,7 @@ public class GUI_revamp extends JFrame {
 						File selectedFile = chooser.getSelectedFile();
 						currConfig.setSelectedFile(selectedFile);
 						tf_chooseFile.setText(selectedFile.getName());
+						currConfig.parseInputs();
 					}
 				});
 				chooser.showOpenDialog(null);
@@ -747,11 +762,13 @@ public class GUI_revamp extends JFrame {
 
 		ActionListener apply = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				currConfig.saveChanges(true);
-				currConfig.setUserObject(currConfig.getName());
-				revalidate();
-				repaint();
-				currConfig.serialize();
+				if(currConfig != null){
+					currConfig.saveChanges(true);
+					currConfig.setUserObject(currConfig.getName());
+					revalidate();
+					repaint();
+					currConfig.serialize();
+				}
 			}
 		};
 
