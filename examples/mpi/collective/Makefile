@@ -32,6 +32,9 @@ scatterAllgather_bad: scatterAllgather_bad.c
 
 vectorSum: vectorSum.c
 	${VERIFY} -input_NPROCS=5 vectorSum.c
+	
+vectorSum_bad: vectorSum_bad.c
+	${VERIFY} -input_NPROCS=5 vectorSum_bad.c
 
 clean: 
 	rm -f -r CIVLREP
