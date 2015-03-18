@@ -117,7 +117,7 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 */
 	public void saveChanges(boolean saveConfig) {
 		if (saveConfig) {
-			if (temp_name != null){
+			if (temp_name != null) {
 				name = temp_name;
 				this.setUserObject(name);
 			}
@@ -173,6 +173,7 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 			System.out.println("File: " + config.selectedFile);
 			System.out.println("Command: " + config.command.getName());
 			return config;
+
 		} catch (IOException i) {
 			i.printStackTrace();
 			return null;
@@ -251,7 +252,7 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		this.temp_name = temp_name;
 	}
 
-	public File getTemp_selectedFile() {		
+	public File getTemp_selectedFile() {
 		return temp_selectedFile;
 	}
 

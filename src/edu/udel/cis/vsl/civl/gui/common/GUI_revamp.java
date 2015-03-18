@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
@@ -98,6 +100,9 @@ public class GUI_revamp extends JFrame {
 	 */
 	private int newConfigsNum;
 	
+	/**
+	 * The path to the serialized Run Configurations.
+	 */
 	private static String serializePath;
 
 	protected RunConfigDataNode cachedConfig;
@@ -108,7 +113,7 @@ public class GUI_revamp extends JFrame {
 		setSize(1200, 700);
 		componentMap = new HashMap<String, Component>();
 		newConfigsNum = 0;
-		
+
 		String currDirect = null;
 		try {
 			currDirect = new File(".").getCanonicalPath();
@@ -116,6 +121,8 @@ public class GUI_revamp extends JFrame {
 			e.printStackTrace();
 		}
 		setSerializePath(currDirect + "/doc/RunConfigs");
+		File f = new File(currDirect + "/doc/RunConfigs");
+		f.mkdirs();
 
 		initCIVL_Commands();
 		loadSavedConfigsMap();
@@ -128,14 +135,15 @@ public class GUI_revamp extends JFrame {
 		initListeners(this);
 
 	}
-	
-	public void setSerializePath(String path){
+    
+	public void setSerializePath(String path) {
 		serializePath = path;
 	}
 
+	/**
+	 * This function loads all of the serialized run configurations into a map for easy access.
+	 */
 	public void loadSavedConfigsMap() {
-		// deserialize()
-		//RunConfigDataNode config = null;
 		final File folder = new File(serializePath);
 		listFilesForFolder(folder);
 	}
@@ -151,12 +159,14 @@ public class GUI_revamp extends JFrame {
 			if (fileEntry.isDirectory()) {
 				listFilesForFolder(fileEntry);
 			} else {
-				//if(fileEntry.exstension != ".ser"){
-				RunConfigDataNode temp = new RunConfigDataNode(new CIVL_Command("", "", null, false));
+				// if(fileEntry.exstension != ".ser"){
+				RunConfigDataNode temp = new RunConfigDataNode(
+						new CIVL_Command("", "", null, false));
 				temp.setName(fileEntry.getName());
 				temp.setSerializeDestination(serializePath);
-				savedConfigs.put(fileEntry.getName(), temp.deserialize());
-				//}
+				if (!(fileEntry.getName().equals("entries"))) {
+					savedConfigs.put(fileEntry.getName(), temp.deserialize());
+				}
 			}
 		}
 	}
@@ -204,7 +214,7 @@ public class GUI_revamp extends JFrame {
 		if (comp.getName() != null && comp.getName() != "")
 			componentMap.put(comp.getName(), comp);
 		else
-			// TODO: change this to a thrown exception
+			// TODO: maybe change this to a thrown exception
 			System.out.println("component must have a name");
 	}
 
@@ -294,22 +304,23 @@ public class GUI_revamp extends JFrame {
 
 			currCommand = currConfig.getCommand();
 
-			if (currCommand.getName() == "parse") {
+			if (currCommand.getName().equals("parse")) {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				p_view.add(tp_commandView);
 				p_view.validate();
 
-			} else if (currCommand.getName() == "preprocess") {
+			} else if (currCommand.getName().equals("preprocess")) {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				p_view.add(tp_commandView);
 				p_view.validate();
 
-			} else if (currCommand.getName() == "replay") {
+			} else if (currCommand.getName().equals("replay")) {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				p_view.add(tp_commandView);
 				p_view.validate();
 
-			} else if (currCommand.getName() == "run") {
+			} else if (currCommand.getName().equals("run")) {
+				//System.out.println(currConfig.getCommand().getName());
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Inputs", p_inputs);
@@ -317,7 +328,7 @@ public class GUI_revamp extends JFrame {
 				p_view.add(tp_commandView);
 				p_view.validate();
 
-			} else if (currCommand.getName() == "verify") {
+			} else if (currCommand.getName().equals("verify")){
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Inputs", p_inputs);
@@ -566,6 +577,24 @@ public class GUI_revamp extends JFrame {
 		DefaultMutableTreeNode runNode = new DefaultMutableTreeNode("run");
 		DefaultMutableTreeNode verifyNode = new DefaultMutableTreeNode("verify");
 
+		Collection<RunConfigDataNode> c = savedConfigs.values();
+
+		Object[] configs = c.toArray();
+		
+		for (int i = 0; i < configs.length; i++) {
+			if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("parse"))
+				parseNode.add((MutableTreeNode) configs[i]);
+			else if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("preprocess"))
+				preprocessNode.add((MutableTreeNode) configs[i]);
+			else if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("replay"))
+				replayNode.add((MutableTreeNode) configs[i]);
+			else if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("run")){
+				runNode.add((MutableTreeNode) configs[i]);
+			}	
+			else if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("verify"))
+				verifyNode.add((MutableTreeNode) configs[i]);
+		}
+
 		top.add(parseNode);
 		top.add(preprocessNode);
 		top.add(replayNode);
@@ -586,6 +615,7 @@ public class GUI_revamp extends JFrame {
 		final JButton bt_run = (JButton) getComponentByName("bt_run");
 		final JButton bt_apply = (JButton) getComponentByName("bt_apply");
 		final JButton bt_browseFile = (JButton) getComponentByName("bt_browseFile");
+		final JButton bt_deleteConfig = (JButton) getComponentByName("bt_deleteConfig");
 		final JTextField tf_name = (JTextField) getComponentByName("tf_name");
 		final JTextField tf_chooseFile = (JTextField) getComponentByName("tf_chooseFile");
 		final CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
@@ -597,18 +627,17 @@ public class GUI_revamp extends JFrame {
 				TreePath selected = jt_commands.getSelectionPath();
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
-				if (selected.getPathCount() == 2) {
+				
+					
+				if(selected == null){
+					System.out.println("Node no longer exists");
+				}
+				else if (selected.getPathCount() == 2) {
 					if (currConfig != null && !currConfig.isBrandNew()) {
 						if (currConfig.isChanged()) {
 							boolean saveConfig;
-							int response = JOptionPane
-									.showConfirmDialog(
-											gui,
-											"There are unsaved changes in the current "
-													+ "Run Configuration, do you want to save changes?",
-											"Save Changes?",
-											JOptionPane.YES_NO_OPTION);
-
+							//int response = JOptionPane.showConfirmDialog(gui,"There are unsaved changes in the current "+ "Run Configuration, do you want to save changes?","Save Changes?",JOptionPane.YES_NO_OPTION);
+							int response = 0;
 							if (response == 1)
 								saveConfig = false;
 
@@ -630,17 +659,17 @@ public class GUI_revamp extends JFrame {
 				}
 
 				else if (selected.getPathCount() == 3) {
+					if(currConfig == null){
+						currConfig = (RunConfigDataNode) node;
+						currConfig.setBrandNew(false);
+						tf_name.setText(currConfig.getName());
+						drawView();
+					}
 					if (currConfig != null && !currConfig.isBrandNew()) {
 						if (currConfig.isChanged()) {
 							boolean saveConfig;
-							int response = JOptionPane
-									.showConfirmDialog(
-											gui,
-											"There are unsaved changes in the current "
-													+ "Run Configuration, do you want to save changes?",
-											"Save Changes?",
-											JOptionPane.YES_NO_OPTION);
-
+							//int response = JOptionPane.showConfirmDialog(gui,"There are unsaved changes in the current "+ "Run Configuration, do you want to save changes?","Save Changes?",JOptionPane.YES_NO_OPTION);
+							int response = 0;
 							if (response == 1)
 								saveConfig = false;
 
@@ -729,11 +758,34 @@ public class GUI_revamp extends JFrame {
 
 		ActionListener run = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				currConfig.deserialize();
+				currConfig = currConfig.deserialize();
+				currCommand = currConfig.getCommand();
 			}
 		};
 
 		bt_run.addActionListener(run);
+		
+		ActionListener delete = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				File folder = new File(serializePath);
+				savedConfigs.remove(currConfig.getName());
+				DefaultTreeModel model = (DefaultTreeModel) jt_commands.getModel();
+                TreePath[] paths = jt_commands.getSelectionPaths();
+                for (TreePath path : paths) {
+                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+                    if (node.getParent() != null) {
+                        model.removeNodeFromParent(node);
+                        File configToDelete = new File(serializePath+currConfig.getName());
+                        configToDelete.delete();
+                    }
+                }
+                currConfig = null;
+                cachedConfig = null;
+                jt_commands.setSelectionRow(0);
+            }
+		};
+		
+		bt_deleteConfig.addActionListener(delete);
 
 		ActionListener newConfig = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -776,7 +828,6 @@ public class GUI_revamp extends JFrame {
 					for (int i = 0; i < currConfig.getValues().length; i++) {
 						currConfig.getValues()[i] = options[i].defaultValue();
 					}
-
 					savedConfigs.put(currConfig.getName(), currConfig);
 
 					if (selected.getPathCount() != 1)
@@ -814,7 +865,7 @@ public class GUI_revamp extends JFrame {
 		 * 
 		 * });
 		 */
-
+		
 		tf_name.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
@@ -825,7 +876,8 @@ public class GUI_revamp extends JFrame {
 			@Override
 			public void removeUpdate(DocumentEvent e) {
 				if (currConfig == null)
-					cachedConfig.setTemp_name(tf_name.getText());
+					if(cachedConfig != null)
+						cachedConfig.setTemp_name(tf_name.getText());
 				else
 					currConfig.setTemp_name(tf_name.getText());
 			}
@@ -836,20 +888,8 @@ public class GUI_revamp extends JFrame {
 			}
 		});
 
-		tbl_optionTable.addSaveTableListener(new SaveTableListener() {
-			DefaultTableModel optionModel = (DefaultTableModel) tbl_optionTable
-					.getModel();
-
-			@Override
-			public void SaveTableTriggered(SaveTableEvent evt) {
-				System.out.println("save table event caught");
-				Object[] temp_values = new Object[optionModel.getRowCount()];
-				for (int i = 0; i < optionModel.getRowCount(); i++) {
-					temp_values[i] = optionModel.getValueAt(i, 1);
-				}
-				currConfig.setTemp_values(temp_values);
-			}
-		});
+		//tbl_optionTable.getModel().addTableModelListener(tbl_optionTable); //Already done in constructor for CIVL_Table
+		
 
 	}
 
