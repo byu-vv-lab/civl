@@ -5,7 +5,7 @@ REPLAY = $(CIVL) replay
 all: bcast_bad scatter_bad gather_bad scatterGather scatterGather_bad scatterAllgather
 
 bcast_bad: bcast_bad.c
-	${VERIFY} -input_NPROCS=5 bcast_bad.c
+	${VERIFY} -input_NPROCS=6 bcast_bad.c
 
 scatter_bad: scatter_bad.c
 	${VERIFY} -input_NPROCS=5 scatter_bad.c
@@ -19,6 +19,10 @@ scatterGather: scatterGather.c
 scatterGather_bad: scatterGather_bad.c
 	${VERIFY} -input_NPROCS=5 scatterGather_bad.c
 	${REPLAY}  scatterGather_bad.c
+
+BcastReduce:  BcastReduce.c BcastReduce2.c
+	$(VERIFY) -input_NPROCS_UPPER_BOUND=8 -input_NPROCS_LOWER_BOUND=1 BcastReduce.c
+	$(VERIFY) -input_NPROCS_UPPER_BOUND=8 -input_NPROCS_LOWER_BOUND=1 BcastReduce2.c
 
 scatterAllgather: scatterAllgather.c
 	${VERIFY} -input_NPROCS=5 scatterAllgather.c
