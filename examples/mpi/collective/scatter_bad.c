@@ -1,0 +1,31 @@
+#include<mpi.h>
+#include<stdlib.h>
+
+int main() 
+{ 
+    int argc;
+    char** argv;
+    int rank;
+    int procs;
+    int* values;
+
+    MPI_Init(&argc,&argv); 
+    MPI_Comm_size(MPI_COMM_WORLD, &procs); 
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
+    
+    if (rank == 0) {
+      values = (int*)malloc(sizeof(int)*procs);
+      for(int i = 0; i < procs; i++){
+	values[i] = i;
+      }
+    }else{
+      values = (int*)malloc(sizeof(int));
+    }
+
+    if (rank != 2)
+      MPI_Scatter(values, 1, MPI_INT, values, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    free(values);
+    MPI_Finalize(); 
+    return 0; 
+}

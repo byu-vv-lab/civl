@@ -2,7 +2,16 @@ CIVL = civl
 VERIFY = $(CIVL) verify
 REPLAY = $(CIVL) replay
 
-all: scatterGather scatterGather_bad
+all: bcast_bad scatter_bad gather_bad scatterGather scatterGather_bad
+
+bcast_bad: bcast_bad.c
+	${VERIFY} -input_NPROCS=5 bcast_bad.c
+
+scatter_bad: scatter_bad.c
+	${VERIFY} -input_NPROCS=5 scatter_bad.c
+
+gather_bad: gather_bad.c
+	${VERIFY} -input_NPROCS=5 gather_bad.c
 
 scatterGather: scatterGather.c
 	${VERIFY} -input_NPROCS=5 scatterGather.c
