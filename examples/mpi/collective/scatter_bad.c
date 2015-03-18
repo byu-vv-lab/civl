@@ -1,3 +1,8 @@
+/**
+ * This example demonstrates the usage of MPI collective operations,
+ * which should be called in the same orders for all MPI processes.
+ * This example has an error when there are more than two MPI processes.
+ */
 #include<mpi.h>
 #include<stdlib.h>
 

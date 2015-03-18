@@ -44,8 +44,19 @@ public class MPICollectiveTest {
 	}
 
 	@Test
+	public void bcast_good() {
+		assertTrue(ui.run("verify -input_NPROCS=4 ", filename("bcast_bad.c")));
+	}
+
+	@Test
 	public void BcastReduce() {
 		assertTrue(ui.run("verify -input_NPROCS=5 ", filename("BcastReduce.c")));
+	}
+
+	@Test
+	public void BcastReduce_bad() {
+		assertFalse(ui.run("verify -input_NPROCS=10 ",
+				filename("BcastReduce_bad.c")));
 	}
 
 	@Test
@@ -55,8 +66,24 @@ public class MPICollectiveTest {
 	}
 
 	@Test
+	public void BcastReduce2_bad() {
+		assertFalse(ui.run("verify -input_NPROCS=10 ",
+				filename("BcastReduce2.c")));
+	}
+
+	@Test
 	public void gather_bad() {
 		assertFalse(ui.run("verify -input_NPROCS=6 ", filename("gather_bad.c")));
+	}
+
+	@Test
+	public void gather_good() {
+		assertTrue(ui.run("verify -input_NPROCS=2 ", filename("gather_bad.c")));
+	}
+
+	@Test
+	public void scatter_good() {
+		assertTrue(ui.run("verify -input_NPROCS=2 ", filename("scatter_bad.c")));
 	}
 
 	@Test
