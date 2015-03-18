@@ -2,7 +2,7 @@ CIVL = civl
 VERIFY = $(CIVL) verify
 REPLAY = $(CIVL) replay
 
-all: bcast_bad scatter_bad gather_bad scatterGather scatterGather_bad scatterAllgather
+all: bcast_bad scatter_bad gather_bad scatterGather scatterGather_bad scatterAllgather vectorSum
 
 bcast_bad: bcast_bad.c
 	${VERIFY} -input_NPROCS=6 bcast_bad.c
@@ -29,6 +29,9 @@ scatterAllgather: scatterAllgather.c
 
 scatterAllgather_bad: scatterAllgather_bad.c
 	${VERIFY} -input_NPROCS=5 scatterAllgather_bad.c
+
+vectorSum: vectorSum.c
+	${VERIFY} -input_NPROCS=5 vectorSum.c
 
 clean: 
 	rm -f -r CIVLREP
