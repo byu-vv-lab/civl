@@ -160,10 +160,9 @@ int CMPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root, int tag,
     for (int i=0; i<nprocs; i++)
       if (i != root)
 	CMPI_Send(buf, count, datatype, i, tag, comm.col);
-  } else {
+  } else
     CMPI_Collective_recv(buf, count, datatype, root, tag, comm.col,
 	      MPI_STATUS_IGNORE);
-  }
   return 0;
 }
 
