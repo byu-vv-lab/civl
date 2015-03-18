@@ -767,13 +767,13 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 									claim,
 									resultType,
 									ErrorKind.MEMORY_LEAK,
-									"There is at least one message still remaing in channel["
+									"There is at least one message still remaining in channel["
 											+ i
 											+ "]["
 											+ j
 											+ "] of the communicator referenced by "
 											+ gcommHandleExpr
-											+ " when the commmunicator is going to be destroied");
+											+ " when the commmunicator is going to be destroyed");
 				}
 			}
 		}
