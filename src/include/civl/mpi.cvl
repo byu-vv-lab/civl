@@ -285,10 +285,13 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Alltoall() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  for(int i = 0; i < nprocs; i++)
+  for(int i = 0; i < nprocs; i++) {
+    void * ptr = CMPI_PointerAdd(recvbuf, i*sendcount, recvtype);
+
     CMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, 
-		  recvbuf + (i*sendcount), recvcount, recvtype, i, ALLTOALL_TAG, comm,
+		  ptr, recvcount, recvtype, i, ALLTOALL_TAG, comm,
 		  "MPI_Alltoall()");
+  }
   return 0;
 }
 
@@ -303,8 +306,10 @@ int MPI_Alltoallv(const void* sendbuf, const int sendcounts[],
   $assert(curr_status == __INIT, "MPI_Alltoallv() cannot be invoked without "
     "MPI_Init() being called before.\n");
   for(int i = 0; i < nprocs; i++) {
+    void * ptr = CMPI_PointerAdd(recvbuf, rdispls[i], recvtype);
+
     CMPI_Scatterv(sendbuf, sendcounts, sdispls, sendtype, 
-		  recvbuf + rdispls[i], recvcounts[i], recvtype, i, ALLTOALLV_TAG, comm,
+		  ptr, recvcounts[i], recvtype, i, ALLTOALLV_TAG, comm,
 		  "MPI_Alltoallv()");
   }
   return 0;
@@ -321,8 +326,10 @@ int MPI_Alltoallw(const void* sendbuf, const int sendcounts[], const int sdispls
   $assert(curr_status == __INIT, "MPI_Alltoallw() cannot be invoked without "
     "MPI_Init() being called before.\n");
   for(int i = 0; i < nprocs; i++) {
+    void * ptr = CMPI_PointerAdd(recvbuf, rdispls[i], recvtypes[i]);
+
     CMPI_Scatterv(sendbuf, sendcounts, sdispls, sendtypes[i], 
-		  recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i, 
+		  ptr, recvcounts[i], recvtypes[i], i, 
 		  ALLTOALLW_TAG, comm, "MPI_Alltoallw()");
   }
   return 0;

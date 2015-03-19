@@ -28,9 +28,12 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.expr.Expressions;
 
 public class LibpointerExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
@@ -130,6 +133,10 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		case "$is_valid_pointer":
 			state = execute_is_valid_pointer(state, pid, process, lhs,
 					arguments, argumentValues, call.getSource());
+			break;
+		case "$pointer_add":
+			state = executePointer_add(state, pid, process, arguments,
+					argumentValues, lhs, call.getSource());
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("the function " + name
@@ -638,4 +645,85 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
+	/**
+	 * Execute the
+	 * <code>void * $pointer_add(const void *ptr, int offset, int type_size);</code>
+	 * system function.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param process
+	 *            The string identifier of the process
+	 * @param arguments
+	 *            {@link Expressions} of arguments
+	 * @param argumentValues
+	 *            {@link SymbolicExpressions} of arguments
+	 * @param source
+	 *            CIVL source of the statement
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executePointer_add(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			LHSExpression lhs, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression ptr = argumentValues[0];
+		SymbolicExpression output_ptr;
+		NumericExpression offset = (NumericExpression) argumentValues[1];
+		NumericExpression type_size = (NumericExpression) argumentValues[2];
+		// ptr_primType_size: the size of the primitive type pointed by first
+		// argument, which
+		// should be equal to the last argument which is the size of the
+		// expected primitive type
+		NumericExpression ptr_primType_size;
+		SymbolicType primitiveTypePointed;
+		Evaluation eval;
+		BooleanExpression claim;
+		Reasoner reasoner;
+		ResultType resultType;
+
+		if (!ptr.operator().equals(SymbolicOperator.CONCRETE)) {
+			errorLogger.logSimpleError(
+					source,
+					state,
+					process,
+					symbolicAnalyzer.stateToString(state),
+					ErrorKind.DEREFERENCE,
+					"$pointer_add() doesn't accept an invalid pointer:"
+							+ symbolicAnalyzer.symbolicExpressionToString(
+									source, state, ptr));
+		}
+		primitiveTypePointed = symbolicAnalyzer.getFlattenedArrayElementType(
+				state, arguments[0].getSource(), ptr).getDynamicType(universe);
+		ptr_primType_size = symbolicUtil.sizeof(arguments[0].getSource(),
+				primitiveTypePointed);
+		claim = universe.equals(ptr_primType_size, type_size);
+		reasoner = universe.reasoner(state.getPathCondition());
+		resultType = reasoner.valid(claim).getResultType();
+		if (!resultType.equals(ResultType.YES)) {
+			Certainty certainty = resultType.equals(ResultType.NO) ? Certainty.CONCRETE
+					: Certainty.MAYBE;
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.POINTER,
+					certainty,
+					process,
+					"The primitive type of the object pointed by input pointer:"
+							+ primitiveTypePointed
+							+ " must be"
+							+ " consistent with the size of the"
+							+ " primitive type specified at the forth argument: "
+							+ type_size + ".", source);
+			this.errorLogger.reportError(err);
+		}
+		eval = evaluator.evaluatePointerAdd(state, process, ptr, offset, true,
+				source).left;
+		state = eval.state;
+		output_ptr = eval.value;
+		if (lhs != null)
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					output_ptr);
+		return state;
+	}
 }

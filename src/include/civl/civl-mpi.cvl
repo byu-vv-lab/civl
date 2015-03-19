@@ -9,6 +9,7 @@
 #include <mpi.h>
 #include <civl-mpi.cvh>
 #include <string.h>
+#include <pointer.cvh>
 
 /**************************** Duplicated Part *************************************/
 /* Duplicated definition with the same struct in mpi.h.
@@ -99,6 +100,12 @@ int _MPI_Init(void) {
 int _MPI_Finalize(void) {
   CMPI_Set_status(__FINALIZED);
   return 0;
+}
+
+void * CMPI_PointerAdd(const void * ptr, int offset, MPI_Datatype datatype) {
+  int type_size = sizeofDatatype(datatype);
+
+  return $pointer_add(ptr, offset, type_size);
 }
 
 /********************* Note *********************/
@@ -246,7 +253,9 @@ int CMPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
       // to care about datatype extent.
       offset = i * recvcount; 
       if(!rootInPlace || i != root) {
-	CMPI_Collective_recv(recvbuf + offset, recvcount, recvtype, 
+	void * ptr = CMPI_PointerAdd(recvbuf, offset, recvtype);
+
+	CMPI_Collective_recv(ptr, recvcount, recvtype, 
 			     i, tag, comm.col, &status, routName);
 	real_recvcount = status.size/sizeofDatatype(recvtype);
 	$assert(real_recvcount == recvcount,
@@ -283,7 +292,9 @@ int CMPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 	    "between 'sendtype' and 'recvtype'.", routName);
     for(int i=0; i<nprocs; i++){
       if(!rootInPlace || i != root){
-	CMPI_Collective_recv(recvbuf + displs[i], recvcounts[i], 
+	void * ptr = CMPI_PointerAdd(recvbuf, displs[i], recvtype);
+
+	CMPI_Collective_recv(ptr, recvcounts[i], 
 			     recvtype, i, tag, comm.col, &status, routName);
 	real_recvcount = status.size/sizeofDatatype(recvtype);
 	$assert(real_recvcount == recvcounts[i], "%s asks for equality between"
@@ -317,8 +328,11 @@ int CMPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
       "between 'sendtype' and 'recvtype'.");
     for(int i=0; i<nprocs; i++){
       offset = i * sendcount;
-      if(!rootInPlace || i != root)
-	CMPI_Send(sendbuf + offset, sendcount, sendtype, i, tag, comm.col);
+      if(!rootInPlace || i != root) {
+	void * ptr = CMPI_PointerAdd(sendbuf, offset, sendtype);
+
+	CMPI_Send(ptr, sendcount, sendtype, i, tag, comm.col);
+      }
     }
   }
   if(!rootInPlace){//Already checked that (rootInPlace == true)==>(root==rank)
@@ -356,9 +370,14 @@ int CMPI_Scatterv(const void* sendbuf, const int sendcounts[], const
 	    "between 'sendtype' and 'recvtype'.", routName);
 
     for(int i=0; i<nprocs; i++){
-      if(!rootInPlace || i != root)
-	CMPI_Send(sendbuf + displs[i], sendcounts[i], sendtype, i, 
-		 tag, comm.col);
+      if(!rootInPlace || i != root) {
+	void * ptr = CMPI_PointerAdd(sendbuf, displs[i], sendtype);
+
+	CMPI_Send(ptr, sendcounts[i], sendtype, i, 
+		  tag, comm.col);
+	//CMPI_Send(sendbuf + displs[i], sendcounts[i], sendtype, i, 
+	// tag, comm.col);
+      }
     }
   }
   if(!rootInPlace){
