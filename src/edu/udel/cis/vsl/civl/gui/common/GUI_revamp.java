@@ -432,7 +432,6 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * Creates the container {@link JPanel}.
 	 */
-	// TODO: make tf_name actually change the name of the config
 	// TODO: have a unsaved changes pop up window like eclipse run configs
 	public void initContainer() {
 		JPanel p_container = new JPanel();
@@ -738,7 +737,7 @@ public class GUI_revamp extends JFrame {
 		};
 
 		bt_browseFile.addActionListener(browseFile);
-
+ 
 		defaultize = new AbstractAction() {
 
 			public void actionPerformed(ActionEvent e) {
