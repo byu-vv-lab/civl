@@ -162,6 +162,16 @@ public class MPICollectiveTest {
 		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("c_ex13.c")));
 	}
 
+	@Test
+	public void alltoallv() {
+		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("alltoallv.c")));
+	}
+
+	@Test
+	public void alltoallw() {
+		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("alltoallw.c")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
