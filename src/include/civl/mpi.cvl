@@ -336,7 +336,7 @@ int MPI_Alltoallw(const void* sendbuf, const int sendcounts[], const int sdispls
 }
 
 int MPI_Init_thread( int *argc, char ***argv, int required, int *provided ){
-  CMPI_Set_status(__INIT);  //TODO: why set initialized flag here ?
+  CMPI_Set_status(__INIT);  //TODO: why set initialized flag here ??
   *provided = MPI_THREAD_MULTIPLE;
   return MPI_SUCCESS;
 }
