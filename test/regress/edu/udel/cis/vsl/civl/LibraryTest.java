@@ -223,6 +223,11 @@ public class LibraryTest {
 				filename(CIVLC, "defined.cvl")));
 	}
 
+	@Test
+	public void assume() throws ABCException {
+		assertTrue(ui.run("verify", filename(CIVLC, "assume.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
