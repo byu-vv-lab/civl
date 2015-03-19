@@ -22,7 +22,7 @@ int main( int argc, char **argv )
     
     printf("%d : send = %d %d %d %d\n", rank, send[0], send[1], send[2], send[3]);
     
-    MPI_Alltoall(&send, 1, MPI_INT, &recv, 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Alltoall(send, 1, MPI_INT, recv, 1, MPI_INT, MPI_COMM_WORLD);
     
     printf("%d : recv = %d %d %d %d\n", rank, recv[0], recv[1], recv[2], recv[3]);
     

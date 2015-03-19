@@ -12,6 +12,9 @@
 /*  globals */
 int numnodes,myid,mpi_err;
 #define mpi_root 0
+#ifdef _CIVL
+$input int count=4;
+#endif
 /* end globals  */
 
 void init_it(int  *argc, char ***argv);
@@ -24,12 +27,16 @@ void init_it(int  *argc, char ***argv) {
 
 int main(int argc,char *argv[]){
 	int *myray,*send_ray,*back_ray;
+#ifndef _CIVL
 	int count;
+#endif
 	int size,mysize,i,k,j,total,gtotal;
 	
 	init_it(&argc,&argv);
 /* each processor will get count elements from the root */
+#ifndef _CIVL
 	count=4;
+#endif
 	myray=(int*)malloc(count*sizeof(int));
 /* create the data to be sent on the root */
 	if(myid == mpi_root){
@@ -48,7 +55,7 @@ int main(int argc,char *argv[]){
 	total=0;
 	for(i=0;i<count;i++)
 	    total=total+myray[i];
-	printf("myid= %d total= %d\n ",myid,total);
+	printf("myid= %d total= %d\n",myid,total);
 /* send the local sums back to the root */
     mpi_err = MPI_Reduce(&total,    &gtotal, 1,  MPI_INT, 
 						MPI_SUM, 
@@ -56,7 +63,7 @@ int main(int argc,char *argv[]){
 	                 	MPI_COMM_WORLD);
 /* the root prints the global sum */
 	if(myid == mpi_root){
-	  printf("results from all processors= %d \n ",gtotal);
+	  printf("results from all processors= %d \n",gtotal);
 	}
     mpi_err = MPI_Finalize();
 }

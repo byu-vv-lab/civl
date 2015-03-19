@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include <math.h>
+#ifdef _CIVL
+#include <civlc.cvh>
+#endif
  
 /************************************************************
 This is a simple broadcast program in MPI
@@ -30,6 +33,8 @@ char *argv[];
     for(i=0;i<count;i++)
       printf("%d ",buffer[i]);
     printf("\n");
+#ifdef _CIVL
+    $assert($forall{k=0 .. count-1} buffer[k]==k);
+#endif
     MPI_Finalize();
 }
-

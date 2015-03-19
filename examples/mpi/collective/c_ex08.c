@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
+#ifdef _CIVL
+#include<civlc.cvh>
+#endif
 /*
 ! This program shows how to use MPI_Gatherv.  Each processor sends a
 ! different amount of data to the root processor.  We use MPI_Gather
@@ -22,7 +25,7 @@ void init_it(int  *argc, char ***argv) {
 int main(int argc,char *argv[]){
 /* poe a.out -procs 3 -rmpool 1 */
 	int *will_use;
-	int *myray,*displacements,*counts,*allray;
+	int *myray,*displacements=NULL,*counts=NULL,*allray=NULL;
 	int size,mysize,i;
 	
 	init_it(&argc,&argv);
@@ -61,6 +64,15 @@ int main(int argc,char *argv[]){
 		for(i=0;i<size;i++)
 			printf("%d ",allray[i]);
 		printf("\n");
+#ifdef _CIVL
+		for(int j=0, k=1, t=0; j<size && t<=k; j++,t++){
+		  if(t==k){
+		      t=0;
+		      k++;
+		    }
+		  $assert(allray[j] == k);
+		}	  
+#endif
 	}
     mpi_err = MPI_Finalize();
 }
