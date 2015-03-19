@@ -766,8 +766,9 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 									symbolicAnalyzer.stateToString(state),
 									claim,
 									resultType,
-									ErrorKind.MEMORY_LEAK,
-									"There is at least one message still remaining in channel["
+									ErrorKind.MPI_ERROR,
+									"MPI communicator memory leak: "
+											+ "There is at least one message still remaining in channel["
 											+ i
 											+ "]["
 											+ j
