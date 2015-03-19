@@ -153,9 +153,10 @@ public class MPICollectiveTest {
 
 	@Test
 	public void alltoallv_ex09() {
-		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("c_ex09.c")));
+		assertTrue(ui.run("verify -enablePrintf=false -input_NPROCS=6 ",
+				filename("c_ex09.c")));
 	}
-	
+
 	@Test
 	public void gatherv_ex13() {
 		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("c_ex13.c")));
