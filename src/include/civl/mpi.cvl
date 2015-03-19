@@ -115,7 +115,7 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
   $assert (curr_status == __INIT,
 	  "MPI_Bcast() cannot be invoked without MPI_Init() "
 	   "being called before.\n");
-  CMPI_Bcast(buf, count, datatype, root, BCAST_TAG, comm);
+  CMPI_Bcast(buf, count, datatype, root, BCAST_TAG, comm, "MPI_Bcast()");
   return 0;
 }
 
@@ -129,7 +129,7 @@ int MPI_Reduce(const void* sendbuf, void* recvbuf, int count,
   $assert (curr_status == __INIT,
 	  "MPI_Reduce() cannot be invoked without "
 	   "MPI_Init() being called before.\n");
-  CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, REDUCE_TAG, comm);
+  CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, REDUCE_TAG, comm, "MPI_Reduce()");
   return 0;
 }
 
@@ -145,8 +145,10 @@ int MPI_Allreduce(const void* sendbuf, void* recvbuf, int count,
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Allreduce() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, ALLREDUCE_TAG, comm);
-  CMPI_Bcast(recvbuf, count, datatype, root, ALLREDUCE_TAG, comm);
+  CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, ALLREDUCE_TAG, comm,
+	      "MPI_Allreduce()");
+  CMPI_Bcast(recvbuf, count, datatype, root, ALLREDUCE_TAG, comm, 
+	     "MPI_Allreduce()");
   return 0;
 }
 
@@ -173,7 +175,7 @@ int MPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   $assert(curr_status == __INIT, "MPI_Gather() cannot be invoked without "
     "MPI_Init() being called before.\n");
   CMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-	      root, GATHER_TAG, comm);
+	      root, GATHER_TAG, comm, "MPI_Gather()");
   return 0;
 }
 
@@ -187,7 +189,7 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   $assert(curr_status == __INIT, "MPI_Scatter() cannot be invoked without "
     "MPI_Init() being called before.\n");
   CMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-	       root, SCATTER_TAG, comm);
+	       root, SCATTER_TAG, comm, "MPI_Scatter()");
   return 0;
 }
 
@@ -204,7 +206,7 @@ int MPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   $assert(curr_status == __INIT, "MPI_Gatherv() cannot be invoked without "
     "MPI_Init() being called before.\n");
   CMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
-	      recvtype, root, GATHERV_TAG, comm);
+	       recvtype, root, GATHERV_TAG, comm, "MPI_Gatherv()");
   return 0;
 }
 
@@ -218,7 +220,8 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
   $assert(curr_status == __INIT, "MPI_Scatterv() cannot be invoked without "
 	  "MPI_Init() being called before.\n");
   CMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf,
-		recvcount, recvtype, root, SCATTERV_TAG, comm);
+		recvcount, recvtype, root, SCATTERV_TAG, comm, 
+		"MPI_Scatterv()");
   return 0;
 }
 
@@ -233,8 +236,9 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     "MPI_Init() being called before.\n");
   CMPI_Gather(sendbuf, sendcount, sendtype,
 	     recvbuf, recvcount, recvtype,
-	      0, ALLGATHER_TAG, comm);
-  CMPI_Bcast(recvbuf, recvcount*nprocs, recvtype, 0, ALLGATHER_TAG, comm);
+	      0, ALLGATHER_TAG, comm, "MPI_Allgather()");
+  CMPI_Bcast(recvbuf, recvcount*nprocs, recvtype, 0, ALLGATHER_TAG, comm,
+	     "MPI_Allgather()");
   return 0;
 }
 
@@ -257,9 +261,10 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[]
 
   }
   CMPI_Reduce(sendbuf, recvbuf, total_count, datatype, op, 
-	      root, RED_SCATTER_TAG, comm);
+	      root, RED_SCATTER_TAG, comm, "MPI_Reduce_scatter()");
   CMPI_Scatterv(sendbuf, recvcount, displs, datatype, recvbuf,
-		recvcount[rank], datatype, root, RED_SCATTER_TAG, comm);
+		recvcount[rank], datatype, root, RED_SCATTER_TAG, comm,
+		"MPI_Reduce_scatter()");
   return 0;
 }
 
@@ -282,7 +287,8 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     "MPI_Init() being called before.\n");
   for(int i = 0; i < nprocs; i++)
     CMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, 
-		  recvbuf + (i*sendcount), recvcount, recvtype, i, ALLTOALL_TAG, comm);
+		  recvbuf + (i*sendcount), recvcount, recvtype, i, ALLTOALL_TAG, comm,
+		  "MPI_Alltoall()");
   return 0;
 }
 
@@ -298,7 +304,8 @@ int MPI_Alltoallv(const void* sendbuf, const int sendcounts[],
     "MPI_Init() being called before.\n");
   for(int i = 0; i < nprocs; i++) {
     CMPI_Scatterv(sendbuf, sendcounts, sdispls, sendtype, 
-		  recvbuf + rdispls[i], recvcounts[i], recvtype, i, ALLTOALLV_TAG, comm);
+		  recvbuf + rdispls[i], recvcounts[i], recvtype, i, ALLTOALLV_TAG, comm,
+		  "MPI_Alltoallv()");
   }
   return 0;
 }
@@ -316,7 +323,7 @@ int MPI_Alltoallw(const void* sendbuf, const int sendcounts[], const int sdispls
   for(int i = 0; i < nprocs; i++) {
     CMPI_Scatterv(sendbuf, sendcounts, sdispls, sendtypes[i], 
 		  recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i, 
-		  ALLTOALLV_TAG, comm);
+		  ALLTOALLW_TAG, comm, "MPI_Alltoallw()");
   }
   return 0;
 }

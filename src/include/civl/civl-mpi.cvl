@@ -101,6 +101,10 @@ int _MPI_Finalize(void) {
   return 0;
 }
 
+/********************* Note *********************/
+/* CMPI_Send and CMPI_Recv are a pair of send receives functions that
+   help implementing MPI routines. They should never be block which
+   means no potential deadlocks related to these functions */
 int CMPI_Send(void *buf, int count, MPI_Datatype datatype, int dest,
 	      int tag, $comm comm) {
   if (dest >= 0) {
@@ -129,17 +133,25 @@ int CMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
   return 0;
 }
 
+/********************* Collective helper functions ********************/
+/* Note: collective helpers functions are functions have same
+   behaviors as MPI collective functions, it can be re-used as a part
+   of implementation by different MPI routines. For example,
+   MPI_Allreduce will call CMPI_Reduce and CMPI_Bcast, both of them
+   should throw errors (if encounters any) as if errors are thrown
+   from MPI_Allreduce.
+*/
 int CMPI_Collective_recv(void *buf, int count, MPI_Datatype datatype, 
 			 int source, int tag, $comm comm, 
-			 MPI_Status * status) {
+			 MPI_Status * status, char * routName) {
   if(source >= 0 || source == MPI_ANY_SOURCE) {
     $message in = $comm_dequeue(comm, source, MPI_ANY_TAG);
     int size = count*sizeofDatatype(datatype);
     int recvTag;
 
     recvTag = $message_tag(in);
-    $assert (recvTag == tag , "Collective routine receives a "
-	     "message with a mismatched tag\n");
+    $assert (recvTag == tag , "Collective routine %s receives a "
+	     "message with a mismatched tag\n", routName);
     $message_unpack(in, buf, size);
     if (status != MPI_STATUS_IGNORE) {
       status->size = $message_size(in);
@@ -153,7 +165,7 @@ int CMPI_Collective_recv(void *buf, int count, MPI_Datatype datatype,
 
 /* Broadcast helper function that uses any specified message tag */
 int CMPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root, int tag,
-	      MPI_Comm comm) {
+	       MPI_Comm comm, char * routName) {
   if ($comm_place(comm.col) == root) {
     int nprocs = $comm_size(comm.col);
 
@@ -162,14 +174,14 @@ int CMPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root, int tag,
 	CMPI_Send(buf, count, datatype, i, tag, comm.col);
   } else
     CMPI_Collective_recv(buf, count, datatype, root, tag, comm.col,
-	      MPI_STATUS_IGNORE);
+			 MPI_STATUS_IGNORE, routName);
   return 0;
 }
 
 /* Reduction helper function that uses any specified message tag */
 int CMPI_Reduce(const void* sendbuf, void* recvbuf, int count,
 		MPI_Datatype datatype, MPI_Op op, int root, int tag,
-		MPI_Comm comm) {
+		MPI_Comm comm, char * routName) {
   int rank;
 
   rank = $comm_place(comm.col);
@@ -188,8 +200,8 @@ int CMPI_Reduce(const void* sendbuf, void* recvbuf, int count,
 	$message in = $comm_dequeue(comm.col, i, MPI_ANY_TAG);
 
 	colTag = $message_tag(in);
-	$assert (colTag == tag , "Collective routine receives a "
-		 "message with a mismatched tag\n");
+	$assert (colTag == tag , "Collective routine %s receives a "
+		 "message with a mismatched tag\n", routName);
 	/* the third argument "count" indicates the number of cells needs doing the
 	   operation. */
 	$bundle_unpack_apply(in.data, recvbuf, count, op);
@@ -204,7 +216,7 @@ int CMPI_Reduce(const void* sendbuf, void* recvbuf, int count,
 /* Gathering helper function that uses any specified message tag */
 int CMPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, 
 	       void* recvbuf, int recvcount, MPI_Datatype recvtype, 
-		int root, int tag, MPI_Comm comm){
+		int root, int tag, MPI_Comm comm, char * routName){
   int rank, nprocs;
   _Bool rootInPlace = $false;
   MPI_Status status;
@@ -226,8 +238,8 @@ int CMPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
     // For root process, check if sendtype is equal to 
     // recvtype which is required by MPI standard.
     $assert (sendtype == recvtype,
-    "MPI_Gather() asks for equality "
-	     "between 'sendtype' and 'recvtype'.");
+    "%s asks for equality "
+	     "between 'sendtype' and 'recvtype'.", routName);
     for(int i=0; i<nprocs; i++){
       // Since currently we don't support pointer addition 
       // on non-array type obejcts, we don't need 
@@ -235,12 +247,12 @@ int CMPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
       offset = i * recvcount; 
       if(!rootInPlace || i != root) {
 	CMPI_Collective_recv(recvbuf + offset, recvcount, recvtype, 
-			     i, tag, comm.col, &status);
+			     i, tag, comm.col, &status, routName);
 	MPI_Get_count(&status, recvtype, &real_recvcount);
 	$assert(real_recvcount == recvcount,
-	"MPI_Gather() asks for equality between"
+	"%s asks for equality between"
 	  " the amount of data sent and the "
-		"amount of data received.");
+		"amount of data received.", routName);
       }
     }
   }
@@ -250,7 +262,7 @@ int CMPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 int CMPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 		void* recvbuf, const int recvcounts[], const int displs[],
 		 MPI_Datatype recvtype, int root, int tag, 
-		 MPI_Comm comm){
+		 MPI_Comm comm, char * routName){
   int rank, nprocs;
   _Bool rootInPlace = $false;
 
@@ -267,16 +279,16 @@ int CMPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
     int real_recvcount;
     MPI_Status status;
 
-    $assert(sendtype == recvtype, "MPI_Gatherv() asks for equality "
-      "between 'sendtype' and 'recvtype'.");
+    $assert(sendtype == recvtype, "%s asks for equality "
+	    "between 'sendtype' and 'recvtype'.", routName);
     for(int i=0; i<nprocs; i++){
       if(!rootInPlace || i != root){
 	CMPI_Collective_recv(recvbuf + displs[i], recvcounts[i], 
-			     recvtype, i, tag, comm.col, &status);
+			     recvtype, i, tag, comm.col, &status, routName);
 	MPI_Get_count(&status, recvtype, &real_recvcount);
-	$assert(real_recvcount == recvcounts[i], "MPI_Gatherv() asks for equality between"
+	$assert(real_recvcount == recvcounts[i], "%s asks for equality between"
 	  " the amount of data sent and the "
-	  "amount of data received.");
+		"amount of data received.", routName);
       }
     }
   }
@@ -286,7 +298,7 @@ int CMPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 /* Scatter helper function that uses any specified message tag */
 int CMPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, 
 		 void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
-		 int tag, MPI_Comm comm){
+		 int tag, MPI_Comm comm, char * routName){
   int rank, nprocs;
   _Bool rootInPlace = $false;
 
@@ -314,12 +326,12 @@ int CMPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
     MPI_Status status;
     
     CMPI_Collective_recv(recvbuf, recvcount, recvtype, 
-			 root, tag, comm.col, &status);
+			 root, tag, comm.col, &status, routName);
     MPI_Get_count(&status, recvtype, &real_recvcount);
     $assert(real_recvcount == recvcount,
-    "MPI_Scatter() asks for equality between"
+    "%s asks for equality between"
       " the amount of data sent and the "
-	    "amount of data received.");
+	    "amount of data received.", routName);
   }
   return 0;
 }
@@ -328,7 +340,7 @@ int CMPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 int CMPI_Scatterv(const void* sendbuf, const int sendcounts[], const
 		 int displs[], MPI_Datatype sendtype, void* recvbuf,
 		 int recvcount, MPI_Datatype recvtype, int root, int tag,
-		 MPI_Comm comm){
+		  MPI_Comm comm, char * routName){
   int rank, nprocs;
   _Bool rootInPlace = $false;
 
@@ -340,8 +352,8 @@ int CMPI_Scatterv(const void* sendbuf, const int sendcounts[], const
   }
   if(rank == root){
     //For process root, check sendtype and recvtype
-    $assert(sendtype == recvtype, "MPI_Scatterv() asks for equality "
-      "between 'sendtype' and 'recvtype'.");
+    $assert(sendtype == recvtype, "%s asks for equality "
+	    "between 'sendtype' and 'recvtype'.", routName);
 
     for(int i=0; i<nprocs; i++){
       if(!rootInPlace || i != root)
@@ -354,11 +366,11 @@ int CMPI_Scatterv(const void* sendbuf, const int sendcounts[], const
     int real_recvcount;
 
     CMPI_Collective_recv(recvbuf, recvcount, recvtype, 
-			 root, tag, comm.col, &status);
+			 root, tag, comm.col, &status, routName);
     MPI_Get_count(&status, recvtype, &real_recvcount);
-    $assert(real_recvcount == recvcount, "Process rank:%d\nMPI_Scatterv() asks for equality between"
+    $assert(real_recvcount == recvcount, "Process rank:%d\n%s asks for equality between"
       " the amount of data sent (%d) and the "
-      "amount of data received (%d).", rank, real_recvcount, recvcount);
+	    "amount of data received (%d).", rank, routName, real_recvcount, recvcount);
   }
   return 0;
 }
