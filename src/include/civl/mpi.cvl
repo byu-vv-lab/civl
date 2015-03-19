@@ -293,6 +293,7 @@ int MPI_Alltoallv(const void* sendbuf, const int sendcounts[],
   int nprocs = $comm_size(comm.col);
   __MPI_Sys_status__ curr_status;
 
+  curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Alltoallv() cannot be invoked without "
     "MPI_Init() being called before.\n");
   for(int i = 0; i < nprocs; i++) {
@@ -309,6 +310,7 @@ int MPI_Alltoallw(const void* sendbuf, const int sendcounts[], const int sdispls
   int nprocs = $comm_size(comm.col);
   __MPI_Sys_status__ curr_status;
 
+  curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Alltoallw() cannot be invoked without "
     "MPI_Init() being called before.\n");
   for(int i = 0; i < nprocs; i++) {
