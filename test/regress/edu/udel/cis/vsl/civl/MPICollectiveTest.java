@@ -122,17 +122,43 @@ public class MPICollectiveTest {
 		assertTrue(ui.run("verify -input_NPROCS=6 ",
 				filename("scatterGather.c")));
 	}
-	
+
 	@Test
-	public void c_ex04() {
-		assertTrue(ui.run("verify -input_NPROCS=6 ",
-				filename("c_ex04.c")));
+	public void bcast_ex04() {
+		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("c_ex04.c")));
+	}
+
+	@Test
+	public void scatterGather_ex05() {
+		assertTrue(ui.run("verify -input_NPROCS=6 -inputcount=5",
+				filename("c_ex05.c")));
+	}
+
+	@Test
+	public void scatterReduce_ex06() {
+		assertTrue(ui.run("verify -input_NPROCS=6 -inputcount=5",
+				filename("c_ex06.c")));
+	}
+
+	@Test
+	public void alltoall_ex07() {
+		assertTrue(ui.run("verify -enablePrintf=false -input_NPROCS=6 ",
+				filename("c_ex07.c")));
+	}
+
+	@Test
+	public void gatherv_ex08() {
+		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("c_ex08.c")));
+	}
+
+	@Test
+	public void alltoallv_ex09() {
+		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("c_ex09.c")));
 	}
 	
 	@Test
-	public void alltoall() {
-		assertTrue(ui.run("verify -input_NPROCS=6 ",
-				filename("c_ex07.c")));
+	public void gatherv_ex13() {
+		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("c_ex13.c")));
 	}
 
 	@AfterClass

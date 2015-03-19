@@ -26,7 +26,7 @@ void init_it(int  *argc, char ***argv) {
 }
 
 int main(int argc,char *argv[]){
-	int *myray,*send_ray,*back_ray;
+	int *myray=NULL,*send_ray=NULL,*back_ray=NULL;
 #ifndef _CIVL
 	int count;
 #endif
@@ -65,5 +65,10 @@ int main(int argc,char *argv[]){
 	if(myid == mpi_root){
 	  printf("results from all processors= %d \n",gtotal);
 	}
+#ifdef _CIVL
+	free(myray);
+	free(send_ray);
+	free(back_ray);
+#endif
     mpi_err = MPI_Finalize();
 }

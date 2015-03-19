@@ -54,6 +54,12 @@ int main(int argc,char *argv[]){
 	for(i=0;i<numnodes;i++)
 		printf("%d ",rcounts[i]);
 	printf("\n");
+#ifdef _CIVL
+free(scounts);
+free(rcounts);
+free(sdisp);
+free(rdisp);
+#endif
     mpi_err = MPI_Finalize();
 }
 

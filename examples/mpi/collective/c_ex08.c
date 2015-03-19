@@ -74,5 +74,11 @@ int main(int argc,char *argv[]){
 		}	  
 #endif
 	}
+#ifdef _CIVL
+	free(myray);
+	free(displacements);
+	free(counts);
+	free(allray);
+#endif
     mpi_err = MPI_Finalize();
 }

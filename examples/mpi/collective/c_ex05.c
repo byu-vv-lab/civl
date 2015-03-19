@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
+#ifdef _CIVL
+#include<civlc.cvh>
+#endif
 
 /*
 ! This program shows how to use MPI_Scatter and MPI_Gather
@@ -26,7 +29,7 @@ void init_it(int  *argc, char ***argv) {
 }
 
 int main(int argc,char *argv[]){
-	int *myray,*send_ray,*back_ray;
+	int *myray,*send_ray=NULL,*back_ray=NULL;
 #ifndef _CIVL
 	int count;
 #endif
@@ -57,6 +60,9 @@ int main(int argc,char *argv[]){
 	for(i=0;i<count;i++)
 	    total=total+myray[i];
 	printf("myid= %d total= %d\n",myid,total);
+#ifdef _CIVL
+	$assert(total == myid*25 + 10);
+#endif
 /* send the local sums back to the root */
     mpi_err = MPI_Gather(&total,    1,  MPI_INT, 
 						back_ray, 1,  MPI_INT, 
@@ -68,6 +74,14 @@ int main(int argc,char *argv[]){
 	  for(i=0;i<numnodes;i++)
 	    total=total+back_ray[i];
 	  printf("results from all processors= %d \n",total);
+#ifdef _CIVL
+	  $assert(total == 25*numnodes*(numnodes-1)/2+10*numnodes);
+#endif
 	}
+#ifdef _CIVL
+	free(myray);
+	free(send_ray);
+	free(back_ray);
+#endif
     mpi_err = MPI_Finalize();
 }
