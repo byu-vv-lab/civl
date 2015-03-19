@@ -16,18 +16,17 @@ int main( int argc, char **argv )
     int *sbuf, *rbuf;
     int rank, size;
     int *sendcounts, *recvcounts, *rdispls, *sdispls;
-    int i, j, *p, err;
+    int i, j, *p;
 
     MPI_Init( &argc, &argv );
-    err = 0;
     comm = MPI_COMM_WORLD;
     /* Create the buffer */
-    MPI_Comm_size( comm, &size );
-    MPI_Comm_rank( comm, &rank );
+    MPI_Comm_size(comm, &size );
+    MPI_Comm_rank(comm, &rank );
     sbuf = (int *)malloc( size * size * sizeof(int) );
     rbuf = (int *)malloc( size * size * sizeof(int) );
     if (!sbuf || !rbuf) {
-        fprintf( stderr, "Could not allocated buffers!\n" );
+        printf("Could not allocated buffers!\n");
         MPI_Abort( comm, 1 );
     }
     /* Load up the buffers */
@@ -36,12 +35,12 @@ int main( int argc, char **argv )
         rbuf[i] = -i;
     }
     /* Create and load the arguments to alltoallv */
-    sendcounts = (int *)malloc( size * sizeof(int) );
-    recvcounts = (int *)malloc( size * sizeof(int) );
-    rdispls = (int *)malloc( size * sizeof(int) );
-    sdispls = (int *)malloc( size * sizeof(int) );
+    sendcounts = (int *)malloc( size * sizeof(int));
+    recvcounts = (int *)malloc( size * sizeof(int));
+    rdispls = (int *)malloc( size * sizeof(int));
+    sdispls = (int *)malloc( size * sizeof(int));
     if (!sendcounts || !recvcounts || !rdispls || !sdispls) {
-        fprintf( stderr, "Could not allocate arg items!\n" );fflush(stderr);
+        printf("Could not allocate arg items!\n" );
         MPI_Abort( comm, 1 );
     }
     for (i=0; i<size; i++) {
@@ -57,11 +56,12 @@ int main( int argc, char **argv )
         p = rbuf + rdispls[i];
         for (j=0; j<rank; j++) {
             if (p[j] != i * 100 + (rank*(rank+1))/2 + j) {
-                fprintf( stderr, "[%d] got %d expected %d for %dth\n",
-                                    rank, p[j],(i*(i+1))/2 + j, j );
-                fflush(stderr);
-                err++;
-            }
+                printf("[%d] got %d expected %d for %dth\n",
+                                    rank, p[j],(i*(i+1))/2 + j, j);
+            }else{
+                printf("[%d] got %d expected %d for %dth\n",
+                                    rank, p[j],(i*(i+1))/2 + j, j);
+	    }
         }
     }
     free( sdispls );

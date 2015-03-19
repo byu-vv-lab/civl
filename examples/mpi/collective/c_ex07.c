@@ -16,7 +16,7 @@ void seed_random(int  id);
 void random_number(float *z);
 
 void init_it(int  *argc, char ***argv) {
-	mpi_err = MPI_Init(argc,argv);
+    mpi_err = MPI_Init(argc,argv);
     mpi_err = MPI_Comm_size( MPI_COMM_WORLD, &numnodes );
     mpi_err = MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 }
