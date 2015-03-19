@@ -248,7 +248,7 @@ int CMPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
       if(!rootInPlace || i != root) {
 	CMPI_Collective_recv(recvbuf + offset, recvcount, recvtype, 
 			     i, tag, comm.col, &status, routName);
-	MPI_Get_count(&status, recvtype, &real_recvcount);
+	real_recvcount = status.size/sizeofDatatype(recvtype);
 	$assert(real_recvcount == recvcount,
 	"%s asks for equality between"
 	  " the amount of data sent and the "
@@ -285,7 +285,7 @@ int CMPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
       if(!rootInPlace || i != root){
 	CMPI_Collective_recv(recvbuf + displs[i], recvcounts[i], 
 			     recvtype, i, tag, comm.col, &status, routName);
-	MPI_Get_count(&status, recvtype, &real_recvcount);
+	real_recvcount = status.size/sizeofDatatype(recvtype);
 	$assert(real_recvcount == recvcounts[i], "%s asks for equality between"
 	  " the amount of data sent and the "
 		"amount of data received.", routName);
@@ -327,7 +327,7 @@ int CMPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
     
     CMPI_Collective_recv(recvbuf, recvcount, recvtype, 
 			 root, tag, comm.col, &status, routName);
-    MPI_Get_count(&status, recvtype, &real_recvcount);
+    real_recvcount = status.size/sizeofDatatype(recvtype);
     $assert(real_recvcount == recvcount,
     "%s asks for equality between"
       " the amount of data sent and the "
@@ -367,7 +367,7 @@ int CMPI_Scatterv(const void* sendbuf, const int sendcounts[], const
 
     CMPI_Collective_recv(recvbuf, recvcount, recvtype, 
 			 root, tag, comm.col, &status, routName);
-    MPI_Get_count(&status, recvtype, &real_recvcount);
+    real_recvcount = status.size/sizeofDatatype(recvtype);
     $assert(real_recvcount == recvcount, "Process rank:%d\n%s asks for equality between"
       " the amount of data sent (%d) and the "
 	    "amount of data received (%d).", rank, routName, real_recvcount, recvcount);

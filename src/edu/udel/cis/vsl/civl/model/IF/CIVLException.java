@@ -70,6 +70,7 @@ public class CIVLException extends RuntimeException {
 		LIBRARY,
 		MALLOC,
 		MEMORY_LEAK,
+		MPI_ERROR,
 		OTHER,
 		OUT_OF_BOUNDS,
 		OUTPUT_READ,
