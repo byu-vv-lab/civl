@@ -29,14 +29,33 @@ int main(int argc, char * argv[])
       rcvBuf = (int*)malloc(sizeof(int));
     }
 
+#ifdef ROOT
+    if(rank != 2)
+        MPI_Scatter(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    else
+        MPI_Scatter(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, 2, MPI_COMM_WORLD);
+#elif defined ORDER
+    if(rank%2)
+        MPI_Scatter(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    else
+        MPI_Gather(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#else
     MPI_Scatter(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+#endif
+    
     if(rank != 0){
       *sendBuf = *rcvBuf + rank;
     }
 
+#ifdef ORDER
+    if(rank%2)
+        MPI_Gather(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    else
+        MPI_Scatter(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#else
     MPI_Gather(sendBuf, 1, MPI_INT, rcvBuf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+#endif
+    
     if(rank == 0){
       for(int i=0; i<procs; i++){
 	printf("sendBuf[%d]=%d, rcvBuf[%d]=%d\n", i, sendBuf[i], i, rcvBuf[i]);

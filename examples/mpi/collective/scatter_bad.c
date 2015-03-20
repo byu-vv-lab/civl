@@ -6,29 +6,41 @@
 #include<mpi.h>
 #include<stdlib.h>
 
-int main(int argc, char * argv[]) 
-{ 
+int main(int argc, char * argv[])
+{
     int rank;
     int procs;
     int* values;
-
-    MPI_Init(&argc,&argv); 
-    MPI_Comm_size(MPI_COMM_WORLD, &procs); 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
     
-    if (rank == 0) {
-      values = (int*)malloc(sizeof(int)*procs);
-      for(int i = 0; i < procs; i++){
-	values[i] = i;
-      }
+    MPI_Init(&argc,&argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &procs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    
+    if (rank == 0 || rank == 2) {
+        values = (int*)malloc(sizeof(int)*procs);
+        for(int i = 0; i < procs; i++){
+            values[i] = i;
+        }
     }else{
-      values = (int*)malloc(sizeof(int));
+        values = (int*)malloc(sizeof(int));
     }
-
+    
+#if defined TYPE
     if (rank != 2)
-      MPI_Scatter(values, 1, MPI_INT, values, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+        MPI_Scatter(values, 1, MPI_INT, values, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    else
+        MPI_Scatter(values, 1, MPI_FLOAT, values, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+#elif defined ROOT
+    if (rank != 2)
+        MPI_Scatter(values, 1, MPI_INT, values, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    else
+        MPI_Scatter(values, 1, MPI_INT, values, 1, MPI_INT, 2, MPI_COMM_WORLD);
+#else
+    if (rank != 2)
+        MPI_Scatter(values, 1, MPI_INT, values, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
+    
     free(values);
-    MPI_Finalize(); 
+    MPI_Finalize();
     return 0; 
 }
