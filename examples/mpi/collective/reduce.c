@@ -38,7 +38,9 @@ int main(int argc, char **argv){
     if(mype == 0){
         printf(" PE: %d sum=%5.0f calc=%d\n", mype, sum, calc);
 #ifdef _CIVL
+#ifndef OPERATOR
         $assert(sum == calc);
+#endif
 #endif
     }
     ierr = MPI_Finalize();

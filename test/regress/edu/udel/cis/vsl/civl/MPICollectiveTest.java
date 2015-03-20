@@ -220,10 +220,23 @@ public class MPICollectiveTest {
 	
 	@Test
 	public void reduce_type() {
-		assertFalse(ui.run("verify -showProgram -input_NPROCS=6 -DTYPE", filename("reduce.c")));
+		assertFalse(ui.run("verify -input_NPROCS=6 -DTYPE", filename("reduce.c")));
 	}
 	
+	@Test
+	public void allreduce() {
+		assertTrue(ui.run("verify -input_NPROCS=6", filename("allreduce.c")));
+	}
 	
+	@Test
+	public void allreduce_operator() {
+		assertFalse(ui.run("verify -input_NPROCS=6 -DOPERATOR", filename("allreduce.c")));
+	}
+	
+	@Test
+	public void allreduce_type() {
+		assertFalse(ui.run("verify -input_NPROCS=6 -DTYPE", filename("allreduce.c")));
+	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {

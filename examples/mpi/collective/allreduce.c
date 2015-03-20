@@ -14,12 +14,27 @@ int main(int argc, char **argv){
     ierr = MPI_Comm_rank(WCOMM, &mype);
     
     val  = (double)mype;
+    
+#ifdef TYPE
+    if(mype%2)
+        ierr = MPI_Allreduce(&val, &sum, knt, MPI_DOUBLE, MPI_SUM, WCOMM);
+    else
+        ierr = MPI_Allreduce(&val, &sum, knt, MPI_INT, MPI_SUM, WCOMM);
+#elif defined OPERATOR
+    if(mype%2)
+        ierr = MPI_Allreduce(&val, &sum, knt, MPI_DOUBLE, MPI_SUM, WCOMM);
+    else
+        ierr = MPI_Allreduce(&val, &sum, knt, MPI_INT, MPI_MAX, WCOMM);
+#else
     ierr = MPI_Allreduce(&val, &sum, knt, MPI_DOUBLE, MPI_SUM, WCOMM);
+#endif
     
     calc = ((npes - 1) * npes) / 2;
     printf(" PE: %d sum=%5.0f calc=%d\n", mype, sum, calc);
 #ifdef _CIVL
+#ifndef OPERATOR
     $assert(sum == calc);
+#endif
 #endif
     ierr = MPI_Finalize();
 }
