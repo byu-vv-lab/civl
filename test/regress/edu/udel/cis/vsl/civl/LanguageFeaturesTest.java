@@ -525,6 +525,11 @@ public class LanguageFeaturesTest {
 		assertFalse(ui.run("verify ", filename("noopBad.cvl")));
 	}
 
+	@Test
+	public void pointerAdd1() {
+		assertTrue(ui.run("verify", filename("pointerAdd1.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

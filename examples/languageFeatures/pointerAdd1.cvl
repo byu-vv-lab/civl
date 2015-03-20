@@ -1,0 +1,4 @@
+int main(){
+  int x = 9;
+  int *p = &x+1;
+}
