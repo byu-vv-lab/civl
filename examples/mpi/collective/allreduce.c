@@ -24,7 +24,7 @@ int main(int argc, char **argv){
     if(mype%2)
         ierr = MPI_Allreduce(&val, &sum, knt, MPI_DOUBLE, MPI_SUM, WCOMM);
     else
-        ierr = MPI_Allreduce(&val, &sum, knt, MPI_INT, MPI_MAX, WCOMM);
+        ierr = MPI_Allreduce(&val, &sum, knt, MPI_DOUBLE, MPI_MAX, WCOMM);
 #else
     ierr = MPI_Allreduce(&val, &sum, knt, MPI_DOUBLE, MPI_SUM, WCOMM);
 #endif
