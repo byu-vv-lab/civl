@@ -774,7 +774,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 											+ j
 											+ "] of the communicator referenced by "
 											+ gcommHandleExpr
-											+ " when the commmunicator is going to be destroyed");
+											+ " when the commmunicator is going to be destroyed.\n"
+											+ "Claim: " + claim + "\n");
 				}
 			}
 		}
