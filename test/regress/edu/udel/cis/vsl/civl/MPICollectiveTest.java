@@ -100,6 +100,18 @@ public class MPICollectiveTest {
 	}
 
 	@Test
+	public void scatter_root() {
+		assertFalse(ui.run("verify -input_NPROCS=6 ",
+				filename("scatter_root.c")));
+	}
+
+	@Test
+	public void scatter_root_deadlock() {
+		assertFalse(ui.run("verify -input_NPROCS=6 ",
+				filename("scatter_root_deadlock.c")));
+	}
+
+	@Test
 	public void scatterAllgather_bad() {
 		assertFalse(ui.run("verify -input_NPROCS=6 ",
 				filename("scatterAllgather_bad.c")));
