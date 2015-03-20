@@ -134,6 +134,7 @@ public class CIVLErrorLogger extends ErrorLog {
 		Certainty certainty;
 		CIVLExecutionException error;
 
+		assert resultType != ResultType.YES;
 		// performance! need to cache the satisfiability of each pc somewhere
 		// negation is slow
 		// maybe add "nsat" to Reasoner.
