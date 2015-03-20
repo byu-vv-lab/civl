@@ -755,9 +755,9 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 				queue = universe.arrayRead(queues, universe.integer(j));
 				queueLength = (NumericExpression) universe.tupleRead(queue,
 						zeroObject);
-				claim = universe.lessThan(zero, queueLength);
+				claim = universe.lessThanEquals(queueLength, zero);
 				resultType = reasoner.valid(claim).getResultType();
-				if (!resultType.equals(ResultType.NO)) {
+				if (!resultType.equals(ResultType.YES)) {
 					this.errorLogger
 							.logError(
 									source,
