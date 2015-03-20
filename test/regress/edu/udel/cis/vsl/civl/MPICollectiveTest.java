@@ -80,53 +80,47 @@ public class MPICollectiveTest {
 
 	@Test
 	public void gather_order() {
-		assertFalse(ui.run("verify -input_NPROCS=6 ", filename("gather_bad.c")));
+		assertFalse(ui.run("verify -input_NPROCS=6 ", filename("gather.c")));
 	}
 
 	@Test
 	public void gather_type() {
 		assertFalse(ui.run("verify -DTYPE -input_NPROCS=6 ",
-				filename("gather_bad.c")));
+				filename("gather.c")));
 	}
 
 	@Test
 	public void gather_root() {
 		assertFalse(ui.run("verify -DROOT -input_NPROCS=6 ",
-				filename("gather_bad.c")));
+				filename("gather.c")));
 	}
 
 	@Test
 	public void gather_good() {
-		assertTrue(ui.run("verify -input_NPROCS=2 ", filename("gather_bad.c")));
+		assertTrue(ui.run("verify -input_NPROCS=2 ", filename("gather.c")));
 	}
 
 	@Test
 	public void scatter_good() {
-		assertTrue(ui.run("verify -input_NPROCS=2 ", filename("scatter_bad.c")));
+		assertTrue(ui.run("verify -input_NPROCS=2 ", filename("scatter.c")));
 	}
 
 	@Test
 	public void scatter_order() {
 		assertFalse(ui
-				.run("verify -input_NPROCS=6 ", filename("scatter_bad.c")));
+				.run("verify -input_NPROCS=6 ", filename("scatter.c")));
 	}
 
 	@Test
 	public void scatter_type() {
 		assertFalse(ui.run("verify -DTYPE -input_NPROCS=6 ",
-				filename("scatter_bad.c")));
+				filename("scatter.c")));
 	}
 
 	@Test
 	public void scatter_root() {
 		assertFalse(ui.run("verify -DROOT -input_NPROCS=6 ",
-				filename("scatter_bad.c")));
-	}
-
-	@Test
-	public void scatter_root_deadlock() {
-		assertFalse(ui.run("verify -input_NPROCS=6 ",
-				filename("scatter_root_deadlock.c")));
+				filename("scatter.c")));
 	}
 
 	@Test
