@@ -79,8 +79,20 @@ public class MPICollectiveTest {
 	}
 
 	@Test
-	public void gather_bad() {
+	public void gather_order() {
 		assertFalse(ui.run("verify -input_NPROCS=6 ", filename("gather_bad.c")));
+	}
+
+	@Test
+	public void gather_type() {
+		assertFalse(ui.run("verify -DTYPE -input_NPROCS=6 ",
+				filename("gather_bad.c")));
+	}
+
+	@Test
+	public void gather_root() {
+		assertFalse(ui.run("verify -DROOT -input_NPROCS=6 ",
+				filename("gather_bad.c")));
 	}
 
 	@Test
@@ -94,15 +106,21 @@ public class MPICollectiveTest {
 	}
 
 	@Test
-	public void scatter_bad() {
+	public void scatter_order() {
 		assertFalse(ui
 				.run("verify -input_NPROCS=6 ", filename("scatter_bad.c")));
 	}
 
 	@Test
+	public void scatter_type() {
+		assertFalse(ui.run("verify -DTYPE -input_NPROCS=6 ",
+				filename("scatter_bad.c")));
+	}
+
+	@Test
 	public void scatter_root() {
-		assertFalse(ui.run("verify -input_NPROCS=6 ",
-				filename("scatter_root.c")));
+		assertFalse(ui.run("verify -DROOT -input_NPROCS=6 ",
+				filename("scatter_bad.c")));
 	}
 
 	@Test
@@ -125,8 +143,8 @@ public class MPICollectiveTest {
 
 	@Test
 	public void scatterGather_bad() {
-		assertFalse(ui.run("verify -input_NPROCS=6 ",
-				filename("scatterGather_bad.c")));
+		assertFalse(ui.run("verify -DORDER -input_NPROCS=6 ",
+				filename("scatterGather.c")));
 	}
 
 	@Test
@@ -183,6 +201,29 @@ public class MPICollectiveTest {
 	public void alltoallw() {
 		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("alltoallw.c")));
 	}
+	
+
+	@Test
+	public void reduce() {
+		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("reduce.c")));
+	}
+	
+	@Test
+	public void reduce_operator() {
+		assertFalse(ui.run("verify -input_NPROCS=6 -DOPERATOR", filename("reduce.c")));
+	}
+	
+	@Test
+	public void reduce_root() {
+		assertFalse(ui.run("verify -input_NPROCS=6 -DROOT", filename("reduce.c")));
+	}
+	
+	@Test
+	public void reduce_type() {
+		assertFalse(ui.run("verify -showProgram -input_NPROCS=6 -DTYPE", filename("reduce.c")));
+	}
+	
+	
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
