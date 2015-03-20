@@ -528,6 +528,11 @@ public class LanguageFeaturesTest {
 	@Test
 	public void pointerAdd1() {
 		assertTrue(ui.run("verify", filename("pointerAdd1.cvl")));
+		assertFalse(ui.run("verify -DWRONG", filename("pointerAdd1.cvl")));
+		assertTrue(ui.run("verify -DARRAY", filename("pointerAdd1.cvl")));
+		assertFalse(ui.run("verify -DARRAY -DWRONG",
+				filename("pointerAdd1.cvl")));
+
 	}
 
 	@AfterClass
