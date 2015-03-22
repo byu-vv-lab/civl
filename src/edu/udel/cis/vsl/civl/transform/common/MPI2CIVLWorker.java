@@ -32,7 +32,7 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
-//TODO: translate exit(k) to return k;
+//TODO: added CMPI_destroy call before each call to exit(k);
 /**
  * MPI2CIVLTransformer transforms an AST of an MPI program into an AST of an
  * equivalent CIVL-C program. See {@linkplain #transform(AST)}. TODO: copy
@@ -76,7 +76,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 
 	/* ************************** Private Static Fields ********************** */
 
-	// private static String EXIT = "exit";
+	private final static String EXIT = "exit";
 	private final static String MPI_PREFIX = "$mpi_";
 
 	/**
@@ -831,6 +831,48 @@ public class MPI2CIVLWorker extends BaseWorker {
 		return null;
 	}
 
+	/**
+	 * transforms exit(k); to CMPI_destroy(MPI_COMM_WORLD); exit(k);
+	 * 
+	 * @param node
+	 */
+	private void transformExit(ASTNode node) {
+		if (node instanceof ExpressionStatementNode) {
+			ExpressionNode expr = ((ExpressionStatementNode) node)
+					.getExpression();
+
+			if (expr instanceof FunctionCallNode) {
+				ExpressionNode function = ((FunctionCallNode) expr)
+						.getFunction();
+
+				if (function instanceof IdentifierExpressionNode) {
+					String funcName = ((IdentifierExpressionNode) function)
+							.getIdentifier().name();
+
+					if (funcName.equals(EXIT)) {
+						BlockItemNode commDestroy = this.commDestroy(
+								COMM_DESTROY, COMM_WORLD);
+						int nodeIndex = node.childIndex();
+						ASTNode parent = node.parent();
+
+						node.remove();
+
+						StatementNode newStmt = nodeFactory
+								.newCompoundStatementNode(node.getSource(),
+										Arrays.asList(commDestroy,
+												(BlockItemNode) node));
+
+						parent.setChild(nodeIndex, newStmt);
+					}
+				}
+			}
+		} else
+			for (ASTNode child : node.children()) {
+				if (child != null)
+					transformExit(child);
+			}
+	}
+
 	/* ********************* Methods From BaseTransformer ****************** */
 
 	/**
@@ -925,6 +967,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 		ast.release();
 		// change MPI_Init(...) to _MPI_Init();
 		preprocessASTNode(root);
+		transformExit(root);
 		if (nprocsVar == null) {
 			// declaring $input int NPROCS;
 			nprocsVar = this.nprocsDeclaration();
