@@ -107,8 +107,7 @@ public class MPICollectiveTest {
 
 	@Test
 	public void scatter_order() {
-		assertFalse(ui
-				.run("verify -input_NPROCS=6 ", filename("scatter.c")));
+		assertFalse(ui.run("verify -input_NPROCS=6 ", filename("scatter.c")));
 	}
 
 	@Test
@@ -195,41 +194,63 @@ public class MPICollectiveTest {
 	public void alltoallw() {
 		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("alltoallw.c")));
 	}
-	
 
 	@Test
 	public void reduce() {
 		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("reduce.c")));
 	}
-	
+
 	@Test
 	public void reduce_operator() {
-		assertFalse(ui.run("verify -input_NPROCS=6 -DOPERATOR", filename("reduce.c")));
+		assertFalse(ui.run("verify -input_NPROCS=6 -DOPERATOR",
+				filename("reduce.c")));
 	}
-	
+
 	@Test
 	public void reduce_root() {
-		assertFalse(ui.run("verify -input_NPROCS=6 -DROOT", filename("reduce.c")));
+		assertFalse(ui.run("verify -input_NPROCS=6 -DROOT",
+				filename("reduce.c")));
 	}
-	
+
 	@Test
 	public void reduce_type() {
-		assertFalse(ui.run("verify -input_NPROCS=6 -DTYPE", filename("reduce.c")));
+		assertFalse(ui.run("verify -input_NPROCS=6 -DTYPE",
+				filename("reduce.c")));
 	}
-	
+
 	@Test
 	public void allreduce() {
 		assertTrue(ui.run("verify -input_NPROCS=6", filename("allreduce.c")));
 	}
-	
+
 	@Test
 	public void allreduce_operator() {
-		assertFalse(ui.run("verify -input_NPROCS=6 -DOPERATOR", filename("allreduce.c")));
+		assertFalse(ui.run("verify -input_NPROCS=6 -DOPERATOR",
+				filename("allreduce.c")));
 	}
-	
+
 	@Test
 	public void allreduce_type() {
-		assertFalse(ui.run("verify -input_NPROCS=6 -DTYPE", filename("allreduce.c")));
+		assertFalse(ui.run("verify -input_NPROCS=6 -DTYPE",
+				filename("allreduce.c")));
+	}
+
+	@Test
+	public void barrierReduce() {
+		assertTrue(ui
+				.run("verify -input_NPROCS=5", filename("barrierReduce.c")));
+	}
+
+	@Test
+	public void barrierReduce_order() {
+		assertFalse(ui.run("verify -input_NPROCS=5 -DORDER",
+				filename("barrierReduce.c")));
+	}
+
+	@Test
+	public void barrierScatter() {
+		assertFalse(ui.run("verify -input_NPROCS=5",
+				filename("barrierScatter.c")));
 	}
 
 	@AfterClass
