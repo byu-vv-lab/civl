@@ -1789,13 +1789,13 @@ public class FunctionTranslator {
 					modelFactory.sourceOf(expressionNode));
 			break;
 		case CONSTANT:
-//		case IDENTIFIER_EXPRESSION: {
-//			Statement noopStatement = modelFactory.noopStatement(
-//					modelFactory.sourceOf(expressionNode), location, null);
-//
-//			result = new CommonFragment(noopStatement);
-//		}
-//			break;
+			// case IDENTIFIER_EXPRESSION: {
+			// Statement noopStatement = modelFactory.noopStatement(
+			// modelFactory.sourceOf(expressionNode), location, null);
+			//
+			// result = new CommonFragment(noopStatement);
+			// }
+			// break;
 		default: {
 			Expression expression = this.translateExpressionNode(
 					expressionNode, scope, true);
@@ -4313,7 +4313,26 @@ public class FunctionTranslator {
 			// modelBuilder.handledObjectTypes.add(result);
 			typeFactory.addSystemType(tag, result);
 			break;
+		case ModelConfiguration.COLLECT_RECORD_TYPE:
+			typeFactory.addSystemType(tag, result);
+			result.setHandleObjectType(false);
+			modelBuilder.collectRecordType = result;
+			// modelBuilder.handledObjectTypes.add(result);
+			break;
+		case ModelConfiguration.GCOLLECT_CHECKER_TYPE:
+			typeFactory.addSystemType(tag, result);
+			result.setHandleObjectType(true);
+			modelBuilder.gcollectCheckerType = result;
+			modelBuilder.handledObjectTypes.add(result);
+			break;
+		case ModelConfiguration.COLLECT_CHECKER_TYPE:
+			typeFactory.addSystemType(tag, result);
+			result.setHandleObjectType(true);
+			modelBuilder.collectCheckerType = result;
+			modelBuilder.handledObjectTypes.add(result);
+			break;
 		default:
+			// TODO: set default case
 		}
 		return result;
 	}

@@ -17,6 +17,7 @@ struct MPI_Request{
 struct MPI_Comm {
   $comm p2p; // point-to-point communication
   $comm col; // collective communication
+  $collect_checker collect_checker;
   $barrier barrier;
 };
 
@@ -184,10 +185,15 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 		void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
 		MPI_Comm comm){
   __MPI_Sys_status__ curr_status;
+  int place = $comm_place(comm.col);
+  int nprocs = $comm_size(comm.col);
+  int datatypes[2] = {(int)sendtype, (int)recvtype};
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Scatter() cannot be invoked without "
     "MPI_Init() being called before.\n");
+  $collect_check(comm.collect_checker, place, nprocs,
+		 SCATTER_TAG, root, 2, &datatypes);
   CMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
 	       root, SCATTER_TAG, comm, "MPI_Scatter()");
   return 0;

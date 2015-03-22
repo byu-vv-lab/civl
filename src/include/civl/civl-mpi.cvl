@@ -18,6 +18,7 @@
 typedef struct MPI_Comm {
   $comm p2p; // point-to-point communication
   $comm col; // collective communication
+  $collect_checker collect_checker;
   $barrier barrier;
 }MPI_Comm;
 
@@ -26,6 +27,7 @@ typedef struct MPI_Comm {
 struct CMPI_Gcomm {
   $gcomm p2p; // point-to-point communication
   $gcomm col; // collective communication
+  $gcollect_checker collect_checker;
   $gbarrier gbarrier;
 };
 
@@ -67,6 +69,7 @@ CMPI_Gcomm CMPI_Gcomm_create($scope scope, int size) {
 
   result.p2p = $gcomm_create(scope, size);
   result.col = $gcomm_create(scope, size);
+  result.collect_checker = $gcollect_checker_create(scope);
   result.gbarrier = $gbarrier_create(scope, size);
   return result;
 }
@@ -74,6 +77,7 @@ CMPI_Gcomm CMPI_Gcomm_create($scope scope, int size) {
 void CMPI_Gcomm_destroy(CMPI_Gcomm gc) {
   $gcomm_destroy(gc.p2p);
   $gcomm_destroy(gc.col);
+  $gcollect_checker_destroy(gc.collect_checker);
   $gbarrier_destroy(gc.gbarrier);
 }
 
@@ -82,6 +86,7 @@ MPI_Comm CMPI_Comm_create($scope scope, CMPI_Gcomm gc, int rank) {
   
   result.p2p = $comm_create(scope, gc.p2p, rank);
   result.col = $comm_create(scope, gc.col, rank);
+  result.collect_checker = $collect_checker_create(scope, gc.collect_checker);
   result.barrier = $barrier_create(scope, gc.gbarrier, rank);
   return result;
 }
@@ -89,6 +94,7 @@ MPI_Comm CMPI_Comm_create($scope scope, CMPI_Gcomm gc, int rank) {
 void CMPI_Comm_destroy(MPI_Comm comm) {
   $comm_destroy(comm.p2p);
   $comm_destroy(comm.col);
+  $collect_checker_destroy(comm.collect_checker);
   $barrier_destroy(comm.barrier);
 }
 
@@ -108,7 +114,7 @@ void * CMPI_PointerAdd(const void * ptr, int offset, MPI_Datatype datatype) {
   return $pointer_add(ptr, offset, type_size);
 }
 
-/********************* Note *********************/
+/********************* Lower level MPI routines  *********************/
 /* CMPI_Send and CMPI_Recv are a pair of send receives functions that
    help implementing MPI routines. They should never be block which
    means no potential deadlocks related to these functions */

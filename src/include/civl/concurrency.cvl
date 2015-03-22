@@ -7,6 +7,7 @@
 #define __CIVLC_CONCURRENCY__
 
 #include<concurrency.cvh>
+#include<seq.cvh>
 
 /* *********************** Types *********************** */
 
@@ -28,6 +29,30 @@ struct __gbarrier__ {
 struct __barrier__ {
   int place;
   $gbarrier gbarrier; // initialized as 0.
+};
+
+/******************* Collective Arrive Checking Records *******************/
+/* Record entry */
+struct __collect_record__{
+  int routine_tag;
+  int root;
+  int numTypes;
+  int datatype;
+  int sendtype;
+  int recvtype;
+  _Bool marks[];  //an array stores marks for processes
+  int numMarked;  //number of processes already marked this record
+};
+
+/* Global records queue */
+struct __gcollect_checker__ {
+  int length;
+  $collect_record records[];
+};
+
+/* Local handle of the global records queue */
+struct __collect_checker__{
+  $gcollect_checker checker;
 };
 
 /* *********************** Functions *********************** */

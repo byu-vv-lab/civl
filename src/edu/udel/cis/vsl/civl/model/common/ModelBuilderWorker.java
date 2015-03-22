@@ -133,6 +133,24 @@ public class ModelBuilderWorker {
 	CIVLType gbarrierType;
 
 	/**
+	 * The type __collect_record__, which is the type of an entry in a
+	 * collective operation checker
+	 */
+	CIVLType collectRecordType;
+
+	/**
+	 * The type __gcollect_checker__, which is the type of the handle
+	 * $gcollect_checker
+	 */
+	CIVLType gcollectCheckerType;
+
+	/**
+	 * The type __collect_checker__, which is the type of the handle
+	 * $collect_checker
+	 */
+	CIVLType collectCheckerType;
+
+	/**
 	 * The type __int_iter__, which is the base type of the handle $int_iter.
 	 */
 	CIVLType intIterType;

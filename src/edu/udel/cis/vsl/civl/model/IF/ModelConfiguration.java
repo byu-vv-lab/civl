@@ -6,7 +6,7 @@ package edu.udel.cis.vsl.civl.model.IF;
  * heap variable is added as the variable with index 0.
  * 
  * @author zmanchun
- *
+ * 
  */
 public final class ModelConfiguration {
 
@@ -127,6 +127,21 @@ public final class ModelConfiguration {
 	 * The tm type, used by time.h.
 	 */
 	public static final String TM_TYPE = "tm";
+
+	/**
+	 * The <code>__collect_record__</code> type
+	 */
+	public static final String COLLECT_RECORD_TYPE = "__collect_record__";
+
+	/**
+	 * The <code>__gcollect_checker__</code> type
+	 */
+	public static final String GCOLLECT_CHECKER_TYPE = "__gcollect_checker__";
+
+	/**
+	 * The <code>__collect_checker__</code> type
+	 */
+	public static final String COLLECT_CHECKER_TYPE = "__collect_checker__";
 
 	/* libraries */
 

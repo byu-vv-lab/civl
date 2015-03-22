@@ -776,6 +776,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 											+ gcommHandleExpr
 											+ " when the commmunicator is going to be destroyed.\n"
 											+ "Claim: " + claim + "\n");
+					// TODO: is always MPI error ?
 				}
 			}
 		}
