@@ -34,7 +34,7 @@ public class SimpleMPITest {
 
 	@Test
 	public void anysource() {
-		assertTrue(ui.run("verify -input_NPROCS=5", filename("anysource.c")));
+		assertTrue(ui.run("verify -input_NPROCS=2", filename("anysource.c")));
 	}
 
 	@Test
