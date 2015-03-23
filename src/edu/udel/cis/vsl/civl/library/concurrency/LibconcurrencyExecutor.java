@@ -36,6 +36,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.Number;
+import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.expr.Expressions;
 
@@ -536,8 +537,9 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression nprocs = argumentValues[2];
 		SymbolicExpression routine_tag = argumentValues[3];
 		SymbolicExpression root = argumentValues[4];
-		SymbolicExpression numTypes = argumentValues[5];
-		SymbolicExpression typesPtr = argumentValues[6];
+		SymbolicExpression op = argumentValues[5];
+		SymbolicExpression numTypes = argumentValues[6];
+		SymbolicExpression typesPtr = argumentValues[7];
 		SymbolicExpression types;
 		SymbolicExpression check, gcheckHandle, gcheck;
 		SymbolicExpression records, tail_record;
@@ -552,6 +554,11 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		Reasoner reasoner;
 		Evaluation eval;
 		ResultType resultType;
+		// fields indeces
+		IntObject routineTagIdx = this.zeroObject, rootIdx = oneObject, opIdx = twoObject;
+		IntObject numTypesIdx = universe.intObject(3), typesIdx = universe
+				.intObject(4), marksArrayIdx = universe.intObject(5);
+		IntObject numMarksIdx = universe.intObject(6);
 
 		// Decides "numTypes", it must be a concrete number.
 		reasoner = universe.reasoner(state.getPathCondition());
@@ -561,11 +568,15 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 					"Collective operation checker must know the number of datatypes of a record.\n",
 					source);
 		int_numTypes = (IntegerNumber) temp;
-		assert int_numTypes.intValue() > 0 && int_numTypes.intValue() < 3 : "CIVL currently only support 1 or 2 "
+		assert int_numTypes.intValue() >= 0 && int_numTypes.intValue() < 3 : "CIVL currently only support 1 or 2 "
 				+ "datatypes in one collective record. (e.g. MPI_Alltoallw() is not supported)\n";
-		eval = evaluator.dereference(source, state, process, typesPtr, false);
-		state = eval.state;
-		types = eval.value;
+		if (int_numTypes.intValue() > 0) {
+			eval = evaluator.dereference(source, state, process, typesPtr,
+					false);
+			state = eval.state;
+			types = eval.value;
+		} else
+			types = universe.emptyArray(universe.integerType());
 		// Step 1: If the process if the first process to create a new record ?
 		// By checking if the process is marked in the record in tail
 		eval = evaluator
@@ -585,7 +596,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		if (!resultType.equals(ResultType.YES)) {
 			tail_record = universe.arrayRead(records,
 					universe.subtract(records_length, one));
-			marksArray = universe.tupleRead(tail_record, universe.intObject(6));
+			marksArray = universe.tupleRead(tail_record, marksArrayIdx);
 			markedElement = (BooleanExpression) universe.arrayRead(marksArray,
 					(NumericExpression) place);
 			resultType = reasoner.valid(markedElement).getResultType();
@@ -606,14 +617,9 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 					this.trueValue);
 			newRecordComponents.add(routine_tag);
 			newRecordComponents.add(root);
+			newRecordComponents.add(op);
 			newRecordComponents.add(numTypes);
-			if (int_numTypes.intValue() == 1)
-				newRecordComponents.add(universe.arrayRead(types, zero));
-			else {
-				newRecordComponents.add(universe.integer(-1));
-				newRecordComponents.add(universe.arrayRead(types, zero));
-				newRecordComponents.add(universe.arrayRead(types, one));
-			}
+			newRecordComponents.add(types);
 			newRecordComponents.add(newMarks);
 			newRecordComponents.add(one);
 			newRecord = universe.tuple((SymbolicTupleType) collectRecordType
@@ -634,8 +640,8 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 			while (isMarked) {
 				try {
 					unmarked_record = universe.arrayRead(records, loopIdf);
-					marksArray = universe.tupleRead(
-							unmarked_record, universe.intObject(6));
+					marksArray = universe.tupleRead(unmarked_record,
+							marksArrayIdx);
 					markedElement = (BooleanExpression) universe.arrayRead(
 							marksArray, (NumericExpression) place);
 					if (reasoner.valid(markedElement).getResultType()
@@ -651,38 +657,28 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 			}
 			assert unmarked_record != null : "Unexpected Collective operation checking exception.\n";
 			claim = universe.equals(
-					universe.tupleRead(unmarked_record, zeroObject),
+					universe.tupleRead(unmarked_record, routineTagIdx),
 					routine_tag);
 			resultType = reasoner.valid(claim).getResultType();
 			if (resultType.equals(ResultType.YES)) {
 				claim = universe.equals(
-						universe.tupleRead(unmarked_record, oneObject), root);
+						universe.tupleRead(unmarked_record, rootIdx), root);
 				resultType = reasoner.valid(claim).getResultType();
 				if (resultType.equals(ResultType.YES)) {
-					BooleanExpression extraClaim;
-
-					claim = universe
-							.equals(universe.tupleRead(unmarked_record,
-									twoObject), one);
-					if (int_numTypes.intValue() == 1) {
-						extraClaim = universe.equals(
-								universe.tupleRead(unmarked_record,
-										universe.intObject(3)),
-								universe.arrayRead(types, zero));
-						claim = extraClaim;
-					} else {
-						claim = universe.equals(
-								universe.tupleRead(unmarked_record,
-										universe.intObject(4)),
-								universe.arrayRead(types, zero));
-						extraClaim = universe.equals(
-								universe.tupleRead(unmarked_record,
-										universe.intObject(5)),
-								universe.arrayRead(types, one));
-						claim = universe.and(claim, extraClaim);
-					}
+					// compare reduction operation
+					claim = universe.equals(
+							universe.tupleRead(unmarked_record, opIdx), op);
 					resultType = reasoner.valid(claim).getResultType();
-					if (!resultType.equals(ResultType.YES))
+					if (resultType.equals(ResultType.YES)) {
+						claim = universe.equals(universe.tupleRead(
+								unmarked_record, numTypesIdx), numTypes);
+						claim = universe.and(claim, universe.equals(
+								universe.tupleRead(unmarked_record, typesIdx),
+								types));
+						resultType = reasoner.valid(claim).getResultType();
+						if (!resultType.equals(ResultType.YES))
+							isMatched = false;
+					} else
 						isMatched = false;
 				} else
 					isMatched = false;
@@ -698,17 +694,16 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 				SymbolicExpression marked_record;
 				// checking passed, mark process itself
 
-				marksArray = universe.tupleRead(
-						unmarked_record, universe.intObject(6));
+				marksArray = universe.tupleRead(unmarked_record, marksArrayIdx);
 				marksArray = universe.arrayWrite(marksArray,
 						(NumericExpression) place, trueValue);
 				numMarked = (NumericExpression) universe.tupleRead(
-						unmarked_record, universe.intObject(7));
+						unmarked_record, numMarksIdx);
 				numMarked = universe.add(numMarked, one);
 				marked_record = universe.tupleWrite(unmarked_record,
-						universe.intObject(6), marksArray);
-				marked_record = universe.tupleWrite(marked_record,
-						universe.intObject(7), numMarked);
+						marksArrayIdx, marksArray);
+				marked_record = universe.tupleWrite(marked_record, numMarksIdx,
+						numMarked);
 				records = universe.arrayWrite(records, loopIdf, marked_record);
 				modifiedRecord = marked_record;
 			}
@@ -716,7 +711,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		// Step 2: check if it needs to dequeue a record
 		assert modifiedRecord != null : "Internal error";
 		numMarked = (NumericExpression) universe.tupleRead(modifiedRecord,
-				universe.intObject(7));
+				numMarksIdx);
 		claim = universe.equals(numMarked, nprocs);
 		resultType = reasoner.valid(claim).getResultType();
 		assert !resultType.equals(ResultType.MAYBE) : "Number of marked processes in record should be concrete.";

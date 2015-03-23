@@ -112,14 +112,17 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
 	      MPI_Comm comm) {
   __MPI_Sys_status__ curr_status;
+  int place = $comm_place(comm.col);
+  int nprocs = $comm_size(comm.col);
+  int types[1] = {datatype};
   int datatypes[1] = {(int)datatype};
 
   curr_status = CMPI_Get_status();
   $assert (curr_status == __INIT,
 	  "MPI_Bcast() cannot be invoked without MPI_Init() "
 	   "being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), BCAST_TAG, root, 1, &datatypes);
+  $collect_check(comm.collect_checker, place, nprocs, BCAST_TAG, root, -1, 1,
+		 &types);
   CMPI_Bcast(buf, count, datatype, root, BCAST_TAG, comm, "MPI_Bcast()");
   return 0;
 }
@@ -129,14 +132,16 @@ int MPI_Reduce(const void* sendbuf, void* recvbuf, int count,
 	       MPI_Datatype datatype, MPI_Op op, int root,
 	       MPI_Comm comm) {
   __MPI_Sys_status__ curr_status;
+  int place = $comm_place(comm.col);
+  int nprocs = $comm_size(comm.col);
   int datatypes[1] = {(int)datatype};
 
   curr_status = CMPI_Get_status();
   $assert (curr_status == __INIT,
 	  "MPI_Reduce() cannot be invoked without "
 	   "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), REDUCE_TAG, root, 1, &datatypes);
+  $collect_check(comm.collect_checker, place, nprocs, REDUCE_TAG, root, (int)op, 1,
+		 &datatypes);
   CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, REDUCE_TAG, comm, "MPI_Reduce()");
   return 0;
 }
@@ -147,15 +152,17 @@ int MPI_Allreduce(const void* sendbuf, void* recvbuf, int count,
 		  MPI_Datatype datatype,
 		  MPI_Op op, MPI_Comm comm) {
   int root = 0;
+  int place = $comm_place(comm.col);
+  int nprocs = $comm_size(comm.col);
+  int datatypes[1] = {(int)datatype};
   MPI_Status status;
   __MPI_Sys_status__ curr_status;
-  int datatypes[1] = {(int)datatype};
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Allreduce() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), ALLREDUCE_TAG, root, 1, &datatypes);
+  $collect_check(comm.collect_checker, place, nprocs, ALLREDUCE_TAG, root, 
+		 (int)op, 1, &datatypes);
   CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, ALLREDUCE_TAG, comm,
 	      "MPI_Allreduce()");
   CMPI_Bcast(recvbuf, count, datatype, root, ALLREDUCE_TAG, comm, 
@@ -165,12 +172,14 @@ int MPI_Allreduce(const void* sendbuf, void* recvbuf, int count,
 
 int MPI_Barrier(MPI_Comm comm){
   __MPI_Sys_status__ curr_status;
+  int place = $comm_place(comm.col);
+  int nprocs = $comm_size(comm.col);
 
   curr_status = CMPI_Get_status();
-  $assert(curr_status == __INIT, "MPI_Allreduce() cannot be invoked "
+  $assert(curr_status == __INIT, "MPI_Barrier() cannot be invoked "
     "without MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), BARRIER_TAG, 0, 0, NULL);
+  $collect_check(comm.collect_checker, place, nprocs, -1, -1, 
+		 BARRIER_TAG, 0, NULL);
   $barrier_call(comm.barrier);
   return 0;
 }
@@ -183,13 +192,15 @@ int MPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 	       void* recvbuf, int recvcount, MPI_Datatype recvtype, 
 	       int root, MPI_Comm comm){
   __MPI_Sys_status__ curr_status;
+  int place = $comm_place(comm.col);
+  int nprocs = $comm_size(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Gather() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), GATHER_TAG, root, 2, &datatypes);
+  $collect_check(comm.collect_checker, place, nprocs,
+		 GATHER_TAG, root, -1, 2, &datatypes);
   CMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
 	      root, GATHER_TAG, comm, "MPI_Gather()");
   return 0;
@@ -209,7 +220,7 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   $assert(curr_status == __INIT, "MPI_Scatter() cannot be invoked without "
     "MPI_Init() being called before.\n");
   $collect_check(comm.collect_checker, place, nprocs,
-		 SCATTER_TAG, root, 2, &datatypes);
+		 SCATTER_TAG, root, -1, 2, &datatypes);
   CMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
 	       root, SCATTER_TAG, comm, "MPI_Scatter()");
   return 0;
@@ -220,16 +231,16 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 int MPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 		void* recvbuf, const int recvcounts[], const int displs[],
 		MPI_Datatype recvtype, int root, MPI_Comm comm){
-  int rank, nprocs;
-  _Bool rootInPlace = $false;
   __MPI_Sys_status__ curr_status;
+  int place = $comm_place(comm.col);
+  int nprocs = $comm_size(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Gatherv() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), GATHERV_TAG, root, 2, &datatypes);
+  $collect_check(comm.collect_checker, place, nprocs, GATHERV_TAG, root, 
+		 -1, 2, &datatypes);
   CMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
 	       recvtype, root, GATHERV_TAG, comm, "MPI_Gatherv()");
   return 0;
@@ -240,13 +251,15 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
 		 int displs[], MPI_Datatype sendtype, void* recvbuf,
 		 int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm){
   __MPI_Sys_status__ curr_status;
+  int place = $comm_place(comm.col);
+  int nprocs = $comm_size(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Scatterv() cannot be invoked without "
 	  "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), SCATTERV_TAG, root, 2, &datatypes);
+  $collect_check(comm.collect_checker, place, nprocs,
+		 SCATTERV_TAG, root, -1, 2, &datatypes);
   CMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf,
 		recvcount, recvtype, root, SCATTERV_TAG, comm, 
 		"MPI_Scatterv()");
@@ -256,15 +269,16 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
 int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm){
+  int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
-  __MPI_Sys_status__ curr_status;
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  __MPI_Sys_status__ curr_status;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Allgather() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), ALLGATHER_TAG, 0, 2, &datatypes);
+  $collect_check(comm.collect_checker, place, nprocs,
+		 ALLGATHER_TAG, 0, -1, 2, &datatypes);
   CMPI_Gather(sendbuf, sendcount, sendtype,
 	     recvbuf, recvcount, recvtype,
 	      0, ALLGATHER_TAG, comm, "MPI_Allgather()");
@@ -280,14 +294,14 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[]
   int rank = $comm_place(comm.col);
   int root = 0;
   int displs[nprocs];
-  __MPI_Sys_status__ curr_status;
   int datatypes[1] = {(int)datatype};
+  __MPI_Sys_status__ curr_status;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Reduce_scatter() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), RED_SCATTER_TAG, root, 1, &datatypes);
+  $collect_check(comm.collect_checker, rank, nprocs,
+		 RED_SCATTER_TAG, root, (int)op, 2, &datatypes);
   for(int i=0, total_count=0; i<nprocs; i++) {
     displs[i] = total_count;
     total_count += recvcount[i];
@@ -306,10 +320,11 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                  MPI_Comm comm) {
   int nprocs = $comm_size(comm.col);
   int rank = $comm_place(comm.col);
+  int root = 0;
   int displs[nprocs];
   int sendcounts[nprocs];
-  __MPI_Sys_status__ curr_status;
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  __MPI_Sys_status__ curr_status;
 
   for(int i=0; i<nprocs; i++) {
     sendcounts[i] = sendcount;
@@ -318,8 +333,8 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Alltoall() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), ALLTOALL_TAG, 0, 2, &datatypes);
+  $collect_check(comm.collect_checker, rank, nprocs,
+		 ALLTOALL_TAG, root, -1, 2, &datatypes);
   for(int i = 0; i < nprocs; i++) {
     void * ptr = CMPI_PointerAdd(recvbuf, i*sendcount, recvtype);
 
@@ -335,14 +350,15 @@ int MPI_Alltoallv(const void* sendbuf, const int sendcounts[],
 		  const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, 
 		  MPI_Comm comm) {
   int nprocs = $comm_size(comm.col);
-  __MPI_Sys_status__ curr_status;
+  int place = $comm_place(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  __MPI_Sys_status__ curr_status;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Alltoallv() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, $comm_place(comm.col), 
-  	$comm_size(comm.col), ALLTOALLV_TAG, 0, 2, &datatypes);
+  $collect_check(comm.collect_checker, place, nprocs,
+		 ALLTOALLV_TAG, 0, -1, 2, &datatypes);
   for(int i = 0; i < nprocs; i++) {
     void * ptr = CMPI_PointerAdd(recvbuf, rdispls[i], recvtype);
 

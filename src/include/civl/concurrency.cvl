@@ -36,10 +36,9 @@ struct __barrier__ {
 struct __collect_record__{
   int routine_tag;
   int root;
+  int op;
   int numTypes;
-  int datatype;
-  int sendtype;
-  int recvtype;
+  int datatypes[];
   _Bool marks[];  //an array stores marks for processes
   int numMarked;  //number of processes already marked this record
 };
