@@ -330,7 +330,9 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 						arraySubObj = universe.arrayRead(arraySubObj, zero);
 					arrayInBundle = symbolicAnalyzer.getSubArray(arraySubObj,
 							zero, one, state, process, source);
-				} else
+				} else if (eval.value.isNull())
+					arrayInBundle = universe.emptyArray(elementType);
+				else
 					arrayInBundle = universe.array(elementType,
 							Arrays.asList(eval.value));
 				state = eval.state;
