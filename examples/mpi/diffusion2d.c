@@ -368,5 +368,6 @@ int main(int argc, char * argv[]) {
   free(u_next);
   if (rank == 0)
     free(recvbuf);
+  MPI_Finalize();
   return 0;
 }

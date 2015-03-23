@@ -66,5 +66,6 @@ int main(int argc, char * argv[])
     free(sendBuf);
     free(rcvBuf);
     free(sum);
+    MPI_Finalize();
     return 0; 
 }

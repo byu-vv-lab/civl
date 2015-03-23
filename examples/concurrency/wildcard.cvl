@@ -29,7 +29,7 @@ void MPI_Process(int place){
       MPI_Recv(&msg, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
     }
   }
-
+  _MPI_Finalize();
   CMPI_Comm_destroy(MPI_COMM_WORLD);
   printf("process %d terminates\n", rank);
 }
