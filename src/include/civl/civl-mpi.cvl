@@ -210,13 +210,12 @@ int CMPI_Reduce(const void* sendbuf, void* recvbuf, int count,
     int size;
 
     size = count * sizeofDatatype(datatype);
+    memcpy(recvbuf, sendbuf, size);
     for (int i = 0; i<nprocs; i++) {
-      if(i == root)
-	memcpy(recvbuf, sendbuf, size);
-      else{
+      if(i != root){
 	int colTag;
 	$message in = $comm_dequeue(comm.col, i, MPI_ANY_TAG);
-
+	
 	colTag = $message_tag(in);
 	$assert (colTag == tag , "Collective routine %s receives a "
 		 "message with a mismatched tag\n", routName);
