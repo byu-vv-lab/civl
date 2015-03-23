@@ -124,7 +124,7 @@ public class MPICollectiveTest {
 
 	@Test
 	public void scatter2() {
-		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("scatter2.c")));
+		assertFalse(ui.run("verify -input_NPROCS=6 ", filename("scatter2.c")));
 	}
 
 	@Test
