@@ -26,7 +26,7 @@ void main() {
     for (i=0; i<COUNT*nprocs; i++)
       sendbuf[i] = 1.0*i;
   }
-  MPI_Scatter(sendbuf, COUNT*nprocs, MPI_DOUBLE, 
+  MPI_Scatter(sendbuf, COUNT, MPI_DOUBLE, 
 	      &recvbuf[0], COUNT, MPI_DOUBLE,
 	      root, MPI_COMM_WORLD);
   if (myrank == root) {
