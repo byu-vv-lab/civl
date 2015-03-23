@@ -12,7 +12,7 @@ public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 		CONFIG, SHOW, VERIFY, REPLAY, GUI, HELP, RUN
 	}
 
-	private NormalCommandKind command;
+	protected NormalCommandKind commandKind;
 	private GMCSection cmdSection;
 	private String[] files;
 	private File coreFile;
@@ -23,17 +23,17 @@ public class NormalCommandLine extends BaseCommandLine implements CommandLine {
 
 	public NormalCommandLine(NormalCommandKind command,
 			GMCSection cmdSection, String[] files) {
-		this.command = command;
+		this.commandKind = command;
 		this.cmdSection = cmdSection;
 		this.files = files;
 	}
 
 	public void setCommand(NormalCommandKind cmd) {
-		this.command = cmd;
+		this.commandKind = cmd;
 	}
 
 	public NormalCommandKind normalCommandKind() {
-		return this.command;
+		return this.commandKind;
 	}
 
 	public GMCSection gmcSection() {

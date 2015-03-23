@@ -84,10 +84,10 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.Models;
-import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandKind;
 import edu.udel.cis.vsl.civl.run.common.CIVLCommand;
 import edu.udel.cis.vsl.civl.run.common.CIVLCommandFactory;
 import edu.udel.cis.vsl.civl.run.common.CompareCommandLine;
+import edu.udel.cis.vsl.civl.run.common.HelpCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
@@ -269,7 +269,7 @@ public class UserInterface {
 			throws CommandLineException, ABCException, IOException,
 			MisguidedExecutionException {
 		if (commandLine.normalCommandKind() == NormalCommandKind.HELP)
-			runHelp(commandLine);
+			runHelp((HelpCommandLine) commandLine);
 		else if (commandLine.normalCommandKind() == NormalCommandKind.CONFIG)
 			Configurations.makeConfigFile();
 		else {
@@ -705,31 +705,31 @@ public class UserInterface {
 		return modelTranslator.translate() != null;
 	}
 
-	private void runHelp(CommandLine command) {
-		CommandKind arg = command.commandArg();
+	private void runHelp(HelpCommandLine command) {
+		String arg = command.arg();
 
 		if (arg == null)
 			printUsage(out);
 		else {
 			out.println();
 			switch (arg) {
-			case COMPARE:
+			case CommandLine.COMPARE:
 				out.println("COMPARE the functional equivalence of two programs.");
 				out.println("\nUsage: civl compare [common options] -spec [spec options] "
 						+ "filename+ -impl [impl options] filename+");
 				out.println("\nOptions:");
 				break;
-			case GUI:
+			case CommandLine.GUI:
 				out.println("Run the graphical interface of CIVL.");
 				out.println("\nUsage: civl gui");
 				break;
-			case HELP:
+			case CommandLine.HELP:
 				out.println("Prints the HELP information of CIVL");
 				out.println("\nUsage: civl help [command]");
 				out.println("command can be any of the following: "
 						+ "compare, gui, help, replay, run, show and verify.");
 				break;
-			case REPLAY:
+			case CommandLine.REPLAY:
 				out.println("REPLAY the counterexample trace of some verification result.");
 				out.println("\nUsage: civl replay [options] filename+");
 				out.println("    or civl replay [common options] -spec [spec options] "
@@ -737,21 +737,21 @@ public class UserInterface {
 				out.println("the latter replays the counterexample of some comparison result.");
 				out.println("\nOptions:");
 				break;
-			case RUN:
+			case CommandLine.RUN:
 				out.println("RUN a program randomly.");
 				out.println("\nUsage: civl run [options] filename+");
 				out.println("\nOptions:");
 				break;
-			case SHOW:
+			case CommandLine.SHOW:
 				out.println("SHOW the preprocessing, parsing and translating result of a program.");
 				out.println("\nUsage: civl show [options] filename+");
 				out.println("\nOptions:");
 				break;
-			case CONFIG:
+			case CommandLine.CONFIG:
 				out.println("Configure CIVL.  Detect theorem provers and create .sarl.");
 				out.println("\nUsage: civl config");
 				break;
-			case VERIFY:
+			case CommandLine.VERIFY:
 				out.println("VERIFY a certain program.");
 				out.println("\nUsage: civl verify [options] filename+");
 				out.println("\nOptions:");

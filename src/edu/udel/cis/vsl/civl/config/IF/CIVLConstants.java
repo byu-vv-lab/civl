@@ -20,6 +20,12 @@ import edu.udel.cis.vsl.gmc.Option;
  */
 public class CIVLConstants {
 
+	/**
+	 * Kinds of deadlock: absolute, potential or none.
+	 * 
+	 * @author Manchun Zheng
+	 *
+	 */
 	public enum DeadlockKind {
 		ABSOLUTE, POTENTIAL, NONE
 	}

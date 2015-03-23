@@ -10,7 +10,7 @@ import java.util.TreeMap;
 
 import org.antlr.v4.runtime.misc.NotNull;
 
-import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandKind;
+import edu.udel.cis.vsl.civl.run.IF.CommandLine;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandLineKind;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -68,41 +68,31 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	@Override
 	public void enterHelp(@NotNull CommandParser.HelpContext ctx) {
 		String commandArg = null;
+		HelpCommandLine helpCmd = new HelpCommandLine();
 
 		kind = CommandLineKind.NORMAL;
-		normalCmd = new NormalCommandLine();
-		normalCmd.setCommandString(this.commandString);
-		normalCmd.setCommand(NormalCommandKind.HELP);
+		helpCmd.setCommandString(this.commandString);
+		helpCmd.setCommand(NormalCommandKind.HELP);
 		if (ctx.children.size() > 2)
 			commandArg = ctx.children.get(1).getText();
 		if (commandArg != null) {
-			// String commandArg = ctx.COMMAND().getText();
 			switch (commandArg) {
-			case "compare":
-				normalCmd.setCommandArg(CommandKind.COMPARE);
+			case CommandLine.COMPARE:
+			case CommandLine.GUI:
+			case CommandLine.HELP:
+			case CommandLine.REPLAY:
+			case CommandLine.RUN:
+			case CommandLine.SHOW:
+			case CommandLine.CONFIG:
+			case CommandLine.VERIFY:
+				helpCmd.setArg(commandArg);
 				break;
-			case "gui":
-				normalCmd.setCommandArg(CommandKind.GUI);
-				break;
-			case "help":
-				normalCmd.setCommandArg(CommandKind.HELP);
-				break;
-			case "replay":
-				normalCmd.setCommandArg(CommandKind.REPLAY);
-				break;
-			case "run":
-				normalCmd.setCommandArg(CommandKind.RUN);
-				break;
-			case "show":
-				normalCmd.setCommandArg(CommandKind.SHOW);
-				break;
-			case "config":
-				normalCmd.setCommandArg(CommandKind.CONFIG);
-				break;
-			default: // TODO: why is this the default???
-				normalCmd.setCommandArg(CommandKind.VERIFY);
+			default:
+				throw new RuntimeCommandException("invalid argument for help: "
+						+ commandArg);
 			}
 		}
+		normalCmd = helpCmd;
 	}
 
 	@Override

@@ -8,7 +8,6 @@ import java.util.TreeMap;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine;
-import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandKind;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandLineKind;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
 import edu.udel.cis.vsl.gmc.Option;
@@ -65,24 +64,23 @@ public class CIVLCommand {
 		}
 	}
 
-	public static void printOptionsOfCommand(CommandKind command,
-			PrintStream out) {
+	public static void printOptionsOfCommand(String command, PrintStream out) {
 		switch (command) {
-		case COMPARE:
-		case VERIFY:
+		case CommandLine.COMPARE:
+		case CommandLine.VERIFY:
 			printOptions(verifyOrCompareOptions.values(), out);
 			break;
-		case REPLAY:
+		case CommandLine.REPLAY:
 			printOptions(replayOptions.values(), out);
 			break;
-		case RUN:
+		case CommandLine.RUN:
 			printOptions(runOptions.values(), out);
 			break;
-		case SHOW:
+		case CommandLine.SHOW:
 			printOptions(showOptions.values(), out);
 			break;
-		case GUI:
-		case CONFIG: // no options for "civl config"
+		case CommandLine.GUI:
+		case CommandLine.CONFIG: // no options for "civl config"
 		default:
 		}
 	}
