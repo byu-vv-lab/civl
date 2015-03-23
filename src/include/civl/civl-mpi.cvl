@@ -92,6 +92,11 @@ MPI_Comm CMPI_Comm_create($scope scope, CMPI_Gcomm gc, int rank) {
 }
 
 void CMPI_Comm_destroy(MPI_Comm comm) {
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert(curr_status == __FINALIZED, "Process terminates without "
+	  "calling MPI_Finalize() first.");
   $comm_destroy(comm.p2p);
   $comm_destroy(comm.col);
   $collect_checker_destroy(comm.collect_checker);
