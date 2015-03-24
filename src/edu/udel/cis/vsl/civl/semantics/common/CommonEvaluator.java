@@ -3702,11 +3702,15 @@ public class CommonEvaluator implements Evaluator {
 								newOffset)));
 				return eval;
 			} else if (symRef.isIdentityReference()) {
-				BooleanExpression claim = universe.equals(zero, offset);
-				BooleanExpression assumption = state.getPathCondition();
-				ResultType resultType = universe.reasoner(assumption)
-						.valid(claim).getResultType();
+				BooleanExpression claim;
+				BooleanExpression assumption;
+				ResultType resultType;
 
+				claim = universe.or(universe.equals(zero, offset),
+						universe.equals(one, offset));
+				assumption = state.getPathCondition();
+				resultType = universe.reasoner(assumption).valid(claim)
+						.getResultType();
 				if (resultType != ResultType.YES) {
 					state = errorLogger.logError(expression.getSource(), state,
 							process, symbolicAnalyzer.stateToString(state),
