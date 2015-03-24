@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
-public class MPICollectiveTest_part2 {
+public class MPICollectivePart2Test {
 
 	/* *************************** Static Fields *************************** */
 
