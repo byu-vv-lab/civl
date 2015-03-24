@@ -64,7 +64,6 @@ public class ModelTranslator {
 	private Map<String, Macro> macroMaps;// = getMacroMaps(preprocessor,
 											// cmdConfig);
 	private FrontEnd frontEnd;
-	private PrintStream err = System.err;
 	private PrintStream out = System.out;
 	String userFileName;
 	private TransformerFactory transformerFactory;
@@ -74,7 +73,8 @@ public class ModelTranslator {
 
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
 			GMCConfiguration gmcConfig, GMCSection gmcSection,
-			String[] filenames, String coreName, File coreFile) {
+			String[] filenames, String coreName, File coreFile)
+			throws PreprocessorException {
 		this(transformerFactory, frontEnd, gmcConfig, gmcSection, filenames,
 				coreName, coreFile, SARL.newStandardUniverse());
 	}
@@ -82,7 +82,7 @@ public class ModelTranslator {
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
 			GMCConfiguration gmcConfig, GMCSection cmdSection,
 			String[] filenames, String coreName, File coreFile,
-			SymbolicUniverse universe) {
+			SymbolicUniverse universe) throws PreprocessorException {
 		this.transformerFactory = transformerFactory;
 		this.cmdSection = cmdSection;
 		this.gmcConfig = gmcConfig;
@@ -103,7 +103,8 @@ public class ModelTranslator {
 		macroMaps = getMacroMaps(preprocessor);
 	}
 
-	Program buildProgram() throws PreprocessorException {
+	Program buildProgram() throws PreprocessorException, SyntaxException,
+			ParseException, IOException {
 		CTokenSource[] tokenSources;
 		List<AST> asts = null;
 		Program program = null;
@@ -125,8 +126,7 @@ public class ModelTranslator {
 			program = this.link(asts);
 		if (program != null) {
 			startTime = System.currentTimeMillis();
-			if (!this.applyAllTransformers(program))
-				return null;
+			this.applyAllTransformers(program);
 			endTime = System.currentTimeMillis();
 			if (config.showTime()) {
 				totalTime = (endTime - startTime);// / 1000;
@@ -174,7 +174,8 @@ public class ModelTranslator {
 		out.flush();
 	}
 
-	Model translate() throws PreprocessorException {
+	Model translate() throws PreprocessorException, CommandLineException,
+			SyntaxException, ParseException, IOException {
 		long startTime = System.currentTimeMillis();
 		Program program = this.buildProgram();
 		long endTime = System.currentTimeMillis();
@@ -226,25 +227,16 @@ public class ModelTranslator {
 		return result;
 	}
 
-	Model buildModel(Program program) {
+	Model buildModel(Program program) throws CommandLineException {
 		Model model;
 		ModelBuilder modelBuilder = Models.newModelBuilder(this.universe);
 		String modelName = coreName(userFileName);
+		boolean hasFscanf = TransformerFactory.hasFunctionCalls(
+				program.getAST(), Arrays.asList("scanf", "fscanf"));
 
-		try {
-			boolean hasFscanf = TransformerFactory.hasFunctionCalls(
-					program.getAST(), Arrays.asList("scanf", "fscanf"));
-
-			model = modelBuilder.buildModel(cmdSection, program, modelName,
-					config.debugOrVerbose(), out);
-			model.setHasFscanf(hasFscanf);
-		} catch (CommandLineException e) {
-			err.println("errors encountered when building model for "
-					+ modelName + ":");
-			err.println(e.getMessage());
-			err.flush();
-			return null;
-		}
+		model = modelBuilder.buildModel(cmdSection, program, modelName,
+				config.debugOrVerbose(), out);
+		model.setHasFscanf(hasFscanf);
 		if (config.debugOrVerbose() || config.showModel()) {
 			out.println(bar + "The CIVL model is:" + bar);
 			model.print(out, config.debugOrVerbose());
@@ -393,17 +385,9 @@ public class ModelTranslator {
 	 *            The result of compiling and linking the input program.
 	 * @throws SyntaxException
 	 */
-	private boolean applyAllTransformers(Program program) {
-		try {
-			this.applyTranslationTransformers(program);
-			this.applyDefaultTransformers(program);
-		} catch (SyntaxException e) {
-			err.println("errors encountered when applying transformers:");
-			err.println(e.getMessage());
-			err.flush();
-			return false;
-		}
-		return true;
+	private void applyAllTransformers(Program program) throws SyntaxException {
+		this.applyTranslationTransformers(program);
+		this.applyDefaultTransformers(program);
 	}
 
 	/**
@@ -422,21 +406,13 @@ public class ModelTranslator {
 	 * @throws ParseException
 	 * @throws IOException
 	 */
-	private Program link(List<AST> userASTs) {
+	private Program link(List<AST> userASTs) throws PreprocessorException,
+			SyntaxException, ParseException, IOException {
 		ArrayList<AST> asts = new ArrayList<>();
 		AST[] TUs;
 		Program program;
 
-		try {
-			asts.addAll(this.systemImplASTs(userASTs));
-		} catch (PreprocessorException | SyntaxException | ParseException
-				| IOException e) {
-			err.println("errors encountered when parsing implementation "
-					+ "of system libraries:");
-			err.println(e.getMessage());
-			err.flush();
-			return null;
-		}
+		asts.addAll(this.systemImplASTs(userASTs));
 		asts.addAll(userASTs);
 		TUs = new AST[asts.size()];
 		asts.toArray(TUs);
@@ -446,29 +422,19 @@ public class ModelTranslator {
 				out.println("  " + ast);
 			out.flush();
 		}
-		try {
-			long startTime, endTime;
-			long totalTime;
 
-			startTime = System.currentTimeMillis();
-			program = frontEnd.link(TUs, Language.CIVL_C);
-			endTime = System.currentTimeMillis();
-			if (config.showTime()) {
-				totalTime = (endTime - startTime);// / 1000;
-				out.println(totalTime + "ms:\tSUMARRY linking " + TUs.length
-						+ " ASTs");
-			}
-		} catch (SyntaxException e) {
-			// the following is inaccurate and I think not helpful.
-			// this is the first time the translation units get analyzed,
-			// so this may report an error that is in a single translation unit
-			// and has nothing to do with linking.
-			// err.println("errors encountered when linking input program with"
-			// + " the implementation of system libraries:");
-			err.println("Compilation error: " + e.getMessage());
-			err.flush();
-			return null;
+		long startTime, endTime;
+		long totalTime;
+
+		startTime = System.currentTimeMillis();
+		program = frontEnd.link(TUs, Language.CIVL_C);
+		endTime = System.currentTimeMillis();
+		if (config.showTime()) {
+			totalTime = (endTime - startTime);// / 1000;
+			out.println(totalTime + "ms:\tSUMARRY linking " + TUs.length
+					+ " ASTs");
 		}
+
 		return program;
 	}
 
@@ -516,21 +482,14 @@ public class ModelTranslator {
 		return ast;
 	}
 
-	public List<AST> parseTokens(CTokenSource[] tokenSources) {
+	public List<AST> parseTokens(CTokenSource[] tokenSources)
+			throws SyntaxException, ParseException {
 		List<AST> asts = new ArrayList<>(tokenSources.length);
 
 		for (CTokenSource tokens : tokenSources) {
-			try {
-				AST ast = parse(tokens);
+			AST ast = parse(tokens);
 
-				asts.add(ast);
-			} catch (SyntaxException | ParseException e) {
-				err.println("errors encountered when parsing "
-						+ tokens.getSourceName() + ":");
-				err.println(e.getMessage());
-				err.flush();
-				return null;
-			}
+			asts.add(ast);
 		}
 		return asts;
 	}
@@ -540,20 +499,11 @@ public class ModelTranslator {
 
 		for (String filename : filenames) {
 			File file = new File(filename);
+			CTokenSource tokens = preprocessor
+					.outputTokenSource(systemIncludes, userIncludes, macroMaps,
+							new File(filename));
 
-			try {
-				CTokenSource tokens = preprocessor.outputTokenSource(
-						systemIncludes, userIncludes, macroMaps, new File(
-								filename));
-
-				tokenSources.add(tokens);
-			} catch (PreprocessorException e) {
-				err.println("errors encountered when preprocessing " + filename
-						+ ":");
-				err.println(e.getMessage());
-				err.flush();
-				return null;
-			}
+			tokenSources.add(tokens);
 			if (config.showPreproc() || config.debugOrVerbose()) {
 				out.println(bar + " Preprocessor output for " + filename + " "
 						+ bar);
@@ -566,7 +516,8 @@ public class ModelTranslator {
 		return tokenSources.toArray(new CTokenSource[filenames.length]);
 	}
 
-	private Map<String, Macro> getMacroMaps(Preprocessor preprocessor) {
+	private Map<String, Macro> getMacroMaps(Preprocessor preprocessor)
+			throws PreprocessorException {
 		Map<String, Object> macroDefMap = cmdSection.getMapValue(macroO);
 		Map<String, String> macroDefs = new HashMap<String, String>();
 
@@ -576,13 +527,7 @@ public class ModelTranslator {
 				macroDefs.put(name, (String) macroDefMap.get(name));
 			}
 		}
-		try {
-			return preprocessor.getMacros(macroDefs);
-		} catch (PreprocessorException e) {
-			this.err.println("invalid macro definitions found in the command line:");
-			err.println(e.getMessage());
-		}
-		return new HashMap<String, Macro>();
+		return preprocessor.getMacros(macroDefs);
 	}
 
 	/**

@@ -701,7 +701,8 @@ public class UserInterface {
 	}
 
 	private boolean runShow(ModelTranslator modelTranslator)
-			throws PreprocessorException {
+			throws PreprocessorException, SyntaxException, ParseException,
+			CommandLineException, IOException {
 		return modelTranslator.translate() != null;
 	}
 

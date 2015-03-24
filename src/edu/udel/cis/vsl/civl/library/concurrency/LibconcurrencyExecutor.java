@@ -680,7 +680,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 			records = universe.append(records, newRecord);
 			records_length = universe.add(records_length, one);
 			modifiedRecord = newRecord;
-		} else {
+		} else {//TODO what if there are more than one records in the record queue?
 			SymbolicExpression unmarked_record = null;
 			NumericExpression loopIdf = zero; // symbolic loop identifier
 			boolean isMarked = true;
