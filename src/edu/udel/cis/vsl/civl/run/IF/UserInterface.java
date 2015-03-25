@@ -57,12 +57,15 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
@@ -429,6 +432,37 @@ public class UserInterface {
 			this.createWebLogs(model.program());
 		return this.runCompareVerify(compareCommand.gmcConfig(), model,
 				specWorker.preprocessor, specWorker.universe);
+	}
+
+	/**
+	 * The GUI will call this method to get the input variables of a given
+	 * program. Currently, it is taking a list of files (in fact, the paths of
+	 * files), parsing and linking the given list of files and finding out the
+	 * list of input variables declared. Ultimately, this will take a normal
+	 * command line object, because sometimes macros and some other options
+	 * affect the way CIVL parses/transforms the program, which might result in
+	 * different input variables.
+	 * 
+	 * @param files
+	 * @return the list of input variable declaration nodes, which contains
+	 *         plenty of information about the input variable, e.g., the source,
+	 *         type and name, etc.
+	 * @throws PreprocessorException
+	 */
+	public List<VariableDeclarationNode> getInputVariables(String[] files) {
+		try {
+			GMCConfiguration gmcConfig = new GMCConfiguration(
+					definedOptions.values());
+			ModelTranslator translator = new ModelTranslator(
+					transformerFactory, frontEnd, gmcConfig,
+					gmcConfig.getAnonymousSection(), files, files[0], new File(
+							files[0]));
+
+			return translator.getInputVariables();
+		} catch (PreprocessorException | SyntaxException | ParseException
+				| IOException e) {
+			return new LinkedList<VariableDeclarationNode>();
+		}
 	}
 
 	/* ************************* Private Methods *************************** */

@@ -215,7 +215,6 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   int nprocs = $comm_size(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
 
-  printf("process %d enters scatter\n", place);
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Scatter() cannot be invoked without "
     "MPI_Init() being called before.\n");

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -120,60 +121,94 @@ public class ModelTranslator {
 					+ "ms:\tSUMARRY ANTLR preprocessor parsing to form preproc tree for "
 					+ tokenSources.length + " translation units");
 		}
-		if (tokenSources != null)
-			asts = this.parseTokens(tokenSources);
-		if (asts != null)
-			program = this.link(asts);
-		if (program != null) {
-			startTime = System.currentTimeMillis();
-			this.applyAllTransformers(program);
-			endTime = System.currentTimeMillis();
-			if (config.showTime()) {
-				totalTime = (endTime - startTime);// / 1000;
-				out.println(totalTime + "ms:\tSUMARRY applying transformers");
-			}
-			if (config.debugOrVerbose() || config.showAST()) {
-				out.println(bar
-						+ "The AST after linking and applying transformer is:"
-						+ bar);
-				program.getAST().print(out);
-				out.println();
-				out.flush();
-			}
-			if (config.debugOrVerbose() || config.showProgram()) {
-				out.println(bar
-						+ "The program after linking and applying transformer is:"
-						+ bar);
-				program.prettyPrint(out);
-				out.println();
-				out.flush();
-			}
-			if (config.debugOrVerbose() || config.showInputVars())
-				this.printInputVariableNames(program);
-			return program;
+		asts = this.parseTokens(tokenSources);
+		program = this.link(asts);
+		startTime = System.currentTimeMillis();
+		this.applyAllTransformers(program);
+		endTime = System.currentTimeMillis();
+		if (config.showTime()) {
+			totalTime = (endTime - startTime);// / 1000;
+			out.println(totalTime + "ms:\tSUMARRY applying transformers");
 		}
-		return null;
+		if (config.debugOrVerbose() || config.showAST()) {
+			out.println(bar
+					+ "The AST after linking and applying transformer is:"
+					+ bar);
+			program.getAST().print(out);
+			out.println();
+			out.flush();
+		}
+		if (config.debugOrVerbose() || config.showProgram()) {
+			out.println(bar
+					+ "The program after linking and applying transformer is:"
+					+ bar);
+			program.prettyPrint(out);
+			out.println();
+			out.flush();
+		}
+		if (config.debugOrVerbose() || config.showInputVars())
+			this.printInputVariableNames(program);
+		return program;
 	}
 
 	private void printInputVariableNames(Program program) {
-		ASTNode root = program.getAST().getRootNode();
+		List<VariableDeclarationNode> inputVars = this
+				.inputVariablesOfProgram(program);
 
 		out.println(bar + " input variables of " + this.userFileCoreName + " "
 				+ bar);
+		for (VariableDeclarationNode var : inputVars) {
+			var.prettyPrint(out);
+			out.println();
+		}
+		out.flush();
+	}
+
+	private List<VariableDeclarationNode> inputVariablesOfProgram(
+			Program program) {
+		LinkedList<VariableDeclarationNode> result = new LinkedList<>();
+		ASTNode root = program.getAST().getRootNode();
+
 		for (ASTNode child : root.children()) {
 			if (child != null
 					&& child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 				VariableDeclarationNode variable = (VariableDeclarationNode) child;
 
 				if (variable.getTypeNode().isInputQualified()) {
-					variable.prettyPrint(out);
-					out.println();
+					result.add(variable);
 				}
 			}
 		}
-		out.flush();
+		return result;
 	}
 
+	/**
+	 * 
+	 * @return the input variables declared in the given program
+	 * @throws PreprocessorException
+	 * @throws SyntaxException
+	 * @throws ParseException
+	 * @throws IOException
+	 */
+	public List<VariableDeclarationNode> getInputVariables()
+			throws PreprocessorException, SyntaxException, ParseException,
+			IOException {
+		Program program = this.buildProgram();
+
+		return this.inputVariablesOfProgram(program);
+	}
+
+	/**
+	 * Parse, link, apply transformers and build CIVL-C model for a certain
+	 * CIVL-C compiling task.
+	 * 
+	 * @return
+	 * @throws PreprocessorException
+	 * @throws CommandLineException
+	 * @throws SyntaxException
+	 * @throws ParseException
+	 * @throws IOException
+	 */
 	Model translate() throws PreprocessorException, CommandLineException,
 			SyntaxException, ParseException, IOException {
 		long startTime = System.currentTimeMillis();
