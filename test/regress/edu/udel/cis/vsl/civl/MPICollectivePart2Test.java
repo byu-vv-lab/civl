@@ -144,6 +144,12 @@ public class MPICollectivePart2Test {
 		assertFalse(ui.run("verify -input_NPROCS=5",
 				filename("barrierScatter.c")));
 	}
+	
+	@Test
+	public void factorial(){
+		assertTrue(ui.run("verify -input_NPROCS=5",
+				filename("factorial.c")));
+	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
