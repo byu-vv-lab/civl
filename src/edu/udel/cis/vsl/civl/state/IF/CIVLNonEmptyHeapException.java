@@ -3,9 +3,10 @@ package edu.udel.cis.vsl.civl.state.IF;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * Extends an execution exception with a state at which error occurred.
@@ -13,31 +14,18 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
  * @author siegel
  * 
  */
-public class CIVLStateException extends Exception {
+public class CIVLNonEmptyHeapException extends CIVLStateException {
 
 	/**
-	 * Eclipse generated.
+	 * Required by eclipse
 	 */
-	private static final long serialVersionUID = -6159425221287192305L;
+	private static final long serialVersionUID = -5422700931342739728L;
+	@SuppressWarnings("unused")
+	private SymbolicExpression heapValue;
 
-	protected State state;
-
-	protected ErrorKind kind;
-
-	protected Certainty certainty;
-
-	protected String message;
-
-	protected CIVLSource source;
-
-	public CIVLStateException(ErrorKind kind, Certainty certainty,
+	public CIVLNonEmptyHeapException(ErrorKind kind, Certainty certainty,
 			String message, State state, CIVLSource source) {
-		this.kind = kind;
-		this.certainty = certainty;
-		this.message = message;
-		assert state != null;
-		this.state = state;
-		this.source = source;
+		super(kind, certainty, message, state, source);
 	}
 
 	public CIVLSource source() {
