@@ -150,7 +150,13 @@ public class MPICollectivePart2Test {
 		assertTrue(ui.run("verify -input_NPROCS=5",
 				filename("factorial.c")));
 	}
-
+	
+	@Test
+	public void reduceScatter(){
+		assertTrue(ui.run("verify -input_NPROCS=4",
+				filename("reduceScatter.c")));
+	}
+	
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
