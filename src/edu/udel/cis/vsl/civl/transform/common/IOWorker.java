@@ -419,18 +419,8 @@ public class IOWorker extends BaseWorker {
 			IdentifierExpressionNode functionExpression = (IdentifierExpressionNode) functionCall
 					.getFunction();
 			String functionName = functionExpression.getIdentifier().name();
-			// IdentifierNode functionNameIdentifer = functionExpression
-			// .getIdentifier();
-
 			if (functionName.equals(FFLUSH)) {
 				functionCall.parent().removeChild(functionCall.childIndex());
-				// SequenceNode<ExpressionNode> arguments = nodeFactory
-				// .newSequenceNode(functionCall.getArgument(0)
-				// .getSource(), "Actual Parameters",
-				// new ArrayList<ExpressionNode>(0));
-				//
-				// functionNameIdentifer.setName(FFLUSH_NEW);
-				// functionCall.setArguments(arguments);
 			}
 		}
 	}

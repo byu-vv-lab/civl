@@ -64,15 +64,8 @@ public class MPI2CIVLWorker extends BaseWorker {
 
 	/* ************************** Pthread Constants ********************** */
 
-	// private static final String PTHREAD_MUTEX_TRYLOCK =
-	// "pthread_mutex_trylock";
-	// private static final String PTHREAD_GPOOL = "$pthread_gpool";
 	private static final String PTHREAD_JOIN = "pthread_join";
 	private static final String PTHREAD_PTR = "value_ptr_value";
-	// private static final String PTHREAD_MUTEX_UNLOCK =
-	// "pthread_mutex_unlock";
-	// private static final String PTHREAD_COND_WAIT = "pthread_cond_wait";
-	// private static final String PTHREAD_EXIT = "_pthread_exit";
 
 	/* ************************** Private Static Fields ********************** */
 
@@ -84,8 +77,6 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * program.
 	 */
 	private final static String COMM_WORLD = "MPI_COMM_WORLD";
-
-	// private static String PTHREAD_IS_TERMINATED = "_isTerminated";
 
 	/**
 	 * The name of the identifier of the CMPI_Gcomm variable in the final CIVL
@@ -650,7 +641,8 @@ public class MPI2CIVLWorker extends BaseWorker {
 		}
 		items.add(callMain);
 		items.add(commDestroy);
-		mpiProcessBody = nodeFactory.newCompoundStatementNode(root.getSource(),
+		mpiProcessBody = nodeFactory.newCompoundStatementNode(this.newSource(
+				"function body of " + MPI_PROCESS, CParser.COMPOUND_STATEMENT),
 				items);
 		formals = nodeFactory.newSequenceNode(this.newSource(
 				"formal parameters of function " + MPI_PROCESS,
