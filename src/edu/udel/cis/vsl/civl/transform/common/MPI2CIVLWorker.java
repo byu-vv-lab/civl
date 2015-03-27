@@ -225,6 +225,16 @@ public class MPI2CIVLWorker extends BaseWorker {
 
 	/* *************************** Private Methods ************************* */
 
+	// /**
+	// * Checks the stdio transformer status of a given AST. Specifically, this
+	// * method checks if the any of the varaibles stdout, stdin and stderr are
+	// * present and store the result to
+	// *
+	// * @param root
+	// */
+	// private void checkStdioStatus(ASTNode root) {
+	// }
+
 	/**
 	 * Creates a bound assumption node in the form of:
 	 * <code>$assume lowerBound < variable && variable <= upperBound</code>.
@@ -854,15 +864,15 @@ public class MPI2CIVLWorker extends BaseWorker {
 								COMM_DESTROY, COMM_WORLD);
 						int nodeIndex = node.childIndex();
 						ASTNode parent = node.parent();
+						List<BlockItemNode> newItems = new LinkedList<>();
 
 						node.remove();
-
-						StatementNode newStmt = nodeFactory
-								.newCompoundStatementNode(node.getSource(),
-										Arrays.asList(commDestroy,
-												(BlockItemNode) node));
-
-						parent.setChild(nodeIndex, newStmt);
+						newItems.add(commDestroy);
+						newItems.add((BlockItemNode) node);
+						parent.setChild(
+								nodeIndex,
+								nodeFactory.newCompoundStatementNode(
+										node.getSource(), newItems));
 					}
 				}
 			}

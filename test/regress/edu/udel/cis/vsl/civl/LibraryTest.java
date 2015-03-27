@@ -228,6 +228,16 @@ public class LibraryTest {
 		assertTrue(ui.run("verify", filename(CIVLC, "assume.cvl")));
 	}
 
+	@Test
+	public void fprintfExit() throws ABCException {
+		assertTrue(ui.run("verify", filename(STDIO, "fprintfExit.cvl")));
+	}
+
+	@Test
+	public void scanfExit() throws ABCException {
+		assertTrue(ui.run("verify", filename(STDIO, "scanfExit.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

@@ -1,0 +1,13 @@
+#include<stdio.h>
+#include<civlc.cvh>
+
+int main(){
+  int a = 1, b = 2, c = 3;
+  
+  scanf("%d", a);
+  fscanf(stdin, "%d", b);
+  if(b == 0)
+    $exit();
+  fscanf(stdin, "%d", c);
+  return 0;
+}

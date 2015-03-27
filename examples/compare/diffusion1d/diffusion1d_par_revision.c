@@ -107,11 +107,6 @@ void quit(FILE * file) {
     free(u);
   fclose(file);
   // Following statements should be added in $exit() or added by CIVL automatically
-#pragma CIVL $filesystem_copy_output(CIVL_filesystem, CIVL_output_filesystem);
-#pragma CIVL $filesystem_destroy(CIVL_filesystem);
-#pragma CIVL $free(stdout);
-#pragma CIVL $free(stdin);
-#pragma CIVL $free(stderr);
   exit(1);
 }
 

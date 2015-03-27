@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.transform.common;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
@@ -127,40 +128,44 @@ public class IOWorker extends BaseWorker {
 	/**
 	 * The CIVL system function to destroy a file system.
 	 */
-	private static String FILESYSTEM_DESTROY = "$filesystem_destroy";
+	final static String FILESYSTEM_DESTROY = "$filesystem_destroy";
 
 	/**
 	 * The CIVL system function to copy all files of a file system to an array.
 	 */
-	private static String FILESYSTEM_COPY_OUTPUT = "$filesystem_copy_output";
+	private final static String FILESYSTEM_COPY_OUTPUT = "$filesystem_copy_output";
 
 	/**
 	 * The CIVL system function to destroy a memory unit through a pointer.
 	 */
-	private static String FREE = "$free";
+	final static String FREE = "$free";
 
 	/**
 	 * The name of the default file system in the root scope.
 	 */
-	private static String CIVL_FILESYSTEM = "CIVL_filesystem";
+	final static String CIVL_FILESYSTEM = "CIVL_filesystem";
 
 	/**
 	 * The name of the output array of files.
 	 */
-	private static String CIVL_OUTPUT_FILESYSTEM = "CIVL_output_filesystem";
+	private final static String CIVL_OUTPUT_FILESYSTEM = "CIVL_output_filesystem";
 
 	/**
 	 * The name of stdin.
 	 */
-	private static String STDIN = "stdin";
+	static final String STDIN = "stdin";
 	/**
 	 * The name of stdout.
 	 */
-	private static String STDOUT = "stdout";
+	static final String STDOUT = "stdout";
 	/**
 	 * The name of stderr.
 	 */
-	private static String STDERR = "stderr";
+	static final String STDERR = "stderr";
+
+	private final static String EXIT = "exit";
+
+	private final static String CIVL_EXIT = "$exit";
 
 	/* ****************************** Constructor ************************** */
 
@@ -222,6 +227,49 @@ public class IOWorker extends BaseWorker {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Add calls to deallocate stdout/stdin/stderr before any exit(k).
+	 * 
+	 * @param node
+	 * @throws SyntaxException
+	 */
+	private void transformExit(ASTNode node) throws SyntaxException {
+		if (node instanceof ExpressionStatementNode) {
+			ExpressionNode expr = ((ExpressionStatementNode) node)
+					.getExpression();
+
+			if (expr instanceof FunctionCallNode) {
+				ExpressionNode function = ((FunctionCallNode) expr)
+						.getFunction();
+
+				if (function instanceof IdentifierExpressionNode) {
+					String funcName = ((IdentifierExpressionNode) function)
+							.getIdentifier().name();
+
+					if (funcName.equals(EXIT) || funcName.equals(CIVL_EXIT)) {
+						int nodeIndex = node.childIndex();
+						ASTNode parent = node.parent();
+						Source source = node.getSource();
+						List<BlockItemNode> newItems = new LinkedList<>();
+
+						node.remove();
+						newItems.add(this.copyFilesToOutput(source));
+						newItems.addAll(this.freeCalls(source));
+						newItems.add((BlockItemNode) node);
+						parent.setChild(
+								nodeIndex,
+								nodeFactory.newCompoundStatementNode(
+										node.getSource(), newItems));
+					}
+				}
+			}
+		} else
+			for (ASTNode child : node.children()) {
+				if (child != null)
+					transformExit(child);
+			}
 	}
 
 	/**
@@ -689,8 +737,7 @@ public class IOWorker extends BaseWorker {
 		if (transformationNeeded) {
 			this.renameFunctionCalls(rootNode);
 			this.transformMain(rootNode);
-			// } else if (hasFflush) {
-			// this.renameFflushCalls(rootNode);
+			this.transformExit(rootNode);
 		} else {
 			// remove nodes from stdio.cvl
 			removeNodes(rootNode);
