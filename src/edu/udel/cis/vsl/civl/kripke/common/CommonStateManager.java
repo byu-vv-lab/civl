@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.state.IF.CIVLNonEmptyHeapException;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -92,9 +93,9 @@ public class CommonStateManager implements StateManager {
 	private SymbolicAnalyzer symbolicAnalyzer;
 
 	private BooleanExpression falseExpr;
-	
+
 	// TODO: trying to fix this:
-//	private boolean saveStates;
+	// private boolean saveStates;
 
 	/* ***************************** Constructor *************************** */
 
@@ -122,7 +123,7 @@ public class CommonStateManager implements StateManager {
 		this.errorLogger = errorLogger;
 		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.falseExpr = symbolicAnalyzer.getUniverse().falseExpression();
-//		this.saveStates = config.saveStates();
+		// this.saveStates = config.saveStates();
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -207,6 +208,25 @@ public class CommonStateManager implements StateManager {
 			try {
 				state = stateFactory.canonic(state, config.collectProcesses(),
 						config.collectScopes(), config.collectHeaps());
+			} catch (CIVLNonEmptyHeapException hex) {
+				// TODO state never gets canonicalized and then gmc can't figure
+				// out if it has been seen before.
+				CIVLExecutionException err = new CIVLExecutionException(
+						hex.kind(),
+						hex.certainty(),
+						process,
+						"The dyscope "
+								+ hex.dyscopeName()
+								+ "(id="
+								+ hex.dyscopeID()
+								+ ") has a non-empty heap upon termination.\nheap"
+								+ symbolicAnalyzer.symbolicExpressionToString(
+										hex.source(), hex.state(),
+										hex.heapValue()) + "",
+						symbolicAnalyzer.stateToString(hex.state()),
+						hex.source());
+
+				errorLogger.reportError(err);
 			} catch (CIVLStateException stex) {
 				// TODO state never gets canonicalized and then gmc can't figure
 				// out if it has been seen before.
@@ -222,21 +242,21 @@ public class CommonStateManager implements StateManager {
 			if (newCanonicId > this.maxCanonicId)
 				this.maxCanonicId = newCanonicId;
 		} else {
-//			if (config.collectProcesses())
-//				state = stateFactory.collectProcesses(state);
-//			try {
-//				if (config.collectHeaps())
-//					state = stateFactory.collectHeaps(state);
-//				if (config.collectScopes())
-//					state = stateFactory.collectScopes(state);
-//			} catch (CIVLStateException stex) {
-//				CIVLExecutionException err = new CIVLExecutionException(
-//						stex.kind(), stex.certainty(), process, stex.message(),
-//						symbolicAnalyzer.stateToString(stex.state()),
-//						stex.source());
-//
-//				errorLogger.reportError(err);
-//			}
+			// if (config.collectProcesses())
+			// state = stateFactory.collectProcesses(state);
+			// try {
+			// if (config.collectHeaps())
+			// state = stateFactory.collectHeaps(state);
+			// if (config.collectScopes())
+			// state = stateFactory.collectScopes(state);
+			// } catch (CIVLStateException stex) {
+			// CIVLExecutionException err = new CIVLExecutionException(
+			// stex.kind(), stex.certainty(), process, stex.message(),
+			// symbolicAnalyzer.stateToString(stex.state()),
+			// stex.source());
+			//
+			// errorLogger.reportError(err);
+			// }
 			if (config.simplify())
 				state = stateFactory.simplify(state);
 			traceStep.complete(state);

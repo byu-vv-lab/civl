@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.IF.CIVLNonEmptyHeapException;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
@@ -401,12 +402,9 @@ public class ImmutableStateFactory implements StateFactory {
 						.getValue(heapVariable.vid());
 
 				if (!(heapValue.isNull() || symbolicUtil.isEmptyHeap(heapValue))) {
-					throw new CIVLStateException(ErrorKind.MEMORY_LEAK,
-							Certainty.CONCRETE, "The unreachable dyscope "
-									+ scopeToBeRemoved.name() + "(id=" + i
-									+ ")" + " has a non-empty heap "
-									+ heapValue.toString() + ".", state,
-							heapVariable.getSource());
+					throw new CIVLNonEmptyHeapException(ErrorKind.MEMORY_LEAK,
+							Certainty.CONCRETE, state, scopeToBeRemoved.name(),
+							i, heapValue, heapVariable.getSource());
 				}
 			}
 		}

@@ -20,12 +20,17 @@ public class CIVLNonEmptyHeapException extends CIVLStateException {
 	 * Required by eclipse
 	 */
 	private static final long serialVersionUID = -5422700931342739728L;
-	@SuppressWarnings("unused")
 	private SymbolicExpression heapValue;
+	private String dyscopeName;
+	private int dyscopeID;
 
 	public CIVLNonEmptyHeapException(ErrorKind kind, Certainty certainty,
-			String message, State state, CIVLSource source) {
-		super(kind, certainty, message, state, source);
+			State state, String dyscopeName, int dyscopeID,
+			SymbolicExpression heapValue, CIVLSource source) {
+		super(kind, certainty, "", state, source);
+		this.dyscopeName = dyscopeName;
+		this.dyscopeID = dyscopeID;
+		this.heapValue = heapValue;
 	}
 
 	public CIVLSource source() {
@@ -56,5 +61,17 @@ public class CIVLNonEmptyHeapException extends CIVLStateException {
 		ps.print(state.toString());
 		result += baos.toString();
 		return result;
+	}
+
+	public SymbolicExpression heapValue() {
+		return heapValue;
+	}
+
+	public String dyscopeName() {
+		return dyscopeName;
+	}
+
+	public int dyscopeID() {
+		return dyscopeID;
 	}
 }
