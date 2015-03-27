@@ -14,7 +14,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author siegel
  * 
  */
-public class CIVLNonEmptyHeapException extends CIVLStateException {
+public class CIVLHeapException extends CIVLStateException {
 
 	/**
 	 * Required by eclipse
@@ -23,14 +23,35 @@ public class CIVLNonEmptyHeapException extends CIVLStateException {
 	private SymbolicExpression heapValue;
 	private String dyscopeName;
 	private int dyscopeID;
+	private HeapErrorKind heapErrorKind;
+	private int heapFieldID;
+	private int heapObjectID;
 
-	public CIVLNonEmptyHeapException(ErrorKind kind, Certainty certainty,
-			State state, String dyscopeName, int dyscopeID,
-			SymbolicExpression heapValue, CIVLSource source) {
+	public enum HeapErrorKind {
+		NONEMPTY, UNREACHABLE
+	}
+
+	public CIVLHeapException(ErrorKind kind, Certainty certainty, State state,
+			String dyscopeName, int dyscopeID, SymbolicExpression heapValue,
+			HeapErrorKind heapError, CIVLSource source) {
 		super(kind, certainty, "", state, source);
 		this.dyscopeName = dyscopeName;
 		this.dyscopeID = dyscopeID;
 		this.heapValue = heapValue;
+		this.heapErrorKind = heapError;
+	}
+
+	public CIVLHeapException(ErrorKind kind, Certainty certainty, State state,
+			String dyscopeName, int dyscopeID, SymbolicExpression heapValue,
+			int fieldID, int objectID, HeapErrorKind heapError,
+			CIVLSource source) {
+		super(kind, certainty, "", state, source);
+		this.dyscopeName = dyscopeName;
+		this.dyscopeID = dyscopeID;
+		this.heapValue = heapValue;
+		this.heapErrorKind = heapError;
+		this.heapFieldID = fieldID;
+		this.heapObjectID = objectID;
 	}
 
 	public CIVLSource source() {
@@ -73,5 +94,17 @@ public class CIVLNonEmptyHeapException extends CIVLStateException {
 
 	public int dyscopeID() {
 		return dyscopeID;
+	}
+
+	public HeapErrorKind heapErrorKind() {
+		return heapErrorKind;
+	}
+
+	public int heapFieldID() {
+		return heapFieldID;
+	}
+
+	public int heapObjectID() {
+		return heapObjectID;
 	}
 }

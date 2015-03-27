@@ -70,14 +70,14 @@ public interface StateFactory {
 	 * @return the canonical version of the given state
 	 */
 	State canonic(State state, boolean collectProcesses, boolean collectScopes,
-			boolean collectHeaps) throws CIVLStateException;
+			boolean collectHeaps) throws CIVLHeapException;
 
 	/**
 	 * Returns the canonic, initial state for a CIVL Model.
 	 * 
 	 * @return the initial state
 	 */
-	State initialState(Model model) throws CIVLStateException;
+	State initialState(Model model) throws CIVLHeapException;
 
 	/**
 	 * Updates the value assigned to a variable in the state. Specifically,

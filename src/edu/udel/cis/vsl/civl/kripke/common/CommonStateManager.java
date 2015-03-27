@@ -20,8 +20,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
-import edu.udel.cis.vsl.civl.state.IF.CIVLNonEmptyHeapException;
-import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
+import edu.udel.cis.vsl.civl.state.IF.CIVLHeapException;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -208,33 +207,35 @@ public class CommonStateManager implements StateManager {
 			try {
 				state = stateFactory.canonic(state, config.collectProcesses(),
 						config.collectScopes(), config.collectHeaps());
-			} catch (CIVLNonEmptyHeapException hex) {
+			} catch (CIVLHeapException hex) {
 				// TODO state never gets canonicalized and then gmc can't figure
 				// out if it has been seen before.
-				CIVLExecutionException err = new CIVLExecutionException(
-						hex.kind(),
-						hex.certainty(),
-						process,
-						"The dyscope "
-								+ hex.dyscopeName()
-								+ "(id="
-								+ hex.dyscopeID()
-								+ ") has a non-empty heap upon termination.\nheap"
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										hex.source(), hex.state(),
-										hex.heapValue()) + "",
-						symbolicAnalyzer.stateToString(hex.state()),
-						hex.source());
+				String message = "";
+				CIVLExecutionException err;
 
-				errorLogger.reportError(err);
-			} catch (CIVLStateException stex) {
-				// TODO state never gets canonicalized and then gmc can't figure
-				// out if it has been seen before.
-				CIVLExecutionException err = new CIVLExecutionException(
-						stex.kind(), stex.certainty(), process, stex.message(),
-						symbolicAnalyzer.stateToString(stex.state()),
-						stex.source());
-
+				switch (hex.heapErrorKind()) {
+				case NONEMPTY:
+					message = "The dyscope " + hex.dyscopeName() + "(id="
+							+ hex.dyscopeID()
+							+ ") has a non-empty heap upon termination.\n";
+					break;
+				case UNREACHABLE:
+					message = "An unreachable object (mallocID="
+							+ hex.heapFieldID() + ", objectID="
+							+ hex.heapObjectID()
+							+ ") is detectd in the heap of dyscope "
+							+ hex.dyscopeName() + "(id=" + hex.dyscopeID()
+							+ ").\n";
+					break;
+				default:
+				}
+				message = "heap"
+						+ message
+						+ symbolicAnalyzer.symbolicExpressionToString(
+								hex.source(), hex.state(), hex.heapValue());
+				err = new CIVLExecutionException(hex.kind(), hex.certainty(),
+						process, message, symbolicAnalyzer.stateToString(hex
+								.state()), hex.source());
 				errorLogger.reportError(err);
 			}
 			traceStep.complete(state);

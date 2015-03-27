@@ -23,7 +23,8 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.civl.state.IF.CIVLNonEmptyHeapException;
+import edu.udel.cis.vsl.civl.state.IF.CIVLHeapException;
+import edu.udel.cis.vsl.civl.state.IF.CIVLHeapException.HeapErrorKind;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
@@ -223,7 +224,7 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public ImmutableState canonic(State state, boolean collectProcesses,
 			boolean collectScopes, boolean collectHeaps)
-			throws CIVLStateException {
+			throws CIVLHeapException {
 		ImmutableState theState = (ImmutableState) state;
 
 		// performance experiment: seems to make no difference
@@ -251,7 +252,7 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public ImmutableState collectHeaps(State state) throws CIVLStateException {
+	public ImmutableState collectHeaps(State state) throws CIVLHeapException {
 		ImmutableState theState = (ImmutableState) state;
 
 		// only collect heaps when necessary.
@@ -315,17 +316,13 @@ public class ImmutableStateFactory implements StateFactory {
 												universe.integer(objectId));
 
 								if (!symbolicUtil.isInvalidHeapObject(heapObj)) {
-									throw new CIVLStateException(
+									throw new CIVLHeapException(
 											ErrorKind.MEMORY_LEAK,
-											Certainty.CONCRETE,
-											"An unreachable object is detectd in the heap of dyscope "
-													+ dyscope.name() + "(id="
-													+ dyscopeId + ")"
-													+ ".\n  malloc ID: "
-													+ mallocId
-													+ "\n  called ID: "
-													+ objectId, theState,
-											dyscope.lexicalScope().getSource());
+											Certainty.CONCRETE, theState,
+											dyscope.name(), dyscopeId, heap,
+											mallocId, objectId,
+											HeapErrorKind.UNREACHABLE, dyscope
+													.lexicalScope().getSource());
 								}
 								// unreachable heap object
 								// updates references
@@ -376,16 +373,12 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public ImmutableState collectScopes(State state) throws CIVLStateException {
+	public ImmutableState collectScopes(State state) throws CIVLHeapException {
 		ImmutableState theState = (ImmutableState) state;
 		int oldNumScopes = theState.numDyscopes();
 		int[] oldToNew = numberScopes(theState);
 		boolean change = false;
 		int newNumScopes = 0;
-
-		// Performance debug:
-
-		// System.out.println("oldToNew: " + Arrays.toString(oldToNew));
 
 		for (int i = 0; i < oldNumScopes; i++) {
 			int id = oldToNew[i];
@@ -402,9 +395,10 @@ public class ImmutableStateFactory implements StateFactory {
 						.getValue(heapVariable.vid());
 
 				if (!(heapValue.isNull() || symbolicUtil.isEmptyHeap(heapValue))) {
-					throw new CIVLNonEmptyHeapException(ErrorKind.MEMORY_LEAK,
+					throw new CIVLHeapException(ErrorKind.MEMORY_LEAK,
 							Certainty.CONCRETE, state, scopeToBeRemoved.name(),
-							i, heapValue, heapVariable.getSource());
+							i, heapValue, HeapErrorKind.NONEMPTY,
+							heapVariable.getSource());
 				}
 			}
 		}
@@ -448,12 +442,10 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicExpression heap = dyscope.getValue(0);
 
 			if (!symbolicUtil.isEmptyHeap(heap))
-				throw new CIVLStateException(ErrorKind.MEMORY_LEAK,
-						Certainty.CONCRETE,
-						"The root dyscope d0 (id=0) has a non-empty heap "
-								+ heap.toString()
-								+ " upon termination of the program.", state,
-						dyscope.lexicalScope().getSource());
+				throw new CIVLHeapException(ErrorKind.MEMORY_LEAK,
+						Certainty.CONCRETE, state, "d0", 0, heap,
+						HeapErrorKind.NONEMPTY, dyscope.lexicalScope()
+								.getSource());
 
 		}
 		return theState;
@@ -480,7 +472,7 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public ImmutableState initialState(Model model) throws CIVLStateException {
+	public ImmutableState initialState(Model model) throws CIVLHeapException {
 		// HashMap<Integer, Map<SymbolicExpression, Boolean>> reachableMUs = new
 		// HashMap<Integer, Map<SymbolicExpression, Boolean>>();
 		// HashMap<Integer, Map<SymbolicExpression, Boolean>> reachableMUwtPtr =
