@@ -182,15 +182,16 @@ public class IOWorker extends BaseWorker {
 	/* *************************** Private Methods ************************* */
 
 	/**
-	 * Adds function calls at the end of the program to deallocate the memory
-	 * space created previously for file system and files, otherwise, there will
-	 * be memory leak problem.
+	 * Adds function calls before every return statement of the main function to
+	 * copy the file system to the output variable and deallocate the memory
+	 * space created previously for file system and files (otherwise, there will
+	 * be memory leak problem).
 	 * 
 	 * @param rootNode
 	 *            The root node of the AST.
 	 * @throws SyntaxException
 	 */
-	private void processFreeCall(ASTNode rootNode) throws SyntaxException {
+	private void transformMain(ASTNode rootNode) throws SyntaxException {
 		int numChildren = rootNode.numChildren();
 
 		for (int i = 0; i < numChildren; i++) {
@@ -687,11 +688,11 @@ public class IOWorker extends BaseWorker {
 		removeFflushCalls(rootNode);
 		if (transformationNeeded) {
 			this.renameFunctionCalls(rootNode);
-			this.processFreeCall(rootNode);
+			this.transformMain(rootNode);
 			// } else if (hasFflush) {
 			// this.renameFflushCalls(rootNode);
 		} else {
-			// remove nodes from stdio-c.cvl
+			// remove nodes from stdio.cvl
 			removeNodes(rootNode);
 			processFprintf(rootNode);
 		}
