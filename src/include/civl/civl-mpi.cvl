@@ -235,42 +235,49 @@ int CMPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 	       void* recvbuf, int recvcount, MPI_Datatype recvtype, 
 		int root, int tag, MPI_Comm comm, char * routName){
   int rank, nprocs;
-  _Bool rootInPlace = $false;
   MPI_Status status;
 
   rank = $comm_place(comm.col);
   nprocs = $comm_size(comm.col);
-  if(sendbuf == MPI_IN_PLACE){// Sendbuf is ignored at root
+  /* MPI standard requirement:
+   * For root process, sendtype must be equal to 
+   * recvtype. */
+  if(rank == root)
+    $assert (sendtype == recvtype,
+	     "%s asks for equality "
+	     "between 'sendtype' and 'recvtype'.", routName);
+  /* MPI_standard requirement: 
+   * Only root process can use MPI_IN_PLACE*/
+  if(sendbuf == MPI_IN_PLACE){
     $assert (root == rank,
 	     "Only root can replace 'sendbuf' with 'MPI_IN_PLACE'.");
-    rootInPlace = $true;
-  }
-  else 
+  } else if(root == rank) {
+    void * ptr;
+
+    $assert(sendcount == recvcount, "Root process of routine %d without using"
+	    " MPI_IN_PLACE should give the same value for recvcount and sendcount",
+	    routName);
+    ptr = CMPI_PointerAdd(recvbuf, root * recvcount, recvtype);
+    memcpy(ptr, sendbuf, recvcount * sizeofDatatype(recvtype));
+  } else
     CMPI_Send(sendbuf, sendcount, sendtype, root, tag, comm.col);
-  // sendbuf cannot be ignored
+  /* Root process receives messages and put them in right places */
   if(rank == root){
     int real_recvcount;
     int offset;
 
-    // For root process, check if sendtype is equal to 
-    // recvtype which is required by MPI standard.
-    $assert (sendtype == recvtype,
-    "%s asks for equality "
-	     "between 'sendtype' and 'recvtype'.", routName);
     for(int i=0; i<nprocs; i++){
-      // Since currently we don't support pointer addition 
-      // on non-array type obejcts, we don't need 
-      // to care about datatype extent.
-      offset = i * recvcount; 
-      if(!rootInPlace || i != root) {
-	void * ptr = CMPI_PointerAdd(recvbuf, offset, recvtype);
-
+      if(i != root) {
+	void * ptr;
+	
+	offset = i * recvcount; 
+	ptr = CMPI_PointerAdd(recvbuf, offset, recvtype);	
 	CMPI_Collective_recv(ptr, recvcount, recvtype, 
 			     i, tag, comm.col, &status, routName);
 	real_recvcount = status.size/sizeofDatatype(recvtype);
 	$assert(real_recvcount == recvcount,
-	"%s asks for equality between"
-	  " the amount of data sent and the "
+		"%s asks for equality between"
+		" the amount of data sent and the "
 		"amount of data received.", routName);
       }
     }
@@ -283,32 +290,44 @@ int CMPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 		 MPI_Datatype recvtype, int root, int tag, 
 		 MPI_Comm comm, char * routName){
   int rank, nprocs;
-  _Bool rootInPlace = $false;
 
   rank = $comm_place(comm.col);
   nprocs = $comm_size(comm.col);
+  /* MPI standard requirement:
+   * For root process, sendtype must be equal to 
+   * recvtype. */
+  if(rank == root)
+    $assert(sendtype == recvtype, "%s asks for equality "
+	    "between 'sendtype' and 'recvtype'.", routName);
+  /* MPI_standard requirement: 
+   * Only root process can use MPI_IN_PLACE*/
   if(sendbuf == MPI_IN_PLACE){
     $assert(root == rank, "Only root can replace 'sendbuf' with 'MPI_IN_PLACE'.");
-    rootInPlace = $true;
+  }else if(root == rank) {
+    void * ptr;
+    
+    $assert(sendcount == recvcounts[root], "For routine %s, recvcounts[%d] "
+	    "should be same as the sendcount of the process with rank %d.\n", 
+	    routName, root, root);
+    ptr = CMPI_PointerAdd(recvbuf, displs[rank], recvtype);
+    memcpy(ptr, sendbuf, sendcount * sizeofDatatype(recvtype));
   }else{
     CMPI_Send(sendbuf, sendcount, sendtype, root, tag, comm.col);
   }
-  //Root receive
+  /* Root process receives messages and put them in right places */
   if(rank == root){
     int real_recvcount;
     MPI_Status status;
-
-    $assert(sendtype == recvtype, "%s asks for equality "
-	    "between 'sendtype' and 'recvtype'.", routName);
+    
     for(int i=0; i<nprocs; i++){
-      if(!rootInPlace || i != root){
+      if(i != root){
 	void * ptr = CMPI_PointerAdd(recvbuf, displs[i], recvtype);
-
+	
 	CMPI_Collective_recv(ptr, recvcounts[i], 
 			     recvtype, i, tag, comm.col, &status, routName);
 	real_recvcount = status.size/sizeofDatatype(recvtype);
 	$assert(real_recvcount == recvcounts[i], "%s asks for equality between"
-	  " the amount of data sent and the "
+		" the amount of data sent and the "
 		"amount of data received.", routName);
       }
     }
@@ -321,31 +340,44 @@ int CMPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 		 void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
 		 int tag, MPI_Comm comm, char * routName){
   int rank, nprocs;
-  _Bool rootInPlace = $false;
 
   rank = $comm_place(comm.col);
   nprocs = $comm_size(comm.col);
-  if(recvbuf == MPI_IN_PLACE){// Sendbuf is ignored at root
+  /* MPI standard requirement:
+   * For root process, sendtype must be equal to 
+   * recvtype. */
+  if(rank == root)     
+    $assert(sendtype == recvtype, "MPI_Scatter() asks for equality "
+	    "between 'sendtype' and 'recvtype'.");
+  /* MPI_standard requirement: 
+   * Only root process can use MPI_IN_PLACE */
+  if(recvbuf == MPI_IN_PLACE){
     $assert(root == rank, "Only root can replace 'recvbuf' with 'MPI_IN_PLACE'.");
-    rootInPlace = $true;
+  }else if(rank == root) {
+    void * ptr;
+
+    $assert(sendcount == recvcount, "Root process of routine %d without using"
+	    " MPI_IN_PLACE should give the same value for recvcount and sendcount",
+	    routName);	   
+    ptr = CMPI_PointerAdd(sendbuf, root*recvcount, sendtype);
+    memcpy(recvbuf, ptr, sizeofDatatype(recvtype)*recvcount);
   }
+  /* Root process scatters data to other processes */
   if(rank == root){
     int offset;
 
-    // For root process, check if sendtype is equal to  
-    // recvtype which is required by MPI standard.
-    $assert(sendtype == recvtype, "MPI_Scatter() asks for equality "
-      "between 'sendtype' and 'recvtype'.");
     for(int i=0; i<nprocs; i++){
-      offset = i * sendcount;
-      if(!rootInPlace || i != root) {
-	void * ptr = CMPI_PointerAdd(sendbuf, offset, sendtype);
+      if(i != root) {
+	void * ptr;
 
+	offset = i * sendcount;
+	ptr = CMPI_PointerAdd(sendbuf, offset, sendtype);
 	CMPI_Send(ptr, sendcount, sendtype, i, tag, comm.col);
       }
     }
   }
-  if(!rootInPlace){//Already checked that (rootInPlace == true)==>(root==rank)
+  /* Non-root processes receive data */
+  if(!(root == rank)){
     int real_recvcount;
     MPI_Status status;
     
@@ -366,39 +398,48 @@ int CMPI_Scatterv(const void* sendbuf, const int sendcounts[], const
 		 int recvcount, MPI_Datatype recvtype, int root, int tag,
 		  MPI_Comm comm, char * routName){
   int rank, nprocs;
-  _Bool rootInPlace = $false;
 
   rank = $comm_place(comm.col);
   nprocs = $comm_size(comm.col);
-  if(recvbuf == MPI_IN_PLACE){
-    $assert(root == rank, "Only root can replace 'recvbuf' with 'MPI_IN_PLACE'.");
-    rootInPlace = $true;
-  }
-  if(rank == root){
-    //For process root, check sendtype and recvtype
+  /* MPI standard requirement:
+   * For root process, sendtype must be equal to 
+   * recvtype. */
+  if(rank == root)
     $assert(sendtype == recvtype, "%s asks for equality "
 	    "between 'sendtype' and 'recvtype'.", routName);
+  /* MPI_standard requirement: 
+   * Only root process can use MPI_IN_PLACE */
+  if(recvbuf == MPI_IN_PLACE){
+    $assert(root == rank, "Only root can replace 'recvbuf' with 'MPI_IN_PLACE'.");
+  } else if(rank == root) {
+    void * ptr;
 
+    $assert(sendcounts[root] == recvcount, "For routine %s, sendcounts[%d] "
+	    "should be same as the recvcount of the process with rank %d.\n", 
+	    routName, root, root);
+    ptr = CMPI_PointerAdd(sendbuf, displs[root], sendtype);
+    memcpy(recvbuf, ptr, recvcount*sizeofDatatype(recvtype));
+  }
+  /* Root process scatters data to other processes */
+  if(rank == root){
     for(int i=0; i<nprocs; i++){
-      if(!rootInPlace || i != root) {
+      if(i != root) {
 	void * ptr = CMPI_PointerAdd(sendbuf, displs[i], sendtype);
-
+	
 	CMPI_Send(ptr, sendcounts[i], sendtype, i, 
 		  tag, comm.col);
-	//CMPI_Send(sendbuf + displs[i], sendcounts[i], sendtype, i, 
-	// tag, comm.col);
       }
     }
   }
-  if(!rootInPlace){
+  if(!(root == rank)){
     MPI_Status status;
     int real_recvcount;
-
+    
     CMPI_Collective_recv(recvbuf, recvcount, recvtype, 
 			 root, tag, comm.col, &status, routName);
     real_recvcount = status.size/sizeofDatatype(recvtype);
     $assert(real_recvcount == recvcount, "Process rank:%d\n%s asks for equality between"
-      " the amount of data sent (%d) and the "
+	    " the amount of data sent (%d) and the "
 	    "amount of data received (%d).", rank, routName, real_recvcount, recvcount);
   }
   return 0;

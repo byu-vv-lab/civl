@@ -8,6 +8,7 @@
 #include <mpi.h>
 #include <civl-mpi.cvh>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Completed definition for mpi-common.h */
 struct MPI_Request{
@@ -288,7 +289,7 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[],
 		       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  int total_count;
+  int total_count = 0;
   int nprocs = $comm_size(comm.col);
   int rank = $comm_place(comm.col);
   int root = 0;
@@ -301,12 +302,16 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[]
     "MPI_Init() being called before.\n");
   $collect_check(comm.collect_checker, rank, nprocs,
 		 RED_SCATTER_TAG, root, (int)op, 2, &datatypes);
-  for(int i=0, total_count=0; i<nprocs; i++) {
+  for(int i=0; i<nprocs; i++) {
     displs[i] = total_count;
     total_count += recvcount[i];
-
   }
-  CMPI_Reduce(sendbuf, recvbuf, total_count, datatype, op, 
+  /* Note: In MPI standard, the sendbuf and recvbuf shall not be the
+   * same, the implementation here is a lower layer helper function
+   * for MPI_Reduce routine, and the reason it plays a trick here is
+   * because allocating a memory space for a void pointer is not
+   * allowed in CIVL yet. */
+  CMPI_Reduce(sendbuf, sendbuf, total_count, datatype, op, 
 	      root, RED_SCATTER_TAG, comm, "MPI_Reduce_scatter()");
   CMPI_Scatterv(sendbuf, recvcount, displs, datatype, recvbuf,
 		recvcount[rank], datatype, root, RED_SCATTER_TAG, comm,
