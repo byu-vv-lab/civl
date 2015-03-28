@@ -289,7 +289,7 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[],
 		       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  int total_count = 0;
+  int total_count, i;
   int nprocs = $comm_size(comm.col);
   int rank = $comm_place(comm.col);
   int root = 0;
@@ -302,7 +302,7 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[]
     "MPI_Init() being called before.\n");
   $collect_check(comm.collect_checker, rank, nprocs,
 		 RED_SCATTER_TAG, root, (int)op, 2, &datatypes);
-  for(int i=0; i<nprocs; i++) {
+  for(total_count = 0, i = 0; i<nprocs; i++) {
     displs[i] = total_count;
     total_count += recvcount[i];
   }
