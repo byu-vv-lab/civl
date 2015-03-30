@@ -877,11 +877,11 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			case ARRAY_WRITE:
 				result.append(arguments[0].toStringBuffer(true));
-				result.append("[");
+				result.append("{[");
 				result.append(arguments[1].toStringBuffer(false));
-				result.append(":=");
+				result.append("]=");
 				result.append(arguments[2].toStringBuffer(false));
-				result.append("]");
+				result.append("}");
 				return result.toString();
 			case CAST:
 				result.append('(');
@@ -914,7 +914,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 							@SuppressWarnings("unchecked")
 							SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
 
-							result.append("<");
+							result.append("{");
 							for (SymbolicExpression symbolicElement : symbolicCollection) {
 								result.append(symbolicExpressionToString(
 										source, state, symbolicElement, false,
@@ -922,7 +922,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 								result.append(",");
 							}
 							result.deleteCharAt(result.length() - 1);
-							result.append(">");
+							result.append("}");
 						} else {
 							result.append(arguments[0].toStringBuffer(false));
 						}
@@ -952,21 +952,21 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 							prefix, separate));
 				else
 					result.append(arguments[0].toStringBuffer(true));
-				result.append("[");
+				result.append("{");
 				for (SymbolicExpression value : (SymbolicSequence<?>) arguments[1]) {
 					if (!value.isNull()) {
 						if (first)
 							first = false;
 						else
 							result.append(", ");
-						result.append(count + ":=");
+						result.append("[" + count + "]" + "=");
 						result.append(symbolicExpressionToString(source, state,
 								value, false, "", ""));
 						// result.append(value.toStringBuffer(false));
 					}
 					count++;
 				}
-				result.append("]");
+				result.append("}");
 				return result.toString();
 			}
 			case DENSE_TUPLE_WRITE: {
@@ -974,21 +974,21 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				boolean first = true;
 
 				result.append(arguments[0].toStringBuffer(true));
-				result.append("<");
+				result.append("{");
 				for (SymbolicExpression value : (SymbolicSequence<?>) arguments[1]) {
 					if (!value.isNull()) {
 						if (first)
 							first = false;
 						else
 							result.append(", ");
-						result.append(count + ":=");
+						result.append(count + "=");
 						// result.append(value.toStringBuffer(false));
 						result.append(symbolicExpressionToString(source, state,
 								value, false, "", ""));
 					}
 					count++;
 				}
-				result.append(">");
+				result.append("}");
 				return result.toString();
 			}
 			case DIVIDE:
@@ -1000,7 +1000,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			case EQUALS:
 				result.append(arguments[0].toStringBuffer(false));
-				result.append(" == ");
+				result.append("==");
 				result.append(arguments[1].toStringBuffer(false));
 				if (atomize)
 					atomize(result);
@@ -1030,7 +1030,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case INT_DIVIDE: {
 				result.append(arguments[0].toStringBuffer(true));
 				// result.append("\u00F7");
-				result.append(" div ");
+				result.append("/");
 				result.append(arguments[1].toStringBuffer(true));
 				if (atomize)
 					atomize(result);
@@ -1054,14 +1054,14 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			case LESS_THAN:
 				result.append(arguments[0].toStringBuffer(false));
-				result.append(" < ");
+				result.append("<");
 				result.append(arguments[1].toStringBuffer(false));
 				if (atomize)
 					atomize(result);
 				return result.toString();
 			case LESS_THAN_EQUALS:
 				result.append(arguments[0].toStringBuffer(false));
-				result.append(" <= ");
+				result.append("<=");
 				result.append(arguments[1].toStringBuffer(false));
 				if (atomize)
 					atomize(result);
@@ -1085,7 +1085,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			case NEQ:
 				result.append(arguments[0].toStringBuffer(false));
-				result.append(" != ");
+				result.append("!=");
 				result.append(arguments[1].toStringBuffer(false));
 				if (atomize)
 					atomize(result);
@@ -1101,7 +1101,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			case OR:
 				processFlexibleBinary(source, state, symbolicExpression,
-						result, " || ", false, atomize);
+						result, "||", false, atomize);
 				// if (atomize)
 				// atomize(result);
 				return result.toString();
@@ -1113,7 +1113,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					atomize(result);
 				return result.toString();
 			case SUBTRACT:
-				processBinary(result, " - ", arguments[0], arguments[1], true);
+				processBinary(result, "-", arguments[0], arguments[1], true);
 				if (atomize)
 					atomize(result);
 				return result.toString();
@@ -1129,11 +1129,11 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			case TUPLE_WRITE:
 				result.append(arguments[0].toStringBuffer(true));
-				result.append("[.");
+				result.append("{.");
 				result.append(arguments[1].toStringBuffer(false));
 				result.append(":=");
 				result.append(arguments[2].toStringBuffer(false));
-				result.append("]");
+				result.append("}");
 				return result.toString();
 			case UNION_EXTRACT:
 				result.append("extract(");

@@ -180,18 +180,6 @@ import edu.udel.cis.vsl.gmc.CommandLineException;
  */
 public class FunctionTranslator {
 
-	private static final String BUNDLE_TYPE = "__bundle__";
-
-	private static final String DYNAMIC_TYPE = "__dynamic__";
-
-	private static final String HEAP_TYPE = "__heap__";
-
-	private static final String MESSAGE_TYPE = "__message__";
-
-	private static final String PROC_TYPE = "__proc__";
-
-	private static final String QUEUE_TYPE = "__queue__";
-
 	private static final String PAR_FUNC_NAME = "_par_proc";
 
 	/* ************************** Instance Fields ************************** */
@@ -4223,13 +4211,13 @@ public class FunctionTranslator {
 		}
 		// civlc.h defines $proc as struct __proc__, etc.
 		switch (tag) {
-		case PROC_TYPE:
+		case ModelConfiguration.PROC_TYPE:
 			return typeFactory.processType();
-		case HEAP_TYPE:
+		case ModelConfiguration.HEAP_TYPE:
 			return modelBuilder.heapType;
-		case DYNAMIC_TYPE:
+		case ModelConfiguration.DYNAMIC_TYPE:
 			return typeFactory.dynamicType();
-		case BUNDLE_TYPE:
+		case ModelConfiguration.BUNDLE_TYPE:
 			return modelBuilder.bundleType;
 		default:
 		}
@@ -4252,10 +4240,10 @@ public class FunctionTranslator {
 		}
 		result.complete(civlFields);
 		switch (tag) {
-		case MESSAGE_TYPE:
+		case ModelConfiguration.MESSAGE_TYPE:
 			modelBuilder.messageType = result;
 			break;
-		case QUEUE_TYPE:
+		case ModelConfiguration.QUEUE_TYPE:
 			modelBuilder.queueType = result;
 			break;
 		case ModelConfiguration.PTHREAD_POOL:

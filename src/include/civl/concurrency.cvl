@@ -14,7 +14,7 @@
 /* A data type representing a global barrier which must be operated by local
  * barriers.  Completes the declaration of this type in civlc-common.h.
  */
-struct __gbarrier__ {
+struct $gbarrier {
   int nprocs;
   $proc proc_map[]; // initialized as all $proc_null.
   _Bool in_barrier[]; // initialized as all false.
@@ -26,14 +26,14 @@ struct __gbarrier__ {
  * a handle of a global barrier.
  * Completes the declaration of this type in civlc-common.h.
  */
-struct __barrier__ {
+struct $barrier {
   int place;
   $gbarrier gbarrier; // initialized as 0.
 };
 
 /******************* Collective Arrive Checking Records *******************/
 /* Record entry */
-struct __collect_record__{
+struct $collect_record {
   int routine_tag;
   int root;
   int op;
@@ -44,13 +44,13 @@ struct __collect_record__{
 };
 
 /* Global records queue */
-struct __gcollect_checker__ {
+struct $gcollect_checker {
   int length;
   $collect_record records[];
 };
 
 /* Local handle of the global records queue */
-struct __collect_checker__{
+struct $collect_checker {
   $gcollect_checker checker;
 };
 

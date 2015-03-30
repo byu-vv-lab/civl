@@ -9,7 +9,7 @@
 #include <civlc.cvh>
 
 /* Completes the declaration of this type in civlc.cvh */
-struct __int_iter__ {
+struct $int_iter {
   int size;
   int content[];
   int index; //initialized as 0

@@ -438,7 +438,15 @@ public class CommonEvaluator implements Evaluator {
 	Evaluation dereference(CIVLSource source, State state, String process,
 			SymbolicExpression pointer, boolean checkOutput,
 			boolean analysisOnly) throws UnsatisfiablePathConditionException {
-		if (pointer.operator() != SymbolicOperator.CONCRETE) {
+		if (!pointer.type().equals(this.pointerType)) {
+			CIVLExecutionException se = new CIVLExecutionException(
+					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
+					"Attempt to deference an invalid pointer",
+					this.symbolicAnalyzer.stateToString(state), source);
+
+			errorLogger.reportError(se);
+			throw new UnsatisfiablePathConditionException();
+		} else if (pointer.operator() != SymbolicOperator.CONCRETE) {
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
 					"Attempt to deference a pointer that is never initialized",

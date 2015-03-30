@@ -229,8 +229,8 @@ public class CommonStateManager implements StateManager {
 					break;
 				default:
 				}
-				message = "heap"
-						+ message
+				message = message
+						+ "heap"
 						+ symbolicAnalyzer.symbolicExpressionToString(
 								hex.source(), hex.state(), hex.heapValue());
 				err = new CIVLExecutionException(hex.kind(), hex.certainty(),

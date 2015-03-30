@@ -15,7 +15,7 @@
  * data is encapsulated inside this value; no external allocation
  * is used.  Completes the declaration of this structure type in 
  * civlc-common.h */ 
-struct __queue__ {
+struct $queue {
   int length;
   $message messages[];
 };
@@ -24,7 +24,7 @@ struct __queue__ {
 /* A global communicator datatype which must be operated by local communicators.
  * This communicator type has the same meaning as the communicator type
  * in MPI.  Completes the declaration of this type in civlc-common.h */
-struct __gcomm__ {
+struct $gcomm {
   int nprocs; // number of processes
   _Bool isInit[]; // if the local comm has been initiated
   $queue buf[][]; // message buffers
@@ -36,7 +36,7 @@ struct __gcomm__ {
  * a set of processes which have ranks in common.
  * Completes the declaration of this type in civlc-common.h.
  */
-struct __comm__ {
+struct $comm {
   int place;
   $gcomm gcomm;
 };

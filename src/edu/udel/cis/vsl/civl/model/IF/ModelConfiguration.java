@@ -88,30 +88,42 @@ public final class ModelConfiguration {
 	 * The name of __barrier__ type, which is the object type of the handle
 	 * $barrier.
 	 */
-	public static final String BARRIER_TYPE = "__barrier__";
+	public static final String BARRIER_TYPE = "$barrier";
+
+	public static final String BUNDLE_TYPE = "$bundle";
+
+	public static final String DYNAMIC_TYPE = "$dynamic";
+
+	public static final String HEAP_TYPE = "$heap";
+
+	public static final String MESSAGE_TYPE = "$message";
+
+	public static final String PROC_TYPE = "$proc";
+
+	public static final String QUEUE_TYPE = "$queue";
 
 	/**
-	 * The name of __comm__ type, which is the object type of the handle $comm.
+	 * The name of $comm type, which is the object type of the handle $comm.
 	 */
-	public static final String COMM_TYPE = "__comm__";
+	public static final String COMM_TYPE = "$comm";
 
 	/**
 	 * The name of __gbarrier__ type, which is the object type of the handle
 	 * $gbarrier.
 	 */
-	public static final String GBARRIER_TYPE = "__gbarrier__";
+	public static final String GBARRIER_TYPE = "$gbarrier";
 
 	/**
 	 * The name of __gcomm__ type, which is the object type of the handle
 	 * $gcomm.
 	 */
-	public static final String GCOMM_TYPE = "__gcomm__";
+	public static final String GCOMM_TYPE = "$gcomm";
 
 	/**
 	 * The name of __int_iter__ type, which is the object type of the handle
 	 * $int_iter.
 	 */
-	public static final String INT_ITER_TYPE = "__int_iter__";
+	public static final String INT_ITER_TYPE = "$int_iter";
 
 	/**
 	 * The file type $file.
@@ -131,17 +143,17 @@ public final class ModelConfiguration {
 	/**
 	 * The <code>__collect_record__</code> type
 	 */
-	public static final String COLLECT_RECORD_TYPE = "__collect_record__";
+	public static final String COLLECT_RECORD_TYPE = "$collect_record";
 
 	/**
 	 * The <code>__gcollect_checker__</code> type
 	 */
-	public static final String GCOLLECT_CHECKER_TYPE = "__gcollect_checker__";
+	public static final String GCOLLECT_CHECKER_TYPE = "$gcollect_checker";
 
 	/**
 	 * The <code>__collect_checker__</code> type
 	 */
-	public static final String COLLECT_CHECKER_TYPE = "__collect_checker__";
+	public static final String COLLECT_CHECKER_TYPE = "$collect_checker";
 
 	/* libraries */
 
