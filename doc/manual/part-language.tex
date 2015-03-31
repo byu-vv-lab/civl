@@ -1107,14 +1107,12 @@ to input variables.  They may only be written to, never read.  They
 are used primarily in functional equivalence checking.
 
 \section{Assertions and assumptions}
-
+\label{sec:assertionAndAssumption}
 \subsection{Assertions: \cassert}
 
-
-An \emph{assert statement} has the either of the forms below
+The system function \cassert\ (provided by the \texttt{civlc} header) has the signature
 \begin{verbatim}
-  $assert expr;
-  $assert expr : msg, msg_arg0, msg_arg1, ... ;
+void $assert(_Bool expr, ...);
 \end{verbatim}
 
 It takes an boolean type expression and a number of optional expressions which are used to construct an error message.
@@ -1123,40 +1121,38 @@ expressions, and may include universal or existential quantifiers
 (see below), and the boolean values  \ctrue{} and \cfalse{}.
 
 During verification, the assertion is checked.  If it cannot be proved
-that it must hold, a violation is reported. If additional arguments are present, then a specific message is prented as well if the assertion is violated.  These
+that it must hold, a violation is reported. If additional arguments are present, then a specific message is printed as well if the assertion is violated.  These
 additional arguments are similar in form to those used in C's
 \texttt{printf} statement: a format string, followed by some number of
 arguments which are evaluated and substituted for successive codes in
 the format string.  For example,
 \begin{verbatim}
-  $assert x<=B : "x-coordinate %f exceeds bound %f", x, B; 
+  $assert(x<=B, "x-coordinate %f exceeds bound %f", x, B); 
 \end{verbatim}
 
-%The C function \texttt{assert}, included in the standard library
-%\texttt{assert.h}, is identical to \cassert.  Programmers are
-%free to use either one.
-
+If \texttt{x=3} and \texttt{B=2}, then the above assertion will be violated and CIVL would print the error message ``x-coordinate 3 exceeds bound 2".
 
 \subsection{Assume statements: \cassume}
 
-An \emph{assume statement} has the form
+The system function \cassume\ (provided by the \texttt{civlc} header) has the signature
 \begin{verbatim}
-  $assume expr;
+void $assume(_Bool expr);
 \end{verbatim}
-During verification, the assumed expression is assumed to hold.  If
+
+During verification, the given expression is assumed to hold.  If
 this leads to a contradiction on some execution, that execution is
 simply ignored.  It never reports a violation, it only restricts the
 set of possible executions that will be explored by the verification
 algorithm.
 
-Like as assertion statement, as assume statement can be used any place
-a statement is expected.  In addition, as assume statement can be used
+Like an assertion call, an assume call can be used any place
+a statement is expected.  In addition, an assume call can be used
 in file scope to place restrictions on the global variables of the
 programs.  For example,
 \begin{verbatim}
 $input int B;
 $input int N;
-$assume 0<=N && N<=B;
+$assume(0<=N && N<=B);
 \end{verbatim}
 declares \texttt{N} and \texttt{B} to be integer inputs and restricts
 consideration to inputs satisfying $0\leq\texttt{N}\leq\texttt{B}$.
@@ -1473,6 +1469,16 @@ CIVL-C headers have the suffix \texttt{.cvh}. Here is the list of standard libra
 The header \texttt{civlc.cvh} declares four types, three macros and  several functions. The types declared are \texttt{size\_t}, \texttt{\$proc},
 \texttt{\$scope} and \texttt{\$int\_iter}. The declared macros are \texttt{\$true}, \texttt{\$false} and \texttt{NULL}. The functions provided in this header
 will be described in the following.
+
+\subsubsection{The \cassert\ and \cassume\ functions}
+\label{subsubsec:wait}
+The \cassert\ and \cassume \ functions have the following signatures
+\begin{verbatim}
+  void $assert(_Bool expr, ...);
+  void $assume(_Bool expr);
+\end{verbatim}
+
+Information about them could be found in Section~\ref{sec:assertionAndAssumption}.
 
 \subsubsection{The \cwait\ function}
 \label{subsubsec:wait}
