@@ -304,6 +304,8 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		Reasoner reasoner;
 		ResultType resultType;
 
+		if (symbolicUtil.isNullPointer(pointer))
+			return state;
 		if (!pointer.operator().equals(SymbolicOperator.CONCRETE)
 				|| !symbolicUtil.isValidPointer(pointer)) {
 			errorLogger.reportError(new CIVLExecutionException(
@@ -312,8 +314,6 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 					arguments[0].getSource()));
 			return state;
 		}
-		if (symbolicUtil.isNullPointer(pointer))
-			return state;
 		realType = symbolicAnalyzer.getFlattenedArrayElementType(state,
 				ptrSource, pointer);
 		realSymType = realType.getDynamicType(universe);
