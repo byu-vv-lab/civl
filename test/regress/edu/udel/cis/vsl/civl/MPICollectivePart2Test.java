@@ -67,12 +67,6 @@ public class MPICollectivePart2Test {
 	}
 
 	@Test
-	public void alltoallv_ex09() {
-		assertTrue(ui.run("verify -enablePrintf=false -input_NPROCS=6 ",
-				filename("c_ex09.c")));
-	}
-
-	@Test
 	public void gatherv_ex13() {
 		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("c_ex13.c")));
 	}
@@ -80,11 +74,6 @@ public class MPICollectivePart2Test {
 	@Test
 	public void alltoallv() {
 		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("alltoallv.c")));
-	}
-
-	@Test
-	public void alltoallw() {
-		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("alltoallw.c")));
 	}
 
 	@Test
@@ -143,12 +132,6 @@ public class MPICollectivePart2Test {
 	public void barrierScatter() {
 		assertFalse(ui.run("verify -input_NPROCS=5",
 				filename("barrierScatter.c")));
-	}
-	
-	@Test
-	public void factorial(){
-		assertTrue(ui.run("verify -input_NPROCS=5",
-				filename("factorial.c")));
 	}
 	
 	@Test

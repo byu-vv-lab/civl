@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
@@ -40,5 +41,21 @@ public class MPICollectiveDevTest {
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
 		rootDir = null;
+	}
+
+	@Test
+	public void alltoallw() {
+		assertTrue(ui.run("verify -input_NPROCS=6 ", filename("alltoallw.c")));
+	}
+
+	@Test
+	public void alltoallv_ex09() {
+		assertTrue(ui.run("verify -enablePrintf=false -input_NPROCS=6 ",
+				filename("c_ex09.c")));
+	}
+
+	@Test
+	public void factorial() {
+		assertTrue(ui.run("verify -input_NPROCS=5", filename("factorial.c")));
 	}
 }
