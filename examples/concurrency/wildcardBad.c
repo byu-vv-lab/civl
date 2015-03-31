@@ -22,4 +22,5 @@ void main(int argc, char * argv[]){
     MPI_Recv(&msg, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
     MPI_Recv(&msg, 1, MPI_INT, 1, 1, MPI_COMM_WORLD, &status);
   }
+  MPI_Finalize();
 }
