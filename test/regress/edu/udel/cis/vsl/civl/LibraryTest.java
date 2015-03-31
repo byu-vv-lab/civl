@@ -112,8 +112,8 @@ public class LibraryTest {
 
 	@Test
 	public void barrier() throws ABCException {
-		assertTrue(ui
-				.run("verify", "-inputB=5", filename(CIVLC, "barrier.cvl")));
+		assertTrue(ui.run("verify", "-inputB=5 -showSavedStates",
+				filename(CIVLC, "barrier.cvl")));
 	}
 
 	@Test
@@ -180,6 +180,11 @@ public class LibraryTest {
 	@Test
 	public void random() throws ABCException {
 		assertFalse(ui.run("verify", filename(STDLIB, "random.cvl")));
+	}
+
+	@Test
+	public void rand_r() throws ABCException {
+		assertTrue(ui.run("verify -D_LINUX", filename(STDLIB, "rand_r.c")));
 	}
 
 	@Test
