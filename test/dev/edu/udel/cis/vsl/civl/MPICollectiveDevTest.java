@@ -58,4 +58,16 @@ public class MPICollectiveDevTest {
 	public void factorial() {
 		assertTrue(ui.run("verify -input_NPROCS=5", filename("factorial.c")));
 	}
+
+	@Test
+	public void unsafe() {
+		assertFalse(ui.run("verify -input_NPROCS=2",
+				filename("../simple/unsafe.c")));
+	}
+
+	@Test
+	public void noninterference2() {
+		assertFalse(ui.run("verify -input_NPROCS=2",
+				filename("../simple/noninterference2.c")));
+	}
 }

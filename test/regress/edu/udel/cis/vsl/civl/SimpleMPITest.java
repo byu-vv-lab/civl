@@ -79,10 +79,7 @@ public class SimpleMPITest {
 		assertFalse(ui.run("verify -input_NPROCS=5", filename("ooobcast.c")));
 	}
 
-	@Test
-	public void unsafe() {
-		assertFalse(ui.run("verify -input_NPROCS=2", filename("unsafe.c")));
-	}
+
 
 	@Test
 	public void reduce() {
@@ -123,12 +120,6 @@ public class SimpleMPITest {
 	public void noninterference() {
 		assertFalse(ui.run("verify -input_NPROCS=2",
 				filename("noninterference.c")));
-	}
-
-	@Test
-	public void noninterference2() {
-		assertFalse(ui.run("verify -input_NPROCS=2",
-				filename("noninterference2.c")));
 	}
 
 	@Test
