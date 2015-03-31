@@ -14,7 +14,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
-import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -113,8 +112,8 @@ public interface Evaluator {
 	 *         of the function that the given function pointer refers to.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	Triple<State, CIVLFunction, Integer> evaluateFunctionIdentifier(State state,
-			int pid, Expression functionPointer, CIVLSource source)
+	Triple<State, CIVLFunction, Integer> evaluateFunctionIdentifier(
+			State state, int pid, Expression functionPointer, CIVLSource source)
 			throws UnsatisfiablePathConditionException;
 
 	Evaluation initialValueOfStateVariable(CIVLSource source, State state,
@@ -170,24 +169,6 @@ public interface Evaluator {
 	 */
 	Evaluation getStringExpression(State state, String process,
 			CIVLSource source, SymbolicExpression charPointer)
-			throws UnsatisfiablePathConditionException;
-
-	/**
-	 * Computes the reachable memory units of an expression recursively and adds
-	 * those memory units to the given set.
-	 * 
-	 * @param state
-	 *            The state where the computation happens.
-	 * @param pid
-	 *            The ID of the process that the expression belongs to.
-	 * @param expression
-	 *            The expression whose impact memory units are to be computed.
-	 * @param memoryUnits
-	 *            The set of memory units reachable by the expression.
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	MemoryUnitSet memoryUnitsOfExpression(State state, int pid,
-			Expression expression, MemoryUnitSet muSet)
 			throws UnsatisfiablePathConditionException;
 
 	/**

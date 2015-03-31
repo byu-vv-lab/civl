@@ -485,7 +485,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			result.append("&<d");
 			result.append(dyscopeId);
 			result.append(">");
-			result.append("heap<");
+			result.append("heap.malloc");
 			return new Triple<>(0, type, result.toString());
 		} else if (reference.isArrayElementReference()) {
 			ArrayElementReference arrayEleRef = (ArrayElementReference) reference;
@@ -499,7 +499,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case 1:
 				result.append(parentResult.third);
 				result.append(index);
-				result.append('>');
+				result.append(']');
 				return new Triple<>(2, parentResult.second, result.toString());
 			case 2:
 				result.append(parentResult.third);
@@ -545,7 +545,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 				result.append(parentResult.third);
 				result.append(index.getInt());
-				result.append(',');
+				result.append('[');
 				return new Triple<>(1, heapObjType, result.toString());
 			case 1:
 			case 2:
@@ -692,7 +692,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			int dyscopeId, vid;
 
 			if (!pointerType.name().getString().equalsIgnoreCase("pointer")) {
-				return pointer.toString();
+				return this.symbolicExpressionToString(source, state, pointer,
+						"", "");
 			}
 			dyscopeId = symbolicUtil.getDyscopeId(source, pointer);
 			vid = symbolicUtil.getVariableId(source, pointer);
