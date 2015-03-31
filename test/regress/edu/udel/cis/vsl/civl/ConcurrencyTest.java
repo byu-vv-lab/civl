@@ -177,8 +177,8 @@ public class ConcurrencyTest {
 	@Test
 	public void wildcardBad() {
 		assertFalse(ui.run("verify", "-enablePrintf=false",
-				filename("wildcardBad.cvl")));
-		ui.run("replay", filename("wildcardBad.cvl"));
+				filename("wildcardBad.c")));
+		ui.run("replay", filename("wildcardBad.c"));
 	}
 
 	@AfterClass
