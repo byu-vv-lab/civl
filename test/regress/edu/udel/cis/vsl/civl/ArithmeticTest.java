@@ -67,8 +67,7 @@ public class ArithmeticTest {
 
 	@Test
 	public void matmat() {
-		assertTrue(ui.run("verify", "-inputBOUND=3", "-simplify=false",
-				filename("matmat.cvl")));
+		assertTrue(ui.run("verify", "-inputBOUND=3", filename("matmat.cvl")));
 	}
 
 	@Test
@@ -152,7 +151,7 @@ public class ArithmeticTest {
 	public void quadratic2() {
 		assertTrue(ui.run("verify", filename("quadratic2.cvl")));
 	}
-	
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
