@@ -249,6 +249,21 @@ public class IOWorker extends BaseWorker {
 							.getIdentifier().name();
 
 					if (funcName.equals(EXIT) || funcName.equals(CIVL_EXIT)) {
+
+						// dont transform $exit() when it is in the function
+						// body of exit() in stdlib.cvl
+						if (funcName.equals(CIVL_EXIT)
+								&& node.getSource().getFirstToken()
+										.getSourceFile().getName()
+										.equals("stdlib.cvl")
+								&& node.parent().parent() instanceof FunctionDefinitionNode) {
+							FunctionDefinitionNode funcDef = (FunctionDefinitionNode) node
+									.parent().parent();
+
+							if (funcDef.getName().equals(EXIT))
+								return;
+						}
+
 						int nodeIndex = node.childIndex();
 						ASTNode parent = node.parent();
 						Source source = node.getSource();
@@ -733,6 +748,9 @@ public class IOWorker extends BaseWorker {
 			removeNodes(rootNode);
 			processFprintf(rootNode);
 		}
-		return astFactory.newAST(rootNode, unit.getSourceFiles());
+		AST result = astFactory.newAST(rootNode, unit.getSourceFiles());
+
+		result.prettyPrint(System.out, false);
+		return result;
 	}
 }
