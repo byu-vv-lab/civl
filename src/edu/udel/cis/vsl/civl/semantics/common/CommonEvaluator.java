@@ -505,7 +505,7 @@ public class CommonEvaluator implements Evaluator {
 								symbolicAnalyzer.stateToString(state),
 								ErrorKind.DEREFERENCE,
 								"Illegal pointer dereference: "
-										+ e.getMessage() + source.getSummary());
+										+ e.getMessage());
 						throw new UnsatisfiablePathConditionException();
 					}
 					return new Evaluation(state, deref);
@@ -1594,9 +1594,10 @@ public class CommonEvaluator implements Evaluator {
 			String name;
 			StringObject nameObj;
 
-			if (variable.scope().id() == 0 && variable.isInput())
-				name = "X" + vid;
-			else
+			if (variable.scope().id() == 0 && variable.isInput()) {
+				name = "X" + stateFactory.numSymbolicConstants(state);
+				state = stateFactory.incrementNumSymbolicConstants(state);
+			} else
 				name = "X_s" + dyscopeId + "v" + vid;
 			nameObj = universe.stringObject(name);
 			result = universe.symbolicConstant(nameObj, dynamicType);
