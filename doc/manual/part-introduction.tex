@@ -447,4 +447,52 @@ The program has a subtle defect, which only manifests on very specific
 interleavings of the threads.   This defect can be found using
 \texttt{civl verify}.
 
+\section{Verifying C programs}
+CIVL can be used to verify C programs, with a number of transformers. One can also insert macros to C programs to tune it for verification, which, most of time, involves defining input variables. This is usually accomplished by the default macro \texttt{\_CIVL}.
+
+For example, Figure~\ref{fig:CIVLmacro} is a simple program that computes the sum of a number of positive numbers. The program can be compiled by any C compiler, as long as no \texttt{\_CIVL} macro is defined in the command for compiling. When CIVL runs this program, it will automatically have \texttt{\_CIVL} defined and thus \texttt{N} becomes an input variable and \texttt{sum} becomes an output variable and there is an assertion to check the correctness the sum computed by the program.
+
+\begin{figure}[H]
+\begin{small}
+\begin{verbatim}
+#ifdef _CIVL
+#include<civlc.cvh>
+#endif
+
+#ifdef _CIVL
+$input int N;
+$output int sum;
+#else
+#define N 100
+int sum;
+#endif
+
+void main() {
+  int localsum = 0;
+  for (int i = 1; i <= N; i++) {
+	  localsum+=i;
+  } 
+  sum = localsum;
+#ifdef _CIVL
+  $assert(sum == (N+1)*N/2);
+#endif
+}
+
+\end{verbatim}
+  \end{small}
+  \caption{\texttt{\_CIVL}: the default macro}
+  \label{fig:CIVLmacro}
+\end{figure}
+
+\subsection{Verifying CUDA C programs}
+
+\subsection{Verifying MPI C programs}
+
+
+\subsection{Verifying OpenMP C programs}
+
+
+\subsection{Verifying Pthreads C programs}
+
+
 
