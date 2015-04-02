@@ -748,9 +748,10 @@ public class IOWorker extends BaseWorker {
 			removeNodes(rootNode);
 			processFprintf(rootNode);
 		}
+
 		AST result = astFactory.newAST(rootNode, unit.getSourceFiles());
 
-		result.prettyPrint(System.out, false);
+		// result.prettyPrint(System.out, false);
 		return result;
 	}
 }

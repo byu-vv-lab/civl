@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.semantics.common;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -289,7 +290,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	@Override
 	public String symbolicExpressionToString(CIVLSource source, State state,
 			SymbolicExpression symbolicExpression) {
-		return this.symbolicExpressionToString(source, state,
+		return this.symbolicExpressionToString(source, state, null,
 				symbolicExpression, "", "| ");
 	}
 
@@ -340,8 +341,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				first = false;
 			else
 				buffer.append(opString);
-			buffer.append(symbolicExpressionToString(source, state, arg, first,
-					"", "", false));
+			buffer.append(symbolicExpressionToString(source, state, null, arg,
+					first, "", "", false));
 		}
 	}
 
@@ -405,7 +406,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			result.append(prefix + "| | " + variable.name() + " = ");
 			result.append(symbolicExpressionToString(variable.getSource(),
-					state, value, prefix + "| | ", "| "));
+					state, variable.type(), value, prefix + "| | ", "| "));
 			result.append("\n");
 		}
 		return result;
@@ -692,8 +693,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			int dyscopeId, vid;
 
 			if (!pointerType.name().getString().equalsIgnoreCase("pointer")) {
-				return this.symbolicExpressionToString(source, state, pointer,
-						"", "");
+				return this.symbolicExpressionToString(source, state, null,
+						pointer, "", "");
 			}
 			dyscopeId = symbolicUtil.getDyscopeId(source, pointer);
 			vid = symbolicUtil.getVariableId(source, pointer);
@@ -730,9 +731,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	}
 
 	private String symbolicExpressionToString(CIVLSource source, State state,
-			SymbolicExpression symbolicExpression, String prefix,
-			String separate) {
-		return this.symbolicExpressionToString(source, state,
+			CIVLType type, SymbolicExpression symbolicExpression,
+			String prefix, String separate) {
+		return this.symbolicExpressionToString(source, state, type,
 				symbolicExpression, false, prefix, separate, true);
 	}
 
@@ -793,8 +794,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private String symbolicExpressionToString(CIVLSource source, State state,
-			SymbolicExpression symbolicExpression, boolean atomize,
-			String prefix, String separate, boolean showType) {
+			CIVLType civlType, SymbolicExpression symbolicExpression,
+			boolean atomize, String prefix, String separate, boolean showType) {
 		StringBuffer result = new StringBuffer();
 		SymbolicType type = symbolicExpression.type();
 		SymbolicType charType = typeFactory.charType().getDynamicType(universe);
@@ -920,12 +921,19 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					if (objectKind == SymbolicObjectKind.EXPRESSION_COLLECTION) {
 						@SuppressWarnings("unchecked")
 						SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
+						int elementIndex = 0;
 
 						result.append("{");
 						for (SymbolicExpression symbolicElement : symbolicCollection) {
+							Pair<String, CIVLType> elementNameAndType = this
+									.subType(civlType, elementIndex++);
+
+							if (elementNameAndType.left != null)
+								result.append("." + elementNameAndType.left
+										+ "=");
 							result.append(symbolicExpressionToString(source,
-									state, symbolicElement, false, "", "",
-									false));
+									state, elementNameAndType.right,
+									symbolicElement, false, "", "", false));
 							result.append(",");
 						}
 						result.deleteCharAt(result.length() - 1);
@@ -950,11 +958,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case DENSE_ARRAY_WRITE: {
 				int count = 0;
 				boolean first = true;
+				int eleIndex = 0;
 
 				if (arguments[0] instanceof SymbolicExpression)
 					result.append(this.symbolicExpressionToString(source,
-							state, (SymbolicExpression) arguments[0], atomize,
-							prefix, separate, false));
+							state, null, (SymbolicExpression) arguments[0],
+							atomize, prefix, separate, false));
 				else
 					result.append(arguments[0].toStringBuffer(true));
 				result.append("{");
@@ -966,6 +975,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 							result.append(", ");
 						result.append("[" + count + "]" + "=");
 						result.append(symbolicExpressionToString(source, state,
+								this.subType(civlType, eleIndex++).right,
 								value, false, "", "", false));
 						// result.append(value.toStringBuffer(false));
 					}
@@ -975,23 +985,27 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			}
 			case DENSE_TUPLE_WRITE: {
-				int count = 0;
 				boolean first = true;
+				int eleIndex = 0;
 
 				result.append(arguments[0].toStringBuffer(true));
 				result.append("{");
 				for (SymbolicExpression value : (SymbolicSequence<?>) arguments[1]) {
 					if (!value.isNull()) {
+						Pair<String, CIVLType> eleNameAndType = this.subType(
+								civlType, eleIndex++);
+
 						if (first)
 							first = false;
 						else
 							result.append(", ");
-						result.append(count + "=");
+						result.append("." + eleNameAndType.left + "=");
+						// result.append(count + "=");
 						// result.append(value.toStringBuffer(false));
 						result.append(symbolicExpressionToString(source, state,
-								value, false, "", "", false));
+								eleNameAndType.right, value, false, "", "",
+								false));
 					}
-					count++;
 				}
 				result.append("}");
 				return result.toString();
@@ -1167,6 +1181,32 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		}
 	}
 
+	// TODO finish me
+	/**
+	 * Returns the i-th sub-type (and its name if it is a struct or union field)
+	 * of the given type. If the given type is an array type, then return the
+	 * element type; if the given type is a struct or union type, then returns
+	 * the i-th field type. Returns null for other types.
+	 * 
+	 * @param type
+	 * @param i
+	 * @return
+	 */
+	private Pair<String, CIVLType> subType(CIVLType type, int i) {
+		if (type != null)
+			if (type instanceof CIVLArrayType) {
+				CIVLArrayType arrayType = (CIVLArrayType) type;
+
+				return new Pair<>(null, arrayType.elementType());
+			} else if (type instanceof CIVLStructOrUnionType) {
+				CIVLStructOrUnionType structOrUnionType = (CIVLStructOrUnionType) type;
+				StructOrUnionField field = structOrUnionType.getField(i);
+
+				return new Pair<>(field.name().name(), field.type());
+			}
+		return new Pair<>(null, null);
+	}
+
 	/**
 	 * Constructs the pretty presentation of a heap.
 	 * 
@@ -1219,6 +1259,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			NumericExpression fieldLength = universe.length(heapField);
 			int length;
 			CIVLSource mallocSource;
+			CIVLType fieldTypeElement = heapType.getMalloc(i)
+					.getStaticElementType();
 
 			if (fieldLength.isZero())
 				continue;
@@ -1238,13 +1280,26 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			for (int j = 0; j < length; j++) {
 				SymbolicExpression heapObject = universe.arrayRead(heapField,
 						universe.integer(j));
+				IntegerNumber heapObjLenNumber = ((IntegerNumber) reasoner
+						.extractNumber(universe.length(heapObject)));
+				CIVLType heapObjType = null;
 
+				if (heapObjLenNumber != null) {
+					int heapObjSize = ((IntegerNumber) reasoner
+							.extractNumber(universe.length(heapObject)))
+							.intValue();
+
+					heapObjType = this.typeFactory.completeArrayType(
+							fieldTypeElement, this.modelFactory
+									.integerLiteralExpression(mallocSource,
+											BigInteger.valueOf(heapObjSize)));
+				}
 				result.append("\n");
 				result.append(objectPrefix);
 				result.append(j);
 				result.append(": ");
 				result.append(this.symbolicExpressionToString(source, state,
-						heapObject, false, "", "", true));
+						heapObjType, heapObject, false, "", "", true));
 			}
 		}
 		if (result.length() == 0)
