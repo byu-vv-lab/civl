@@ -177,29 +177,6 @@ public class ImmutableState implements State {
 	 */
 	ImmutableState simplifiedState = null;
 
-	// TODO use arrays instead of maps
-	// arrays of memory unit sets:
-	// reachableNonPtrReadOnly
-	// reachableNonPtrWritable
-	// reachablePtrReadOnly
-	// reachablePtrWritable
-	// Create new TYPE: ImmutableMemoryUnitSet (add, union, intersect,
-	// membership, etc) over-approximation
-	// these are completely determined by the state
-
-	/**
-	 * reachable memory units without pointers: PID to Map of memory units and
-	 * access permission( true: writable, false: read-only). If a pointer is not
-	 * in the map, it means that pointer (pointers to variables) is not
-	 * reachable from the process.
-	 * 
-	 */
-	// // directly reachable
-	// Map<Integer, Map<SymbolicExpression, Boolean>> reachableMUnonPtr;
-	//
-	// // pointer reachable = directly reachable + anything else
-	// Map<Integer, Map<SymbolicExpression, Boolean>> reachableMUPtr;
-
 	/* *************************** Static Methods ************************** */
 
 	/**
@@ -240,21 +217,6 @@ public class ImmutableState implements State {
 		}
 		return result;
 	}
-
-	// static ImmutableState newState(ImmutableState state,
-	// ImmutableMemoryUnitSet[] reachableNonPtrReadonly,
-	// ImmutableMemoryUnitSet[] reachableNonPtrWritable,
-	// ImmutableMemoryUnitSet[] reachablePtrReadonly,
-	// ImmutableMemoryUnitSet[] reachablePtrWritable) {
-	// ImmutableState result = ImmutableState
-	// .newState(state, null, null, null);
-	//
-	// result.reachableNonPtrReadonly = reachableNonPtrReadonly;
-	// result.reachableNonPtrWritable = reachableNonPtrWritable;
-	// result.reachablePtrReadonly = reachablePtrReadonly;
-	// result.reachablePtrWritable = reachablePtrWritable;
-	// return result;
-	// }
 
 	/* **************************** Constructors *************************** */
 
@@ -817,18 +779,6 @@ public class ImmutableState implements State {
 		return scope.getValue(variableID);
 	}
 
-	// @Override
-	// public Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer(
-	// int pid) {
-	// return this.reachableMUnonPtr.get(pid);
-	// }
-	//
-	// @Override
-	// public Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer(
-	// int pid) {
-	// return this.reachableMUPtr.get(pid);
-	// }
-
 	/* ************************ Methods from Object ************************ */
 
 	@Override
@@ -880,25 +830,4 @@ public class ImmutableState implements State {
 	public String toString() {
 		return "State " + identifier();
 	}
-
-	// @Override
-	// public MemoryUnitSet reachableMemUnitsPtrReadonly(int pid) {
-	// return this.reachablePtrReadonly[pid];
-	// }
-	//
-	// @Override
-	// public MemoryUnitSet reachableMemUnitsNonPtrReadonly(int pid) {
-	// return this.reachableNonPtrReadonly[pid];
-	// }
-	//
-	// @Override
-	// public MemoryUnitSet reachableMemUnitsPtrWritable(int pid) {
-	// return this.reachablePtrWritable[pid];
-	// }
-	//
-	// @Override
-	// public MemoryUnitSet reachableMemUnitsNonPtrWritable(int pid) {
-	// return this.reachableNonPtrWritable[pid];
-	// }
-
 }

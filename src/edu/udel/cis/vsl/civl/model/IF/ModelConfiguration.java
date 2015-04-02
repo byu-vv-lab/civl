@@ -50,6 +50,12 @@ public final class ModelConfiguration {
 	public static final String BROKEN_TIME_VARIABLE = "_broken_time_var";
 
 	/**
+	 * The variable to store the number of symbolic constants appearing in the
+	 * state
+	 */
+	public static final String SYMBOLIC_CONSTANT_COUNTER = "_X_count_var";
+
+	/**
 	 * The name of the heap variable of each scope.
 	 */
 	public static final String HEAP_VAR = "_heap";

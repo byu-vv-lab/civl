@@ -567,11 +567,24 @@ public interface StateFactory {
 	State deallocate(State state, SymbolicExpression heapObjectPointer,
 			int dyscopeId, int mallocId, int index);
 
-	// void printReachableMemoryUnits(PrintStream out, State state);
+	/**
+	 * Increase the number of symbolic constants by one.
+	 * 
+	 * @param state
+	 *            the state whole number of symbolic constants is to be
+	 *            increased.
+	 * @return the new state
+	 */
+	State incrementNumSymbolicConstants(State state);
 
-	// boolean hasAccessConflict(State state, int pid, int otherPid, MemoryUnit
-	// mu);
-	// State computeReachableMemUnits(State state, int pid);
+	/**
+	 * Returns the number of symbolic constants appearing in the given state.
+	 * 
+	 * @param state
+	 *            the given state
+	 * @return the number of symbolic constants appearing in the given state.
+	 */
+	int numSymbolicConstants(State state);
 
 	MemoryUnitFactory memUnitFactory();
 }

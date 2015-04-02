@@ -327,12 +327,4 @@ public interface State {
 	 *            The print stream to be used.
 	 */
 	void print(PrintStream out);
-
-	/**
-	 * Returns the number of symbolic constants appearing in the state.
-	 * 
-	 * @return the number of symbolic constants appearing in the state.
-	 */
-	// int numSymbolicConstants();
-
 }

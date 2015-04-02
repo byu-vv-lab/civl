@@ -175,12 +175,12 @@ public class CommonModelFactory implements ModelFactory {
 
 	/**
 	 * Kinds for temporal variables introduced when translating conditional
-	 * expressions, choose_int function calls that require to temporal variable
-	 * to store some intermediate data
+	 * expressions that requires temporal variable to store some intermediate
+	 * data
 	 * 
 	 */
 	public enum TempVariableKind {
-		CONDITIONAL, CHOOSE
+		CONDITIONAL
 	}
 
 	/* *************************** Static Fields *************************** */
@@ -236,6 +236,8 @@ public class CommonModelFactory implements ModelFactory {
 	private Variable timeCountVariable;
 
 	private Variable brokenTimeVariable;
+
+	private Variable symbolicConstantCounter;
 
 	private VariableExpression civlFilesystemVariableExpression;
 
@@ -1437,6 +1439,7 @@ public class CommonModelFactory implements ModelFactory {
 			this.createAtomicLockVariable(newScope);
 			// if (modelBuilder.timeLibIncluded)
 			createTimeVariables(newScope);
+			createSymbolicConstantCounter(newScope);
 		}
 		if (parent != null) {
 			parent.addChild(newScope);
@@ -1849,6 +1852,14 @@ public class CommonModelFactory implements ModelFactory {
 							.numVariables());
 			scope.addVariable(brokenTimeVariable);
 		}
+	}
+
+	private void createSymbolicConstantCounter(Scope scope) {
+		symbolicConstantCounter = this.variable(this.systemSource,
+				typeFactory.integerType, this.identifier(this.systemSource,
+						ModelConfiguration.SYMBOLIC_CONSTANT_COUNTER), scope
+						.numVariables());
+		scope.addVariable(symbolicConstantCounter);
 	}
 
 	/* *************************** Private Methods ************************* */
