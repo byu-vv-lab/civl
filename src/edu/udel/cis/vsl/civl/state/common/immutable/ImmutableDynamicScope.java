@@ -64,8 +64,8 @@ public class ImmutableDynamicScope implements DynamicScope {
 	private Scope lexicalScope;
 
 	/**
-	 * The dyscope ID of the parent of this dyscope in the dynamic scope
-	 * tree, or -1 if this is the root (and therefore has no parent).
+	 * The dyscope ID of the parent of this dyscope in the dynamic scope tree,
+	 * or -1 if this is the root (and therefore has no parent).
 	 */
 	private int parent;
 
@@ -343,14 +343,16 @@ public class ImmutableDynamicScope implements DynamicScope {
 		SymbolicExpression[] newValues = null;
 
 		// update pointers
-		if (oldToNewExpression.size() > 0)
+		if (oldToNewExpression.size() > 0) {
+			UnaryOperator<SymbolicExpression> substituter = universe
+					.mapSubstituter(oldToNewExpression);
+
 			for (Variable variable : pointerVariableIter) {
 				int vid = variable.vid();
 				SymbolicExpression oldValue = variableValues[vid];
 
 				if (oldValue != null && !oldValue.isNull()) {
-					SymbolicExpression newValue = universe.substitute(oldValue,
-							oldToNewExpression);
+					SymbolicExpression newValue = substituter.apply(oldValue);
 
 					if (oldValue != newValue) {
 						if (newValues == null)
@@ -359,6 +361,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 					}
 				}
 			}
+		}
 		return newValues == null ? this : new ImmutableDynamicScope(
 				lexicalScope, this.parent, this.parentIdentifier, newValues,
 				reachers, this.identifier);
@@ -370,14 +373,16 @@ public class ImmutableDynamicScope implements DynamicScope {
 		SymbolicExpression[] newValues = null;
 
 		// update pointers
-		if (oldToNewExpression.size() > 0)
+		if (oldToNewExpression.size() > 0) {
+			UnaryOperator<SymbolicExpression> substituter = universe
+					.mapSubstituter(oldToNewExpression);
+
 			for (Variable variable : this.lexicalScope.variables()) {
 				int vid = variable.vid();
 				SymbolicExpression oldValue = variableValues[vid];
 
 				if (oldValue != null && !oldValue.isNull()) {
-					SymbolicExpression newValue = universe.substitute(oldValue,
-							oldToNewExpression);
+					SymbolicExpression newValue = substituter.apply(oldValue);
 
 					if (oldValue != newValue) {
 						if (newValues == null)
@@ -386,6 +391,7 @@ public class ImmutableDynamicScope implements DynamicScope {
 					}
 				}
 			}
+		}
 		return newValues == null ? this : new ImmutableDynamicScope(
 				lexicalScope, this.parent, this.parentIdentifier, newValues,
 				reachers, this.identifier);

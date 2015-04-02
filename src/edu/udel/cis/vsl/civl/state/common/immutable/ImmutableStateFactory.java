@@ -408,7 +408,7 @@ public class ImmutableStateFactory implements StateFactory {
 					.get(key);
 
 			if (substituter == null) {
-				substituter = universe.substituter(scopeSubMap(oldToNew));
+				substituter = universe.mapSubstituter(scopeSubMap(oldToNew));
 				dyscopeSubMap.put(key, substituter);
 			}
 
@@ -1483,6 +1483,8 @@ public class ImmutableStateFactory implements StateFactory {
 	private ImmutableDynamicScope[] updateProcessReferencesInScopes(
 			ImmutableState state, int[] oldToNewPidMap) {
 		Map<SymbolicExpression, SymbolicExpression> procSubMap = procSubMap(oldToNewPidMap);
+		UnaryOperator<SymbolicExpression> substituter = universe
+				.mapSubstituter(procSubMap);
 		ImmutableDynamicScope[] newScopes = null;
 		int numScopes = state.numDyscopes();
 
@@ -1498,8 +1500,7 @@ public class ImmutableStateFactory implements StateFactory {
 			for (Variable variable : procrefVariableIter) {
 				int vid = variable.vid();
 				SymbolicExpression oldValue = dynamicScope.getValue(vid);
-				SymbolicExpression newValue = universe.substitute(oldValue,
-						procSubMap);
+				SymbolicExpression newValue = substituter.apply(oldValue);
 
 				if (oldValue != newValue) {
 					if (newValues == null)
@@ -1799,7 +1800,8 @@ public class ImmutableStateFactory implements StateFactory {
 						oldName2NewName, universe);
 			}
 			BooleanExpression newPathCondition = (BooleanExpression) universe
-					.substitute(theState.getPathCondition(), oldName2NewName);
+					.mapSubstituter(oldName2NewName).apply(
+							theState.getPathCondition());
 			theState = ImmutableState.newState(theState, newProcesses,
 					newScopes, newPathCondition);
 		}
