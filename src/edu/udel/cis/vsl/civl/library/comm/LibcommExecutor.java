@@ -192,7 +192,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression place = argumentValues[2];
 		SymbolicExpression gcomm;
 		SymbolicExpression comm;
-		SymbolicExpression isInitArray;
+		SymbolicExpression procArray;
+		SymbolicExpression myProc;
 		LinkedList<SymbolicExpression> commComponents = new LinkedList<SymbolicExpression>();
 		CIVLSource civlsource = arguments[0].getSource();
 		CIVLType commType = typeFactory
@@ -203,16 +204,17 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 				gcommHandle, false);
 		state = eval.state;
 		gcomm = eval.value;
-		isInitArray = universe.tupleRead(gcomm, oneObject);
+		procArray = universe.tupleRead(gcomm, oneObject);
+		myProc = modelFactory.processValue(pid);
 		// TODO report an error if the place has already been taken by other
 		// processes.
-		assert universe.arrayRead(isInitArray, (NumericExpression) place)
-				.equals(universe.bool(false));
+		assert universe.arrayRead(procArray, (NumericExpression) place).equals(
+				modelFactory.processValue(-1));
 		// TODO report an error if the place exceeds the size of the
 		// communicator
-		isInitArray = universe.arrayWrite(isInitArray,
-				(NumericExpression) place, universe.bool(true));
-		gcomm = universe.tupleWrite(gcomm, oneObject, isInitArray);
+		procArray = universe.arrayWrite(procArray, (NumericExpression) place,
+				myProc);
+		gcomm = universe.tupleWrite(gcomm, oneObject, procArray);
 		state = this.primaryExecutor.assign(civlsource, state, process,
 				gcommHandle, gcomm);
 		// builds comm
@@ -632,8 +634,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		NumericExpression nprocs = (NumericExpression) argumentValues[1];
 		SymbolicExpression scope = argumentValues[0];
 		Expression scopeExpression = arguments[0];
-		SymbolicExpression isInit;
-		SymbolicExpression isInitArray;
+		SymbolicExpression procNegOne;
+		SymbolicExpression procArray;
 		SymbolicExpression buf;
 		SymbolicExpression bufRow;
 		SymbolicExpression queueLength = universe.integer(0);
@@ -645,22 +647,23 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 				.systemType(ModelConfiguration.GCOMM_TYPE);
 		SymbolicType dynamicQueueType = queueType.getDynamicType(universe);
 		SymbolicType dynamicMessageType = messageType.getDynamicType(universe);
+		SymbolicType procType = typeFactory.processSymbolicType();
 		BooleanExpression context = state.getPathCondition();
 
-		isInit = universe.bool(false);
+		procNegOne = modelFactory.processValue(-1);
 		emptyMessages = universe.array(dynamicMessageType,
 				new LinkedList<SymbolicExpression>());
 		assert dynamicQueueType instanceof SymbolicTupleType;
 		emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
 				Arrays.asList(queueLength, emptyMessages));
-		isInitArray = symbolicUtil.newArray(context, isInit.type(), nprocs,
-				isInit);
+		procArray = symbolicUtil
+				.newArray(context, procType, nprocs, procNegOne);
 		bufRow = symbolicUtil.newArray(context, emptyQueue.type(), nprocs,
 				emptyQueue);
 		buf = symbolicUtil.newArray(context, bufRow.type(), nprocs, bufRow);
 		gcomm = universe.tuple(
 				(SymbolicTupleType) gcommType.getDynamicType(universe),
-				Arrays.asList(nprocs, isInitArray, buf));
+				Arrays.asList(nprocs, procArray, buf));
 		state = primaryExecutor.malloc(source, state, pid, process, lhs,
 				scopeExpression, scope, gcommType, gcomm);
 		return state;
