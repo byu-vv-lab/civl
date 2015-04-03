@@ -108,7 +108,8 @@ REPLAY
 
 OPTION_NAME
     :
-      '-ast'
+     '-_CIVL'
+    | '-ast'
     | '-collectHeaps'
     | '-collectProcesses'
     | '-collectScopes'

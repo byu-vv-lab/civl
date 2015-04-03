@@ -382,6 +382,12 @@ public class CIVLConstants {
 			"ROUND_ROBIN");
 
 	/**
+	 * Collect heaps? true by default.
+	 */
+	public final static Option CIVLMacroO = Option.newScalarOption("_CIVL",
+			BOOLEAN, "Define _CIVL macro?", true);
+
+	/**
 	 * The name of the CIVL system function, which is the starting point of a
 	 * CIVL model.
 	 */
@@ -403,6 +409,6 @@ public class CIVLConstants {
 				showProverQueriesO, showQueriesO, showSavedStatesO,
 				showStatesO, showTimeO, showTransitionsO, simplifyO, solveO,
 				statelessPrintfO, svcompO, sysIncludePathO, traceO,
-				userIncludePathO, verboseO, webO };
+				userIncludePathO, verboseO, webO, CIVLMacroO };
 	}
 }

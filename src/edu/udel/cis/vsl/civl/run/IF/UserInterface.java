@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.CIVLMacroO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.astO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.bar;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectHeapsO;
@@ -172,7 +173,7 @@ public class UserInterface {
 		CIVLCommand.addShowOption(showModelO, verboseO, debugO, echoO,
 				userIncludePathO, sysIncludePathO, svcompO, showInputVarsO,
 				showProgramO, ompNoSimplifyO, ompLoopDecompO, macroO, preprocO,
-				astO, showTimeO);
+				astO, showTimeO, CIVLMacroO);
 		CIVLCommand.addVerifyOrCompareOption(errorBoundO, verboseO, debugO,
 				echoO, userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
@@ -182,16 +183,12 @@ public class UserInterface {
 				showProgramO, showPathConditionO, ompNoSimplifyO,
 				ompLoopDecompO, collectProcessesO, collectScopesO,
 				collectHeapsO, macroO, preprocO, astO, showTimeO,
-				showMemoryUnitsO);
-		CIVLCommand
-				.addReplayOption(showModelO, verboseO, debugO, echoO,
-						showTransitionsO, showStatesO, showSavedStatesO,
-						showQueriesO, showProverQueriesO, idO, traceO,
-						enablePrintfO, showAmpleSetO, showAmpleSetWtStatesO,
-						statelessPrintfO, guiO, showProgramO,
-						showPathConditionO, ompNoSimplifyO, collectProcessesO,
-						collectScopesO, collectHeapsO, preprocO, astO,
-						showMemoryUnitsO);
+				showMemoryUnitsO, CIVLMacroO);
+		CIVLCommand.addReplayOption(showModelO, verboseO, debugO, echoO,
+				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
+				showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,
+				showAmpleSetWtStatesO, statelessPrintfO, guiO, showProgramO,
+				showPathConditionO, preprocO, astO, showMemoryUnitsO);
 		CIVLCommand.addRunOption(errorBoundO, verboseO, randomO, guidedO,
 				seedO, debugO, echoO, userIncludePathO, sysIncludePathO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
@@ -200,7 +197,7 @@ public class UserInterface {
 				statelessPrintfO, deadlockO, svcompO, showProgramO,
 				showPathConditionO, ompNoSimplifyO, ompLoopDecompO,
 				collectProcessesO, collectScopesO, collectHeapsO, macroO,
-				preprocO, astO, showMemoryUnitsO);
+				preprocO, astO, showMemoryUnitsO, CIVLMacroO);
 	}
 
 	/* ************************** Constructors ***************************** */

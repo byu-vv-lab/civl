@@ -668,7 +668,8 @@ public class ModelTranslator {
 		Map<String, Object> macroDefMap = cmdSection.getMapValue(macroO);
 		Map<String, String> macroDefs = new HashMap<String, String>();
 
-		macroDefs.put(CIVL_MACRO, "");
+		if (this.cmdSection.isTrue(CIVLConstants.CIVLMacroO))
+			macroDefs.put(CIVL_MACRO, "");
 		if (macroDefMap != null) {
 			for (String name : macroDefMap.keySet()) {
 				macroDefs.put(name, (String) macroDefMap.get(name));
