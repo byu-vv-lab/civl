@@ -305,8 +305,7 @@ public class UserInterface {
 			}
 			ModelTranslator modelTranslator = new ModelTranslator(
 					transformerFactory, frontEnd, gmcConfig, gmcSection,
-					commandLine.files(), commandLine.getCoreFileName(),
-					commandLine.getCoreFile());
+					commandLine.files(), commandLine.getCoreFileName());
 
 			if (commandLine.gmcSection().isTrue(echoO))
 				out.println(commandLine.getCommandString());
@@ -384,10 +383,9 @@ public class UserInterface {
 
 		ModelTranslator specWorker = new ModelTranslator(transformerFactory,
 				frontEnd, gmcConfig, specSection, spec.files(),
-				spec.getCoreFileName(), spec.getCoreFile(), universe), implWorker = new ModelTranslator(
+				spec.getCoreFileName(), universe), implWorker = new ModelTranslator(
 				transformerFactory, frontEnd, gmcConfig, implSection,
-				impl.files(), impl.getCoreFileName(), impl.getCoreFile(),
-				universe);
+				impl.files(), impl.getCoreFileName(), universe);
 		Program specProgram, implProgram, compositeProgram;
 		Combiner combiner = Transform.compareCombiner();
 		Model model;
@@ -452,8 +450,7 @@ public class UserInterface {
 					definedOptions.values());
 			ModelTranslator translator = new ModelTranslator(
 					transformerFactory, frontEnd, gmcConfig,
-					gmcConfig.getAnonymousSection(), files, files[0], new File(
-							files[0]));
+					gmcConfig.getAnonymousSection(), files, files[0]);
 
 			return translator.getInputVariables();
 		} catch (PreprocessorException | SyntaxException | ParseException

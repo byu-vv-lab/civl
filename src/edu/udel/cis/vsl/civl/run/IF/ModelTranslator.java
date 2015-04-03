@@ -181,22 +181,20 @@ public class ModelTranslator {
 	 *            command line.
 	 * @param coreName
 	 *            The core name of the user file.
-	 * @param coreFile
-	 *            The user file.
-	 * @throws PreprocessorException
+	 * @throws PreprocessorException if there is a problem 
 	 */
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
 			GMCConfiguration gmcConfig, GMCSection gmcSection,
-			String[] filenames, String coreName, File coreFile)
-			throws PreprocessorException {
+			String[] filenames, String coreName) throws PreprocessorException {
 		this(transformerFactory, frontEnd, gmcConfig, gmcSection, filenames,
-				coreName, coreFile, SARL.newStandardUniverse());
+				coreName, SARL.newStandardUniverse());
 	}
 
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
 			GMCConfiguration gmcConfig, GMCSection cmdSection,
-			String[] filenames, String coreName, File coreFile,
-			SymbolicUniverse universe) throws PreprocessorException {
+			String[] filenames, String coreName, SymbolicUniverse universe)
+			throws PreprocessorException
+			 {
 		this.transformerFactory = transformerFactory;
 		this.cmdSection = cmdSection;
 		this.gmcConfig = gmcConfig;
@@ -663,6 +661,13 @@ public class ModelTranslator {
 		return tokenSources.toArray(new CTokenSource[filenames.length]);
 	}
 
+	/**
+	 * 
+	 * @param preprocessor
+	 * @return
+	 * @throws PreprocessorException
+	 *             if there is a problem preprocessing the macros.
+	 */
 	private Map<String, Macro> getMacroMaps(Preprocessor preprocessor)
 			throws PreprocessorException {
 		Map<String, Object> macroDefMap = cmdSection.getMapValue(macroO);

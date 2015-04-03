@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
@@ -42,9 +43,8 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
  * <li>a heap pointer is any pointer pointing to some part of the heap.</li>
  * </ul>
  * 
- * TODO: malloc pointer
- * This class is part of the symbolic utility, the purpose of which is to factor
- * out the code related to heap.
+ * TODO: malloc pointer This class is part of the symbolic utility, the purpose
+ * of which is to factor out the code related to heap.
  * 
  * @author Manchun Zheng
  * 
@@ -52,11 +52,6 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 public class HeapAnalyzer {
 
 	/* *************************** Instance Fields ************************* */
-
-	/**
-	 * Constant for the name of invalid heap objects.
-	 */
-	private final String INVALID = "INVALID";
 
 	/**
 	 * The symbolic utility to be used.
@@ -189,7 +184,7 @@ public class HeapAnalyzer {
 	 * @return The invalid heap object of the given type.
 	 */
 	SymbolicConstant invalidHeapObject(SymbolicType heapObjectType) {
-		StringObject name = universe.stringObject(INVALID);
+		StringObject name = universe.stringObject(ModelConfiguration.INVALID);
 
 		return universe.symbolicConstant(name, heapObjectType);
 	}
@@ -274,7 +269,7 @@ public class HeapAnalyzer {
 			SymbolicConstant constant = (SymbolicConstant) heapObject;
 			StringObject name = constant.name();
 
-			if (name.getString().equals(INVALID))
+			if (name.getString().equals(ModelConfiguration.INVALID))
 				return true;
 		}
 		return false;

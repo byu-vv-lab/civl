@@ -551,10 +551,13 @@ public class CommonCIVLTypeFactory implements CIVLTypeFactory {
 	 * @return The numeric expression of the sizeof expression.
 	 */
 	private NumericExpression sizeofPrimitiveType(PrimitiveTypeKind kind) {
+		String name = "SIZEOF_" + kind;
 		NumericExpression result = (NumericExpression) universe
-				.symbolicConstant(universe.stringObject("SIZEOF_" + kind),
+				.symbolicConstant(universe.stringObject(name),
 						universe.integerType());
 
+		if(!ModelConfiguration.RESERVE_NAMES.contains(name))
+			ModelConfiguration.RESERVE_NAMES.add(name);
 		result = (NumericExpression) universe.canonic(result);
 		return result;
 	}

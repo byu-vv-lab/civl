@@ -1,5 +1,9 @@
 package edu.udel.cis.vsl.civl.model.IF;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * This file contains the constants used by the model builder/translator, which
  * reflects the translation strategy of CIVL. For example, for every scope, the
@@ -9,6 +13,22 @@ package edu.udel.cis.vsl.civl.model.IF;
  * 
  */
 public final class ModelConfiguration {
+
+	/* Reserved names of symbolic constants */
+	public static final String UNDEFINED = "UNDEFINED";
+
+	/**
+	 * Constant for the name of invalid heap objects.
+	 */
+	public static final String INVALID = "INVALID";
+
+	public static Set<String> RESERVE_NAMES = new HashSet<>(Arrays.asList(
+			UNDEFINED, INVALID));
+
+	public static void addReservedName(String name) {
+		if (!RESERVE_NAMES.contains(name))
+			RESERVE_NAMES.add(name);
+	}
 
 	/* Domain decomposition strategies */
 	/**

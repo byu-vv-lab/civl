@@ -41,7 +41,6 @@ import edu.udel.cis.vsl.sarl.IF.UnaryOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
@@ -170,6 +169,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private ImmutableMemoryUnitFactory memUnitFactory;
 
+	private ReservedConstant isReservedSymbolicConstant;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -187,6 +188,7 @@ public class ImmutableStateFactory implements StateFactory {
 		this.memUnitFactory = (ImmutableMemoryUnitFactory) memFactory;
 		this.undefinedProcessValue = modelFactory.undefinedValue(typeFactory
 				.processSymbolicType());
+		isReservedSymbolicConstant = new ReservedConstant();
 	}
 
 	/* ********************** Methods from StateFactory ******************** */
@@ -1733,7 +1735,8 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	/**
-	 * Rename all symbolic constants of the state.
+	 * Rename all symbolic constants of the state. Trying to use the new
+	 * interface (canonicRenamer) provided by SARL.
 	 * 
 	 * @param state
 	 * @return
@@ -1742,108 +1745,30 @@ public class ImmutableStateFactory implements StateFactory {
 			boolean collectHeaps) {
 		ImmutableState theState = (ImmutableState) state;
 		int numDyscopes = theState.numDyscopes();
-		int nameId = 0;
-		Map<StringObject, StringObject> oldName2NewName = new HashMap<>();
-		int numHeapFields = this.typeFactory.heapType().getNumMallocs();
-		Pair<Integer, Map<StringObject, StringObject>> nameMappingResult;
+		int numProcs = theState.numProcs();
+		ImmutableProcessState[] newProcesses = new ImmutableProcessState[numProcs];
+		UnaryOperator<SymbolicExpression> nameSubsituter = universe
+				.canonicalRenamer("X", this.isReservedSymbolicConstant);
 
+		for (int i = 0; i < numProcs; i++) {
+			newProcesses[i] = theState.getProcessState(i);
+		}
+
+		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
 		for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
-			ImmutableDynamicScope dyscope = theState.getDyscope(dyscopeId);
-			Collection<Variable> variables = dyscope.lexicalScope()
-					.varsNeedSymbolicConstant();
+			ImmutableDynamicScope oldScope = theState.getDyscope(dyscopeId);
 
-			for (Variable variable : variables) {
-				int vid = variable.vid();
-				SymbolicExpression value = dyscope.getValue(vid);
-
-				// never renames input variables in the file scope
-				if (value.isNull())
-					continue;
-				// if (dyscopeId == 0 && variable.isInput()) {
-				// nameId++;
-				// continue;
-				// }
-				if (vid == 0) {// heap
-					if (collectHeaps)
-						// only rename heap objects when the option
-						// -collectHeaps is turned on
-						for (int heapFieldId = 0; heapFieldId < numHeapFields; heapFieldId++) {
-							SymbolicExpression heapField = universe.tupleRead(
-									value, universe.intObject(heapFieldId));
-							int length = this.symbolicUtil.extractInt(null,
-									(NumericExpression) universe
-											.length(heapField));
-
-							for (int heapObjId = 0; heapObjId < length; heapObjId++) {
-								SymbolicExpression heapObj = universe
-										.arrayRead(heapField,
-												universe.integer(heapObjId));
-
-								nameMappingResult = this.addOldToNewName(
-										heapObj, nameId, oldName2NewName);
-								nameId = nameMappingResult.left;
-								oldName2NewName = nameMappingResult.right;
-							}
-						}
-				} else {// if (!variable.isInput()) {// normal variables
-					nameMappingResult = this.addOldToNewName(value, nameId,
-							oldName2NewName);
-					nameId = nameMappingResult.left;
-					oldName2NewName = nameMappingResult.right;
-				}
-			}
+			newScopes[dyscopeId] = oldScope
+					.updateSymbolicConstants(nameSubsituter);
 		}
-		if (oldName2NewName.size() > 0) {
-			int numProcs = theState.numProcs();
-			ImmutableProcessState[] newProcesses = new ImmutableProcessState[numProcs];
-			for (int i = 0; i < numProcs; i++) {
-				newProcesses[i] = theState.getProcessState(i);
-			}
-			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
-			for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
-				ImmutableDynamicScope oldScope = theState.getDyscope(dyscopeId);
-				UnaryOperator<SymbolicExpression> nameSubsituter = universe
-						.nameSubstituter(oldName2NewName);
 
-				newScopes[dyscopeId] = oldScope
-						.updateSymbolicConstants(nameSubsituter);
-			}
-			BooleanExpression newPathCondition = (BooleanExpression) universe
-					.nameSubstituter(oldName2NewName).apply(
-							theState.getPathCondition());
-			theState = ImmutableState.newState(theState, newProcesses,
-					newScopes, newPathCondition);
-		}
+		BooleanExpression newPathCondition = (BooleanExpression) nameSubsituter
+				.apply(theState.getPathCondition());
+
+		theState = ImmutableState.newState(theState, newProcesses, newScopes,
+				newPathCondition);
+
 		return theState;
-	}
-
-	private Pair<Integer, Map<StringObject, StringObject>> addOldToNewName(
-			SymbolicExpression heapObject, int nameId,
-			Map<StringObject, StringObject> oldToNewHeapObjectNames) {
-		SymbolicConstant oldConstant = null;
-		String prefix = "X";
-
-		if (heapObject instanceof SymbolicConstant)
-			oldConstant = (SymbolicConstant) heapObject;
-		else if (heapObject.operator() != SymbolicOperator.APPLY) {
-			SymbolicObject arg0 = heapObject.argument(0);
-
-			if (arg0 instanceof SymbolicConstant)
-				oldConstant = (SymbolicConstant) arg0;
-		}
-		if (oldConstant != null) {
-			String oldName = oldConstant.name().getString();
-			String newName = prefix + nameId;
-
-			if (!oldName.equals(newName)) {
-				StringObject newNameString = universe.stringObject(newName);
-
-				oldToNewHeapObjectNames.put(universe.stringObject(oldName),
-						newNameString);
-			}
-			return new Pair<>(nameId + 1, oldToNewHeapObjectNames);
-		}
-		return new Pair<>(nameId, oldToNewHeapObjectNames);
 	}
 
 	@Override
