@@ -47,31 +47,144 @@ import edu.udel.cis.vsl.gmc.GMCSection;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
+/**
+ * A model translator parses, links, transforms a list of source files (C or
+ * CIVL-C programs) into a ABC program; and then build a CIVL model from that
+ * program. Command line options are also taken into account including macros,
+ * transformer settings (e.g., -ompNoSimplify), input variables, system/user
+ * include path, etc.
+ * <p>
+ * A model translator takes care of a command line section. E.g., the command
+ * line
+ * <code>civl compare -spec -DN=5 sum.c -impl -DCUDA -inputNB=8 sum.c sum_cuda.c</code>
+ * contains two command line sections "spec" and "impl", each of which will then
+ * be translated to an ABC program by a specific model translator (different
+ * lists of files, different macros, input variables, etc).
+ * <p>
+ * Non-compare command line contains one command line section, and thus only one
+ * model translator is created.
+ * 
+ * @author Manchun Zheng
+ *
+ */
 public class ModelTranslator {
 
+	// private final static fields (constants)
+	/**
+	 * The default macro for CIVL-C programs. Could be disable by the setting
+	 * the option _CIVL to false: <code>-_CIVL=false</code>.
+	 */
 	private static final String CIVL_MACRO = "_CIVL";
 
+	/**
+	 * An empty file array
+	 */
 	private final static File[] emptyFileArray = new File[0];
 
+	/**
+	 * The CIVL system include path for library implementations
+	 */
 	private final static File[] civlSysPathArray = new File[] { CIVLConstants.CIVL_INCLUDE_PATH };
 
+	// package-private fields, which are accessed by UserInterface
+	/**
+	 * The GMC configuration that this model translator associates with.
+	 */
 	GMCConfiguration gmcConfig;
-	GMCSection cmdSection;// = commandLine.configuration();
-	CIVLConfiguration config;// = new CIVLConfiguration(cmdConfig);
-	String[] filenames;// = commandLine.files();
-	Preprocessor preprocessor;// = this.frontEnd.getPreprocessor();
-	private File[] systemIncludes;// = this.getSysIncludes(cmdConfig),
-	private File[] userIncludes;// = this.getUserIncludes(cmdConfig);
-	private Map<String, Macro> macroMaps;// = getMacroMaps(preprocessor,
-											// cmdConfig);
-	private FrontEnd frontEnd;
-	private PrintStream out = System.out;
-	String userFileName;
-	private TransformerFactory transformerFactory;
-	SymbolicUniverse universe;
-	String userFileCoreName;
-	File userFile;
 
+	/**
+	 * The command line section for this model translator.
+	 */
+	GMCSection cmdSection;
+
+	/**
+	 * The CIVL configuration for this model translator, which is dependent on
+	 * the command line section.
+	 */
+	CIVLConfiguration config;
+
+	/**
+	 * The preprocessor to be used for preprocessing source files associated
+	 * with this model translator.
+	 */
+	Preprocessor preprocessor;
+
+	/**
+	 * The symbolic universe.
+	 */
+	SymbolicUniverse universe;
+
+	// private fields
+	/**
+	 * The list of files specified in the command line section for parsing and
+	 * linking.
+	 */
+	private String[] filenames;
+	/**
+	 * The system include paths specified in the command line section.
+	 */
+	private File[] systemIncludes;
+
+	/**
+	 * The user include paths specified in the command line section.
+	 */
+	private File[] userIncludes;
+
+	/**
+	 * The map of macros of this model translator, including macros defined in
+	 * the command line section and the default <code>_CIVL</code> macro if the
+	 * option "-_CIVL" isn't disable.
+	 */
+	private Map<String, Macro> macroMaps;
+
+	/**
+	 * The ABC front end to be used.
+	 */
+	private FrontEnd frontEnd;
+
+	/**
+	 * The output stream for printing error messages.
+	 */
+	private PrintStream out = System.out;
+
+	/**
+	 * The file name of the user file, which is the first file specified in the
+	 * command line section.
+	 */
+	private String userFileName;
+
+	/**
+	 * The transformer factory which provides transformers.
+	 */
+	private TransformerFactory transformerFactory;
+
+	/**
+	 * The core name of teh user file.
+	 */
+	private String userFileCoreName;
+
+	// constructor
+	/**
+	 * Creates a new instance of model translator.
+	 * 
+	 * @param transformerFactory
+	 *            The transformer factory that provides various CIVL transformer
+	 * @param frontEnd
+	 *            The ABC front end
+	 * @param gmcConfig
+	 *            The GMC configuration which corresponds to the command line.
+	 * @param gmcSection
+	 *            The GMC section which corresponds to the command line section
+	 *            this model translator associates with.
+	 * @param filenames
+	 *            The list of file names for parsing, which are specified in the
+	 *            command line.
+	 * @param coreName
+	 *            The core name of the user file.
+	 * @param coreFile
+	 *            The user file.
+	 * @throws PreprocessorException
+	 */
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
 			GMCConfiguration gmcConfig, GMCSection gmcSection,
 			String[] filenames, String coreName, File coreFile)
@@ -96,7 +209,6 @@ public class ModelTranslator {
 		config = new CIVLConfiguration(cmdSection);
 		this.filenames = filenames;
 		userFileName = filenames[0];
-		this.userFile = coreFile;
 		this.frontEnd = frontEnd;
 		this.preprocessor = frontEnd.getPreprocessor();
 		systemIncludes = this.getSysIncludes(cmdSection);
@@ -648,11 +760,6 @@ public class ModelTranslator {
 					// current directory or elsewhere in the path.
 					// It also ensures any file included will also
 					// be found in either /include/civl or /include/abc.
-
-					// File systemFile = new
-					// File(CIVLConstants.CIVL_INCLUDE_PATH,
-					// systemFilename);
-
 					CTokenSource tokens = preprocessor.outputTokenSource(
 							civlSysPathArray, emptyFileArray, macroMaps,
 							systemFilename);
@@ -665,28 +772,6 @@ public class ModelTranslator {
 		}
 		return result;
 	}
-
-	// /**
-	// * Parses a given file into an AST.
-	// *
-	// * @param preprocessor
-	// * The preprocessor that will extracts token source from the
-	// * given file.
-	// * @param filename
-	// * The name of the file that is to be parsed.
-	// * @return The AST which is the result of parsing the given file.
-	// * @throws SyntaxException
-	// * @throws ParseException
-	// * @throws PreprocessorException
-	// */
-	// private AST parseFile(String filename) throws SyntaxException,
-	// ParseException, PreprocessorException, IOException {
-	//
-	// CTokenSource tokens = preprocessor.outputTokenSource(systemIncludes,
-	// userIncludes, macroMaps, filename);
-	//
-	// return parse(tokens);
-	// }
 
 	/**
 	 * Finds out the file name of the system implementation of a header file,
