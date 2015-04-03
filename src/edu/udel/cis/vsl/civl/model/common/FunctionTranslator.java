@@ -3654,21 +3654,21 @@ public class FunctionTranslator {
 			break;
 		case DIV:
 			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.DIVIDE, arguments.get(0), arguments.get(1));
-			break;
-		case EQUALS:
-			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.EQUAL, arguments.get(0), arguments.get(1));
+					BINARY_OPERATOR.DIVIDE,
+					modelFactory.numericExpression(arguments.get(0)),
+					modelFactory.numericExpression(arguments.get(1)));
 			break;
 		case GT:
 			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.LESS_THAN, arguments.get(1),
-					arguments.get(0));
+					BINARY_OPERATOR.LESS_THAN,
+					modelFactory.numericExpression(arguments.get(1)),
+					modelFactory.numericExpression(arguments.get(0)));
 			break;
 		case GTE:
 			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.LESS_THAN_EQUAL, arguments.get(1),
-					arguments.get(0));
+					BINARY_OPERATOR.LESS_THAN_EQUAL,
+					modelFactory.numericExpression(arguments.get(1)),
+					modelFactory.numericExpression(arguments.get(0)));
 			break;
 		case IMPLIES:
 			try {
@@ -3744,27 +3744,42 @@ public class FunctionTranslator {
 			break;
 		case LT:
 			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.LESS_THAN, arguments.get(0),
-					arguments.get(1));
+					BINARY_OPERATOR.LESS_THAN,
+					modelFactory.numericExpression(arguments.get(0)),
+					modelFactory.numericExpression(arguments.get(1)));
 			break;
 		case LTE:
 			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.LESS_THAN_EQUAL, arguments.get(0),
-					arguments.get(1));
+					BINARY_OPERATOR.LESS_THAN_EQUAL,
+					modelFactory.numericExpression(arguments.get(0)),
+					modelFactory.numericExpression(arguments.get(1)));
 			break;
 		case MINUS:
-			result = translateMinusOperation(source, arguments.get(0),
-					arguments.get(1));
+			result = translateMinusOperation(source,
+					modelFactory.numericExpression(arguments.get(0)),
+					modelFactory.numericExpression(arguments.get(1)));
 			break;
 		case MOD:
 			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.MODULO, arguments.get(0), arguments.get(1));
+					BINARY_OPERATOR.MODULO,
+					modelFactory.numericExpression(arguments.get(0)),
+					modelFactory.numericExpression(arguments.get(1)));
 			break;
-		case NEQ:
-			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.NOT_EQUAL, arguments.get(0),
-					arguments.get(1));
+		case EQUALS:
+		case NEQ: {
+			Expression arg0 = arguments.get(0), arg1 = arguments.get(1);
+			CIVLType arg0Type = arg0.getExpressionType(), arg1Type = arg1
+					.getExpressionType();
+
+			if (arg0Type.isNumericType() && arg1Type.isBoolType())
+				arg1 = modelFactory.numericExpression(arg1);
+			else if (arg0Type.isBoolType() && arg1Type.isNumericType())
+				arg0 = modelFactory.numericExpression(arg0);
+			result = modelFactory.binaryExpression(source, operatorNode
+					.getOperator() == Operator.EQUALS ? BINARY_OPERATOR.EQUAL
+					: BINARY_OPERATOR.NOT_EQUAL, arg0, arg1);
 			break;
+		}
 		case NOT: {
 			CIVLType argType = arguments.get(0).getExpressionType();
 
@@ -3786,21 +3801,25 @@ public class FunctionTranslator {
 		}
 			break;
 		case PLUS:
-			result = translatePlusOperation(source, arguments.get(0),
-					arguments.get(1));
+			result = translatePlusOperation(source,
+					modelFactory.numericExpression(arguments.get(0)),
+					modelFactory.numericExpression(arguments.get(1)));
 			break;
 		case SUBSCRIPT:
 			throw new CIVLInternalException("unreachable", source);
 		case TIMES:
 			result = modelFactory.binaryExpression(source,
-					BINARY_OPERATOR.TIMES, arguments.get(0), arguments.get(1));
+					BINARY_OPERATOR.TIMES,
+					modelFactory.numericExpression(arguments.get(0)),
+					modelFactory.numericExpression(arguments.get(1)));
 			break;
 		case UNARYMINUS:
 			result = modelFactory.unaryExpression(source,
-					UNARY_OPERATOR.NEGATIVE, arguments.get(0));
+					UNARY_OPERATOR.NEGATIVE,
+					modelFactory.numericExpression(arguments.get(0)));
 			break;
 		case UNARYPLUS:
-			result = arguments.get(0);
+			result = modelFactory.numericExpression(arguments.get(0));
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(

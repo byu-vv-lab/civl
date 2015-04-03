@@ -154,16 +154,28 @@ public interface ModelFactory {
 			BINARY_OPERATOR operator, Expression left, Expression right);
 
 	/**
-	 * Translate an expression from the CIVL AST to the CIVL model. The
-	 * resulting expression will always be boolean-valued. If the expression
-	 * evaluates to a numeric type, the result will be the equivalent of
-	 * expression!=0. Used for evaluating expression in conditions.
+	 * Convert an expression to be of boolean-type. The resulting expression
+	 * will always be boolean-valued. If the expression evaluates to a numeric
+	 * type, the result will be the equivalent of expression!=0. Used for
+	 * evaluating expression in conditions.
 	 * 
 	 * @param expression
 	 *            The expression to be translated.
 	 * @return The boolean expression
 	 */
 	Expression booleanExpression(Expression expression)
+			throws ModelFactoryException;
+
+	/**
+	 * Translates an expression to be of numeric-type (i.e., int or real).
+	 * Basically, if the given expression has boolean type, then it is converted
+	 * to a cast expression ((int)expression). Otherwise, if it is not of
+	 * numeric type, an exception will be thrown.
+	 * 
+	 * @param expression
+	 * @return
+	 */
+	Expression numericExpression(Expression expression)
 			throws ModelFactoryException;
 
 	/**

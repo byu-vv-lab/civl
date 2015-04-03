@@ -498,10 +498,27 @@ public class CommonModelFactory implements ModelFactory {
 						BINARY_OPERATOR.NOT_EQUAL, expression,
 						this.nullPointerExpression(pointerType, source));
 			} else {
-				throw new ModelFactoryException();
+				throw new ModelFactoryException("The expression " + expression
+						+ " isn't compatible with boolean type",
+						expression.getSource());
 			}
 		}
 		return expression;
+	}
+
+	@Override
+	public Expression numericExpression(Expression expression)
+			throws ModelFactoryException {
+		CIVLType type = expression.getExpressionType();
+
+		if (type.isNumericType() || type.isPointerType() || type.isScopeType()
+				|| type.isArrayType())
+			return expression;
+		if (type.isBoolType())
+			return this.castExpression(expression.getSource(),
+					typeFactory.integerType(), expression);
+		throw new ModelFactoryException("The expression " + expression
+				+ " isn't compatible with numeric type", expression.getSource());
 	}
 
 	/**

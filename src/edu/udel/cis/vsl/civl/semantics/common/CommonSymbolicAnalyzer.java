@@ -930,17 +930,18 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 						result.append("{");
 						for (SymbolicExpression symbolicElement : symbolicCollection) {
 							Pair<String, CIVLType> elementNameAndType = this
-									.subType(civlType, elementIndex++);
+									.subType(civlType, elementIndex);
 
+							if (elementIndex != 0)
+								result.append(", ");
+							elementIndex++;
 							if (elementNameAndType.left != null)
 								result.append("." + elementNameAndType.left
 										+ "=");
 							result.append(symbolicExpressionToString(source,
 									state, elementNameAndType.right,
 									symbolicElement, false, "", "", false));
-							result.append(",");
 						}
-						result.deleteCharAt(result.length() - 1);
 						result.append("}");
 					} else {
 						result.append(arguments[0].toStringBuffer(false));
