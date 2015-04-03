@@ -209,7 +209,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		// TODO report an error if the place has already been taken by other
 		// processes.
 		assert universe.arrayRead(procArray, (NumericExpression) place).equals(
-				modelFactory.processValue(-1));
+				modelFactory.processValue(-2));
 		// TODO report an error if the place exceeds the size of the
 		// communicator
 		procArray = universe.arrayWrite(procArray, (NumericExpression) place,
@@ -634,7 +634,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		NumericExpression nprocs = (NumericExpression) argumentValues[1];
 		SymbolicExpression scope = argumentValues[0];
 		Expression scopeExpression = arguments[0];
-		SymbolicExpression procNegOne;
+		SymbolicExpression procNegTwo;
 		SymbolicExpression procArray;
 		SymbolicExpression buf;
 		SymbolicExpression bufRow;
@@ -650,14 +650,14 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicType procType = typeFactory.processSymbolicType();
 		BooleanExpression context = state.getPathCondition();
 
-		procNegOne = modelFactory.processValue(-1);
+		procNegTwo = modelFactory.processValue(-2);
 		emptyMessages = universe.array(dynamicMessageType,
 				new LinkedList<SymbolicExpression>());
 		assert dynamicQueueType instanceof SymbolicTupleType;
 		emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
 				Arrays.asList(queueLength, emptyMessages));
 		procArray = symbolicUtil
-				.newArray(context, procType, nprocs, procNegOne);
+				.newArray(context, procType, nprocs, procNegTwo);
 		bufRow = symbolicUtil.newArray(context, emptyQueue.type(), nprocs,
 				emptyQueue);
 		buf = symbolicUtil.newArray(context, bufRow.type(), nprocs, bufRow);
