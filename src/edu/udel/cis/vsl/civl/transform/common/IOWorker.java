@@ -124,6 +124,7 @@ public class IOWorker extends BaseWorker {
 	private static String FOPEN_WBPX = "wb+x";
 	private static String FOPEN_APB = "a+b";
 	private static String FOPEN_ABP = "ab+";
+	private static String TEXTFILE_MODE = "t";
 
 	/**
 	 * The CIVL system function to destroy a file system.
@@ -550,6 +551,8 @@ public class IOWorker extends BaseWorker {
 
 	private String processFopenMode(String mode, Source source)
 			throws SyntaxException {
+		if (mode.endsWith(TEXTFILE_MODE))
+			mode = mode.substring(0, mode.length() - 1);
 		if (mode.equals(FOPEN_R))
 			return CIVL_FILE_MODE_R;
 		if (mode.equals(FOPEN_W))
