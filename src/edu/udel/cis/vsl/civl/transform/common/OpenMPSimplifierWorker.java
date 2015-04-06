@@ -651,6 +651,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		/*
 		 * Check for array-based dependences.
 		 */
+
 		independent &= noArrayRefDependences(boundingConditions,
 				writeArrayRefs, readArrayRefs);
 
