@@ -31,6 +31,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpDeclarativeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpReductionNode;
@@ -196,8 +197,9 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	private HashMap<ASTNode, ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>>> sharedWrite = new HashMap<ASTNode, ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>>>();
 	private ArrayList<TypedefDeclarationNode> structsDefsToAdd = new ArrayList<TypedefDeclarationNode>();
 	private ArrayList<StructureOrUnionTypeNode> structsToAdd = new ArrayList<StructureOrUnionTypeNode>();
-	private ArrayList<Triple<StatementNode, IdentifierNode, String>> tempVars = new ArrayList<Triple<StatementNode, IdentifierNode, String>>();
-
+	private ArrayList<Triple<BlockItemNode, IdentifierNode, String>> tempVars = new ArrayList<Triple<BlockItemNode, IdentifierNode, String>>();
+	
+	
 	/**
 	 * The command line configuration information.
 	 */
@@ -370,7 +372,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				nodeFactory.newIdentifierNode(newSource(place, CParser.TYPE),
 						GSHARED_TYPE), null);
 
-		if (currentType.isRestrictQualified() || currentType.isInputQualified()) {
+		if (currentType.isRestrictQualified() || currentType.isInputQualified() || currentType.isVolatileQualified()) {
 			addressOf = nodeFactory.newCastNode(
 					source,
 					nodeFactory.newPointerTypeNode(source,
@@ -424,7 +426,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						newSource(place, CParser.IDENTIFIER), variable.name()
 								+ "_status")));
 
-		if (currentType.isRestrictQualified()) {
+		if (currentType.isRestrictQualified() || currentType.isVolatileQualified()) {
 			addressOfLocalVar = nodeFactory.newCastNode(
 					source,
 					nodeFactory.newPointerTypeNode(source,
@@ -504,13 +506,22 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 * @return The function call node of <code>$omp_write</code>.
 	 */
 	private ExpressionStatementNode write(ExpressionNode variable,
-			String sharedName, ExpressionNode writeName) {
+			String sharedName, ExpressionNode writeName, Type origType) {
 		final String place = sharedName + "_sharedWriteCall";
 		ExpressionNode function = this.identifierExpression(
 				newSource(place, CParser.IDENTIFIER), "$omp_write");
 		ExpressionNode addressOfVar = nodeFactory.newOperatorNode(
 				newSource(place, CParser.AMPERSAND), Operator.ADDRESSOF,
 				Arrays.asList(variable));
+		
+		if (origType instanceof QualifiedObjectType && ((QualifiedObjectType) origType).isVolatileQualified()) {
+			addressOfVar = nodeFactory.newCastNode(
+					source,
+					nodeFactory.newPointerTypeNode(source,
+							nodeFactory.newVoidTypeNode(source)),
+							addressOfVar);
+		}
+		
 		ExpressionNode addressOfTmp = nodeFactory.newOperatorNode(
 				newSource(place, CParser.AMPERSAND), Operator.ADDRESSOF,
 				Arrays.asList(writeName));
@@ -530,13 +541,23 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 	 * @return The function call node of <code>$omp_read</code>.
 	 */
 	private ExpressionStatementNode read(ExpressionNode parent,
-			String sharedName, String tmpName) {
+			String sharedName, String tmpName, Type origType) {
 		final String place = sharedName + "_sharedReadCall";
 		ExpressionNode function = this.identifierExpression(
 				newSource(place, CParser.IDENTIFIER), "$omp_read");
+
 		ExpressionNode addressOfVar = nodeFactory.newOperatorNode(
 				newSource(place, CParser.AMPERSAND), Operator.ADDRESSOF,
 				Arrays.asList(parent));
+		
+		if (origType instanceof QualifiedObjectType && ((QualifiedObjectType) origType).isVolatileQualified()) {
+			addressOfVar = nodeFactory.newCastNode(
+					source,
+					nodeFactory.newPointerTypeNode(source,
+							nodeFactory.newVoidTypeNode(source)),
+							addressOfVar);
+		}
+		
 		ExpressionNode addressOfTmp = nodeFactory.newOperatorNode(
 				newSource(place, CParser.AMPERSAND),
 				Operator.ADDRESSOF,
@@ -619,9 +640,16 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		// declaring $input int THREAD_MAX;
 
 		threadMax = this.threadMaxDeclaration();
-
+		
+		SequenceNode<IdentifierExpressionNode> threadPrivateList;
+		
+		List<IdentifierExpressionNode> list = new LinkedList<IdentifierExpressionNode>();
+		threadPrivateList = nodeFactory.newSequenceNode(source, "threadPrivateList",
+					list);
+		
+		
 		// Recursive call to replace all omp code
-		replaceOMPPragmas(root, null, null, null, null);
+		replaceOMPPragmas(root, null, null, null, null, threadPrivateList);
 
 		for (ASTNode key : sharedWrite.keySet()) {
 			ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> statements = sharedWrite
@@ -707,6 +735,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				externalList);
 		completeSources(newRootNode);
 		this.processOmpLockCalls(newRootNode);
+		newRootNode.prettyPrint(System.out);
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 		newAst = this.combineASTs(civlcOmpAST, newAst);
 		newAst = this.combineASTs(civlcAST, newAst);
@@ -719,8 +748,44 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			SequenceNode<IdentifierExpressionNode> privateIDs,
 			SequenceNode<IdentifierExpressionNode> sharedIDs,
 			SequenceNode<IdentifierExpressionNode> reductionIDs,
-			SequenceNode<IdentifierExpressionNode> firstPrivateIDs)
+			SequenceNode<IdentifierExpressionNode> firstPrivateIDs,
+			SequenceNode<IdentifierExpressionNode> threadPrivateIDs)
 			throws SyntaxException {
+		
+		if (node instanceof OmpExecutableNode){
+			if(!(node instanceof OmpParallelNode)){
+				//check if node is nested in omp parallel node
+				ASTNode parent = node.parent();
+				boolean nested = false;
+				while(parent != null){
+					parent = parent.parent();
+					if(parent instanceof OmpParallelNode){
+						nested = true;
+						break;
+					}
+					if(parent instanceof CivlForNode){
+						if(((CivlForNode) parent).isParallel()){
+							nested = true;
+							break;
+						}
+					}
+				}
+				if(!nested){
+					if(node instanceof OmpSyncNode){
+						ASTNode body = node.child(7);
+						body.remove();
+						int index = node.childIndex();
+						ASTNode directParent = node.parent();
+						node.remove();
+						directParent.setChild(index, body);
+						return;
+					}
+				}
+			}
+			
+			
+		}
+		
 		if (node instanceof OmpParallelNode) {
 			List<BlockItemNode> items;
 			CompoundStatementNode pragmaBody;
@@ -858,6 +923,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 			// Add implicit shared variables
 			ArrayList<String> alreadyDeclVars = new ArrayList<String>();
+			alreadyDeclVars.add("stdin");
+			alreadyDeclVars.add("stdout");
+			alreadyDeclVars.add("stderr");
+			
 			if (sharedList != null) {
 				for (ASTNode child : sharedList.children()) {
 					String c = ((IdentifierExpressionNode) child)
@@ -868,6 +937,14 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 			if (privateList != null) {
 				for (ASTNode child : privateList.children()) {
+					String c = ((IdentifierExpressionNode) child)
+							.getIdentifier().name();
+					alreadyDeclVars.add(c);
+				}
+			}
+			
+			if (threadPrivateIDs != null) {
+				for (ASTNode child : threadPrivateIDs.children()) {
 					String c = ((IdentifierExpressionNode) child)
 							.getIdentifier().name();
 					alreadyDeclVars.add(c);
@@ -1338,7 +1415,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			for (ASTNode child : children) {
 				if (child.childIndex() >= childrenAdded) {
 					replaceOMPPragmas(child, privateList, sharedList,
-							reductionList, firstPrivateList);
+							reductionList, firstPrivateList, threadPrivateIDs);
 				}
 			}
 		} else if (node instanceof OmpForNode) {
@@ -1361,6 +1438,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			ForLoopInitializerNode initializer;
 			OmpSymbolReductionNode reductionNode = null;
 			String forNode = "forPragma";
+			//ASTNode numIterations = null;
 
 			// Get the list of reduction variables in the OmpForNode
 			ompReductionNode = ((OmpForNode) node).reductionList();
@@ -1392,6 +1470,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				}
 				initializer = currentLoop.getInitializer();
 				lo_hi_step = canonicalForLoopBounds(currentLoop);
+				//numIterations = lo_hi_step.second;
 				ranges.add(new Triple<ASTNode, ASTNode, ASTNode>(
 						lo_hi_step.first, lo_hi_step.second, lo_hi_step.third));
 				// Initializer node only will be either IdentifierExpressionNode
@@ -1560,6 +1639,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				}
 				reductionIDs = reductionList;
 			}
+			
+			// Declare local copies of the private variables
+			if (lastPrivateList != null) {
+				for (ASTNode child : lastPrivateList.children()) {
+					VariableDeclarationNode localPrivate = addPrivateVariable(
+							(IdentifierExpressionNode) child, "regular");
+					items.add(localPrivate);
+				}
+			}
 
 			String civlFor = "civlFor";
 			CivlForNode cfn;
@@ -1631,6 +1719,71 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			}
 			
 			//Do lastprivate vars
+			if (lastPrivateList != null) {
+				for (ASTNode child : lastPrivateList.children()) {
+					String name = ((IdentifierNode) child.child(0)).name();
+					ExpressionNode arg1 = this.identifierExpression(source, name + "$omp_private");
+					OperatorNode expression = nodeFactory.newOperatorNode(source, Operator.ASSIGN, (ExpressionNode)child.copy(), arg1);
+					ExpressionStatementNode statement = nodeFactory.newExpressionStatementNode(expression);
+					
+					int size = items.size();
+					
+					ASTNode lastChild = items.get(size-1);
+
+					Pair<VariableDeclarationNode, ExpressionStatementNode> tempPair = new Pair<>(
+							null, statement);
+					if (sharedWrite.containsKey(lastChild)) {
+						ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> nodeToAdd = sharedRead
+								.get(lastChild);
+						nodeToAdd.add(tempPair);
+					} else {
+						ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> tempPairs = new ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>>();
+						tempPairs.add(tempPair);
+						sharedWrite.put(lastChild, tempPairs);
+					}
+				}
+			}
+			
+			boolean removed = false;
+			for (ASTNode child : sharedIDs.children()) {
+				IdentifierExpressionNode idexp = (IdentifierExpressionNode) child;
+				IdentifierNode id = idexp.getIdentifier();
+				if (lastPrivateList != null) {
+					for (ASTNode childPrivateList : lastPrivateList.children()) {
+						IdentifierExpressionNode privateIdexp = (IdentifierExpressionNode) childPrivateList;
+						IdentifierNode privateId = privateIdexp
+								.getIdentifier();
+						if (id.name().equals(privateId.name())) {
+							child.remove();
+							removed = true;
+						}
+					}
+				}
+
+			}
+			SequenceNode<IdentifierExpressionNode> newSharedList;
+			List<IdentifierExpressionNode> list = new LinkedList<IdentifierExpressionNode>();
+			if (removed) {
+				for (ASTNode child : sharedIDs.children()) {
+					if (child != null) {
+						child.remove();
+						list.add((IdentifierExpressionNode) child);
+					}
+				}
+				newSharedList = nodeFactory.newSequenceNode(source,
+						"sharedList", list);
+				sharedIDs = newSharedList;
+			}
+			
+			if (lastPrivateList != null) {
+				for (ASTNode child : lastPrivateList.children()) {
+					if (child != null) {
+						child.remove();
+						privateIDs
+								.addSequenceChild((IdentifierExpressionNode) child);
+					}
+				}
+			}
 
 			// Insert the CompoundStatementNode where the OmpForNode used to be
 			pragmaBody = nodeFactory.newCompoundStatementNode(
@@ -1643,7 +1796,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			// Visit all of the children to check for omp code
 			for (ASTNode child : children) {
 				replaceOMPPragmas(child, privateIDs, sharedIDs, reductionIDs,
-						firstPrivateIDs);
+						firstPrivateIDs, threadPrivateIDs);
 			}
 
 		} else if (node instanceof OmpSyncNode) {
@@ -1687,7 +1840,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				// Visit all the child to check for omp code
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 
 			} else if(syncKind.equals("OMPATOMIC")){
@@ -1726,7 +1879,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				// Visit all the child to check for omp code
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			} else if (syncKind.equals("BARRIER")) {
 				// Replace omp barrier with $omp_barrier_and_flush
@@ -1805,7 +1958,9 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				// critical node with the CompoundStatementNode
 				body = nodeFactory.newCompoundStatementNode(
 						newSource(syncNode, CParser.COMPOUND_STATEMENT), items);
-				criticalNames.add(criticalName);
+				if(!criticalNames.contains(criticalName)){
+					criticalNames.add(criticalName);
+				}
 				int index = node.childIndex();
 				ASTNode parent = node.parent();
 				parent.setChild(index, body);
@@ -1815,7 +1970,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				// Visit all the child to check for omp code
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 
 			}
@@ -2019,7 +2174,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 
 			}
@@ -2258,7 +2413,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 
 			}
@@ -2267,7 +2422,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			if (!replaced) {
 				for (ASTNode child : node.children()) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			}
 		} else if (node instanceof IdentifierNode) {
@@ -2321,10 +2476,30 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						}
 						if (!sameName) {
 							sharedRead((IdentifierNode) node,
-									(StatementNode) parent, privateIDs,
+									(BlockItemNode) parent, privateIDs,
 									sharedIDs, reductionIDs, firstPrivateIDs);
 						}
 
+					}
+				}
+			}
+			if (threadPrivateIDs != null) {
+				for (ASTNode child : threadPrivateIDs.children()) {
+					IdentifierNode c = ((IdentifierExpressionNode) child)
+							.getIdentifier();
+					if (c.name().equals(((IdentifierNode) node).name())) {
+						ASTNode idExp = node.parent();
+						IdentifierExpressionNode arg0 = (IdentifierExpressionNode) this.identifierExpression(source, c.name() + "$omp_threadprivate");
+						IdentifierExpressionNode arg1 = (IdentifierExpressionNode) this.identifierExpression(source, "_tid");
+
+						OperatorNode threadPrivateReplace = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT, arg0, arg1);
+						
+						int index = idExp.childIndex();
+						ASTNode parent = idExp.parent();
+						parent.setChild(index, threadPrivateReplace);
+						
+						//((IdentifierNode) node).setName(((IdentifierNode) node)
+						//		.name() + "$omp_threadprivate");
 					}
 				}
 			}
@@ -2361,7 +2536,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						if (!isInReduction) {
 							sharedWrite((IdentifierNode) lhs, privateIDs,
 									sharedIDs, reductionIDs, firstPrivateIDs,
-									op);
+									threadPrivateIDs, op);
 						}
 					}
 				}
@@ -2369,14 +2544,14 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				for (int i = 0; i < node.numChildren(); i++) {
 					ASTNode child = node.child(i);
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			}
 
 		} else if (node instanceof OperatorNode) {
 			for (int i = node.numChildren() - 1; i >= 0; i--) {
 				replaceOMPPragmas(node.child(i), privateIDs, sharedIDs,
-						reductionIDs, firstPrivateIDs);
+						reductionIDs, firstPrivateIDs, threadPrivateIDs);
 			}
 		} else if (node instanceof ForLoopNode && sharedIDs != null) {
 			ASTNode oldBody;
@@ -2491,21 +2666,59 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				Iterable<ASTNode> children = body.children();
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			} else {
 				Iterable<ASTNode> children = node.children();
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			}
 
+		} else if (node instanceof OmpDeclarativeNode){ 
+			//Create array of threadprivate vars for each var
+			SequenceNode<IdentifierExpressionNode> vars = ((OmpDeclarativeNode) node).variables();
+			vars.remove();
+			for (ASTNode child : vars.children()) {
+				String c = ((IdentifierExpressionNode) child).getIdentifier().name();
+				IdentifierNode name = nodeFactory.newIdentifierNode(source, c+"$omp_threadprivate");
+				IdentifierNode id = ((IdentifierExpressionNode) child).getIdentifier();
+				TypeNode privateType = ((VariableDeclarationNode) ((Variable) id
+						.getEntity()).getFirstDeclaration()).getTypeNode().copy();
+				IdentifierExpressionNode extent = (IdentifierExpressionNode) this.identifierExpression(source, "$omp_numThreads");
+				ArrayTypeNode arrayType = nodeFactory.newArrayTypeNode(source, privateType, extent);
+				VariableDeclarationNode arrayNode = nodeFactory.newVariableDeclarationNode(source, name, arrayType);
+				int index = node.childIndex();
+				ASTNode parent = node.parent();
+				
+				ASTNode nextNode = parent.child(index+1);
+				
+				//Insert new nodes
+				Pair<VariableDeclarationNode, ExpressionStatementNode> tempPair = new Pair<>(
+						arrayNode, null);
+				if (sharedWrite.containsKey(nextNode)) {
+					ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> nodeToAdd = sharedWrite
+							.get(nextNode);
+					nodeToAdd.add(tempPair);
+				} else {
+					ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> tempPairs = new ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>>();
+					tempPairs.add(tempPair);
+					sharedWrite.put(nextNode, tempPairs);
+				}
+				threadPrivateIDs.addSequenceChild((IdentifierExpressionNode) child.copy());
+			}
+			
+			//Remove old node
+			node.remove();
+			
+			
+						
 		} else if (node != null) {
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
 				replaceOMPPragmas(child, privateIDs, sharedIDs, reductionIDs,
-						firstPrivateIDs);
+						firstPrivateIDs, threadPrivateIDs);
 			}
 		}
 
@@ -2535,22 +2748,24 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			SequenceNode<IdentifierExpressionNode> privateIDs,
 			SequenceNode<IdentifierExpressionNode> sharedIDs,
 			SequenceNode<IdentifierExpressionNode> reductionIDs,
-			SequenceNode<IdentifierExpressionNode> firstPrivateIDs, int opCode)
+			SequenceNode<IdentifierExpressionNode> firstPrivateIDs,
+			SequenceNode<IdentifierExpressionNode> threadPrivateIDs, int opCode)
 			throws SyntaxException, NoSuchElementException {
 		VariableDeclarationNode temp;
 		Type currentType = ((Variable) node.getEntity()).getType();
 		int nodesDeep = 0;
 		boolean pointer = false;
-
-		if (currentType instanceof QualifiedObjectType) {
-			currentType = ((QualifiedObjectType) currentType).getBaseType();
-		}
-
+		Type origType = currentType;
 		while (currentType instanceof PointerType) {
 			currentType = ((PointerType) currentType).referencedType();
 			nodesDeep++;
 			pointer = true;
 		}
+		
+		if (currentType instanceof QualifiedObjectType) {
+			currentType = ((QualifiedObjectType) currentType).getBaseType();
+		}
+
 		while (currentType instanceof ArrayType) {
 			currentType = ((ArrayType) currentType).getElementType();
 			nodesDeep++;
@@ -2598,10 +2813,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					nodeName,
 					this.identifierExpression(
 							newSource(place, CParser.IDENTIFIER), "tmpWrite"
-									+ String.valueOf(tempWriteCount)));
+									+ String.valueOf(tempWriteCount)), origType);
 			if (opCode == 2) {
 				readCall = read((ExpressionNode) parentOfID.copy(), nodeName,
-						"tmpWrite" + String.valueOf(tempWriteCount));
+						"tmpWrite" + String.valueOf(tempWriteCount), origType);
 			}
 		} else {
 			parentOfID = node.parent();
@@ -2611,7 +2826,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			}
 			if (parentOfID instanceof OperatorNode) {
 				checkArrayIndices((OperatorNode) parentOfID, privateIDs,
-						sharedIDs, reductionIDs, firstPrivateIDs);
+						sharedIDs, reductionIDs, firstPrivateIDs, threadPrivateIDs);
 			}
 
 			writeCall = write(
@@ -2619,10 +2834,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					nodeName,
 					this.identifierExpression(
 							newSource(place, CParser.IDENTIFIER), "tmpWrite"
-									+ String.valueOf(tempWriteCount)));
+									+ String.valueOf(tempWriteCount)), origType);
 			if (opCode == 2) {
 				readCall = read((ExpressionNode) parentOfID.copy(), nodeName,
-						"tmpWrite" + String.valueOf(tempWriteCount));
+						"tmpWrite" + String.valueOf(tempWriteCount), origType);
 			}
 		}
 
@@ -2804,7 +3019,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 	private ASTNode getParentOfID(IdentifierNode node) {
 		ASTNode parent = node.parent();
-		while (!(parent instanceof StatementNode)) {
+		while (!(parent instanceof StatementNode || parent instanceof VariableDeclarationNode)) {
 			parent = parent.parent();
 		}
 		return parent;
@@ -2833,33 +3048,36 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 	}
 
-	private void sharedRead(IdentifierNode node, StatementNode parentStatement,
+	private void sharedRead(IdentifierNode node, BlockItemNode parentStatement,
 			SequenceNode<IdentifierExpressionNode> privateIDs,
 			SequenceNode<IdentifierExpressionNode> sharedIDs,
 			SequenceNode<IdentifierExpressionNode> reductionIDs,
 			SequenceNode<IdentifierExpressionNode> firstPrivateIDs)
 			throws SyntaxException, NoSuchElementException {
-
+			
 		boolean alreadyUsed = false;
 		boolean write = false;
 		ExpressionStatementNode writeCall = null;
 		ASTNode statementParent = null;
 		ASTNode parentOfID = null;
-
+		
 		Type currentType = ((Variable) node.getEntity()).getType();
 		int nodesDeep = 0;
 		boolean pointer = false;
 		VariableDeclarationNode temp;
-
-		if (currentType instanceof QualifiedObjectType) {
-			currentType = ((QualifiedObjectType) currentType).getBaseType();
-		}
-
+		Type origType = currentType;
+		
 		while (currentType instanceof PointerType) {
 			currentType = ((PointerType) currentType).referencedType();
 			pointer = true;
 			nodesDeep++;
 		}
+		
+		if (currentType instanceof QualifiedObjectType) {
+			currentType = ((QualifiedObjectType) currentType).getBaseType();
+		}
+
+
 		while (currentType instanceof ArrayType) {
 			currentType = ((ArrayType) currentType).getElementType();
 			nodesDeep++;
@@ -2878,34 +3096,48 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		if (pointer) {
 			parentIsFunctionCall = checkIfParentIsFunction(node);
 		}
-
-		if (parentIsFunctionCall) {
-			nodesDeep = 0;
-			declarationTypeNode = nodeFactory.newPointerTypeNode(source,
-					nodeFactory.newBasicTypeNode(
-							newSource(place, CParser.TYPE), baseTypeKind));
-		} else if (currentType instanceof StructureOrUnionType) {
+		boolean tempBool = true;
+ 
+		if (currentType instanceof StructureOrUnionType) {
 			StructureOrUnionTypeNode stn = (StructureOrUnionTypeNode) ((StructureOrUnionType) currentType)
 					.getKey();
 			StructureOrUnionTypeNode copy = stn.copy();
+			copy.getStructDeclList().remove();
 			declarationTypeNode = copy;
 			write = true;
+			tempBool = false;
+			//if(parentIsFunctionCall){
+				nodesDeep = 0;
+			//}
 		}
+		
+		if (parentIsFunctionCall && tempBool) {
+			declarationTypeNode = nodeFactory.newPointerTypeNode(source,
+					nodeFactory.newBasicTypeNode(
+							newSource(place, CParser.TYPE), baseTypeKind));
+			nodesDeep--;
+			while(nodesDeep > 0){
+				declarationTypeNode = nodeFactory.newPointerTypeNode(source,
+						declarationTypeNode);
+				nodesDeep--;
+			}
+		}
+		
 		// else if(pointer){
 		// declarationTypeNode = nodeFactory.newPointerTypeNode(source,
 		// nodeFactory.newBasicTypeNode(
 		// newSource(place, CParser.TYPE), baseTypeKind));
 		// }
-		else {
+		else if(tempBool) {
 			declarationTypeNode = nodeFactory.newBasicTypeNode(
 					newSource(place, CParser.TYPE), baseTypeKind);
 		}
 
-		for (Triple<StatementNode, IdentifierNode, String> triple : tempVars) {
+		for (Triple<BlockItemNode, IdentifierNode, String> triple : tempVars) {
 			if (triple.second.name().equals(node.name() + "_local")) {
 				ASTNode parent = node.parent();
 				while (parent != null) {
-					if (parent.equals(triple.first)) {
+					if (parent.equals(triple.first) && parentStatement.equals(triple.first)) {
 						String name = node.name();
 
 						if (nodesDeep == 0) {
@@ -2924,7 +3156,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						alreadyUsed = true;
 
 						statementParent = node.parent();
-						while (!(statementParent instanceof StatementNode)) {
+						while (!(statementParent instanceof StatementNode || statementParent instanceof VariableDeclarationNode)) {
 							if (statementParent instanceof OperatorNode) {
 								if (((OperatorNode) statementParent)
 										.getOperator() == Operator.POSTDECREMENT
@@ -2942,8 +3174,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 								triple.second.name()), name,
 								this.identifierExpression(
 										newSource(place, CParser.IDENTIFIER),
-										triple.third));
-
+										triple.third), origType);
 						directParent
 								.setChild(index, this.identifierExpression(
 										source, triple.third));
@@ -2970,7 +3201,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			if (nodesDeep == 0) {
 				parentOfID = node.parent();
 				readCall = read((ExpressionNode) parentOfID.copy(), nodeName,
-						"tmpRead" + String.valueOf(tmpCount));
+						"tmpRead" + String.valueOf(tmpCount), origType);
 			} else {
 				parentOfID = node.parent();
 				while (nodesDeep > 0) {
@@ -2979,10 +3210,10 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				}
 
 				readCall = read((ExpressionNode) parentOfID.copy(), nodeName,
-						"tmpRead" + String.valueOf(tmpCount));
+						"tmpRead" + String.valueOf(tmpCount), origType);
 			}
 
-			Triple<StatementNode, IdentifierNode, String> tempName = new Triple<>(
+			Triple<BlockItemNode, IdentifierNode, String> tempName = new Triple<>(
 					parentStatement, node, "tmpRead" + String.valueOf(tmpCount));
 			tempVars.add(tempName);
 
@@ -3010,7 +3241,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					nodeName,
 					this.identifierExpression(
 							newSource(place, CParser.IDENTIFIER), "tmpRead"
-									+ String.valueOf(tmpCount)));
+									+ String.valueOf(tmpCount)), origType);
 
 			tmpCount++;
 		}
@@ -3140,14 +3371,15 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			SequenceNode<IdentifierExpressionNode> privateIDs,
 			SequenceNode<IdentifierExpressionNode> sharedIDs,
 			SequenceNode<IdentifierExpressionNode> reductionIDs,
-			SequenceNode<IdentifierExpressionNode> firstPrivateIDs)
+			SequenceNode<IdentifierExpressionNode> firstPrivateIDs,
+			SequenceNode<IdentifierExpressionNode> threadPrivateIDs)
 			throws SyntaxException, NoSuchElementException {
 		replaceOMPPragmas(op.child(1), privateIDs, sharedIDs, reductionIDs,
-				firstPrivateIDs);
+				firstPrivateIDs, threadPrivateIDs);
 		ASTNode lhs = op.child(0);
 		while (lhs instanceof OperatorNode) {
 			replaceOMPPragmas(lhs.child(1), privateIDs, sharedIDs,
-					reductionIDs, firstPrivateIDs);
+					reductionIDs, firstPrivateIDs, threadPrivateIDs);
 			lhs = lhs.child(0);
 		}
 	}
