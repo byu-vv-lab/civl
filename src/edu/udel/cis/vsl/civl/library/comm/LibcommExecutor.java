@@ -192,7 +192,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression place = argumentValues[2];
 		SymbolicExpression gcomm;
 		SymbolicExpression comm;
-		SymbolicExpression procArray;
+		SymbolicExpression procArray, initArray;
 		SymbolicExpression myProc;
 		LinkedList<SymbolicExpression> commComponents = new LinkedList<SymbolicExpression>();
 		CIVLSource civlsource = arguments[0].getSource();
@@ -205,16 +205,20 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		state = eval.state;
 		gcomm = eval.value;
 		procArray = universe.tupleRead(gcomm, oneObject);
+		initArray = universe.tupleRead(gcomm, twoObject);
 		myProc = modelFactory.processValue(pid);
 		// TODO report an error if the place has already been taken by other
 		// processes.
-		assert universe.arrayRead(procArray, (NumericExpression) place).equals(
-				modelFactory.processValue(-2));
+		assert universe.arrayRead(initArray, (NumericExpression) place).equals(
+				falseValue);
 		// TODO report an error if the place exceeds the size of the
 		// communicator
 		procArray = universe.arrayWrite(procArray, (NumericExpression) place,
 				myProc);
+		initArray = universe.arrayWrite(initArray, (NumericExpression) place,
+				trueValue);
 		gcomm = universe.tupleWrite(gcomm, oneObject, procArray);
+		gcomm = universe.tupleWrite(gcomm, twoObject, initArray);
 		state = this.primaryExecutor.assign(civlsource, state, process,
 				gcommHandle, gcomm);
 		// builds comm
@@ -311,7 +315,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 				false);
 		state = eval.state;
 		gcomm = eval.value;
-		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		buf = universe.tupleRead(gcomm, threeObject);
 		dest = (NumericExpression) universe.tupleRead(comm, zeroObject);
 		bufRow = universe.arrayRead(buf, source);
 		queue = universe.arrayRead(bufRow, dest);
@@ -330,7 +334,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		queue = universe.tupleWrite(queue, oneObject, messages);
 		bufRow = universe.arrayWrite(bufRow, dest, queue);
 		buf = universe.arrayWrite(buf, source, bufRow);
-		gcomm = universe.tupleWrite(gcomm, universe.intObject(2), buf);
+		gcomm = universe.tupleWrite(gcomm, threeObject, buf);
 		state = this.primaryExecutor.assign(civlsource, state, process,
 				gcommHandle, gcomm);
 		if (lhs != null) {
@@ -388,7 +392,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 				false);
 		state = eval.state;
 		gcomm = eval.value;
-		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		buf = universe.tupleRead(gcomm, threeObject);
 		// TODO checks if source is equal to the place of comm.
 		source = universe.tupleRead(newMessage, zeroObject);
 		dest = universe.tupleRead(newMessage, oneObject);
@@ -405,7 +409,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		queue = universe.tupleWrite(queue, oneObject, messages);
 		bufRow = universe.arrayWrite(bufRow, (NumericExpression) dest, queue);
 		buf = universe.arrayWrite(buf, (NumericExpression) source, bufRow);
-		gcomm = universe.tupleWrite(gcomm, universe.intObject(2), buf);
+		gcomm = universe.tupleWrite(gcomm, threeObject, buf);
 		state = this.primaryExecutor.assign(civlsource, state, process,
 				gcommHandle, gcomm);
 		return state;
@@ -464,7 +468,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		gcomm = eval.value;
 		dest = (NumericExpression) universe.tupleRead(comm, zeroObject);
 		queue = universe.arrayRead(universe.arrayRead(
-				universe.tupleRead(gcomm, twoObject), source), dest);
+				universe.tupleRead(gcomm, threeObject), source), dest);
 		queueLength = universe.tupleRead(queue, zeroObject);
 		messages = universe.tupleRead(queue, oneObject);
 		msgIdx = this.getMatchedMsgIdx(state, pid, messages, queueLength, tag,
@@ -531,7 +535,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		gcomm = eval.value;
 		dest = (NumericExpression) universe.tupleRead(comm, zeroObject);
 		queue = universe.arrayRead(universe.arrayRead(
-				universe.tupleRead(gcomm, twoObject), source), dest);
+				universe.tupleRead(gcomm, threeObject), source), dest);
 		queueLength = universe.tupleRead(queue, zeroObject);
 		messages = universe.tupleRead(queue, oneObject);
 		msgIdx = this.getMatchedMsgIdx(state, pid, messages, queueLength, tag,
@@ -634,8 +638,9 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		NumericExpression nprocs = (NumericExpression) argumentValues[1];
 		SymbolicExpression scope = argumentValues[0];
 		Expression scopeExpression = arguments[0];
-		SymbolicExpression procNegTwo;
+		SymbolicExpression procNegOne;
 		SymbolicExpression procArray;
+		SymbolicExpression initArray;
 		SymbolicExpression buf;
 		SymbolicExpression bufRow;
 		SymbolicExpression queueLength = universe.integer(0);
@@ -650,20 +655,22 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicType procType = typeFactory.processSymbolicType();
 		BooleanExpression context = state.getPathCondition();
 
-		procNegTwo = modelFactory.processValue(-2);
+		procNegOne = modelFactory.processValue(-1);
 		emptyMessages = universe.array(dynamicMessageType,
 				new LinkedList<SymbolicExpression>());
 		assert dynamicQueueType instanceof SymbolicTupleType;
 		emptyQueue = universe.tuple((SymbolicTupleType) dynamicQueueType,
 				Arrays.asList(queueLength, emptyMessages));
 		procArray = symbolicUtil
-				.newArray(context, procType, nprocs, procNegTwo);
+				.newArray(context, procType, nprocs, procNegOne);
+		initArray = symbolicUtil.newArray(context, universe.booleanType(),
+				nprocs, falseValue);
 		bufRow = symbolicUtil.newArray(context, emptyQueue.type(), nprocs,
 				emptyQueue);
 		buf = symbolicUtil.newArray(context, bufRow.type(), nprocs, bufRow);
 		gcomm = universe.tuple(
 				(SymbolicTupleType) gcommType.getDynamicType(universe),
-				Arrays.asList(nprocs, procArray, buf));
+				Arrays.asList(nprocs, procArray, initArray, buf));
 		state = primaryExecutor.malloc(source, state, pid, process, lhs,
 				scopeExpression, scope, gcommType, gcomm);
 		return state;
@@ -744,7 +751,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		nprocExpr = modelFactory.dotExpression(gcommExpr.getSource(),
 				gcommExpr, 0);
 		nprocs_int = symbolicUtil.extractInt(nprocExpr.getSource(), nprocs);
-		buf = universe.tupleRead(gcomm, twoObject);
+		buf = universe.tupleRead(gcomm, threeObject);
 		for (int i = 0; i < nprocs_int; i++) {
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
@@ -769,8 +776,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 									symbolicAnalyzer.stateToString(state),
 									claim,
 									resultType,
-									ErrorKind.MPI_ERROR,
-									"MPI communicator memory leak: "
+									ErrorKind.COMMUNICATION,
+									"Communicator memory leak: "
 											+ "There is at least one message still remaining in channel["
 											+ i
 											+ "]["

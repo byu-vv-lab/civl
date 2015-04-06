@@ -26,8 +26,8 @@ struct $queue {
  * in MPI.  Completes the declaration of this type in civlc-common.h */
 struct $gcomm {
   int nprocs; // number of processes
-  //_Bool isInit[]; // if the local comm has been initiated
   $proc procs[];
+  _Bool isInit[]; // if the local comm has been initiated
   $queue buf[][]; // message buffers
 };
 

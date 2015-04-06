@@ -269,7 +269,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 		NumericExpression tagVal = universe.integer(tag);
 		List<NumericExpression> results = new LinkedList<>();
 
-		buf = universe.tupleRead(gcomm, universe.intObject(2));
+		buf = universe.tupleRead(gcomm, threeObject);
 		assert (source == -1 || source >= 0) : "Message source is neither wild-card nor valid positive integer.\n";
 		assert (tag == -2 || tag >= 0) : "Message tag is neither wild-card nor valid positive integer.\n";
 		// non-wild card source and tag
