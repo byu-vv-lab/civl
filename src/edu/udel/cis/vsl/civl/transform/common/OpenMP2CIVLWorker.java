@@ -735,7 +735,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				externalList);
 		completeSources(newRootNode);
 		this.processOmpLockCalls(newRootNode);
-		newRootNode.prettyPrint(System.out);
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
 		newAst = this.combineASTs(civlcOmpAST, newAst);
 		newAst = this.combineASTs(civlcAST, newAst);
