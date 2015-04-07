@@ -5,6 +5,9 @@ import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
 import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import edu.udel.cis.vsl.gmc.Option;
 
@@ -411,4 +414,46 @@ public class CIVLConstants {
 				statelessPrintfO, svcompO, sysIncludePathO, traceO,
 				userIncludePathO, verboseO, webO, CIVLMacroO };
 	}
+
+	// headers...
+	public final static String CIVLC = "civlc.cvh";
+	public final static String CIVL_MPI = "civl-mpi.cvh";
+	public final static String CIVL_PTHREAD = "civl-pthread.cvh";
+	public final static String COMM = "comm.cvh";
+	public final static String CONCURRENCY = "concurrency.cvh";
+	public final static String CIVL_OMP = "civl-omp.cvh";
+	public final static String MPI = "mpi.h";
+	public final static String MATH = "math.h";
+	public final static String OMP = "omp.h";
+	public final static String PTHREAD = "pthread.h";
+	public final static String SEQ = "seq.cvh";
+	public final static String STRING_LIB = "string.h";
+	public final static String SVCOMP = "svcomp.h";
+	public final static String STDIO = "stdio.h";
+	public final static String STDLIB = "stdlib.h";
+	public final static String SYS_TIME = "sys/time.h";
+	public final static String TIME = "time.h";
+	public final static String CUDA = "cuda.h";
+	public final static String CIVL_CUDA = "civl-cuda.cvh";
+
+	/**
+	 * Returns all CIVL-C libraries.
+	 * 
+	 * @return all CIVL-C libraries.
+	 */
+	public final static Set<String> getAllCivlLibs() {
+		return new HashSet<String>(Arrays.asList(CIVLC, CIVL_MPI, CIVL_PTHREAD,
+				COMM, CONCURRENCY, CIVL_OMP, SEQ, CIVL_CUDA));
+	}
+
+	/**
+	 * Returns all standard c libraries.
+	 * 
+	 * @return all standard c libraries.
+	 */
+	public final static Set<String> getAllStandardCLibs() {
+		return new HashSet<String>(Arrays.asList(MPI, MATH, OMP, PTHREAD,
+				STRING_LIB, SVCOMP, STDIO, STDLIB, TIME, CUDA, SYS_TIME));
+	}
+
 }

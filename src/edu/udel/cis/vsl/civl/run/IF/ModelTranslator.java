@@ -181,7 +181,9 @@ public class ModelTranslator {
 	 *            command line.
 	 * @param coreName
 	 *            The core name of the user file.
-	 * @throws PreprocessorException if there is a problem 
+	 * @throws PreprocessorException
+	 *             if there is a problem processing any macros defined in the
+	 *             command line
 	 */
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
 			GMCConfiguration gmcConfig, GMCSection gmcSection,
@@ -190,11 +192,32 @@ public class ModelTranslator {
 				coreName, SARL.newStandardUniverse());
 	}
 
+	/**
+	 * 
+	 * @param transformerFactory
+	 *            The transformer factory that provides various CIVL transformer
+	 * @param frontEnd
+	 *            The ABC front end
+	 * @param gmcConfig
+	 *            The GMC configuration which corresponds to the command line.
+	 * @param gmcSection
+	 *            The GMC section which corresponds to the command line section
+	 *            this model translator associates with.
+	 * @param filenames
+	 *            The list of file names for parsing, which are specified in the
+	 *            command line.
+	 * @param coreName
+	 *            The core name of the user file.
+	 * @param universe
+	 *            The symbolic universe, the unique one used by this run.
+	 * @throws PreprocessorException
+	 *             if there is a problem processing any macros defined in the
+	 *             command line
+	 */
 	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
 			GMCConfiguration gmcConfig, GMCSection cmdSection,
 			String[] filenames, String coreName, SymbolicUniverse universe)
-			throws PreprocessorException
-			 {
+			throws PreprocessorException {
 		this.transformerFactory = transformerFactory;
 		this.cmdSection = cmdSection;
 		this.gmcConfig = gmcConfig;
@@ -214,8 +237,24 @@ public class ModelTranslator {
 		macroMaps = getMacroMaps(preprocessor);
 	}
 
+	/**
+	 * Builds the ABC program, based on the command line associated with this
+	 * model translator, which include several steps: parsing, linking, applying
+	 * transformers, etc.
+	 * 
+	 * @return the ABC program built by CIVL according to the command line
+	 *         setting
+	 * @throws PreprocessorException
+	 *             if there is a problem preprocessing any source files.
+	 * @throws SyntaxException
+	 *             if there is a problem parsing the source files.
+	 * @throws ParseException
+	 *             if there is a problem parsing or linking the source files.
+	 * @throws IOException
+	 *             if there is a problem reading source files.
+	 */
 	Program buildProgram() throws PreprocessorException, SyntaxException,
-			ParseException, IOException {
+			IOException, ParseException {
 		CTokenSource[] tokenSources;
 		List<AST> asts = null;
 		Program program = null;
@@ -261,6 +300,14 @@ public class ModelTranslator {
 		return program;
 	}
 
+	/**
+	 * Print the input variables declared in the given program to the standard
+	 * output stream.
+	 * 
+	 * @param program
+	 *            the program, which is the result of parsing, linking and
+	 *            transforming.
+	 */
 	private void printInputVariableNames(Program program) {
 		List<VariableDeclarationNode> inputVars = this
 				.inputVariablesOfProgram(program);
@@ -274,6 +321,14 @@ public class ModelTranslator {
 		out.flush();
 	}
 
+	/**
+	 * Gets the list of input variables declared in the given program.
+	 * 
+	 * @param program
+	 *            the program, which is the result of parsing, linking and
+	 *            transforming.
+	 * @return the list of input variables declared in the given program.
+	 */
 	private List<VariableDeclarationNode> inputVariablesOfProgram(
 			Program program) {
 		LinkedList<VariableDeclarationNode> result = new LinkedList<>();
@@ -372,6 +427,17 @@ public class ModelTranslator {
 		return result;
 	}
 
+	/**
+	 * Builds a CIVL model from an ABC program, which is the result of parsing,
+	 * linking and transforming source files.
+	 * 
+	 * @param program
+	 *            the ABC program.
+	 * @return the CIVL model representation of the given ABC program.
+	 * @throws CommandLineException
+	 *             if there is a problem in the format of input variable values
+	 *             in the command line.
+	 */
 	Model buildModel(Program program) throws CommandLineException {
 		Model model;
 		ModelBuilder modelBuilder = Models.newModelBuilder(this.universe);
@@ -627,6 +693,17 @@ public class ModelTranslator {
 		return ast;
 	}
 
+	/**
+	 * Translates a certain array of tokens into a list of AST's.
+	 * 
+	 * @param tokenSources
+	 *            the array of tokens to be parsed.
+	 * @return the list of AST's which is the result of parsing the token array.
+	 * @throws SyntaxException
+	 *             if there is a problem parsing the tokens.
+	 * @throws ParseException
+	 *             if there is a problem parsing the tokens.
+	 */
 	public List<AST> parseTokens(CTokenSource[] tokenSources)
 			throws SyntaxException, ParseException {
 		List<AST> asts = new ArrayList<>(tokenSources.length);
@@ -639,6 +716,13 @@ public class ModelTranslator {
 		return asts;
 	}
 
+	/**
+	 * Preprocesses the files associated with this model translator into tokens.
+	 * 
+	 * @return the tokens which are the preprocessed result of the source files.
+	 * @throws PreprocessorException
+	 *             if there is any problem preprocessing the source files.
+	 */
 	public CTokenSource[] preprocess() throws PreprocessorException {
 		List<CTokenSource> tokenSources = new ArrayList<>(filenames.length);
 
@@ -662,10 +746,12 @@ public class ModelTranslator {
 	}
 
 	/**
+	 * Translates command line marcos into ABC macro objects.
 	 * 
 	 * @param preprocessor
-	 * @return
-	 * @throws PreprocessorException
+	 *            the preprocessor which would be used to translate macros.
+	 * @return a map of macro keys and objects.
+	 * @throws PreprocessorExceptions
 	 *             if there is a problem preprocessing the macros.
 	 */
 	private Map<String, Macro> getMacroMaps(Preprocessor preprocessor)
@@ -705,8 +791,15 @@ public class ModelTranslator {
 		}
 	}
 
-	private File[] getUserIncludes(GMCSection config) {
-		return extractPaths((String) config.getValue(userIncludePathO));
+	/**
+	 * Gets the user include paths, which are specified in the command line
+	 * 
+	 * @param section
+	 *            the command line section this model translator corresponds to.
+	 * @return the user include paths.
+	 */
+	private File[] getUserIncludes(GMCSection section) {
+		return extractPaths((String) section.getValue(userIncludePathO));
 	}
 
 	/**
@@ -740,9 +833,17 @@ public class ModelTranslator {
 	 * @return The list of ASTs each of which corresponds to the implementation
 	 *         of a library used by the input AST.
 	 * @throws PreprocessorException
+	 *             if there is a problem preprocessing the implementation file
+	 *             of a library
 	 * @throws SyntaxException
+	 *             if there is a problem parsing the implementation file of a
+	 *             library
 	 * @throws ParseException
+	 *             if there is a problem parsing the implementation file of a
+	 *             library
 	 * @throws IOException
+	 *             if there is a problem reading the implementation file of a
+	 *             library
 	 */
 	private List<AST> systemImplASTs(List<AST> userASTs)
 			throws PreprocessorException, SyntaxException, ParseException,
@@ -791,48 +892,11 @@ public class ModelTranslator {
 	private String getSystemImplementationName(File file) {
 		String name = file.getName();
 
-		switch (name) {
-		case "civlc.cvh":
-			return "civlc.cvl";
-		case "civl-mpi.cvh":
-			return "civl-mpi.cvl";
-		case "civl-pthread.cvh":
-			return "civl-pthread.cvl";
-		case "comm.cvh":
-			return "comm.cvl";
-		case "concurrency.cvh":
-			return "concurrency.cvl";
-		case "civl-omp.cvh":
-			return "civl-omp.cvl";
-		case "mpi.h":
-			return "mpi.cvl";
-		case "math.h":
-			return "math.cvl";
-		case "omp.h":
-			return "omp.cvl";
-		case "pthread.h":
-			return "pthread.cvl";
-		case "seq.cvh":
-			return "seq.cvl";
-		case "string.h":
-			return "string.cvl";
-		case "svcomp.h":
-			return "svcomp.cvl";
-		case "stdio.h":
-			return "stdio.cvl";
-		case "stdlib.h":
-			return "stdlib.cvl";
-		case "sys/time.h":
-			return "sys-time.cvl";
-		case "time.h":
-			return "time.cvl";
-		case "cuda.h":
-			return "cuda.cvl";
-		case "civl-cuda.cvh":
-			return "civl-cuda.cvl";
-		default:
-			return null;
-		}
+		if (CIVLConstants.getAllCivlLibs().contains(name))
+			return name.substring(0, name.length() - 1) + "l";
+		else if (CIVLConstants.getAllStandardCLibs().contains(name))
+			return name.substring(0, name.length() - 1) + "cvl";
+		return null;
 	}
 
 }
