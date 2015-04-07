@@ -436,6 +436,19 @@ public class CIVLConstants {
 	public final static String CUDA = "cuda.h";
 	public final static String CIVL_CUDA = "civl-cuda.cvh";
 
+	public final static String ASSERT = "assert.h";
+	public final static String COMPLEX = "complex.h";
+	public final static String CTYPE = "ctype.h";
+	public final static String FLOAT = "float.h";
+	public final static String GD = "gd.h";
+	public final static String GDFX = "gdfx.h";
+	public final static String LIMITS = "limits.h";
+	public final static String OP = "op.h";
+	public final static String STDARG = "stdarg.h";
+	public final static String STDBOOL = "stdbool.h";
+	public final static String STDDEF = "stddef.h";
+	public final static String UNISTD = "unistd.h";
+
 	/**
 	 * Returns all CIVL-C libraries.
 	 * 
@@ -451,9 +464,20 @@ public class CIVLConstants {
 	 * 
 	 * @return all standard c libraries.
 	 */
-	public final static Set<String> getAllStandardCLibs() {
+	public final static Set<String> getCinterfaces() {
 		return new HashSet<String>(Arrays.asList(MPI, MATH, OMP, PTHREAD,
 				STRING_LIB, SVCOMP, STDIO, STDLIB, TIME, CUDA, SYS_TIME));
 	}
 
+	/**
+	 * Returns all standard c libraries.
+	 * 
+	 * @return all standard c libraries.
+	 */
+	public final static Set<String> getAllCLibraries() {
+		return new HashSet<String>(Arrays.asList(MPI, MATH, OMP, PTHREAD,
+				STRING_LIB, SVCOMP, STDIO, STDLIB, TIME, CUDA, SYS_TIME,
+				ASSERT, COMPLEX, CTYPE, FLOAT, GD, GDFX, LIMITS, OP, STDARG,
+				STDBOOL, STDDEF, UNISTD));
+	}
 }

@@ -894,7 +894,7 @@ public class ModelTranslator {
 
 		if (CIVLConstants.getAllCivlLibs().contains(name))
 			return name.substring(0, name.length() - 1) + "l";
-		else if (CIVLConstants.getAllStandardCLibs().contains(name))
+		else if (CIVLConstants.getCinterfaces().contains(name))
 			return name.substring(0, name.length() - 1) + "cvl";
 		return null;
 	}
