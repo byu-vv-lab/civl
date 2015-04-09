@@ -2076,20 +2076,22 @@ public class FunctionTranslator {
 					String fileName = file.getName();
 					String libName;
 
-					if (!fileName.contains("."))
-						throw new CIVLInternalException("Malformed file name "
-								+ fileName + " containing system function "
-								+ functionName, nodeSource);
 					switch (functionIdentifier.name()) {
 					case "$assert":
 					case "$assume":
 					case "$defined":
 						libName = "civlc";
 						break;
+					case "$assert_equals":
 					case "$equals":
 						libName = "pointer";
 						break;
 					default:
+						if (!fileName.contains("."))
+							throw new CIVLInternalException(
+									"Malformed file name " + fileName
+											+ " containing system function "
+											+ functionName, nodeSource);
 						libName = fileNameWithoutExtension(fileName);
 					}
 					// if (functionIdentifier.name().equals("$assert"))
