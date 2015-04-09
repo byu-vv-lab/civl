@@ -6,6 +6,7 @@ package edu.udel.cis.vsl.civl.predicate.IF;
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.MAYBE;
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.YES;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
+import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -22,29 +23,23 @@ import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 
 /**
- * An absolute deadlock occurs if all of the following hold:
+ * An potential deadlock occurs if all of the following hold:
  * 
  * <ol>
- * <li>not every process has terminated
- * <li>no process has an enabled statement (note that a send statement is
- * enabled iff the current number of buffered messages is less than the buffer
- * bound).
+ * <li>not every process has terminated</li>
+ * <li>the only enabled transitions are sends for which there is no matching
+ * receive</li>
  * </ol>
  * 
- * It is to be contrasted with a "potentially deadlocked" state, i.e., one in
- * which there may be send transitions enabled, but the send transitions can
- * only execute if buffering is allowed, i.e., no matching receives are
- * currently posted. Every absolutely deadlocked state is potentially
- * deadlocked, but not necessarily vice-versa.
- * 
- * @author Timothy K. Zirkel (zirkel)
- * 
+ * @author Ziqing Luo
  */
-public class Deadlock implements CIVLStatePredicate {
+public class PotentialDeadlock implements CIVLStatePredicate {
 
 	private SymbolicUniverse universe;
 
 	private Enabler enabler;
+
+	private LibraryEnablerLoader loader;
 
 	/**
 	 * If violation is found it is cached here.
@@ -60,20 +55,6 @@ public class Deadlock implements CIVLStatePredicate {
 	private SymbolicAnalyzer symbolicAnalyzer;
 
 	/**
-	 * An absolute deadlock occurs if all of the following hold:
-	 * 
-	 * <ol>
-	 * <li>not every process has terminated
-	 * <li>no process has an enabled statement (note that a send statement is
-	 * enabled iff the current number of buffered messages is less than the
-	 * buffer bound).
-	 * </ol>
-	 * 
-	 * It is to be contrasted with a "potentially deadlocked" state, i.e., one
-	 * in which there may be send transitions enabled, but the send transitions
-	 * can only execute if buffering is allowed, i.e., no matching receives are
-	 * currently posted. Every absolutely deadlocked state is potentially
-	 * deadlocked, but not necessarily vice-versa.
 	 * 
 	 * @param symbolicUniverse
 	 *            The symbolic universe for creating symbolic expressions.
@@ -82,12 +63,15 @@ public class Deadlock implements CIVLStatePredicate {
 	 * @param symbolicAnalyzer
 	 *            The symbolic analyzer used in the system.
 	 */
-	public Deadlock(SymbolicUniverse symbolicUniverse, Enabler enabler,
+	public PotentialDeadlock(SymbolicUniverse symbolicUniverse,
+			Enabler enabler, LibraryEnablerLoader loader,
 			SymbolicAnalyzer symbolicAnalyzer) {
 		this.universe = symbolicUniverse;
 		this.falseExpr = symbolicUniverse.falseExpression();
 		this.enabler = enabler;
+		this.loader = loader;
 		this.symbolicAnalyzer = symbolicAnalyzer;
+		// loader.g
 	}
 
 	public CIVLExecutionException getViolation() {
@@ -195,7 +179,7 @@ public class Deadlock implements CIVLStatePredicate {
 		CIVLSource source = null; // location of first non-term proc
 
 		for (ProcessState p : state.getProcessStates()) {
-			if (p == null || p.hasEmptyStack())
+			if (p == null || p.hasEmptyStack()) // p has terminated
 				continue;
 
 			int pid = p.getPid();
@@ -209,6 +193,7 @@ public class Deadlock implements CIVLStatePredicate {
 
 				if (guard.isFalse())
 					continue;
+
 				predicate = universe.or(predicate, guard);
 				if (predicate.isTrue())
 					return false;

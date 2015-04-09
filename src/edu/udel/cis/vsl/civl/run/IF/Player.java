@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants.DeadlockKind;
 import edu.udel.cis.vsl.civl.dynamic.IF.Dynamics;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -20,7 +21,9 @@ import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.predicate.IF.StandardPredicate;
+import edu.udel.cis.vsl.civl.predicate.IF.CIVLStatePredicate;
+import edu.udel.cis.vsl.civl.predicate.IF.Deadlock;
+import edu.udel.cis.vsl.civl.predicate.IF.PotentialDeadlock;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
@@ -64,7 +67,7 @@ public abstract class Player {
 
 	protected EnablerIF<State, Transition, TransitionSequence> enabler;
 
-	protected StandardPredicate predicate;
+	protected CIVLStatePredicate predicate;
 
 	protected LibraryEnablerLoader libraryEnablerLoader;
 
@@ -125,7 +128,8 @@ public abstract class Player {
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
 				libraryEvaluatorLoader, symbolicUtil, symbolicAnalyzer,
 				memUnitFactory, log);
-		this.gui = (Boolean) config.getAnonymousSection().getValueOrDefault(guiO);
+		this.gui = (Boolean) config.getAnonymousSection().getValueOrDefault(
+				guiO);
 		this.libraryExecutorLoader = Semantics
 				.newLibraryExecutorLoader(this.libraryEvaluatorLoader);
 		this.executor = Semantics.newExecutor(modelFactory, stateFactory, log,
@@ -140,8 +144,16 @@ public abstract class Player {
 				.newLibraryEnablerLoader(this.libraryEvaluatorLoader);
 		enabler = Kripkes.newEnabler(stateFactory, evaluator, symbolicAnalyzer,
 				memUnitFactory, this.libraryEnablerLoader, log, civlConfig);
-		this.predicate = new StandardPredicate(log, universe,
-				(Enabler) this.enabler, symbolicAnalyzer);
+		if (civlConfig.deadlock() == DeadlockKind.ABSOLUTE) {
+			this.predicate = new Deadlock(universe, (Enabler) this.enabler,
+					symbolicAnalyzer);
+		} else if (civlConfig.deadlock() == DeadlockKind.POTENTIAL) {
+			this.predicate = new PotentialDeadlock(universe,
+					(Enabler) this.enabler, libraryEnablerLoader,
+					symbolicAnalyzer);
+		} else {
+			this.predicate = null;
+		}
 		stateManager = Kripkes.newStateManager((Enabler) enabler, executor,
 				symbolicAnalyzer, log, civlConfig);
 	}
