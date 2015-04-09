@@ -34,26 +34,7 @@ public interface BinaryExpression extends Expression {
 	 * 
 	 */
 	public enum BINARY_OPERATOR {
-		AND,
-		BITAND,
-		BITCOMPLEMENT,
-		BITOR,
-		BITXOR,
-		DIVIDE,
-		EQUAL,
-		IMPLIES,
-		LESS_THAN,
-		LESS_THAN_EQUAL,
-		MINUS,
-		MODULO,
-		NOT_EQUAL,
-		OR,
-		PLUS,
-		POINTER_ADD,
-		POINTER_SUBTRACT,
-		SHIFTLEFT,
-		SHIFTRIGHT,
-		TIMES
+		AND, BITAND, BITCOMPLEMENT, BITOR, BITXOR, DIVIDE, EQUAL, IMPLIES, LESS_THAN, LESS_THAN_EQUAL, MINUS, MODULO, NOT_EQUAL, OR, PLUS, POINTER_ADD, POINTER_SUBTRACT, SHIFTLEFT, SHIFTRIGHT, TIMES
 	};
 
 	/**
@@ -65,6 +46,8 @@ public interface BinaryExpression extends Expression {
 	 * @return The binary operator
 	 */
 	BINARY_OPERATOR operator();
+
+	String operatorToString();
 
 	/**
 	 * @return The right operand.

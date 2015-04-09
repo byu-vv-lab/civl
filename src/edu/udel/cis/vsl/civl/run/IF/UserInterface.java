@@ -1,51 +1,23 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.CIVLMacroO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.astO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.bar;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectHeapsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectProcessesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectScopesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.date;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.deadlockO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.debugO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.echoO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.enablePrintfO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.errorBoundO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guiO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guidedO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.idO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.inputO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.macroO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompLoopDecompO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompNoSimplifyO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.preprocO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.procBoundO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.randomO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.saveStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.seedO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showAmpleSetWtStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showInputVarsO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showMemoryUnitsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showModelO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showPathConditionO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showProgramO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showProverQueriesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showQueriesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showSavedStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showStatesO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTimeO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.svcompO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.sysIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.userIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.version;
 
@@ -170,34 +142,6 @@ public class UserInterface {
 	static {
 		for (Option option : CIVLConstants.getAllOptions())
 			definedOptions.put(option.name(), option);
-		CIVLCommand.addShowOption(showModelO, verboseO, debugO, echoO,
-				userIncludePathO, sysIncludePathO, svcompO, showInputVarsO,
-				showProgramO, ompNoSimplifyO, ompLoopDecompO, macroO, preprocO,
-				astO, showTimeO, CIVLMacroO);
-		CIVLCommand.addVerifyOrCompareOption(errorBoundO, verboseO, debugO,
-				echoO, userIncludePathO, sysIncludePathO, showTransitionsO,
-				showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, inputO, minO, maxdepthO, procBoundO,
-				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
-				showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcompO,
-				showProgramO, showPathConditionO, ompNoSimplifyO,
-				ompLoopDecompO, collectProcessesO, collectScopesO,
-				collectHeapsO, macroO, preprocO, astO, showTimeO,
-				showMemoryUnitsO, CIVLMacroO);
-		CIVLCommand.addReplayOption(showModelO, verboseO, debugO, echoO,
-				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,
-				showAmpleSetWtStatesO, statelessPrintfO, guiO, showProgramO,
-				showPathConditionO, preprocO, astO, showMemoryUnitsO);
-		CIVLCommand.addRunOption(errorBoundO, verboseO, randomO, guidedO,
-				seedO, debugO, echoO, userIncludePathO, sysIncludePathO,
-				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, inputO, maxdepthO, procBoundO, simplifyO,
-				enablePrintfO, showAmpleSetO, showAmpleSetWtStatesO,
-				statelessPrintfO, deadlockO, svcompO, showProgramO,
-				showPathConditionO, ompNoSimplifyO, ompLoopDecompO,
-				collectProcessesO, collectScopesO, collectHeapsO, macroO,
-				preprocO, astO, showMemoryUnitsO, CIVLMacroO);
 	}
 
 	/* ************************** Constructors ***************************** */

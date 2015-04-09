@@ -619,8 +619,9 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 					arguments, argumentValues);
 			break;
 		case "printf":
-			state = this.primaryExecutor.execute_printf(source, state, pid,
-					process, lhs, arguments, argumentValues);
+			if (civlConfig.enablePrintf())
+				state = this.primaryExecutor.execute_printf(source, state, pid,
+						process, lhs, arguments, argumentValues);
 			break;
 		case "fscanf":
 			state = execute_fscanf(source, state, pid, process, lhs, arguments,
@@ -1070,15 +1071,17 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 								state, argumentValue)));
 		}
 		if (fileNameString.compareTo(STDOUT) == 0) {
-			this.primaryExecutor.printf(civlConfig.out(),
-					arguments[1].getSource(), formats, printedContents);
+			if (civlConfig.enablePrintf())
+				this.primaryExecutor.printf(civlConfig.out(),
+						arguments[1].getSource(), formats, printedContents);
 			if (civlConfig.statelessPrintf())
 				return state;
 		} else if (fileNameString.compareTo(STDIN) == 0) {
 			// TODO: stdin
 		} else if (fileNameString.equals(STDERR)) {
-			this.primaryExecutor.printf(civlConfig.err(),
-					arguments[1].getSource(), formats, printedContents);
+			if (civlConfig.enablePrintf())
+				this.primaryExecutor.printf(civlConfig.err(),
+						arguments[1].getSource(), formats, printedContents);
 		}
 		{ // updates the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,

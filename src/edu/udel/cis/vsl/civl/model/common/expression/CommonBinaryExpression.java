@@ -203,70 +203,8 @@ public class CommonBinaryExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		String op = "";
+		String op = this.operatorToString();
 
-		switch (operator) {
-		case BITAND:
-			op = "&";
-			break;
-		case BITOR:
-			op = "|";
-			break;
-		case BITXOR:
-			op = "^";
-			break;
-		case PLUS:
-			op = "+";
-			break;
-		case MINUS:
-			op = "-";
-			break;
-		case TIMES:
-			op = "*";
-			break;
-		case DIVIDE:
-			op = "/";
-			break;
-		case LESS_THAN:
-			op = "<";
-			break;
-		case LESS_THAN_EQUAL:
-			op = "<=";
-			break;
-		case EQUAL:
-			op = "==";
-			break;
-		case NOT_EQUAL:
-			op = "!=";
-			break;
-		case AND:
-			op = "&&";
-			break;
-		case OR:
-			op = "||";
-			break;
-		case IMPLIES:
-			op = "=>";
-			break;
-		case MODULO:
-			op = "%";
-			break;
-		case POINTER_ADD:
-			op = "+";
-			break;
-		case POINTER_SUBTRACT:
-			op = "-";
-			break;
-		case SHIFTLEFT:
-			op = "<<";
-			break;
-		case SHIFTRIGHT:
-			op = ">>";
-			break;
-		default:
-			throw new CIVLInternalException("Unknown operator: " + operator,
-					this);
-		}
 		return "(" + left + op + right + ")";
 	}
 
@@ -348,5 +286,74 @@ public class CommonBinaryExpression extends CommonExpression implements
 		BinaryExpression that = (BinaryExpression) expression;
 
 		return this.left.equals(that.left()) && this.right.equals(that.right());
+	}
+
+	@Override
+	public String operatorToString() {
+		String op = "";
+
+		switch (operator) {
+		case BITAND:
+			op = "&";
+			break;
+		case BITOR:
+			op = "|";
+			break;
+		case BITXOR:
+			op = "^";
+			break;
+		case PLUS:
+			op = "+";
+			break;
+		case MINUS:
+			op = "-";
+			break;
+		case TIMES:
+			op = "*";
+			break;
+		case DIVIDE:
+			op = "/";
+			break;
+		case LESS_THAN:
+			op = "<";
+			break;
+		case LESS_THAN_EQUAL:
+			op = "<=";
+			break;
+		case EQUAL:
+			op = "==";
+			break;
+		case NOT_EQUAL:
+			op = "!=";
+			break;
+		case AND:
+			op = "&&";
+			break;
+		case OR:
+			op = "||";
+			break;
+		case IMPLIES:
+			op = "=>";
+			break;
+		case MODULO:
+			op = "%";
+			break;
+		case POINTER_ADD:
+			op = "+";
+			break;
+		case POINTER_SUBTRACT:
+			op = "-";
+			break;
+		case SHIFTLEFT:
+			op = "<<";
+			break;
+		case SHIFTRIGHT:
+			op = ">>";
+			break;
+		default:
+			throw new CIVLInternalException("Unknown operator: " + operator,
+					this);
+		}
+		return op;
 	}
 }

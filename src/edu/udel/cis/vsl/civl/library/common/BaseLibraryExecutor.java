@@ -245,7 +245,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			int msgOffset) throws UnsatisfiablePathConditionException {
 		if (resultType != ResultType.YES) {
 			if (arguments.length > msgOffset) {
-				if (civlConfig.enablePrintf()) {
+//				if (civlConfig.enablePrintf()) {
 					Expression[] pArguments = Arrays.copyOfRange(arguments,
 							msgOffset, arguments.length);
 					SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
@@ -253,8 +253,17 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 
 					state = this.primaryExecutor.execute_printf(source, state,
 							pid, process, null, pArguments, pArgumentValues);
-				}
+					civlConfig.out().println();
+//				}
 			}
+			
+			StringBuilder message=new StringBuilder();
+			
+			message.append("Assertion voilated: ");
+			message.append(statement.toString());
+			message.append("\nEvaluation: ");
+			message.append("BLAHBLAh...");
+			
 			state = errorLogger.logError(source, state, process,
 					symbolicAnalyzer.stateToString(state), assertValue,
 					resultType, ErrorKind.ASSERTION_VIOLATION,
