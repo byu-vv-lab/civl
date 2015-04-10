@@ -83,7 +83,6 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitExpressionEvaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
-import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -109,14 +108,12 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.number.NumberFactory;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.object.StringObject;
-import edu.udel.cis.vsl.sarl.IF.object.SymbolicObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicFunctionType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
-import edu.udel.cis.vsl.sarl.collections.IF.SymbolicCollection;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 import edu.udel.cis.vsl.sarl.number.Numbers;
 
@@ -154,14 +151,6 @@ public class CommonEvaluator implements Evaluator {
 	 * Stack because of its more intuitive iteration order.
 	 */
 	private LinkedList<SymbolicConstant> boundVariables = new LinkedList<>();
-
-	/**
-	 * The symbolic bundle type. This is the symbolic type of a symbolic
-	 * expression that represents a bundle value. A bundle is a special kind of
-	 * value in CIVL that is obtained by "bundling up" some region of memory up
-	 * into a single value.
-	 */
-	private SymbolicUnionType bundleType;
 
 	/**
 	 * The dynamic heap type. This is the symbolic type of a symbolic expression
@@ -327,8 +316,6 @@ public class CommonEvaluator implements Evaluator {
 
 	private MemoryUnitExpressionEvaluator memUnitEvaluator;
 
-	private MemoryUnitFactory memUnitFactory;
-
 	private CIVLTypeFactory typeFactory;
 
 	/* ***************************** Constructors ************************** */
@@ -361,14 +348,12 @@ public class CommonEvaluator implements Evaluator {
 		this.modelFactory = modelFactory;
 		this.typeFactory = modelFactory.typeFactory();
 		this.stateFactory = stateFactory;
-		this.memUnitFactory = stateFactory.memUnitFactory();
 		this.universe = stateFactory.symbolicUniverse();
 		this.memUnitEvaluator = new CommonMemoryUnitEvaluator(symbolicUtil,
 				this, memUnitFactory, universe);
 		pointerType = typeFactory.pointerSymbolicType();
 		functionPointerType = typeFactory.functionPointerSymbolicType();
 		heapType = typeFactory.heapSymbolicType();
-		bundleType = typeFactory.bundleSymbolicType();
 		zeroObj = (IntObject) universe.canonic(universe.intObject(0));
 		// oneObj = (IntObject) universe.canonic(universe.intObject(1));
 		twoObj = (IntObject) universe.canonic(universe.intObject(2));
@@ -2284,105 +2269,6 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/**
-	 * Finds pointers contained in a given expression recursively.
-	 * 
-	 * @param expr
-	 * @param set
-	 * @param state
-	 */
-	private void findPointersInExpression(SymbolicExpression expr,
-			MemoryUnitSet muSet, State state, String process) {
-		SymbolicType type = expr.type();
-		MemoryUnitSet result = muSet;
-
-		// TODO check comm type
-		if (type != null && !type.equals(heapType) && !type.equals(bundleType)) {
-			// need to eliminate heap type as well. each proc has its own.
-			if (pointerType.equals(type)) {
-				SymbolicExpression pointerValue;
-				Evaluation eval;
-
-				memUnitFactory.add(muSet, expr);
-				// set.add(expr);
-				try {
-					if (expr.operator() == SymbolicOperator.CONCRETE
-							&& symbolicUtil.getDyscopeId(null, expr) >= 0) {
-						/*
-						 * If the expression is an arrayElementReference
-						 * expression, and finally it turns that the array type
-						 * has length 0, return immediately. Because we can not
-						 * dereference it and the dereference exception
-						 * shouldn't report here.
-						 */
-						if (symbolicUtil.getSymRef(expr)
-								.isArrayElementReference()) {
-							SymbolicExpression arrayPointer = symbolicUtil
-									.parentPointer(null, expr);
-
-							eval = this.dereference(null, state, process,
-									arrayPointer, false, true);
-							/* Check if it's length == 0 */
-							if (universe.length(eval.value).isZero())
-								return;
-						}
-						eval = this.dereference(null, state, process, expr,
-								false, true);
-						pointerValue = eval.value;
-						state = eval.state;
-						if (pointerValue.operator() == SymbolicOperator.CONCRETE
-								&& pointerValue.type() != null
-								&& pointerValue.type().equals(pointerType))
-							findPointersInExpression(pointerValue, result,
-									state, process);
-					}
-				} catch (UnsatisfiablePathConditionException e) {
-					// // TODO Auto-generated catch block
-					// e.printStackTrace();
-				}
-			} else {
-				int numArgs = expr.numArguments();
-
-				for (int i = 0; i < numArgs; i++) {
-					SymbolicObject arg = expr.argument(i);
-
-					findPointersInObject(arg, result, state, process);
-				}
-			}
-		}
-		return;
-	}
-
-	/**
-	 * Finds all the pointers that can be dereferenced inside a symbolic object.
-	 * 
-	 * @param object
-	 *            a symbolic object
-	 * @param set
-	 *            a set to which the pointer values will be added
-	 * @param heapType
-	 *            the heap type, which will be ignored
-	 */
-	private void findPointersInObject(SymbolicObject object,
-			MemoryUnitSet memSet, State state, String process) {
-		switch (object.symbolicObjectKind()) {
-		case EXPRESSION:
-			findPointersInExpression((SymbolicExpression) object, memSet,
-					state, process);
-			break;
-		case EXPRESSION_COLLECTION: {
-			MemoryUnitSet result = memSet;
-
-			for (SymbolicExpression expr : (SymbolicCollection<?>) object)
-				findPointersInExpression(expr, result, state, process);
-			break;
-		}
-		default:
-			// ignore types and primitives, they don't have any pointers
-			// you can dereference.
-		}
-	}
-
-	/**
 	 * Evaluates the dynamic type of a given CIVL type at a certain state. When
 	 * the CIVL type has some state, e.g., an array type with a variable as the
 	 * extent, the type needs to be evaluated.
@@ -3606,19 +3492,6 @@ public class CommonEvaluator implements Evaluator {
 		} else
 			throw new CIVLInternalException("Unknown kind of LHSExpression",
 					operand);
-		return result;
-	}
-
-	@Override
-	public SymbolicType referencedType(CIVLSource source, State state,
-			SymbolicExpression pointer) {
-		int sid = symbolicUtil.getDyscopeId(source, pointer);
-		int vid = symbolicUtil.getVariableId(source, pointer);
-		ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
-		SymbolicExpression variableValue = state.getDyscope(sid).getValue(vid);
-		SymbolicType variableType = variableValue.type();
-		SymbolicType result = universe.referencedType(variableType, symRef);
-
 		return result;
 	}
 

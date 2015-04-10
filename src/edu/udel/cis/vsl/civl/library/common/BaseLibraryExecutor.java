@@ -138,12 +138,29 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			Pair<State, String> messageResult = this.symbolicAnalyzer
 					.expressionEvaluation(state, pid, arguments[0], false);
 
+			/**
+			 * [4/10/15, 11:22:43 AM] Stephen Siegel: Assertion: expr...
+			 * [4/10/15, 11:22:48 AM] Stephen Siegel: —> … [4/10/15, 11:22:51
+			 * AM] Stephen Siegel: —> … [4/10/15, 11:22:55 AM] Stephen Siegel:
+			 * —> false
+			 * 
+			 * [4/10/15, 11:23:19 AM] Stephen Siegel: Assertion:
+			 * $assert(((a+b)==(c+d))) [4/10/15, 11:23:29 AM] Stephen Siegel: —>
+			 * (1+2)==(3+4) [4/10/15, 11:23:35 AM] Stephen Siegel: —> 3==7
+			 * [4/10/15, 11:23:38 AM] Stephen Siegel: —> false
+			 * 
+			 * Reduced context of path condition
+			 */
+
 			state = messageResult.left;
-			message.append("Assertion voilated: ");
+			message.append("Context: ");
+			message.append(state.getPathCondition());
+			message.append("\n");
+			message.append("Assertion: ");
 			message.append(statement.toString());
-			message.append("\nEvaluation: ");
+			message.append("\n-> ");
 			message.append(messageResult.right);
-			message.append("\nResult: ");
+			message.append("\n-> ");
 			messageResult = this.symbolicAnalyzer.expressionEvaluation(state,
 					pid, arguments[0], true);
 			state = messageResult.left;

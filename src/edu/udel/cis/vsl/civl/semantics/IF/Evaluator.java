@@ -24,7 +24,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
-import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
  * This is the CIVL main evaluator. First, it is responsible for evaluating all
@@ -278,23 +277,6 @@ public interface Evaluator {
 	 */
 	Evaluation reference(State state, int pid, LHSExpression operand)
 			throws UnsatisfiablePathConditionException;
-
-	/**
-	 * Returns the dynamic type pointed to by a pointer. Can be used even if the
-	 * pointer can't be dereferenced (because it points off the end of an
-	 * object, for example).
-	 * 
-	 * @param source
-	 *            The source code element to be used in the error report.
-	 * @param state
-	 *            The state where the computation happens.
-	 * @param pointer
-	 *            The symbolic representation of the pointer whose type is to be
-	 *            computed.
-	 * @return The symbolic type that the given pointer is pointing to.
-	 */
-	SymbolicType referencedType(CIVLSource source, State state,
-			SymbolicExpression pointer);
 
 	/**
 	 * The state factory should be the unique one used in the system.
