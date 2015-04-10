@@ -8,6 +8,115 @@
 #include <concurrency.cvh>
 #include <civl-cuda.cvh>
 
+
+/* type used to represent an instance of a Cuda kernel
+ */
+struct _kernelInstance {
+  $proc process;        // the actual process executing this kernel
+  _kernelStatus status; // the kernel status
+};
+
+/* a type that wraps a kernel instance for insertion into a list
+ */
+struct _kernelInstanceNode {
+  _kernelInstance *instance;
+  _kernelInstanceNode  *next;
+};
+
+/* _kernelInstanceNode interface
+ */
+_kernelInstance *getInstance(_kernelInstanceNode *node) {
+  return node->instance;
+}
+
+/* a type used to represent a Cuda stream
+ */
+struct _CUstream {
+    _kernelInstanceNode *mostRecent;  // the most recently enqueued instance
+    _Bool usable;                     // indicates whether or not this stream
+                                      // has been marked for deletion
+};
+
+/* _CUstream interface
+ */
+_kernelInstanceNode *getMostRecent(cudaStream_t s) {
+  return s->mostRecent;
+}
+
+_Bool isUsable(cudaStream_t s) {
+  return s->usable;
+}
+
+void setUsable(cudaStream_t s, _Bool b) {
+  s->usable = b;
+}
+
+/* a type that wraps a stream for insertion into a list
+ */
+struct _cudaStreamNode {
+  cudaStream_t stream;
+  _cudaStreamNode *next;
+};
+
+/* _cudaStreamNode encapsulation functions
+ */
+void setStream(_cudaStreamNode* node, cudaStream_t stream) {
+  node->stream = stream;
+}
+
+void setNext(_cudaStreamNode* node, _cudaStreamNode* next) {
+  node->next = next;
+}
+
+/* a type used to represent a Cuda event
+ */
+struct _CUevent {
+  _kernelInstance **instances;
+  int numInstances;
+};
+
+/* _CUevent encapsulation functions
+ */
+_kernelInstance **getInstances(cudaEvent_t e) {
+  return e->instances;
+}
+
+void setInstances(cudaEvent_t e, _kernelInstance** instances, int numInstances) {
+  e->instances = instances;
+  e->numInstances = numInstances;
+}
+
+int getNumInstances(cudaEvent_t e) {
+  return e->numInstances;
+}
+
+/* a type representing the state of a Cuda device
+ */
+struct _cudaContext {
+  _cudaStreamNode *headNode;
+  cudaStream_t nullStream;
+  int numStreams;
+};
+
+/* _cudaContext encapsulation functions
+ */
+int getNumStreams(_cudaContext *_context) {
+  return _context->numStreams;
+}
+
+_cudaStreamNode *getHeadNode(_cudaContext *_context) {
+  return _context->headNode;
+}
+
+cudaStream_t getNullStream(_cudaContext *_context) {
+  return _context->nullStream;
+}
+
+void addNewStream(_cudaContext *_context, _cudaStreamNode *newNode) {
+  _context->headNode = newNode;
+  _context->numStreams++;
+}
+
 /* Computes the one dimensional index of a grid cell at a given location
  * in a three dimensional grid of a given size
  */
@@ -32,14 +141,14 @@ void _runProcs(dim3 dim, void spawningFunction(uint3)) {
   elaborate(dim.x);
   elaborate(dim.y);
   elaborate(dim.z);
-	$range rx = 0 .. dim.x - 1;
-	$range ry = 0 .. dim.y - 1;
-	$range rz = 0 .. dim.z - 1;
-	$domain(3) dom = ($domain){rx, ry, rz};
-	$parfor(int x,y,z : dom){
-		uint3 id = { x, y, z };
-		spawningFunction(id);
-	}
+  $range rx = 0 .. dim.x - 1;
+  $range ry = 0 .. dim.y - 1;
+  $range rz = 0 .. dim.z - 1;
+  $domain(3) dom = ($domain){rx, ry, rz};
+  $parfor(int x,y,z : dom){
+    uint3 id = { x, y, z };
+    spawningFunction(id);
+  }
 }
 
 // ------------------------------------------------
@@ -48,7 +157,7 @@ void _runProcs(dim3 dim, void spawningFunction(uint3)) {
  */
 void _tryWait($proc p) {
   if (p != $proc_null) 
-		$wait(p);
+    $wait(p);
 }
 
 /* The current state of the GPU
@@ -138,9 +247,9 @@ void _streamDestroy(cudaStream_t s) {
   _kernelInstanceNode *nextNode;
 
   while (curNode != NULL) {
-		nextNode = curNode->next;
-		_kernelInstanceNodeDestroy(curNode);
-		curNode = nextNode;
+    nextNode = curNode->next;
+    _kernelInstanceNodeDestroy(curNode);
+    curNode = nextNode;
   }
   //printf("freeing cuda stream\n");
   $free(s);
@@ -173,9 +282,9 @@ void _streamNodeDestroyAll() {
   _cudaStreamNode *nextNode;
 
   while (curNode != NULL) {
-		nextNode = curNode->next;
-		_streamNodeDestroy(curNode);
-		curNode = nextNode;
+    nextNode = curNode->next;
+    _streamNodeDestroy(curNode);
+    curNode = nextNode;
   }
   _context.headNode = NULL;
 }

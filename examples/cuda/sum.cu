@@ -1,6 +1,3 @@
-#ifdef _CIVL
-#include <civlc.cvh>
-#endif
 /**
 * This is an example from the paper "Formal Semantics of Heterogeneous CUDA-C: 
 * A Modular Approach with Applications" by Chris Hathhorn et al. 

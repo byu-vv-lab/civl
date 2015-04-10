@@ -53,18 +53,17 @@ cudaError_t cudaEventCreate(cudaEvent_t *event) {
  * determine when the event has actually been recorded.
  */
 cudaError_t cudaEventRecord(cudaEvent_t event, cudaStream_t s) {
-    if (event->instances != NULL) {
+    if (getInstances(event) != NULL) {
         //printf("freeing instance list b\n");
-        $free(event->instances);
+        $free(getInstances(event));
     }
     if (s == NULL) {
-        event->instances = _allMostRecentKernels();
-        event->numInstances = _context.numStreams + 1;
+        setInstances(event, _allMostRecentKernels(), getNumStreams(&_context) + 1);
     } else {
         //printf("mallocing instance list c\n");
-        event->instances = (_kernelInstance**)$malloc($root, sizeof(_kernelInstance*));
-        event->instances[0] = s->mostRecent->instance;
-        event->numInstances = 1;
+        _kernelInstance **instanceList = (_kernelInstance**)$malloc($root, sizeof(_kernelInstance*));
+        instanceList[0] = getInstance(getMostRecent(s));
+        setInstances(event, instanceList, 1);
     }
 }
 
@@ -80,8 +79,8 @@ cudaError_t cudaEventRecord(cudaEvent_t event, cudaStream_t s) {
 cudaError_t cudaEventQuery(cudaEvent_t event) {
     _Bool allKernelsFinished = $true;
 
-    for (int i = 0; i < event->numInstances; i++) {
-        if (event->instances[i]->status != _kernelStatusFinished) {
+    for (int i = 0; i < getNumInstances(event); i++) {
+        if (getStatus(getInstances(event)[i]) != _kernelStatusFinished) {
             allKernelsFinished = $false;
             break;
         }
@@ -122,10 +121,9 @@ cudaError_t cudaStreamCreate(cudaStream_t *pStream) {
   _cudaStreamNode *newNode = _streamNodeCreate();
 
   *pStream = _streamCreate();
-  newNode->stream = *pStream;
-  newNode->next = _context.headNode;
-  _context.headNode = newNode;
-  _context.numStreams += 1;
+  setStream(newNode, *pStream);
+  setNext(newNode, getHeadNode(&_context));
+  addNewStream(&_context, newNode);
 
   return cudaSuccess;
 }
@@ -136,7 +134,7 @@ cudaError_t cudaStreamSynchronize(cudaStream_t stream) {
     cudaStream_t s;
 
     if (stream == NULL)
-        s = _context.nullStream;
+        s = getNullStream(&_context);
     else
         s = stream;
     _streamWait(s);
@@ -146,8 +144,8 @@ cudaError_t cudaStreamSynchronize(cudaStream_t stream) {
 /* Destroys and cleans up the asynchronous stream specified by stream.
  */
 cudaError_t cudaStreamDestroy(cudaStream_t pStream) {
-  $assert((pStream->usable));
-  pStream->usable = $false;
+  $assert(isUsable(pStream));
+  setUsable(pStream, $false);
   return cudaSuccess;
 }
 
@@ -155,7 +153,7 @@ cudaError_t cudaStreamDestroy(cudaStream_t pStream) {
  */
 cudaError_t cudaDeviceSynchronize() {
     _streamWaitAll();
-    _streamWait(_context.nullStream);
+    _streamWait(getNullStream(&_context));
     return cudaSuccess;
 }
 

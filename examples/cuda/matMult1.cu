@@ -1,3 +1,4 @@
+// TODO add assertions to check equivalence of implementation results
 #ifdef _CIVL
 #include <civlc.cvh>
 #endif
