@@ -322,7 +322,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		reasoner = universe.reasoner(state.getPathCondition());
 		resultType = reasoner.valid(claim).getResultType();
 		if (!resultType.equals(ResultType.YES)) {
-			this.errorLogger
+			state = this.errorLogger
 					.logError(
 							ptrSource,
 							state,

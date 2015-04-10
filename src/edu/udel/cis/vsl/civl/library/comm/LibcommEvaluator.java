@@ -462,7 +462,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 		claim = universe.lessThan(index, universe.length(procArray));
 		resultType = reasoner.valid(claim).getResultType();
 		if (!resultType.equals(ResultType.YES)) {
-			this.errorLogger
+			state = this.errorLogger
 					.logError(
 							source,
 							state,

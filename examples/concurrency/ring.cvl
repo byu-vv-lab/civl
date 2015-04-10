@@ -9,6 +9,7 @@
 $input int NPROCS_BOUND = 10; // upper bound of the number of MPI processes
 $input int NPROCS; // number of MPI processes
 $assume(0 < NPROCS && NPROCS <= NPROCS_BOUND);
+$assume(NPROCS >= 2);
 $input int N_BOUND = 5; // upper bound on number times to loop
 $input int N; // number of times to loop
 $assume(0 < N && N <= N_BOUND);

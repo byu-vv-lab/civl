@@ -768,7 +768,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 				claim = universe.lessThanEquals(queueLength, zero);
 				resultType = reasoner.valid(claim).getResultType();
 				if (!resultType.equals(ResultType.YES)) {
-					this.errorLogger
+					state = this.errorLogger
 							.logError(
 									source,
 									state,

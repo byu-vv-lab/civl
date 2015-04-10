@@ -243,7 +243,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 					source);
 
 			this.errorLogger.reportError(err);
-			this.errorLogger
+			state = this.errorLogger
 					.logError(
 							source,
 							state,
@@ -552,7 +552,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		claim = universe.equals(records_length, zero);
 		resultType = reasoner.valid(claim).getResultType();
 		if (!resultType.equals(ResultType.YES)) {
-			errorLogger
+			state = errorLogger
 					.logError(
 							source,
 							state,
@@ -680,7 +680,8 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 			records = universe.append(records, newRecord);
 			records_length = universe.add(records_length, one);
 			modifiedRecord = newRecord;
-		} else {//TODO what if there are more than one records in the record queue?
+		} else {// TODO what if there are more than one records in the record
+				// queue?
 			SymbolicExpression unmarked_record = null;
 			NumericExpression loopIdf = zero; // symbolic loop identifier
 			boolean isMarked = true;
@@ -716,7 +717,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 			if (!isMatched) {
 				assert unmatchMessage != null;
 				// checking un-passed
-				errorLogger.logError(source, state, process,
+				state = errorLogger.logError(source, state, process,
 						symbolicAnalyzer.stateToString(state), claim,
 						resultType, ErrorKind.MPI_ERROR,
 						"Collective operation mismatched on field: "
