@@ -133,8 +133,25 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 		reasoner = universe.reasoner(state.getPathCondition());
 		valid = reasoner.valid(assertValue);
 		resultType = valid.getResultType();
-		state = this.reportAssertionFailure(state, pid, process, resultType,
-				arguments, argumentValues, source, statement, assertValue, 1);
+		if (resultType != ResultType.YES) {
+			StringBuilder message = new StringBuilder();
+			Pair<State, String> messageResult = this.symbolicAnalyzer
+					.expressionEvaluation(state, pid, arguments[0], false);
+
+			state = messageResult.left;
+			message.append("Assertion voilated: ");
+			message.append(statement.toString());
+			message.append("\nEvaluation: ");
+			message.append(messageResult.right);
+			message.append("\nResult: ");
+			messageResult = this.symbolicAnalyzer.expressionEvaluation(state,
+					pid, arguments[0], true);
+			state = messageResult.left;
+			message.append(messageResult.right);
+			state = this.reportAssertionFailure(state, pid, process,
+					resultType, message.toString(), arguments, argumentValues,
+					source, statement, assertValue, 1);
+		}
 		return state;
 	}
 
@@ -239,50 +256,27 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	protected State reportAssertionFailure(State state, int pid,
-			String process, ResultType resultType, Expression[] arguments,
-			SymbolicExpression[] argumentValues, CIVLSource source,
-			CallOrSpawnStatement statement, BooleanExpression assertValue,
-			int msgOffset) throws UnsatisfiablePathConditionException {
-		if (resultType != ResultType.YES) {
-			if (arguments.length > msgOffset) {
-				// if (civlConfig.enablePrintf()) {
-				Expression[] pArguments = Arrays.copyOfRange(arguments,
-						msgOffset, arguments.length);
-				SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
-						argumentValues, msgOffset, argumentValues.length);
+			String process, ResultType resultType, String message,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source, CallOrSpawnStatement statement,
+			BooleanExpression assertValue, int msgOffset)
+			throws UnsatisfiablePathConditionException {
+		assert resultType != ResultType.YES;
+		if (arguments.length > msgOffset) {
+			// if (civlConfig.enablePrintf()) {
+			Expression[] pArguments = Arrays.copyOfRange(arguments, msgOffset,
+					arguments.length);
+			SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
+					argumentValues, msgOffset, argumentValues.length);
 
-				state = this.primaryExecutor.execute_printf(source, state, pid,
-						process, null, pArguments, pArgumentValues);
-				civlConfig.out().println();
-				// }
-			}
-
-			StringBuilder message = new StringBuilder();
-			Pair<State, String> messageResult = this.symbolicAnalyzer
-					.expressionEvaluation(state, pid, arguments[0], false);
-
-			state = messageResult.left;
-			message.append("Assertion voilated: ");
-			message.append(statement.toString());
-			message.append("\nEvaluation: ");
-			message.append(messageResult.right);
-			message.append("\nResult: ");
-			messageResult = this.symbolicAnalyzer.expressionEvaluation(state,
-					pid, arguments[0], true);
-			state = messageResult.left;
-			message.append(messageResult.right);
-			state = errorLogger.logError(source, state, process,
-					symbolicAnalyzer.stateToString(state), assertValue,
-					resultType, ErrorKind.ASSERTION_VIOLATION,
-					message.toString());
-
-			// state = errorLogger.logError(source, state, process,
-			// symbolicAnalyzer.stateToString(state), assertValue,
-			// resultType, ErrorKind.ASSERTION_VIOLATION,
-			// "Cannot prove assertion holds: " + statement.toString()
-			// + "\n  Path condition: " + state.getPathCondition()
-			// + "\n  Assertion: " + assertValue + "\n");
+			state = this.primaryExecutor.execute_printf(source, state, pid,
+					process, null, pArguments, pArgumentValues);
+			civlConfig.out().println();
+			// }
 		}
+		state = errorLogger.logError(source, state, process,
+				symbolicAnalyzer.stateToString(state), assertValue, resultType,
+				ErrorKind.ASSERTION_VIOLATION, message);
 		return state;
 	}
 

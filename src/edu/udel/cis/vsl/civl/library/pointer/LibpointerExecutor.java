@@ -577,8 +577,34 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		}
 		claim = universe.equals(first, second);
 		resultType = reasoner.valid(claim).getResultType();
-		state = this.reportAssertionFailure(state, pid, process, resultType,
-				arguments, argumentValues, source, call, claim, 2);
+		if (resultType != ResultType.YES) {
+			StringBuilder message = new StringBuilder();
+			String firstArg, secondArg;
+
+			message.append("Assertion voilated: ");
+			message.append(call.toString());
+			message.append("\nEvaluation: \n          ");
+			firstArg = this.symbolicAnalyzer.symbolicExpressionToString(
+					arguments[0].getSource(), state, argumentValues[0]);
+			message.append(arguments[0].toString() + "=" + firstArg);
+			message.append("\n          ");
+			secondArg = this.symbolicAnalyzer.symbolicExpressionToString(
+					arguments[1].getSource(), state, argumentValues[1]);
+			message.append(arguments[1].toString() + "=" + secondArg);
+			message.append("\nResult: \n          ");
+			message.append(firstArg.substring(1)
+					+ "="
+					+ this.symbolicAnalyzer.symbolicExpressionToString(
+							arguments[0].getSource(), state, first));
+			message.append("\n          ");
+			message.append(secondArg.substring(1)
+					+ "="
+					+ this.symbolicAnalyzer.symbolicExpressionToString(
+							arguments[1].getSource(), state, second));
+			state = this.reportAssertionFailure(state, pid, process,
+					resultType, message.toString(), arguments, argumentValues,
+					source, call, claim, 2);
+		}
 		return state;
 	}
 
