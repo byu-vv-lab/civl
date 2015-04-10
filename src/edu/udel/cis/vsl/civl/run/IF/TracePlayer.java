@@ -93,8 +93,10 @@ public class TracePlayer extends Player {
 		// civlConfig.setShowStates(false);
 		civlConfig.setShowSavedStates(config.getAnonymousSection()
 				.isTrue(CIVLConstants.showSavedStatesO));
-		if (config.getAnonymousSection().getValue(CIVLConstants.showTransitionsO) == null)
-			civlConfig.setShowTransitions(true);
+		// if
+		// (config.getAnonymousSection().getValue(CIVLConstants.showTransitionsO)
+		// == null)
+		// civlConfig.setShowTransitions(true);
 		civlConfig.setVerbose(false);
 		log.setSearcher(null);
 		replayer = new Replayer<State, Transition>(stateManager, out);

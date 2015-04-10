@@ -240,8 +240,9 @@ public class UserInterface {
 				gmcSection = gmcConfig.getAnonymousSection();
 				setToDefault(gmcSection, Arrays.asList(showModelO, verboseO,
 						debugO, showStatesO, showSavedStatesO, showQueriesO,
-						showProverQueriesO, enablePrintfO, statelessPrintfO));
-				gmcSection.setScalarValue(showTransitionsO, true);
+						showProverQueriesO, enablePrintfO, statelessPrintfO,
+						showTransitionsO));
+				// gmcSection.setScalarValue(showTransitionsO, true);
 				gmcSection.setScalarValue(collectScopesO, false);
 				gmcSection.setScalarValue(collectProcessesO, false);
 				gmcSection.setScalarValue(collectHeapsO, false);
@@ -312,8 +313,8 @@ public class UserInterface {
 			anonymousSection = gmcConfig.getAnonymousSection();
 			setToDefault(anonymousSection, Arrays.asList(showModelO, verboseO,
 					debugO, showStatesO, showQueriesO, showProverQueriesO,
-					enablePrintfO, statelessPrintfO));
-			anonymousSection.setScalarValue(showTransitionsO, true);
+					enablePrintfO, statelessPrintfO, showTransitionsO));
+			// anonymousSection.setScalarValue(showTransitionsO, true);
 			anonymousSection.setScalarValue(collectScopesO, false);
 			anonymousSection.setScalarValue(collectProcessesO, false);
 			anonymousSection.setScalarValue(collectHeapsO, false);
