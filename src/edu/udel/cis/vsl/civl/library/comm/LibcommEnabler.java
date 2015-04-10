@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.library.comm;
 
 import java.math.BigInteger;
 import java.util.BitSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,6 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
@@ -34,6 +36,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
+import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
@@ -120,12 +123,15 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 	 * @param reachableMemUnitsMap
 	 *            The map of reachable memory units of all active processes.
 	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 * @throws LibraryLoaderException
 	 */
 	private BitSet ampleSetWork(State state, int pid,
 			CallOrSpawnStatement call, MemoryUnitSet[] reachablePtrWritableMap,
 			MemoryUnitSet[] reachablePtrReadonlyMap,
 			MemoryUnitSet[] reachableNonPtrWritableMap,
-			MemoryUnitSet[] reachableNonPtrReadonlyMap) {
+			MemoryUnitSet[] reachableNonPtrReadonlyMap)
+			throws UnsatisfiablePathConditionException {
 		int numArgs;
 		numArgs = call.arguments().size();
 		Expression[] arguments;
@@ -133,6 +139,8 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		String function = call.function().name().name();
 		CIVLSource source = call.getSource();
 		BitSet ampleSet = new BitSet();
+		String process = "p" + state.getProcessState(pid).identifier()
+				+ " (id = " + pid + ")";
 
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
@@ -170,12 +178,20 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			}
 			return ampleSet;
 		case "$comm_enqueue":
+			BooleanExpression hasMatchedDequeue;
 			// Because we don't know if other processes will call an wild card
 			// receive(dequeue), we have to put all processes into ample set.
-			return this.computeAmpleSetByHandleObject(state, pid, arguments[0],
-					argumentValues[0], reachablePtrWritableMap,
+			ampleSet = this.computeAmpleSetByHandleObject(state, pid,
+					arguments[0], argumentValues[0], reachablePtrWritableMap,
 					reachablePtrReadonlyMap, reachableNonPtrWritableMap,
 					reachableNonPtrReadonlyMap);
+			hasMatchedDequeue = this.hasMatchedDequeue(state, pid, process,
+					call, false);
+			if (hasMatchedDequeue.isFalse()) {
+				for (int otherPid = 0; otherPid < state.numProcs(); otherPid++)
+					ampleSet.set(otherPid);
+			}
+			return ampleSet;
 		default:
 			throw new CIVLInternalException("Unreachable" + function, source);
 		}
@@ -380,5 +396,172 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		}
 
 		return transitionStatements;
+	}
+
+	/**
+	 * Return a {@link BooleanExpression} as a result of weather the current
+	 * <code>comm_enqueue</code> call has a matched <code>comm_dequeue</code>
+	 * statement.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param process
+	 *            The String identifier of the process
+	 * @param enqueue_call
+	 *            The <code>comm_enqueue</code> {@link CallOrSpawnStatement}
+	 * @param wildcardCounts
+	 *            A flag indicates that if a wild-card <code>comm_dequeue</code>
+	 *            is a matched one
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public BooleanExpression hasMatchedDequeue(State state, int pid,
+			String process, CallOrSpawnStatement enqueue_call,
+			boolean wildcardCounts) throws UnsatisfiablePathConditionException {
+		LibcommEvaluator libevaluator;
+		Expression commHandleExpr = enqueue_call.arguments().get(0);
+		Expression msgExpr = enqueue_call.arguments().get(1);
+		SymbolicExpression comm, gcomm, place, dest, tag, msg;
+		SymbolicExpression procArray, candidateProc;
+		Evaluation eval;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		int candidateProcId;
+
+		try {
+			libevaluator = (LibcommEvaluator) this.libEvaluatorLoader
+					.getLibraryEvaluator(this.name, evaluator, modelFactory,
+							symbolicUtil, symbolicAnalyzer);
+		} catch (LibraryLoaderException e) {
+			throw new CIVLInternalException(
+					"LibcommEnabler loads LibcommEvaluator failed",
+					(CIVLSource) null);
+		}
+		eval = libevaluator.getCommByCommHandleExpr(state, pid, process,
+				commHandleExpr);
+		comm = eval.value;
+		eval = libevaluator.getGcommByComm(eval.state, pid, process,
+				eval.value, commHandleExpr.getSource());
+		gcomm = eval.value;
+		eval = evaluator.evaluate(state, pid, msgExpr);
+		msg = eval.value;
+		state = eval.state;
+		procArray = universe.tupleRead(gcomm, oneObject);
+		dest = universe.tupleRead(msg, oneObject);
+		place = universe.tupleRead(msg, zeroObject);
+		tag = universe.tupleRead(msg, twoObject);
+		candidateProc = libevaluator.readProcArray(state, pid, process,
+				procArray, (NumericExpression) dest, enqueue_call.getSource());
+		candidateProcId = modelFactory.getProcessId(enqueue_call.getSource(),
+				candidateProc);
+		if (candidateProcId == -1 || candidateProcId == pid)
+			return falseValue;
+		else {
+			ProcessState procState = state.getProcessState(candidateProcId);
+			Iterable<Statement> procOutgoings;
+			Iterator<Statement> iter;
+			BooleanExpression result = falseValue;
+
+			if (!procState.hasEmptyStack()) {
+				procOutgoings = procState.peekStack().location().outgoing();
+				iter = procOutgoings.iterator();
+				while (iter.hasNext()) {
+					Statement procCall = iter.next();
+
+					if (procCall.statementKind().equals(
+							StatementKind.CALL_OR_SPAWN)) {
+						BooleanExpression hasMatched = this
+								.isMatchedDequeueStatement(state,
+										candidateProcId,
+										procState.identifier(), libevaluator,
+										reasoner,
+										(CallOrSpawnStatement) procCall, place,
+										tag, comm, wildcardCounts);
+						if (hasMatched.isTrue())
+							return hasMatched;
+						else
+							result = universe.or(result, hasMatched);
+					}
+
+				}
+			}
+			return result;
+		}
+	}
+
+	/**
+	 * A helper function for
+	 * {@link #hasMatchedDequeue(State, int, String, CallOrSpawnStatement, boolean)}
+	 * . Given a <code>comm_dequeue</code> statement and the expected message
+	 * source, message tag and the communicator handle, returns the true value
+	 * of {@link BooleaneExpression} if the <code>comm_dequeue</code> is matched
+	 * with those given parameters.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param identifier
+	 *            The identifier of the process
+	 * @param libevaluator
+	 *            A instance of {@link LibcommEvaluator}
+	 * @param reasoner
+	 *            A instance of {@link Reasoner}
+	 * @param call
+	 *            The testing <code>comm_dequeue</code> statement
+	 * @param expectedSource
+	 *            The message source from the sender (which is a enqueue
+	 *            statement)
+	 * @param expectedTag
+	 *            the message tag from the sender (which is a enqueue statement)
+	 * @param expectedComm
+	 *            the handle of the communicator of the sender (which is a
+	 *            enqueue statement)
+	 * @param wildcardCounts
+	 *            A flag indicates that if a wild-card <code>comm_dequeue</code>
+	 *            is a matched one
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private BooleanExpression isMatchedDequeueStatement(State state, int pid,
+			int identifier, LibcommEvaluator libevaluator, Reasoner reasoner,
+			CallOrSpawnStatement call, SymbolicExpression expectedSource,
+			SymbolicExpression expectedTag, SymbolicExpression expectedComm,
+			boolean wildcardCounts) throws UnsatisfiablePathConditionException {
+		String dequeueName = "$comm_dequeue";
+		String process = "p" + identifier + " (id = " + pid + ")";
+		BooleanExpression claim1, claim2, claim3;
+
+		if (call.function().name().name().equals(dequeueName)) {
+			Expression commHandleExpr = call.arguments().get(0);
+			Expression sourceExpr = call.arguments().get(1);
+			Expression tagExpr = call.arguments().get(2);
+			Evaluation eval;
+			SymbolicExpression enqueueGcommHandle, myGcommHandle, mySource, myTag;
+			// the GcommHandles of enqueue and dequeue should be same
+
+			eval = libevaluator.getCommByCommHandleExpr(state, pid, process,
+					commHandleExpr);
+			state = eval.state;
+			myGcommHandle = universe.tupleRead(eval.value, oneObject);
+			enqueueGcommHandle = universe.tupleRead(expectedComm, oneObject);
+			eval = evaluator.evaluate(state, pid, sourceExpr);
+			state = eval.state;
+			mySource = eval.value;
+			eval = evaluator.evaluate(state, pid, tagExpr);
+			state = eval.state;
+			myTag = eval.value;
+			claim1 = universe.equals(mySource, expectedSource);
+			if (wildcardCounts)
+				claim1 = universe.or(claim1,
+						universe.equals(mySource, universe.integer(-1)));
+			claim2 = universe.equals(myTag, expectedTag);
+			claim2 = universe.or(claim2,
+					universe.equals(myTag, universe.integer(-2)));
+			claim3 = universe.equals(myGcommHandle, enqueueGcommHandle);
+			return universe.and(universe.and(claim1, claim2), claim3);
+		}
+		return falseValue;
 	}
 }

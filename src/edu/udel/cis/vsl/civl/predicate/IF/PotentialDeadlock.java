@@ -5,14 +5,22 @@ package edu.udel.cis.vsl.civl.predicate.IF;
 
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.MAYBE;
 import static edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType.YES;
+import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
+import edu.udel.cis.vsl.civl.library.comm.LibcommEnabler;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -39,7 +47,7 @@ public class PotentialDeadlock implements CIVLStatePredicate {
 
 	private Enabler enabler;
 
-	private LibraryEnablerLoader loader;
+	private LibcommEnabler libEnabler;
 
 	/**
 	 * If violation is found it is cached here.
@@ -62,16 +70,25 @@ public class PotentialDeadlock implements CIVLStatePredicate {
 	 *            The enabler of the system.
 	 * @param symbolicAnalyzer
 	 *            The symbolic analyzer used in the system.
+	 * @throws LibraryLoaderException
 	 */
 	public PotentialDeadlock(SymbolicUniverse symbolicUniverse,
-			Enabler enabler, LibraryEnablerLoader loader,
+			Enabler enabler, LibraryEnablerLoader loader, Evaluator evaluator,
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
 			SymbolicAnalyzer symbolicAnalyzer) {
 		this.universe = symbolicUniverse;
 		this.falseExpr = symbolicUniverse.falseExpression();
 		this.enabler = enabler;
-		this.loader = loader;
 		this.symbolicAnalyzer = symbolicAnalyzer;
-		// loader.g
+		try {
+			this.libEnabler = (LibcommEnabler) loader.getLibraryEnabler("comm",
+					enabler, evaluator, modelFactory, symbolicUtil,
+					symbolicAnalyzer);
+		} catch (LibraryLoaderException e) {
+			throw new CIVLInternalException(
+					"PotentialDeadlock loads LibcommEnabler failed",
+					(CIVLSource) null);
+		}
 	}
 
 	public CIVLExecutionException getViolation() {
@@ -157,7 +174,7 @@ public class PotentialDeadlock implements CIVLStatePredicate {
 	@Override
 	public String explanation() {
 		if (violation == null)
-			return "No deadlock";
+			return "No any kind of deadlock";
 		return violation.getMessage();
 	}
 
@@ -193,13 +210,28 @@ public class PotentialDeadlock implements CIVLStatePredicate {
 
 				if (guard.isFalse())
 					continue;
+				if (s.statementKind().equals(StatementKind.CALL_OR_SPAWN)) {
+					CallOrSpawnStatement call = (CallOrSpawnStatement) s;
 
+					// TODO: function pointer makes call.function() == null
+					if (call.function() != null)
+						if (call.function().name().name()
+								.equals("$comm_enqueue")) {
+							String process = "p" + p.identifier() + " (id = "
+									+ pid + ")";
+							BooleanExpression claim;
+
+							claim = libEnabler.hasMatchedDequeue(state, pid,
+									process, call, true);
+							guard = universe.and(guard, claim);
+							predicate = universe.or(predicate, claim);
+						}
+				}
 				predicate = universe.or(predicate, guard);
 				if (predicate.isTrue())
 					return false;
 			} // end loop over all outgoing statements
 		} // end loop over all processes
-
 		ResultType enabled = reasoner.valid(predicate).getResultType();
 
 		if (enabled == YES)
@@ -210,10 +242,10 @@ public class PotentialDeadlock implements CIVLStatePredicate {
 
 			if (enabled == MAYBE) {
 				certainty = Certainty.MAYBE;
-				message = "Cannot prove that deadlock is impossible:\n";
+				message = "Cannot prove that potential or absolute deadlock is impossible:\n";
 			} else {
 				certainty = Certainty.PROVEABLE;
-				message = "A deadlock is possible:\n";
+				message = "A potential or absolute deadlock is possible:\n";
 			}
 			message += "  Path condition: " + state.getPathCondition()
 					+ "\n  Enabling predicate: " + predicate + "\n";

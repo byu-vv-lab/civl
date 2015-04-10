@@ -5,6 +5,7 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -16,6 +17,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -233,6 +235,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 		return guard;
 	}
 
+	/* *********************** Public helper functions *********************** */
 	/**
 	 * Seeks all possible channels of the given communicator for all available
 	 * sources whose corresponding channel (which is decided by "destination"
@@ -369,5 +372,109 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 			return results;
 		}
 		return results;
+	}
+
+	/**
+	 * Return the {@link Evaluation} of $gcomm object by giving a
+	 * {@link SymbolicExpression} of $comm object.
+	 * 
+	 * @param state
+	 *            the current state
+	 * @param pid
+	 *            the PID of the process
+	 * @param process
+	 *            the string identifier of the process
+	 * @param comm
+	 *            the {@link SymbolicExpression} of $comm object
+	 * @param civlsource
+	 *            the {@link CIVLSource} of the $comm object
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public Evaluation getGcommByComm(State state, int pid, String process,
+			SymbolicExpression comm, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression gcommHandle;
+		Evaluation eval;
+
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(civlsource, state, process, gcommHandle,
+				false);
+		return eval;
+	}
+
+	/**
+	 * Return the {@link Evaluation} of $comm object by giving a
+	 * {@link Expression} of a $comm handle.
+	 * 
+	 * @param state
+	 *            the current state
+	 * @param pid
+	 *            the PID of the process
+	 * @param process
+	 *            the string identifier of the process
+	 * @param commHandleExpr
+	 *            the {@link Expression} of a $comm handle
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public Evaluation getCommByCommHandleExpr(State state, int pid,
+			String process, Expression commHandleExpr)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression commHandle;
+		Evaluation eval;
+
+		eval = evaluator.evaluate(state, pid, commHandleExpr);
+		commHandle = eval.value;
+		eval = evaluator.dereference(commHandleExpr.getSource(), eval.state,
+				process, commHandle, false);
+		return eval;
+	}
+
+	/**
+	 * A wrapper function for read $proc array in a communicator. Any out of
+	 * bound error should reported consistently.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param process
+	 *            The String identifier of the process
+	 * @param procArray
+	 *            The {@link SymbolicExpression} of the $proc array
+	 * @param index
+	 *            The array reading index
+	 * @param source
+	 *            The CIVLSource of the place that the array reading action
+	 *            happens
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public SymbolicExpression readProcArray(State state, int pid,
+			String process, SymbolicExpression procArray,
+			NumericExpression index, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		BooleanExpression claim;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		ResultType resultType;
+
+		claim = universe.lessThan(index, universe.length(procArray));
+		resultType = reasoner.valid(claim).getResultType();
+		if (!resultType.equals(ResultType.YES)) {
+			this.errorLogger
+					.logError(
+							source,
+							state,
+							process,
+							symbolicAnalyzer.stateToString(state),
+							claim,
+							resultType,
+							ErrorKind.OUT_OF_BOUNDS,
+							"The place of "
+									+ process
+									+ " in a communicator is out of the bound of the total number of processes");
+		}
+		return universe.arrayRead(procArray, index);
 	}
 }

@@ -15,14 +15,14 @@ import edu.udel.cis.vsl.gmc.GMCSection;
  * such as boolean or int, so this class does not use any other CIVL classes
  * 
  * @author siegel
- *
+ * 
  */
 public class CIVLConfiguration {
 
 	/**
 	 * What kind of deadlocks should CIVL search for?
 	 */
-	private DeadlockKind deadlock = DeadlockKind.ABSOLUTE;
+	private DeadlockKind deadlock = DeadlockKind.POTENTIAL;
 
 	/**
 	 * Should CIVL run in "debug" mode, printing lots and lots of output?

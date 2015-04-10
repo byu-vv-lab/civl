@@ -149,8 +149,8 @@ public abstract class Player {
 					symbolicAnalyzer);
 		} else if (civlConfig.deadlock() == DeadlockKind.POTENTIAL) {
 			this.predicate = new PotentialDeadlock(universe,
-					(Enabler) this.enabler, libraryEnablerLoader,
-					symbolicAnalyzer);
+					(Enabler) this.enabler, libraryEnablerLoader, evaluator,
+					modelFactory, symbolicUtil, symbolicAnalyzer);
 		} else {
 			this.predicate = null;
 		}
