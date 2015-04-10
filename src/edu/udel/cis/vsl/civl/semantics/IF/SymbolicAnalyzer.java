@@ -3,9 +3,11 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -182,4 +184,15 @@ public interface SymbolicAnalyzer {
 	 * @return the symbolic universe
 	 */
 	SymbolicUniverse getUniverse();
+	
+	/**
+	 * Compute a friendly string representation of an expression's evaluation.
+	 * Eg, if the expression is a+b, then return 8+9 supposing a=8, b=9.
+	 * 
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	Pair<State, String> expressionEvaluation(State state, int pid,
+			Expression expression, boolean resultOnly)
+			throws UnsatisfiablePathConditionException;
 }

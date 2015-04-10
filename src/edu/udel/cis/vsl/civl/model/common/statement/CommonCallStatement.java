@@ -75,7 +75,7 @@ public class CommonCallStatement extends CommonStatement implements
 	 */
 	@Override
 	public CIVLFunction function() {
-		if (this.functionExpression.expressionKind() == ExpressionKind.FUNCTION_POINTER)
+		if (this.functionExpression.expressionKind() == ExpressionKind.FUNCTION_IDENTIFIER)
 			return ((FunctionIdentifierExpression) functionExpression)
 					.function();
 		return null;

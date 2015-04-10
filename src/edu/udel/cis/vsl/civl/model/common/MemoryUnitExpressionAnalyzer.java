@@ -409,7 +409,7 @@ public class MemoryUnitExpressionAnalyzer {
 			break;
 		case DYNAMIC_TYPE_OF:
 			break;
-		case FUNCTION_POINTER:// TODO clean it up
+		case FUNCTION_IDENTIFIER:// TODO clean it up
 			break;
 		case FUNCTION_GUARD:
 			break;

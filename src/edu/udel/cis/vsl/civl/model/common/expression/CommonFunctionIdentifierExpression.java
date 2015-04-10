@@ -26,7 +26,7 @@ public class CommonFunctionIdentifierExpression extends CommonExpression
 
 	@Override
 	public ExpressionKind expressionKind() {
-		return ExpressionKind.FUNCTION_POINTER;
+		return ExpressionKind.FUNCTION_IDENTIFIER;
 	}
 
 	@Override

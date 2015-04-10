@@ -79,24 +79,7 @@ public class CommonUnaryExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		String op = "";
-
-		switch (operator) {
-		case NEGATIVE:
-			op = "-(" + operand + ")";
-			break;
-		case NOT:
-			op = "!(" + operand + ")";
-			break;
-		case BIG_O:
-			op = "$O(" + operand + ")";
-			break;
-		default:
-			throw new CIVLInternalException("Unknown unary operator: "
-					+ operator, this);
-		}
-		// return op + "(" + operand + ")";
-		return op;
+		return this.operatorToString() + "(" + operand + ")";
 	}
 
 	@Override
@@ -198,5 +181,26 @@ public class CommonUnaryExpression extends CommonExpression implements
 
 		return this.operator == that.operator()
 				&& this.operand.equals(that.operand());
+	}
+
+	@Override
+	public String operatorToString() {
+		String op = "";
+
+		switch (operator) {
+		case NEGATIVE:
+			op = "-";
+			break;
+		case NOT:
+			op = "!";
+			break;
+		case BIG_O:
+			op = "$O";
+			break;
+		default:
+			throw new CIVLInternalException("Unknown unary operator: "
+					+ operator, this);
+		}
+		return op;
 	}
 }

@@ -8,6 +8,7 @@ import java.util.Map;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
+import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
@@ -23,6 +24,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
+import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
+import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
@@ -1364,111 +1369,244 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		}
 	}
 
-	/**
-	 * Compute a friendly string representation of an expression's evaluation.
-	 * Eg, if the expression is a+b, then return 8+9 supposing a=8, b=9.
-	 * 
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
+	@Override
 	public Pair<State, String> expressionEvaluation(State state, int pid,
-			Expression expression, boolean isTopLevel)
+			Expression expression, boolean resultOnly)
+			throws UnsatisfiablePathConditionException {
+		return this.expressionEvaluationWorker(state, pid, expression, resultOnly,
+				true);
+	}
+
+	private Pair<State, String> expressionEvaluationWorker(State state, int pid,
+			Expression expression, boolean resultOnly, boolean isTopLevel)
 			throws UnsatisfiablePathConditionException {
 		ExpressionKind kind = expression.expressionKind();
 		StringBuilder result = new StringBuilder();
+		Pair<State, String> temp;
 
-		switch (kind) {
-		case ABSTRACT_FUNCTION_CALL: {
-			AbstractFunctionCallExpression abstractFuncCall = (AbstractFunctionCallExpression) expression;
-			int i = 0;
-			result.append(abstractFuncCall.function().name().name());
-			result.append("(");
-			for (Expression argument : abstractFuncCall.arguments()) {
-				if (i != 0)
-					result.append(", ");
-				result.append(expressionEvaluation(state, pid, argument, false));
-			}
-			result.append(")");
-			break;
-		}
-		case ADDRESS_OF: {
-			AddressOfExpression addressOf = (AddressOfExpression) expression;
-
-			result.append("&");
-			result.append(this.expressionEvaluation(state, pid,
-					addressOf.operand(), false));
-			break;
-		}
-		case BINARY: {
-			BinaryExpression binary = (BinaryExpression) expression;
-
-			if (!isTopLevel)
-				result.append("(");
-			result.append(this.expressionEvaluation(state, pid, binary.left(),
-					false));
-			result.append(binary.operatorToString());
-			result.append(this.expressionEvaluation(state, pid, binary.right(),
-					false));
-			if (!isTopLevel)
-				result.append(")");
-			break;
-		}
-		case CAST: {
-			CastExpression cast = (CastExpression) expression;
-
-			result.append("(");
-			result.append(cast.getCastType().toString());
-			result.append(")");
-			result.append(this.expressionEvaluation(state, pid,
-					cast.getExpression(), false));
-			break;
-		}
-		case COND: {
-			throw new CIVLInternalException(
-					"Conditional expression is unreachable because it should"
-							+ " have been traslated away by the model builder.",
-					expression.getSource());
-		}
-		case DEREFERENCE: {
-			DereferenceExpression dereference = (DereferenceExpression) expression;
-
-			result.append("*");
-			result.append(this.expressionEvaluation(state, pid,
-					dereference.pointer(), false));
-			break;
-		}
-		case DOMAIN_GUARD:
-		{DomainGuardExpression domGuard=(DomainGuardExpression)expression;
-		int dim = domGuard.dimension();
-		
-		result.append(this.expressionEvaluation(state, pid, domGuard.domain(), false));
-		result.append(" has next for (");
-for(int i=0; i < dim;i++){
-	if(i != 0)
-		result.append(", ");
-}		
-			
-		}
-		case ARRAY_LITERAL:
-		case BOOLEAN_LITERAL:
-		case CHAR_LITERAL: {
+		if (resultOnly && !isTopLevel) {
 			Evaluation eval = this.evaluator.evaluate(state, pid, expression);
 
 			state = eval.state;
 			result.append(this.symbolicExpressionToString(
 					expression.getSource(), state, eval.value));
-			break;
-		}
-		case BOUND_VARIABLE:
-		case DERIVATIVE: {
-			result.append(expression.toString());
-			break;
-		}
-		default:
-			throw new CIVLUnimplementedFeatureException(
-					"printing the evaluation of expression of " + kind
-							+ " kind", expression.getSource());
+		} else {
+
+			switch (kind) {
+			case ABSTRACT_FUNCTION_CALL: {
+				AbstractFunctionCallExpression abstractFuncCall = (AbstractFunctionCallExpression) expression;
+				int i = 0;
+				result.append(abstractFuncCall.function().name().name());
+				result.append("(");
+				for (Expression argument : abstractFuncCall.arguments()) {
+					if (i != 0)
+						result.append(", ");
+					temp = expressionEvaluationWorker(state, pid, argument,
+							resultOnly, false);
+					result.append(temp.right);
+					state = temp.left;
+				}
+				result.append(")");
+				break;
+			}
+			case ADDRESS_OF: {
+				AddressOfExpression addressOf = (AddressOfExpression) expression;
+
+				result.append("&");
+				temp = this.expressionEvaluationWorker(state, pid,
+						addressOf.operand(), resultOnly, false);
+				state = temp.left;
+				result.append(temp.right);
+				break;
+			}
+			case BINARY: {
+				BinaryExpression binary = (BinaryExpression) expression;
+
+				if (!isTopLevel)
+					result.append("(");
+				temp = this.expressionEvaluationWorker(state, pid, binary.left(),
+						resultOnly, false);
+				state = temp.left;
+				result.append(temp.right);
+				result.append(binary.operatorToString());
+				temp = this.expressionEvaluationWorker(state, pid, binary.right(),
+						resultOnly, false);
+				state = temp.left;
+				result.append(temp.right);
+				if (!isTopLevel)
+					result.append(")");
+				break;
+			}
+			case CAST: {
+				CastExpression cast = (CastExpression) expression;
+
+				result.append("(");
+				result.append(cast.getCastType().toString());
+				result.append(")");
+				temp = this.expressionEvaluationWorker(state, pid,
+						cast.getExpression(), resultOnly, false);
+				state = temp.left;
+				result.append(temp.right);
+				break;
+			}
+			case COND: {
+				throw new CIVLInternalException(
+						"Conditional expression is unreachable because it should"
+								+ " have been traslated away by the model builder.",
+						expression.getSource());
+			}
+			case DEREFERENCE: {
+				DereferenceExpression dereference = (DereferenceExpression) expression;
+
+				result.append("*");
+				temp = this.expressionEvaluationWorker(state, pid,
+						dereference.pointer(), resultOnly, false);
+				state = temp.left;
+				result.append(temp.right);
+				break;
+			}
+			case DOMAIN_GUARD: {
+				DomainGuardExpression domGuard = (DomainGuardExpression) expression;
+				int dim = domGuard.dimension();
+
+				temp = this.expressionEvaluationWorker(state, pid, domGuard.domain(),
+						resultOnly, false);
+				state = temp.left;
+				result.append(temp.right);
+				result.append(" has next for (");
+				for (int i = 0; i < dim; i++) {
+					Variable var = domGuard.variableAt(i);
+
+					if (i != 0)
+						result.append(", ");
+					result.append(this.symbolicExpressionToString(
+							var.getSource(),
+							state,
+							state.getVariableValue(
+									state.getDyscope(pid, var.scope()),
+									var.vid())));
+				}
+				result.append(")");
+				break;
+			}
+			case FUNCTION_IDENTIFIER: {
+				FunctionIdentifierExpression functionID = (FunctionIdentifierExpression) expression;
+				Triple<State, CIVLFunction, Integer> functionResult = this.evaluator
+						.evaluateFunctionIdentifier(state, pid, functionID,
+								expression.getSource());
+
+				state = functionResult.first;
+				result.append(functionResult.second.name().name());
+				break;
+			}
+			case QUANTIFIER: {
+				QuantifiedExpression quantified = (QuantifiedExpression) expression;
+				Quantifier quantifier = quantified.quantifier();
+
+				switch (quantifier) {
+				case FORALL:
+					result.append("forall");
+					break;
+				case EXISTS:
+					result.append("exits");
+					break;
+				case UNIFORM:
+					result.append("uniform");
+					break;
+				default:
+					throw new CIVLUnimplementedFeatureException(
+							"printing the evaluation of quantified expression with "
+									+ quantifier + " quantifier",
+							quantified.getSource());
+				}
+				result.append("{");
+				result.append(quantified.boundVariableName().name());
+				if (quantified.isRange()) {
+					Evaluation rangeEval = this.evaluator.evaluate(state, pid,
+							quantified.lower());
+
+					state = rangeEval.state;
+					result.append("=");
+					result.append(this.symbolicExpressionToString(quantified
+							.lower().getSource(), state, rangeEval.value));
+					result.append("..");
+					rangeEval = this.evaluator.evaluate(state, pid,
+							quantified.upper());
+					state = rangeEval.state;
+					result.append(this.symbolicExpressionToString(quantified
+							.lower().getSource(), state, rangeEval.value));
+				} else {
+					temp = this.expressionEvaluationWorker(state, pid,
+							quantified.boundRestriction(), resultOnly, true);
+					state = temp.left;
+					result.append(temp.right);
+				}
+				result.append("} ");
+				temp = this.expressionEvaluationWorker(state, pid,
+						quantified.expression(), resultOnly, true);
+				state = temp.left;
+				result.append(temp.right);
+				break;
+			}
+			case UNARY: {
+				UnaryExpression unary = (UnaryExpression) expression;
+
+				result.append(unary.operatorToString());
+				temp = this.expressionEvaluationWorker(state, pid, unary.operand(),
+						resultOnly, false);
+				state = temp.left;
+				result.append(temp.right);
+				break;
+			}
+			case ARRAY_LITERAL:
+			case BOOLEAN_LITERAL:
+			case CHAR_LITERAL:
+			case DOT:
+			case DYNAMIC_TYPE_OF:
+			case INITIAL_VALUE:
+			case INTEGER_LITERAL:
+			case MEMORY_UNIT:
+			case NULL_LITERAL:
+			case REAL_LITERAL:
+			case REGULAR_RANGE:
+			case SIZEOF_TYPE:
+			case SIZEOF_EXPRESSION:
+			case STRING_LITERAL:
+			case STRUCT_OR_UNION_LITERAL:
+			case SUBSCRIPT:
+			case VARIABLE:
+			case REC_DOMAIN_LITERAL: {
+				Evaluation eval = this.evaluator.evaluate(state, pid,
+						expression);
+
+				state = eval.state;
+				result.append(this.symbolicExpressionToString(
+						expression.getSource(), state, eval.value));
+				break;
+			}
+			case BOUND_VARIABLE:
+			case DERIVATIVE:
+			case FUNCTION_GUARD:
+			case RESULT:
+			case SCOPEOF:
+			case SELF:
+			case SYSTEM_GUARD:
+			case UNDEFINED_PROC:
+			case HERE_OR_ROOT:
+			case PROC_NULL: {
+				result.append(expression.toString());
+				break;
+			}
+			default:
+				throw new CIVLUnimplementedFeatureException(
+						"printing the evaluation of expression of " + kind
+								+ " kind", expression.getSource());
+			}
 		}
 		return new Pair<>(state, result.toString());
+	}
+
+	void setEvaluator(Evaluator evaluator) {
+		this.evaluator = evaluator;
 	}
 }

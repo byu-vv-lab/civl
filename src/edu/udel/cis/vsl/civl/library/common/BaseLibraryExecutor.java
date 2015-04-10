@@ -245,31 +245,43 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			int msgOffset) throws UnsatisfiablePathConditionException {
 		if (resultType != ResultType.YES) {
 			if (arguments.length > msgOffset) {
-//				if (civlConfig.enablePrintf()) {
-					Expression[] pArguments = Arrays.copyOfRange(arguments,
-							msgOffset, arguments.length);
-					SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
-							argumentValues, msgOffset, argumentValues.length);
+				// if (civlConfig.enablePrintf()) {
+				Expression[] pArguments = Arrays.copyOfRange(arguments,
+						msgOffset, arguments.length);
+				SymbolicExpression[] pArgumentValues = Arrays.copyOfRange(
+						argumentValues, msgOffset, argumentValues.length);
 
-					state = this.primaryExecutor.execute_printf(source, state,
-							pid, process, null, pArguments, pArgumentValues);
-					civlConfig.out().println();
-//				}
+				state = this.primaryExecutor.execute_printf(source, state, pid,
+						process, null, pArguments, pArgumentValues);
+				civlConfig.out().println();
+				// }
 			}
-			
-			StringBuilder message=new StringBuilder();
-			
+
+			StringBuilder message = new StringBuilder();
+			Pair<State, String> messageResult = this.symbolicAnalyzer
+					.expressionEvaluation(state, pid, arguments[0], false);
+
+			state = messageResult.left;
 			message.append("Assertion voilated: ");
 			message.append(statement.toString());
 			message.append("\nEvaluation: ");
-			message.append("BLAHBLAh...");
-			
+			message.append(messageResult.right);
+			message.append("\nResult: ");
+			messageResult = this.symbolicAnalyzer.expressionEvaluation(state,
+					pid, arguments[0], true);
+			state = messageResult.left;
+			message.append(messageResult.right);
 			state = errorLogger.logError(source, state, process,
 					symbolicAnalyzer.stateToString(state), assertValue,
 					resultType, ErrorKind.ASSERTION_VIOLATION,
-					"Cannot prove assertion holds: " + statement.toString()
-							+ "\n  Path condition: " + state.getPathCondition()
-							+ "\n  Assertion: " + assertValue + "\n");
+					message.toString());
+
+			// state = errorLogger.logError(source, state, process,
+			// symbolicAnalyzer.stateToString(state), assertValue,
+			// resultType, ErrorKind.ASSERTION_VIOLATION,
+			// "Cannot prove assertion holds: " + statement.toString()
+			// + "\n  Path condition: " + state.getPathCondition()
+			// + "\n  Assertion: " + assertValue + "\n");
 		}
 		return state;
 	}

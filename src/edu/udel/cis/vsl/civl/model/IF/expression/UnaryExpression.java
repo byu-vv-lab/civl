@@ -19,6 +19,8 @@ public interface UnaryExpression extends Expression {
 	 * @return The binary operator
 	 */
 	UNARY_OPERATOR operator();
+	
+	String operatorToString();
 
 	/**
 	 * @return The operand.

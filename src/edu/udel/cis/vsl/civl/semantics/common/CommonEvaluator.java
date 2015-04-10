@@ -357,6 +357,7 @@ public class CommonEvaluator implements Evaluator {
 		this.errorLogger = errorLogger;
 		this.symbolicUtil = symbolicUtil;
 		this.symbolicAnalyzer = symbolicAnalyzer;
+		((CommonSymbolicAnalyzer) symbolicAnalyzer).setEvaluator(this);
 		this.modelFactory = modelFactory;
 		this.typeFactory = modelFactory.typeFactory();
 		this.stateFactory = stateFactory;
@@ -3043,7 +3044,7 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateDynamicTypeOf(state, pid,
 					(DynamicTypeOfExpression) expression);
 			break;
-		case FUNCTION_POINTER:
+		case FUNCTION_IDENTIFIER:
 			result = evaluateFunctionIdentifierExpression(state, pid,
 					(FunctionIdentifierExpression) expression);
 			break;

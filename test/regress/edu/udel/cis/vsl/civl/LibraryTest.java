@@ -40,6 +40,10 @@ public class LibraryTest {
 	}
 
 	/* **************************** Test Methods *************************** */
+	@Test
+	public void assertBad() throws ABCException {
+		assertFalse(ui.run("verify", filename(CIVLC, "assertBad.cvl")));
+	}
 
 	@Test
 	public void elaborate() throws ABCException {
