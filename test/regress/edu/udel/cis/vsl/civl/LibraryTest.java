@@ -78,7 +78,7 @@ public class LibraryTest {
 
 	@Test
 	public void communicatorFeatures() {
-		assertTrue(ui.run("verify", "-inputNPROCS_BOUND=2", "-inputN_BOUND=2",
+		assertTrue(ui.run("verify", "-inputNPROCS=2", "-inputN_BOUND=2",
 				"-enablePrintf=false",
 				filename(CIVLC, "communicatorFeatures.cvl")));
 	}
