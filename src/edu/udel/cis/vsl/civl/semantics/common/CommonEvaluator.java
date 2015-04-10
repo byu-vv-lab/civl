@@ -3202,64 +3202,6 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public Evaluation initialValueOfStateVariable(CIVLSource source,
-			State state, int pid, CIVLType type)
-			throws UnsatisfiablePathConditionException {
-		TypeKind kind = type.typeKind();
-		Evaluation eval = null;
-
-		switch (kind) {
-		case COMPLETE_ARRAY: {
-			CIVLCompleteArrayType arrayType = (CIVLCompleteArrayType) type;
-			NumericExpression size;
-			SymbolicExpression element;
-
-			eval = this.evaluate(state, pid, arrayType.extent());
-			size = (NumericExpression) eval.value;
-			state = eval.state;
-			eval = this.initialValueOfStateVariable(source, state, pid,
-					arrayType.elementType());
-			state = eval.state;
-			element = eval.value;
-			eval.value = symbolicUtil.newArray(state.getPathCondition(),
-					arrayType.elementType().getDynamicType(universe), size,
-					element);
-			break;
-		}
-		case STRUCT_OR_UNION: {
-			CIVLStructOrUnionType strType = (CIVLStructOrUnionType) type;
-
-			if (strType.isStructType()) {
-				List<SymbolicExpression> comps = new ArrayList<>(
-						strType.numFields());
-
-				for (StructOrUnionField field : strType.fields()) {
-					eval = this.initialValueOfStateVariable(source, state, pid,
-							field.type());
-					state = eval.state;
-					comps.add(eval.value);
-				}
-				eval.value = universe.tuple(
-						(SymbolicTupleType) strType.getDynamicType(universe),
-						comps);
-			} else {
-				// TODO union Think about it
-			}
-			break;
-		}
-		case PRIMITIVE:
-		case ENUM:
-		case POINTER:
-			eval = new Evaluation(state, universe.integer(-1));
-			break;
-		default:
-			throw new CIVLInternalException("Invalid type of state variables",
-					source);
-		}
-		return eval;
-	}
-
-	@Override
 	public CIVLErrorLogger errorLogger() {
 		return this.errorLogger;
 	}

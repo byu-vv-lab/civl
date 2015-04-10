@@ -116,9 +116,6 @@ public interface Evaluator {
 			State state, int pid, Expression functionPointer, CIVLSource source)
 			throws UnsatisfiablePathConditionException;
 
-	Evaluation initialValueOfStateVariable(CIVLSource source, State state,
-			int pid, CIVLType type) throws UnsatisfiablePathConditionException;
-
 	/**
 	 * Evaluate the size of a CIVL type.
 	 * 
