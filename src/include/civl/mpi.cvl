@@ -106,8 +106,10 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtype));
   CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtype));
   // not correct for checking potential deadlock...rewrite:
-  MPI_Send(sendbuf, sendcount, sendtype, dest, sendtag, comm);
-  MPI_Recv(recvbuf, recvcount, recvtype, source, recvtag, comm, status);
+  //CMPI_Send(sendbuf, sendcount, sendtype, dest, sendtag, comm.p2p);
+  //CMPI_Recv(recvbuf, recvcount, recvtype, source, recvtag, comm.p2p, status);
+  CMPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount,
+		recvtype, source, recvtag, comm.p2p, status);
   return 0;
 }
 /******************************** Collective ***********************************/

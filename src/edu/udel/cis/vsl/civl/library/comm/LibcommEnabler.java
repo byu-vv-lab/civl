@@ -185,6 +185,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 					arguments[0], argumentValues[0], reachablePtrWritableMap,
 					reachablePtrReadonlyMap, reachableNonPtrWritableMap,
 					reachableNonPtrReadonlyMap);
+
 			hasMatchedDequeue = this.hasMatchedDequeue(state, pid, process,
 					call, false);
 			if (hasMatchedDequeue.isFalse()) {
@@ -429,6 +430,12 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		int candidateProcId;
 
+		eval = evaluator.evaluate(state, pid, enqueue_call.guard());
+		state = eval.state;
+		// False -> False <=> True
+		// No enqueue statement enabled -> no matched dequeue <=> True
+		if (eval.value.isFalse())
+			return trueValue;
 		try {
 			libevaluator = (LibcommEvaluator) this.libEvaluatorLoader
 					.getLibraryEvaluator(this.name, evaluator, modelFactory,

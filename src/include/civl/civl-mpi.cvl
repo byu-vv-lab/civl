@@ -151,6 +151,45 @@ int CMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
   return 0;
 }
 
+int CMPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+		  int dest, int sendtag, void *recvbuf, int recvcount, 
+		  MPI_Datatype recvtype, int source, int recvtag,
+		  $comm comm, MPI_Status *status) {
+  //send and receive triggering flags
+  if((dest >= 0) && ((source >= 0 || source == MPI_ANY_SOURCE))) {
+    $message out, in;
+    int size = sendcount*sizeofDatatype(sendtype);
+    int place = $comm_place(comm);
+
+    out = $message_pack(place, dest, sendtag, sendbuf, size);
+    $choose {
+      $when (1){ 
+	$comm_enqueue(comm, out);
+	in = $comm_dequeue(comm, source, recvtag);
+      }
+      $when (1){
+	in = $comm_dequeue(comm, source, recvtag);
+	$comm_enqueue(comm, out);
+      }
+    }
+    size = recvcount*sizeofDatatype(recvtype);
+    $message_unpack(in, recvbuf, size);
+    if (status != MPI_STATUS_IGNORE) {
+      status->size = $message_size(in);
+      status->MPI_SOURCE = $message_source(in);
+      status->MPI_TAG = $message_tag(in);
+      status->MPI_ERROR = 0;
+    }
+  }
+  else if (dest >= 0) {
+    CMPI_Send(sendbuf, sendcount, sendtype, dest, sendtag, comm);
+  }
+  else if (source >= 0 || source == MPI_ANY_SOURCE) {
+    CMPI_Recv(recvbuf, recvcount, recvtype, source, recvtag, comm, status);
+  }
+  return 0;
+}
+
 /********************* Collective helper functions ********************/
 /* Note: collective helpers functions are functions have same
    behaviors as MPI collective functions, it can be re-used as a part
