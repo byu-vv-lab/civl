@@ -149,6 +149,11 @@ public class MPITranslationTest {
 				filename("sum_array.c")));
 	}
 
+	@Test
+	public void sendrecv() {
+		assertTrue(ui.run("verify", filename("sendrecv.c")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
