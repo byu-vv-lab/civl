@@ -22,7 +22,7 @@ public class CIVLConfiguration {
 	/**
 	 * What kind of deadlocks should CIVL search for?
 	 */
-	private DeadlockKind deadlock = DeadlockKind.POTENTIAL;
+	private DeadlockKind deadlock = DeadlockKind.ABSOLUTE;
 
 	/**
 	 * Should CIVL run in "debug" mode, printing lots and lots of output?
