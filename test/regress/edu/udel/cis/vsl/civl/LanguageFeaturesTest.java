@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -113,6 +114,10 @@ public class LanguageFeaturesTest {
 		assertFalse(ui.run("verify", filename("badGuard.cvl")));
 	}
 
+	/**
+	 * This should be moved to test/dev.
+	 */
+	@Ignore
 	@Test
 	public void bigO() {
 		assertTrue(ui.run("verify", filename("bigO.cvl")));
