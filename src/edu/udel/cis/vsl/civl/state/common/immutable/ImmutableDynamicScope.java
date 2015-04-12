@@ -371,10 +371,6 @@ public class ImmutableDynamicScope implements DynamicScope {
 			UnaryOperator<SymbolicExpression> substituter) {
 		SymbolicExpression[] newValues = null;
 
-		// update pointers
-		// if (oldToNewExpression.size() > 0) {
-		// UnaryOperator<SymbolicExpression> substituter = universe
-		// .mapSubstituter(oldToNewExpression);
 		for (Variable variable : this.lexicalScope.variables()) {
 			int vid = variable.vid();
 			SymbolicExpression oldValue = variableValues[vid];
@@ -389,7 +385,6 @@ public class ImmutableDynamicScope implements DynamicScope {
 				}
 			}
 		}
-		// }
 		return newValues == null ? this : new ImmutableDynamicScope(
 				lexicalScope, this.parent, this.parentIdentifier, newValues,
 				reachers, this.identifier);

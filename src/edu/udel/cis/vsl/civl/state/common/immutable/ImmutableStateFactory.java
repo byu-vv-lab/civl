@@ -237,21 +237,21 @@ public class ImmutableStateFactory implements StateFactory {
 			theState = collectScopes(theState);
 		if (collectHeaps)
 			theState = collectHeaps(theState);
-		theState = collectSymbolicConstants(theState, collectHeaps);
+		// theState = collectSymbolicConstants(theState, collectHeaps);
 		theState = flyweight(theState);
 		if (simplify) {
 			ImmutableState simplifiedState = theState.simplifiedState;
 
 			if (simplifiedState == null) {
 				simplifiedState = simplify(theState);
-				if (theState != simplifiedState)
-					simplifiedState = collectSymbolicConstants(simplifiedState,
-							collectHeaps);
+				// if (theState != simplifiedState)
+				// simplifiedState = collectSymbolicConstants(simplifiedState,
+				// collectHeaps);
 				simplifiedState = flyweight(simplifiedState);
 				theState.simplifiedState = simplifiedState;
 				simplifiedState.simplifiedState = simplifiedState;
-				return simplifiedState;
 			}
+			return simplifiedState;
 		}
 		return theState;
 	}
@@ -842,52 +842,51 @@ public class ImmutableStateFactory implements StateFactory {
 
 		if (theState.simplifiedState != null)
 			return theState.simplifiedState;
-		else {
-			int numScopes = theState.numDyscopes();
-			BooleanExpression pathCondition = theState.getPathCondition();
-			ImmutableDynamicScope[] newDynamicScopes = null;
-			Reasoner reasoner = universe.reasoner(pathCondition);
-			BooleanExpression newPathCondition;
 
-			for (int i = 0; i < numScopes; i++) {
-				ImmutableDynamicScope oldScope = theState.getDyscope(i);
-				int numVars = oldScope.numberOfVariables();
-				SymbolicExpression[] newVariableValues = null;
+		int numScopes = theState.numDyscopes();
+		BooleanExpression pathCondition = theState.getPathCondition();
+		ImmutableDynamicScope[] newDynamicScopes = null;
+		Reasoner reasoner = universe.reasoner(pathCondition);
+		BooleanExpression newPathCondition;
 
-				for (int j = 0; j < numVars; j++) {
-					SymbolicExpression oldValue = oldScope.getValue(j);
-					SymbolicExpression newValue = reasoner.simplify(oldValue);
+		for (int i = 0; i < numScopes; i++) {
+			ImmutableDynamicScope oldScope = theState.getDyscope(i);
+			int numVars = oldScope.numberOfVariables();
+			SymbolicExpression[] newVariableValues = null;
 
-					if (oldValue != newValue && newVariableValues == null) {
-						newVariableValues = new SymbolicExpression[numVars];
-						for (int j2 = 0; j2 < j; j2++)
-							newVariableValues[j2] = oldScope.getValue(j2);
-					}
-					if (newVariableValues != null)
-						newVariableValues[j] = newValue;
+			for (int j = 0; j < numVars; j++) {
+				SymbolicExpression oldValue = oldScope.getValue(j);
+				SymbolicExpression newValue = reasoner.simplify(oldValue);
+
+				if (oldValue != newValue && newVariableValues == null) {
+					newVariableValues = new SymbolicExpression[numVars];
+					for (int j2 = 0; j2 < j; j2++)
+						newVariableValues[j2] = oldScope.getValue(j2);
 				}
-				if (newVariableValues != null && newDynamicScopes == null) {
-					newDynamicScopes = new ImmutableDynamicScope[numScopes];
-					for (int i2 = 0; i2 < i; i2++)
-						newDynamicScopes[i2] = theState.getDyscope(i2);
-				}
-				if (newDynamicScopes != null)
-					newDynamicScopes[i] = newVariableValues != null ? oldScope
-							.setVariableValues(newVariableValues) : oldScope;
+				if (newVariableValues != null)
+					newVariableValues[j] = newValue;
 			}
-			newPathCondition = reasoner.getReducedContext();
-			if (newPathCondition != pathCondition) {
-				if (nsat(newPathCondition))
-					newPathCondition = universe.falseExpression();
-			} else
-				newPathCondition = null;
-			if (newDynamicScopes != null || newPathCondition != null) {
-				theState = ImmutableState.newState(theState, null,
-						newDynamicScopes, newPathCondition);
-				theState.simplifiedState = theState;
+			if (newVariableValues != null && newDynamicScopes == null) {
+				newDynamicScopes = new ImmutableDynamicScope[numScopes];
+				for (int i2 = 0; i2 < i; i2++)
+					newDynamicScopes[i2] = theState.getDyscope(i2);
 			}
-			return theState;
+			if (newDynamicScopes != null)
+				newDynamicScopes[i] = newVariableValues != null ? oldScope
+						.setVariableValues(newVariableValues) : oldScope;
 		}
+		newPathCondition = reasoner.getReducedContext();
+		if (newPathCondition != pathCondition) {
+			if (nsat(newPathCondition))
+				newPathCondition = universe.falseExpression();
+		} else
+			newPathCondition = null;
+		if (newDynamicScopes != null || newPathCondition != null) {
+			theState = ImmutableState.newState(theState, null,
+					newDynamicScopes, newPathCondition);
+			theState.simplifiedState = theState;
+		}
+		return theState;
 	}
 
 	@Override
@@ -1745,29 +1744,33 @@ public class ImmutableStateFactory implements StateFactory {
 			boolean collectHeaps) {
 		ImmutableState theState = (ImmutableState) state;
 		int numDyscopes = theState.numDyscopes();
-		int numProcs = theState.numProcs();
-		ImmutableProcessState[] newProcesses = new ImmutableProcessState[numProcs];
-		UnaryOperator<SymbolicExpression> nameSubsituter = universe
+		UnaryOperator<SymbolicExpression> nameSubstituter = universe
 				.canonicalRenamer("X", this.isReservedSymbolicConstant);
-
-		for (int i = 0; i < numProcs; i++) {
-			newProcesses[i] = theState.getProcessState(i);
-		}
-
 		ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
+		boolean change = false;
+
 		for (int dyscopeId = 0; dyscopeId < numDyscopes; dyscopeId++) {
 			ImmutableDynamicScope oldScope = theState.getDyscope(dyscopeId);
+			ImmutableDynamicScope newScope = oldScope
+					.updateSymbolicConstants(nameSubstituter);
 
-			newScopes[dyscopeId] = oldScope
-					.updateSymbolicConstants(nameSubsituter);
+			change = change || newScope != oldScope;
+			newScopes[dyscopeId] = newScope;
 		}
+		if (!change)
+			newScopes = null;
 
-		BooleanExpression newPathCondition = (BooleanExpression) nameSubsituter
-				.apply(theState.getPathCondition());
+		BooleanExpression oldPathCondition = theState.getPathCondition();
+		BooleanExpression newPathCondition = (BooleanExpression) nameSubstituter
+				.apply(oldPathCondition);
 
-		theState = ImmutableState.newState(theState, newProcesses, newScopes,
-				newPathCondition);
-
+		if (oldPathCondition == newPathCondition)
+			newPathCondition = null;
+		else
+			change = true;
+		if (change)
+			theState = ImmutableState.newState(theState, null, newScopes,
+					newPathCondition);
 		return theState;
 	}
 
