@@ -154,6 +154,12 @@ public class MPITranslationTest {
 		assertTrue(ui.run("verify", filename("sendrecv.c")));
 	}
 
+	@Test
+	public void gaussJordan() {
+		assertTrue(ui.run("verify -enablePrintf=false -inputnumRow=2 -inputnumCol=2",
+				filename("gaussJordan_elimination.c")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

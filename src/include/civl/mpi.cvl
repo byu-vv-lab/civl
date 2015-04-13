@@ -68,7 +68,7 @@ int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Send() cannot be invoked "
     "without MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(buf, sizeofDatatype(datatype));
+  CMPI_AssertConsistentType(buf, datatype);
   return CMPI_Send(buf, count, datatype, dest, tag, comm.p2p);
 }
 
@@ -79,7 +79,7 @@ int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Recv() cannot be invoked "
     "without MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(buf, sizeofDatatype(datatype));
+  CMPI_AssertConsistentType(buf, datatype);
   return CMPI_Recv(buf, count, datatype, source, tag, comm.p2p, status);
 }
 
@@ -103,8 +103,8 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Sendrecv() cannot be invoked "
 	  "without MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtype));
-  CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtype));
+  CMPI_AssertConsistentType(sendbuf, sendtype);
+  CMPI_AssertConsistentType(recvbuf, recvtype);
   // not correct for checking potential deadlock...rewrite:
   //CMPI_Send(sendbuf, sendcount, sendtype, dest, sendtag, comm.p2p);
   //CMPI_Recv(recvbuf, recvcount, recvtype, source, recvtag, comm.p2p, status);
@@ -128,7 +128,7 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
   $assert (curr_status == __INIT,
 	  "MPI_Bcast() cannot be invoked without MPI_Init() "
 	   "being called before.\n");
-  CMPI_AssertConsistentType(buf, sizeofDatatype(datatype));
+  CMPI_AssertConsistentType(buf, datatype);
   $collect_check(comm.collect_checker, place, nprocs, BCAST_TAG, root, -1, 1,
 		 &types);
   CMPI_Bcast(buf, count, datatype, root, BCAST_TAG, comm, "MPI_Bcast()");
@@ -150,8 +150,8 @@ int MPI_Reduce(const void* sendbuf, void* recvbuf, int count,
 	   "MPI_Init() being called before.\n");
   $collect_check(comm.collect_checker, place, nprocs, REDUCE_TAG, root, (int)op, 1,
 		 &datatypes);
-  CMPI_AssertConsistentType(sendbuf, sizeofDatatype(datatype));
-  CMPI_AssertConsistentType(recvbuf, sizeofDatatype(datatype));
+  CMPI_AssertConsistentType(sendbuf, datatype);
+  CMPI_AssertConsistentType(recvbuf, datatype);
   CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, REDUCE_TAG, comm, "MPI_Reduce()");
   return 0;
 }
@@ -171,8 +171,8 @@ int MPI_Allreduce(const void* sendbuf, void* recvbuf, int count,
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Allreduce() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(sendbuf, sizeofDatatype(datatype));
-  CMPI_AssertConsistentType(recvbuf, sizeofDatatype(datatype));
+  CMPI_AssertConsistentType(sendbuf, datatype);
+  CMPI_AssertConsistentType(recvbuf, datatype);
   $collect_check(comm.collect_checker, place, nprocs, ALLREDUCE_TAG, root, 
 		 (int)op, 1, &datatypes);
   CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, ALLREDUCE_TAG, comm,
@@ -212,8 +212,8 @@ int MPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   $assert(curr_status == __INIT, "MPI_Gather() cannot be invoked without "
     "MPI_Init() being called before.\n");
   if(sendbuf != MPI_IN_PLACE)
-    CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtype));
-  CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtype));
+    CMPI_AssertConsistentType(sendbuf, sendtype);
+  CMPI_AssertConsistentType(recvbuf, recvtype);
   $collect_check(comm.collect_checker, place, nprocs,
 		 GATHER_TAG, root, -1, 2, &datatypes);
   CMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
@@ -233,9 +233,9 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Scatter() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtype));
+  CMPI_AssertConsistentType(sendbuf, sendtype);
   if(recvbuf != MPI_IN_PLACE)
-    CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtype));
+    CMPI_AssertConsistentType(recvbuf, recvtype);
   $collect_check(comm.collect_checker, place, nprocs,
 		 SCATTER_TAG, root, -1, 2, &datatypes);
   CMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
@@ -257,8 +257,8 @@ int MPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   $assert(curr_status == __INIT, "MPI_Gatherv() cannot be invoked without "
     "MPI_Init() being called before.\n");
   if(sendbuf != MPI_IN_PLACE)
-    CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtype));
-  CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtype));
+    CMPI_AssertConsistentType(sendbuf, sendtype);
+  CMPI_AssertConsistentType(recvbuf, recvtype);
   $collect_check(comm.collect_checker, place, nprocs, GATHERV_TAG, root, 
 		 -1, 2, &datatypes);
   CMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
@@ -278,9 +278,9 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Scatterv() cannot be invoked without "
 	  "MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtype));
+  CMPI_AssertConsistentType(sendbuf, sendtype);
   if(recvbuf != MPI_IN_PLACE)
-    CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtype));
+    CMPI_AssertConsistentType(recvbuf, recvtype);
   $collect_check(comm.collect_checker, place, nprocs,
 		 SCATTERV_TAG, root, -1, 2, &datatypes);
   CMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf,
@@ -301,8 +301,8 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   $assert(curr_status == __INIT, "MPI_Allgather() cannot be invoked without "
     "MPI_Init() being called before.\n");
   if(sendbuf != MPI_IN_PLACE)
-    CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtype));
-  CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtype));
+    CMPI_AssertConsistentType(sendbuf, sendtype);
+  CMPI_AssertConsistentType(recvbuf, recvtype);
   $collect_check(comm.collect_checker, place, nprocs,
 		 ALLGATHER_TAG, 0, -1, 2, &datatypes);
   CMPI_Gather(sendbuf, sendcount, sendtype,
@@ -326,9 +326,9 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[]
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Reduce_scatter() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(sendbuf, sizeofDatatype(datatype));
+  CMPI_AssertConsistentType(sendbuf, datatype);
   if(recvbuf != MPI_IN_PLACE)
-    CMPI_AssertConsistentType(recvbuf, sizeofDatatype(datatype));
+    CMPI_AssertConsistentType(recvbuf, datatype);
   $collect_check(comm.collect_checker, rank, nprocs,
 		 RED_SCATTER_TAG, root, (int)op, 2, &datatypes);
   for(total_count = 0, i = 0; i<nprocs; i++) {
@@ -366,8 +366,8 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Alltoall() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtype));
-  CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtype));
+  CMPI_AssertConsistentType(sendbuf, sendtype);
+  CMPI_AssertConsistentType(recvbuf, recvtype);
   $collect_check(comm.collect_checker, rank, nprocs,
 		 ALLTOALL_TAG, root, -1, 2, &datatypes);
   for(int i = 0; i < nprocs; i++) {
@@ -392,8 +392,8 @@ int MPI_Alltoallv(const void* sendbuf, const int sendcounts[],
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Alltoallv() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtype));
-  CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtype));
+  CMPI_AssertConsistentType(sendbuf, sendtype);
+  CMPI_AssertConsistentType(recvbuf, recvtype);
   $collect_check(comm.collect_checker, place, nprocs,
 		 ALLTOALLV_TAG, 0, -1, 2, &datatypes);
   for(int i = 0; i < nprocs; i++) {
@@ -417,8 +417,8 @@ int MPI_Alltoallw(const void* sendbuf, const int sendcounts[], const int sdispls
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Alltoallw() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  CMPI_AssertConsistentType(sendbuf, sizeofDatatype(sendtypes[place]));
-  CMPI_AssertConsistentType(recvbuf, sizeofDatatype(recvtypes[place]));
+  CMPI_AssertConsistentType(sendbuf, sendtypes[place]);
+  CMPI_AssertConsistentType(recvbuf, recvtypes[place]);
   for(int i = 0; i < nprocs; i++) {
     void * ptr = CMPI_PointerAdd(recvbuf, rdispls[i], recvtypes[i]);
 

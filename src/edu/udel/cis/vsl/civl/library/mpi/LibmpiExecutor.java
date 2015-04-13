@@ -14,12 +14,14 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
@@ -33,11 +35,10 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
-import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
-import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
@@ -115,7 +116,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			break;
 		case "CMPI_AssertConsistentType":
 			state = executeAssertConsistentType(state, pid, process, arguments,
-					argumentValues);
+					argumentValues, statement.getSource());
 			break;
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
@@ -289,17 +290,15 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	 */
 	private State executeAssertConsistentType(State state, int pid,
 			String process, Expression[] arguments,
-			SymbolicExpression[] argumentValues)
+			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource ptrSource = arguments[0].getSource();
 		SymbolicExpression pointer = argumentValues[0];
-		NumericExpression assertedTypesize = (NumericExpression) argumentValues[1];
-		NumericExpression realTypesize;
+		NumericExpression assertedType = (NumericExpression) argumentValues[1];
 		CIVLType realType;
-		SymbolicType realSymType;
-		BooleanExpression claim;
+		SymbolicType realSymType, assertedSymType;
 		Reasoner reasoner;
-		ResultType resultType;
+		IntegerNumber assertedTypeEnum;
 
 		if (symbolicUtil.isNullPointer(pointer))
 			return state;
@@ -311,28 +310,67 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 					arguments[0].getSource()));
 			return state;
 		}
+		reasoner = universe.reasoner(state.getPathCondition());
 		realType = symbolicAnalyzer.getFlattenedArrayElementType(state,
 				ptrSource, pointer);
 		realSymType = realType.getDynamicType(universe);
-		realTypesize = symbolicUtil.sizeof(ptrSource, realSymType);
-		claim = universe.equals(realTypesize, assertedTypesize);
-		reasoner = universe.reasoner(state.getPathCondition());
-		resultType = reasoner.valid(claim).getResultType();
-		if (!resultType.equals(ResultType.YES)) {
-			state = this.errorLogger
-					.logError(
-							ptrSource,
-							state,
-							process,
-							symbolicAnalyzer.stateInformation(state),
-							claim,
-							resultType,
-							ErrorKind.MPI_ERROR,
-							"The primitive type:"
-									+ realType.toString()
-									+ " of the object pointed by the input pointer argument of"
-									+ " MPI routines is not consistent with the given MPI_Datatype");
+		assertedTypeEnum = (IntegerNumber) reasoner.extractNumber(assertedType);
+		assertedSymType = this.mpiTypeToCIVLType(assertedTypeEnum.intValue(),
+				source).getDynamicType(universe);
+		if (!assertedSymType.equals(realSymType)) {
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.MPI_ERROR,
+					Certainty.CONCRETE,
+					process,
+					"The primitive type:"
+							+ realType.toString()
+							+ " of the object pointed by the input pointer argument of"
+							+ " MPI routines is not consistent with the given MPI_Datatype",
+					source);
+			errorLogger.reportError(err);
 		}
 		return state;
+	}
+
+	private CIVLPrimitiveType mpiTypeToCIVLType(int MPI_TYPE, CIVLSource source) {
+		switch (MPI_TYPE) {
+		case 0: // char
+			return typeFactory.charType();
+		case 1: // character
+			return typeFactory.charType();
+		case 8: // int
+			return typeFactory.integerType();
+		case 20: // long 
+			return typeFactory.integerType();
+		case 22: // float
+			return typeFactory.realType();
+		case 23: // double
+			return typeFactory.realType();
+		case 24: //long double
+			return typeFactory.realType();
+		case 27: // long long 
+			return typeFactory.integerType();
+		case 39: // 2int
+			return typeFactory.integerType();
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"CIVL doesn't have such a CIVLPrimitiveType", source);
+		}
+		/*
+		 * MPI_CHAR, MPI_CHARACTER, MPI_SIGNED_CHAR, MPI_UNSIGNED_CHAR,
+		 * MPI_BYTE, MPI_WCHAR, MPI_SHORT, MPI_UNSIGNED_SHORT, MPI_INT,
+		 * MPI_INT16_T, MPI_INT32_T, MPI_INT64_T, MPI_INT8_T, MPI_INTEGER,
+		 * MPI_INTEGER1, MPI_INTEGER16, MPI_INTEGER2, MPI_INTEGER4,
+		 * MPI_INTEGER8, MPI_UNSIGNED, MPI_LONG, MPI_UNSIGNED_LONG, MPI_FLOAT,
+		 * MPI_DOUBLE, MPI_LONG_DOUBLE, MPI_LONG_LONG_INT,
+		 * MPI_UNSIGNED_LONG_LONG, MPI_LONG_LONG, MPI_PACKED, MPI_LB, MPI_UB,
+		 * MPI_UINT16_T, MPI_UINT32_T, MPI_UINT64_T, MPI_UINT8_T, MPI_FLOAT_INT,
+		 * MPI_DOUBLE_INT, MPI_LONG_INT, MPI_SHORT_INT, MPI_2INT,
+		 * MPI_LONG_DOUBLE_INT, MPI_AINT, MPI_OFFSET, MPI_2DOUBLE_PRECISION,
+		 * MPI_2INTEGER, MPI_2REAL, MPI_C_BOOL, MPI_C_COMPLEX,
+		 * MPI_C_DOUBLE_COMPLEX, MPI_C_FLOAT_COMPLEX, MPI_C_LONG_DOUBLE_COMPLEX,
+		 * MPI_COMPLEX, MPI_COMPLEX16, MPI_COMPLEX32, MPI_COMPLEX4,
+		 * MPI_COMPLEX8, MPI_REAL, MPI_REAL16, MPI_REAL2, MPI_REAL4, MPI_REAL8
+		 */
 	}
 }
