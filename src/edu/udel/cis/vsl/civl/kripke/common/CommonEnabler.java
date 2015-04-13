@@ -120,6 +120,9 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	protected SymbolicAnalyzer symbolicAnalyzer;
 
+	private static final HashMap<Integer, Map<Statement, BooleanExpression>> EMPTY_STATEMENT_GUARD_MAP = new HashMap<Integer, Map<Statement, BooleanExpression>>(
+			0);
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -331,12 +334,8 @@ public abstract class CommonEnabler implements Enabler {
 			TransitionSequence localTransitions = Semantics
 					.newTransitionSequence(state);
 
-			localTransitions
-					.addAll(enabledTransitionsOfProcess(
-							state,
-							pidInAtomic,
-							new HashMap<Integer, Map<Statement, BooleanExpression>>(
-									0)));
+			localTransitions.addAll(enabledTransitionsOfProcess(state,
+					pidInAtomic, EMPTY_STATEMENT_GUARD_MAP));
 			if (!localTransitions.isEmpty())
 				return localTransitions;
 		}
@@ -460,7 +459,7 @@ public abstract class CommonEnabler implements Enabler {
 			guard = (BooleanExpression) eval.value;
 		}
 		if (guard.isFalse())
-			return universe.falseExpression();
+			return this.falseExpression;
 
 		BooleanExpression pathCondition = state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(pathCondition);
@@ -468,11 +467,13 @@ public abstract class CommonEnabler implements Enabler {
 		if (guard.isTrue()) {
 			return pathCondition;
 		}
+		guard = (BooleanExpression) universe.canonic(guard);
 		if (reasoner.isValid(universe.not(guard)))
 			return this.falseExpression;
 		if (reasoner.isValid(guard))
 			return pathCondition;
-		return universe.and(pathCondition, guard);
+		return (BooleanExpression) universe.canonic(universe.and(pathCondition,
+				guard));
 	}
 
 	public List<Transition> enabledTransitionsOfProcess(State state, int pid) {

@@ -93,6 +93,8 @@ public class CommonStateManager implements StateManager {
 
 	private BooleanExpression falseExpr;
 
+	private int numStatesExplored = 1;
+
 	// TODO: trying to fix this:
 	// private boolean saveStates;
 
@@ -181,6 +183,7 @@ public class CommonStateManager implements StateManager {
 			if (this.config.printStates())
 				config.out().print(this.symbolicAnalyzer.stateToString(state));
 			state = executor.execute(state, pid, stateStatus.enabledTransition);
+			numStatesExplored++;
 			if (printTransitions)
 				printStatement(oldState, state, stateStatus.enabledTransition,
 						AtomicKind.NONE, processIdentifier, false);
@@ -240,8 +243,10 @@ public class CommonStateManager implements StateManager {
 			}
 			traceStep.complete(state);
 			newCanonicId = state.getCanonicId();
-			if (newCanonicId > this.maxCanonicId)
+			if (newCanonicId > this.maxCanonicId) {
 				this.maxCanonicId = newCanonicId;
+				numStatesExplored++;
+			}
 		} else {
 			// if (config.collectProcesses())
 			// state = stateFactory.collectProcesses(state);
@@ -454,20 +459,18 @@ public class CommonStateManager implements StateManager {
 			Location location, String process) {
 		switch (enabled) {
 		case NONDETERMINISTIC:
-			errorLogger
-					.reportError(new CIVLExecutionException(ErrorKind.OTHER,
-							Certainty.CONCRETE, process,
-							"Non-determinism is encountered in $atom block.",
-							symbolicAnalyzer.stateInformation(state), location
-									.getSource()));
+			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
+					Certainty.CONCRETE, process,
+					"Non-determinism is encountered in $atom block.",
+					symbolicAnalyzer.stateInformation(state), location
+							.getSource()));
 			break;
 		case BLOCKED:
-			errorLogger
-					.reportError(new CIVLExecutionException(ErrorKind.OTHER,
-							Certainty.CONCRETE, process,
-							"Blocked location is encountered in $atom block.",
-							symbolicAnalyzer.stateInformation(state), location
-									.getSource()));
+			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
+					Certainty.CONCRETE, process,
+					"Blocked location is encountered in $atom block.",
+					symbolicAnalyzer.stateInformation(state), location
+							.getSource()));
 			break;
 		default:
 		}
@@ -580,5 +583,10 @@ public class CommonStateManager implements StateManager {
 	@Override
 	public void setUpdater(Printable updater) {
 		this.updater = updater;
+	}
+
+	@Override
+	public int numStatesExplored() {
+		return numStatesExplored;
 	}
 }

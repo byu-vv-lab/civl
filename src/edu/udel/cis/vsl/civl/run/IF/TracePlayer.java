@@ -145,9 +145,9 @@ public class TracePlayer extends Player {
 	}
 
 	public void printStats() {
-		civlConfig.out().print("   statesInstantiated  : ");
-		civlConfig.out().println(stateManager.getNumStateInstances());
-		civlConfig.out().print("   statesSaved         : ");
+		civlConfig.out().print("   states              : ");
+		civlConfig.out().println(stateManager.numStatesExplored());
+		civlConfig.out().print("   states Saved        : ");
 		civlConfig.out().println(stateManager.getNumStatesSaved());
 		civlConfig.out().println(
 				"   maxProcs            : " + stateManager.maxProcs());

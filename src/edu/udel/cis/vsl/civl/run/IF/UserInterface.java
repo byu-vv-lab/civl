@@ -258,11 +258,13 @@ public class UserInterface {
 			case SHOW:
 				return runShow(modelTranslator);
 			case VERIFY:
-				return runVerify(modelTranslator);
+				return runVerify(commandLine.getCommandString(),
+						modelTranslator);
 			case REPLAY:
-				return runReplay(modelTranslator, traceFile);
+				return runReplay(commandLine.getCommandString(),
+						modelTranslator, traceFile);
 			case RUN:
-				return runRun(modelTranslator);
+				return runRun(commandLine.getCommandString(), modelTranslator);
 			default:
 				throw new CIVLInternalException(
 						"missing implementation for command of "
@@ -367,11 +369,13 @@ public class UserInterface {
 			model.print(out, civlConfig.debugOrVerbose());
 		}
 		if (compareCommand.isReplay())
-			return this.runCompareReplay(gmcConfig, traceFile, model, universe);
+			return this.runCompareReplay(compareCommand.getCommandString(),
+					gmcConfig, traceFile, model, universe);
 		if (civlConfig.web())
 			this.createWebLogs(model.program());
-		return this.runCompareVerify(compareCommand.gmcConfig(), model,
-				specWorker.preprocessor, specWorker.universe);
+		return this.runCompareVerify(compareCommand.getCommandString(),
+				compareCommand.gmcConfig(), model, specWorker.preprocessor,
+				specWorker.universe);
 	}
 
 	/**
@@ -482,6 +486,8 @@ public class UserInterface {
 	 * </p>
 	 * 
 	 * @param modelTranslator
+	 *            The model translator for this replay command, which contains
+	 *            the command line section information.
 	 * @return
 	 * @throws CommandLineException
 	 * @throws FileNotFoundException
@@ -489,9 +495,9 @@ public class UserInterface {
 	 * @throws ABCException
 	 * @throws MisguidedExecutionException
 	 */
-	private boolean runReplay(ModelTranslator modelTranslator, File traceFile)
-			throws CommandLineException, FileNotFoundException, IOException,
-			ABCException, MisguidedExecutionException {
+	private boolean runReplay(String command, ModelTranslator modelTranslator,
+			File traceFile) throws CommandLineException, FileNotFoundException,
+			IOException, ABCException, MisguidedExecutionException {
 		boolean result;
 		Model model;
 		TracePlayer replayer;
@@ -508,7 +514,7 @@ public class UserInterface {
 				@SuppressWarnings("unused")
 				CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
 			}
-			printStats(out, modelTranslator.universe);
+			printStats(out, modelTranslator.universe, command);
 			replayer.printStats();
 			out.println();
 			return result;
@@ -516,7 +522,7 @@ public class UserInterface {
 		return false;
 	}
 
-	private boolean runRun(ModelTranslator modelTranslator)
+	private boolean runRun(String command, ModelTranslator modelTranslator)
 			throws CommandLineException, ABCException, IOException,
 			MisguidedExecutionException {
 		boolean result;
@@ -531,7 +537,7 @@ public class UserInterface {
 					+ player.getSeed() + " ...");
 			out.flush();
 			result = player.run().result();
-			printStats(out, modelTranslator.universe);
+			printStats(out, modelTranslator.universe, command);
 			player.printStats();
 			out.println();
 			return result;
@@ -539,7 +545,7 @@ public class UserInterface {
 		return false;
 	}
 
-	private boolean runVerify(ModelTranslator modelTranslator)
+	private boolean runVerify(String command, ModelTranslator modelTranslator)
 			throws CommandLineException, ABCException, IOException {
 		boolean result;
 		Model model;
@@ -570,7 +576,7 @@ public class UserInterface {
 				verifier.terminateUpdater();
 				throw e;
 			}
-			printStats(out, modelTranslator.universe);
+			printStats(out, modelTranslator.universe, command);
 			verifier.printStats();
 			out.println();
 			verifier.printResult();
@@ -612,9 +618,10 @@ public class UserInterface {
 		}
 	}
 
-	private boolean runCompareVerify(GMCConfiguration cmdConfig, Model model,
-			Preprocessor preprocessor, SymbolicUniverse universe)
-			throws CommandLineException, ABCException, IOException {
+	private boolean runCompareVerify(String command,
+			GMCConfiguration cmdConfig, Model model, Preprocessor preprocessor,
+			SymbolicUniverse universe) throws CommandLineException,
+			ABCException, IOException {
 		Verifier verifier = new Verifier(cmdConfig, model, out, err, startTime);
 		boolean result = false;
 
@@ -629,7 +636,7 @@ public class UserInterface {
 			verifier.terminateUpdater();
 			throw e;
 		}
-		printStats(out, universe);
+		printStats(out, universe, command);
 		verifier.printStats();
 		out.println();
 		verifier.printResult();
@@ -637,11 +644,11 @@ public class UserInterface {
 		return result;
 	}
 
-	private boolean runCompareReplay(GMCConfiguration gmcConfig,
-			File traceFile, Model model, SymbolicUniverse universe)
-			throws CommandLineException, FileNotFoundException, IOException,
-			SyntaxException, PreprocessorException, ParseException,
-			MisguidedExecutionException {
+	private boolean runCompareReplay(String command,
+			GMCConfiguration gmcConfig, File traceFile, Model model,
+			SymbolicUniverse universe) throws CommandLineException,
+			FileNotFoundException, IOException, SyntaxException,
+			PreprocessorException, ParseException, MisguidedExecutionException {
 		boolean guiMode = gmcConfig.getAnonymousSection().isTrue(guiO);
 		TracePlayer replayer;
 		Trace<Transition, State> trace;
@@ -655,7 +662,7 @@ public class UserInterface {
 			@SuppressWarnings("unused")
 			CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
 		}
-		printStats(out, universe);
+		printStats(out, universe, command);
 		replayer.printStats();
 		out.println();
 		return result;
@@ -790,7 +797,8 @@ public class UserInterface {
 	 * @param transitions
 	 *            the number of transitions executed in the course of the run
 	 */
-	private void printStats(PrintStream out, SymbolicUniverse universe) {
+	private void printStats(PrintStream out, SymbolicUniverse universe,
+			String command) {
 		// round up time to nearest 1/100th of second...
 		double time = Math
 				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
@@ -798,10 +806,11 @@ public class UserInterface {
 		long numProverCalls = universe.numProverValidCalls();
 		long memory = Runtime.getRuntime().totalMemory();
 
+		out.print("\ncommand: civl " + command);
 		out.println("\n" + bar + " Stats " + bar);
-		out.print("   validCalls          : ");
+		out.print("   valid calls         : ");
 		out.println(numValidCalls);
-		out.print("   proverCalls         : ");
+		out.print("   prover calls        : ");
 		out.println(numProverCalls);
 		out.print("   memory (bytes)      : ");
 		out.println(memory);

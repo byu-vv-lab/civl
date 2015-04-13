@@ -46,4 +46,6 @@ public interface StateManager extends StateManagerIF<State, Transition> {
 	 *            The value to be used.
 	 */
 	void setUpdater(Printable updater);
+
+	int numStatesExplored();
 }

@@ -28,6 +28,8 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 public class Verifier extends Player {
 
+	private String errorBoundExceeds;
+
 	class SearchUpdater implements Printable {
 		@Override
 		public void print(PrintStream out) {
@@ -236,7 +238,13 @@ public class Verifier extends Player {
 			updater = new SearchUpdater();
 		}
 		stateManager.setUpdater(updater);
+		errorBoundExceeds = "errorBoundExceeds";
 		// this.shortFileNamesShown = shortFileNamesShown;
+		this.errorBoundExceeds = "Terminating search after finding "
+				+ this.log.errorBound() + " failure";
+		if (log.errorBound() > 1)
+			errorBoundExceeds += "s";
+		errorBoundExceeds += ".";
 	}
 
 	/**
@@ -247,17 +255,17 @@ public class Verifier extends Player {
 	public void printStats() {
 		civlConfig.out().print("   maxProcs            : ");
 		civlConfig.out().println(stateManager.maxProcs());
-		civlConfig.out().print("   statesInstantiated  : ");
-		civlConfig.out().println(stateManager.getNumStateInstances());
-		civlConfig.out().print("   statesSaved         : ");
+		civlConfig.out().print("   states              : ");
+		civlConfig.out().println(stateManager.numStatesExplored());
+		civlConfig.out().print("   states saved        : ");
 		civlConfig.out().println(stateManager.getNumStatesSaved());
-		civlConfig.out().print("   statesSeen          : ");
-		civlConfig.out().println(searcher.numStatesSeen());
-		civlConfig.out().print("   statesMatched       : ");
+		// civlConfig.out().print("   statesSeen        : ");
+		// civlConfig.out().println(searcher.numStatesSeen());
+		civlConfig.out().print("   state matches       : ");
 		civlConfig.out().println(searcher.numStatesMatched());
-		civlConfig.out().print("   steps               : ");
-		civlConfig.out().println(executor.getNumSteps());
 		civlConfig.out().print("   transitions         : ");
+		civlConfig.out().println(executor.getNumSteps());
+		civlConfig.out().print("   trace steps         : ");
 		civlConfig.out().println(searcher.numTransitions());
 	}
 
@@ -298,13 +306,7 @@ public class Verifier extends Player {
 				}
 			} catch (ExcessiveErrorException e) {
 				violationFound = true;
-				// if (!shortFileNamesShown) {
-				// // preprocessor.printShorterFileNameMap(civlConfig.out());
-				// // TODO
-				// civlConfig.out().println();
-				// }
-				civlConfig.out().println(
-						"Error bound exceeded: search terminated");
+				civlConfig.out().println(errorBoundExceeds);
 			}
 			terminateUpdater();
 			if (violationFound || log.numEntries() > 0) {
