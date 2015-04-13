@@ -445,19 +445,23 @@ public class ImmutableProcessState implements ProcessState {
 		StringBuffer result = new StringBuffer();
 
 		result.append("process p" + identifier + " (id=" + pid + "):\n");
-		for (int i = 0; i < callStack.length; i++) {
-			StackEntry frame = callStack[i];
-			Location location = frame.location();
-			CIVLSource source = location.getSource();
-			String locationString = source == null ? "" : " at "
-					+ source.getSummary();
-			String frameString = location.function().name() + locationString;
+		if (callStack.length < 1)
+			result.append("  EMPTY");
+		else
+			for (int i = 0; i < callStack.length; i++) {
+				StackEntry frame = callStack[i];
+				Location location = frame.location();
+				CIVLSource source = location.getSource();
+				String locationString = source == null ? "" : " at "
+						+ source.getSummary();
+				String frameString = location.function().name()
+						+ locationString;
 
-			if (i != 0)
-				result.append(" called from\n");
-			result.append("  ");
-			result.append(frameString);
-		}
+				if (i != 0)
+					result.append(" called from\n");
+				result.append("  ");
+				result.append(frameString);
+			}
 		result.append("\n");
 		return result;
 	}
