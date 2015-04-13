@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -26,7 +27,11 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 
 	private LibraryEvaluatorLoader libEvaluatorLoader;
 
-	public CommonLibraryEnablerLoader(LibraryEvaluatorLoader libEvaluatorLoader) {
+	private CIVLConfiguration civlConfig;
+
+	public CommonLibraryEnablerLoader(
+			LibraryEvaluatorLoader libEvaluatorLoader,
+			CIVLConfiguration civlConfig) {
 		this.libEvaluatorLoader = libEvaluatorLoader;
 	}
 
@@ -57,12 +62,14 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 						.getConstructor(String.class, Enabler.class,
 								Evaluator.class, ModelFactory.class,
 								SymbolicUtility.class, SymbolicAnalyzer.class,
+								CIVLConfiguration.class,
 								LibraryEnablerLoader.class,
 								LibraryEvaluatorLoader.class);
 
 				result = constructor.newInstance(name, primaryEnabler,
 						evaluator, modelFacotry, symbolicUtil,
-						symbolicAnalyzer, this, this.libEvaluatorLoader);
+						symbolicAnalyzer, this.civlConfig, this,
+						this.libEvaluatorLoader);
 			} catch (Exception e) {
 				throw new LibraryLoaderException(e.getMessage());
 			}

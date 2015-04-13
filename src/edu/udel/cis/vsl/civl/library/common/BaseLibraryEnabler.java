@@ -4,6 +4,7 @@ import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
@@ -73,10 +74,11 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 	public BaseLibraryEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
+			CIVLConfiguration civlConfig,
 			LibraryEnablerLoader libEnablerLoader,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer,
-				libEvaluatorLoader, modelFactory);
+				civlConfig, libEvaluatorLoader, modelFactory);
 		this.primaryEnabler = primaryEnabler;
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();

@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -33,10 +34,10 @@ public class LibdomainEvaluator extends BaseLibraryEvaluator implements
 
 	public LibdomainEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer,
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer,
-				libEvaluatorLoader);
+				civlConfig, libEvaluatorLoader);
 	}
 
 	/**

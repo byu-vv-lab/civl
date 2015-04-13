@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.library.seq;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -13,9 +14,10 @@ public class LibseqEvaluator extends BaseLibraryEvaluator implements
 
 	public LibseqEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer,
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
-		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer, libEvaluatorLoader);
+		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer,
+				civlConfig, libEvaluatorLoader);
 	}
 
 }

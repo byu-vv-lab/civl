@@ -271,7 +271,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		this.FILEtype = (CIVLStructOrUnionType) typeFactory
 				.systemType(ModelConfiguration.FILE_STREAM_TYPE);
 		this.libevaluator = new LibstdioEvaluator(name, evaluator,
-				modelFactory, symbolicUtil, symbolicAnalyzer,
+				modelFactory, symbolicUtil, symbolicAnalyzer, civlConfig,
 				this.libEvaluatorLoader);
 	}
 

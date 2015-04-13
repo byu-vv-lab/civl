@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.library.bundle;
 
 import java.util.ArrayList;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -23,10 +24,10 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 
 	public LibbundleEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer,
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer,
-				libEvaluatorLoader);
+				civlConfig, libEvaluatorLoader);
 	}
 
 	/* ************************* Public Function *************************** */

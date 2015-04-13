@@ -244,7 +244,7 @@ public class CommonExecutor implements Executor {
 			try {
 				LibraryExecutor executor = loader.getLibraryExecutor(
 						libraryName, this, this.modelFactory,
-						this.symbolicUtil, symbolicAnalyzer, this.civlConfig);
+						this.symbolicUtil, symbolicAnalyzer);
 
 				state = executor.execute(state, pid, statement);
 			} catch (LibraryLoaderException exception) {

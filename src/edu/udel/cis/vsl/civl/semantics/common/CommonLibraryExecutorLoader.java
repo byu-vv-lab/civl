@@ -26,8 +26,13 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 
 	private LibraryEvaluatorLoader libEvaluatorLoader;
 
-	public CommonLibraryExecutorLoader(LibraryEvaluatorLoader libEvaluatorLoader) {
+	private CIVLConfiguration civlConfig;
+
+	public CommonLibraryExecutorLoader(
+			LibraryEvaluatorLoader libEvaluatorLoader,
+			CIVLConfiguration civlConfig) {
 		this.libEvaluatorLoader = libEvaluatorLoader;
+		this.civlConfig = civlConfig;
 	}
 
 	/* ***************** Methods from LibraryExecutorLoader **************** */
@@ -35,8 +40,8 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 	@Override
 	public LibraryExecutor getLibraryExecutor(String name,
 			Executor primaryExecutor, ModelFactory modelFacotry,
-			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
-			CIVLConfiguration civlConfig) throws LibraryLoaderException {
+			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer)
+			throws LibraryLoaderException {
 		LibraryExecutor result;
 
 		if (name.equals("assert"))
@@ -63,7 +68,7 @@ public class CommonLibraryExecutorLoader implements LibraryExecutorLoader {
 
 				result = constructor.newInstance(name, primaryExecutor,
 						modelFacotry, symbolicUtil, symbolicAnalyzer,
-						civlConfig, this, this.libEvaluatorLoader);
+						this.civlConfig, this, this.libEvaluatorLoader);
 			} catch (Exception e) {
 				throw new LibraryLoaderException(e.getMessage());
 			}

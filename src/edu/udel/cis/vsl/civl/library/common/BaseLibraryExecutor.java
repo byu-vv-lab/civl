@@ -72,8 +72,6 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 
 	protected CIVLErrorLogger errorLogger;
 
-	protected CIVLConfiguration civlConfig;
-
 	/**
 	 * The set of characters that are used to construct a number in a format
 	 * string.
@@ -106,13 +104,12 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			LibraryExecutorLoader libExecutorLoader,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, primaryExecutor.evaluator().universe(), symbolicUtil,
-				symbolicAnalyzer, libEvaluatorLoader, modelFactory);
+				symbolicAnalyzer, civlConfig, libEvaluatorLoader, modelFactory);
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.stateFactory = evaluator.stateFactory();
 		this.errorLogger = primaryExecutor.errorLogger();
 		this.libExecutorLoader = libExecutorLoader;
-		this.civlConfig = civlConfig;
 		numbers = new HashSet<Character>(10);
 		for (int i = 0; i < 10; i++) {
 			numbers.add(Character.forDigit(i, 10));
@@ -151,13 +148,14 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			messageResult = this.symbolicAnalyzer.expressionEvaluation(state,
 					pid, arguments[0], true);
 			state = messageResult.left;
-			secondEvaluation=messageResult.right;
+			secondEvaluation = messageResult.right;
 			if (!firstEvaluation.equals(secondEvaluation)) {
 				message.append("\n-> ");
 				message.append(secondEvaluation);
 			}
-			result = this.symbolicAnalyzer.symbolicExpressionToString(arguments[0].getSource(), state, assertValue).toString();
-			if(!secondEvaluation.equals(result)){
+			result = this.symbolicAnalyzer.symbolicExpressionToString(
+					arguments[0].getSource(), state, assertValue).toString();
+			if (!secondEvaluation.equals(result)) {
 				message.append("\n-> ");
 				message.append(result);
 			}

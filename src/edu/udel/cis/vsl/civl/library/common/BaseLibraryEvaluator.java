@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
@@ -73,10 +74,10 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 */
 	public BaseLibraryEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer,
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer,
-				libEvaluatorLoader, modelFactory);
+				civlConfig, libEvaluatorLoader, modelFactory);
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
 		this.errorLogger = evaluator.errorLogger();

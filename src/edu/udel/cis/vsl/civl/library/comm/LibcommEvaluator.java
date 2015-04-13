@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.library.comm;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -35,10 +36,10 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 
 	public LibcommEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer,
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer,
-				libEvaluatorLoader);
+				civlConfig, libEvaluatorLoader);
 	}
 
 	/* ********************* Methods from LibraryEvaluator ******************* */

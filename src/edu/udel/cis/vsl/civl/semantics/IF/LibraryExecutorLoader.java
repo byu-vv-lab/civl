@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
-import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 
@@ -28,15 +27,12 @@ public interface LibraryExecutorLoader {
 	 *            expressions.
 	 * @param symbolicAnalyzer
 	 *            The symbolic analyzer used in the system.
-	 * @param civlConfig
-	 *            The CIVL configuration.
 	 * @return The library executor of the given name.
 	 * @throws LibraryLoaderException
 	 *             If the library executor of the given name cannot be found.
 	 */
 	LibraryExecutor getLibraryExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFacotry, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig)
-			throws LibraryLoaderException;
+			SymbolicAnalyzer symbolicAnalyzer) throws LibraryLoaderException;
 
 }

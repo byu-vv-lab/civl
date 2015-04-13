@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.library.stdio;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -27,10 +28,10 @@ public class LibstdioEvaluator extends BaseLibraryEvaluator implements
 
 	public LibstdioEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer,
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer,
-				libEvaluatorLoader);
+				civlConfig, libEvaluatorLoader);
 	}
 
 	/**

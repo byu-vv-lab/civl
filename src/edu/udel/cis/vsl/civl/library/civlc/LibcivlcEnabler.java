@@ -5,6 +5,7 @@ import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
@@ -60,10 +61,12 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	public LibcivlcEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
+			CIVLConfiguration civlConfig,
 			LibraryEnablerLoader libEnablerLoader,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, primaryEnabler, evaluator, modelFactory, symbolicUtil,
-				symbolicAnalyzer, libEnablerLoader, libEvaluatorLoader);
+				symbolicAnalyzer, civlConfig, libEnablerLoader,
+				libEvaluatorLoader);
 	}
 
 	/* ********************* Methods from LibraryEnabler ******************* */
@@ -104,8 +107,8 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 				throw new CIVLExecutionException(ErrorKind.INTERNAL,
 						Certainty.NONE, process,
 						"Argument to $choose_int not concrete: " + eval.value,
-						symbolicAnalyzer.stateInformation(state), arguments.get(0)
-								.getSource());
+						symbolicAnalyzer.stateInformation(state), arguments
+								.get(0).getSource());
 			}
 			upper = upperNumber.intValue();
 			for (int i = 0; i < upper; i++) {

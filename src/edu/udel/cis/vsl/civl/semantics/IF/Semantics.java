@@ -35,8 +35,9 @@ public class Semantics {
 	 * @return The new library executor loader.
 	 */
 	public static LibraryExecutorLoader newLibraryExecutorLoader(
-			LibraryEvaluatorLoader libEvaluatorLoader) {
-		return new CommonLibraryExecutorLoader(libEvaluatorLoader);
+			LibraryEvaluatorLoader libEvaluatorLoader,
+			CIVLConfiguration civlConfig) {
+		return new CommonLibraryExecutorLoader(libEvaluatorLoader, civlConfig);
 	}
 
 	/**
@@ -44,8 +45,9 @@ public class Semantics {
 	 * 
 	 * @return The new library evaluator loader.
 	 */
-	public static LibraryEvaluatorLoader newLibraryEvaluatorLoader() {
-		return new CommonLibraryEvaluatorLoader();
+	public static LibraryEvaluatorLoader newLibraryEvaluatorLoader(
+			CIVLConfiguration civlConfig) {
+		return new CommonLibraryEvaluatorLoader(civlConfig);
 	}
 
 	/**

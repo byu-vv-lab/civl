@@ -51,8 +51,9 @@ public class Kripkes {
 	 * @return The new library enabler loader created.
 	 */
 	public static LibraryEnablerLoader newLibraryEnablerLoader(
-			LibraryEvaluatorLoader libEvaluatorLoader) {
-		return new CommonLibraryEnablerLoader(libEvaluatorLoader);
+			LibraryEvaluatorLoader libEvaluatorLoader,
+			CIVLConfiguration civlConfig) {
+		return new CommonLibraryEnablerLoader(libEvaluatorLoader, civlConfig);
 	}
 
 	/**

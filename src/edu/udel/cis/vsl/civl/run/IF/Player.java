@@ -122,7 +122,8 @@ public abstract class Player {
 				modelFactory);
 		this.stateFactory = States.newImmutableStateFactory(modelFactory,
 				symbolicUtil, memUnitFactory, config);
-		this.libraryEvaluatorLoader = Semantics.newLibraryEvaluatorLoader();
+		this.libraryEvaluatorLoader = Semantics
+				.newLibraryEvaluatorLoader(this.civlConfig);
 		this.symbolicAnalyzer = Semantics.newSymbolicAnalyzer(this.civlConfig,
 				universe, modelFactory, symbolicUtil);
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
@@ -130,8 +131,8 @@ public abstract class Player {
 				memUnitFactory, log);
 		this.gui = (Boolean) config.getAnonymousSection().getValueOrDefault(
 				guiO);
-		this.libraryExecutorLoader = Semantics
-				.newLibraryExecutorLoader(this.libraryEvaluatorLoader);
+		this.libraryExecutorLoader = Semantics.newLibraryExecutorLoader(
+				this.libraryEvaluatorLoader, this.civlConfig);
 		this.executor = Semantics.newExecutor(modelFactory, stateFactory, log,
 				libraryExecutorLoader, evaluator, symbolicAnalyzer, log,
 				civlConfig);
@@ -140,8 +141,8 @@ public abstract class Player {
 		this.maxdepth = (int) config.getAnonymousSection().getValueOrDefault(
 				maxdepthO);
 
-		this.libraryEnablerLoader = Kripkes
-				.newLibraryEnablerLoader(this.libraryEvaluatorLoader);
+		this.libraryEnablerLoader = Kripkes.newLibraryEnablerLoader(
+				this.libraryEvaluatorLoader, this.civlConfig);
 		enabler = Kripkes.newEnabler(stateFactory, evaluator, symbolicAnalyzer,
 				memUnitFactory, this.libraryEnablerLoader, log, civlConfig);
 		if (civlConfig.deadlock() == DeadlockKind.ABSOLUTE) {

@@ -108,7 +108,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 				symbolicAnalyzer, civlConfig, libExecutorLoader,
 				libEvaluatorLoader);
 		libevaluator = new LibbundleEvaluator(name, evaluator, modelFactory,
-				symbolicUtil, symbolicAnalyzer, libEvaluatorLoader);
+				symbolicUtil, symbolicAnalyzer, civlConfig, libEvaluatorLoader);
 	}
 
 	/* ******************** Methods from LibraryExecutor ******************* */

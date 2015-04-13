@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.library.common;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
@@ -160,6 +161,11 @@ public abstract class LibraryComponent {
 	protected CIVLTypeFactory typeFactory;
 
 	/**
+	 * The CIVL configuration object
+	 */
+	protected CIVLConfiguration civlConfig;
+
+	/**
 	 * Creates a new instance of a library.
 	 * 
 	 * @param universe
@@ -171,6 +177,7 @@ public abstract class LibraryComponent {
 	 */
 	protected LibraryComponent(String name, SymbolicUniverse universe,
 			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
+			CIVLConfiguration civlConfig,
 			LibraryEvaluatorLoader libEvaluatorLoader, ModelFactory modelFactory) {
 		this.name = name;
 		this.universe = universe;
@@ -190,6 +197,7 @@ public abstract class LibraryComponent {
 		this.modelFactory = modelFactory;
 		this.model = modelFactory.model();
 		this.typeFactory = modelFactory.typeFactory();
+		this.civlConfig = civlConfig;
 	}
 
 	/**

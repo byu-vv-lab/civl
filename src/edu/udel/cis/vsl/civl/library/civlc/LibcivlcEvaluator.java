@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.library.civlc;
 import java.math.BigInteger;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
@@ -32,10 +33,10 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 
 	public LibcivlcEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
-			SymbolicAnalyzer symbolicAnalyzer,
+			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer,
-				libEvaluatorLoader);
+				civlConfig, libEvaluatorLoader);
 	}
 
 	@Override
