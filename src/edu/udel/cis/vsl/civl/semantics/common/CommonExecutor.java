@@ -238,27 +238,8 @@ public class CommonExecutor implements Executor {
 			CallOrSpawnStatement statement)
 			throws UnsatisfiablePathConditionException {
 		if (statement.function() instanceof SystemFunction) {
-			String libraryName = ((SystemFunction) statement.function())
-					.getLibrary();
-
-			try {
-				LibraryExecutor executor = loader.getLibraryExecutor(
-						libraryName, this, this.modelFactory,
-						this.symbolicUtil, symbolicAnalyzer);
-
-				state = executor.execute(state, pid, statement);
-			} catch (LibraryLoaderException exception) {
-				String process = state.getProcessState(pid).name() + "(id="
-						+ pid + ")";
-				CIVLExecutionException err = new CIVLExecutionException(
-						ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
-						"An error is encountered when loading the library executor for "
-								+ libraryName + ": " + exception.getMessage(),
-						this.symbolicAnalyzer.stateInformation(state),
-						statement.getSource());
-
-				this.errorLogger.reportError(err);
-			}
+			state = this.executeSystemFunctionCall(state, pid, statement,
+					(SystemFunction) statement.function());
 		} else {
 			CIVLFunction function = statement.function();
 			SymbolicExpression[] arguments;
@@ -279,11 +260,42 @@ public class CommonExecutor implements Executor {
 
 				function = eval.second;
 				state = eval.first;
-				state = stateFactory.pushCallStack(state, pid, function,
-						eval.third, arguments);
+				if (function.isSystem()) {
+					state = this.executeSystemFunctionCall(state, pid,
+							statement, (SystemFunction) function);
+				} else
+					state = stateFactory.pushCallStack(state, pid, function,
+							eval.third, arguments);
 			} else
 				state = stateFactory.pushCallStack(state, pid, function,
 						arguments);
+		}
+		return state;
+	}
+
+	private State executeSystemFunctionCall(State state, int pid,
+			CallOrSpawnStatement call, SystemFunction function)
+			throws UnsatisfiablePathConditionException {
+		String libraryName = function.getLibrary();
+		String funcName = function.name().name();
+
+		try {
+			LibraryExecutor executor = loader.getLibraryExecutor(libraryName,
+					this, this.modelFactory, this.symbolicUtil,
+					symbolicAnalyzer);
+
+			state = executor.execute(state, pid, call, funcName);
+		} catch (LibraryLoaderException exception) {
+			String process = state.getProcessState(pid).name() + "(id=" + pid
+					+ ")";
+			CIVLExecutionException err = new CIVLExecutionException(
+					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
+					"An error is encountered when loading the library executor for "
+							+ libraryName + ": " + exception.getMessage(),
+					this.symbolicAnalyzer.stateInformation(state),
+					call.getSource());
+
+			this.errorLogger.reportError(err);
 		}
 		return state;
 	}

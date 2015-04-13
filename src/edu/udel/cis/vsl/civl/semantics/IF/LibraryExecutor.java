@@ -33,9 +33,13 @@ public interface LibraryExecutor {
 	 *            The PID of the process that the statement belongs to.
 	 * @param statement
 	 *            The call statement to be executed.
+	 * @param functionName
+	 *            The name of the system function that this call is going to
+	 *            executed. Note: we need this when the function of the call
+	 *            statement is a function pointer.
 	 * @return The resulting state after executing the call statement.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	State execute(State state, int pid, CallOrSpawnStatement statement)
-			throws UnsatisfiablePathConditionException;
+	State execute(State state, int pid, CallOrSpawnStatement statement,
+			String functionName) throws UnsatisfiablePathConditionException;
 }

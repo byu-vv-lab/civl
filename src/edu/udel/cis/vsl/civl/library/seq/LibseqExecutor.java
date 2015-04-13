@@ -13,7 +13,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
@@ -50,9 +49,9 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 	}
 
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement statement)
-			throws UnsatisfiablePathConditionException {
-		return executeWork(state, pid, statement);
+	public State execute(State state, int pid, CallOrSpawnStatement statement,
+			String functionName) throws UnsatisfiablePathConditionException {
+		return executeWork(state, pid, statement, functionName);
 	}
 
 	/**
@@ -68,9 +67,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeWork(State state, int pid, CallOrSpawnStatement call)
-			throws UnsatisfiablePathConditionException {
-		Identifier name;
+	private State executeWork(State state, int pid, CallOrSpawnStatement call,
+			String functionName) throws UnsatisfiablePathConditionException {
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		LHSExpression lhs;
@@ -78,7 +76,6 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 
 		numArgs = call.arguments().size();
-		name = call.function().name();
 		lhs = call.lhs();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
@@ -90,7 +87,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-		switch (name.name()) {
+		switch (functionName) {
 		case "$seq_init":
 			state = executeSeqInit(state, pid, process, arguments,
 					argumentValues, call.getSource());
@@ -99,10 +96,6 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			state = executeSeqInsert(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
-		// case "$seq_append":
-		// state = executeSeqAppend(state, pid, process, arguments,
-		// argumentValues, call.getSource());
-		// break;
 		case "$seq_length":
 			state = executeSeqLength(state, pid, process, lhs, arguments,
 					argumentValues, call.getSource());
@@ -407,8 +400,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ functionName
 							+ " must be of a pointer to incomplete array of type T.\n"
 							+ "actual type of the first argument: pointer to "
-							+ arrayType, symbolicAnalyzer.stateInformation(state),
-					source);
+							+ arrayType,
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -469,8 +462,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 					ErrorKind.SEQUENCE, Certainty.PROVEABLE, process,
 					"The index for $seq_insert() is out of the range of the array index.\n"
 							+ "array length: " + lengthInt + "\n" + "index: "
-							+ indexInt, symbolicAnalyzer.stateInformation(state),
-					source);
+							+ indexInt,
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;

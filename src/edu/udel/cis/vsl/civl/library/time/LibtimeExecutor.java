@@ -6,7 +6,6 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -30,7 +29,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 public class LibtimeExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
 
-//	private SymbolicConstant timeFunc;
+	// private SymbolicConstant timeFunc;
 	private SymbolicConstant localtimeFunc;
 	private CIVLType tmType;
 	private SymbolicType tmSymbolicType;
@@ -83,9 +82,8 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 	}
 
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement statement)
-			throws UnsatisfiablePathConditionException {
-		Identifier name;
+	public State execute(State state, int pid, CallOrSpawnStatement statement,
+			String functionName) throws UnsatisfiablePathConditionException {
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		CallOrSpawnStatement call;
@@ -93,7 +91,6 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 
 		call = (CallOrSpawnStatement) statement;
 		numArgs = call.arguments().size();
-		name = call.function().name();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
@@ -104,11 +101,7 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-		switch (name.name()) {
-//		case "time":
-//			state = this.executeTime(state, pid, call.lhs(), arguments,
-//					argumentValues);
-//			break;
+		switch (functionName) {
 		case "localtime":
 			state = this.executeLocalTime(state, pid, call.lhs(), arguments,
 					argumentValues);

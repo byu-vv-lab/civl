@@ -4,7 +4,6 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -33,9 +32,9 @@ public class LibscopeExecutor extends BaseLibraryExecutor implements
 	}
 
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement statement)
-			throws UnsatisfiablePathConditionException {
-		return executeWork(state, pid, statement);
+	public State execute(State state, int pid, CallOrSpawnStatement statement,
+			String functionName) throws UnsatisfiablePathConditionException {
+		return executeWork(state, pid, statement, functionName);
 	}
 
 	/**
@@ -51,9 +50,8 @@ public class LibscopeExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeWork(State state, int pid, CallOrSpawnStatement call)
-			throws UnsatisfiablePathConditionException {
-		Identifier name;
+	private State executeWork(State state, int pid, CallOrSpawnStatement call,
+			String functionName) throws UnsatisfiablePathConditionException {
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		LHSExpression lhs;
@@ -61,7 +59,6 @@ public class LibscopeExecutor extends BaseLibraryExecutor implements
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 
 		numArgs = call.arguments().size();
-		name = call.function().name();
 		lhs = call.lhs();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
@@ -73,7 +70,7 @@ public class LibscopeExecutor extends BaseLibraryExecutor implements
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-		switch (name.name()) {
+		switch (functionName) {
 		case "$scope_parent":
 			state = this.executeScopeParent(state, pid, process, lhs,
 					arguments, argumentValues);

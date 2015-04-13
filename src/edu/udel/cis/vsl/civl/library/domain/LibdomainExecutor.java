@@ -14,7 +14,6 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -52,9 +51,8 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 	}
 
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement call)
-			throws UnsatisfiablePathConditionException {
-		Identifier name;
+	public State execute(State state, int pid, CallOrSpawnStatement call,
+			String functionName) throws UnsatisfiablePathConditionException {
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		LHSExpression lhs;
@@ -62,7 +60,6 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 
 		numArgs = call.arguments().size();
-		name = call.function().name();
 		lhs = call.lhs();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
@@ -74,7 +71,7 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-		switch (name.name()) {
+		switch (functionName) {
 		case "$domain_partition":
 			state = execute_domain_partition(state, pid, process, lhs,
 					arguments, argumentValues, call.getSource());

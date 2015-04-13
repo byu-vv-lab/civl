@@ -14,7 +14,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -73,16 +72,15 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	}
 
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement statement)
-			throws UnsatisfiablePathConditionException {
-		return this.executeWork(state, pid, statement);
+	public State execute(State state, int pid, CallOrSpawnStatement statement,
+			String functionName) throws UnsatisfiablePathConditionException {
+		return this.executeWork(state, pid, statement, functionName);
 	}
 
 	/* ************************* private methods **************************** */
 
-	private State executeWork(State state, int pid, Statement statement)
-			throws UnsatisfiablePathConditionException {
-		Identifier name;
+	private State executeWork(State state, int pid, Statement statement,
+			String functionName) throws UnsatisfiablePathConditionException {
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		CallOrSpawnStatement call;
@@ -95,7 +93,6 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		}
 		call = (CallOrSpawnStatement) statement;
 		numArgs = call.arguments().size();
-		name = call.function().name();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
@@ -106,7 +103,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-		switch (name.name()) {
+		switch (functionName) {
 		case "MPI_Comm_size":
 		case "MPI_Comm_rank":
 		case "CMPI_Set_status":

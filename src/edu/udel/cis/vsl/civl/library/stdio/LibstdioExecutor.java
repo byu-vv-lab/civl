@@ -16,7 +16,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -570,9 +569,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeWork(State state, int pid,
-			CallOrSpawnStatement statement)
+			CallOrSpawnStatement statement, String functionName)
 			throws UnsatisfiablePathConditionException {
-		Identifier name;
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		int numArgs;
@@ -582,7 +580,6 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
 		numArgs = statement.arguments().size();
-		name = statement.function().name();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
@@ -593,11 +590,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-		switch (name.name()) {
-		// case "printf":
-		// state = primaryExecutor.executePrintf(state, pid, arguments,
-		// argumentValues);
-		// break;
+		switch (functionName) {
 		case "$fopen":
 			state = execute_fopen(source, state, pid, process, lhs, arguments,
 					argumentValues);
@@ -643,7 +636,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 					arguments, argumentValues);
 			break;
 		default:
-			throw new CIVLUnimplementedFeatureException(name.name(), statement);
+			throw new CIVLUnimplementedFeatureException(functionName, statement);
 
 		}
 		state = stateFactory.setLocation(state, pid, statement.target(),
@@ -1195,8 +1188,9 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	/* ******************** Methods from LibraryExecutor ******************* */
 
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement statement)
-			throws UnsatisfiablePathConditionException {
-		return executeWork(state, pid, (CallOrSpawnStatement) statement);
+	public State execute(State state, int pid, CallOrSpawnStatement statement,
+			String functionName) throws UnsatisfiablePathConditionException {
+		return executeWork(state, pid, (CallOrSpawnStatement) statement,
+				functionName);
 	}
 }

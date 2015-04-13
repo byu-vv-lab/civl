@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.library.asserts;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -29,16 +28,14 @@ public class LibassertsExecutor extends BaseLibraryExecutor {
 	}
 
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement call)
-			throws UnsatisfiablePathConditionException {
-		Identifier name;
+	public State execute(State state, int pid, CallOrSpawnStatement call,
+			String functionName) throws UnsatisfiablePathConditionException {
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		int numArgs;
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 
 		numArgs = call.arguments().size();
-		name = call.function().name();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
@@ -49,7 +46,7 @@ public class LibassertsExecutor extends BaseLibraryExecutor {
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-		switch (name.name()) {
+		switch (functionName) {
 		case "assert":
 			state = this.executeAssert(state, pid, process, arguments,
 					argumentValues, call.getSource(), call);

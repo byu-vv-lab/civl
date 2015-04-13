@@ -8,7 +8,6 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -70,15 +69,14 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 	}
 
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement statement)
-			throws UnsatisfiablePathConditionException {
-		return executeWork(state, pid, statement);
+	public State execute(State state, int pid, CallOrSpawnStatement statement,
+			String functionName) throws UnsatisfiablePathConditionException {
+		return executeWork(state, pid, statement, functionName);
 	}
 
 	private State executeWork(State state, int pid,
-			CallOrSpawnStatement statement)
+			CallOrSpawnStatement statement, String functionName)
 			throws UnsatisfiablePathConditionException {
-		Identifier name;
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		int numArgs;
@@ -88,7 +86,6 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		LHSExpression lhs = statement.lhs();
 
 		numArgs = statement.arguments().size();
-		name = statement.function().name();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
@@ -99,7 +96,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-		switch (name.name()) {
+		switch (functionName) {
 		case "$pthread_gpool_thread":
 			state = execute_pthread_gpool_thread(state, pid, process, lhs,
 					arguments, argumentValues, source);
@@ -146,7 +143,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(
-					"execution of function " + name.name()
+					"execution of function " + functionName
 							+ " in pthread library", source);
 		}
 		state = stateFactory.setLocation(state, pid, statement.target(),

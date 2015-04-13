@@ -13,7 +13,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -77,9 +76,9 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 	/* ******************** Methods from LibraryExecutor ******************* */
 
 	@Override
-	public State execute(State state, int pid, CallOrSpawnStatement statement)
-			throws UnsatisfiablePathConditionException {
-		return executeWork(state, pid, statement);
+	public State execute(State state, int pid, CallOrSpawnStatement statement,
+			String functionName) throws UnsatisfiablePathConditionException {
+		return executeWork(state, pid, statement, functionName);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -97,9 +96,8 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 	 * @return The new state after executing the function call.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeWork(State state, int pid, CallOrSpawnStatement call)
-			throws UnsatisfiablePathConditionException {
-		Identifier name;
+	private State executeWork(State state, int pid, CallOrSpawnStatement call,
+			String functionName) throws UnsatisfiablePathConditionException {
 		Expression[] arguments;
 		SymbolicExpression[] argumentValues;
 		int numArgs;
@@ -108,7 +106,6 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 		CIVLSource source = call.getSource();
 
 		numArgs = call.arguments().size();
-		name = call.function().name();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
@@ -119,7 +116,7 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
-		switch (name.name()) {
+		switch (functionName) {
 		case "free":
 			state = executeFree(state, pid, process, arguments, argumentValues,
 					call.getSource());

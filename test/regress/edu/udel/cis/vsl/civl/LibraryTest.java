@@ -234,7 +234,7 @@ public class LibraryTest {
 
 	@Test
 	public void assume() throws ABCException {
-		assertTrue(ui.run("verify", filename(CIVLC, "assume.cvl")));
+		assertTrue(ui.run("verify -showProgram", filename(CIVLC, "assume.cvl")));
 	}
 
 	@Test
@@ -245,6 +245,11 @@ public class LibraryTest {
 	@Test
 	public void scanfExit() throws ABCException {
 		assertTrue(ui.run("verify", filename(STDIO, "scanfExit.cvl")));
+	}
+
+	@Test
+	public void systemFunctionPointer() throws ABCException {
+		assertTrue(ui.run("verify", filename("funcPointer.cvl")));
 	}
 
 	@AfterClass
