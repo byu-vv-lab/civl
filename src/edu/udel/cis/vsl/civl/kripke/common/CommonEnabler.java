@@ -36,7 +36,6 @@ import edu.udel.cis.vsl.gmc.EnablerIF;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * CommonEnabler implements {@link EnablerIF} for CIVL models. It is an abstract
@@ -47,36 +46,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Timothy K. Zirkel (zirkel)
  */
 public abstract class CommonEnabler implements Enabler {
-
-	/**
-	 * This class encapsulates a symbolic expression and an option to denote if
-	 * that symbolic expression is FALSE.
-	 * 
-	 * @author Manchun Zheng
-	 *
-	 */
-	class SymbolicValue {
-		SymbolicExpression value;
-		boolean isFalse = false;
-
-		SymbolicValue(SymbolicExpression expr, boolean isFalse) {
-			this.value = expr;
-			this.isFalse = isFalse;
-		}
-	}
-
-	/**
-	 * Creates a new symbolic value object.
-	 * 
-	 * @param expr
-	 *            The symbolic expression
-	 * @param isFalse
-	 *            If the expression is FALSE, i.e., expr.isFalse().
-	 * @return
-	 */
-	SymbolicValue newSymbolicValue(SymbolicExpression expr, boolean isFalse) {
-		return new SymbolicValue(expr, isFalse);
-	}
 
 	/* *************************** Instance Fields ************************* */
 
@@ -308,7 +277,7 @@ public abstract class CommonEnabler implements Enabler {
 	 *         specified state
 	 */
 	List<Transition> enabledTransitionsOfProcess(State state, int pid,
-			Map<Integer, Map<Statement, SymbolicValue>> newGuardMap) {
+			Map<Integer, Map<Statement, BooleanExpression>> newGuardMap) {
 		ProcessState p = state.getProcessState(pid);
 		Location pLocation = p.getLocation();
 		LinkedList<Transition> transitions = new LinkedList<>();
@@ -362,9 +331,12 @@ public abstract class CommonEnabler implements Enabler {
 			TransitionSequence localTransitions = Semantics
 					.newTransitionSequence(state);
 
-			localTransitions.addAll(enabledTransitionsOfProcess(state,
-					pidInAtomic,
-					new HashMap<Integer, Map<Statement, SymbolicValue>>(0)));
+			localTransitions
+					.addAll(enabledTransitionsOfProcess(
+							state,
+							pidInAtomic,
+							new HashMap<Integer, Map<Statement, BooleanExpression>>(
+									0)));
 			if (!localTransitions.isEmpty())
 				return localTransitions;
 		}
@@ -477,27 +449,19 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	private BooleanExpression newPathCondition(State state, int pid,
 			Statement statement,
-			Map<Integer, Map<Statement, SymbolicValue>> newGuardMap) {
+			Map<Integer, Map<Statement, BooleanExpression>> newGuardMap) {
 		BooleanExpression guard = null;
-		Map<Statement, SymbolicValue> myMap = newGuardMap.get(pid);
+		Map<Statement, BooleanExpression> myMap = newGuardMap.get(pid);
 
-		if (myMap != null) {
-			SymbolicValue guardValue = myMap.get(statement);
-
-			if (guardValue != null)
-				if (guardValue.isFalse)
-					return universe.falseExpression();
-				else
-					guard = (BooleanExpression) guardValue.value;
-		}
-		// BooleanExpression guard = (BooleanExpression)
-		// newGuardMap.get(pid).get(
-		// statement);
+		if (myMap != null)
+			guard = myMap.get(statement);
 		if (guard == null) {
 			Evaluation eval = getGuard(statement, pid, state);
 
 			guard = (BooleanExpression) eval.value;
 		}
+		if (guard.isFalse())
+			return universe.falseExpression();
 
 		BooleanExpression pathCondition = state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(pathCondition);
@@ -514,6 +478,6 @@ public abstract class CommonEnabler implements Enabler {
 
 	public List<Transition> enabledTransitionsOfProcess(State state, int pid) {
 		return this.enabledTransitionsOfProcess(state, pid,
-				new HashMap<Integer, Map<Statement, SymbolicValue>>(0));
+				new HashMap<Integer, Map<Statement, BooleanExpression>>(0));
 	}
 }

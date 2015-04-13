@@ -11,7 +11,6 @@ import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
-import edu.udel.cis.vsl.civl.kripke.common.CommonEnabler.SymbolicValue;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
@@ -34,6 +33,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
@@ -144,7 +144,7 @@ public class AmpleSetWorker {
 	 * of evaluating guards for later usage of generating new path condition, so
 	 * as to avoid duplicate/redundant valid calls.
 	 */
-	Map<Integer, Map<Statement, SymbolicValue>> newGuardMap;
+	Map<Integer, Map<Statement, BooleanExpression>> newGuardMap;
 
 	/**
 	 * The processes being waited for of each process. Index is PID, bit set for
@@ -560,29 +560,24 @@ public class AmpleSetWorker {
 		for (ProcessState p : state.getProcessStates()) {
 			boolean active = false;
 			int pid;
-			Map<Statement, SymbolicValue> myGuards = new HashMap<>();
+			Map<Statement, BooleanExpression> myGuards = new HashMap<>();
 
 			if (p == null || p.hasEmptyStack())
 				continue;
 			pid = p.getPid();
 			this.nonEmptyProcesses.set(pid);
 			for (Statement s : p.getLocation().outgoing()) {
-				SymbolicExpression myGuard;
-				SymbolicValue myGuardValue;
-				boolean isFalse = true;
+				BooleanExpression myGuard;
 
 				if (this.procBound > 0 && s instanceof CallOrSpawnStatement
 						&& ((CallOrSpawnStatement) s).isSpawn()
 						&& state.numLiveProcs() >= this.procBound)
 					continue;
 				// side-effect of evaluating the guard is ignored here
-				myGuard = enabler.getGuard(s, pid, state).value;
-				if (!myGuard.isFalse()) {
+				myGuard = (BooleanExpression) enabler.getGuard(s, pid, state).value;
+				if (!myGuard.isFalse())
 					active = true;
-					isFalse = false;
-				}
-				myGuardValue = enabler.newSymbolicValue(myGuard, isFalse);
-				myGuards.put(s, myGuardValue);
+				myGuards.put(s, myGuard);
 				if (active)
 					break;
 			}
