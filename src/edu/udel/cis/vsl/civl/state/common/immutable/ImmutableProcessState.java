@@ -441,23 +441,24 @@ public class ImmutableProcessState implements ProcessState {
 	}
 
 	@Override
-	public StringBuffer toSBrieftringBuffer(String prefix) {
+	public StringBuffer toSBrieftringBuffer() {
 		StringBuffer result = new StringBuffer();
 
-		result.append(prefix + "process p" + identifier + "(id=" + pid + ")\n");
-		result.append(prefix + "| call stack\n");
+		result.append("process p" + identifier + " (id=" + pid + "):\n");
 		for (int i = 0; i < callStack.length; i++) {
 			StackEntry frame = callStack[i];
 			Location location = frame.location();
 			CIVLSource source = location.getSource();
-			String locationString = source == null ? "" : ", "
+			String locationString = source == null ? "" : " at "
 					+ source.getSummary();
-			String frameString = "Frame[function=" + location.function().name()
-					+ ", location=" + location.id() + locationString + "]";
+			String frameString = location.function().name() + locationString;
 
-			result.append(prefix + "| | " + frameString);
-			result.append("\n");
+			if (i != 0)
+				result.append(" called from\n");
+			result.append("  ");
+			result.append(frameString);
 		}
+		result.append("\n");
 		return result;
 	}
 

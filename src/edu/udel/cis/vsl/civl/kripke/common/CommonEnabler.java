@@ -373,7 +373,6 @@ public abstract class CommonEnabler implements Enabler {
 			if (statement instanceof CallOrSpawnStatement) {
 				CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
-				// TODO think about optimization of system functions
 				if (call.isSystemCall()) { // TODO check function pointer
 					return this.getEnabledTransitionsOfSystemCall(
 							call.getSource(), state, call, pathCondition, pid,

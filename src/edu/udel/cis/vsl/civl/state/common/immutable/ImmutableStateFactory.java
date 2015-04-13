@@ -1740,6 +1740,7 @@ public class ImmutableStateFactory implements StateFactory {
 	 * @param state
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private ImmutableState collectSymbolicConstants(State state,
 			boolean collectHeaps) {
 		ImmutableState theState = (ImmutableState) state;
