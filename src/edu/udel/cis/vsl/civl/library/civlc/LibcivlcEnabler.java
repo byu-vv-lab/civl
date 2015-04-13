@@ -104,7 +104,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 				throw new CIVLExecutionException(ErrorKind.INTERNAL,
 						Certainty.NONE, process,
 						"Argument to $choose_int not concrete: " + eval.value,
-						symbolicAnalyzer.stateToString(state), arguments.get(0)
+						symbolicAnalyzer.stateInformation(state), arguments.get(0)
 								.getSource());
 			}
 			upper = upperNumber.intValue();
@@ -210,7 +210,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The number of processes for $waitall "
 							+ "needs a concrete value.",
-					symbolicAnalyzer.stateToString(state),
+					symbolicAnalyzer.stateInformation(state),
 					arguments[1].getSource());
 
 			this.evaluator.errorLogger().reportError(err);

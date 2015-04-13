@@ -183,6 +183,11 @@ public class CIVLConfiguration {
 	private int ompLoopDecomp = ModelConfiguration.DECOMP_ROUND_ROBIN;
 
 	/**
+	 * Is the current command replay? Not replay by default.
+	 */
+	private boolean isReplay = false;
+
+	/**
 	 * Constructs a new CIVL configuration object from the command line
 	 * configuration.
 	 * 
@@ -503,5 +508,13 @@ public class CIVLConfiguration {
 
 	public void setOmpLoopDecomp(int ompLoopDecomp) {
 		this.ompLoopDecomp = ompLoopDecomp;
+	}
+
+	public boolean isReplay() {
+		return isReplay;
+	}
+
+	public void setReplay(boolean isReplay) {
+		this.isReplay = isReplay;
 	}
 }

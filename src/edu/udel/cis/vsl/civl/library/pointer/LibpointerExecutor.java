@@ -581,7 +581,9 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			StringBuilder message = new StringBuilder();
 			String firstArg, secondArg;
 
-			message.append("Assertion voilated: ");
+			message.append("Context: ");
+			message.append(reasoner.getReducedContext());
+			message.append("\nAssertion voilated: ");
 			message.append(call.toString());
 			message.append("\nEvaluation: \n          ");
 			firstArg = this.symbolicAnalyzer.symbolicExpressionToString(

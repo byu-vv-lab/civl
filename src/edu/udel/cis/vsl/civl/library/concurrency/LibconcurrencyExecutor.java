@@ -248,7 +248,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 							source,
 							state,
 							process,
-							symbolicAnalyzer.stateToString(state),
+							symbolicAnalyzer.stateInformation(state),
 							claim,
 							resultType,
 							ErrorKind.OTHER,
@@ -557,7 +557,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 							source,
 							state,
 							process,
-							symbolicAnalyzer.stateToString(state),
+							symbolicAnalyzer.stateInformation(state),
 							claim,
 							resultType,
 							ErrorKind.MPI_ERROR,
@@ -718,7 +718,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 				assert unmatchMessage != null;
 				// checking un-passed
 				state = errorLogger.logError(source, state, process,
-						symbolicAnalyzer.stateToString(state), claim,
+						symbolicAnalyzer.stateInformation(state), claim,
 						resultType, ErrorKind.MPI_ERROR,
 						"Collective operation mismatched on field: "
 								+ unmatchMessage + ".\n");

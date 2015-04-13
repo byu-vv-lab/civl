@@ -272,7 +272,7 @@ public class Verifier extends Player {
 				civlConfig.out().println();
 				// stateFactory.printState(out, initialState);
 				civlConfig.out().print(
-						symbolicAnalyzer.stateToString(initialState));
+						symbolicAnalyzer.stateInformation(initialState));
 				// initialState.print(out);
 			}
 			try {
@@ -324,7 +324,7 @@ public class Verifier extends Player {
 			throw new CIVLExecutionException(stateException.kind(),
 					stateException.certainty(), "",
 					stateException.getMessage(),
-					symbolicAnalyzer.stateToString(stateException.state()),
+					symbolicAnalyzer.stateInformation(stateException.state()),
 					stateException.source());
 		}
 	}

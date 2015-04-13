@@ -452,7 +452,7 @@ public abstract class CommonEnabler implements Enabler {
 					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
 					"An error is encountered when loading the library enabler for "
 							+ libraryName + ": " + exception.getMessage(),
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 		}

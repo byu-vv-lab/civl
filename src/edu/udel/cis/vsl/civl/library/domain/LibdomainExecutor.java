@@ -126,7 +126,7 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"$domain_partition requires a concrete strategy argument",
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -137,7 +137,7 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 					Certainty.PROVEABLE,
 					process,
 					"$domain_partition requires a concrete number of partitions argument",
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;

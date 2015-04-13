@@ -254,7 +254,7 @@ public class CommonExecutor implements Executor {
 						ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
 						"An error is encountered when loading the library executor for "
 								+ libraryName + ": " + exception.getMessage(),
-						this.symbolicAnalyzer.stateToString(state),
+						this.symbolicAnalyzer.stateInformation(state),
 						statement.getSource());
 
 				this.errorLogger.reportError(err);
@@ -340,7 +340,7 @@ public class CommonExecutor implements Executor {
 					+ elementSize.toString();
 			CIVLExecutionException e = new CIVLExecutionException(
 					ErrorKind.MALLOC, certainty, process, message,
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			errorLogger.reportError(e);
 			state = state.setPathCondition(universe.and(pathCondition, claim));
@@ -423,7 +423,7 @@ public class CommonExecutor implements Executor {
 								"Attempt to terminate the main process while process "
 										+ proc.identifier() + "(process<"
 										+ proc.getPid() + ">) is still running",
-								symbolicAnalyzer.stateToString(state),
+								symbolicAnalyzer.stateInformation(state),
 								statement.getSource());
 
 						this.errorLogger.reportError(err);
@@ -469,7 +469,7 @@ public class CommonExecutor implements Executor {
 									+ " Attempt to use the return value of function "
 									+ functionName + " when " + functionName
 									+ " has returned without a return value.",
-							symbolicAnalyzer.stateToString(state),
+							symbolicAnalyzer.stateInformation(state),
 							call.getSource());
 
 					this.errorLogger.reportError(err);
@@ -746,7 +746,7 @@ public class CommonExecutor implements Executor {
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The arguments of the domain for $parfor "
 							+ "must be concrete.",
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 		} else if (!number_domSize.isZero()) {
@@ -1271,7 +1271,7 @@ public class CommonExecutor implements Executor {
 			throws UnsatisfiablePathConditionException {
 		if (symbolicUtil.isUndefinedPointer(pointer)) {
 			errorLogger.logSimpleError(source, state, process,
-					symbolicAnalyzer.stateToString(state),
+					symbolicAnalyzer.stateInformation(state),
 					ErrorKind.DEREFERENCE,
 					"Attempt to dereference a pointer that refers to a "
 							+ "memory space that is already deallocated");
@@ -1291,7 +1291,7 @@ public class CommonExecutor implements Executor {
 			if (sid < 0) {
 				errorLogger
 						.logSimpleError(source, state, process,
-								symbolicAnalyzer.stateToString(state),
+								symbolicAnalyzer.stateInformation(state),
 								ErrorKind.DEREFERENCE,
 								"Attempt to dereference pointer into scope which has been removed from state");
 				throw new UnsatisfiablePathConditionException();
@@ -1303,7 +1303,7 @@ public class CommonExecutor implements Executor {
 							source,
 							state,
 							process,
-							symbolicAnalyzer.stateToString(state),
+							symbolicAnalyzer.stateInformation(state),
 							ErrorKind.INPUT_WRITE,
 							"Attempt to write to input variable "
 									+ variable.name());
@@ -1313,7 +1313,7 @@ public class CommonExecutor implements Executor {
 							source,
 							state,
 							process,
-							symbolicAnalyzer.stateToString(state),
+							symbolicAnalyzer.stateInformation(state),
 							ErrorKind.CONSTANT_WRITE,
 							"Attempt to write to constant variable "
 									+ variable.name());
@@ -1334,7 +1334,7 @@ public class CommonExecutor implements Executor {
 							newVariableValue);
 				} catch (SARLException e) {
 					errorLogger.logSimpleError(source, state, process,
-							symbolicAnalyzer.stateToString(state),
+							symbolicAnalyzer.stateInformation(state),
 							ErrorKind.DEREFERENCE,
 							"Invalid assignment: " + e.getMessage());
 					throw new UnsatisfiablePathConditionException();

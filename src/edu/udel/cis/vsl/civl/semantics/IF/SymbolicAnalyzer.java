@@ -47,8 +47,11 @@ public interface SymbolicAnalyzer {
 	 *            The state whose string representation is to be computed.
 	 * @return The user-friendly string representation of a state.
 	 */
+	StringBuffer stateInformation(State state);
+
 	StringBuffer stateToString(State state);
 
+	
 	/**
 	 * <p>
 	 * Computes the user-friendly string representation of a symbolic
@@ -184,7 +187,7 @@ public interface SymbolicAnalyzer {
 	 * @return the symbolic universe
 	 */
 	SymbolicUniverse getUniverse();
-	
+
 	/**
 	 * Compute a friendly string representation of an expression's evaluation.
 	 * Eg, if the expression is a+b, then return 8+9 supposing a=8, b=9.

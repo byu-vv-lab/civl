@@ -176,7 +176,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "actual value of third argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									elePtrSource, state, elePointer),
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -192,7 +192,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 								+ "actual first argument: " + arrayPtrString
 								+ "\n" + "actual type of " + arrayPtrString
 								+ ": pointer to " + arrayType,
-						symbolicAnalyzer.stateToString(state), source);
+						symbolicAnalyzer.stateInformation(state), source);
 
 				this.errorLogger.reportError(err);
 				return state;
@@ -216,7 +216,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 									+ "\n"
 									+ "actual type of object pointed to by the third argument: "
 									+ eleType,
-							symbolicAnalyzer.stateToString(state), source);
+							symbolicAnalyzer.stateInformation(state), source);
 
 					this.errorLogger.reportError(err);
 					return state;
@@ -309,7 +309,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "actual argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									seqSource, state, seqPtr),
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -328,7 +328,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 								+ "actual argument: "
 								+ symbolicAnalyzer.symbolicExpressionToString(
 										seqSource, state, seq),
-						symbolicAnalyzer.stateToString(state), source);
+						symbolicAnalyzer.stateInformation(state), source);
 
 				this.errorLogger.reportError(err);
 				return state;
@@ -374,7 +374,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "actual value of first argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									arrayPtrSource, state, arrayPtr),
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -391,7 +391,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "actual value of third argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									valuesPtrSource, state, valuesPtr),
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -407,7 +407,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ functionName
 							+ " must be of a pointer to incomplete array of type T.\n"
 							+ "actual type of the first argument: pointer to "
-							+ arrayType, symbolicAnalyzer.stateToString(state),
+							+ arrayType, symbolicAnalyzer.stateInformation(state),
 					source);
 
 			this.errorLogger.reportError(err);
@@ -432,7 +432,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 								+ "\n"
 								+ "actual type of the third argument: pointer to "
 								+ valueType,
-						symbolicAnalyzer.stateToString(state), source);
+						symbolicAnalyzer.stateInformation(state), source);
 
 				this.errorLogger.reportError(err);
 				return state;
@@ -453,7 +453,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "actual value of the array pointed to by the first argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									arrayPtrSource, state, arrayValue),
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;
@@ -469,7 +469,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 					ErrorKind.SEQUENCE, Certainty.PROVEABLE, process,
 					"The index for $seq_insert() is out of the range of the array index.\n"
 							+ "array length: " + lengthInt + "\n" + "index: "
-							+ indexInt, symbolicAnalyzer.stateToString(state),
+							+ indexInt, symbolicAnalyzer.stateInformation(state),
 					source);
 
 			this.errorLogger.reportError(err);
@@ -481,7 +481,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "array length: " + lengthInt + "\n"
 							+ "start index: " + indexInt + "\n"
 							+ "number of elements to be removed: " + countInt,
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			return state;

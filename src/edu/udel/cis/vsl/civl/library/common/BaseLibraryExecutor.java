@@ -137,34 +137,24 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			StringBuilder message = new StringBuilder();
 			Pair<State, String> messageResult = this.symbolicAnalyzer
 					.expressionEvaluation(state, pid, arguments[0], false);
-
-			/**
-			 * [4/10/15, 11:22:43 AM] Stephen Siegel: Assertion: expr...
-			 * [4/10/15, 11:22:48 AM] Stephen Siegel: —> … [4/10/15, 11:22:51
-			 * AM] Stephen Siegel: —> … [4/10/15, 11:22:55 AM] Stephen Siegel:
-			 * —> false
-			 * 
-			 * [4/10/15, 11:23:19 AM] Stephen Siegel: Assertion:
-			 * $assert(((a+b)==(c+d))) [4/10/15, 11:23:29 AM] Stephen Siegel: —>
-			 * (1+2)==(3+4) [4/10/15, 11:23:35 AM] Stephen Siegel: —> 3==7
-			 * [4/10/15, 11:23:38 AM] Stephen Siegel: —> false
-			 * 
-			 * Reduced context of path condition
-			 */
+			String firstEvaluation;
 
 			state = messageResult.left;
 			message.append("Context: ");
-			message.append(state.getPathCondition());
+			message.append(reasoner.getReducedContext());
 			message.append("\n");
 			message.append("Assertion: ");
 			message.append(statement.toString());
 			message.append("\n-> ");
 			message.append(messageResult.right);
-			message.append("\n-> ");
+			firstEvaluation = messageResult.right;
 			messageResult = this.symbolicAnalyzer.expressionEvaluation(state,
 					pid, arguments[0], true);
 			state = messageResult.left;
-			message.append(messageResult.right);
+			if (!firstEvaluation.equals(messageResult.right)) {
+				message.append("\n-> ");
+				message.append(messageResult.right);
+			}
 			state = this.reportAssertionFailure(state, pid, process,
 					resultType, message.toString(), arguments, argumentValues,
 					source, statement, assertValue, 1);
@@ -200,7 +190,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
 					"Attempt to free an unitialized pointer",
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			throw new UnsatisfiablePathConditionException();
@@ -208,7 +198,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
 					"Attempt to free a memory space that is already freed",
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			throw new UnsatisfiablePathConditionException();
@@ -225,7 +215,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 									source, state, firstElementPointer)
 							+ " is not a pointer returned by a memory "
 							+ "management method",
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
 			throw new UnsatisfiablePathConditionException();
@@ -278,6 +268,8 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			CIVLSource source, CallOrSpawnStatement statement,
 			BooleanExpression assertValue, int msgOffset)
 			throws UnsatisfiablePathConditionException {
+		StringBuffer stateInfo;
+
 		assert resultType != ResultType.YES;
 		if (arguments.length > msgOffset) {
 			// if (civlConfig.enablePrintf()) {
@@ -291,9 +283,13 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			civlConfig.out().println();
 			// }
 		}
-		state = errorLogger.logError(source, state, process,
-				symbolicAnalyzer.stateToString(state), assertValue, resultType,
-				ErrorKind.ASSERTION_VIOLATION, message);
+		if (this.civlConfig.isReplay())
+			stateInfo = this.symbolicAnalyzer.stateInformation(state);
+		else
+			stateInfo = state.callStackToString();
+		state = errorLogger
+				.logError(source, state, process, stateInfo, assertValue,
+						resultType, ErrorKind.ASSERTION_VIOLATION, message);
 		return state;
 	}
 

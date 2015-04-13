@@ -467,7 +467,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 							source,
 							state,
 							process,
-							symbolicAnalyzer.stateToString(state),
+							symbolicAnalyzer.stateInformation(state),
 							claim,
 							resultType,
 							ErrorKind.OUT_OF_BOUNDS,

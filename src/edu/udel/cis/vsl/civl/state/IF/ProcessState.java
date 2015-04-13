@@ -146,4 +146,6 @@ public interface ProcessState {
 	Map<SymbolicExpression, Boolean> getReachableMemUnitsWoPointer();
 
 	Map<SymbolicExpression, Boolean> getReachableMemUnitsWtPointer();
+
+	StringBuffer toSBrieftringBuffer(String prefix);
 }

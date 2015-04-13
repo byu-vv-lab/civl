@@ -665,7 +665,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The number of processes for $waitall "
 							+ "needs a concrete value.",
-					symbolicAnalyzer.stateToString(state),
+					symbolicAnalyzer.stateInformation(state),
 					arguments[1].getSource());
 
 			this.errorLogger.reportError(err);

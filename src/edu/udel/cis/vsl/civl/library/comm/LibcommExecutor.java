@@ -773,7 +773,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 									source,
 									state,
 									process,
-									symbolicAnalyzer.stateToString(state),
+									symbolicAnalyzer.stateInformation(state),
 									claim,
 									resultType,
 									ErrorKind.COMMUNICATION,

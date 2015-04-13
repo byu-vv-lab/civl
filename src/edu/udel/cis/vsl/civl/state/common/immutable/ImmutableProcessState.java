@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
@@ -434,6 +435,27 @@ public class ImmutableProcessState implements ProcessState {
 			StackEntry frame = callStack[i];
 
 			result.append(prefix + "| | " + frame);
+			result.append("\n");
+		}
+		return result;
+	}
+
+	@Override
+	public StringBuffer toSBrieftringBuffer(String prefix) {
+		StringBuffer result = new StringBuffer();
+
+		result.append(prefix + "process p" + identifier + "(id=" + pid + ")\n");
+		result.append(prefix + "| call stack\n");
+		for (int i = 0; i < callStack.length; i++) {
+			StackEntry frame = callStack[i];
+			Location location = frame.location();
+			CIVLSource source = location.getSource();
+			String locationString = source == null ? "" : ", "
+					+ source.getSummary();
+			String frameString = "Frame[function=" + location.function().name()
+					+ ", location=" + location.id() + locationString + "]";
+
+			result.append(prefix + "| | " + frameString);
 			result.append("\n");
 		}
 		return result;

@@ -97,7 +97,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The argument of $wait should be concrete, but the actual value is "
 							+ joinProcess + ".",
-					symbolicAnalyzer.stateToString(state),
+					symbolicAnalyzer.stateInformation(state),
 					joinProcessExpr.getSource());
 
 			this.errorLogger.reportError(err);
@@ -138,7 +138,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"The number of processes for $waitall "
 							+ "needs a concrete value.",
-					symbolicAnalyzer.stateToString(state), arguments.get(1)
+					symbolicAnalyzer.stateInformation(state), arguments.get(1)
 							.getSource());
 
 			this.errorLogger.reportError(err);

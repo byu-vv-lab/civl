@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -111,10 +112,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	private SymbolicTupleType functionPointerType;
 	private Evaluator evaluator;
 
+	private CIVLConfiguration config;
+
 	/* ***************************** Constructors ************************** */
 
-	public CommonSymbolicAnalyzer(SymbolicUniverse universe,
-			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
+	public CommonSymbolicAnalyzer(CIVLConfiguration config,
+			SymbolicUniverse universe, ModelFactory modelFactory,
+			SymbolicUtility symbolicUtil) {
 		this.universe = universe;
 		this.modelFactory = modelFactory;
 		this.typeFactory = modelFactory.typeFactory();
@@ -129,6 +133,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		this.twoObj = (IntObject) universe.canonic(universe.intObject(2));
 		zero = (NumericExpression) universe.canonic(universe.integer(0));
 		// one = (NumericExpression) universe.canonic(universe.integer(1));
+		this.config = config;
 	}
 
 	/* ******************** Methods From SymbolicAnalyzer ****************** */
@@ -208,7 +213,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 			if (valid != ResultType.YES) {
 				state = errorLogger.logError(source, state, process,
-						this.stateToString(state), claim, valid,
+						this.stateInformation(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS, "negative start index");
 				pathCondition = state.getPathCondition();
 				reasoner = universe.reasoner(pathCondition);
@@ -217,7 +222,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			valid = reasoner.valid(claim).getResultType();
 			if (valid != ResultType.YES) {
 				state = errorLogger.logError(source, state, process,
-						this.stateToString(state), claim, valid,
+						this.stateInformation(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"end index exceeds length of array");
 				pathCondition = state.getPathCondition();
@@ -227,7 +232,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			valid = reasoner.valid(claim).getResultType();
 			if (valid != ResultType.YES) {
 				state = errorLogger.logError(source, state, process,
-						this.stateToString(state), claim, valid,
+						this.stateInformation(state), claim, valid,
 						ErrorKind.OUT_OF_BOUNDS,
 						"start index greater than end index");
 				pathCondition = state.getPathCondition();
@@ -1373,13 +1378,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	public Pair<State, String> expressionEvaluation(State state, int pid,
 			Expression expression, boolean resultOnly)
 			throws UnsatisfiablePathConditionException {
-		return this.expressionEvaluationWorker(state, pid, expression, resultOnly,
-				true);
+		return this.expressionEvaluationWorker(state, pid, expression,
+				resultOnly, true);
 	}
 
-	private Pair<State, String> expressionEvaluationWorker(State state, int pid,
-			Expression expression, boolean resultOnly, boolean isTopLevel)
-			throws UnsatisfiablePathConditionException {
+	private Pair<State, String> expressionEvaluationWorker(State state,
+			int pid, Expression expression, boolean resultOnly,
+			boolean isTopLevel) throws UnsatisfiablePathConditionException {
 		ExpressionKind kind = expression.expressionKind();
 		StringBuilder result = new StringBuilder();
 		Pair<State, String> temp;
@@ -1424,13 +1429,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 				if (!isTopLevel)
 					result.append("(");
-				temp = this.expressionEvaluationWorker(state, pid, binary.left(),
-						resultOnly, false);
+				temp = this.expressionEvaluationWorker(state, pid,
+						binary.left(), resultOnly, false);
 				state = temp.left;
 				result.append(temp.right);
 				result.append(binary.operatorToString());
-				temp = this.expressionEvaluationWorker(state, pid, binary.right(),
-						resultOnly, false);
+				temp = this.expressionEvaluationWorker(state, pid,
+						binary.right(), resultOnly, false);
 				state = temp.left;
 				result.append(temp.right);
 				if (!isTopLevel)
@@ -1469,8 +1474,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				DomainGuardExpression domGuard = (DomainGuardExpression) expression;
 				int dim = domGuard.dimension();
 
-				temp = this.expressionEvaluationWorker(state, pid, domGuard.domain(),
-						resultOnly, false);
+				temp = this.expressionEvaluationWorker(state, pid,
+						domGuard.domain(), resultOnly, false);
 				state = temp.left;
 				result.append(temp.right);
 				result.append(" has next for (");
@@ -1552,8 +1557,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				UnaryExpression unary = (UnaryExpression) expression;
 
 				result.append(unary.operatorToString());
-				temp = this.expressionEvaluationWorker(state, pid, unary.operand(),
-						resultOnly, false);
+				temp = this.expressionEvaluationWorker(state, pid,
+						unary.operand(), resultOnly, false);
 				state = temp.left;
 				result.append(temp.right);
 				break;
@@ -1608,5 +1613,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 	void setEvaluator(Evaluator evaluator) {
 		this.evaluator = evaluator;
+	}
+
+	@Override
+	public StringBuffer stateInformation(State state) {
+		if (this.config.isReplay())
+			return this.stateToString(state);
+		return state.callStackToString();
 	}
 }

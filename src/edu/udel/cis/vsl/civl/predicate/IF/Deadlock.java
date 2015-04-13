@@ -235,7 +235,7 @@ public class Deadlock implements CIVLStatePredicate {
 			message += explanationWork(state);
 			violation = new CIVLExecutionException(ErrorKind.DEADLOCK,
 					certainty, "", message,
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 			return true;
 		}
 	}

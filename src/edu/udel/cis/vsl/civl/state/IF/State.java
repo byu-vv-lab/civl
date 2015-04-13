@@ -183,6 +183,14 @@ public interface State {
 	String toString();
 
 	/**
+	 * Gets the call stack information (function, location, but no dyscope) of
+	 * each process and return it as a string buffer object.
+	 * 
+	 * @return the call stack information of each process
+	 */
+	StringBuffer callStackToString();
+
+	/**
 	 * Sets the "depth" field of this state to the given value. This is another
 	 * field used by a depth-first search. It is used when searching for a
 	 * minimal counterexample, i.e., a shortest path to a violating state.

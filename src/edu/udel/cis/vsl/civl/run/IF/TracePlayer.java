@@ -42,24 +42,26 @@ public class TracePlayer extends Player {
 	private long seed = 0;
 
 	public static TracePlayer guidedPlayer(GMCConfiguration config,
-			Model model, File traceFile, PrintStream out, PrintStream err) throws CommandLineException,
-			IOException, MisguidedExecutionException {
-		TracePlayer result = new TracePlayer(config, model, out, err
-				);
+			Model model, File traceFile, PrintStream out, PrintStream err)
+			throws CommandLineException, IOException,
+			MisguidedExecutionException {
+		TracePlayer result = new TracePlayer(config, model, out, err);
 		GuidedTransitionChooser<State, Transition, TransitionSequence> guidedChooser = new GuidedTransitionChooser<>(
 				result.enabler, traceFile);
 
+		result.civlConfig.setReplay(true);
 		result.chooser = guidedChooser;
 		result.replayer.setLength(guidedChooser.getLength());
 		return result;
 	}
 
 	public static TracePlayer randomPlayer(GMCConfiguration config,
-			Model model, PrintStream out, PrintStream err) throws CommandLineException,
-			IOException, MisguidedExecutionException {
-		TracePlayer result = new TracePlayer(config, model, out, err
-				);
-		String seedString = (String) config.getAnonymousSection().getValue(seedO);
+			Model model, PrintStream out, PrintStream err)
+			throws CommandLineException, IOException,
+			MisguidedExecutionException {
+		TracePlayer result = new TracePlayer(config, model, out, err);
+		String seedString = (String) config.getAnonymousSection().getValue(
+				seedO);
 		RandomTransitionChooser<State, Transition, TransitionSequence> chooser;
 
 		if (seedString == null)
@@ -82,8 +84,7 @@ public class TracePlayer extends Player {
 	}
 
 	TracePlayer(GMCConfiguration config, Model model, PrintStream out,
-			PrintStream err)
-			throws CommandLineException {
+			PrintStream err) throws CommandLineException {
 		super(config, model, out, err);
 		// turn the following off because they duplicate what
 		// the Replayer prints:
@@ -91,8 +92,8 @@ public class TracePlayer extends Player {
 		// stateManager.setShowStates(false);
 		// stateManager.setShowSavedStates(false);
 		// civlConfig.setShowStates(false);
-		civlConfig.setShowSavedStates(config.getAnonymousSection()
-				.isTrue(CIVLConstants.showSavedStatesO));
+		civlConfig.setShowSavedStates(config.getAnonymousSection().isTrue(
+				CIVLConstants.showSavedStatesO));
 		// if
 		// (config.getAnonymousSection().getValue(CIVLConstants.showTransitionsO)
 		// == null)
@@ -107,16 +108,14 @@ public class TracePlayer extends Player {
 
 	public TracePlayer(GMCConfiguration config, Model model,
 			TransitionChooser<State, Transition> chooser, PrintStream out,
-			PrintStream err)
-			throws CommandLineException {
+			PrintStream err) throws CommandLineException {
 		this(config, model, out, err);
 		this.chooser = chooser;
 	}
 
 	public TracePlayer(GMCConfiguration config, Model model, File traceFile,
-			PrintStream out, PrintStream err)
-			throws CommandLineException, IOException,
-			MisguidedExecutionException {
+			PrintStream out, PrintStream err) throws CommandLineException,
+			IOException, MisguidedExecutionException {
 		this(config, model, out, err);
 		this.chooser = new GuidedTransitionChooser<State, Transition, TransitionSequence>(
 				enabler, traceFile);
@@ -140,7 +139,7 @@ public class TracePlayer extends Player {
 			throw new CIVLExecutionException(stateException.kind(),
 					stateException.certainty(), "",
 					stateException.getMessage(),
-					symbolicAnalyzer.stateToString(stateException.state()),
+					symbolicAnalyzer.stateInformation(stateException.state()),
 					stateException.source());
 		}
 	}

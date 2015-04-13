@@ -123,8 +123,8 @@ public abstract class Player {
 		this.stateFactory = States.newImmutableStateFactory(modelFactory,
 				symbolicUtil, memUnitFactory, config);
 		this.libraryEvaluatorLoader = Semantics.newLibraryEvaluatorLoader();
-		this.symbolicAnalyzer = Semantics.newSymbolicAnalyzer(universe,
-				modelFactory, symbolicUtil);
+		this.symbolicAnalyzer = Semantics.newSymbolicAnalyzer(this.civlConfig,
+				universe, modelFactory, symbolicUtil);
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
 				libraryEvaluatorLoader, symbolicUtil, symbolicAnalyzer,
 				memUnitFactory, log);

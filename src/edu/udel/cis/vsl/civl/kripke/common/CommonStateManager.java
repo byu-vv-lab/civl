@@ -234,7 +234,7 @@ public class CommonStateManager implements StateManager {
 						+ symbolicAnalyzer.symbolicExpressionToString(
 								hex.source(), hex.state(), hex.heapValue());
 				err = new CIVLExecutionException(hex.kind(), hex.certainty(),
-						process, message, symbolicAnalyzer.stateToString(hex
+						process, message, symbolicAnalyzer.stateInformation(hex
 								.state()), hex.source());
 				errorLogger.reportError(err);
 			}
@@ -458,7 +458,7 @@ public class CommonStateManager implements StateManager {
 					.reportError(new CIVLExecutionException(ErrorKind.OTHER,
 							Certainty.CONCRETE, process,
 							"Non-determinism is encountered in $atom block.",
-							symbolicAnalyzer.stateToString(state), location
+							symbolicAnalyzer.stateInformation(state), location
 									.getSource()));
 			break;
 		case BLOCKED:
@@ -466,7 +466,7 @@ public class CommonStateManager implements StateManager {
 					.reportError(new CIVLExecutionException(ErrorKind.OTHER,
 							Certainty.CONCRETE, process,
 							"Blocked location is encountered in $atom block.",
-							symbolicAnalyzer.stateToString(state), location
+							symbolicAnalyzer.stateInformation(state), location
 									.getSource()));
 			break;
 		default:

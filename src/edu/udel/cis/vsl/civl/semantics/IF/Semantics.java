@@ -117,9 +117,10 @@ public class Semantics {
 	 * @return The new symbolic analyzer.
 	 */
 	public static SymbolicAnalyzer newSymbolicAnalyzer(
-			SymbolicUniverse universe, ModelFactory modelFactory,
-			SymbolicUtility symbolicUtil) {
-		return new CommonSymbolicAnalyzer(universe, modelFactory, symbolicUtil);
+			CIVLConfiguration civlConfig, SymbolicUniverse universe,
+			ModelFactory modelFactory, SymbolicUtility symbolicUtil) {
+		return new CommonSymbolicAnalyzer(civlConfig, universe, modelFactory,
+				symbolicUtil);
 	}
 
 	/**

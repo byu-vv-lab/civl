@@ -327,7 +327,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 							ptrSource,
 							state,
 							process,
-							symbolicAnalyzer.stateToString(state),
+							symbolicAnalyzer.stateInformation(state),
 							claim,
 							resultType,
 							ErrorKind.MPI_ERROR,

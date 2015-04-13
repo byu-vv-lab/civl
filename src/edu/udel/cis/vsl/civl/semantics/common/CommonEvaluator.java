@@ -428,7 +428,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
 					"Attempt to deference an invalid pointer",
-					this.symbolicAnalyzer.stateToString(state), source);
+					this.symbolicAnalyzer.stateInformation(state), source);
 
 			errorLogger.reportError(se);
 			throw new UnsatisfiablePathConditionException();
@@ -436,7 +436,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
 					"Attempt to deference a pointer that is never initialized",
-					this.symbolicAnalyzer.stateToString(state), source);
+					this.symbolicAnalyzer.stateInformation(state), source);
 
 			errorLogger.reportError(se);
 			throw new UnsatisfiablePathConditionException();
@@ -445,7 +445,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
 					"Attempt to deference a null pointer",
-					this.symbolicAnalyzer.stateToString(state), source);
+					this.symbolicAnalyzer.stateInformation(state), source);
 
 			errorLogger.reportError(se);
 			throw new UnsatisfiablePathConditionException();
@@ -455,7 +455,7 @@ public class CommonEvaluator implements Evaluator {
 
 				if (sid < 0) {
 					errorLogger.logSimpleError(source, state, process,
-							symbolicAnalyzer.stateToString(state),
+							symbolicAnalyzer.stateInformation(state),
 							ErrorKind.DEREFERENCE,
 							"Attempt to dereference pointer into scope"
 									+ " which has been removed from state");
@@ -473,7 +473,7 @@ public class CommonEvaluator implements Evaluator {
 
 						if (variable.isOutput()) {
 							errorLogger.logSimpleError(source, state, process,
-									symbolicAnalyzer.stateToString(state),
+									symbolicAnalyzer.stateInformation(state),
 									ErrorKind.OUTPUT_READ,
 									"Attempt to read output variable "
 											+ variable.name().name());
@@ -488,7 +488,7 @@ public class CommonEvaluator implements Evaluator {
 								source,
 								state,
 								process,
-								symbolicAnalyzer.stateToString(state),
+								symbolicAnalyzer.stateInformation(state),
 								ErrorKind.DEREFERENCE,
 								"Illegal pointer dereference: "
 										+ e.getMessage());
@@ -500,7 +500,7 @@ public class CommonEvaluator implements Evaluator {
 				CIVLExecutionException se = new CIVLExecutionException(
 						ErrorKind.DEREFERENCE, Certainty.MAYBE, process,
 						"Undefined pointer value?",
-						this.symbolicAnalyzer.stateToString(state), source);
+						this.symbolicAnalyzer.stateInformation(state), source);
 
 				errorLogger.reportError(se);
 				throw new UnsatisfiablePathConditionException();
@@ -1010,7 +1010,7 @@ public class CommonEvaluator implements Evaluator {
 				else {
 					state = errorLogger.logError(arg.getSource(), state,
 							process,
-							this.symbolicAnalyzer.stateToString(state), claim,
+							this.symbolicAnalyzer.stateInformation(state), claim,
 							resultType, ErrorKind.INVALID_CAST,
 							"Cast from non-zero integer to pointer");
 					eval.state = state;
@@ -1094,7 +1094,7 @@ public class CommonEvaluator implements Evaluator {
 							certain,
 							process,
 							"Cast operation may involves casting a integer, whose value is larger than UCHAR_MAX or less than UCHAR_MIN, to char type object which is considered as unimplemented feature of CIVL",
-							this.symbolicAnalyzer.stateToString(state), arg
+							this.symbolicAnalyzer.stateInformation(state), arg
 									.getSource());
 
 					errorLogger.reportError(error);
@@ -1109,7 +1109,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException error = new CIVLExecutionException(
 					ErrorKind.INVALID_CAST, Certainty.NONE, process,
 					"SARL could not cast: " + e,
-					this.symbolicAnalyzer.stateToString(state), arg.getSource());
+					this.symbolicAnalyzer.stateInformation(state), arg.getSource());
 
 			errorLogger.reportError(error);
 			throw new UnsatisfiablePathConditionException();
@@ -1158,7 +1158,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
 					"Attempt to dereference an uninitialized pointer.",
-					symbolicAnalyzer.stateToString(state), expression.pointer()
+					symbolicAnalyzer.stateInformation(state), expression.pointer()
 							.getSource());
 
 			this.errorLogger.reportError(err);
@@ -1399,7 +1399,7 @@ public class CommonEvaluator implements Evaluator {
 
 			if (test.isFalse()) {
 				errorLogger.logSimpleError(expression.getSource(), eval.state,
-						process, this.symbolicAnalyzer.stateToString(state),
+						process, this.symbolicAnalyzer.stateInformation(state),
 						ErrorKind.UNION,
 						"Attempt to access an invalid union member");
 				throw new UnsatisfiablePathConditionException();
@@ -1450,7 +1450,7 @@ public class CommonEvaluator implements Evaluator {
 		function = eval.second;
 		if (function == null) {
 			errorLogger.logSimpleError(expression.getSource(), state, process,
-					symbolicAnalyzer.stateToString(state), ErrorKind.OTHER,
+					symbolicAnalyzer.stateInformation(state), ErrorKind.OTHER,
 					"function body cann't be found");
 			throw new UnsatisfiablePathConditionException();
 		}
@@ -1642,7 +1642,7 @@ public class CommonEvaluator implements Evaluator {
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
 						eval.state, process,
-						this.symbolicAnalyzer.stateToString(eval.state), claim,
+						this.symbolicAnalyzer.stateInformation(eval.state), claim,
 						resultType, ErrorKind.DIVISION_BY_ZERO,
 						"Division by zero");
 			}
@@ -1683,7 +1683,7 @@ public class CommonEvaluator implements Evaluator {
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
 						eval.state, process,
-						this.symbolicAnalyzer.stateToString(eval.state), claim,
+						this.symbolicAnalyzer.stateInformation(eval.state), claim,
 						resultType, ErrorKind.DIVISION_BY_ZERO,
 						"Modulus denominator is zero");
 			}
@@ -1879,7 +1879,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.OTHER, Certainty.PROVEABLE, process,
 					"A regular range expression requires a non-zero step.",
-					symbolicAnalyzer.stateToString(state), range.getSource());
+					symbolicAnalyzer.stateInformation(state), range.getSource());
 
 			errorLogger.reportError(err);
 		}
@@ -1990,7 +1990,7 @@ public class CommonEvaluator implements Evaluator {
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
 						eval.state, process,
-						symbolicAnalyzer.stateToString(eval.state), claim,
+						symbolicAnalyzer.stateInformation(eval.state), claim,
 						resultType, ErrorKind.OUT_OF_BOUNDS,
 						"Out of bounds array index:\nindex = " + index
 								+ "\nlength = " + length);
@@ -2066,7 +2066,7 @@ public class CommonEvaluator implements Evaluator {
 			if (sid < 0) {
 				errorLogger
 						.logSimpleError(pointer.getSource(), state, process,
-								symbolicAnalyzer.stateToString(state),
+								symbolicAnalyzer.stateInformation(state),
 								ErrorKind.DEREFERENCE,
 								"Attempt to dereference pointer into scope which has been removed from state");
 				throw new UnsatisfiablePathConditionException();
@@ -2223,7 +2223,7 @@ public class CommonEvaluator implements Evaluator {
 					ErrorKind.OUTPUT_READ, Certainty.CONCRETE, process,
 					"Attempt to read the output variable "
 							+ expression.variable().name(),
-					this.symbolicAnalyzer.stateToString(state),
+					this.symbolicAnalyzer.stateInformation(state),
 					expression.getSource());
 
 			errorLogger.reportError(e);
@@ -2237,7 +2237,7 @@ public class CommonEvaluator implements Evaluator {
 						ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
 						process, "Attempt to read uninitialized variable "
 								+ expression,
-						this.symbolicAnalyzer.stateToString(state),
+						this.symbolicAnalyzer.stateInformation(state),
 						expression.getSource());
 
 				errorLogger.reportError(e);
@@ -2533,7 +2533,7 @@ public class CommonEvaluator implements Evaluator {
 			if (expressionValue.equals(modelFactory.undefinedValue(typeFactory
 					.scopeSymbolicType()))) {
 				errorLogger.logSimpleError(source, state, process,
-						symbolicAnalyzer.stateToString(state),
+						symbolicAnalyzer.stateInformation(state),
 						ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid scope reference");
 				throw new UnsatisfiablePathConditionException();
@@ -2542,7 +2542,7 @@ public class CommonEvaluator implements Evaluator {
 			if (expressionValue.equals(modelFactory.undefinedValue(typeFactory
 					.processSymbolicType()))) {
 				errorLogger.logSimpleError(source, state, process,
-						symbolicAnalyzer.stateToString(state),
+						symbolicAnalyzer.stateInformation(state),
 						ErrorKind.MEMORY_LEAK,
 						"Attempt to evaluate an invalid process reference");
 				throw new UnsatisfiablePathConditionException();
@@ -2557,14 +2557,14 @@ public class CommonEvaluator implements Evaluator {
 				if (scopeID < 0) {
 					errorLogger
 							.logSimpleError(source, state, process,
-									symbolicAnalyzer.stateToString(state),
+									symbolicAnalyzer.stateInformation(state),
 									ErrorKind.MEMORY_LEAK,
 									"Attempt to evaluate a pointer refererring to memory of an invalid scope");
 					throw new UnsatisfiablePathConditionException();
 				}
 			} catch (Exception e) {
 				errorLogger.logSimpleError(source, state, process,
-						symbolicAnalyzer.stateToString(state),
+						symbolicAnalyzer.stateInformation(state),
 						ErrorKind.UNDEFINED_VALUE,
 						"Attempt to use undefined pointer");
 				throw new UnsatisfiablePathConditionException();
@@ -2621,7 +2621,7 @@ public class CommonEvaluator implements Evaluator {
 
 		if (pointer.operator() != SymbolicOperator.CONCRETE)
 			errorLogger.logSimpleError(source, state, process,
-					symbolicAnalyzer.stateToString(state),
+					symbolicAnalyzer.stateInformation(state),
 					ErrorKind.DEREFERENCE,
 					"Attempt to dereference a invalid pointer");
 		claim = universe.equals(offset, zero);
@@ -2707,7 +2707,7 @@ public class CommonEvaluator implements Evaluator {
 									source,
 									state,
 									process,
-									symbolicAnalyzer.stateToString(state),
+									symbolicAnalyzer.stateInformation(state),
 									outCondExpr,
 									resultType,
 									ErrorKind.OUT_OF_BOUNDS,
@@ -2797,7 +2797,7 @@ public class CommonEvaluator implements Evaluator {
 											state,
 											process,
 											symbolicAnalyzer
-													.stateToString(state),
+													.stateInformation(state),
 											equalExtentClaim,
 											checkResultType,
 											ErrorKind.OUT_OF_BOUNDS,
@@ -3077,7 +3077,7 @@ public class CommonEvaluator implements Evaluator {
 					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE,
 					procState.name() + "(id=" + pid + ")",
 					"Invalid function pointer: " + functionIdentifier,
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 
 			errorLogger.reportError(err);
 		}
@@ -3158,7 +3158,7 @@ public class CommonEvaluator implements Evaluator {
 								process,
 								"Reading undefined or uninitialized value from some pointer to heap: "
 										+ charArray.argument(0),
-								symbolicAnalyzer.stateToString(state), source);
+								symbolicAnalyzer.stateInformation(state), source);
 
 						errorLogger.reportError(err);
 					}
@@ -3273,7 +3273,7 @@ public class CommonEvaluator implements Evaluator {
 			throws UnsatisfiablePathConditionException {
 		if (symbolicUtil.isUndefinedPointer(pointer)) {
 			errorLogger.logSimpleError(expression.getSource(), state, process,
-					symbolicAnalyzer.stateToString(state),
+					symbolicAnalyzer.stateInformation(state),
 					ErrorKind.DEREFERENCE,
 					"Attempt to dereference a pointer that refers to a "
 							+ "memory space that is already deallocated");
@@ -3298,7 +3298,7 @@ public class CommonEvaluator implements Evaluator {
 
 				if (resultType != ResultType.YES) {
 					state = errorLogger.logError(expression.getSource(), state,
-							process, symbolicAnalyzer.stateToString(state),
+							process, symbolicAnalyzer.stateInformation(state),
 							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 							"Pointer addition resulted in out of bounds object pointer:\n"
 									+ "offset = " + newOffset);
@@ -3319,7 +3319,7 @@ public class CommonEvaluator implements Evaluator {
 						.getResultType();
 				if (resultType != ResultType.YES) {
 					state = errorLogger.logError(expression.getSource(), state,
-							process, symbolicAnalyzer.stateToString(state),
+							process, symbolicAnalyzer.stateInformation(state),
 							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 							"Pointer addition resulted in out of bounds object pointer:\noffset = "
 									+ offset);
@@ -3359,7 +3359,7 @@ public class CommonEvaluator implements Evaluator {
 		// Check if the two point to the same object
 		if ((rightVid != leftVid) || (rightSid != leftSid))
 			state = errorLogger.logError(expression.getSource(), state,
-					process, symbolicAnalyzer.stateToString(state), null,
+					process, symbolicAnalyzer.stateInformation(state), null,
 					ResultType.NO, ErrorKind.POINTER,
 					"Operands of pointer subtraction point to the same obejct");
 		// Check if two pointers are array element reference pointers. Based on
@@ -3373,7 +3373,7 @@ public class CommonEvaluator implements Evaluator {
 				.getSymRef(rightPtr).isArrayElementReference()))
 			state = errorLogger
 					.logError(expression.getSource(), state, process,
-							symbolicAnalyzer.stateToString(state), null,
+							symbolicAnalyzer.stateInformation(state), null,
 							ResultType.NO, ErrorKind.POINTER,
 							"Not both of the operands of pointer subtraction points to an array element");
 		// Get the pointer to the whole array
@@ -3404,7 +3404,7 @@ public class CommonEvaluator implements Evaluator {
 			if (!isCompatiable)
 				state = errorLogger
 						.logError(expression.getSource(), state, process,
-								symbolicAnalyzer.stateToString(state), null,
+								symbolicAnalyzer.stateInformation(state), null,
 								ResultType.NO, ErrorKind.POINTER,
 								"Operands of pointer subtraction point to different heap obejcts");
 			// Since they are in the same heap object, the result is directly

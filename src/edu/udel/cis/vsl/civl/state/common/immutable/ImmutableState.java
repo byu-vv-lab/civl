@@ -830,4 +830,19 @@ public class ImmutableState implements State {
 	public String toString() {
 		return "State " + identifier();
 	}
+
+	@Override
+	public StringBuffer callStackToString() {
+		StringBuffer result = new StringBuffer();
+		int numProcs = this.numProcs();
+
+		result.append("State " + identifier() + "\n");
+		for (int i = 0; i < numProcs; i++) {
+			ProcessState process = processStates[i];
+
+			if (process != null)
+				result.append(process.toSBrieftringBuffer("| "));
+		}
+		return result;
+	}
 }

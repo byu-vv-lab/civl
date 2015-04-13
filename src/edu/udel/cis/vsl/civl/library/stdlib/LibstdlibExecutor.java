@@ -176,7 +176,7 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 							ErrorKind.OTHER, Certainty.PROVEABLE, process,
 							"The argument to atoi() should be a valid integer representation.\n"
 									+ "actual argument: " + argString,
-							symbolicAnalyzer.stateToString(state), source);
+							symbolicAnalyzer.stateInformation(state), source);
 
 					errorLogger.reportError(e);
 				}
