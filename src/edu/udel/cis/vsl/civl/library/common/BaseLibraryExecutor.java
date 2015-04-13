@@ -137,7 +137,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			StringBuilder message = new StringBuilder();
 			Pair<State, String> messageResult = this.symbolicAnalyzer
 					.expressionEvaluation(state, pid, arguments[0], false);
-			String firstEvaluation;
+			String firstEvaluation, secondEvaluation, result;
 
 			state = messageResult.left;
 			message.append("Context: ");
@@ -151,9 +151,15 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			messageResult = this.symbolicAnalyzer.expressionEvaluation(state,
 					pid, arguments[0], true);
 			state = messageResult.left;
-			if (!firstEvaluation.equals(messageResult.right)) {
+			secondEvaluation=messageResult.right;
+			if (!firstEvaluation.equals(secondEvaluation)) {
 				message.append("\n-> ");
-				message.append(messageResult.right);
+				message.append(secondEvaluation);
+			}
+			result = this.symbolicAnalyzer.symbolicExpressionToString(arguments[0].getSource(), state, assertValue).toString();
+			if(!secondEvaluation.equals(result)){
+				message.append("\n-> ");
+				message.append(result);
 			}
 			state = this.reportAssertionFailure(state, pid, process,
 					resultType, message.toString(), arguments, argumentValues,
