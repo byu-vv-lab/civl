@@ -33,6 +33,7 @@ public class CommonLibraryEnablerLoader implements LibraryEnablerLoader {
 			LibraryEvaluatorLoader libEvaluatorLoader,
 			CIVLConfiguration civlConfig) {
 		this.libEvaluatorLoader = libEvaluatorLoader;
+		this.civlConfig = civlConfig;
 	}
 
 	/* ********************* Methods from LibraryLoader ******************** */
