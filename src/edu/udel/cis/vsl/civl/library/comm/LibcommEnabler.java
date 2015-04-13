@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants.DeadlockKind;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
@@ -181,7 +182,6 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			}
 			return ampleSet;
 		case "$comm_enqueue":
-			BooleanExpression hasMatchedDequeue;
 			// Because we don't know if other processes will call an wild card
 			// receive(dequeue), we have to put all processes into ample set.
 			ampleSet = this.computeAmpleSetByHandleObject(state, pid,
@@ -189,11 +189,15 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 					reachablePtrReadonlyMap, reachableNonPtrWritableMap,
 					reachableNonPtrReadonlyMap);
 
-			hasMatchedDequeue = this.hasMatchedDequeue(state, pid, process,
-					call, false);
-			if (hasMatchedDequeue.isFalse()) {
-				for (int otherPid = 0; otherPid < state.numProcs(); otherPid++)
-					ampleSet.set(otherPid);
+			if (this.civlConfig.deadlock().equals(DeadlockKind.POTENTIAL)) {
+				BooleanExpression hasMatchedDequeue;
+				
+				hasMatchedDequeue = this.hasMatchedDequeue(state, pid, process,
+						call, false);
+				if (hasMatchedDequeue.isFalse()) {
+					for (int otherPid = 0; otherPid < state.numProcs(); otherPid++)
+						ampleSet.set(otherPid);
+				}
 			}
 			return ampleSet;
 		default:

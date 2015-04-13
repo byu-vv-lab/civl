@@ -149,23 +149,43 @@ public class ConcurrencyTest {
 
 	@Test
 	public void ring() {
-		assertTrue(ui.run("verify", "-inputNPROCS_BOUND=8", "-inputN_BOUND=4",
-				filename("ring.cvl")));
+		assertTrue(ui.run("verify", "-deadlock=potential -inputNPROCS_BOUND=8",
+				"-inputN_BOUND=4", filename("ring.cvl")));
+	}
+
+	@Test
+	public void ring1Bad() {
+		assertFalse(ui.run("verify", "-deadlock=potential -inputNPROCS=3",
+				filename("ring1Bad.cvl")));
 	}
 
 	@Test
 	public void ring1() {
-		assertTrue(ui.run("verify", "-inputNPROCS=3", filename("ring1.cvl")));
+		assertTrue(ui.run("verify", "-deadlock=potential -inputNPROCS=3",
+				filename("ring1.cvl")));
 	}
 
 	@Test
 	public void ring2() {
-		assertTrue(ui.run("verify", "-inputNPROCS=3", filename("ring2.cvl")));
+		assertTrue(ui.run("verify", "-deadlock=potential -inputNPROCS=3",
+				filename("ring2.cvl")));
+	}
+
+	@Test
+	public void ring2Bad() {
+		assertFalse(ui.run("verify", "-deadlock=potential -inputNPROCS=3",
+				filename("ring2Bad.cvl")));
 	}
 
 	@Test
 	public void ring3() {
-		assertTrue(ui.run("verify", filename("ring3.cvl")));
+		assertTrue(ui.run("verify -deadlock=potential", filename("ring3.cvl")));
+	}
+
+	@Test
+	public void ring3Bad() {
+		assertFalse(ui.run("verify -deadlock=potential",
+				filename("ring3Bad.cvl")));
 	}
 
 	@Test

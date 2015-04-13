@@ -17,16 +17,8 @@ void MPI_Process (int rank) {
   y = (int*)$malloc($here, sizeof(int));
   *x = rank;
   out = $message_pack(rank, dest, TAG, x, sizeof(int));
-  $choose {				 
-    $when (1){ 
-      $comm_enqueue(comm, out);
-      in = $comm_dequeue(comm, dest, TAG);
-    }
-    $when (1){
-      in = $comm_dequeue(comm, dest, TAG);
-      $comm_enqueue(comm, out);
-    }
-  }
+  $comm_enqueue(comm, out);
+  in = $comm_dequeue(comm, dest, TAG);
   $message_unpack(in, y, sizeof(int));
   $free(x);
   $free(y);
