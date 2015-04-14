@@ -463,20 +463,17 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return "UNDEFINED";
 			else {
 				DynamicScope dyScope = state.getDyscope(dyscopeId);
-				SymbolicExpression funcNameExpression = universe.tupleRead(
-						pointer, oneObj);
-				StringBuffer funcName = this.symbolicUtil.charArrayToString(
-						source,
-						(SymbolicSequence<?>) funcNameExpression.argument(0),
-						0, true);
+				NumericExpression funcIdExpr = (NumericExpression) universe
+						.tupleRead(pointer, oneObj);
 				StringBuffer result = new StringBuffer();
+				int fid = symbolicUtil.extractInt(source, funcIdExpr);
+				CIVLFunction function = dyScope.lexicalScope().getFunction(fid);
 
-				result.append('&');
 				result.append("<");
 				result.append("scope ");
 				result.append(dyScope.lexicalScope().id());
-				result.append(">(function)");
-				result.append(funcName);
+				result.append(">");
+				result.append(function.toString());
 				return result.toString();
 			}
 		}
