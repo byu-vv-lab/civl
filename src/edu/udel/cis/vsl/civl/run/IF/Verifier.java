@@ -40,9 +40,9 @@ public class Verifier extends Player {
 
 			out.print(time + "s: ");
 			out.print("mem=" + megabytes + "Mb");
-			out.print(" steps=" + executor.getNumSteps());
-			out.print(" trans=" + searcher.numTransitions());
-			out.print(" seen=" + searcher.numStatesSeen());
+			out.print(" trans=" + executor.getNumSteps());
+			out.print(" traceSteps=" + searcher.numTransitions());
+			out.print(" explored=" + stateManager.numStatesExplored());
 			out.print(" saved=" + stateManager.getNumStatesSaved());
 			out.print(" prove=" + modelFactory.universe().numProverValidCalls());
 			out.println();
