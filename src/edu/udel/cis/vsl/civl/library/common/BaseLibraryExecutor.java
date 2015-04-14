@@ -137,10 +137,9 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			String firstEvaluation, secondEvaluation, result;
 
 			state = messageResult.left;
-			message.append("Context: ");
+			message.append("\nContext: ");
 			message.append(reasoner.getReducedContext());
-			message.append("\n");
-			message.append("Assertion: ");
+			message.append("\n\nAssertion: ");
 			message.append(statement.toString());
 			message.append("\n-> ");
 			message.append(messageResult.right);

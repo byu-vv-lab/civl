@@ -125,15 +125,15 @@ public class Deadlock implements CIVLStatePredicate {
 				explanation.append("\n");
 			if (!p.hasEmptyStack())
 				location = p.getLocation();
-			explanation.append("ProcessState " + pid + ": ");
+			explanation.append("process " + p.name() + " (id="+ pid + "): ");
 			if (location == null) {
 				explanation.append("terminated");
 			} else {
-				CIVLSource source = location.getSource();
+				// CIVLSource source = location.getSource();
 
-				explanation.append("at location " + location.id() + ", ");
-				if (source != null)
-					explanation.append(source.getSummary());
+				// explanation.append("at location " + location.id() + ", ");
+				// if (source != null)
+				// explanation.append(source.getSummary());
 				for (Statement statement : location.outgoing()) {
 					BooleanExpression guard;
 
@@ -163,7 +163,7 @@ public class Deadlock implements CIVLStatePredicate {
 					// } else if (nonGuardExplanation != null) {
 					// explanation.append(nonGuardExplanation);
 				} else {
-					explanation.append("\n  Enabling predicate: " + predicate);
+					explanation.append(predicate);
 				}
 			}
 		}

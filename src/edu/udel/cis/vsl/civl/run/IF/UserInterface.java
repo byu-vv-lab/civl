@@ -17,6 +17,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showSavedStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statsBar;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.version;
@@ -80,6 +81,7 @@ import edu.udel.cis.vsl.gmc.Trace;
 import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.config.Configurations;
+import edu.udel.cis.vsl.sarl.IF.config.ProverInfo;
 
 /**
  * Basic command line and API user interface for CIVL tools.
@@ -514,8 +516,10 @@ public class UserInterface {
 				@SuppressWarnings("unused")
 				CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
 			}
-			printStats(out, modelTranslator.universe, command);
+			printCommand(out, command);
+//			printTimeAndMemory(out);
 			replayer.printStats();
+			printUniverseStats(out, modelTranslator.universe);
 			out.println();
 			return result;
 		}
@@ -537,8 +541,10 @@ public class UserInterface {
 					+ player.getSeed() + " ...");
 			out.flush();
 			result = player.run().result();
-			printStats(out, modelTranslator.universe, command);
+			this.printCommand(out, command);
+//			printTimeAndMemory(out);
 			player.printStats();
+			printUniverseStats(out, modelTranslator.universe);
 			out.println();
 			return result;
 		}
@@ -576,14 +582,30 @@ public class UserInterface {
 				verifier.terminateUpdater();
 				throw e;
 			}
-			printStats(out, modelTranslator.universe, command);
+			this.printCommand(out, command);
+//			printTimeAndMemory(out);
 			verifier.printStats();
+			printUniverseStats(out, modelTranslator.universe);
 			out.println();
 			verifier.printResult();
 			out.flush();
 			return result;
 		}
 		return false;
+	}
+
+	private void printCommand(PrintStream out, String command) {
+		double time = Math
+				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
+		long memory = Runtime.getRuntime().totalMemory();
+
+		out.println("\n" + statsBar + " Command " + statsBar);
+		out.print("civl " + command);
+		out.println("\n" + statsBar + " Stats " + statsBar);
+		out.print("   time (s)            : ");
+		out.println(time);
+		out.print("   memory (bytes)      : ");
+		out.println(memory);
 	}
 
 	private void createWebLogs(Program program) throws IOException {
@@ -636,8 +658,10 @@ public class UserInterface {
 			verifier.terminateUpdater();
 			throw e;
 		}
-		printStats(out, universe, command);
+		this.printCommand(out, command);
+//		this.printTimeAndMemory(out);
 		verifier.printStats();
+		printUniverseStats(out, universe);
 		out.println();
 		verifier.printResult();
 		out.flush();
@@ -662,8 +686,10 @@ public class UserInterface {
 			@SuppressWarnings("unused")
 			CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
 		}
-		printStats(out, universe, command);
+		this.printCommand(out, command);
+		// this.printTimeAndMemory(out);
 		replayer.printStats();
+		printUniverseStats(out, universe);
 		out.println();
 		return result;
 	}
@@ -797,25 +823,26 @@ public class UserInterface {
 	 * @param transitions
 	 *            the number of transitions executed in the course of the run
 	 */
-	private void printStats(PrintStream out, SymbolicUniverse universe,
-			String command) {
+	private void printUniverseStats(PrintStream out, SymbolicUniverse universe) {
 		// round up time to nearest 1/100th of second...
-		double time = Math
-				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
 		long numValidCalls = universe.numValidCalls();
 		long numProverCalls = universe.numProverValidCalls();
-		long memory = Runtime.getRuntime().totalMemory();
+		Iterable<ProverInfo> provers;
+		int i = 0;
 
-		out.print("\ncommand: civl " + command);
-		out.println("\n" + bar + " Stats " + bar);
 		out.print("   valid calls         : ");
 		out.println(numValidCalls);
+		provers = Configurations.getDefaultConfiguration().getProvers();
+		out.print("   provers             : ");
+		for (ProverInfo prover : provers) {
+			if (i != 0)
+				out.print(", ");
+			out.print(prover);
+			i++;
+		}
+		out.println();
 		out.print("   prover calls        : ");
 		out.println(numProverCalls);
-		out.print("   memory (bytes)      : ");
-		out.println(memory);
-		out.print("   time (s)            : ");
-		out.println(time);
 	}
 
 	private void setToDefault(GMCSection config, Collection<Option> options) {

@@ -6,6 +6,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.randomO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statsBar;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -160,6 +161,7 @@ public abstract class Player {
 	}
 
 	public void printResult() {
+		civlConfig.out().println(statsBar + " Result " + statsBar);
 		civlConfig.out().println(result);
 	}
 

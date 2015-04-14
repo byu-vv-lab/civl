@@ -836,10 +836,11 @@ public class ImmutableState implements State {
 		StringBuffer result = new StringBuffer();
 		int numProcs = this.numProcs();
 
-		result.append("Call stacks:\n");
+		result.append("\nCall stacks:\n");
 		for (int i = 0; i < numProcs; i++) {
 			ProcessState process = processStates[i];
 
+			result.append("\n");
 			if (process != null)
 				result.append(process.toSBrieftringBuffer());
 		}

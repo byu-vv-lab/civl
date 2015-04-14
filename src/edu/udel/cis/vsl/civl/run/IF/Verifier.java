@@ -241,7 +241,7 @@ public class Verifier extends Player {
 		errorBoundExceeds = "errorBoundExceeds";
 		// this.shortFileNamesShown = shortFileNamesShown;
 		this.errorBoundExceeds = "Terminating search after finding "
-				+ this.log.errorBound() + " failure";
+				+ this.log.errorBound() + " violation";
 		if (log.errorBound() > 1)
 			errorBoundExceeds += "s";
 		errorBoundExceeds += ".";
@@ -253,7 +253,7 @@ public class Verifier extends Player {
 	 * general UserInterface class.
 	 */
 	public void printStats() {
-		civlConfig.out().print("   maxProcs            : ");
+		civlConfig.out().print("   max process count   : ");
 		civlConfig.out().println(stateManager.maxProcs());
 		civlConfig.out().print("   states              : ");
 		civlConfig.out().println(stateManager.numStatesExplored());
@@ -320,6 +320,7 @@ public class Verifier extends Player {
 				}
 			} else {
 				result = "The standard properties hold for all executions.";
+				// result = "No violations found.";
 			}
 			return !violationFound && log.numEntries() == 0;
 		} catch (CIVLStateException stateException) {

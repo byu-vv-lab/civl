@@ -62,6 +62,8 @@ public class CIVLConstants {
 	 */
 	public final static String bar = "===================";
 
+	public final static String statsBar = "===";
+
 	/**
 	 * The name of the directory into which CIVL will store the artifacts it
 	 * generates.
