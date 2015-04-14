@@ -250,13 +250,15 @@ public class IOWorker extends BaseWorker {
 							.getIdentifier().name();
 
 					if (funcName.equals(EXIT) || funcName.equals(CIVL_EXIT)) {
+						String sourceFile = node.getSource().getFirstToken()
+								.getSourceFile().getName();
 
+						if (sourceFile.equals("pthread.cvl"))
+							return;
 						// dont transform $exit() when it is in the function
 						// body of exit() in stdlib.cvl
-						if (funcName.equals(CIVL_EXIT)
-								&& node.getSource().getFirstToken()
-										.getSourceFile().getName()
-										.equals("stdlib.cvl")
+						else if (funcName.equals(CIVL_EXIT)
+								&& sourceFile.equals("stdlib.cvl")
 								&& node.parent().parent() instanceof FunctionDefinitionNode) {
 							FunctionDefinitionNode funcDef = (FunctionDefinitionNode) node
 									.parent().parent();
