@@ -31,6 +31,11 @@ public class ExperimentalTest {
 	}
 
 	@Test
+	public void ring3ModelBug() {
+		assertTrue(ui.run("verify", filename("ring3ModelBug.cvl")));
+	}
+
+	@Test
 	public void diff1dCompare() {
 		assertTrue(ui.run("compare", "-spec", filename("diff1d_spec.c"),
 				"-impl", filename("diff1d_par.c")));
