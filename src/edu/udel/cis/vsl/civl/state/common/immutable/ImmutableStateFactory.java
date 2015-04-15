@@ -925,24 +925,20 @@ public class ImmutableStateFactory implements StateFactory {
 	public Pair<State, SymbolicExpression> malloc(State state, int pid,
 			int dyscopeId, int mallocId, SymbolicType elementType,
 			NumericExpression elementCount) {
-		// DynamicScope dyscope = state.getDyscope(dyscopeId);
-		// SymbolicExpression heapValue = dyscope.getValue(0).isNull() ?
-		// typeFactory
-		// .heapType().getInitialValue() : dyscope.getValue(0);
-		// IntObject index = universe.intObject(mallocId);
-		// SymbolicExpression heapField = universe.tupleRead(heapValue, index);
-		// int length = ((IntegerNumber) universe.extractNumber(universe
-		// .length(heapField))).intValue();
-		String name = "X" + numSymbolicConstants(state);
-		// StringObject heapObjectName = universe.stringObject("Hop" + pid + "s"
-		// + dyscopeId + "f" + mallocId + "o" + length);
-		StringObject heapObjectName = universe.stringObject(name);
+		DynamicScope dyscope = state.getDyscope(dyscopeId);
+		SymbolicExpression heapValue = dyscope.getValue(0).isNull() ? typeFactory
+				.heapType().getInitialValue() : dyscope.getValue(0);
+		IntObject index = universe.intObject(mallocId);
+		SymbolicExpression heapField = universe.tupleRead(heapValue, index);
+		int length = ((IntegerNumber) universe.extractNumber(universe
+				.length(heapField))).intValue();
+		StringObject heapObjectName = universe.stringObject("Hop" + pid + "s"
+				+ dyscopeId + "f" + mallocId + "o" + length);
 		SymbolicType heapObjectType = universe.arrayType(elementType,
 				elementCount);
 		SymbolicExpression heapObject = universe.symbolicConstant(
 				heapObjectName, heapObjectType);
 
-		state = incrementNumSymbolicConstants(state);
 		return this.malloc(state, dyscopeId, mallocId, heapObject);
 	}
 
