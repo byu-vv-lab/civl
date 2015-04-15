@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
@@ -84,6 +85,17 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * program.
 	 */
 	private final static String GCOMM_WORLD = "GCOMM_WORLD";
+
+	/**
+	 * The name of the identifier of the CMPI_Gcomm sequence variable in the
+	 * final CIVL-MPI program
+	 */
+	private final static String GCOMMS = "GCOMMS";
+
+	/**
+	 * The name of the function call for initializing a sequence.
+	 */
+	private final static String SEQ_INIT = "$seq_init";
 
 	/**
 	 * The name of CMPI_Gcomm type in the final CIVL-C program.
@@ -340,6 +352,38 @@ public class MPI2CIVLWorker extends BaseWorker {
 				Arrays.asList(this.hereNode(),
 						this.identifierExpression(NPROCS)), null);
 		return this.variableDeclaration(GCOMM_WORLD, gcommType, gcommCreate);
+	}
+
+	// TODO: doc
+	private VariableDeclarationNode gcommsSeqDeclaration() {
+		TypeNode gcommType, gcommArrayType;
+		VariableDeclarationNode node;
+
+		gcommType = nodeFactory.newTypedefNameNode(this.identifier(GCOMM_TYPE),
+				null);
+		gcommArrayType = nodeFactory.newArrayTypeNode((Source) null, gcommType,
+				null);
+		node = this.variableDeclaration(GCOMMS, gcommArrayType, null);
+		return node;
+	}
+
+	private ExpressionStatementNode gcommsSeqInitCalling()
+			throws SyntaxException {
+		FunctionCallNode node;
+		OperatorNode gcommsPtrNode, gcommworldPtrNode;
+
+		gcommsPtrNode = nodeFactory.newOperatorNode(
+				this.newSource("&", CParser.OPERATOR), Operator.ADDRESSOF,
+				this.identifierExpression(GCOMMS));
+		gcommworldPtrNode = nodeFactory.newOperatorNode(
+				this.newSource("&", CParser.OPERATOR), Operator.ADDRESSOF,
+				this.identifierExpression(GCOMM_WORLD));
+		node = nodeFactory.newFunctionCallNode(this.newSource("function call "
+				+ SEQ_INIT, CParser.CALL), this.identifierExpression(SEQ_INIT),
+				Arrays.asList(gcommsPtrNode,
+						nodeFactory.newIntegerConstantNode(null, "1"),
+						gcommworldPtrNode), null);
+		return nodeFactory.newExpressionStatementNode(node);
 	}
 
 	/**
@@ -1045,6 +1089,8 @@ public class MPI2CIVLWorker extends BaseWorker {
 		if (nprocsAssumption != null)
 			externalList.add(nprocsAssumption);
 		externalList.add(gcommWorld);
+		externalList.add(this.gcommsSeqDeclaration());
+		externalList.add(this.gcommsSeqInitCalling());
 		externalList.add(mpiProcess);
 		externalList.add(mainFunction);
 		newRootNode = nodeFactory.newSequenceNode(null, "TranslationUnit",
