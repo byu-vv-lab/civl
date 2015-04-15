@@ -99,7 +99,8 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 				}
 				debugOut.println();
 				if (!debugging && showAmpleSetWtStates)
-					debugOut.print(symbolicAnalyzer.stateToString(state));
+					debugOut.print(state.callStackToString());
+				// debugOut.print(symbolicAnalyzer.stateToString(state));
 			}
 		}
 		// Compute the ample set (of transitions)
