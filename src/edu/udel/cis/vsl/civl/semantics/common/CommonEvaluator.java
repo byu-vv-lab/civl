@@ -1565,7 +1565,7 @@ public class CommonEvaluator implements Evaluator {
 			Variable variable, SymbolicType dynamicType, int dyscopeId)
 			throws UnsatisfiablePathConditionException {
 		CIVLType type = variable.type();
-		int vid = variable.vid();
+		// int vid = variable.vid();
 		SymbolicExpression result;
 
 		if (!variable.isInput() && variable.isStatic()) {
@@ -1580,11 +1580,13 @@ public class CommonEvaluator implements Evaluator {
 			String name;
 			StringObject nameObj;
 
-			if (variable.scope().id() == 0 && variable.isInput()) {
-				name = "X" + stateFactory.numSymbolicConstants(state);
-				state = stateFactory.incrementNumSymbolicConstants(state);
-			} else
-				name = "X_s" + dyscopeId + "v" + vid;
+			name = "X" + stateFactory.numSymbolicConstants(state);
+			state = stateFactory.incrementNumSymbolicConstants(state);
+			// if (variable.scope().id() == 0 && variable.isInput()) {
+			// name = "X" + stateFactory.numSymbolicConstants(state);
+			// state = stateFactory.incrementNumSymbolicConstants(state);
+			// } else
+			// name = "X_s" + dyscopeId + "v" + vid;
 			nameObj = universe.stringObject(name);
 			result = universe.symbolicConstant(nameObj, dynamicType);
 		}
