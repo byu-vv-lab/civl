@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.statement;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.StaticAnalysisConfiguration;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
 /**
@@ -30,6 +32,8 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  */
 public class CommonCallStatement extends CommonStatement implements
 		CallOrSpawnStatement {
+
+	private static final BitSet EMPTY_BITSET = new BitSet();
 
 	private boolean isCall;
 
@@ -174,10 +178,10 @@ public class CommonCallStatement extends CommonStatement implements
 
 	@Override
 	public void purelyLocalAnalysis() {
-//		if (this.isSystemCall()) {
-//			this.purelyLocal = false;
-//			return;
-//		}
+		// if (this.isSystemCall()) {
+		// this.purelyLocal = false;
+		// return;
+		// }
 		this.guard().purelyLocalAnalysis();
 		if (this.lhs != null) {
 			this.lhs.purelyLocalAnalysis();
@@ -265,8 +269,19 @@ public class CommonCallStatement extends CommonStatement implements
 		}
 		if (arguments != null) {
 			Set<Variable> argumentResult;
+			int n = this.arguments.size();
+			CIVLFunction function = this.function();
+			BitSet ignored = EMPTY_BITSET;
 
-			for (Expression argument : arguments) {
+			if (function != null)
+				ignored = StaticAnalysisConfiguration
+						.getIgnoredArgumenets(function);
+			for (int i = 0; i < n; i++) {
+				if (ignored.get(i))
+					continue;
+
+				Expression argument = arguments.get(i);
+
 				argumentResult = argument.variableAddressedOf(scope);
 				if (argumentResult != null)
 					result.addAll(argumentResult);
@@ -281,8 +296,19 @@ public class CommonCallStatement extends CommonStatement implements
 
 		if (arguments != null) {
 			Set<Variable> argumentResult;
+			int n = this.arguments.size();
+			CIVLFunction function = this.function();
+			BitSet ignored = EMPTY_BITSET;
 
-			for (Expression argument : arguments) {
+			if (function != null)
+				ignored = StaticAnalysisConfiguration
+						.getIgnoredArgumenets(function);
+			for (int i = 0; i < n; i++) {
+				if (ignored.get(i))
+					continue;
+
+				Expression argument = arguments.get(i);
+
 				argumentResult = argument.variableAddressedOf();
 				if (argumentResult != null)
 					result.addAll(argumentResult);
