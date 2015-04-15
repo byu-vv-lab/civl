@@ -149,6 +149,15 @@ cudaError_t cudaStreamDestroy(cudaStream_t pStream) {
   return cudaSuccess;
 }
 
+/* Explicitly destroys and cleans up all resources associated with the 
+ * current device in the current process. Any subsequent API call to 
+ * this device will reinitialize the device.
+ */
+cudaError_t cudaDeviceReset( void ) {
+  // TODO: Figure out if _cudaContext must be destroyed here
+  return cudaSuccess;
+}
+
 /* locks until stream has completed all operations.
  */
 cudaError_t cudaDeviceSynchronize() {

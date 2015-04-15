@@ -187,12 +187,11 @@ public class Cuda2CIVLWorker extends BaseWorker {
 				cudaMallocCall.getSource(), Operator.ASSIGN,
 				Arrays.asList(assignLhs, mallocCast));
 		// create comma node
-		// ExpressionNode finalExpression = nodeFactory.newOperatorNode(source,
-		// Operator.COMMA, Arrays.asList(assignment, nodeFactory
-		// .newEnumerationConstantNode(nodeFactory
-		// .newIdentifierNode(source, "cudaSuccess"))));
-		// finalExpression.prettyPrint(System.out);
-		return assignment;
+		ExpressionNode finalExpression = nodeFactory.newOperatorNode(source,
+				Operator.COMMA, Arrays.asList(assignment, nodeFactory
+				.newEnumerationConstantNode(nodeFactory
+				.newIdentifierNode(source, "cudaSuccess"))));
+		return finalExpression;
 	}
 
 	protected FunctionDefinitionNode mainDefinitionTransform(
