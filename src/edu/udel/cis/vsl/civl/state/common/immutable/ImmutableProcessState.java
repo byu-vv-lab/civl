@@ -446,7 +446,7 @@ public class ImmutableProcessState implements ProcessState {
 
 		result.append("process p" + identifier + " (id=" + pid + "):\n");
 		if (callStack.length < 1)
-			result.append("  EMPTY");
+			result.append("  terminated");
 		else
 			for (int i = 0; i < callStack.length; i++) {
 				StackEntry frame = callStack[i];
