@@ -1042,9 +1042,17 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					atomize(result);
 				return result.toString();
 			case EQUALS:
-				result.append(arguments[0].toStringBuffer(false));
+				if (arguments[0] instanceof SymbolicExpression)
+					result.append(this.symbolicExpressionToString(source,
+							state, (SymbolicExpression) arguments[0]));
+				else
+					result.append(arguments[0].toStringBuffer(false));
 				result.append("==");
-				result.append(arguments[1].toStringBuffer(false));
+				if (arguments[1] instanceof SymbolicExpression)
+					result.append(this.symbolicExpressionToString(source,
+							state, (SymbolicExpression) arguments[1]));
+				else
+					result.append(arguments[1].toStringBuffer(false));
 				if (atomize)
 					atomize(result);
 				return result.toString();
@@ -1538,16 +1546,18 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					result.append(this.symbolicExpressionToString(quantified
 							.lower().getSource(), state, rangeEval.value));
 				} else {
-					temp = this.expressionEvaluationWorker(state, pid,
-							quantified.boundRestriction(), resultOnly, true);
-					state = temp.left;
-					result.append(temp.right);
+					// temp = this.expressionEvaluationWorker(state, pid,
+					// quantified.boundRestriction(), resultOnly, true);
+					// state = temp.left;
+					// result.append(temp.right);
+					result.append(quantified.boundRestriction());
 				}
 				result.append("} ");
-				temp = this.expressionEvaluationWorker(state, pid,
-						quantified.expression(), resultOnly, true);
-				state = temp.left;
-				result.append(temp.right);
+				// temp = this.expressionEvaluationWorker(state, pid,
+				// quantified.expression(), resultOnly, true);
+				// state = temp.left;
+				result.append(quantified.expression().toString());
+				// result.append(temp.right);
 				break;
 			}
 			case UNARY: {
