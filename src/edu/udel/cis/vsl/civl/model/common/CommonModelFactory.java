@@ -1614,10 +1614,22 @@ public class CommonModelFactory implements ModelFactory {
 			CIVLArrayType type) {
 		String name = ANONYMOUS_VARIABLE_PREFIX + this.anonymousVariableId++;
 		Variable variable = this.variable(sourceOf, type,
-				this.identifier(null, name), this.systemScope.numVariables());
+				this.identifier(sourceOf, name),
+				this.systemScope.numVariables());
 
 		variable.setConst(true);
 		this.systemScope.addVariable(variable);
+		return variable;
+	}
+
+	@Override
+	public Variable newAnonymousVariable(CIVLSource sourceOf, Scope scope,
+			CIVLType type) {
+		String name = ANONYMOUS_VARIABLE_PREFIX + this.anonymousVariableId++;
+		Variable variable = this.variable(sourceOf, type,
+				this.identifier(sourceOf, name), scope.numVariables());
+
+		scope.addVariable(variable);
 		return variable;
 	}
 

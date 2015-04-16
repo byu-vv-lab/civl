@@ -734,15 +734,16 @@ public class FunctionTranslator {
 	 * @return The model representation of the assignment, which might also be a
 	 *         fork statement or function call.
 	 */
-	private Statement assignStatement(CIVLSource source, LHSExpression lhs,
+	private Fragment assignStatement(CIVLSource source, LHSExpression lhs,
 			ExpressionNode rhsNode, boolean isInitializer, Scope scope) {
-		Statement result = null;
+		Statement assign = null;
 		Location location;
 
 		if (isCompleteMallocExpression(rhsNode)) {
 			location = modelFactory.location(lhs.getSource(), scope);
-			result = mallocStatement(source, location, lhs, (CastNode) rhsNode,
+			assign = mallocStatement(source, location, lhs, (CastNode) rhsNode,
 					scope);
+			return new CommonFragment(assign);
 		} else if (rhsNode instanceof FunctionCallNode
 				|| rhsNode instanceof SpawnNode) {
 			FunctionCallNode functionCallNode;
@@ -755,17 +756,44 @@ public class FunctionTranslator {
 				functionCallNode = ((SpawnNode) rhsNode).getCall();
 				isCall = false;
 			}
-			result = translateFunctionCall(scope, lhs, functionCallNode,
-					isCall, source);
+
+			if (rhsNode.getNumConversions() > 0) {
+				Fragment result;
+				CIVLType type = this.translateABCType(source, scope,
+						rhsNode.getInitialType());
+				Variable tmpVar = this.modelFactory.newAnonymousVariable(
+						source, scope, type);
+				LHSExpression tmpLhs = this.modelFactory.variableExpression(
+						source, tmpVar);
+				Expression castTmp;
+
+				assign = translateFunctionCall(scope, tmpLhs, functionCallNode,
+						isCall, source);
+				result = new CommonFragment(assign);
+				tmpLhs = this.modelFactory.variableExpression(source, tmpVar);
+				castTmp = this
+						.applyConversions(scope, functionCallNode, tmpLhs);
+				assign = modelFactory.assignStatement(source,
+						this.modelFactory.location(source, scope), lhs,
+						castTmp, false);
+				result.addNewStatement(assign);
+				return result;
+			} else {
+				assign = translateFunctionCall(scope, lhs, functionCallNode,
+						isCall, source);
+				return new CommonFragment(assign);
+			}
+
 		} else {
 			Expression rhs;
 
 			rhs = arrayToPointer(translateExpressionNode(rhsNode, scope, true));
 			location = modelFactory.location(lhs.getSource(), scope);
-			result = modelFactory.assignStatement(source, location, lhs, rhs,
+			assign = modelFactory.assignStatement(source, location, lhs, rhs,
 					isInitializer);
+			return new CommonFragment(assign);
+
 		}
-		return result;
 	}
 
 	/**
@@ -1227,7 +1255,6 @@ public class FunctionTranslator {
 		ExpressionNode lhs = assignNode.getArgument(0);
 		ExpressionNode rhs = assignNode.getArgument(1);
 		Expression leftExpression;
-		Statement assignStatement;
 
 		// this.isLHS = true;
 		leftExpression = translateExpressionNode(lhs, scope, true);
@@ -1249,9 +1276,8 @@ public class FunctionTranslator {
 						"attempt to modify the constant variable "
 								+ leftExpression, modelFactory.sourceOf(lhs));
 		}
-		assignStatement = assignStatement(modelFactory.sourceOfSpan(lhs, rhs),
+		return assignStatement(modelFactory.sourceOfSpan(lhs, rhs),
 				(LHSExpression) leftExpression, rhs, false, scope);
-		return new CommonFragment(assignStatement);
 	}
 
 	// /**
@@ -2705,8 +2731,9 @@ public class FunctionTranslator {
 					assignStatement = modelFactory.assignStatement(
 							modelFactory.sourceOf(node), location, lhs, rhs,
 							true);
+					initFragment = new CommonFragment(assignStatement);
 				} else {
-					assignStatement = this.assignStatement(
+					initFragment = this.assignStatement(
 							modelFactory.sourceOf(node), lhs,
 							(ExpressionNode) init, true, scope);
 				}
@@ -2729,8 +2756,9 @@ public class FunctionTranslator {
 				}
 				assignStatement = modelFactory.assignStatement(
 						modelFactory.sourceOf(node), location, lhs, rhs, true);
+				initFragment = new CommonFragment(assignStatement);
 			}
-			initFragment = new CommonFragment(assignStatement);
+			// initFragment = new CommonFragment(assignStatement);
 			if (anonStatement != null) {
 				initFragment = new CommonFragment(anonStatement)
 						.combineWith(initFragment);
@@ -2742,8 +2770,8 @@ public class FunctionTranslator {
 			}
 			if (modelFactory.hasConditionalExpressions()) {
 				initFragment = modelFactory
-						.refineConditionalExpressionOfStatement(
-								assignStatement, location);
+						.refineConditionalExpressionOfStatement(initFragment
+								.startLocation().getOutgoing(0), location);
 			}
 		}
 		return initFragment;
@@ -3302,89 +3330,102 @@ public class FunctionTranslator {
 					modelFactory.sourceOf(expressionNode));
 		}
 		if (translateConversions) {
-			// apply conversions
-			CIVLSource source = result.getSource();
-			int numConversions = expressionNode.getNumConversions();
-
-			for (int i = 0; i < numConversions; i++) {
-				Conversion conversion = expressionNode.getConversion(i);
-				Type oldType = conversion.getOldType();
-				Type newType = conversion.getNewType();
-				// Arithmetic, Array, CompatibleStructureOrUnion,
-				// Function, Lvalue, NullPointer, PointerBool, VoidPointer
-
-				if (conversion instanceof ArithmeticConversion) {
-					CIVLType oldCIVLType = translateABCType(source, scope,
-							oldType);
-					CIVLType newCIVLType = translateABCType(source, scope,
-							newType);
-
-					// need equals on Types
-					if (oldCIVLType.isIntegerType()
-							&& newCIVLType.isIntegerType()
-							|| oldCIVLType.isRealType()
-							&& newCIVLType.isRealType()) {
-						// nothing to do
-					} else {
-						// Sometimes the conversion might have been done during
-						// the translating the expression node, for example,
-						// when translating a constant node, so only create a
-						// cast expression if necessary.
-						if (!result.getExpressionType().equals(newCIVLType))
-							result = modelFactory.castExpression(source,
-									newCIVLType, result);
-					}
-				} else if (conversion instanceof CompatiblePointerConversion) {
-					// nothing to do
-				} else if (conversion instanceof ArrayConversion) {
-					if (expressionNode.expressionKind() == ExpressionKind.OPERATOR
-							&& ((OperatorNode) expressionNode).getOperator() == Operator.SUBSCRIPT) {
-						// we will ignore this one here because we want
-						// to keep it as array in subscript expressions
-					} else if (result.expressionKind() == Expression.ExpressionKind.ADDRESS_OF
-							|| result.expressionKind() == Expression.ExpressionKind.ARRAY_LITERAL) {
-						// FIXME: Not sure why this needs to be checked...
-					} else {
-						assert result instanceof LHSExpression;
-						result = modelFactory.addressOfExpression(source,
-								modelFactory.subscriptExpression(source,
-										(LHSExpression) result,
-										modelFactory.integerLiteralExpression(
-												source, BigInteger.ZERO)));
-					}
-
-				} else if (conversion instanceof CompatibleStructureOrUnionConversion) {
-					// think about this
-					throw new CIVLUnimplementedFeatureException(
-							"compatible structure or union conversion", source);
-				} else if (conversion instanceof FunctionConversion) {
-				} else if (conversion instanceof LvalueConversion) {
-					// nothing to do since ignore qualifiers anyway
-				} else if (conversion instanceof NullPointerConversion) {
-					// result is a null pointer to new type
-					CIVLPointerType newCIVLType = (CIVLPointerType) translateABCType(
-							source, scope, newType);
-
-					result = modelFactory.nullPointerExpression(newCIVLType,
-							source);
-				} else if (conversion instanceof PointerBoolConversion) {
-					// pointer type to boolean type: p!=NULL
-					result = modelFactory.binaryExpression(source,
-							BINARY_OPERATOR.NOT_EQUAL, result, modelFactory
-									.nullPointerExpression(
-											(CIVLPointerType) result
-													.getExpressionType(),
-											source));
-				} else if (conversion instanceof VoidPointerConversion) {
-					// void*->T* or T*->void*
-					// ignore, pointer types are all the same
-					// all pointer types are using the same symbolic object type
-				} else
-					throw new CIVLInternalException("Unknown conversion: "
-							+ conversion, source);
-			}
+			result = this.applyConversions(scope, expressionNode, result);
 		}
 		return result;
+	}
+
+	/**
+	 * Applies conversions associated with the given expression node to the
+	 * given expression.
+	 * 
+	 * Precondition: the given expression is the CIVL representation of the
+	 * given expression node before conversions.
+	 * 
+	 * @param scope
+	 * @param expressionNode
+	 * @param expression
+	 * @return
+	 */
+	private Expression applyConversions(Scope scope,
+			ExpressionNode expressionNode, Expression expression) {
+		// apply conversions
+		CIVLSource source = expression.getSource();
+		int numConversions = expressionNode.getNumConversions();
+
+		for (int i = 0; i < numConversions; i++) {
+			Conversion conversion = expressionNode.getConversion(i);
+			Type oldType = conversion.getOldType();
+			Type newType = conversion.getNewType();
+			// Arithmetic, Array, CompatibleStructureOrUnion,
+			// Function, Lvalue, NullPointer, PointerBool, VoidPointer
+
+			if (conversion instanceof ArithmeticConversion) {
+				CIVLType oldCIVLType = translateABCType(source, scope, oldType);
+				CIVLType newCIVLType = translateABCType(source, scope, newType);
+
+				// need equals on Types
+				if (oldCIVLType.isIntegerType() && newCIVLType.isIntegerType()
+						|| oldCIVLType.isRealType() && newCIVLType.isRealType()) {
+					// nothing to do
+				} else {
+					// Sometimes the conversion might have been done during
+					// the translating the expression node, for example,
+					// when translating a constant node, so only create a
+					// cast expression if necessary.
+					if (!expression.getExpressionType().equals(newCIVLType))
+						expression = modelFactory.castExpression(source,
+								newCIVLType, expression);
+				}
+			} else if (conversion instanceof CompatiblePointerConversion) {
+				// nothing to do
+			} else if (conversion instanceof ArrayConversion) {
+				if (expressionNode.expressionKind() == ExpressionKind.OPERATOR
+						&& ((OperatorNode) expressionNode).getOperator() == Operator.SUBSCRIPT) {
+					// we will ignore this one here because we want
+					// to keep it as array in subscript expressions
+				} else if (expression.expressionKind() == Expression.ExpressionKind.ADDRESS_OF
+						|| expression.expressionKind() == Expression.ExpressionKind.ARRAY_LITERAL) {
+					// FIXME: Not sure why this needs to be checked...
+				} else {
+					assert expression instanceof LHSExpression;
+					expression = modelFactory.addressOfExpression(source,
+							modelFactory.subscriptExpression(source,
+									(LHSExpression) expression, modelFactory
+											.integerLiteralExpression(source,
+													BigInteger.ZERO)));
+				}
+
+			} else if (conversion instanceof CompatibleStructureOrUnionConversion) {
+				// think about this
+				throw new CIVLUnimplementedFeatureException(
+						"compatible structure or union conversion", source);
+			} else if (conversion instanceof FunctionConversion) {
+			} else if (conversion instanceof LvalueConversion) {
+				// nothing to do since ignore qualifiers anyway
+			} else if (conversion instanceof NullPointerConversion) {
+				// result is a null pointer to new type
+				CIVLPointerType newCIVLType = (CIVLPointerType) translateABCType(
+						source, scope, newType);
+
+				expression = modelFactory.nullPointerExpression(newCIVLType,
+						source);
+			} else if (conversion instanceof PointerBoolConversion) {
+				// pointer type to boolean type: p!=NULL
+				expression = modelFactory.binaryExpression(source,
+						BINARY_OPERATOR.NOT_EQUAL, expression, modelFactory
+								.nullPointerExpression(
+										(CIVLPointerType) expression
+												.getExpressionType(), source));
+			} else if (conversion instanceof VoidPointerConversion) {
+				// void*->T* or T*->void*
+				// ignore, pointer types are all the same
+				// all pointer types are using the same symbolic object type
+			} else
+				throw new CIVLInternalException("Unknown conversion: "
+						+ conversion, source);
+		}
+		return expression;
 	}
 
 	private Expression translateRegularRangeNode(RegularRangeNode rangeNode,

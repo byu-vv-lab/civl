@@ -540,6 +540,11 @@ public class LanguageFeaturesTest {
 
 	}
 
+	@Test
+	public void int2float() {
+		assertTrue(ui.run("verify ", filename("int2float.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

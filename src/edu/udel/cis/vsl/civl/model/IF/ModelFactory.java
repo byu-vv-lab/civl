@@ -1474,4 +1474,15 @@ public interface ModelFactory {
 	 */
 	Identifier getLiteralDomCounterIdentifier(CIVLSource source, int count);
 
+	/**
+	 * Create a variable of the given type and add it to the given scope.
+	 * 
+	 * @param sourceOf
+	 * @param scope
+	 * @param type
+	 * @return
+	 */
+	Variable newAnonymousVariable(CIVLSource sourceOf, Scope scope,
+			CIVLType type);
+
 }
