@@ -113,8 +113,8 @@ struct pthread_rwlock_t{
 */
 
 struct pthread_cond_t{
-  int proccount;
   _Bool signal;
+  _Bool broadcast;
 };
 
 /* pthread_t struct definition
@@ -672,8 +672,8 @@ int pthread_mutex_destroy(pthread_mutex_t *mutex){
   */
 
 int pthread_cond_init(pthread_cond_t *cond, void *arg){
-  cond->proccount = 0;
   cond->signal = 0;
+  cond->broadcast = 0;
   return 0;
 }
 
@@ -994,14 +994,10 @@ int _pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, $pthread_po
     $assert(($false));
     return 0;
   }
-  
-  cond->proccount= cond->proccount+1;
   cond->signal = false;
   pthread_mutex_unlock(mutex);
-  
-  $when(cond->signal);
+  $when(cond->signal || cond->broadcast);
   cond->signal = false;
-  --cond->proccount;
   $when(mutex->lock == 0){_pthread_mutex_lock(mutex, $pthread_pool);}
   return 0;
 }
@@ -1030,9 +1026,7 @@ int pthread_cond_signal(pthread_cond_t *cond){
   */
 
 int pthread_cond_broadcast(pthread_cond_t *cond){
-  while(cond->proccount > 0){
-    cond->signal = true;
-  }
+  cond->broadcast = true;
   return 0;
 }
 
