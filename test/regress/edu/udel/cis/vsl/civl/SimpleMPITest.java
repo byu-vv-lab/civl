@@ -29,7 +29,20 @@ public class SimpleMPITest {
 
 	@Test
 	public void simpleMPI() {
-		assertTrue(ui.run("verify -input_NPROCS=2", filename("simpleMPI.c")));
+		assertTrue(ui.run("verify -showAmpleSet -input_NPROCS=2",
+				filename("simpleMPI.c")));
+	}
+
+	@Test
+	public void commDup() {
+		assertTrue(ui.run("verify -showAmpleSet -input_NPROCS=6",
+				filename("commDup.c")));
+	}
+
+	@Test
+	public void commDupBad() {
+		assertFalse(ui.run("verify -showAmpleSet -input_NPROCS=6",
+				filename("commDupBad.c")));
 	}
 
 	@Test
@@ -78,8 +91,6 @@ public class SimpleMPITest {
 	public void ooobcast() {
 		assertFalse(ui.run("verify -input_NPROCS=5", filename("ooobcast.c")));
 	}
-
-
 
 	@Test
 	public void reduce() {
