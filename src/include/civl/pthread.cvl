@@ -128,10 +128,10 @@ struct pthread_t{
   $proc thr;
   const pthread_attr_t attr;
   _Bool terminated;
+  void** exitValue;
 };
 
 extern pthread_mutex_t PTHREAD_MUTEX_INITIALIZER = {0,$proc_null,0,0,{0,0,0,PTHREAD_MUTEX_NORMAL,0}};
-void *value_ptr_value = NULL;
 $pthread_gpool_t $pthread_gpool = $pthread_gpool_create($here);
 
 /**
@@ -694,6 +694,8 @@ int pthread_cond_destroy(pthread_cond_t *cond){
 }
 
 int pthread_equal(pthread_t t1, pthread_t t2){
+  if(!$proc_defined(t1.thr) || !$proc_defined(t2.thr))
+    return 0;
   if(t1.thr == t2.thr){
     return 1;
   }
@@ -759,7 +761,7 @@ int pthread_join(pthread_t thread, void **value_ptr){
   }
   $wait(thread.thr);
   if(value_ptr!=NULL)
-    value_ptr = &value_ptr_value;
+    *value_ptr = thread.exitValue;
   return 0;
 }
 
@@ -785,10 +787,9 @@ void pthread_exit(void *value_ptr){
   */
 //Manchun: check me
 void _pthread_exit(void *value_ptr, $pthread_pool_t $pthread_pool){
-   $pthread_pool_terminates($pthread_pool);
-    value_ptr_value = value_ptr;
-    $free($pthread_pool);
-    $exit();
+  $pthread_pool_terminates($pthread_pool, value_ptr);
+  $free($pthread_pool);
+  $exit();
 }
 
 void _pthread_exit_main(void *value_ptr){
@@ -802,6 +803,11 @@ void _pthread_exit_main(void *value_ptr){
   $free($pthread_gpool);
   //$exit();
 }
+
+pthread_t _pthread_self($pthread_pool_t pool){
+  return $pthread_pool_thread(pool);
+}
+
 
 /**
   * Takes in a mutex variable and acts accordingly to its current state and type

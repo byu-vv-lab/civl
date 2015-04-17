@@ -1054,7 +1054,8 @@ public class AmpleSetWorker {
 				SymbolicExpression eval;
 				Variable variable;
 
-				if (!symbolicUtil.isValidPointer(expr))
+				if (expr.operator() != SymbolicOperator.CONCRETE
+						|| !symbolicUtil.isValidPointer(expr))
 					return;
 				variable = state
 						.getDyscope(symbolicUtil.getDyscopeId(null, expr))

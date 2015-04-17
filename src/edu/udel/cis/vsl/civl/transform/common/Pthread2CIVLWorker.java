@@ -78,6 +78,10 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	final static String PTHREAD_EXIT_NEW = "_pthread_exit";
 
+	private final static String PTHREAD_SELF = "pthread_self";
+
+	final static String PTHREAD_SELF_NEW = "_pthread_self";
+
 	// needs to go to MPI process scope
 	final static String PTHREAD_EXIT_MAIN_NEW = "_pthread_exit_main";
 
@@ -255,7 +259,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					.getIdentifier().name();
 
 			if (funcName.equals(PTHREAD_MUTEX_LOCK)
-					|| funcName.equals(PTHREAD_COND_WAIT)) {
+					|| funcName.equals(PTHREAD_COND_WAIT) || funcName.equals(PTHREAD_SELF)) {
 				hasSyncCall = true;
 				((IdentifierExpressionNode) function).getIdentifier().setName(
 						"_" + funcName);

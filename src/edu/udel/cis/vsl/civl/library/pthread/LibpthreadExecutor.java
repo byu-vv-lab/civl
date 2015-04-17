@@ -117,10 +117,10 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			state = execute_pthread_gpool_add(state, pid, process, arguments,
 					argumentValues, source);
 			break;
-		case "$pthread_pool_exit":
-			state = execute_pthread_pool_exit(state, pid, process, arguments,
-					argumentValues, source);
-			break;
+		// case "$pthread_pool_exit":
+		// state = execute_pthread_pool_exit(state, pid, process, arguments,
+		// argumentValues, source);
+		// break;
 		case "$pthread_pool_get_terminated":
 			state = execute_pthread_pool_get_terminated(state, pid, process,
 					lhs, arguments, argumentValues, source);
@@ -141,6 +141,10 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			state = execute_pthread_pool_is_terminated(state, pid, process,
 					lhs, arguments, argumentValues, source);
 			break;
+		case "$pthread_pool_thread":
+			state = execute_pthread_pool_thread(state, pid, process, lhs,
+					arguments, argumentValues, source);
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(
 					"execution of function " + functionName
@@ -148,6 +152,27 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		}
 		state = stateFactory.setLocation(state, pid, statement.target(),
 				statement.lhs() != null);
+		return state;
+	}
+
+	private State execute_pthread_pool_thread(State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression pool = argumentValues[0], poolObj;
+		Evaluation eval;
+		SymbolicExpression threadPointer;
+
+		eval = this.evaluator.dereference(source, state, process, pool, false);
+		poolObj = eval.value;
+		state = eval.state;
+		threadPointer = universe.tupleRead(poolObj, this.twoObject);
+		eval = this.evaluator.dereference(source, state, process,
+				threadPointer, false);
+		state = eval.state;
+		if (lhs != null)
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					eval.value);
 		return state;
 	}
 
@@ -292,7 +317,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression pool = argumentValues[0], poolObj;
 		Evaluation eval;
 		SymbolicExpression threadPointer;
-		SymbolicExpression threadTermPointer;
+		SymbolicExpression threadTermPointer, threadExitValuePointer;
 
 		eval = this.evaluator.dereference(source, state, process, pool, false);
 		poolObj = eval.value;
@@ -305,6 +330,12 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 							this.twoObject));
 			state = this.primaryExecutor.assign(source, state, process,
 					threadTermPointer, trueValue);
+			threadExitValuePointer = this.symbolicUtil.makePointer(
+					threadPointer, universe.tupleComponentReference(
+							symbolicUtil.getSymRef(threadPointer),
+							this.threeObject));
+			state = this.primaryExecutor.assign(source, state, process,
+					threadExitValuePointer, argumentValues[1]);
 		}
 		return state;
 	}
@@ -349,32 +380,32 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
-	/**
-	 * void $pthread_pool_exit($pthread_pool pool);
-	 * 
-	 * @param state
-	 * @param pid
-	 * @param process
-	 * @param arguments
-	 * @param argumentValues
-	 * @param source
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	private State execute_pthread_pool_exit(State state, int pid,
-			String process, Expression[] arguments,
-			SymbolicExpression[] argumentValues, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression pthreadPointer = universe.tupleRead(
-				argumentValues[0], this.twoObject);
-		SymbolicExpression fieldPointer = this.symbolicUtil.makePointer(
-				pthreadPointer, universe.tupleComponentReference(
-						this.symbolicUtil.getSymRef(pthreadPointer),
-						this.threeObject));
-
-		return this.primaryExecutor.assign(source, state, process,
-				fieldPointer, trueValue);
-	}
+	// /**
+	// * void $pthread_pool_exit($pthread_pool pool);
+	// *
+	// * @param state
+	// * @param pid
+	// * @param process
+	// * @param arguments
+	// * @param argumentValues
+	// * @param source
+	// * @return
+	// * @throws UnsatisfiablePathConditionException
+	// */
+	// private State execute_pthread_pool_exit(State state, int pid,
+	// String process, Expression[] arguments,
+	// SymbolicExpression[] argumentValues, CIVLSource source)
+	// throws UnsatisfiablePathConditionException {
+	// SymbolicExpression pthreadPointer = universe.tupleRead(
+	// argumentValues[0], this.twoObject);
+	// SymbolicExpression fieldPointer = this.symbolicUtil.makePointer(
+	// pthreadPointer, universe.tupleComponentReference(
+	// this.symbolicUtil.getSymRef(pthreadPointer),
+	// this.threeObject));
+	//
+	// return this.primaryExecutor.assign(source, state, process,
+	// fieldPointer, trueValue);
+	// }
 
 	/**
 	 * void $pthread_gpool_add($pthread_gpool gpool, pthread_t * thread);

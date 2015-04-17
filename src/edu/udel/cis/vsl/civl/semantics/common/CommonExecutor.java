@@ -1018,7 +1018,7 @@ public class CommonExecutor implements Executor {
 
 			} else if (argumentType instanceof CIVLPointerType
 					&& this.symbolicUtil.isNullPointer(argumentValue)
-					&& nonVoidFormats.get(i).type == ConversionType.INT) {
+					&& nonVoidFormats.get(i-1).type == ConversionType.INT) {
 				printedContents.add(new StringBuffer("0"));
 			} else
 				printedContents.add(new StringBuffer(this.symbolicAnalyzer

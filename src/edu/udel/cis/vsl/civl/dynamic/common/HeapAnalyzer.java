@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.expr.UnionMemberReference;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
@@ -285,6 +286,9 @@ public class HeapAnalyzer {
 	 * @return True iff the pointer points to a certain part of some heap.
 	 */
 	boolean isPointerToHeap(SymbolicExpression pointer) {
+		if (pointer.operator() != SymbolicOperator.CONCRETE)
+			return false;
+
 		int vid = symbolicUtil.getVariableId(null, pointer);
 
 		return vid == 0;
