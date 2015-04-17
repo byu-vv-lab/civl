@@ -29,7 +29,7 @@ public class SimpleMPITest {
 
 	@Test
 	public void simpleMPI() {
-		assertTrue(ui.run("verify -showAmpleSet -input_NPROCS=2",
+		assertTrue(ui.run("verify -input_NPROCS=2",
 				filename("simpleMPI.c")));
 	}
 
