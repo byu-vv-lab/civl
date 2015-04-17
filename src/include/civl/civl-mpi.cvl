@@ -20,6 +20,7 @@ typedef struct MPI_Comm {
   $comm col; // collective communication
   $collect_checker collect_checker;
   $barrier barrier;
+  int gcommIndex; //the index of the corresponding global communicator.
 }MPI_Comm;
 
 /* Definition of CMPI_Gcomm (CMPI_Gcomm has a type of __CMPI_Gcomm) 
@@ -88,6 +89,7 @@ MPI_Comm CMPI_Comm_create($scope scope, CMPI_Gcomm gc, int rank) {
   result.col = $comm_create(scope, gc.col, rank);
   result.collect_checker = $collect_checker_create(scope, gc.collect_checker);
   result.barrier = $barrier_create(scope, gc.gbarrier, rank);
+  result.gcommIndex = 0;
   return result;
 }
 
@@ -95,8 +97,9 @@ void CMPI_Comm_destroy(MPI_Comm comm) {
   __MPI_Sys_status__ curr_status;
 
   curr_status = CMPI_Get_status();
-  $assert(curr_status == __FINALIZED, "Process terminates without "
-	  "calling MPI_Finalize() first.");
+  if(comm.gcommIndex == 0)
+    $assert(curr_status == __FINALIZED, "Process terminates without "
+	    "calling MPI_Finalize() first.");
   $comm_destroy(comm.p2p);
   $comm_destroy(comm.col);
   $collect_checker_destroy(comm.collect_checker);
@@ -480,6 +483,49 @@ int CMPI_Scatterv(const void* sendbuf, const int sendcounts[], const
     $assert(real_recvcount == recvcount, "Process rank:%d\n%s asks for equality between"
 	    " the amount of data sent (%d) and the "
 	    "amount of data received (%d).", rank, routName, real_recvcount, recvcount);
+  }
+  return 0;
+}
+
+int CMPI_Comm_dup($scope scope, MPI_Comm comm, MPI_Comm * newcomm, char * routName) {
+  int place = $comm_place(comm.col);
+  CMPI_Gcomm newgcomm;
+  int idx;
+  $scope CMPI_ROOT_SCOPE = CMPI_Root_scope(comm.col);
+
+  if(place == 0) {
+    int size = $comm_size(comm.col);
+
+    newgcomm = CMPI_Gcomm_create(CMPI_ROOT_SCOPE, size);
+    idx = CMPI_NewGcomm(CMPI_ROOT_SCOPE, newgcomm);
+  }
+  CMPI_Bcast(&idx, 1, MPI_INT, 0, COMMDUP_TAG,
+	     comm, routName);
+  newgcomm = CMPI_GetGcomm(CMPI_ROOT_SCOPE, idx);
+  (*newcomm) = CMPI_Comm_create(scope, newgcomm, place);
+  newcomm->gcommIndex = idx;
+  $barrier_call(comm.barrier);
+  $gcomm_dup(comm.p2p, newcomm->p2p);
+  $gcomm_dup(comm.col, newcomm->col);
+  $barrier_call(comm.barrier);
+  return 0;
+}
+
+int CMPI_Comm_free(MPI_Comm * comm) {
+  int place = $comm_place(comm->col);
+  int size = $comm_size(comm->col);
+  int buf[size];
+  int gcommIndex = comm->gcommIndex;
+  $scope CMPI_ROOT_SCOPE = CMPI_Root_scope(comm->col);
+
+  //TODO: CMPI_Gather here is just a ugly synchronization
+  CMPI_Gather(&place, 1, MPI_INT, buf, 1, MPI_INT, 0, 
+	      COMMFREE_TAG, (*comm), "MPI_Comm_free synchronization.");
+  CMPI_Comm_destroy(*comm);
+  if(place == 0) {
+    CMPI_Gcomm temp = CMPI_GetGcomm(CMPI_ROOT_SCOPE, gcommIndex);
+
+    CMPI_Gcomm_destroy(temp);
   }
   return 0;
 }

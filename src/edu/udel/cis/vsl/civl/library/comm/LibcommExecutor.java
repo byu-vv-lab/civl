@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -23,6 +24,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -126,6 +128,10 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 			state = this.executeCommSize(state, pid, process, lhs, arguments,
 					argumentValues);
 			break;
+		case "$gcomm_dup":
+			state = this.executeGcommDup(state, pid, process, arguments,
+					argumentValues, call.getSource());
+			break;
 		case "$comm_destroy":
 			state = executeFree(state, pid, process, arguments, argumentValues,
 					call.getSource());
@@ -206,8 +212,9 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		myProc = modelFactory.processValue(pid);
 		// TODO report an error if the place has already been taken by other
 		// processes.
-		assert universe.arrayRead(initArray, (NumericExpression) place).equals(
-				falseValue);
+		// assert universe.arrayRead(initArray, (NumericExpression)
+		// place).equals(
+		// falseValue);
 		// TODO report an error if the place exceeds the size of the
 		// communicator
 		procArray = universe.arrayWrite(procArray, (NumericExpression) place,
@@ -789,6 +796,50 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		}
 		state = this.executeFree(state, pid, process, arguments,
 				argumentValues, source);
+		return state;
+	}
+
+	private State executeGcommDup(State state, int pid, String process,
+			Expression arguments[], SymbolicExpression argumentValues[],
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression newcomm, gcomm, newgcomm;
+		Expression commHandleExpr = arguments[0];
+		Expression newcommHandleExpr = arguments[1];
+		LibcommEvaluator libevaluator;
+		Evaluation eval;
+		SymbolicExpression procArray;
+		SymbolicExpression initArray;
+		SymbolicExpression buf;
+
+		try {
+			libevaluator = (LibcommEvaluator) this.libEvaluatorLoader
+					.getLibraryEvaluator(this.name, evaluator, modelFactory,
+							symbolicUtil, symbolicAnalyzer);
+		} catch (LibraryLoaderException e) {
+			throw new CIVLInternalException("Loading LibcommEvaluator failed",
+					source);
+		}
+		eval = libevaluator.getCommByCommHandleExpr(state, pid, process,
+				commHandleExpr);
+		eval = libevaluator.getGcommByComm(eval.state, pid, process,
+				eval.value, commHandleExpr.getSource());
+		state = eval.state;
+		gcomm = eval.value;
+		eval = libevaluator.getCommByCommHandleExpr(state, pid, process,
+				newcommHandleExpr);
+		newcomm = eval.value;
+		eval = libevaluator.getGcommByComm(eval.state, pid, process,
+				eval.value, newcommHandleExpr.getSource());
+		newgcomm = eval.value;
+		state = eval.state;
+		procArray = universe.tupleRead(gcomm, oneObject);
+		initArray = universe.tupleRead(gcomm, twoObject);
+		buf = universe.tupleRead(gcomm, threeObject);
+		newgcomm = universe.tupleWrite(newgcomm, oneObject, procArray);
+		newgcomm = universe.tupleWrite(newgcomm, twoObject, initArray);
+		newgcomm = universe.tupleWrite(newgcomm, threeObject, buf);
+		state = this.primaryExecutor.assign(source, state, process,
+				universe.tupleRead(newcomm, oneObject), newgcomm);
 		return state;
 	}
 

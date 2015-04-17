@@ -7,8 +7,8 @@
 #include <bundle.cvh>
 #include <mpi.h>
 #include <civl-mpi.cvh>
-#include <stdio.h>
 #include <stdlib.h>
+#include <pointer.cvh>
 
 /* Completed definition for mpi-common.h */
 struct MPI_Request{
@@ -21,6 +21,7 @@ struct MPI_Comm {
   $comm col; // collective communication
   $collect_checker collect_checker;
   $barrier barrier;
+  int gcommIndex; //the index of the corresponding global communicator.
 };
 
 /************************** MPI LIB Implementations *******************************/
@@ -426,6 +427,28 @@ int MPI_Alltoallw(const void* sendbuf, const int sendcounts[], const int sdispls
 		  ptr, recvcounts[i], recvtypes[i], i, 
 		  ALLTOALLW_TAG, comm, "MPI_Alltoallw()");
   }
+  return 0;
+}
+
+int MPI_Comm_dup(MPI_Comm comm, MPI_Comm * newcomm) {
+  __MPI_Sys_status__ curr_status;
+  $scope CMPI_PROC_SCOPE = CMPI_Proc_scope(comm.col);
+
+  curr_status = CMPI_Get_status();
+  $assert(curr_status == __INIT, "MPI_Comm_dup() cannot be invoked without "
+    "MPI_Init() being called before.\n");
+  CMPI_Comm_dup(CMPI_PROC_SCOPE, comm, newcomm, "MPI_Comm_dup");
+  return 0;
+}
+
+int MPI_Comm_free(MPI_Comm * comm) {
+  __MPI_Sys_status__ curr_status;
+
+  curr_status = CMPI_Get_status();
+  $assert(curr_status == __INIT, "MPI_Comm_free() cannot be invoked without "
+    "MPI_Init() being called before.\n");
+  $assert($is_valid_pointer(comm), "The argument of MPI_Comm_free is NULL.");
+  CMPI_Comm_free(comm);
   return 0;
 }
 
