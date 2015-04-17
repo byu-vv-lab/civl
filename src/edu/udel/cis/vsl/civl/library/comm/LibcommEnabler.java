@@ -2,9 +2,11 @@ package edu.udel.cis.vsl.civl.library.comm;
 
 import java.math.BigInteger;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants.DeadlockKind;
@@ -177,7 +179,8 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			} else {
 				// TODO: find out processes in the gcomm, instead of all
 				// processes of the system.
-				for (int otherPid = 0; otherPid < state.numProcs(); otherPid++)
+				for (int otherPid : this.procIdsInComm(state, pid, process,
+						arguments, argumentValues))
 					ampleSet.set(otherPid);
 			}
 			return ampleSet;
@@ -191,11 +194,12 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 
 			if (this.civlConfig.deadlock().equals(DeadlockKind.POTENTIAL)) {
 				BooleanExpression hasMatchedDequeue;
-				
+
 				hasMatchedDequeue = this.hasMatchedDequeue(state, pid, process,
 						call, false);
 				if (hasMatchedDequeue.isFalse()) {
-					for (int otherPid = 0; otherPid < state.numProcs(); otherPid++)
+					for (int otherPid : this.procIdsInComm(state, pid, process,
+							arguments, argumentValues))
 						ampleSet.set(otherPid);
 				}
 			}
@@ -577,5 +581,43 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			return universe.and(universe.and(claim1, claim2), claim3);
 		}
 		return falseValue;
+	}
+
+	// TODO: what if process x still not add itself into gcomm then the value of
+	// it in procArray in gcomm is -1?
+	private Set<Integer> procIdsInComm(State state, int pid, String process,
+			Expression arguments[], SymbolicExpression argumentValues[])
+			throws UnsatisfiablePathConditionException {
+		Expression commHandleExpr = arguments[0];
+		SymbolicExpression commHandle = argumentValues[0];
+		SymbolicExpression comm, gcommHandle, gcomm;
+		SymbolicExpression procArray, nprocs;
+		Evaluation eval;
+		Reasoner reasoner;
+		IntegerNumber nprocsInt;
+		Set<Integer> procs = new HashSet<>();
+
+		eval = evaluator.dereference(commHandleExpr.getSource(), state,
+				process, commHandle, false);
+		state = eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(commHandleExpr.getSource(), state,
+				process, gcommHandle, false);
+		state = eval.state;
+		gcomm = eval.value;
+		procArray = universe.tupleRead(gcomm, oneObject);
+		nprocs = universe.tupleRead(gcomm, zeroObject);
+		reasoner = universe.reasoner(state.getPathCondition());
+		nprocsInt = (IntegerNumber) reasoner
+				.extractNumber((NumericExpression) nprocs);
+		for (int i = 0; i < nprocsInt.intValue(); i++) {
+			int curr_pid = ((IntegerNumber) reasoner
+					.extractNumber((NumericExpression) universe.arrayRead(
+							procArray, universe.integer(i)))).intValue();
+
+			procs.add(curr_pid);
+		}
+		return procs;
 	}
 }
