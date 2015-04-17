@@ -996,8 +996,8 @@ int _pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, $pthread_po
   }
   cond->signal = false;
   pthread_mutex_unlock(mutex);
-  $when(cond->signal || cond->broadcast);
-  cond->signal = false;
+  $when(cond->signal != 0 || cond->broadcast != 0)
+    cond->signal = false;
   $when(mutex->lock == 0){_pthread_mutex_lock(mutex, $pthread_pool);}
   return 0;
 }

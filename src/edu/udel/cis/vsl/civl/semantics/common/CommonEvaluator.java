@@ -1010,8 +1010,8 @@ public class CommonEvaluator implements Evaluator {
 				else {
 					state = errorLogger.logError(arg.getSource(), state,
 							process,
-							this.symbolicAnalyzer.stateInformation(state), claim,
-							resultType, ErrorKind.INVALID_CAST,
+							this.symbolicAnalyzer.stateInformation(state),
+							claim, resultType, ErrorKind.INVALID_CAST,
 							"Cast from non-zero integer to pointer");
 					eval.state = state;
 				}
@@ -1109,7 +1109,8 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException error = new CIVLExecutionException(
 					ErrorKind.INVALID_CAST, Certainty.NONE, process,
 					"SARL could not cast: " + e,
-					this.symbolicAnalyzer.stateInformation(state), arg.getSource());
+					this.symbolicAnalyzer.stateInformation(state),
+					arg.getSource());
 
 			errorLogger.reportError(error);
 			throw new UnsatisfiablePathConditionException();
@@ -1158,8 +1159,8 @@ public class CommonEvaluator implements Evaluator {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
 					"Attempt to dereference an uninitialized pointer.",
-					symbolicAnalyzer.stateInformation(state), expression.pointer()
-							.getSource());
+					symbolicAnalyzer.stateInformation(state), expression
+							.pointer().getSource());
 
 			this.errorLogger.reportError(err);
 			throw new UnsatisfiablePathConditionException();
@@ -1584,7 +1585,7 @@ public class CommonEvaluator implements Evaluator {
 				name = "X" + stateFactory.numSymbolicConstants(state);
 				state = stateFactory.incrementNumSymbolicConstants(state);
 			} else
-				name = "X_s" + dyscopeId + "v" + vid;
+				name = "X_s" + dyscopeId + "v" + vid + "p" + pid;
 			nameObj = universe.stringObject(name);
 			result = universe.symbolicConstant(nameObj, dynamicType);
 		}
@@ -1642,8 +1643,8 @@ public class CommonEvaluator implements Evaluator {
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
 						eval.state, process,
-						this.symbolicAnalyzer.stateInformation(eval.state), claim,
-						resultType, ErrorKind.DIVISION_BY_ZERO,
+						this.symbolicAnalyzer.stateInformation(eval.state),
+						claim, resultType, ErrorKind.DIVISION_BY_ZERO,
 						"Division by zero");
 			}
 			eval.value = universe.divide((NumericExpression) left, denominator);
@@ -1683,8 +1684,8 @@ public class CommonEvaluator implements Evaluator {
 			if (resultType != ResultType.YES) {
 				eval.state = errorLogger.logError(expression.getSource(),
 						eval.state, process,
-						this.symbolicAnalyzer.stateInformation(eval.state), claim,
-						resultType, ErrorKind.DIVISION_BY_ZERO,
+						this.symbolicAnalyzer.stateInformation(eval.state),
+						claim, resultType, ErrorKind.DIVISION_BY_ZERO,
 						"Modulus denominator is zero");
 			}
 			eval.value = universe.modulo((NumericExpression) left, denominator);
@@ -3158,7 +3159,8 @@ public class CommonEvaluator implements Evaluator {
 								process,
 								"Reading undefined or uninitialized value from some pointer to heap: "
 										+ charArray.argument(0),
-								symbolicAnalyzer.stateInformation(state), source);
+								symbolicAnalyzer.stateInformation(state),
+								source);
 
 						errorLogger.reportError(err);
 					}
