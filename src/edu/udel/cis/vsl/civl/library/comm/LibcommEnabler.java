@@ -168,17 +168,12 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			NumericExpression argSrc = (NumericExpression) argumentValues[1];
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
-			// TODO: fix me.
-			// If it's a wild card source comm_dequeue, all processes in
-			// the same communicator will be added into ample set.
 			if (reasoner.isValid(universe.lessThanEquals(zero, argSrc))) {
 				return this.computeAmpleSetByHandleObject(state, pid,
 						arguments[0], argumentValues[0],
 						reachablePtrWritableMap, reachablePtrReadonlyMap,
 						reachableNonPtrWritableMap, reachableNonPtrReadonlyMap);
 			} else {
-				// TODO: find out processes in the gcomm, instead of all
-				// processes of the system.
 				for (int otherPid : this.procIdsInComm(state, pid, process,
 						arguments, argumentValues))
 					ampleSet.set(otherPid);
@@ -597,27 +592,32 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		IntegerNumber nprocsInt;
 		Set<Integer> procs = new HashSet<>();
 
-		eval = evaluator.dereference(commHandleExpr.getSource(), state,
-				process, commHandle, false);
-		state = eval.state;
-		comm = eval.value;
-		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(commHandleExpr.getSource(), state,
-				process, gcommHandle, false);
-		state = eval.state;
-		gcomm = eval.value;
-		procArray = universe.tupleRead(gcomm, oneObject);
-		nprocs = universe.tupleRead(gcomm, zeroObject);
-		reasoner = universe.reasoner(state.getPathCondition());
-		nprocsInt = (IntegerNumber) reasoner
-				.extractNumber((NumericExpression) nprocs);
-		for (int i = 0; i < nprocsInt.intValue(); i++) {
-			int curr_pid = ((IntegerNumber) reasoner
-					.extractNumber((NumericExpression) universe.arrayRead(
-							procArray, universe.integer(i)))).intValue();
-
-			procs.add(curr_pid);
-		}
+		for (int procid = 0; procid < state.numProcs(); procid++)
+			procs.add(procid);
 		return procs;
+		// eval = evaluator.dereference(commHandleExpr.getSource(), state,
+		// process, commHandle, false);
+		// state = eval.state;
+		// comm = eval.value;
+		// gcommHandle = universe.tupleRead(comm, oneObject);
+		// eval = evaluator.dereference(commHandleExpr.getSource(), state,
+		// process, gcommHandle, false);
+		// state = eval.state;
+		// gcomm = eval.value;
+		// procArray = universe.tupleRead(gcomm, oneObject);
+		// nprocs = universe.tupleRead(gcomm, zeroObject);
+		// reasoner = universe.reasoner(state.getPathCondition());
+		// nprocsInt = (IntegerNumber) reasoner
+		// .extractNumber((NumericExpression) nprocs);
+		// for (int i = 0; i < nprocsInt.intValue(); i++) {
+		// SymbolicExpression currProcSym = universe.arrayRead(procArray,
+		// universe.integer(i));
+		// int curr_pid = modelFactory.getProcessId((CIVLSource) null,
+		// currProcSym);
+		// if (curr_pid == -1)
+		// curr_pid = state.numProcs();
+		// procs.add(curr_pid);
+		// }
+		// return procs;
 	}
 }
