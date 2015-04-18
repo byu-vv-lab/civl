@@ -450,7 +450,9 @@ interleavings of the threads.   This defect can be found using
 \section{Verifying C programs}
 CIVL can be used to verify C programs, with a number of transformers. One can also insert macros to C programs to tune it for verification, which, most of time, involves defining input variables. This is usually accomplished by the default macro \texttt{\_CIVL}.
 
-For example, Figure~\ref{fig:CIVLmacro} is a simple program that computes the sum of a number of positive numbers. The program can be compiled by any C compiler, as long as no \texttt{\_CIVL} macro is defined in the command for compiling. When CIVL runs this program, it will automatically have \texttt{\_CIVL} defined and thus \texttt{N} becomes an input variable and \texttt{sum} becomes an output variable and there is an assertion to check the correctness the sum computed by the program.
+For example, Figure~\ref{fig:CIVLmacro} is a simple program that computes the sum of a number of positive numbers. The program can be compiled by any C compiler, as long as no \texttt{\_CIVL} macro is defined in the command for compiling. When CIVL runs this program, it will automatically have \texttt{\_CIVL} defined and thus \texttt{N} becomes an input variable and \texttt{sum} becomes an output variable and there is an assertion to check the correctness the sum computed by the program. 
+
+If one wants to CIVL to treat a program as it is originally, then the command line option \texttt{-\_CIVL} can be set to false to disable the \texttt{\_CIVL} macro.
 
 \begin{figure}[H]
 \begin{small}
@@ -484,15 +486,21 @@ void main() {
   \label{fig:CIVLmacro}
 \end{figure}
 
-\subsection{Verifying CUDA C programs}
 
 \subsection{Verifying MPI C programs}
+CIVL generates default input variables for verifying MPI programs:
+\begin{itemize}
+\item \texttt{\_NPROCS}: number of MPI processes to be created;
+\item \texttt{\_NPROCS\_LOWER\_BOUND}/\texttt{\_NPROCS\_UPPER\_BOUND}: lower/upper bound of the number of MPI processes to be created.
+\end{itemize}
 
+CIVL requires at least either \texttt{\_NPROCS} or \texttt{\_NPROCS\_UPPER\_BOUND} be specified in the command line in order to verify MPI programs. For example, one can specify  \texttt{civl verify -input\_NPROCS=5 ring.c}. 
 
 \subsection{Verifying OpenMP C programs}
+CIVL introduces a default input variables \texttt{THREAD\_MAX} for OpenMP programs. Usually, \texttt{THREAD\_MAX} needs to be specified in the command line. CIVL will create 1 to \texttt{THREAD\_MAX-1} threads for all OpenMP parallel region during the verification. If \texttt{THREAD\_MAX} is not specified, then somewhere in the OpenMP program must be specifying the number of threads explicitly. By default, CIVL applies simplification to OpenMP based on independent loop analysis, and optimally that might reduce the program to be purely sequential. The option \texttt{ompNoSimplify} can be set to false so as to skip such simplification. Another option, \texttt{ompLoopDecomp} can be used to specify the loop decomposition strategy, which can be \texttt{ALL}, \texttt{ROUND\_ROBIN} or \texttt{RANDOM}.
 
-
-\subsection{Verifying Pthreads C programs}
+\subsection{Verifying Pthreads C  and CUDA C programs}
+There are no special option or default input variables for Pthreads or CUDA programs.
 
 
 

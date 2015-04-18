@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v0.17
+                               v1.0
 
 ------------------------------ Overview -------------------------------
 
@@ -10,8 +10,8 @@ CIVL is a framework encompassing...
    functions in any scope.  Together, these features make for
    a very expressive concurrent language that can faithfully
    represent programs using various APIs and parallel languages,
-   such as MPI, OpenMP, CUDA, and Chapel. CIVL-C also provides
-   a number of primitives supporting verification.
+   such as MPI, OpenMP, Pthread, CUDA, and Chapel. CIVL-C also 
+   provides a number of primitives supporting verification.
  * a model checker which uses symbolic execution to verify a
    number of safety properties of CIVL-C programs.   The model
    checker can also be used to verify that two CIVL-C programs
@@ -41,15 +41,16 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.16 -------------------------
+-------------------------- Updates from v 0.17 -------------------------
 
-1. Transformers for CUDA, Pthreads, MPI, OpenMP and hybrid (MPI+OpeMP, MPI+Pthreads) programs
-   are now ready. Refer to examples folder for more information.
+1. Adding supports for MPI collective routines and multiple communicators;
 
-2. Improving the performance of partial order reduction by applying more static analysis and
-   re-implementing dynamic computations.
+2. Adding verification of potential deadlocks;
    
-3. Fixing various bugs.
+3. Improving the printing of states and error messages;
+
+4. Simplifying the language by changing $assert and $assume to 
+   be system functions of civlc.cvh.
    
 ------------------------- Binary Installation -------------------------
 
