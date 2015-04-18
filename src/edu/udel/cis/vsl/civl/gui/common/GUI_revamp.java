@@ -24,7 +24,6 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -46,6 +45,7 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
+import edu.udel.cis.vsl.civl.run.common.CIVLCommand;
 import edu.udel.cis.vsl.gmc.Option;
 
 /**
@@ -789,7 +789,7 @@ public class GUI_revamp extends JFrame {
 		
 		ActionListener delete = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				File folder = new File(serializePath);
+//				File folder = new File(serializePath);
 				savedConfigs.remove(currConfig.getName());
 				DefaultTreeModel model = (DefaultTreeModel) jt_commands.getModel();
                 TreePath[] paths = jt_commands.getSelectionPaths();                
