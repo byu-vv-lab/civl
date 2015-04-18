@@ -583,13 +583,6 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 	private Set<Integer> procIdsInComm(State state, int pid, String process,
 			Expression arguments[], SymbolicExpression argumentValues[])
 			throws UnsatisfiablePathConditionException {
-		Expression commHandleExpr = arguments[0];
-		SymbolicExpression commHandle = argumentValues[0];
-		SymbolicExpression comm, gcommHandle, gcomm;
-		SymbolicExpression procArray, nprocs;
-		Evaluation eval;
-		Reasoner reasoner;
-		IntegerNumber nprocsInt;
 		Set<Integer> procs = new HashSet<>();
 
 		for (int procid = 0; procid < state.numProcs(); procid++)
