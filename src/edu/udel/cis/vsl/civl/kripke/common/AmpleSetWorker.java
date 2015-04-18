@@ -394,7 +394,9 @@ public class AmpleSetWorker {
 										workingProcessIDs.add(otherPid);
 										ampleProcessIDs.set(otherPid);
 									} else if (!this
-											.isWaitingFor(otherPid, pid)) {
+											.isWaitingFor(otherPid, pid)
+											&& !state.getProcessState(otherPid)
+													.hasEmptyStack()) {
 										workingProcessIDs.add(otherPid);
 										ampleProcessIDs.set(otherPid);
 									}
@@ -447,7 +449,9 @@ public class AmpleSetWorker {
 									myAmpleSetActiveSize++;
 									workingProcessIDs.add(amplePid);
 									ampleProcessIDs.set(amplePid);
-								} else if (!this.isWaitingFor(amplePid, pid)) {
+								} else if (!this.isWaitingFor(amplePid, pid)
+										&& !state.getProcessState(amplePid)
+												.hasEmptyStack()) {
 									workingProcessIDs.add(amplePid);
 									ampleProcessIDs.set(amplePid);
 								}
