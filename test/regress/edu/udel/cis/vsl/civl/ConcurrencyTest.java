@@ -32,11 +32,6 @@ public class ConcurrencyTest {
 	}
 
 	@Test
-	public void adder2() {
-		assertTrue(ui.run("verify", "-inputN=4", filename("adder2.cvl")));
-	}
-
-	@Test
 	public void adderBad() {
 		assertFalse(ui.run("verify", "-inputB=4", "-min",
 				filename("adderBad.cvl")));
@@ -133,8 +128,7 @@ public class ConcurrencyTest {
 
 	@Test
 	public void hybrid() {
-		assertFalse(ui.run("verify", "-inputNPROCS=2 -showModel -debug=false",
-				filename("hybrid.cvl")));
+		assertFalse(ui.run("verify", "-inputNPROCS=2", filename("hybrid.cvl")));
 	}
 
 	@Test

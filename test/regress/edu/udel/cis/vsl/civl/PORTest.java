@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
@@ -25,6 +26,11 @@ public class PORTest {
 
 	/* **************************** Test Methods *************************** */
 
+	@Test
+	public void adder2() {
+		assertTrue(ui.run("verify", "-inputN=4", filename("adder2.cvl")));
+	}
+	
 	@Test
 	public void atomic0() {
 		assertFalse(ui.run("verify", filename("atomic0.cvl")));
