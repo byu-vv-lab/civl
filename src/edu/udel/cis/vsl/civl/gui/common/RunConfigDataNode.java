@@ -7,10 +7,22 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.SortedMap;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
+import edu.udel.cis.vsl.civl.run.IF.CommandLine;
+import edu.udel.cis.vsl.civl.run.IF.UserInterface;
+import edu.udel.cis.vsl.civl.run.common.CIVLCommand;
+import edu.udel.cis.vsl.civl.run.common.NormalCommandLine;
+import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GMCSection;
+import edu.udel.cis.vsl.gmc.Option;
 
 /**
  * This class is the container that hold all of the relevant data about a run
@@ -31,21 +43,22 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 * The name of the <code>RunConfig</code>.
 	 */
 	private String name;
-
-	/**
-	 * The command type for this <code>RunConfig</code>.
-	 */
-	private CIVL_Command command;
-
+	
+	//TODO: erase this, we want multiple files not just one
 	/**
 	 * The selected target <code>CIVL</code> file.
 	 */
 	private File selectedFile;
+	
+	/**
+	 * The selected target <code>CIVL</code> files.
+	 */
+	private ArrayList<File> selectedFiles;
 
 	/**
 	 * The list of input values for this Run Configuration.
 	 */
-	private CIVL_Input[] inputs;
+	private ArrayList<CIVL_Input> inputs;
 
 	/**
 	 * Marks whether unsaved changes have been made to the RunConfigDataNode.
@@ -56,7 +69,12 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 * An array that stores all of the Option values
 	 */
 	private Object[] values;
-
+	
+	/**
+	 * A GMC config that is needed for the file
+	 */
+	private GMCConfiguration gmcConfig;
+	
 	/**
 	 * Is this RunConfigDataNode brand new?(true) Has it been modified in any
 	 * way?(false)
@@ -67,24 +85,53 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 * The directory to which the RunConfigDataNode is serialized to.
 	 */
 	private String serializeDestination;
+	
+	/**
+	 * The NormalCommandKind associated with this RunConfigurationDataNode
+	 */
+	public NormalCommandKind commandKind;
+	
+	public boolean tableChanged;	
 
 	// Temporary Values of all fields that can be saved to their permanent
 	// counterparts.
-	// TODO: change to private
+	// TODO: change to private or possibly delete these
 	transient private String temp_name;
 	transient private File temp_selectedFile;
 	transient private CIVL_Input[] temp_inputs;
 	transient private Object[] temp_values;
 
 	// TODO: add documentation to constructor
-	public RunConfigDataNode(CIVL_Command command) {
-		int size = CIVLConstants.getAllOptions().length;
-		this.setValues(new Object[size]);
-		this.command = command;
-		this.setChanged(false);
-		this.brandNew = true;
-	}
+	public RunConfigDataNode(NormalCommandKind commandKind) {
+		SortedMap<String, Option> map = null;
+		this.selectedFiles = new ArrayList<File>();
+		this.inputs = new ArrayList<CIVL_Input>();
+		
+		if(commandKind.equals(NormalCommandKind.RUN)){
+			map = CIVLCommand.getRunOptions();
+			System.out.println(map.values().size());
+		}
+		
+		else if(commandKind.equals(NormalCommandKind.VERIFY)){
+			map = CIVLCommand.getVerifyOrCompareOptions();
+		}
+		
+		else if(commandKind.equals(NormalCommandKind.SHOW)){
+			map = CIVLCommand.getShowOptions();
+		}
+		
+		
+		GMCConfiguration c = new GMCConfiguration(map.values());
+		this.setGmcConfig(c);
+		this.commandKind = commandKind;
 
+		int size = CIVLConstants.getAllOptions().length;
+		this.setValues(new Object[size]); //DEPRECIATED
+		this.setChanged(false);
+		this.brandNew = true;		
+		this.tableChanged = false;
+	}
+	
 	/**
 	 * Checks if the RunConfigDataNode has unsaved data and returns true if it
 	 * does.
@@ -100,9 +147,6 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		if (selectedFile != temp_selectedFile)
 			changedData = true;
 
-		if (inputs != temp_inputs)
-			changedData = true;
-
 		if (values != temp_values)
 			changedData = true;
 
@@ -116,6 +160,7 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 *            True if the changes are to be saved, false otherwise.
 	 */
 	public void saveChanges(boolean saveConfig) {
+		/*
 		if (saveConfig) {
 			if (temp_name != null) {
 				name = temp_name;
@@ -136,6 +181,10 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 			temp_values = null;
 			changed = false;
 			System.out.println("Changes not saved to the config: " + name);
+		}
+		*/
+		if(saveConfig){
+			
 		}
 	}
 
@@ -170,8 +219,10 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 			fileIn.close();
 			System.out.println("Deserialized RunConfig...");
 			System.out.println("Name: " + config.name);
-			System.out.println("File: " + config.selectedFile);
-			System.out.println("Command: " + config.command.getName());
+			for(int i = 0; i < config.getSelectedFiles().size(); i++){
+				System.out.println("File: " + config.getSelectedFiles().get(i));
+			}
+			System.out.println("Command: " + config.commandKind);
 			return config;
 
 		} catch (IOException i) {
@@ -191,13 +242,13 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	public void setSelectedFile(File selectedFile) {
 		this.selectedFile = selectedFile;
 	}
-
-	public CIVL_Command getCommand() {
-		return command;
+	
+	public ArrayList<File> getSelectedFiles() {
+		return selectedFiles;
 	}
 
-	public void setCommand(CIVL_Command command) {
-		this.command = command;
+	public void setSelectedFiles(ArrayList<File> selectedFiles) {
+		this.selectedFiles = selectedFiles;
 	}
 
 	public String getName() {
@@ -216,11 +267,11 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		this.changed = changed;
 	}
 
-	public CIVL_Input[] getInputs() {
+	public ArrayList<CIVL_Input> getInputs() {
 		return inputs;
 	}
 
-	public void setInputs(CIVL_Input[] inputs) {
+	public void setInputs(ArrayList<CIVL_Input> inputs) {
 		this.inputs = inputs;
 	}
 
@@ -287,4 +338,11 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		this.serializeDestination = serializeDestination;
 	}
 
+	public GMCConfiguration getGmcConfig() {
+		return gmcConfig;
+	}
+
+	public void setGmcConfig(GMCConfiguration gmcConfig) {
+		this.gmcConfig = gmcConfig;
+	}
 }

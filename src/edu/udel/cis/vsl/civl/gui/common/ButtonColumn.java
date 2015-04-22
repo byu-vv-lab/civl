@@ -13,6 +13,7 @@ import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
@@ -52,7 +53,7 @@ public class ButtonColumn extends AbstractCellEditor implements
 		editButton.setFocusPainted(false);
 		editButton.addActionListener(this);
 		originalBorder = editButton.getBorder();
-
+		
 		TableColumnModel columnModel = table.getColumnModel();
 		columnModel.getColumn(column).setCellRenderer(this);
 		columnModel.getColumn(column).setCellEditor(this);

@@ -10,9 +10,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.AbstractAction;
@@ -41,12 +45,22 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
+import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.run.common.CIVLCommand;
+import edu.udel.cis.vsl.civl.run.common.NormalCommandLine;
+import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
+import edu.udel.cis.vsl.gmc.CommandLineException;
+import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.gmc.GMCSection;
+import edu.udel.cis.vsl.gmc.MisguidedExecutionException;
 import edu.udel.cis.vsl.gmc.Option;
+import edu.udel.cis.vsl.gmc.Option.OptionType;
 
 /**
  * The GUI that is responsible for creating and running CIVL run configurations.
@@ -77,7 +91,7 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * The currently enabled {@link CIVL_Command}.
 	 */
-	private CIVL_Command currCommand;
+	private NormalCommandKind currCommand;
 
 	/**
 	 * See the method {@link #addToMap(Component)}.
@@ -99,14 +113,18 @@ public class GUI_revamp extends JFrame {
 	 * The number of un-named {@link RunConfigDataNode}.
 	 */
 	private int newConfigsNum;
-	
+
 	/**
 	 * The path to the serialized Run Configurations.
 	 */
 	private static String serializePath;
 
-	protected RunConfigDataNode cachedConfig;
+	private NormalCommandLine commandLine;
 
+	private NormalCommandKind[] comTypesForNodes;
+
+	protected RunConfigDataNode cachedConfig;
+	
 	public GUI_revamp() {
 		setVisible(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -124,7 +142,6 @@ public class GUI_revamp extends JFrame {
 		File f = new File(currDirect + "/doc/RunConfigs");
 		f.mkdirs();
 
-		initCIVL_Commands();
 		loadSavedConfigsMap();
 		initCommandsPanel();
 		initContainer();
@@ -133,15 +150,15 @@ public class GUI_revamp extends JFrame {
 		createComponentMap(this);
 		initLayouts();
 		initListeners(this);
-
 	}
-    
+
 	public void setSerializePath(String path) {
 		serializePath = path;
 	}
 
 	/**
-	 * This function loads all of the serialized run configurations into a map for easy access.
+	 * This function loads all of the serialized run configurations into a map
+	 * for easy access.
 	 */
 	public void loadSavedConfigsMap() {
 		final File folder = new File(serializePath);
@@ -161,7 +178,7 @@ public class GUI_revamp extends JFrame {
 			} else {
 				// if(fileEntry.exstension != ".ser"){
 				RunConfigDataNode temp = new RunConfigDataNode(
-						new CIVL_Command("", "", null, false));
+						NormalCommandKind.RUN);
 				temp.setName(fileEntry.getName());
 				temp.setSerializeDestination(serializePath);
 				if (!(fileEntry.getName().equals("entries"))) {
@@ -170,11 +187,11 @@ public class GUI_revamp extends JFrame {
 				}
 			}
 		}
-		RunConfigDataNode n = savedConfigs.get("c");
-		Object[] o = n.getValues();
-		for(int i = 0; i < o.length; i++){
-			System.out.println(o[i]);
-		}
+		// RunConfigDataNode n = savedConfigs.get("c");
+		// Object[] o = n.getValues();
+		// for(int i = 0; i < o.length; i++){
+		// System.out.println(o[i]);
+		// }
 	}
 
 	/**
@@ -244,6 +261,31 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
+	 * Takes a VariableDeclarationNode and converts it into a CIVL_Input.
+	 * 
+	 * @param vdn
+	 *            The VariableDeclarationNode to be converted
+	 * @return
+	 */
+	private CIVL_Input vdnToInput(VariableDeclarationNode vdn) {
+		String name = vdn.getName();
+		StringBuffer typeBuffer = vdn.getTypeNode().prettyRepresentation();
+		String type = typeBuffer.toString();
+		InitializerNode i = vdn.getInitializer();
+		CIVL_Input ci = new CIVL_Input(name, type);
+
+		if (i == null) {
+			ci.setInitializer("");
+		}
+
+		else {
+			ci.setInitializer(i.toString());
+		}
+
+		return ci;
+	}
+
+	/**
 	 * Gets the {@link TreePath} of a specified {@link DefaultMutableTreeNode}.
 	 * 
 	 * @param root
@@ -267,10 +309,31 @@ public class GUI_revamp extends JFrame {
 		return null;
 	}
 
+	public NormalCommandLine createCommandLine() {
+		// TODO: do this for all commands
+		// File[] files = new File[1];//TODO: Change this so that we can add
+		// more files not just one
+		// files[0] = currConfig.getSelectedFile();
+		Collection<String> files = new ArrayList<String>();
+		//TODO: FIX THIS by using compute core file???
+		files.add(currConfig.getSelectedFiles().get(0).getPath());
+		NormalCommandLine line = new NormalCommandLine();
+		GMCSection cmdSection = currConfig.getGmcConfig().getAnonymousSection();
+		NormalCommandKind cmd = currCommand;
+		line.setCommand(cmd);
+		line.setFiles(files);
+		line.setGMCConfig(currConfig.getGmcConfig());
+		line.setGMCSection(cmdSection);
+
+		line.complete();
+		this.commandLine = line;
+		return line;
+	}
+
 	/**
-	 * Sets the options for the option table of the current run configuration.
+	 * Shows the options for the option table of the current run configuration.
 	 */
-	public void setOptions() {
+	public void showOptions() {
 		CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
 		DefaultTableModel optionModel = (DefaultTableModel) tbl_optionTable
 				.getModel();
@@ -278,27 +341,152 @@ public class GUI_revamp extends JFrame {
 			optionModel.setRowCount(0);
 			tbl_optionTable.clearSelection();
 		}
-		Option[] options = currCommand.getAllowedOptions();
-		for (int i = 0; i < currConfig.getValues().length; i++) {
-			optionModel.addRow(new Object[] { options[i],
-					currConfig.getValues()[i], "Default" });
-			new ButtonColumn(tbl_optionTable, defaultize, 2);
+
+		GMCSection section = currConfig.getGmcConfig().getSection(
+				GMCConfiguration.ANONYMOUS_SECTION);
+		Object[] opts = currConfig.getGmcConfig().getOptions().toArray();
+		Collection<Option> options = currConfig.getGmcConfig().getOptions();
+		System.out.println(options.size());
+		Iterator<Option> iter_opt = options.iterator();
+		List<Object> vals = new ArrayList<Object>();
+
+		while (iter_opt.hasNext()) {
+			Option curr = iter_opt.next();
+			vals.add(section.getValueOrDefault(curr));
+		}
+		
+		//Sets all of the defaultize buttons
+		new ButtonColumn(tbl_optionTable, defaultize, 2);
+		
+		for (int i = 0; i < vals.size(); i++) {
+			Option currOpt = (Option) opts[i];
+				
+			if(currOpt.name().equals("sysIncludePath")){
+				optionModel.addRow(new Object[] { currOpt, "sysIncludePath", "N/A" });
+			}
+			
+			else if(currOpt.name().equals("userIncludePath")){
+				optionModel.addRow(new Object[] { currOpt, "userIncludePath", "N/A" });
+			}
+			
+			else{
+				optionModel.addRow(new Object[] { currOpt, vals.get(i), "Default" });
+			}
 		}
 	}
-	
-	/*
+
+	/**
+	 * Shows the inputs for the option table of the current run configuration.
+	 */
+	public void showInputs() {
+		CIVLTable tbl_inputTable = (CIVLTable) getComponentByName("tbl_inputTable");
+		DefaultTableModel inputModel = (DefaultTableModel) tbl_inputTable
+				.getModel();
+		if (inputModel.getRowCount() != 0) {
+			inputModel.setRowCount(0);
+			tbl_inputTable.clearSelection();
+		}
+		
+		GMCSection gmcs = currConfig.getGmcConfig().getAnonymousSection();
+		ArrayList<CIVL_Input> inputList = currConfig.getInputs();
+		for (int i = 0; i < inputList.size(); i++) {
+			CIVL_Input input = inputList.get(i);
+			inputModel.addRow(new Object[] { input.getName(), input.getType(),
+					input.getValue(), input.getInitializer() });
+			gmcs.putMapEntry(CIVLConstants.inputO, input.getName(), input.getValue());
+		}
+		
+		
+	}
+
+	/**
+	 * Shows the selected files for the option table of the current run
+	 * configuration.
+	 */
+	public void showSelectedFiles() {
+		CIVLTable tbl_fileTable = (CIVLTable) getComponentByName("tbl_fileTable");
+		DefaultTableModel fileModel = (DefaultTableModel) tbl_fileTable
+				.getModel();
+		if (fileModel.getRowCount() != 0) {
+			fileModel.setRowCount(0);
+			tbl_fileTable.clearSelection();
+		}
+
+		ArrayList<File> files = currConfig.getSelectedFiles();
+		for (int i = 0; i < files.size(); i++) {
+			File f = files.get(i);
+			fileModel
+					.addRow(new Object[] { f.getName(), f.getPath(), "Delete" });
+		}
+	}
+
+	public void setOptions() {
+		CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
+		DefaultTableModel optionModel = (DefaultTableModel) tbl_optionTable
+				.getModel();
+
+		Object[] opts = currConfig.getGmcConfig().getOptions().toArray();
+		GMCSection section = currConfig.getGmcConfig().getSection(
+				GMCConfiguration.ANONYMOUS_SECTION);
+		Collection<Option> options = currConfig.getGmcConfig().getOptions();
+		Iterator<Option> iter_opt = options.iterator();
+		List<Object> vals = new ArrayList<Object>();
+
+		for (int j = 0; j < optionModel.getRowCount(); j++) {
+			vals.add(optionModel.getValueAt(j, 1));
+		}
+
+		for (int i = 0; i < vals.size(); i++) {
+			Option currOpt = (Option) opts[i];
+			Object val = vals.get(i);
+
+			if (!currOpt.type().equals(OptionType.MAP))
+				if (val instanceof String
+						&& currOpt.type().equals(OptionType.INTEGER)) {
+					Integer value = Integer.valueOf((String) val);
+					section.setScalarValue(currOpt, value);
+				} else
+					section.setScalarValue(currOpt, val);
+
+		}
+	}
+
+	/**
 	 * Sets the inputs based on the current RunConfiguration's selected file.
 	 */
 	public void setInputs() {
 		CIVLTable tbl_inputTable = (CIVLTable) getComponentByName("tbl_inputTable");
 		DefaultTableModel inputModel = (DefaultTableModel) tbl_inputTable
 				.getModel();
-		CIVL_Input[] inputs = currConfig.getInputs();
-		for (int i = 0; i < currConfig.getValues().length; i++) {
-			inputModel.addRow(new Object[] { inputs[i],
-					""});
-			new ButtonColumn(tbl_inputTable, defaultize, 2);
+		ArrayList<CIVL_Input> inputList = currConfig.getInputs();
+		inputList.clear();
+		GMCSection gmcs = currConfig.getGmcConfig().getAnonymousSection();
+		for (int j = 0; j < inputModel.getRowCount(); j++) {
+			String name = (String) inputModel.getValueAt(j, 0);
+			String type = inputModel.getValueAt(j, 1).toString();
+			Object value = inputModel.getValueAt(j, 2);
+			String init = "";
+
+			if (inputModel.getValueAt(j, 3) != null) {
+				init = inputModel.getValueAt(j, 3).toString();
+			}
+
+			CIVL_Input input = new CIVL_Input(name, type);
+			input.setValue(value);
+			input.setInitializer(init);
+			inputList.add(input);
+			
+			//Add the inputs to the value map in GMCSection
+			gmcs.putMapEntry(CIVLConstants.inputO, input.getName(), input.getValue());
 		}
+		
+				
+		
+	}
+
+	// TODO: Possibly delete as it is not needed
+	public NormalCommandKind getCommandType(String com) {
+		return currCommand;
 	}
 
 	/**
@@ -323,40 +511,60 @@ public class GUI_revamp extends JFrame {
 			} else
 				tf_chooseFile.setText("");
 
-			currCommand = currConfig.getCommand();
-
-			if (currCommand.getName().equals("parse")) {
+			NormalCommandKind currCommand = currConfig.commandKind;
+			// CONFIG, SHOW, VERIFY, REPLAY, GUI, HELP, RUN
+			if (currCommand.equals(NormalCommandKind.CONFIG)) {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				p_view.add(tp_commandView);
 				p_view.validate();
 
-			} else if (currCommand.getName().equals("preprocess")) {
+			} else if (currCommand.equals(NormalCommandKind.GUI)) {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				p_view.add(tp_commandView);
 				p_view.validate();
 
-			} else if (currCommand.getName().equals("replay")) {
+			} else if (currCommand.equals(NormalCommandKind.HELP)) {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				p_view.add(tp_commandView);
 				p_view.validate();
 
-			} else if (currCommand.getName().equals("run")) {
-				//System.out.println(currConfig.getCommand().getName());
+			} else if (currCommand.equals(NormalCommandKind.REPLAY)) {
+				tp_commandView.addTab("Choose File", p_chooseFile);
+				p_view.add(tp_commandView);
+				p_view.validate();
+
+			} else if (currCommand.equals(NormalCommandKind.SHOW)) {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Inputs", p_inputs);
-				setOptions();
 				p_view.add(tp_commandView);
+				// showOptions();
+				// showInputs();
+				showSelectedFiles();
 				p_view.validate();
 
-			} else if (currCommand.getName().equals("verify")){
+			} else if (currCommand.equals(NormalCommandKind.RUN)) {
+				// System.out.println(currConfig.getCommand().getName());
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Inputs", p_inputs);
-				setOptions();
+				p_view.add(tp_commandView);
+				showOptions();
+				showInputs();
+				showSelectedFiles();
+				p_view.validate();
+
+			} else if (currCommand.equals(NormalCommandKind.VERIFY)) {
+				tp_commandView.addTab("Choose File", p_chooseFile);
+				tp_commandView.addTab("Options", p_options);
+				tp_commandView.addTab("Inputs", p_inputs);
+				showOptions();
+				showInputs();
+				showSelectedFiles();
 				p_view.add(tp_commandView);
 				p_view.validate();
 			}
+
 		}
 
 		else {
@@ -365,32 +573,6 @@ public class GUI_revamp extends JFrame {
 			p_view.add(p_info);
 			p_view.validate();
 		}
-	}
-
-	/**
-	 * Initializes all of the {@link CIVL_Command} that are currently supported.
-	 */
-	public void initCIVL_Commands() {
-		commands = new CIVL_Command[5];
-		Option[] options = CIVLConstants.getAllOptions();
-
-		CIVL_Command parse = new CIVL_Command("parse",
-				"show result of preprocessing and parsing filename",
-				new Option[] {}, false);
-		CIVL_Command preprocess = new CIVL_Command("preprocess",
-				"show result of preprocessing filename", new Option[] {}, false);
-		CIVL_Command replay = new CIVL_Command("replay",
-				"replay trace for program filename", new Option[] {}, false);
-		CIVL_Command run = new CIVL_Command("run", "run program filename",
-				options, true);
-		CIVL_Command verify = new CIVL_Command("verify",
-				"verify program filename", options, true);
-
-		commands[0] = parse;
-		commands[1] = preprocess;
-		commands[2] = replay;
-		commands[3] = run;
-		commands[4] = verify;
 	}
 
 	/**
@@ -432,7 +614,8 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * Creates the container {@link JPanel}.
 	 */
-	// TODO: have a unsaved changes pop up window like eclipse run configs
+	// TODO: have a unsaved changes pop up window like eclipse run configs(in
+	// progress)
 	public void initContainer() {
 		JPanel p_container = new JPanel();
 		JPanel p_view = new JPanel();
@@ -442,6 +625,7 @@ public class GUI_revamp extends JFrame {
 		JPanel p_inputs = new JPanel();
 		JScrollPane sp_optionTable = new JScrollPane();
 		JScrollPane sp_inputTable = new JScrollPane();
+		JScrollPane sp_fileTable = new JScrollPane();
 		JTabbedPane tp_commandView = new JTabbedPane();
 		JButton bt_revert = new JButton("Revert");
 		JButton bt_apply = new JButton("Apply");
@@ -458,6 +642,7 @@ public class GUI_revamp extends JFrame {
 		JTextField tf_chooseFile = new JTextField();
 		JTable tbl_optionTable = new CIVLTable(new int[] { 1, 2 }, "option");
 		JTable tbl_inputTable = new CIVLTable(new int[] { 2 }, "input");
+		JTable tbl_fileTable = new CIVLTable(new int[] { 2 }, "file");
 
 		tf_chooseFile.setColumns(58);
 		tf_name.setColumns(10);
@@ -473,6 +658,7 @@ public class GUI_revamp extends JFrame {
 		p_inputs.setName("p_inputs");
 		sp_optionTable.setName("sp_optionTable");
 		sp_inputTable.setName("sp_inputTable");
+		sp_fileTable.setName("sp_fileTable");
 		tp_commandView.setName("tp_commandView");
 		bt_revert.setName("bt_revert");
 		bt_apply.setName("bt_apply");
@@ -482,6 +668,7 @@ public class GUI_revamp extends JFrame {
 		lb_name.setName("lb_name");
 		tbl_optionTable.setName("tbl_optionTable");
 		tbl_inputTable.setName("tbl_inputTable");
+		tbl_fileTable.setName("tbl_fileTable");
 
 		lb_new.setBounds(6, 6, 554, 16);
 		lb_duplicate.setBounds(6, 39, 589, 16);
@@ -489,14 +676,19 @@ public class GUI_revamp extends JFrame {
 
 		sp_optionTable.setViewportView(tbl_optionTable);
 		sp_inputTable.setViewportView(tbl_inputTable);
+		sp_fileTable.setViewportView(tbl_fileTable);
 		tbl_optionTable.setModel(new DefaultTableModel(null, new String[] {
 				"Option", "Value", "Default" }));
 		tbl_inputTable.setModel(new DefaultTableModel(null, new String[] {
-				"Variable", "Type", "Value" }));
+				"Variable", "Type", "Value", "Default" }));
+		tbl_fileTable.setModel(new DefaultTableModel(null, new String[] {
+				"File Name", "File Path", "Delete" }));
 		tbl_optionTable.setCellSelectionEnabled(true);
 		tbl_inputTable.setCellSelectionEnabled(true);
+		tbl_fileTable.setCellSelectionEnabled(true);
 		tbl_optionTable.setRowHeight(30);
 		tbl_inputTable.setRowHeight(30);
+		tbl_fileTable.setRowHeight(30);
 
 		p_container.add(p_view);
 		p_container.add(bt_revert);
@@ -508,9 +700,10 @@ public class GUI_revamp extends JFrame {
 		p_info.add(lb_duplicate);
 		p_info.add(lb_delete);
 
-		p_chooseFile.add(lb_chooseFile);
-		p_chooseFile.add(tf_chooseFile);
+		// p_chooseFile.add(lb_chooseFile);
+		// p_chooseFile.add(tf_chooseFile);
 		p_chooseFile.add(bt_browseFile);
+		p_chooseFile.add(sp_fileTable);
 
 		p_options.add(sp_optionTable);
 		p_inputs.add(sp_inputTable);
@@ -524,9 +717,10 @@ public class GUI_revamp extends JFrame {
 		addToMap(tf_chooseFile);
 		addToMap(sp_optionTable);
 		addToMap(sp_inputTable);
+		addToMap(sp_fileTable);
 		addToMap(tbl_optionTable);
 		addToMap(tbl_inputTable);
-
+		addToMap(tbl_fileTable);
 		add(p_container);
 
 		revalidate();
@@ -583,6 +777,23 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
+	 * Adds the desired RunConfigDataNode to the CommandNode
+	 * 
+	 * @param rcdn
+	 * @param top
+	 */
+	public void addToNode(RunConfigDataNode rcdn, DefaultMutableTreeNode top) {
+		int comTypesNum = top.getChildCount();
+		ArrayList<CommandNode> list = Collections.list(top.children());
+		for (int i = 0; i < comTypesNum; i++) {
+			if (rcdn.commandKind.equals(list.get(i).commandKind)) {
+				list.get(i).add(rcdn);
+				break;
+			}
+		}
+	}
+
+	/**
 	 * Creates all of the the {@link DefaultMutableTreeNode} that will be used
 	 * for the {@link JTree}, jt_commands.
 	 * 
@@ -590,36 +801,23 @@ public class GUI_revamp extends JFrame {
 	 */
 	public DefaultMutableTreeNode initNodes() {
 		DefaultMutableTreeNode top = new DefaultMutableTreeNode("commands");
-		DefaultMutableTreeNode parseNode = new DefaultMutableTreeNode("parse");
-		DefaultMutableTreeNode preprocessNode = new DefaultMutableTreeNode(
-				"preprocess");
-		DefaultMutableTreeNode replayNode = new DefaultMutableTreeNode("replay");
-		DefaultMutableTreeNode runNode = new DefaultMutableTreeNode("run");
-		DefaultMutableTreeNode verifyNode = new DefaultMutableTreeNode("verify");
 
 		Collection<RunConfigDataNode> c = savedConfigs.values();
 
 		Object[] configs = c.toArray();
-		
-		for (int i = 0; i < configs.length; i++) {
-			if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("parse"))
-				parseNode.add((MutableTreeNode) configs[i]);
-			else if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("preprocess"))
-				preprocessNode.add((MutableTreeNode) configs[i]);
-			else if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("replay"))
-				replayNode.add((MutableTreeNode) configs[i]);
-			else if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("run")){
-				runNode.add((MutableTreeNode) configs[i]);
-			}	
-			else if (((RunConfigDataNode) configs[i]).getCommand().getName().equals("verify"))
-				verifyNode.add((MutableTreeNode) configs[i]);
+		Object[] vals = NormalCommandKind.values();
+
+		for (int i = 0; i < vals.length; i++) {
+			String nodeName = vals[i].toString();
+			CommandNode node = new CommandNode(nodeName,
+					(NormalCommandKind) vals[i]);
+			top.add(node);
 		}
 
-		top.add(parseNode);
-		top.add(preprocessNode);
-		top.add(replayNode);
-		top.add(runNode);
-		top.add(verifyNode);
+		for (int i = 0; i < configs.length; i++) {
+			RunConfigDataNode curr = (RunConfigDataNode) configs[i];
+			addToNode(curr, top);
+		}
 
 		return top;
 	}
@@ -639,6 +837,8 @@ public class GUI_revamp extends JFrame {
 		final JTextField tf_name = (JTextField) getComponentByName("tf_name");
 		final JTextField tf_chooseFile = (JTextField) getComponentByName("tf_chooseFile");
 		final CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
+		final CIVLTable tbl_fileTable = (CIVLTable) getComponentByName("tbl_fileTable");
+		final CIVLTable tbl_inputTable = (CIVLTable) getComponentByName("tbl_inputTable");
 
 		jt_commands.setExpandsSelectedPaths(true);
 		jt_commands.addTreeSelectionListener(new TreeSelectionListener() {
@@ -647,16 +847,16 @@ public class GUI_revamp extends JFrame {
 				TreePath selected = jt_commands.getSelectionPath();
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
-				
-					
-				if(selected == null){
+
+				if (selected == null) {
 					System.out.println("Node no longer exists");
-				}
-				else if (selected.getPathCount() == 2) {
+				} else if (selected.getPathCount() == 2) {
 					if (currConfig != null && !currConfig.isBrandNew()) {
 						if (currConfig.isChanged()) {
 							boolean saveConfig;
-							//int response = JOptionPane.showConfirmDialog(gui,"There are unsaved changes in the current "+ "Run Configuration, do you want to save changes?","Save Changes?",JOptionPane.YES_NO_OPTION);
+							// int response =
+							// JOptionPane.showConfirmDialog(gui,"There are unsaved changes in the current "+
+							// "Run Configuration, do you want to save changes?","Save Changes?",JOptionPane.YES_NO_OPTION);
 							int response = 0;
 							if (response == 1)
 								saveConfig = false;
@@ -670,17 +870,20 @@ public class GUI_revamp extends JFrame {
 					}
 					cachedConfig = currConfig;
 					currConfig = null;
+					currCommand = ((CommandNode) node).commandKind;
+
 					drawView();
 					tf_name.setText("");
-					currCommand = getCommand(node.toString());
-					headerText += "  " + currCommand.getName() + ": "
-							+ currCommand.getDescription();
+					// currCommand = getCommand(node.toString());
+					headerText += "  " + node.toString(); // + ": " +
+															// currCommand.getDescription();
 					ta_header.setText(headerText);
 				}
 
 				else if (selected.getPathCount() == 3) {
-					if(currConfig == null){
+					if (currConfig == null) {
 						currConfig = (RunConfigDataNode) node;
+						currCommand = currConfig.commandKind;
 						currConfig.setBrandNew(false);
 						tf_name.setText(currConfig.getName());
 						drawView();
@@ -688,7 +891,9 @@ public class GUI_revamp extends JFrame {
 					if (currConfig != null && !currConfig.isBrandNew()) {
 						if (currConfig.isChanged()) {
 							boolean saveConfig;
-							//int response = JOptionPane.showConfirmDialog(gui,"There are unsaved changes in the current "+ "Run Configuration, do you want to save changes?","Save Changes?",JOptionPane.YES_NO_OPTION);
+							// int response =
+							// JOptionPane.showConfirmDialog(gui,"There are unsaved changes in the current "+
+							// "Run Configuration, do you want to save changes?","Save Changes?",JOptionPane.YES_NO_OPTION);
 							int response = 0;
 							if (response == 1)
 								saveConfig = false;
@@ -702,6 +907,7 @@ public class GUI_revamp extends JFrame {
 					}
 					cachedConfig = currConfig;
 					currConfig = (RunConfigDataNode) node;
+					currCommand = currConfig.commandKind;
 					currConfig.setBrandNew(false);
 					tf_name.setText(currConfig.getName());
 					drawView();
@@ -724,12 +930,44 @@ public class GUI_revamp extends JFrame {
 				FileNameExtensionFilter filter = new FileNameExtensionFilter(
 						"CIVL Files (.cvl)", "cvl");
 				chooser.setFileFilter(filter);
+				final DefaultTableModel currFileModel = (DefaultTableModel) tbl_fileTable
+						.getModel();
+				final DefaultTableModel currInputModel = (DefaultTableModel) tbl_inputTable
+						.getModel();
+
 				chooser.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						File selectedFile = chooser.getSelectedFile();
-						currConfig.setSelectedFile(selectedFile);
+						// currConfig.setSelectedFile(selectedFile);
+						currConfig.getSelectedFiles().add(selectedFile);
+						currFileModel.addRow(new Object[] {
+								selectedFile.getName(), selectedFile.getPath(),
+								"Delete" });
+
 						tf_chooseFile.setText(selectedFile.getName());
-						//currConfig.parseInputs();
+						Object[] files = currConfig.getSelectedFiles()
+								.toArray();
+						String[] filePaths = new String[files.length];
+						for (int i = 0; i < files.length; i++) {
+							filePaths[i] = ((File) files[i]).getPath();
+						}
+						UserInterface ui = new UserInterface();
+						List<VariableDeclarationNode> inputs = ui
+								.getInputVariables(filePaths);
+
+						ArrayList<CIVL_Input> inputList = currConfig
+								.getInputs();
+						
+						for (int j = 0; j < inputs.size(); j++) {
+							VariableDeclarationNode vdn = inputs.get(j);
+							CIVL_Input ci = vdnToInput(vdn);
+							inputList.add(ci);
+							currInputModel.addRow(new Object[] { vdn.getName(),
+									vdn.getTypeNode().prettyRepresentation(),
+									"", vdn.getInitializer() });
+							
+						}
+
 					}
 				});
 				chooser.showOpenDialog(null);
@@ -737,7 +975,7 @@ public class GUI_revamp extends JFrame {
 		};
 
 		bt_browseFile.addActionListener(browseFile);
- 
+
 		defaultize = new AbstractAction() {
 
 			public void actionPerformed(ActionEvent e) {
@@ -766,8 +1004,10 @@ public class GUI_revamp extends JFrame {
 
 		ActionListener apply = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(currConfig != null){
+				if (currConfig != null) {
 					currConfig.saveChanges(true);
+					setOptions();
+					setInputs();
 					currConfig.setUserObject(currConfig.getName());
 					revalidate();
 					repaint();
@@ -780,47 +1020,70 @@ public class GUI_revamp extends JFrame {
 
 		ActionListener run = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				currConfig = currConfig.deserialize();
-				currCommand = currConfig.getCommand();
+				// currConfig = currConfig.deserialize();
+				// currCommand = currConfig.getCommand();
+				UserInterface ui = new UserInterface();
+				System.out.println(currConfig.getGmcConfig()
+						.getAnonymousSection());
+				createCommandLine();
+				Collection<String> files = new ArrayList<String>();
+				// currConfig.getSelectedFile();
+				files.add(currConfig.getSelectedFiles().get(0).getName());
+				// files.add(currConfig.getSelectedFile().getPath());
+				// currConfig.commandLine.setFiles(files);
+				// currConfig.commandLine.complete();
+				//System.out.println(currConfig.getSelectedFile().getPath());
+				//System.out.println(commandLine);
+				//System.out.println(currConfig.getGmcConfig());
+				commandLine.setGMCConfig(currConfig.getGmcConfig());
+
+				try {
+					ui.runNormalCommand(commandLine);
+				} catch (CommandLineException | ABCException | IOException
+						| MisguidedExecutionException e1) {
+					e1.printStackTrace();
+				}
 			}
 		};
 
 		bt_run.addActionListener(run);
-		
+
 		ActionListener delete = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 //				File folder = new File(serializePath);
 				savedConfigs.remove(currConfig.getName());
-				DefaultTreeModel model = (DefaultTreeModel) jt_commands.getModel();
-                TreePath[] paths = jt_commands.getSelectionPaths();                
-                for (TreePath path : paths) {
-                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-                    if (node.getParent() != null) {
-                        model.removeNodeFromParent(node);
-                        File configToDelete = new File(serializePath+currConfig.getName());
-                        configToDelete.delete();
-                    }
-                }
-                currConfig = null;
-                cachedConfig = null;
-                jt_commands.setSelectionRow(0);
-                revalidate();
+				DefaultTreeModel model = (DefaultTreeModel) jt_commands
+						.getModel();
+				TreePath[] paths = jt_commands.getSelectionPaths();
+				for (TreePath path : paths) {
+					DefaultMutableTreeNode node = (DefaultMutableTreeNode) path
+							.getLastPathComponent();
+					if (node.getParent() != null) {
+						model.removeNodeFromParent(node);
+						File configToDelete = new File(serializePath
+								+ currConfig.getName());
+						configToDelete.delete();
+					}
+				}
+				currConfig = null;
+				cachedConfig = null;
+				jt_commands.setSelectionRow(0);
+				revalidate();
 				repaint();
-            }
+			}
 		};
-		
+
 		bt_deleteConfig.addActionListener(delete);
 
 		ActionListener newConfig = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Option[] options = CIVLConstants.getAllOptions();
 				DefaultTreeModel treeModel = (DefaultTreeModel) jt_commands
 						.getModel();
 				Object config = savedConfigs.get(tf_name.getText());
 				boolean dontCreate = false;
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
-				CIVL_Command selectedCom = getCommand(node.toString());
+				// CIVL_Command selectedCom = getCommand(node.toString());
 
 				if (config != null) {
 					dontCreate = true;
@@ -832,8 +1095,11 @@ public class GUI_revamp extends JFrame {
 					DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) jt_commands
 							.getLastSelectedPathComponent();
 
+					// DefaultMutableTreeNode newChild = new
+					// RunConfigDataNode(selectedCom);
+					System.out.println(currCommand);
 					DefaultMutableTreeNode newChild = new RunConfigDataNode(
-							selectedCom);
+							currCommand);
 					String newName = tf_name.getText();
 					if (tf_name.getText().equals(null)
 							|| tf_name.getText().equals("")) {
@@ -848,10 +1114,8 @@ public class GUI_revamp extends JFrame {
 					currConfig.setName(newName);
 					((RunConfigDataNode) currConfig)
 							.setSerializeDestination(serializePath);
+					showOptions();
 
-					for (int i = 0; i < currConfig.getValues().length; i++) {
-						currConfig.getValues()[i] = options[i].defaultValue();
-					}
 					savedConfigs.put(currConfig.getName(), currConfig);
 
 					if (selected.getPathCount() != 1)
@@ -889,7 +1153,7 @@ public class GUI_revamp extends JFrame {
 		 * 
 		 * });
 		 */
-		
+
 		tf_name.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
@@ -900,10 +1164,9 @@ public class GUI_revamp extends JFrame {
 			@Override
 			public void removeUpdate(DocumentEvent e) {
 				if (currConfig == null)
-					if(cachedConfig != null)
+					if (cachedConfig != null)
 						cachedConfig.setTemp_name(tf_name.getText());
-				else
-					if(currConfig != null)
+					else if (currConfig != null)
 						currConfig.setTemp_name(tf_name.getText());
 			}
 
@@ -913,8 +1176,8 @@ public class GUI_revamp extends JFrame {
 			}
 		});
 
-		//tbl_optionTable.getModel().addTableModelListener(tbl_optionTable); //Already done in constructor for CIVL_Table
-		
+		// tbl_optionTable.getModel().addTableModelListener(tbl_optionTable);
+		// //Already done in constructor for CIVL_Table
 
 	}
 

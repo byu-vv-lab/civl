@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
+import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.event.EventListenerList;
@@ -22,7 +23,7 @@ import edu.udel.cis.vsl.gmc.Option;
  * @author noyes
  * 
  */
-public class CIVLTable extends JTable implements MouseListener{
+public class CIVLTable extends JTable implements MouseListener {
 	/**
 	 * 
 	 */
@@ -65,11 +66,25 @@ public class CIVLTable extends JTable implements MouseListener{
 	 * The renderer for option values.
 	 */
 	private OptionCellRenderer option_render;
-	
+
 	/**
 	 * The list of EventListeners
 	 */
 	protected EventListenerList listenerList = new EventListenerList();
+
+	/**
+	 * The JButton editors that will be used to render the browse file button
+	 * for the include path options.
+	 */
+	private BrowseButtonCellEditor browsePathSys_edit;
+	private BrowseButtonCellEditor browsePathUser_edit;
+
+	/**
+	 * The JButton renderers that will be used to render the browse file button
+	 * for the include path options.
+	 */
+	private BrowseButtonCellRenderer browsePathSys_render;
+	private BrowseButtonCellRenderer browsePathUser_render;
 
 	/**
 	 * This custom class renders option values as option.name() in uneditable
@@ -97,6 +112,11 @@ public class CIVLTable extends JTable implements MouseListener{
 		option_render = new OptionCellRenderer();
 		text_render = new FormattedTextFieldRenderer();
 		text_edit = new FormattedTextFieldEditor();
+		browsePathSys_render = new BrowseButtonCellRenderer("sysIncludePath");
+		browsePathSys_edit = new BrowseButtonCellEditor("sysIncludePath");
+		browsePathUser_render = new BrowseButtonCellRenderer("userIncludePath");
+		browsePathUser_edit = new BrowseButtonCellEditor("userIncludePath");
+
 		this.editableCols = editableCols;
 		this.tableType = tableType;
 		this.addMouseListener(this);
@@ -114,11 +134,32 @@ public class CIVLTable extends JTable implements MouseListener{
 	 */
 	public TableCellEditor getCellEditor(int row, int column) {
 		Object value = super.getValueAt(row, column);
+		Option opt = null;
+		if (this.tableType.equals("option")) {
+			opt = (Option) super.getValueAt(row, 0);
+		}
+		
+		if (opt != null) {
+			if (opt.name().equals("sysIncludePath")) {
+				return browsePathSys_edit;
+			}
+
+			else if (opt.name().equals("userIncludePath")) {
+				return browsePathUser_edit;
+			}
+		}
+
 		if (value == null)
 			value = "";
 
-		if (value instanceof Number) {
-			return text_edit;
+		else if (value instanceof String) {
+			String val = (String) value;
+
+			if (val.equals("sysIncludePath"))
+				return browsePathSys_edit;
+
+			else if (val.equals("userIncludePath"))
+				return browsePathUser_edit;
 		}
 
 		// only for option table
@@ -145,11 +186,29 @@ public class CIVLTable extends JTable implements MouseListener{
 	 */
 	public TableCellRenderer getCellRenderer(int row, int column) {
 		Object value = super.getValueAt(row, column);
+
 		if (value == null)
 			value = "";
 
-		if (value instanceof Number) {
-			return text_render;
+		/*
+		 * if (value instanceof Number) { return text_render; }
+		 */
+
+		/*
+		 * if(opt.name().equals("sysIncludePath")){ return browsePathSys_render;
+		 * }
+		 * 
+		 * else if(opt.name().equals("userIncludePath")){ return
+		 * browsePathUser_render; }
+		 */
+
+		if (value instanceof String) {
+			String val = (String) value;
+			if (val.equals("sysIncludePath"))
+				return browsePathSys_render;
+
+			else if (val.equals("userIncludePath"))
+				return browsePathUser_render;
 		}
 
 		// only for option table
@@ -157,8 +216,8 @@ public class CIVLTable extends JTable implements MouseListener{
 				&& tableType == "option") {
 			return text_render;
 		}
-		
-		else if (value instanceof Option){
+
+		else if (value instanceof Option) {
 			option_render.option = (Option) value;
 			return option_render;
 		}
@@ -192,12 +251,12 @@ public class CIVLTable extends JTable implements MouseListener{
 
 		return found;
 	}
-	
+
 	/**
 	 * Sets the toolTip text that describes each option.
 	 * 
 	 * @param e
-	 * 		The mouse event.
+	 *            The mouse event.
 	 * 
 	 * @return The Tool Tip Text for the desired cell.
 	 */
@@ -218,7 +277,7 @@ public class CIVLTable extends JTable implements MouseListener{
 
 		return tip;
 	}
-	
+
 	public void addSaveTableListener(SaveTableListener listener) {
 		listenerList.add(SaveTableListener.class, listener);
 	}
@@ -226,7 +285,7 @@ public class CIVLTable extends JTable implements MouseListener{
 	public void removeSaveTableListener(SaveTableListener listener) {
 		listenerList.remove(SaveTableListener.class, listener);
 	}
-	
+
 	void fireSaveTableEvent(SaveTableEvent evt) {
 		Object[] listeners = listenerList.getListenerList();
 		for (int i = 0; i < listeners.length; i = i + 2) {
@@ -244,14 +303,13 @@ public class CIVLTable extends JTable implements MouseListener{
 			if (colIndex == 1 && tableType == "option") {
 				fireSaveTableEvent(new SaveTableEvent(this));
 				System.out.println("fire table save");
-			}
-			else if (colIndex == 2 && tableType == "input") {
-				//save input code of some kind
+			} else if (colIndex == 2 && tableType == "input") {
+				// save input code of some kind
 			}
 		} catch (RuntimeException e1) {
 			// catch null pointer exception if mouse is over an empty line
 		}
-		
+
 	}
 
 	@Override
@@ -269,5 +327,5 @@ public class CIVLTable extends JTable implements MouseListener{
 	@Override
 	public void mouseExited(MouseEvent e) {
 	}
-	
+
 }
