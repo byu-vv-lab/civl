@@ -37,8 +37,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.antlr.v4.runtime.misc.NotNull;
-
 import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
@@ -65,7 +63,6 @@ import edu.udel.cis.vsl.civl.model.IF.ModelBuilder;
 import edu.udel.cis.vsl.civl.model.IF.Models;
 import edu.udel.cis.vsl.civl.run.common.CIVLCommand;
 import edu.udel.cis.vsl.civl.run.common.CIVLCommandFactory;
-import edu.udel.cis.vsl.civl.run.common.CommandParser;
 import edu.udel.cis.vsl.civl.run.common.CompareCommandLine;
 import edu.udel.cis.vsl.civl.run.common.HelpCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine;
@@ -855,21 +852,5 @@ public class UserInterface {
 
 	private void setToDefault(GMCSection config, Option option) {
 		config.setScalarValue(option, option.defaultValue());
-	}
-	
-	public static Object translateValue(@NotNull CommandParser.ValueContext ctx) {
-		if (ctx.VAR() != null) {
-			return ctx.VAR().getText();
-		} else if (ctx.BOOLEAN() != null) {
-			if (ctx.BOOLEAN().getText().equals("true"))
-				return true;
-			else
-				return false;
-		} else if (ctx.NUMBER() != null) {
-			// NUMBER
-			return Integer.parseInt(ctx.NUMBER().getText());
-		} else
-			// PATH
-			return ctx.PATH().getText();
 	}
 }

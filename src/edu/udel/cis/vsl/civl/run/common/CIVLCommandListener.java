@@ -12,7 +12,6 @@ import org.antlr.v4.runtime.misc.NotNull;
 
 import edu.udel.cis.vsl.civl.run.IF.CommandLine;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandLineKind;
-import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.gmc.GMCSection;
@@ -173,18 +172,34 @@ public class CIVLCommandListener extends CommandBaseListener implements
 		Option option = optionMap.get(optionName);
 
 		if (ctx.value() != null) {
-			Object value = UserInterface.translateValue(ctx.value());
+			Object value = this.translateValue(ctx.value());
 
 			cmdSection.setScalarValue(option, value);
 		} else if (option.type() == OptionType.BOOLEAN)
 			cmdSection.setScalarValue(option, true);
 	}
 
+	private Object translateValue(@NotNull CommandParser.ValueContext ctx) {
+		if (ctx.VAR() != null) {
+			return ctx.VAR().getText();
+		} else if (ctx.BOOLEAN() != null) {
+			if (ctx.BOOLEAN().getText().equals("true"))
+				return true;
+			else
+				return false;
+		} else if (ctx.NUMBER() != null) {
+			// NUMBER
+			return Integer.parseInt(ctx.NUMBER().getText());
+		} else
+			// PATH
+			return ctx.PATH().getText();
+	}
+
 	@Override
 	public void enterInputOption(@NotNull CommandParser.InputOptionContext ctx) {
 		Option option = mapOptionMap.get("input");
 		String key = ctx.VAR().getText();
-		Object value = UserInterface.translateValue(ctx.value());
+		Object value = this.translateValue(ctx.value());
 
 		cmdSection.putMapEntry(option, key, value);
 	}
