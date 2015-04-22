@@ -191,4 +191,20 @@ public class CIVLCommand {
 			return verifyOrCompareOptions.containsKey(option.name());
 		}
 	}
+	
+	public static SortedMap<String, Option> getReplayOptions(){
+		return replayOptions;
+	}
+	
+	public static SortedMap<String, Option> getRunOptions(){
+		return runOptions;
+	}
+	
+	public static SortedMap<String, Option> getShowOptions(){
+		return showOptions;
+	}
+	
+	public static SortedMap<String, Option> getVerifyOrCompareOptions(){
+		return verifyOrCompareOptions;
+	}
 }
