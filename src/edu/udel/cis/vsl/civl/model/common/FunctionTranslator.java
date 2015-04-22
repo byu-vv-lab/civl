@@ -134,6 +134,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
@@ -148,6 +149,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
@@ -791,8 +793,8 @@ public class FunctionTranslator {
 			location = modelFactory.location(lhs.getSource(), scope);
 			assign = modelFactory.assignStatement(source, location, lhs, rhs,
 					isInitializer);
+			this.normalizeAssignment((AssignStatement) assign);
 			return new CommonFragment(assign);
-
 		}
 	}
 
@@ -913,15 +915,15 @@ public class FunctionTranslator {
 		}
 		loopEntranceLocation = modelFactory.location(condition.getSource(),
 				loopScope);
+		// incrementer comes after the loop body
+		loopEntrance = new CommonFragment(loopEntranceLocation,
+				modelFactory.loopBranchStatement(condition.getSource(),
+						loopEntranceLocation, condition, true));
 		// the loop entrance location is the same as the loop exit location
 		loopExit = new CommonFragment(modelFactory.loopBranchStatement(
 				condition.getSource(), loopEntranceLocation, modelFactory
 						.unaryExpression(condition.getSource(),
 								UNARY_OPERATOR.NOT, condition), false));
-		// incrementer comes after the loop body
-		loopEntrance = new CommonFragment(loopEntranceLocation,
-				modelFactory.loopBranchStatement(condition.getSource(),
-						loopEntranceLocation, condition, true));
 		if (beforeCondition != null) {
 			loopEntrance = beforeCondition.combineWith(loopEntrance);
 		}
@@ -1236,6 +1238,23 @@ public class FunctionTranslator {
 				elementType, scopeExpression, sizeExpression, mallocId, null);
 		modelBuilder.mallocStatements.add(result);
 		return result;
+	}
+
+	private void normalizeAssignment(AssignStatement assign) {
+		LHSExpression lhs = assign.getLhs();
+		Expression rhs = assign.rhs();
+
+		if (rhs instanceof BinaryExpression) {
+			BinaryExpression binary = (BinaryExpression) rhs;
+			Expression leftOperand = binary.left(), rightOperand = binary
+					.right();
+
+			if (leftOperand.equals(lhs))
+				binary.setAssignToLeft(true);
+			else if (rightOperand.equals(lhs)) {
+				binary.setAssignToLeft(binary.switchOperands());
+			}
+		}
 	}
 
 	/**

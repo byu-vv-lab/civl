@@ -238,11 +238,6 @@ public interface Location extends Sourceable {
 	 */
 	void purelyLocalAnalysisForOutgoing();
 
-	/**
-	 * 
-	 * @return True if this location is possible to form a loop
-	 */
-	boolean isLoopPossible();
 
 	/**
 	 * During the translation of AST node into CIVL model, it is possible to
@@ -331,4 +326,8 @@ public interface Location extends Sourceable {
 	boolean hasSpawn();
 
 	void staticAnalysis();
+	
+	void setSafeLoop(boolean value);
+	
+	boolean isSafeLoop();
 }

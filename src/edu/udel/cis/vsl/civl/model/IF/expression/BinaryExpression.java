@@ -53,4 +53,23 @@ public interface BinaryExpression extends Expression {
 	 * @return The right operand.
 	 */
 	Expression right();
+
+	void setAssignToLeft(boolean value);
+
+	/**
+	 * Is the value of this binary expression going to be assigned to the
+	 * left-hand-side operand?
+	 * 
+	 * @return
+	 */
+	boolean isAssignToLeft();
+
+	/**
+	 * Switch the left and right operands when the operator is symmetric, and
+	 * return true; If the operator is not symmetric, then do nothing and return
+	 * false.
+	 * 
+	 * @return
+	 */
+	boolean switchOperands();
 }

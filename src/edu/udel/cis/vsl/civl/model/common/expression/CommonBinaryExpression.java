@@ -48,6 +48,12 @@ public class CommonBinaryExpression extends CommonExpression implements
 	 */
 	private Expression right;
 
+	/**
+	 * True iff the value of this expression is to be assigned to the left
+	 * operand.
+	 */
+	private boolean isAssignToLeft;
+
 	/* **************************** Constructor **************************** */
 
 	/**
@@ -355,5 +361,52 @@ public class CommonBinaryExpression extends CommonExpression implements
 					this);
 		}
 		return op;
+	}
+
+	@Override
+	public void setAssignToLeft(boolean value) {
+		this.isAssignToLeft = value;
+	}
+
+	@Override
+	public boolean isAssignToLeft() {
+		return this.isAssignToLeft;
+	}
+
+	@Override
+	public boolean switchOperands() {
+		if (!isSymmetric(this.operator))
+			return false;
+
+		Expression tmp = left;
+
+		this.left = right;
+		this.right = tmp;
+		return true;
+	}
+
+	/**
+	 * AND, BITAND, BITCOMPLEMENT, BITOR, BITXOR, DIVIDE, EQUAL, IMPLIES,
+	 * LESS_THAN, LESS_THAN_EQUAL, MINUS, MODULO, NOT_EQUAL, OR, PLUS,
+	 * POINTER_ADD, POINTER_SUBTRACT, SHIFTLEFT, SHIFTRIGHT, TIMES
+	 * 
+	 * @param op
+	 * @return
+	 */
+	private static boolean isSymmetric(BINARY_OPERATOR op) {
+		switch (op) {
+		case AND:
+		case BITAND:
+		case BITOR:
+		case BITXOR:
+		case EQUAL:
+		case NOT_EQUAL:
+		case OR:
+		case PLUS:
+		case TIMES:
+			return true;
+		default:
+			return false;
+		}
 	}
 }

@@ -124,6 +124,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 	 */
 	private int spawnBound = 0;
 
+	private boolean isSafeLoop = false;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -237,11 +239,6 @@ public class CommonLocation extends CommonSourceable implements Location {
 	}
 
 	@Override
-	public boolean isLoopPossible() {
-		return this.loopPossible;
-	}
-
-	@Override
 	public boolean isPurelyLocal() {
 		return this.purelyLocal;
 	}
@@ -338,7 +335,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 	public void purelyLocalAnalysis() {
 		// Usually, a location is purely local if it has exactly one outgoing
 		// statement that is purely local
-		if ((this.isStart && incoming.size() > 0) || incoming.size() != 1) {
+		if ((this.isStart && incoming.size() > 0) || (incoming.size() != 1 && !this.isSafeLoop)) {
 			this.purelyLocal = false;
 			return;
 		}
@@ -734,6 +731,16 @@ public class CommonLocation extends CommonSourceable implements Location {
 	@Override
 	public boolean hasSpawn() {
 		return this.spawnBound > 0;
+	}
+
+	@Override
+	public void setSafeLoop(boolean value) {
+		this.isSafeLoop = value;
+	}
+
+	@Override
+	public boolean isSafeLoop() {
+		return this.isSafeLoop;
 	}
 
 }

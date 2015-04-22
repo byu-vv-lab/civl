@@ -248,6 +248,7 @@ public class CommonStateManager implements StateManager {
 				numStatesExplored++;
 			}
 		} else {
+			// FIXME needs to commit all symbolic expressions?
 			// if (config.collectProcesses())
 			// state = stateFactory.collectProcesses(state);
 			// try {
@@ -366,7 +367,7 @@ public class CommonStateManager implements StateManager {
 			if (pidInAtomic != -1) {
 				// the process is in atomic execution
 				assert pidInAtomic == pid;
-				if (pLocation.getNumIncoming() > 1
+				if ((pLocation.getNumIncoming() > 1 && !pLocation.isSafeLoop())
 						|| (pLocation.isStart() && pLocation.getNumIncoming() > 0))
 					// possible loop, save state
 					return new StateStatus(false, null, atomCount,

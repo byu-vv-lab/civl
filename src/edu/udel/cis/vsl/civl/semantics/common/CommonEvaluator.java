@@ -621,6 +621,7 @@ public class CommonEvaluator implements Evaluator {
 		Reasoner reasoner = universe.reasoner(assumption);
 
 		// true && x = x;
+		// TODO is it more efficient to call canonic before the valid call?
 		if (reasoner.isValid(p))
 			return evaluate(eval.state, pid, expression.right());
 		if (reasoner.isValid(universe.not(p))) {

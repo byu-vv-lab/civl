@@ -34,10 +34,16 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.LoopBranchStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
@@ -683,6 +689,9 @@ public class ModelBuilderWorker {
 			}
 			debugOut.println();
 		}
+		if (debugging) {
+			debugOut.println("static analysis of locations...");
+		}
 		for (CIVLFunction f : model.functions()) {
 			// purely local statements can only be
 			// identified after ALL variables have been
@@ -695,17 +704,125 @@ public class ModelBuilderWorker {
 				}
 			}
 		}
+		if (debugging) {
+			debugOut.println("loop analysis of locations...");
+		}
 		for (CIVLFunction f : model.functions()) {
 			// purely local locations that enters an atomic block needs future
 			// statements to be checked, thus it can only be
 			// identified after ALL statements have been
 			// checked for being purely local or not
 			for (Location loc : f.locations()) {
+				if (debugging) {
+					debugOut.println("analyzing location " + loc.id() + " ...");
+				}
+				this.loopAnalysis(loc);
 				loc.purelyLocalAnalysis();
 				factory.computeImpactScopeOfLocation(loc);
 			}
 		}
 		memUnitAnalyzer.memoryUnitAnalysis(model);
+	}
+
+	/**
+	 * Identifies loops that satisfy the following conditions:
+	 * <ol>
+	 * <li>has one iteration variable</li>
+	 * <li>the iteration variable is only modified by the last statement
+	 * (incremental)</li>
+	 * <li>the condition has the form <code>i < N</code> (or <code>i > N</code>)
+	 * </li>
+	 * <li>the loop has finite iterations (can be decided statically)</li>
+	 * </ol>
+	 * 
+	 * @param location
+	 */
+	private void loopAnalysis(Location location) {
+		if (location.getNumOutgoing() == 2) {
+			Statement outgoing0 = location.getOutgoing(0), outgoing1 = location
+					.getOutgoing(1);
+
+			// loop detected
+			if ((outgoing0 instanceof LoopBranchStatement)
+					&& (outgoing1 instanceof LoopBranchStatement)) {
+				LoopBranchStatement loopEnter;
+				Expression condition;
+				Statement increment;
+				LHSExpression iterVar;
+
+				if (((LoopBranchStatement) outgoing0).isEnter()) {
+					loopEnter = (LoopBranchStatement) outgoing0;
+				} else {
+					loopEnter = (LoopBranchStatement) outgoing1;
+				}
+				condition = loopEnter.guard();
+				if (condition.hasConstantValue()
+						&& condition.constantValue().isTrue())
+					return;
+				increment = this.getIncrement(location, loopEnter);
+				if (increment instanceof AssignStatement) {
+					AssignStatement assign = (AssignStatement) increment;
+					Expression incrExpr = assign.rhs();
+
+					iterVar = assign.getLhs();
+					if (condition instanceof BinaryExpression) {
+						BinaryExpression binary = (BinaryExpression) condition;
+						Expression condLeft = binary.left(), condRight = binary
+								.right();
+						BINARY_OPERATOR condOp = binary.operator();
+
+						if (condOp != BINARY_OPERATOR.LESS_THAN
+								&& condOp != BINARY_OPERATOR.LESS_THAN_EQUAL)
+							return;
+						if (incrExpr instanceof BinaryExpression) {
+							BinaryExpression incrementExpr = (BinaryExpression) incrExpr;
+							BINARY_OPERATOR incrOp = incrementExpr.operator();
+							Expression incrLeft = incrementExpr.left(), incrRight = incrementExpr
+									.right();
+
+							if (condLeft.equals(iterVar)) {
+								// i < K, then the increment should be i = i + x
+								// or i = x + i;
+								if (incrOp != BINARY_OPERATOR.PLUS)
+									return;
+								if (incrLeft.equals(iterVar)
+										|| incrRight.equals(iterVar)) {
+									location.setSafeLoop(true);
+								}
+							} else if (condRight.equals(iterVar)) {
+								// K < i, then the increment should be i = i - x
+								if (incrOp != BINARY_OPERATOR.MINUS)
+									return;
+								if (incrLeft.equals(iterVar))
+									location.setSafeLoop(true);
+							}
+						}
+					}
+
+				}
+
+			}
+		}
+	}
+
+	private Statement getIncrement(Location loopStart, Statement loopEnter) {
+		Statement current = loopEnter;
+		int startId = loopStart.id();
+
+		if (current.target() == null)
+			return null;
+		do {
+			Location next = current.target();
+
+			current = next.getOutgoing(0);
+			if (current instanceof LoopBranchStatement) {
+				if (((LoopBranchStatement) current).isEnter())
+					current = next.getOutgoing(1);
+			}
+			if (current.target() == null)
+				return null;
+		} while (current.target().id() != startId);
+		return current;
 	}
 
 	/* *************************** Public Methods ************************** */

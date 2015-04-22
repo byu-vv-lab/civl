@@ -3,8 +3,10 @@ package edu.udel.cis.vsl.civl.model.common.statement;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.LoopBranchStatement;
 
-public class CommonLoopBranchStatement extends CommonNoopStatement {
+public class CommonLoopBranchStatement extends CommonNoopStatement implements
+		LoopBranchStatement {
 
 	/* *************************** Instance Fields ************************* */
 
@@ -42,4 +44,8 @@ public class CommonLoopBranchStatement extends CommonNoopStatement {
 			return "LOOP_BODY_EXIT";
 	}
 
+	@Override
+	public boolean isEnter() {
+		return this.isTrueBranch;
+	}
 }
