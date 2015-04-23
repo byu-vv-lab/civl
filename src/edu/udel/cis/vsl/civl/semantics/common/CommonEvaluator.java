@@ -616,27 +616,28 @@ public class CommonEvaluator implements Evaluator {
 			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluate(state, pid, expression.left());
-		BooleanExpression p = (BooleanExpression) eval.value;
+		BooleanExpression leftValue = (BooleanExpression) eval.value;
 		BooleanExpression assumption = eval.state.getPathCondition();
 		Reasoner reasoner = universe.reasoner(assumption);
 
 		// true && x = x;
 		// TODO is it more efficient to call canonic before the valid call?
-		if (reasoner.isValid(p))
+		if (reasoner.isValid(leftValue))
 			return evaluate(eval.state, pid, expression.right());
-		if (reasoner.isValid(universe.not(p))) {
+		if (reasoner.isValid(universe.not(leftValue))) {
 			// false && x = false;
 			eval.value = universe.falseExpression();
 			return eval;
 		} else {
-			BooleanExpression assumptionAndp = universe.and(assumption, p);
+			BooleanExpression assumptionAndp = universe.and(assumption,
+					leftValue);
 			State s1 = eval.state.setPathCondition(assumptionAndp);
 			Evaluation eval1 = evaluate(s1, pid, expression.right());
 			BooleanExpression pcTemp = eval1.state.getPathCondition();
 
 			if (!assumptionAndp.equals(pcTemp)) {
 				BooleanExpression pc = universe.or(pcTemp,
-						universe.and(assumption, universe.not(p)));
+						universe.and(assumption, universe.not(leftValue)));
 
 				eval.state = eval.state.setPathCondition(pc);
 			}
@@ -649,7 +650,9 @@ public class CommonEvaluator implements Evaluator {
 			// (i.e., the evaluation of expression.right() did not
 			// add any side-effects). If this holds, then pc is just
 			// assumption.
-			eval.value = universe.and(p, (BooleanExpression) eval1.value);
+			// TODO check if assign to left
+			eval.value = universe.and(leftValue,
+					(BooleanExpression) eval1.value);
 			return eval;
 		}
 	}
@@ -1069,6 +1072,7 @@ public class CommonEvaluator implements Evaluator {
 				SymbolicExpression newCharValue;
 				ResultType retType;
 
+				//TODO change to andTo
 				insideRangeClaim = universe.and(
 						universe.lessThan(zero, integerValue),
 						universe.lessThan(integerValue, universe.integer(255)));
@@ -1751,6 +1755,7 @@ public class CommonEvaluator implements Evaluator {
 					universe.and(assumption, p));
 
 			eval.state = eval.state.setPathCondition(pc);
+			//TODO change to orTo
 			eval.value = universe.or(p, (BooleanExpression) eval1.value);
 			return eval;
 		}
@@ -1777,11 +1782,13 @@ public class CommonEvaluator implements Evaluator {
 
 			assert lower.value instanceof NumericExpression;
 			assert upper.value instanceof NumericExpression;
+			//TODO change to andTo
 			rangeRestriction = universe.and(universe.lessThanEquals(
 					(NumericExpression) lower.value,
 					(NumericExpression) boundVariable), universe
 					.lessThanEquals((NumericExpression) boundVariable,
 							(NumericExpression) upper.value));
+			//TODO change to andTo
 			stateWithRestriction = state.setPathCondition(universe.and(
 					(BooleanExpression) rangeRestriction,
 					state.getPathCondition()));
@@ -1983,6 +1990,7 @@ public class CommonEvaluator implements Evaluator {
 		if (arrayType.isComplete()) {
 			NumericExpression length = universe.length(array);
 			BooleanExpression assumption = eval.state.getPathCondition();
+			//TODO change to andTo
 			BooleanExpression claim = universe.and(
 					universe.lessThanEquals(zero, index),
 					universe.lessThan(index, length));
@@ -2773,6 +2781,7 @@ public class CommonEvaluator implements Evaluator {
 					newIndex = universe.divide(remainder, capacity);
 					checkClaim = universe.lessThan(newIndex,
 							dimExtents.get(arrayDim - 1 - i));
+					//TODO change to andTo
 					checkClaim = universe.and(checkClaim,
 							universe.lessThanEquals(zero, newIndex));
 					checkResultType = reasoner.valid(checkClaim)
@@ -3291,6 +3300,7 @@ public class CommonEvaluator implements Evaluator {
 				OffsetReference offsetRef = (OffsetReference) symRef;
 				NumericExpression oldOffset = offsetRef.getOffset();
 				NumericExpression newOffset = universe.add(oldOffset, offset);
+				//TODO change to andTo
 				BooleanExpression claim = universe.and(
 						universe.lessThanEquals(zero, newOffset),
 						universe.lessThanEquals(newOffset, one));

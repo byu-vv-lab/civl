@@ -269,6 +269,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return this.falseValue;
 		offset = numRefs2 - numRefs1;
 		for (int i = offset; i < numRefs1; i++) {
+			//TODO change to andTo
 			result = universe.and(result, universe.equals(refComps1.get(i),
 					refComps2.get(i + offset)));
 		}
@@ -420,6 +421,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				(NumericExpression) step);
 		BooleanExpression negativeStep = universe.lessThan(
 				(NumericExpression) step, zero);
+		//TODO change to andTo
 		BooleanExpression positiveStepResult = universe.and(positiveStep,
 				universe.lessThanEquals((NumericExpression) value,
 						(NumericExpression) high));

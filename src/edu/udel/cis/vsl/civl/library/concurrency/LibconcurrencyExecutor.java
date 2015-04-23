@@ -860,6 +860,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 			return Arrays.asList(false, "operation", resultType, claim);
 		claim = universe.equals(
 				universe.tupleRead(unmarked_record, numTypesIdx), numTypes);
+		//TODO change to andTo
 		claim = universe.and(claim, universe.equals(
 				universe.tupleRead(unmarked_record, typesIdx), datatypesArray));
 		resultType = reasoner.valid(claim).getResultType();

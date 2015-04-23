@@ -263,6 +263,7 @@ public abstract class LibraryComponent {
 				BooleanExpression notPrevData = universe
 						.not((BooleanExpression) arg1);
 
+				//TODO change to andTo
 				return universe.or(
 						universe.and(notNewData, (BooleanExpression) arg1),
 						universe.and((BooleanExpression) arg0, notPrevData));

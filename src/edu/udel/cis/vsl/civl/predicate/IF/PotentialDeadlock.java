@@ -223,6 +223,7 @@ public class PotentialDeadlock implements CIVLStatePredicate {
 
 							claim = libEnabler.hasMatchedDequeue(state, pid,
 									process, call, true);
+							// TODO change to andTo
 							guard = universe.and(guard, claim);
 							predicate = universe.or(predicate, claim);
 						}

@@ -573,6 +573,7 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 			claim2 = universe.or(claim2,
 					universe.equals(myTag, universe.integer(-2)));
 			claim3 = universe.equals(myGcommHandle, enqueueGcommHandle);
+			// TODO change to andTo
 			return universe.and(universe.and(claim1, claim2), claim3);
 		}
 		return falseValue;
