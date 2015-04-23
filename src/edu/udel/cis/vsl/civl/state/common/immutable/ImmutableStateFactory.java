@@ -581,6 +581,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 	@Override
 	public int processInAtomic(State state) {
+		//TODO use a field for vid
 		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0,
 				modelFactory.atomicLockVariableExpression().variable().vid());
 

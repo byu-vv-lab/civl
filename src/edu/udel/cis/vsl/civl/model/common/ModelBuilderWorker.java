@@ -39,6 +39,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATO
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -716,7 +717,7 @@ public class ModelBuilderWorker {
 				if (debugging) {
 					debugOut.println("analyzing location " + loc.id() + " ...");
 				}
-				this.loopAnalysis(loc);
+				this.loopAnalysis(loc, addressedOfVariables);
 				loc.purelyLocalAnalysis();
 				factory.computeImpactScopeOfLocation(loc);
 			}
@@ -736,8 +737,10 @@ public class ModelBuilderWorker {
 	 * </ol>
 	 * 
 	 * @param location
+	 * @param addressedOfVariables
 	 */
-	private void loopAnalysis(Location location) {
+	private void loopAnalysis(Location location,
+			Set<Variable> addressedOfVariables) {
 		if (location.getNumOutgoing() == 2) {
 			Statement outgoing0 = location.getOutgoing(0), outgoing1 = location
 					.getOutgoing(1);
@@ -745,15 +748,18 @@ public class ModelBuilderWorker {
 			// loop detected
 			if ((outgoing0 instanceof LoopBranchStatement)
 					&& (outgoing1 instanceof LoopBranchStatement)) {
-				LoopBranchStatement loopEnter;
+				LoopBranchStatement loopEnter, loopExit;
 				Expression condition;
 				Statement increment;
 				LHSExpression iterVar;
 
 				if (((LoopBranchStatement) outgoing0).isEnter()) {
 					loopEnter = (LoopBranchStatement) outgoing0;
+					loopExit = (LoopBranchStatement) outgoing1;
+
 				} else {
 					loopEnter = (LoopBranchStatement) outgoing1;
+					loopExit = (LoopBranchStatement) outgoing0;
 				}
 				condition = loopEnter.guard();
 				if (condition.hasConstantValue()
@@ -765,6 +771,19 @@ public class ModelBuilderWorker {
 					Expression incrExpr = assign.rhs();
 
 					iterVar = assign.getLhs();
+					// The loop body modifies the iteration variable
+					if (iterVar instanceof VariableExpression) {
+						Variable var = ((VariableExpression) iterVar)
+								.variable();
+
+						// iteration variable could be modified through
+						// pointers.
+						if (addressedOfVariables.contains(var))
+							return;
+					}
+					if (modifiesIterVarInBody(loopEnter.target(), iterVar,
+							increment.source(), loopExit.target()))
+						return;
 					if (condition instanceof BinaryExpression) {
 						BinaryExpression binary = (BinaryExpression) condition;
 						Expression condLeft = binary.left(), condRight = binary
@@ -805,6 +824,60 @@ public class ModelBuilderWorker {
 		}
 	}
 
+	/**
+	 * Checks if the iteration variable is modified anywhere in the loop body
+	 * except the increment.
+	 * 
+	 * @param loopStart
+	 * @param iterVar
+	 * @param increment
+	 * @return
+	 */
+	private boolean modifiesIterVarInBody(Location loopStart,
+			LHSExpression iterVar, Location increment, Location loopExit) {
+		Stack<Location> working = new Stack<>();
+		Set<Location> visited = new HashSet<>();
+		int incrementId = increment.id(), exitId = loopExit.id();
+
+		working.add(loopStart);
+		visited.add(loopStart);
+		while (!working.isEmpty()) {
+			Location current = working.pop();
+
+			for (Statement statement : current.outgoing()) {
+				if (modifiesVariable(iterVar, statement))
+					return true;
+				Location target = statement.target();
+
+				if (target != null && !visited.contains(target)
+						&& target.id() != incrementId && target.id() != exitId) {
+					working.add(target);
+					visited.add(target);
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean modifiesVariable(LHSExpression iterVar, Statement statement) {
+		if (statement instanceof AssignStatement) {
+			LHSExpression lhs = ((AssignStatement) statement).getLhs();
+
+			return lhs.equals(iterVar);
+		}
+		return false;
+	}
+
+	/**
+	 * Finds the increment statement of a loop, which is the last statement in
+	 * the loop body.
+	 * 
+	 * @param loopStart
+	 *            the start location of the loop
+	 * @param loopEnter
+	 *            the enter statement of the loop
+	 * @return
+	 */
 	private Statement getIncrement(Location loopStart, Statement loopEnter) {
 		Statement current = loopEnter;
 		int startId = loopStart.id();

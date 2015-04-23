@@ -499,6 +499,14 @@ public class AmpleSetWorker {
 	}
 
 	// is pid1 waiting for pid2?
+	/**
+	 * Returns true iff process pid1 is waiting for process pid2 at the current
+	 * state.
+	 * 
+	 * @param pid1
+	 * @param pid2
+	 * @return
+	 */
 	private boolean isWaitingFor(int pid1, int pid2) {
 		if (this.waitMap[pid1] != null)
 			return waitMap[pid1].get(pid2);

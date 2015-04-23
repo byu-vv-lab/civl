@@ -1406,7 +1406,9 @@ public class FunctionTranslator {
 						modelFactory.sourceOf(node));
 			}
 			break;
-
+		case PRAGMA://ignored pragma
+			result = new CommonFragment();
+			break;
 		case TYPEDEF:
 			// TypedefDeclarationNode node has to be processed separately from
 			// StructureOrUnionTypeNode, because TypedefDeclarationNode is not a
