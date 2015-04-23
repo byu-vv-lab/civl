@@ -71,9 +71,13 @@ public class CIVLExecutionException extends CIVLException {
 	public String toString() {
 		StringBuffer result = new StringBuffer();
 
-		result.append("CIVL execution error in ");
-		result.append(process);
-		result.append(" (kind: ");
+		result.append("CIVL execution violation ");
+		if (process != null) {
+			result.append("in ");
+			result.append(process);
+			result.append(" ");
+		}
+		result.append("(kind: ");
 		result.append(kind);
 		result.append(", certainty: ");
 		result.append(certainty);
