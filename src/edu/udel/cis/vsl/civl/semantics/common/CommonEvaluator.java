@@ -422,8 +422,9 @@ public class CommonEvaluator implements Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	Evaluation dereference(CIVLSource source, State state, String process,
-			SymbolicExpression pointer, boolean checkOutput,
-			boolean analysisOnly) throws UnsatisfiablePathConditionException {
+			Expression pointerExpression, SymbolicExpression pointer,
+			boolean checkOutput, boolean analysisOnly)
+			throws UnsatisfiablePathConditionException {
 		if (!pointer.type().equals(this.pointerType)) {
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
@@ -454,11 +455,21 @@ public class CommonEvaluator implements Evaluator {
 				int sid = symbolicUtil.getDyscopeId(source, pointer);
 
 				if (sid < 0) {
-					errorLogger.logSimpleError(source, state, process,
-							symbolicAnalyzer.stateInformation(state),
-							ErrorKind.DEREFERENCE,
-							"Attempt to dereference pointer into scope"
-									+ " which has been removed from state");
+					errorLogger
+							.logSimpleError(
+									source,
+									state,
+									process,
+									symbolicAnalyzer.stateInformation(state),
+									ErrorKind.DEREFERENCE,
+									"Attempt to dereference pointer into scope"
+											+ " which has been removed from state: \npointer expression: "
+											+ pointerExpression.toString()
+											+ "\nevaluation: "
+											+ this.symbolicAnalyzer
+													.symbolicExpressionToString(
+															source, state,
+															pointer));
 					throw new UnsatisfiablePathConditionException();
 				} else {
 					int vid = symbolicUtil.getVariableId(source, pointer);
@@ -1072,7 +1083,7 @@ public class CommonEvaluator implements Evaluator {
 				SymbolicExpression newCharValue;
 				ResultType retType;
 
-				//TODO change to andTo
+				// TODO change to andTo
 				insideRangeClaim = universe.and(
 						universe.lessThan(zero, integerValue),
 						universe.lessThan(integerValue, universe.integer(255)));
@@ -1171,7 +1182,7 @@ public class CommonEvaluator implements Evaluator {
 			throw new UnsatisfiablePathConditionException();
 		}
 		return dereference(expression.pointer().getSource(), eval.state,
-				process, eval.value, true);
+				process, expression.pointer(), eval.value, true);
 	}
 
 	/**
@@ -1755,7 +1766,7 @@ public class CommonEvaluator implements Evaluator {
 					universe.and(assumption, p));
 
 			eval.state = eval.state.setPathCondition(pc);
-			//TODO change to orTo
+			// TODO change to orTo
 			eval.value = universe.or(p, (BooleanExpression) eval1.value);
 			return eval;
 		}
@@ -1782,13 +1793,13 @@ public class CommonEvaluator implements Evaluator {
 
 			assert lower.value instanceof NumericExpression;
 			assert upper.value instanceof NumericExpression;
-			//TODO change to andTo
+			// TODO change to andTo
 			rangeRestriction = universe.and(universe.lessThanEquals(
 					(NumericExpression) lower.value,
 					(NumericExpression) boundVariable), universe
 					.lessThanEquals((NumericExpression) boundVariable,
 							(NumericExpression) upper.value));
-			//TODO change to andTo
+			// TODO change to andTo
 			stateWithRestriction = state.setPathCondition(universe.and(
 					(BooleanExpression) rangeRestriction,
 					state.getPathCondition()));
@@ -1990,7 +2001,7 @@ public class CommonEvaluator implements Evaluator {
 		if (arrayType.isComplete()) {
 			NumericExpression length = universe.length(array);
 			BooleanExpression assumption = eval.state.getPathCondition();
-			//TODO change to andTo
+			// TODO change to andTo
 			BooleanExpression claim = universe.and(
 					universe.lessThanEquals(zero, index),
 					universe.lessThan(index, length));
@@ -2648,7 +2659,7 @@ public class CommonEvaluator implements Evaluator {
 
 			arrayPtr = symbolicUtil.parentPointer(source, pointer);
 			index = ((ArrayElementReference) ref).getIndex();
-			eval = dereference(source, state, process, arrayPtr, false);
+			eval = dereference(source, state, process, null, arrayPtr, false);
 			state = eval.state;
 			if (!(eval.value.type() instanceof SymbolicCompleteArrayType))
 				throw new CIVLInternalException(
@@ -2755,7 +2766,8 @@ public class CommonEvaluator implements Evaluator {
 				}
 				dim = oldIndexes.size();
 				arrayRootPtr = symbolicUtil.arrayRootPtr(arrayPtr, source);
-				eval = dereference(source, state, process, arrayRootPtr, false);
+				eval = dereference(source, state, process, null, arrayRootPtr,
+						false);
 				state = eval.state;
 				dimExtents = symbolicUtil.arrayExtents(source, eval.value, dim);
 				dimCapacities = symbolicUtil.getArrayElementsSizes(eval.value,
@@ -2781,7 +2793,7 @@ public class CommonEvaluator implements Evaluator {
 					newIndex = universe.divide(remainder, capacity);
 					checkClaim = universe.lessThan(newIndex,
 							dimExtents.get(arrayDim - 1 - i));
-					//TODO change to andTo
+					// TODO change to andTo
 					checkClaim = universe.and(checkClaim,
 							universe.lessThanEquals(zero, newIndex));
 					checkResultType = reasoner.valid(checkClaim)
@@ -3105,9 +3117,10 @@ public class CommonEvaluator implements Evaluator {
 
 	@Override
 	public Evaluation dereference(CIVLSource source, State state,
-			String process, SymbolicExpression pointer, boolean checkOutput)
-			throws UnsatisfiablePathConditionException {
-		return dereference(source, state, process, pointer, checkOutput, false);
+			String process, Expression pointerExpr, SymbolicExpression pointer,
+			boolean checkOutput) throws UnsatisfiablePathConditionException {
+		return dereference(source, state, process, pointerExpr, pointer,
+				checkOutput, false);
 	}
 
 	/**
@@ -3132,7 +3145,8 @@ public class CommonEvaluator implements Evaluator {
 	 */
 	@Override
 	public Triple<State, StringBuffer, Boolean> getString(CIVLSource source,
-			State state, String process, SymbolicExpression charPointer)
+			State state, String process, Expression charPointerExpr,
+			SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException {
 		if (charPointer.operator() == SymbolicOperator.CONCRETE) {
 			SymbolicSequence<?> originalArray = null;
@@ -3151,7 +3165,7 @@ public class CommonEvaluator implements Evaluator {
 							.parentPointer(source, charPointer);
 					SymbolicExpression charArray;
 
-					eval = dereference(source, state, process,
+					eval = dereference(source, state, process, null,
 							pointerCharArray, false);
 					state = eval.state;
 					charArray = eval.value;
@@ -3178,8 +3192,8 @@ public class CommonEvaluator implements Evaluator {
 							((ArrayElementReference) ref).getIndex());
 
 				} else {
-					eval = dereference(source, state, process, charPointer,
-							false);
+					eval = dereference(source, state, process, charPointerExpr,
+							charPointer, false);
 					state = eval.state;
 					// A single character is not acceptable.
 					if (eval.value.arguments().length <= 1)
@@ -3215,7 +3229,7 @@ public class CommonEvaluator implements Evaluator {
 			SymbolicExpression arrayReference = symbolicUtil.parentPointer(
 					source, charPointer);
 			NumericExpression indexExpr = arrayEltRef.getIndex();
-			Evaluation eval = this.dereference(source, state, process,
+			Evaluation eval = this.dereference(source, state, process, null,
 					arrayReference, false);
 			int index;
 
@@ -3300,7 +3314,7 @@ public class CommonEvaluator implements Evaluator {
 				OffsetReference offsetRef = (OffsetReference) symRef;
 				NumericExpression oldOffset = offsetRef.getOffset();
 				NumericExpression newOffset = universe.add(oldOffset, offset);
-				//TODO change to andTo
+				// TODO change to andTo
 				BooleanExpression claim = universe.and(
 						universe.lessThanEquals(zero, newOffset),
 						universe.lessThanEquals(newOffset, one));
@@ -3429,7 +3443,7 @@ public class CommonEvaluator implements Evaluator {
 		}
 		// Get array by dereferencing array pointer
 		eval = this.dereference(expression.left().getSource(), state, process,
-				arrayPtr, false);
+				null, arrayPtr, false);
 		state = eval.state;
 		array = eval.value;
 		dimCapacities = symbolicUtil.getArrayElementsSizes(array, expression

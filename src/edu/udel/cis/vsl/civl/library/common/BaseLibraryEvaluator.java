@@ -336,8 +336,8 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 									+ dataSize
 									+ ".\nNumber of elements can be stored in the object: "
 									+ universe.add(ptrInterval, one) + ".\n");
-		eval = evaluator.dereference(source, state, process, startPointer,
-				false);
+		eval = evaluator.dereference(source, state, process, null,
+				startPointer, false);
 		state = eval.state;
 		leastCommonArray = eval.value;
 		// If the result of dereferencing is not an array type, then the
@@ -515,7 +515,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		dataLength = universe.add(universe.subtract(endPos, startPos), one);
 		assert (reasoner.isValid(universe.lessThanEquals(zero, dataLength)));
 		oldLeastCommonArray = evaluator.dereference(source, state, process,
-				startPointer, false).value;
+				null, startPointer, false).value;
 		if (!(oldLeastCommonArray.type() instanceof SymbolicArrayType)) {
 			BooleanExpression claim = universe.equals(dataLength, one);
 

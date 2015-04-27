@@ -406,7 +406,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression filesystemPointer = argumentValues[0];
 		Evaluation eval = evaluator.dereference(expressions[0].getSource(),
-				state, process, filesystemPointer, false);
+				state, process, expressions[0], filesystemPointer, false);
 		CIVLSource modeSource = expressions[2].getSource();
 		int mode = symbolicUtil.extractInt(modeSource,
 				(NumericExpression) argumentValues[2]);
@@ -664,7 +664,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		filesystemPointer = eval.value;
 		state = eval.state;
 		eval = evaluator.dereference(fileSystemExpression.getSource(), state,
-				process, filesystemPointer, false);
+				process, fileSystemExpression, filesystemPointer, false);
 		state = eval.state;
 		fileSystemStructure = eval.value;
 		fileArray = universe.tupleRead(fileSystemStructure, oneObject);
@@ -741,7 +741,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression outputArray;
 
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
-				civlFileSystemPointer, false);
+				arguments[0], civlFileSystemPointer, false);
 		state = eval.state;
 		fileArray = universe.tupleRead(eval.value, oneObject);
 		length = universe.length(fileArray);
@@ -801,14 +801,14 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		// TODO: position is never cleared if another process open and read the
 		// file.
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
-				argumentValues[0], false);
+				arguments[0], argumentValues[0], false);
 		fileStream = eval.value;
 		state = eval.state;
 		filePointer = universe.tupleRead(fileStream, zeroObject);
 		position = (NumericExpression) universe
 				.tupleRead(fileStream, twoObject);
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
-				filePointer, false);
+				null, filePointer, false);
 		state = eval.state;
 		fileObject = eval.value;
 		{// checks file length
@@ -832,7 +832,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			}
 		}
 		formatString = this.evaluator.getString(arguments[1].getSource(),
-				state, process, argumentValues[1]);
+				state, process, arguments[1], argumentValues[1]);
 		formatBuffer = formatString.second;
 		state = formatString.first;
 		{ // reads the file
@@ -1015,21 +1015,21 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		List<Format> formats;
 
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
-				argumentValues[0], false);
+				arguments[0], argumentValues[0], false);
 		fileStream = eval.value;
 		state = eval.state;
 		filePointer = universe.tupleRead(fileStream, zeroObject);
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
-				filePointer, false);
+				null, filePointer, false);
 		fileObject = eval.value;
 		state = eval.state;
 		fileName = universe.tupleRead(fileObject, zeroObject);
-		stringResult = this.evaluator.getString(source, state, process,
+		stringResult = this.evaluator.getString(source, state, process, null,
 				fileName);
 		state = stringResult.first;
 		fileNameString = stringResult.second.toString();
 		concreteString = this.evaluator.getString(arguments[1].getSource(),
-				state, process, argumentValues[1]);
+				state, process, arguments[1], argumentValues[1]);
 		formatBuffer = concreteString.second;
 		state = concreteString.first;
 		formats = this.primaryExecutor.splitFormat(arguments[1].getSource(),
@@ -1052,9 +1052,9 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 					throw new CIVLSyntaxException("Array pointer unaccepted",
 							arguments[i].getSource());
 				}
-				concreteString = this.evaluator
-						.getString(arguments[i].getSource(), state, process,
-								argumentValue);
+				concreteString = this.evaluator.getString(
+						arguments[i].getSource(), state, process, arguments[i],
+						argumentValue);
 				stringOfSymbolicExpression = concreteString.second;
 				state = concreteString.first;
 				printedContents.add(stringOfSymbolicExpression);

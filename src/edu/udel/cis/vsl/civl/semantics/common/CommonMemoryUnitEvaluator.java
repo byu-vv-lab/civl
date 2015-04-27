@@ -247,13 +247,13 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitExpressionEvaluator 
 									.parentPointer(null, expr);
 
 							eval = evaluator.dereference(null, state, process,
-									arrayPointer, false, true);
+									null, arrayPointer, false, true);
 							/* Check if it's length == 0 */
 							if (universe.length(eval.value).isZero())
 								return;
 						}
 						eval = evaluator.dereference(null, state, process,
-								expr, false, true);
+								null, expr, false, true);
 						pointerValue = eval.value;
 						state = eval.state;
 						if (pointerValue.operator() == SymbolicOperator.CONCRETE

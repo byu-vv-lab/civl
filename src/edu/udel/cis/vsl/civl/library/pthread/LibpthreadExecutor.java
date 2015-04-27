@@ -163,11 +163,12 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		SymbolicExpression threadPointer;
 
-		eval = this.evaluator.dereference(source, state, process, pool, false);
+		eval = this.evaluator.dereference(source, state, process, arguments[0],
+				pool, false);
 		poolObj = eval.value;
 		state = eval.state;
 		threadPointer = universe.tupleRead(poolObj, this.twoObject);
-		eval = this.evaluator.dereference(source, state, process,
+		eval = this.evaluator.dereference(source, state, process, null,
 				threadPointer, false);
 		state = eval.state;
 		if (lhs != null)
@@ -201,11 +202,13 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		SymbolicExpression result = trueValue;
 
-		eval = this.evaluator.dereference(source, state, process, pool, false);
+		eval = this.evaluator.dereference(source, state, process, arguments[0],
+				pool, false);
 		poolObject = eval.value;
 		state = eval.state;
 		gpool = universe.tupleRead(poolObject, zeroObject);
-		eval = this.evaluator.dereference(source, state, process, gpool, false);
+		eval = this.evaluator.dereference(source, state, process, null, gpool,
+				false);
 		state = eval.state;
 		gpoolObject = eval.value;
 		threads = universe.tupleRead(gpoolObject, zeroObject);
@@ -216,7 +219,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 					universe.integer(i));
 			SymbolicExpression threadObj, threadId;
 
-			eval = this.evaluator.dereference(source, state, process,
+			eval = this.evaluator.dereference(source, state, process, null,
 					threadPointer, false);
 			threadObj = eval.value;
 			state = eval.state;
@@ -241,7 +244,8 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression gpoolObject, threadPointer, threadObj, result;
 		Evaluation eval;
 
-		eval = this.evaluator.dereference(source, state, process, gpool, false);
+		eval = this.evaluator.dereference(source, state, process, arguments[0],
+				gpool, false);
 		gpoolObject = eval.value;
 		state = eval.state;
 		threadPointer = universe.arrayRead(
@@ -249,7 +253,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		if (!symbolicUtil.isValidPointer(threadPointer))
 			result = modelFactory.nullProcessValue();
 		else {
-			eval = this.evaluator.dereference(source, state, process,
+			eval = this.evaluator.dereference(source, state, process, null,
 					threadPointer, false);
 			threadObj = eval.value;
 			state = eval.state;
@@ -283,8 +287,8 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 
 		if (symbolicUtil.isValidPointer(gpool)) {
-			eval = this.evaluator.dereference(source, state, process, gpool,
-					false);
+			eval = this.evaluator.dereference(source, state, process,
+					arguments[0], gpool, false);
 			gpoolObject = eval.value;
 			state = eval.state;
 			result = universe.length(universe
@@ -319,7 +323,8 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression threadPointer;
 		SymbolicExpression threadTermPointer, threadExitValuePointer;
 
-		eval = this.evaluator.dereference(source, state, process, pool, false);
+		eval = this.evaluator.dereference(source, state, process, arguments[0],
+				pool, false);
 		poolObj = eval.value;
 		state = eval.state;
 		threadPointer = universe.tupleRead(poolObj, this.twoObject);
@@ -348,7 +353,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression threadPointer = universe.tupleRead(
 				argumentValues[0], this.twoObject);
 		Evaluation eval = this.evaluator.dereference(source, state, process,
-				threadPointer, false);
+				null, threadPointer, false);
 		SymbolicExpression thread = eval.value;
 
 		state = eval.state;
@@ -370,7 +375,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression threadPointer = universe.tupleRead(
 				argumentValues[0], this.twoObject);
 		Evaluation eval = this.evaluator.dereference(source, state, process,
-				threadPointer, false);
+				null, threadPointer, false);
 		SymbolicExpression thread = eval.value;
 
 		state = eval.state;
@@ -427,7 +432,8 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		SymbolicExpression gpoolObj, threads;
 
-		eval = this.evaluator.dereference(source, state, process, gpool, false);
+		eval = this.evaluator.dereference(source, state, process, arguments[0],
+				gpool, false);
 		gpoolObj = eval.value;
 		state = eval.state;
 		threads = universe.tupleRead(gpoolObj, this.zeroObject);
@@ -464,7 +470,8 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		SymbolicExpression threadPointer, pool;
 
-		eval = this.evaluator.dereference(source, state, process, gpool, false);
+		eval = this.evaluator.dereference(source, state, process, arguments[1],
+				gpool, false);
 		gpoolObject = eval.value;
 		state = eval.state;
 		eval = this
@@ -501,7 +508,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			SymbolicExpression thread, threadId;
 			int threadId_int;
 
-			eval = this.evaluator.dereference(source, state, process,
+			eval = this.evaluator.dereference(source, state, process, null,
 					threadPointer, false);
 			thread = eval.value;
 			state = eval.state;
@@ -550,7 +557,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		CIVLSource poolPointerSource = arguments[0].getSource();
 		SymbolicExpression pool;
 		Evaluation eval = evaluator.dereference(poolPointerSource, state,
-				process, poolPointer, false);
+				process, arguments[0], poolPointer, false);
 		NumericExpression len;
 		SymbolicExpression threads;
 

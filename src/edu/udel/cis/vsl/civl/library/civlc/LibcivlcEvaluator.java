@@ -164,7 +164,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 				procPointer = eval.value;
 				state = eval.state;
 				eval = evaluator.dereference(procsSource, state, process,
-						procPointer, false);
+						pointerAdd, procPointer, false);
 				proc = eval.value;
 				state = eval.state;
 				pidValue = modelFactory.getProcessId(procsSource, proc);

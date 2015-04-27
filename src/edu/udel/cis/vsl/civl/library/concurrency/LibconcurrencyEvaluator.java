@@ -94,7 +94,7 @@ public class LibconcurrencyEvaluator extends BaseLibraryEvaluator implements
 		SymbolicExpression gbarrier;
 		SymbolicExpression gbarrierObj;
 		Evaluation eval = evaluator.dereference(source, state, process,
-				barrier, false);
+				arguments.get(0), barrier, false);
 		SymbolicExpression inBarrierArray;
 		SymbolicExpression meInBarrier;
 
@@ -103,7 +103,8 @@ public class LibconcurrencyEvaluator extends BaseLibraryEvaluator implements
 		myPlace = (NumericExpression) universe
 				.tupleRead(barrierObj, zeroObject);
 		gbarrier = universe.tupleRead(barrierObj, oneObject);
-		eval = evaluator.dereference(source, state, process, gbarrier, false);
+		eval = evaluator.dereference(source, state, process, null, gbarrier,
+				false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		inBarrierArray = universe.tupleRead(gbarrierObj, twoObject);

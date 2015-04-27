@@ -282,11 +282,11 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 		tagExpr = arguments.get(2);
 		commHandle = evaluator.evaluate(state, pid, commHandleExpr).value;
 		comm = evaluator.dereference(commHandleExpr.getSource(), state,
-				process, commHandle, false).value;
+				process, commHandleExpr, commHandle, false).value;
 		dest = this.universe.tupleRead(comm, zeroObject);
 		gcommHandle = this.universe.tupleRead(comm, oneObject);
 		gcomm = evaluator.dereference(commHandleExpr.getSource(), state,
-				process, gcommHandle, false).value;
+				process, null, gcommHandle, false).value;
 		assert (dest instanceof NumericExpression) : "Argument of destination of $comm_dequeue() should be a numeric type.\n";
 		if (isWildcardSrc) {
 			LibcommEvaluator libevaluator;

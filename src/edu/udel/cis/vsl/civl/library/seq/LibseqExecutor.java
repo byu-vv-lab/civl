@@ -216,7 +216,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 				} else {
 					SymbolicExpression eleValue, arrayValue;
 					Evaluation eval = evaluator.dereference(elePtrSource,
-							state, process, elePointer, false);
+							state, process, arguments[2], elePointer, false);
 
 					state = eval.state;
 					eleValue = eval.value;
@@ -308,7 +308,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			return state;
 		} else {
 			Evaluation eval = evaluator.dereference(seqSource, state, process,
-					seqPtr, false);
+					arguments[0], seqPtr, false);
 			SymbolicExpression seq;
 
 			state = eval.state;
@@ -431,8 +431,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 				return state;
 			}
 		}
-		eval = evaluator.dereference(arrayPtrSource, state, process, arrayPtr,
-				false);
+		eval = evaluator.dereference(arrayPtrSource, state, process,
+				arguments[0], arrayPtr, false);
 		state = eval.state;
 		arrayValue = eval.value;
 		if (arrayValue.operator() != SymbolicOperator.CONCRETE) {
@@ -498,8 +498,8 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			} else
 				valuePtr = valuesPtr;
 			if (isInsert) {
-				eval = evaluator.dereference(source, state, process, valuePtr,
-						false);
+				eval = evaluator.dereference(source, state, process, null,
+						valuePtr, false);
 				state = eval.state;
 				value = eval.value;
 

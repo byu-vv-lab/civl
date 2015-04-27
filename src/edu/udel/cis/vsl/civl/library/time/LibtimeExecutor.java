@@ -142,7 +142,7 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression resultPointer = argumentValues[0];
 		String process = state.getProcessState(pid).name();
 		Evaluation eval = this.evaluator.dereference(arguments[3].getSource(),
-				state, process, argumentValues[3], false);
+				state, process, arguments[3], argumentValues[3], false);
 		SymbolicExpression tmValue, sizeValue, tmStr;
 
 		resultPointer = this.symbolicUtil.parentPointer(
@@ -189,7 +189,7 @@ public class LibtimeExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		String process = state.getProcessState(pid).name();
 		Evaluation eval = this.evaluator.dereference(arguments[0].getSource(),
-				state, process, argumentValues[0], false);
+				state, process, arguments[0], argumentValues[0], false);
 		SymbolicExpression result;
 		// Pair<State, SymbolicExpression> tmObjtResult;
 		Variable brokenTimeVar = this.modelFactory.brokenTimeVariable();

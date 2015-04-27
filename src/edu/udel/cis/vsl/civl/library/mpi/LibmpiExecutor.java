@@ -413,7 +413,8 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		int sid;
 
-		eval = evaluator.dereference(source, state, process, commHandle, false);
+		eval = evaluator.dereference(source, state, process, arguments[0],
+				commHandle, false);
 		state = eval.state;
 		gcommHandle = universe.tupleRead(eval.value, oneObject);
 		sid = symbolicUtil.getDyscopeId(source, gcommHandle);

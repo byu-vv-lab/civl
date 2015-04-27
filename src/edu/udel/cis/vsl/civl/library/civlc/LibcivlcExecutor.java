@@ -199,7 +199,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression pointer = argumentValues[0], result = trueValue;
 		Evaluation eval = this.evaluator.dereference(arguments[0].getSource(),
-				state, process, pointer, false);
+				state, process, arguments[0], pointer, false);
 
 		state = eval.state;
 		if (eval.value.isNull()) {
@@ -264,11 +264,11 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		int operator;
 
 		eval = this.evaluator.dereference(arguments[0].getSource(), state,
-				process, argumentValues[0], false);
+				process, arguments[0], argumentValues[0], false);
 		state = eval.state;
 		obj1 = eval.value;
 		eval = this.evaluator.dereference(arguments[2].getSource(), state,
-				process, argumentValues[2], false);
+				process, arguments[2], argumentValues[2], false);
 		state = eval.state;
 		obj2 = eval.value;
 		operator = this.symbolicUtil.extractInt(arguments[1].getSource(),
@@ -395,7 +395,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		IntegerNumber number_size = (IntegerNumber) reasoner
 				.extractNumber((NumericExpression) size);
 		Evaluation eval = evaluator.dereference(source, state, process,
-				arrayPointer, false);
+				arguments[1], arrayPointer, false);
 		CIVLSource arrayPointerSource = arrayPointerExpression.getSource();
 
 		state = eval.state;
@@ -421,7 +421,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = eval.state;
 			arrayElePointer = eval.value;
 			eval = evaluator.dereference(arrayPointerSource, state, process,
-					arrayElePointer, false);
+					pointerAdditionExpression, arrayElePointer, false);
 			state = eval.state;
 			intArrayComponents.add(eval.value);
 		}
@@ -473,8 +473,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		NumericExpression size, index;
 		SymbolicExpression hasNext;
 
-		eval = evaluator.dereference(civlsource, state, process, iterHandle,
-				false);
+		eval = evaluator.dereference(civlsource, state, process, arguments[0],
+				iterHandle, false);
 		state = eval.state;
 		iterObj = eval.value;
 		size = (NumericExpression) universe.tupleRead(iterObj, zeroObject);
@@ -533,8 +533,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		NumericExpression index;
 		SymbolicExpression nextInt;
 
-		eval = evaluator.dereference(civlsource, state, process, iterHandle,
-				false);
+		eval = evaluator.dereference(civlsource, state, process, arguments[0],
+				iterHandle, false);
 		state = eval.state;
 		iterObj = eval.value;
 		array = universe.tupleRead(iterObj, oneObject);
@@ -686,7 +686,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 				procPointer = eval.value;
 				state = eval.state;
 				eval = evaluator.dereference(procsSource, state, process,
-						procPointer, false);
+						pointerAdd, procPointer, false);
 				proc = eval.value;
 				state = eval.state;
 				pidValue = modelFactory.getProcessId(procsSource, proc);

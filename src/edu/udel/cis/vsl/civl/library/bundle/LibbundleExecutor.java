@@ -317,7 +317,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 				state = eval.state;
 				arrayInBundle = eval.value;
 			} else {
-				eval = evaluator.dereference(source, state, process, pointer,
+				eval = evaluator.dereference(source, state, process, null, pointer,
 						true);
 				if (eval.value.type() instanceof SymbolicArrayType) {
 					SymbolicExpression arraySubObj = eval.value;

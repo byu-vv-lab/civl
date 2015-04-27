@@ -180,7 +180,7 @@ public class LibbundleEvaluator extends BaseLibraryEvaluator implements
 		dataSize = universe.length(data);
 		// If data size is zero, do nothing.
 		if (reasoner.isValid(universe.equals(dataSize, zero))) {
-			eval = evaluator.dereference(civlsource, state, process, pointer,
+			eval = evaluator.dereference(civlsource, state, process, null, pointer,
 					false);
 			return new Pair<Evaluation, SymbolicExpression>(eval, pointer);
 		} else if (reasoner.isValid(universe.equals(dataSize, one))) {

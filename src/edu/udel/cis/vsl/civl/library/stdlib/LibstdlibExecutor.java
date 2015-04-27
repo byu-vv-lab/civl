@@ -148,7 +148,7 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 			String argString;
 
 			argStringPair = this.evaluator.getString(arguments[0].getSource(),
-					state, process, argumentValues[0]);
+					state, process, arguments[0], argumentValues[0]);
 			if (!argStringPair.third) {
 				intValue = universe.apply(atoiFunction,
 						Arrays.asList(argumentValues[0]));

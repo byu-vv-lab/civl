@@ -186,8 +186,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		for (ReferenceExpression ref : leafs)
 			leafPointers.add(this.symbolicUtil.setSymRef(objectPointer, ref));
 		for (SymbolicExpression leafPtr : leafPointers) {
-			eval = this.evaluator.dereference(source, state, process, leafPtr,
-					false);
+			eval = this.evaluator.dereference(source, state, process, null,
+					leafPtr, false);
 			state = eval.state;
 			if (universe.equals(eval.value, argumentValues[1]).isTrue()) {
 				result = trueValue;
@@ -223,8 +223,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		for (ReferenceExpression ref : leafs)
 			leafPointers.add(this.symbolicUtil.setSymRef(objectPointer, ref));
 		for (SymbolicExpression leafPtr : leafPointers) {
-			eval = this.evaluator.dereference(source, state, process, leafPtr,
-					false);
+			eval = this.evaluator.dereference(source, state, process, null,
+					leafPtr, false);
 			state = eval.state;
 			if (universe.equals(eval.value, argumentValues[1]).isFalse()) {
 				result = falseValue;
@@ -411,8 +411,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 				this.errorLogger.reportError(err);
 				return state;
 			}
-			eval = evaluator.dereference(sourceRight, state, process, right,
-					false);
+			eval = evaluator.dereference(sourceRight, state, process,
+					arguments[1], right, false);
 			state = eval.state;
 			rightValue = eval.value;
 			state = primaryExecutor.assign(source, state, process, left,
@@ -442,13 +442,13 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression first, second;
 		Evaluation eval = evaluator.dereference(arguments[0].getSource(),
-				state, process, argumentValues[0], false);
+				state, process, arguments[0], argumentValues[0], false);
 		int invalidArg = -1;
 
 		state = eval.state;
 		first = eval.value;
 		eval = evaluator.dereference(arguments[1].getSource(), state, process,
-				argumentValues[1], false);
+				arguments[1], argumentValues[1], false);
 		state = eval.state;
 		second = eval.value;
 		if (!symbolicUtil.isInitialized(first))
@@ -533,11 +533,11 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					"Attempt to dereference a invalid pointer:" + msg);
 		}
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
-				argumentValues[0], false);
+				arguments[0], argumentValues[0], false);
 		state = eval.state;
 		first = eval.value;
 		eval = evaluator.dereference(arguments[1].getSource(), state, process,
-				argumentValues[1], false);
+				arguments[1], argumentValues[1], false);
 		state = eval.state;
 		second = eval.value;
 		if (!symbolicUtil.isInitialized(first))

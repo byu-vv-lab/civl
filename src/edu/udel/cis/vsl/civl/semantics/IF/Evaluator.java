@@ -57,8 +57,8 @@ public interface Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	Evaluation dereference(CIVLSource source, State state, String process,
-			SymbolicExpression pointer, boolean checkedOutput)
-			throws UnsatisfiablePathConditionException;
+			Expression pointerExpression, SymbolicExpression pointer,
+			boolean checkedOutput) throws UnsatisfiablePathConditionException;
 
 	/**
 	 * Returns the error logger object of this evaluator.
@@ -300,7 +300,8 @@ public interface Evaluator {
 	SymbolicUniverse universe();
 
 	Triple<State, StringBuffer, Boolean> getString(CIVLSource source,
-			State state, String process, SymbolicExpression charPointer)
+			State state, String process, Expression charPointerExpr,
+			SymbolicExpression charPointer)
 			throws UnsatisfiablePathConditionException;
 
 	/**

@@ -981,7 +981,7 @@ public class CommonExecutor implements Executor {
 		List<Format> nonVoidFormats = new ArrayList<>();
 
 		concreteString = this.evaluator.getString(arguments[0].getSource(),
-				state, process, argumentValues[0]);
+				state, process, arguments[0], argumentValues[0]);
 		formatBuffer = concreteString.second;
 		state = concreteString.first;
 		formats = this.splitFormat(arguments[0].getSource(), formatBuffer);
@@ -1002,7 +1002,7 @@ public class CommonExecutor implements Executor {
 				if (myFormat.type == ConversionType.STRING) {
 					concreteString = this.evaluator.getString(
 							arguments[i].getSource(), state, process,
-							argumentValue);
+							arguments[i], argumentValue);
 					stringOfSymbolicExpression = concreteString.second;
 					state = concreteString.first;
 					printedContents.add(stringOfSymbolicExpression);
@@ -1018,7 +1018,7 @@ public class CommonExecutor implements Executor {
 
 			} else if (argumentType instanceof CIVLPointerType
 					&& this.symbolicUtil.isNullPointer(argumentValue)
-					&& nonVoidFormats.get(i-1).type == ConversionType.INT) {
+					&& nonVoidFormats.get(i - 1).type == ConversionType.INT) {
 				printedContents.add(new StringBuffer("0"));
 			} else
 				printedContents.add(new StringBuffer(this.symbolicAnalyzer
@@ -1296,8 +1296,8 @@ public class CommonExecutor implements Executor {
 			Variable variable;
 			Evaluation eval;
 
-			eval = evaluator
-					.dereference(source, state, process, pointer, false);
+			eval = evaluator.dereference(source, state, process, null, pointer,
+					false);
 			state = eval.state;
 
 			if (sid < 0) {

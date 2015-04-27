@@ -220,8 +220,8 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 					Certainty.CONCRETE, process, "Invalid place " + place_num
 							+ " used in $barrier_create().", source);
 		}
-		eval = this.evaluator.dereference(civlsource, state, process, gbarrier,
-				false);
+		eval = this.evaluator.dereference(civlsource, state, process,
+				arguments[1], gbarrier, false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		totalPlaces = (NumericExpression) universe.tupleRead(gbarrierObj,
@@ -316,15 +316,15 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		int numInBarrier_int;
 		int nprocs_int;
 
-		eval = evaluator
-				.dereference(civlsource, state, process, barrier, false);
+		eval = evaluator.dereference(civlsource, state, process, arguments[0],
+				barrier, false);
 		state = eval.state;
 		barrierObj = eval.value;
 		myPlace = (NumericExpression) universe
 				.tupleRead(barrierObj, zeroObject);
 		gbarrier = universe.tupleRead(barrierObj, oneObject);
-		eval = evaluator.dereference(civlsource, state, process, gbarrier,
-				false);
+		eval = evaluator.dereference(civlsource, state, process, null,
+				gbarrier, false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		nprocs = universe.tupleRead(gbarrierObj, zeroObject);
@@ -540,7 +540,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 
 		eval = evaluator.dereference(arguments[0].getSource(), state, process,
-				gcheckerHandle, false);
+				arguments[0], gcheckerHandle, false);
 		state = eval.state;
 		gchecker = eval.value;
 		records_length = (NumericExpression) universe.tupleRead(gchecker,
@@ -635,19 +635,19 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		assert int_numTypes.intValue() >= 0 && int_numTypes.intValue() < 3 : "CIVL currently only support 1 or 2 "
 				+ "datatypes in one collective record. (e.g. MPI_Alltoallw() is not supported)\n";
 		if (int_numTypes.intValue() > 0) {
-			eval = evaluator.dereference(source, state, process, typesPtr,
-					false);
+			eval = evaluator.dereference(source, state, process, arguments[7],
+					typesPtr, false);
 			state = eval.state;
 			types = eval.value;
 		} else
 			types = universe.emptyArray(universe.integerType());
-		eval = evaluator
-				.dereference(source, state, process, checkhandle, false);
+		eval = evaluator.dereference(source, state, process, arguments[0],
+				checkhandle, false);
 		state = eval.state;
 		check = eval.value;
 		gcheckHandle = universe.tupleRead(check, zeroObject);
-		eval = evaluator.dereference(source, state, process, gcheckHandle,
-				false);
+		eval = evaluator.dereference(source, state, process, null,
+				gcheckHandle, false);
 		state = eval.state;
 		gcheck = eval.value;
 		// ------Step 1: Check if the process is the first process for a new
@@ -860,7 +860,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 			return Arrays.asList(false, "operation", resultType, claim);
 		claim = universe.equals(
 				universe.tupleRead(unmarked_record, numTypesIdx), numTypes);
-		//TODO change to andTo
+		// TODO change to andTo
 		claim = universe.and(claim, universe.equals(
 				universe.tupleRead(unmarked_record, typesIdx), datatypesArray));
 		resultType = reasoner.valid(claim).getResultType();
