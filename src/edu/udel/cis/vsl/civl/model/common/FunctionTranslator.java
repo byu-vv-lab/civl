@@ -37,13 +37,11 @@ import edu.udel.cis.vsl.abc.ast.node.IF.compound.LiteralObject;
 import edu.udel.cis.vsl.abc.ast.node.IF.compound.ScalarLiteralObject;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.AbstractFunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ContractNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.DeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.EnsuresNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.RequiresNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ScopeParameterizedDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
@@ -1406,7 +1404,7 @@ public class FunctionTranslator {
 						modelFactory.sourceOf(node));
 			}
 			break;
-		case PRAGMA://ignored pragma
+		case PRAGMA:// ignored pragma
 			result = new CommonFragment();
 			break;
 		case TYPEDEF:
@@ -1434,10 +1432,6 @@ public class FunctionTranslator {
 			break;
 		case STATEMENT:
 			result = translateStatementNode(scope, (StatementNode) node);
-			break;
-		case SCOPE_PARAMETERIZED_DECLARATION:
-			result = translateScopeParameterizedDeclarationNode(scope,
-					(ScopeParameterizedDeclarationNode) node);
 			break;
 		case TYPE:
 			TypeNode typeNode = (TypeNode) node;
@@ -1473,7 +1467,9 @@ public class FunctionTranslator {
 		Map<String, BigInteger> valueMap = new LinkedHashMap<>(numOfEnumerators);
 
 		if (name == null) {
-			name = "__enum_";
+			throw new CIVLInternalException(
+					"Anonymous enum encountered, which should already "
+							+ "been handled by ABC", source);
 		}
 		for (Enumerator enumerator : enumType.getEnumerators()) {
 			String member = enumerator.getName();
@@ -1497,32 +1493,6 @@ public class FunctionTranslator {
 			currentValue = value.add(BigInteger.ONE);
 		}
 		return typeFactory.enumType(name, valueMap);
-	}
-
-	private Fragment translateScopeParameterizedDeclarationNode(Scope scope,
-			ScopeParameterizedDeclarationNode scopedNode) {
-		SequenceNode<VariableDeclarationNode> parameters = scopedNode
-				.parameters();
-		ArrayList<Variable> scopeParameters = new ArrayList<>();
-		int numOfParameters = parameters.numChildren();
-		DeclarationNode baseDeclarationNode = scopedNode.baseDeclaration();
-
-		if (baseDeclarationNode instanceof FunctionDeclarationNode) {
-			for (int i = 0; i < numOfParameters; i++) {
-				VariableDeclarationNode decl = parameters.getSequenceChild(i);
-				CIVLSource source = modelFactory.sourceOf(decl.getIdentifier());
-				Identifier variableName = modelFactory.identifier(source,
-						decl.getName());
-
-				scopeParameters.add(modelFactory.variable(source,
-						typeFactory.scopeType(), variableName,
-						scopeParameters.size()));
-			}
-			translateFunctionDeclarationNode(
-					(FunctionDeclarationNode) baseDeclarationNode, scope,
-					scopeParameters);
-		}
-		return null;
 	}
 
 	/**
