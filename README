@@ -3,7 +3,7 @@
 
 ------------------------------ Overview -------------------------------
 
-CIVL is a framework encompassing...
+CIVL is a framework encompassing... 
 
  * a programming language, CIVL-C, which adds to C a number of
    concurrency primitives, as well as the ability to define
