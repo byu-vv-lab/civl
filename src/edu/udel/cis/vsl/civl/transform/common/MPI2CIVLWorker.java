@@ -262,7 +262,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 				.identifierExpression(lowerBound);
 		ExpressionNode lowerPart, upperPart;
 		Source source = this.newSource("assumption on the bound of variable "
-				+ variable, CParser.ASSUME);
+				+ variable, CParser.EXPRESSION_STATEMENT);
 
 		lowerPart = nodeFactory.newOperatorNode(this.newSource(
 				"lower bound of variable " + variable, CParser.EXPR),
@@ -1134,7 +1134,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	private ExpressionStatementNode mpiStatusDePruneAssertion() {
 		List<ExpressionNode> assertionNodesList = new LinkedList<>();
 		Source assertSrc = newSource("_my_status initial value assertion",
-				CParser.ASSERT);
+				CParser.EXPRESSION_STATEMENT);
 		Source myStatusSrc = newSource("_my_status", CParser.IDENTIFIER);
 
 		assertionNodesList.add(nodeFactory.newIdentifierExpressionNode(

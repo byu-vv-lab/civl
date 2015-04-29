@@ -259,7 +259,8 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					.getIdentifier().name();
 
 			if (funcName.equals(PTHREAD_MUTEX_LOCK)
-					|| funcName.equals(PTHREAD_COND_WAIT) || funcName.equals(PTHREAD_SELF)) {
+					|| funcName.equals(PTHREAD_COND_WAIT)
+					|| funcName.equals(PTHREAD_SELF)) {
 				hasSyncCall = true;
 				((IdentifierExpressionNode) function).getIdentifier().setName(
 						"_" + funcName);
@@ -461,27 +462,16 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private StatementNode assumeNode(ExpressionNode expression) {
 		return nodeFactory.newExpressionStatementNode(this.functionCall(
-				this.newSource("assumption", CParser.ASSUME), ASSUME,
-				Arrays.asList(expression)));
+				this.newSource("assumption", CParser.EXPRESSION_STATEMENT),
+				ASSUME, Arrays.asList(expression)));
 	}
 
 	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
 		return nodeFactory.newExpressionStatementNode(this.functionCall(
-				this.newSource("assertion", CParser.ASSERT), ASSERT,
-				Arrays.asList(expression)));
-		// FunctionCallNode functionCall =
-		// nodeFactory.newFunctionCallNode(source,
-		// this.identifierExpression(mySource, ASSERT),
-		// Arrays.asList(expression), null);
-		//
-		// return nodeFactory.newExpressionStatementNode(functionCall);
+				this.newSource("assertion", CParser.EXPRESSION_STATEMENT),
+				ASSERT, Arrays.asList(expression)));
 	}
 
-	/*
-	 * private StatementNode whenNode(Source mySource, ExpressionNode
-	 * expression) { return nodeFactory.newWhenNode(mySource, expression,
-	 * nodeFactory.newNullStatementNode(mySource)); }
-	 */
 	/**
 	 * Creates a StatementNode for error report: $assert $false.
 	 * 
