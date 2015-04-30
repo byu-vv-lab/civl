@@ -84,7 +84,7 @@ import edu.udel.cis.vsl.sarl.IF.config.Configurations;
 import edu.udel.cis.vsl.sarl.IF.config.ProverInfo;
 
 /**
- * Basic command line and API user interface for CIVL tools.
+ * Basic command line and API user interface for CIVL tools. 
  * 
  * Modularization of the user interface:
  * 
