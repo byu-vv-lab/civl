@@ -85,7 +85,21 @@ public class CIVLTable extends JTable implements MouseListener {
 	 */
 	private BrowseButtonCellRenderer browsePathSys_render;
 	private BrowseButtonCellRenderer browsePathUser_render;
+	
+	/**
+	 * The JButton renderer that will be used for the delete(file out of a file table) button.
+	 */
+	private DeleteButtonCellRenderer deleteButton_render;
+	
+	/**
+	 * The JButton editor that will be used for the delete(file out of a file table) button.
+	 */
+	private DeleteButtonCellEditor deleteButton_edit;
+	
+	private IntegerCellRenderer integer_render;
 
+	private IntegerCellEditor integer_edit;
+	
 	/**
 	 * This custom class renders option values as option.name() in uneditable
 	 * JTextAreas.
@@ -116,6 +130,10 @@ public class CIVLTable extends JTable implements MouseListener {
 		browsePathSys_edit = new BrowseButtonCellEditor("sysIncludePath");
 		browsePathUser_render = new BrowseButtonCellRenderer("userIncludePath");
 		browsePathUser_edit = new BrowseButtonCellEditor("userIncludePath");
+		deleteButton_render = new DeleteButtonCellRenderer(this);
+		deleteButton_edit = new DeleteButtonCellEditor(this);
+		integer_edit = new IntegerCellEditor();
+		integer_render = new IntegerCellRenderer();
 
 		this.editableCols = editableCols;
 		this.tableType = tableType;
@@ -151,10 +169,25 @@ public class CIVLTable extends JTable implements MouseListener {
 
 		if (value == null)
 			value = "";
+		
+		if(tableType.equals("file") && value instanceof String) {
+			if(value.equals("Delete")){
+				return deleteButton_edit;
+			}
+		}
+		
+		else if(value instanceof DeleteButtonCellEditor) {
+			return deleteButton_edit;
+		}
+		
+		else if (value instanceof Integer)
+			return integer_edit;
 
-		else if (value instanceof String) {
-			String val = (String) value;
-
+		else if (value instanceof String && column != 0 && column != 2) {
+			//String val = (String) value;
+			Option option = (Option) super.getValueAt(row, 0);
+			String val = option.name();
+			
 			if (val.equals("sysIncludePath"))
 				return browsePathSys_edit;
 
@@ -201,8 +234,18 @@ public class CIVLTable extends JTable implements MouseListener {
 		 * else if(opt.name().equals("userIncludePath")){ return
 		 * browsePathUser_render; }
 		 */
+		
+		if(tableType.equals("file") && value instanceof String) {			
+			if(value.equals("Delete")){
+				return deleteButton_render;
+			}
+		}
+		
+		else if(value instanceof DeleteButtonCellRenderer) {
+			return deleteButton_render;
+		}
 
-		if (value instanceof String) {
+		else if (value instanceof String) {
 			String val = (String) value;
 			if (val.equals("sysIncludePath"))
 				return browsePathSys_render;
@@ -210,10 +253,12 @@ public class CIVLTable extends JTable implements MouseListener {
 			else if (val.equals("userIncludePath"))
 				return browsePathUser_render;
 		}
+		else if (value instanceof Integer)
+			return integer_render;
 
 		// only for option table
 		else if (value instanceof String && column == 1
-				&& tableType == "option") {
+				&& tableType.equals("option")) {
 			return text_render;
 		}
 
@@ -224,6 +269,8 @@ public class CIVLTable extends JTable implements MouseListener {
 
 		else if (value instanceof Boolean)
 			return boolean_render;
+		
+		
 
 		return super.getCellRenderer(row, column);
 	}

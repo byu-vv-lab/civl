@@ -91,7 +91,7 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 */
 	public NormalCommandKind commandKind;
 	
-	public boolean tableChanged;	
+	public boolean tableChanged;
 
 	// Temporary Values of all fields that can be saved to their permanent
 	// counterparts.

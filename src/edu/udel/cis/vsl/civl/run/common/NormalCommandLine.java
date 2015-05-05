@@ -6,7 +6,7 @@ import java.util.Collection;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine;
 import edu.udel.cis.vsl.gmc.GMCSection;
 
-public class NormalCommandLine extends BaseCommandLine implements CommandLine {
+public class NormalCommandLine extends BaseCommandLine implements CommandLine{
 
 	public enum NormalCommandKind {
 		CONFIG, SHOW, VERIFY, REPLAY, GUI, HELP, RUN

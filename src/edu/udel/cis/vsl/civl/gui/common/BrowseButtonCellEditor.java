@@ -3,7 +3,7 @@ package edu.udel.cis.vsl.civl.gui.common;
 import java.awt.Component;
 
 import javax.swing.AbstractCellEditor;
-import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 
@@ -11,7 +11,7 @@ public class BrowseButtonCellEditor extends AbstractCellEditor implements TableC
 	/**
 	 * The component that will be edited by the editor.
 	 */
-	private JButton component;
+	private BrowseButtonPanel component;
 	
 	/**
 	 * Differentiates between sysIncludePath and userIncludePath
@@ -20,7 +20,7 @@ public class BrowseButtonCellEditor extends AbstractCellEditor implements TableC
 
 	public BrowseButtonCellEditor(String optName) {
 		this.setOptName(optName);
-		component = new BrowseButton(optName);
+		component = new BrowseButtonPanel();
 	}
 	
 	@Override
@@ -32,7 +32,7 @@ public class BrowseButtonCellEditor extends AbstractCellEditor implements TableC
 
 	@Override
 	public Object getCellEditorValue() {
-		return component;
+		return component.getPathString();
 	}
 
 	public String getOptName() {

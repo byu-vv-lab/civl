@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.gui.common;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -32,22 +33,30 @@ public class PathChooser extends JFrame {
 	private ArrayList<String> filePaths;
 	
 	private String pathString;
-
-	public PathChooser(String path) {
+	
+	public String optName;
+	
+	public GUI_revamp parent;
+	
+	public PathChooser(String path, String optName) {
 		super();
-		
+		this.optName = optName;
 		filePaths = new ArrayList<String>();
 		setPathString(path);
-		
+				
 		this.setSize(500, 500);
 		this.setLocationRelativeTo(this.getParent());
+		System.out.println(this.getParent());
 
 		initContainer();
-		initActions();
+		initActions();	
 
 		this.setVisible(true);
 	}
-
+	
+	/**
+	 * Creates the container for the path include GUI
+	 */
 	public void initContainer() {
 		// Init components
 		p_container = new JPanel();
@@ -107,7 +116,7 @@ public class PathChooser extends JFrame {
 				String examplesPath = "/Users/noyes/Documents/workspace/CIVL/examples";
 				File start = new File(examplesPath);
 				final JFileChooser chooser = new JFileChooser();
-				chooser.setCurrentDirectory(start);
+				//chooser.setCurrentDirectory(start);
 				FileNameExtensionFilter filter = new FileNameExtensionFilter(
 						"CIVL Files (.cvl)", "cvl");
 				chooser.setFileFilter(filter);
@@ -126,15 +135,18 @@ public class PathChooser extends JFrame {
 					}
 				});
 				chooser.showOpenDialog(null);
-				pathString = save();
-			}
+			}			
 		};
 
 		bt_browseFile.addActionListener(browseFile);
-		
+				
 		ActionListener apply = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				save();
+				pathString = save();
+				System.out.println(pathString);
+				//rcdn.pathString_sys
+				//System.out.println();
+				//save();
 			}
 		};
 		

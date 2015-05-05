@@ -30,6 +30,7 @@ public class RadioPanelCell extends AbstractCellEditor implements TableCellEdito
 
 		radioPanel.add(rb_true);
 		radioPanel.add(rb_false);
+
 	}
 	
 	public void updateData(Boolean selectedVal, boolean isSelected, JTable table) {

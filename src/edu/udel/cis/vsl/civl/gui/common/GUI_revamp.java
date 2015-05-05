@@ -119,12 +119,15 @@ public class GUI_revamp extends JFrame {
 	 */
 	private static String serializePath;
 
+	/**
+	 * The command line object that the GUI will use
+	 */
 	private NormalCommandLine commandLine;
 
+	// TODO: Find uses for these or delete them
 	private NormalCommandKind[] comTypesForNodes;
-
 	protected RunConfigDataNode cachedConfig;
-	
+
 	public GUI_revamp() {
 		setVisible(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -152,6 +155,21 @@ public class GUI_revamp extends JFrame {
 		initListeners(this);
 	}
 
+	/**
+	 * Gets the current RunConfigDataNode
+	 * 
+	 * @return The current RunConfigDataNode
+	 */
+	public RunConfigDataNode getCurrConfig() {
+		return currConfig;
+	}
+
+	/**
+	 * Sets the path to the directory that hold serialized RunConfigDataNodes
+	 * 
+	 * @param path
+	 *            The path we would to serialize the RunConfigDataNodes to
+	 */
 	public void setSerializePath(String path) {
 		serializePath = path;
 	}
@@ -187,11 +205,6 @@ public class GUI_revamp extends JFrame {
 				}
 			}
 		}
-		// RunConfigDataNode n = savedConfigs.get("c");
-		// Object[] o = n.getValues();
-		// for(int i = 0; i < o.length; i++){
-		// System.out.println(o[i]);
-		// }
 	}
 
 	/**
@@ -265,7 +278,7 @@ public class GUI_revamp extends JFrame {
 	 * 
 	 * @param vdn
 	 *            The VariableDeclarationNode to be converted
-	 * @return
+	 * @return The CIVL_Input that represents this vdn
 	 */
 	private CIVL_Input vdnToInput(VariableDeclarationNode vdn) {
 		String name = vdn.getName();
@@ -309,13 +322,19 @@ public class GUI_revamp extends JFrame {
 		return null;
 	}
 
+	/**
+	 * Creates a command line object that the GUI will use to run the
+	 * configurations
+	 * 
+	 * @return The command line for the desired configuration
+	 */
 	public NormalCommandLine createCommandLine() {
 		// TODO: do this for all commands
 		// File[] files = new File[1];//TODO: Change this so that we can add
 		// more files not just one
 		// files[0] = currConfig.getSelectedFile();
 		Collection<String> files = new ArrayList<String>();
-		//TODO: FIX THIS by using compute core file???
+		// TODO: FIX THIS by using compute core file???
 		files.add(currConfig.getSelectedFiles().get(0).getPath());
 		NormalCommandLine line = new NormalCommandLine();
 		GMCSection cmdSection = currConfig.getGmcConfig().getAnonymousSection();
@@ -354,23 +373,26 @@ public class GUI_revamp extends JFrame {
 			Option curr = iter_opt.next();
 			vals.add(section.getValueOrDefault(curr));
 		}
-		
-		//Sets all of the defaultize buttons
+
+		// Sets all of the defaultize buttons
 		new ButtonColumn(tbl_optionTable, defaultize, 2);
-		
+
 		for (int i = 0; i < vals.size(); i++) {
 			Option currOpt = (Option) opts[i];
-				
-			if(currOpt.name().equals("sysIncludePath")){
-				optionModel.addRow(new Object[] { currOpt, "sysIncludePath", "N/A" });
+
+			if (currOpt.name().equals("sysIncludePath")) {
+				optionModel.addRow(new Object[] { currOpt, "sysIncludePath",
+						"N/A" });
 			}
-			
-			else if(currOpt.name().equals("userIncludePath")){
-				optionModel.addRow(new Object[] { currOpt, "userIncludePath", "N/A" });
+
+			else if (currOpt.name().equals("userIncludePath")) {
+				optionModel.addRow(new Object[] { currOpt, "userIncludePath",
+						"N/A" });
 			}
-			
-			else{
-				optionModel.addRow(new Object[] { currOpt, vals.get(i), "Default" });
+
+			else {
+				optionModel.addRow(new Object[] { currOpt, vals.get(i),
+						"Default" });
 			}
 		}
 	}
@@ -386,17 +408,17 @@ public class GUI_revamp extends JFrame {
 			inputModel.setRowCount(0);
 			tbl_inputTable.clearSelection();
 		}
-		
+
 		GMCSection gmcs = currConfig.getGmcConfig().getAnonymousSection();
 		ArrayList<CIVL_Input> inputList = currConfig.getInputs();
 		for (int i = 0; i < inputList.size(); i++) {
 			CIVL_Input input = inputList.get(i);
 			inputModel.addRow(new Object[] { input.getName(), input.getType(),
 					input.getValue(), input.getInitializer() });
-			gmcs.putMapEntry(CIVLConstants.inputO, input.getName(), input.getValue());
+			gmcs.putMapEntry(CIVLConstants.inputO, input.getName(),
+					input.getValue());
 		}
-		
-		
+
 	}
 
 	/**
@@ -420,6 +442,9 @@ public class GUI_revamp extends JFrame {
 		}
 	}
 
+	/**
+	 * Sets the options in the table when values are changed.
+	 */
 	public void setOptions() {
 		CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
 		DefaultTableModel optionModel = (DefaultTableModel) tbl_optionTable
@@ -475,13 +500,12 @@ public class GUI_revamp extends JFrame {
 			input.setValue(value);
 			input.setInitializer(init);
 			inputList.add(input);
-			
-			//Add the inputs to the value map in GMCSection
-			gmcs.putMapEntry(CIVLConstants.inputO, input.getName(), input.getValue());
+
+			// Add the inputs to the value map in GMCSection
+			gmcs.putMapEntry(CIVLConstants.inputO, input.getName(),
+					input.getValue());
 		}
-		
-				
-		
+
 	}
 
 	// TODO: Possibly delete as it is not needed
@@ -840,6 +864,9 @@ public class GUI_revamp extends JFrame {
 		final CIVLTable tbl_fileTable = (CIVLTable) getComponentByName("tbl_fileTable");
 		final CIVLTable tbl_inputTable = (CIVLTable) getComponentByName("tbl_inputTable");
 
+		/**
+		 * Tree Selection Listener
+		 */
 		jt_commands.setExpandsSelectedPaths(true);
 		jt_commands.addTreeSelectionListener(new TreeSelectionListener() {
 			public void valueChanged(TreeSelectionEvent e) {
@@ -921,6 +948,9 @@ public class GUI_revamp extends JFrame {
 			}
 		});
 
+		/**
+		 * Browse File Listener
+		 */
 		ActionListener browseFile = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String examplesPath = "/Users/noyes/Documents/workspace/CIVL/examples";
@@ -957,7 +987,7 @@ public class GUI_revamp extends JFrame {
 
 						ArrayList<CIVL_Input> inputList = currConfig
 								.getInputs();
-						
+
 						for (int j = 0; j < inputs.size(); j++) {
 							VariableDeclarationNode vdn = inputs.get(j);
 							CIVL_Input ci = vdnToInput(vdn);
@@ -965,7 +995,7 @@ public class GUI_revamp extends JFrame {
 							currInputModel.addRow(new Object[] { vdn.getName(),
 									vdn.getTypeNode().prettyRepresentation(),
 									"", vdn.getInitializer() });
-							
+
 						}
 
 					}
@@ -976,6 +1006,9 @@ public class GUI_revamp extends JFrame {
 
 		bt_browseFile.addActionListener(browseFile);
 
+		/**
+		 * The action that sets values to their default values
+		 */
 		defaultize = new AbstractAction() {
 
 			public void actionPerformed(ActionEvent e) {
@@ -1002,6 +1035,9 @@ public class GUI_revamp extends JFrame {
 			}
 		};
 
+		/**
+		 * Applies the changes to the RunConfigDataNode and serializes it.
+		 */
 		ActionListener apply = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (currConfig != null) {
@@ -1018,6 +1054,9 @@ public class GUI_revamp extends JFrame {
 
 		bt_apply.addActionListener(apply);
 
+		/**
+		 * Runs the GUI
+		 */
 		ActionListener run = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				// currConfig = currConfig.deserialize();
@@ -1032,9 +1071,9 @@ public class GUI_revamp extends JFrame {
 				// files.add(currConfig.getSelectedFile().getPath());
 				// currConfig.commandLine.setFiles(files);
 				// currConfig.commandLine.complete();
-				//System.out.println(currConfig.getSelectedFile().getPath());
-				//System.out.println(commandLine);
-				//System.out.println(currConfig.getGmcConfig());
+				// System.out.println(currConfig.getSelectedFile().getPath());
+				// System.out.println(commandLine);
+				// System.out.println(currConfig.getGmcConfig());
 				commandLine.setGMCConfig(currConfig.getGmcConfig());
 
 				try {
@@ -1050,7 +1089,7 @@ public class GUI_revamp extends JFrame {
 
 		ActionListener delete = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-//				File folder = new File(serializePath);
+				// File folder = new File(serializePath);
 				savedConfigs.remove(currConfig.getName());
 				DefaultTreeModel model = (DefaultTreeModel) jt_commands
 						.getModel();
