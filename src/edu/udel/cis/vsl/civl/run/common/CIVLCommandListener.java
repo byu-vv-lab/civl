@@ -171,12 +171,16 @@ public class CIVLCommandListener extends CommandBaseListener implements
 		String optionName = ctx.OPTION_NAME().getText().substring(1);
 		Option option = optionMap.get(optionName);
 
-		if (ctx.value() != null) {
-			Object value = this.translateValue(ctx.value());
+		try {
+			if (ctx.value() != null) {
+				Object value = this.translateValue(ctx.value());
 
-			cmdSection.setScalarValue(option, value);
-		} else if (option.type() == OptionType.BOOLEAN)
-			cmdSection.setScalarValue(option, true);
+				cmdSection.setScalarValue(option, value);
+			} else if (option.type() == OptionType.BOOLEAN)
+				cmdSection.setScalarValue(option, true);
+		} catch (IllegalArgumentException illegalArg) {
+			throw new RuntimeCommandException(illegalArg.getMessage());
+		}
 	}
 
 	private Object translateValue(@NotNull CommandParser.ValueContext ctx) {
