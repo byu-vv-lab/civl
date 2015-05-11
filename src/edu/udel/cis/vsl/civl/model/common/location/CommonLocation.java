@@ -335,7 +335,8 @@ public class CommonLocation extends CommonSourceable implements Location {
 	public void purelyLocalAnalysis() {
 		// Usually, a location is purely local if it has exactly one outgoing
 		// statement that is purely local
-		if ((this.isStart && incoming.size() > 0) || (incoming.size() != 1 && !this.isSafeLoop)) {
+		if ((this.isStart && incoming.size() > 0)
+				|| (incoming.size() != 1 && !this.isSafeLoop)) {
 			this.purelyLocal = false;
 			return;
 		}
@@ -552,12 +553,15 @@ public class CommonLocation extends CommonSourceable implements Location {
 					if (!checkedLocationIDs.contains(target.id()))
 						workings.push(target);
 				if (statement instanceof CallOrSpawnStatement) {
-					CIVLFunction function = ((CallOrSpawnStatement) statement)
-							.function();
+					CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
-					if (function != null
-							&& !checkedFunctions.contains(function)) {
-						workingFunctions.add(function);
+					if (call.isCall()) {
+						CIVLFunction function = call.function();
+
+						if (function != null
+								&& !checkedFunctions.contains(function)) {
+							workingFunctions.add(function);
+						}
 					}
 				}
 			}
