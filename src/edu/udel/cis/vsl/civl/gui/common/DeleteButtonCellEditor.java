@@ -15,10 +15,11 @@ public class DeleteButtonCellEditor extends AbstractCellEditor implements TableC
 	/**
 	 * The component that will be edited by the editor.
 	 */
-	private DeleteButtonPanel component;
+	private JButton component;
 
 	public DeleteButtonCellEditor(CIVLTable table) {
-		component =  new DeleteButtonPanel(table);
+		component =  new DeleteButton(table);
+		component.setText("Delete");
 	}
 	
 	@Override

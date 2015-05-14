@@ -4,7 +4,7 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.JFrame;
 
 public class BrowseButton extends JButton {
 	/**
@@ -23,10 +23,14 @@ public class BrowseButton extends JButton {
 	private String pathString;
 	
 	public String optName;
+	
+	private GUI_revamp parent;
 	 	
-	public BrowseButton(String name){
+	public BrowseButton(String name, GUI_revamp parent){
 		super(name);
-		this.optName = "";
+		this.optName = name;
+		this.parent = parent;
+		//this.optName = "";
 		setPathString("");
 		initAction();
 	}
@@ -39,8 +43,8 @@ public class BrowseButton extends JButton {
 			private static final long serialVersionUID = 1L;
 
 			public void actionPerformed(ActionEvent e) {
-				pc = new PathChooser(pathString, optName);
-				setPathString(pc.save());
+				pc = new PathChooser(pathString, optName, parent);
+				setPathString(pc.format());
 				//System.out.println(pathString);
 				repaint();
 			}

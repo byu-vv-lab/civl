@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.gui.common;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -43,13 +44,13 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 * The name of the <code>RunConfig</code>.
 	 */
 	private String name;
-	
-	//TODO: erase this, we want multiple files not just one
+
+	// TODO: erase this, we want multiple files not just one
 	/**
 	 * The selected target <code>CIVL</code> file.
 	 */
 	private File selectedFile;
-	
+
 	/**
 	 * The selected target <code>CIVL</code> files.
 	 */
@@ -69,12 +70,12 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 * An array that stores all of the Option values
 	 */
 	private Object[] values;
-	
+
 	/**
 	 * A GMC config that is needed for the file
 	 */
 	private GMCConfiguration gmcConfig;
-	
+
 	/**
 	 * Is this RunConfigDataNode brand new?(true) Has it been modified in any
 	 * way?(false)
@@ -85,12 +86,12 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 * The directory to which the RunConfigDataNode is serialized to.
 	 */
 	private String serializeDestination;
-	
+
 	/**
 	 * The NormalCommandKind associated with this RunConfigurationDataNode
 	 */
 	public NormalCommandKind commandKind;
-	
+
 	public boolean tableChanged;
 
 	// Temporary Values of all fields that can be saved to their permanent
@@ -101,37 +102,41 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	transient private CIVL_Input[] temp_inputs;
 	transient private Object[] temp_values;
 
+	private boolean markedForDelete;
+
 	// TODO: add documentation to constructor
 	public RunConfigDataNode(NormalCommandKind commandKind) {
 		SortedMap<String, Option> map = null;
 		this.selectedFiles = new ArrayList<File>();
 		this.inputs = new ArrayList<CIVL_Input>();
-		
-		if(commandKind.equals(NormalCommandKind.RUN)){
+		this.markedForDelete = false;
+		GMCConfiguration c = null;
+
+		if (commandKind.equals(NormalCommandKind.RUN)) {
 			map = CIVLCommand.getRunOptions();
-			System.out.println(map.values().size());
+			c = new GMCConfiguration(map.values());
 		}
-		
-		else if(commandKind.equals(NormalCommandKind.VERIFY)){
+
+		else if (commandKind.equals(NormalCommandKind.VERIFY)) {
 			map = CIVLCommand.getVerifyOrCompareOptions();
+			c = new GMCConfiguration(map.values());
 		}
-		
-		else if(commandKind.equals(NormalCommandKind.SHOW)){
+
+		else if (commandKind.equals(NormalCommandKind.SHOW)) {
 			map = CIVLCommand.getShowOptions();
+			c = new GMCConfiguration(map.values());
 		}
-		
-		
-		GMCConfiguration c = new GMCConfiguration(map.values());
+
 		this.setGmcConfig(c);
 		this.commandKind = commandKind;
 
 		int size = CIVLConstants.getAllOptions().length;
-		this.setValues(new Object[size]); //DEPRECIATED
+		this.setValues(new Object[size]); // DEPRECIATED
 		this.setChanged(false);
-		this.brandNew = true;		
+		this.brandNew = true;
 		this.tableChanged = false;
 	}
-	
+
 	/**
 	 * Checks if the RunConfigDataNode has unsaved data and returns true if it
 	 * does.
@@ -161,30 +166,17 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 */
 	public void saveChanges(boolean saveConfig) {
 		/*
+		 * if (saveConfig) { if (temp_name != null) { name = temp_name;
+		 * this.setUserObject(name); } if (temp_selectedFile != null)
+		 * selectedFile = temp_selectedFile; if (temp_inputs != null) inputs =
+		 * temp_inputs; if (temp_values != null) values = temp_values;
+		 * 
+		 * changed = false; } else { temp_name = null; temp_selectedFile = null;
+		 * temp_inputs = null; temp_values = null; changed = false;
+		 * System.out.println("Changes not saved to the config: " + name); }
+		 */
 		if (saveConfig) {
-			if (temp_name != null) {
-				name = temp_name;
-				this.setUserObject(name);
-			}
-			if (temp_selectedFile != null)
-				selectedFile = temp_selectedFile;
-			if (temp_inputs != null)
-				inputs = temp_inputs;
-			if (temp_values != null)
-				values = temp_values;
 
-			changed = false;
-		} else {
-			temp_name = null;
-			temp_selectedFile = null;
-			temp_inputs = null;
-			temp_values = null;
-			changed = false;
-			System.out.println("Changes not saved to the config: " + name);
-		}
-		*/
-		if(saveConfig){
-			
 		}
 	}
 
@@ -207,9 +199,8 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		}
 	}
 
-	public RunConfigDataNode deserialize() {
+	public RunConfigDataNode deserialize(){
 		RunConfigDataNode config = null;
-
 		try {
 			FileInputStream fileIn = new FileInputStream(serializeDestination
 					+ "/" + name);
@@ -217,12 +208,15 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 			config = (RunConfigDataNode) in.readObject();
 			in.close();
 			fileIn.close();
-			System.out.println("Deserialized RunConfig...");
-			System.out.println("Name: " + config.name);
-			for(int i = 0; i < config.getSelectedFiles().size(); i++){
-				System.out.println("File: " + config.getSelectedFiles().get(i));
+			if (!config.isMarkedForDelete()) {
+				System.out.println("Deserialized RunConfig...");
+				System.out.println("Name: " + config.name);
+				for (int i = 0; i < config.getSelectedFiles().size(); i++) {
+					System.out.println("File: "
+							+ config.getSelectedFiles().get(i));
+				}
+				System.out.println("Command: " + config.commandKind);
 			}
-			System.out.println("Command: " + config.commandKind);
 			return config;
 
 		} catch (IOException i) {
@@ -235,6 +229,14 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		}
 	}
 
+	public void deleteConfig() {
+		this.markedForDelete = true;
+	}
+
+	public boolean isMarkedForDelete() {
+		return markedForDelete;
+	}
+
 	public File getSelectedFile() {
 		return selectedFile;
 	}
@@ -242,7 +244,7 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	public void setSelectedFile(File selectedFile) {
 		this.selectedFile = selectedFile;
 	}
-	
+
 	public ArrayList<File> getSelectedFiles() {
 		return selectedFiles;
 	}

@@ -2,7 +2,7 @@ package edu.udel.cis.vsl.civl.gui.common;
 
 import java.awt.Component;
 
-import javax.swing.JPanel;
+import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
@@ -11,16 +11,19 @@ public class BrowseButtonCellRenderer implements TableCellRenderer {
 	/**
 	 * The component that will be rendered by the renderer.
 	 */
-	private JPanel component;
+	//private JPanel component;
+	private JButton component;
 	
 	/**
 	 * Differentiates between sysIncludePath and userIncludePath
 	 */
 	private String optName;
-
-	public BrowseButtonCellRenderer(String optName) {
+	
+	public BrowseButtonCellRenderer(String optName, GUI_revamp parent) {
 		this.optName = optName;
-		component = new BrowseButtonPanel();
+		//component = new BrowseButtonPanel();
+		component = new BrowseButton(optName, parent);
+		component.setText("Browse...");
 	}
 
 	@Override

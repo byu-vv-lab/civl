@@ -38,15 +38,15 @@ public class PathChooser extends JFrame {
 	
 	public GUI_revamp parent;
 	
-	public PathChooser(String path, String optName) {
+	public PathChooser(String path, String optName, GUI_revamp parent) {
 		super();
 		this.optName = optName;
+		this.parent = parent;
 		filePaths = new ArrayList<String>();
 		setPathString(path);
 				
 		this.setSize(500, 500);
 		this.setLocationRelativeTo(this.getParent());
-		System.out.println(this.getParent());
 
 		initContainer();
 		initActions();	
@@ -64,7 +64,7 @@ public class PathChooser extends JFrame {
 		bt_browseFile = new JButton("Browse");
 		bt_apply = new JButton("Apply");
 		bt_cancel = new JButton("Cancel");
-		tbl_fileTable = new CIVLTable(new int[] { 2 }, "file");
+		tbl_fileTable = new CIVLTable(new int[] { 2 }, "file", null);
 
 		sp_fileTable.setViewportView(tbl_fileTable);
 		tbl_fileTable.setModel(new DefaultTableModel(null, new String[] {
@@ -142,8 +142,8 @@ public class PathChooser extends JFrame {
 				
 		ActionListener apply = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				pathString = save();
-				System.out.println(pathString);
+				pathString = format();
+				parent.save(pathString, optName);
 				//rcdn.pathString_sys
 				//System.out.println();
 				//save();
@@ -171,12 +171,12 @@ public class PathChooser extends JFrame {
 	 * @return The string that represents the include path string
 	 * 
 	 */
-	public String save() {
+	public String format() {
 		String out = "";
 		int size = filePaths.size();
 		for(int i = 0; i < size; i++){
 			if(i != size - 1)
-				out += filePaths.get(i) + " : ";
+				out += filePaths.get(i) + ":";
 			
 			else
 				out += filePaths.get(i);

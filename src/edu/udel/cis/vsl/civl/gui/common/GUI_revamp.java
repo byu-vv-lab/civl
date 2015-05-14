@@ -8,6 +8,8 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import java.util.Map;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.ImageIcon;
@@ -36,13 +39,17 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.border.LineBorder;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -141,8 +148,10 @@ public class GUI_revamp extends JFrame {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		setSerializePath(currDirect + "/doc/RunConfigs");
-		File f = new File(currDirect + "/doc/RunConfigs");
+
+		String homeDir = System.getProperty("user.home");
+		setSerializePath(homeDir + "/.CIVL");
+		File f = new File(homeDir);
 		f.mkdirs();
 
 		loadSavedConfigsMap();
@@ -194,14 +203,25 @@ public class GUI_revamp extends JFrame {
 			if (fileEntry.isDirectory()) {
 				listFilesForFolder(fileEntry);
 			} else {
-				// if(fileEntry.exstension != ".ser"){
 				RunConfigDataNode temp = new RunConfigDataNode(
 						NormalCommandKind.RUN);
 				temp.setName(fileEntry.getName());
 				temp.setSerializeDestination(serializePath);
-				if (!(fileEntry.getName().equals("entries"))) {
-					savedConfigs.put(fileEntry.getName(), temp.deserialize());
-					newConfigsNum++;
+				System.out.println(fileEntry.getName());
+				String name = fileEntry.getName();
+				if (!name.equals("entries")) {
+					RunConfigDataNode config = temp.deserialize();
+					
+					if (!config.isMarkedForDelete()) {
+						savedConfigs.put(name, config);
+						newConfigsNum++;						
+					}
+					
+					
+					//if the config is marked for delete, delete it.
+					else {
+						fileEntry.delete();
+					}
 				}
 			}
 		}
@@ -365,7 +385,6 @@ public class GUI_revamp extends JFrame {
 				GMCConfiguration.ANONYMOUS_SECTION);
 		Object[] opts = currConfig.getGmcConfig().getOptions().toArray();
 		Collection<Option> options = currConfig.getGmcConfig().getOptions();
-		System.out.println(options.size());
 		Iterator<Option> iter_opt = options.iterator();
 		List<Object> vals = new ArrayList<Object>();
 
@@ -382,12 +401,12 @@ public class GUI_revamp extends JFrame {
 
 			if (currOpt.name().equals("sysIncludePath")) {
 				optionModel.addRow(new Object[] { currOpt, "sysIncludePath",
-						"N/A" });
+						"Default" });
 			}
 
 			else if (currOpt.name().equals("userIncludePath")) {
 				optionModel.addRow(new Object[] { currOpt, "userIncludePath",
-						"N/A" });
+						"Default" });
 			}
 
 			else {
@@ -465,14 +484,14 @@ public class GUI_revamp extends JFrame {
 			Option currOpt = (Option) opts[i];
 			Object val = vals.get(i);
 
-			if (!currOpt.type().equals(OptionType.MAP))
+			if (!currOpt.type().equals(OptionType.MAP)) {
 				if (val instanceof String
 						&& currOpt.type().equals(OptionType.INTEGER)) {
 					Integer value = Integer.valueOf((String) val);
 					section.setScalarValue(currOpt, value);
 				} else
 					section.setScalarValue(currOpt, val);
-
+			}
 		}
 	}
 
@@ -508,9 +527,56 @@ public class GUI_revamp extends JFrame {
 
 	}
 
+	/**
+	 * Sets the selected files based on what files have been chosen for the
+	 * given RunConfigurationDataNode.
+	 * 
+	 * @param the
+	 *            row the delete occurs in
+	 */
+	public void deleteSelectedFile(int row) {
+		ArrayList<File> files = currConfig.getSelectedFiles();
+		files.remove(row);
+	}
+
+	/**
+	 * Saves the sysPathString or userPathString.
+	 * 
+	 * @param value
+	 *            the path string set by the user in PathChooser
+	 * @param optName
+	 *            Either sysPathString or userPathString
+	 */
+	public void save(String value, String optName) {
+		Option option = currConfig.getGmcConfig().getOption(optName);
+		System.out.println(option.name());
+		GMCSection section = currConfig.getGmcConfig().getSection(
+				GMCConfiguration.ANONYMOUS_SECTION);
+		section.setScalarValue(option, value);
+		System.out.println(section.getValue(option));
+
+	}
+
 	// TODO: Possibly delete as it is not needed
 	public NormalCommandKind getCommandType(String com) {
 		return currCommand;
+	}
+
+	/**
+	 * Sets the columns' width in the given table to size
+	 * 
+	 * @param tbl
+	 *            The CIVLTable containing the columns
+	 * @param size
+	 *            The new size for the columns
+	 * 
+	 * @param col
+	 *            The column(by index) we are resizing
+	 */
+	public void setColumnSize(CIVLTable tbl, int size, int col) {
+		TableColumnModel tcm = tbl.getColumnModel();
+		tcm.getColumn(col).setMaxWidth(size);
+		tcm.getColumn(col).setMinWidth(size);
 	}
 
 	/**
@@ -604,9 +670,9 @@ public class GUI_revamp extends JFrame {
 	 */
 	public void initCommandsPanel() {
 		JPanel p_commands = new JPanel();
-		JButton bt_new = new JButton("N");
-		JButton bt_duplicate = new JButton("D");
-		JButton bt_deleteConfig = new JButton("X");
+		JButton bt_new = new JButton("");
+		JButton bt_duplicate = new JButton("");
+		JButton bt_deleteConfig = new JButton("");
 		DefaultMutableTreeNode top = initNodes();
 		JTree jt_commands = new JTree(top);
 		JPanel p_tree = new JPanel();
@@ -619,6 +685,12 @@ public class GUI_revamp extends JFrame {
 		jt_commands.setName("jt_commands");
 		p_tree.setName("p_tree");
 		p_buttons.setName("p_buttons");
+
+		bt_deleteConfig.setIcon(new ImageIcon("Images/delete.png"));
+		bt_new.setIcon(new ImageIcon("Images/new.png"));
+		bt_duplicate.setIcon(new ImageIcon("Images/duplicate.png"));
+
+		// bt_deleteConfig.setPreferredSize(bt_new.getSize());
 
 		p_tree.setLayout(null);
 
@@ -647,26 +719,36 @@ public class GUI_revamp extends JFrame {
 		JPanel p_chooseFile = new JPanel();
 		JPanel p_options = new JPanel();
 		JPanel p_inputs = new JPanel();
+
 		JScrollPane sp_optionTable = new JScrollPane();
 		JScrollPane sp_inputTable = new JScrollPane();
 		JScrollPane sp_fileTable = new JScrollPane();
+
 		JTabbedPane tp_commandView = new JTabbedPane();
+
 		JButton bt_revert = new JButton("Revert");
 		JButton bt_apply = new JButton("Apply");
 		JButton bt_browseFile = new JButton("Browse...");
+
 		JLabel lb_name = new JLabel("Name: ");
-		JLabel lb_chooseFile = new JLabel("Chosen File: ");
 		JLabel lb_new = new JLabel(
-				"New - Press the new button to create a new run configuration of the selected type.");
+				"New - Press the 'new' button to create a new run configuration of the selected type.");
 		JLabel lb_duplicate = new JLabel(
-				"Duplicate - Press the 'duplicate' button to duplicate the currently selected run configuration.");
+				"Duplicate - Press the 'duplicate' button to duplicate the current run configuration.");
 		JLabel lb_delete = new JLabel(
 				"Delete - Press the 'delete' button to delete the currently selected run configuration.");
+		lb_new.setIcon(new ImageIcon("Images/new.png"));
+		lb_duplicate.setIcon(new ImageIcon("Images/duplicate.png"));
+		lb_delete.setIcon(new ImageIcon("Images/delete.png"));
+
 		JTextField tf_name = new JTextField();
 		JTextField tf_chooseFile = new JTextField();
-		JTable tbl_optionTable = new CIVLTable(new int[] { 1, 2 }, "option");
-		JTable tbl_inputTable = new CIVLTable(new int[] { 2 }, "input");
-		JTable tbl_fileTable = new CIVLTable(new int[] { 2 }, "file");
+
+		JTable tbl_optionTable = new CIVLTable(new int[] { 1, 2 }, "option",
+				this);
+		JTable tbl_inputTable = new CIVLTable(new int[] { 2 }, "input", this);
+		final JTable tbl_fileTable = new CIVLTable(new int[] { 2 }, "file",
+				this);
 
 		tf_chooseFile.setColumns(58);
 		tf_name.setColumns(10);
@@ -701,18 +783,46 @@ public class GUI_revamp extends JFrame {
 		sp_optionTable.setViewportView(tbl_optionTable);
 		sp_inputTable.setViewportView(tbl_inputTable);
 		sp_fileTable.setViewportView(tbl_fileTable);
+
 		tbl_optionTable.setModel(new DefaultTableModel(null, new String[] {
 				"Option", "Value", "Default" }));
 		tbl_inputTable.setModel(new DefaultTableModel(null, new String[] {
 				"Variable", "Type", "Value", "Default" }));
 		tbl_fileTable.setModel(new DefaultTableModel(null, new String[] {
 				"File Name", "File Path", "Delete" }));
+
 		tbl_optionTable.setCellSelectionEnabled(true);
 		tbl_inputTable.setCellSelectionEnabled(true);
 		tbl_fileTable.setCellSelectionEnabled(true);
-		tbl_optionTable.setRowHeight(30);
-		tbl_inputTable.setRowHeight(30);
-		tbl_fileTable.setRowHeight(30);
+
+		tbl_optionTable.setRowHeight(35);
+		tbl_inputTable.setRowHeight(35);
+		tbl_fileTable.setRowHeight(35);
+
+		setColumnSize((CIVLTable) tbl_optionTable, 145, 0);
+		setColumnSize((CIVLTable) tbl_optionTable, 145, 1);
+		setColumnSize((CIVLTable) tbl_optionTable, 75, 2);
+
+		tf_name.setEnabled(false);
+		bt_apply.setEnabled(false);
+		tbl_fileTable.getModel().addTableModelListener(
+				new TableModelListener() {
+
+					/**
+					 * Deletes the file from the selected files list for the
+					 * current config
+					 */
+					@Override
+					public void tableChanged(TableModelEvent e) {
+						if (currConfig != null) {
+							if (((CIVLTable) tbl_fileTable).deleting
+									&& e.getType() == TableModelEvent.DELETE) {
+								deleteSelectedFile(e.getLastRow());
+							}
+						}
+					}
+
+				});
 
 		p_container.add(p_view);
 		p_container.add(bt_revert);
@@ -758,6 +868,8 @@ public class GUI_revamp extends JFrame {
 		JPanel p_execute = new JPanel();
 		JButton bt_cancel = new JButton("Cancel");
 		JButton bt_run = new JButton("Run");
+
+		bt_run.setEnabled(false);
 
 		p_execute.setName("p_execute");
 		bt_cancel.setName("bt_cancel");
@@ -877,7 +989,23 @@ public class GUI_revamp extends JFrame {
 
 				if (selected == null) {
 					System.out.println("Node no longer exists");
-				} else if (selected.getPathCount() == 2) {
+				}
+
+				else if (selected.getPathCount() == 1) {
+					currConfig = null;
+					tf_name.setEnabled(false);
+					bt_run.setEnabled(false);
+					bt_apply.setEnabled(false);
+					tf_name.setText("");
+					drawView();
+					repaint();
+				}
+
+				else if (selected.getPathCount() == 2) {
+					tf_name.setEnabled(false);
+					bt_run.setEnabled(false);
+					bt_apply.setEnabled(false);
+
 					if (currConfig != null && !currConfig.isBrandNew()) {
 						if (currConfig.isChanged()) {
 							boolean saveConfig;
@@ -908,6 +1036,10 @@ public class GUI_revamp extends JFrame {
 				}
 
 				else if (selected.getPathCount() == 3) {
+					tf_name.setEnabled(true);
+					bt_run.setEnabled(true);
+					bt_apply.setEnabled(true);
+
 					if (currConfig == null) {
 						currConfig = (RunConfigDataNode) node;
 						currCommand = currConfig.commandKind;
@@ -915,6 +1047,7 @@ public class GUI_revamp extends JFrame {
 						tf_name.setText(currConfig.getName());
 						drawView();
 					}
+
 					if (currConfig != null && !currConfig.isBrandNew()) {
 						if (currConfig.isChanged()) {
 							boolean saveConfig;
@@ -932,6 +1065,7 @@ public class GUI_revamp extends JFrame {
 							currConfig.saveChanges(saveConfig);
 						}
 					}
+
 					cachedConfig = currConfig;
 					currConfig = (RunConfigDataNode) node;
 					currCommand = currConfig.commandKind;
@@ -1048,6 +1182,7 @@ public class GUI_revamp extends JFrame {
 					revalidate();
 					repaint();
 					currConfig.serialize();
+
 				}
 			}
 		};
@@ -1087,10 +1222,14 @@ public class GUI_revamp extends JFrame {
 
 		bt_run.addActionListener(run);
 
+		/**
+		 * The Delete Config ActionListener
+		 */
 		ActionListener delete = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				// File folder = new File(serializePath);
-				savedConfigs.remove(currConfig.getName());
+
+				// savedConfigs.remove(currConfig.getName());
 				DefaultTreeModel model = (DefaultTreeModel) jt_commands
 						.getModel();
 				TreePath[] paths = jt_commands.getSelectionPaths();
@@ -1102,6 +1241,9 @@ public class GUI_revamp extends JFrame {
 						File configToDelete = new File(serializePath
 								+ currConfig.getName());
 						configToDelete.delete();
+						currConfig.deleteConfig();
+						savedConfigs.remove(currConfig.getName());
+						currConfig.serialize();
 					}
 				}
 				currConfig = null;
@@ -1114,6 +1256,9 @@ public class GUI_revamp extends JFrame {
 
 		bt_deleteConfig.addActionListener(delete);
 
+		/**
+		 * The new configuration ActionListener
+		 */
 		ActionListener newConfig = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				DefaultTreeModel treeModel = (DefaultTreeModel) jt_commands
@@ -1136,7 +1281,6 @@ public class GUI_revamp extends JFrame {
 
 					// DefaultMutableTreeNode newChild = new
 					// RunConfigDataNode(selectedCom);
-					System.out.println(currCommand);
 					DefaultMutableTreeNode newChild = new RunConfigDataNode(
 							currCommand);
 					String newName = tf_name.getText();
@@ -1148,12 +1292,17 @@ public class GUI_revamp extends JFrame {
 						}
 					}
 
+					if (savedConfigs.containsKey(newName)) {
+						dontCreate = true;
+
+					}
+
 					newChild.setUserObject(newName);
 					currConfig = (RunConfigDataNode) newChild;
 					currConfig.setName(newName);
 					((RunConfigDataNode) currConfig)
 							.setSerializeDestination(serializePath);
-					showOptions();
+					// showOptions();
 
 					savedConfigs.put(currConfig.getName(), currConfig);
 
@@ -1178,46 +1327,45 @@ public class GUI_revamp extends JFrame {
 		};
 		bt_new.addActionListener(newConfig);
 
-		// TODO: make it so when the user goes from tf_name
-		/*
-		 * tf_name.addFocusListener(new FocusListener() {
-		 * 
-		 * @Override public void focusGained(FocusEvent e) {
-		 * 
-		 * }
-		 * 
-		 * @Override public void focusLost(FocusEvent e) { if (currConfig !=
-		 * null) { currConfig.setTemp_name(tf_name.getText()); //
-		 * currConfig.setUserObject(currConfig.getName()); } }
-		 * 
-		 * });
-		 */
+		tf_name.addFocusListener(new FocusListener() {
+
+			@Override
+			public void focusGained(FocusEvent e) {
+
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				if (currConfig != null) {
+					currConfig.setName(tf_name.getText());
+					currConfig.setUserObject(currConfig.getName());
+				}
+			}
+
+		});
 
 		tf_name.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				currConfig.setTemp_name(tf_name.getText());
+				currConfig.setName(tf_name.getText());
+				currConfig.setUserObject(currConfig.getName());
 			}
 
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				if (currConfig == null)
-					if (cachedConfig != null)
-						cachedConfig.setTemp_name(tf_name.getText());
-					else if (currConfig != null)
-						currConfig.setTemp_name(tf_name.getText());
+				if (currConfig != null) {
+					currConfig.setName(tf_name.getText());
+					currConfig.setUserObject(currConfig.getName());
+				}
 			}
 
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				currConfig.setTemp_name(tf_name.getText());
+				currConfig.setName(tf_name.getText());
+				currConfig.setUserObject(currConfig.getName());
 			}
 		});
-
-		// tbl_optionTable.getModel().addTableModelListener(tbl_optionTable);
-		// //Already done in constructor for CIVL_Table
-
 	}
 
 	/**
@@ -1246,15 +1394,17 @@ public class GUI_revamp extends JFrame {
 		JLabel lb_name = (JLabel) getComponentByName("lb_name");
 		JTextField tf_name = (JTextField) getComponentByName("tf_name");
 
-		p_header.setBorder(new LineBorder(new Color(0, 0, 0)));
-		p_container.setBorder(new LineBorder(new Color(0, 0, 0)));
-		p_commands.setBorder(new LineBorder(new Color(0, 0, 0)));
-		p_execute.setBorder(new LineBorder(new Color(0, 0, 0)));
-		p_view.setBorder(new LineBorder(new Color(0, 0, 0)));
-		p_tree.setBorder(new LineBorder(new Color(0, 0, 0)));
-		p_buttons.setBorder(new LineBorder(new Color(0, 0, 0)));
+		Border etched = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
 
-		p_buttons.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 1));
+		p_header.setBorder(etched);
+		p_container.setBorder(etched);
+		p_commands.setBorder(etched);
+		p_execute.setBorder(etched);
+		p_view.setBorder(etched);
+		p_tree.setBorder(etched);
+		p_buttons.setBorder(etched);
+
+		p_buttons.setLayout(new FlowLayout(FlowLayout.LEFT, 25, 2));
 		p_chooseFile.setLayout(new FlowLayout(FlowLayout.LEFT, 6, 1));
 		p_view.setLayout(new BorderLayout(0, 0));
 		p_info.setLayout(null);

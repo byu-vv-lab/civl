@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
-import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 public class DeleteButton extends JButton { 
@@ -18,8 +17,7 @@ public class DeleteButton extends JButton {
 	 * The action that the button will perform
 	 */
 	private AbstractAction act;
-		
-	
+			
 	/**
 	 * The table this button is in.
 	 */
@@ -38,11 +36,11 @@ public class DeleteButton extends JButton {
 			private static final long serialVersionUID = 1L;
 
 			public void actionPerformed(ActionEvent e) {
+				table.deleting = true;
 				final DefaultTableModel currFileModel = (DefaultTableModel) table.getModel();
 				int modelRow = table.getSelectedRow();
 				currFileModel.removeRow(modelRow);
-				System.out.println(currFileModel.getRowCount());
-				//setTable(table);
+				table.deleting = false;
 				repaint();
 			}
 		};

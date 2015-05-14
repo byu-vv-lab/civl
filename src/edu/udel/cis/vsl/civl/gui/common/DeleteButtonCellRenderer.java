@@ -11,10 +11,11 @@ public class DeleteButtonCellRenderer implements TableCellRenderer {
 	/**
 	 * The component that will be rendered by the renderer.
 	 */
-	private DeleteButtonPanel component;
+	private JButton component;
 
 	public DeleteButtonCellRenderer(CIVLTable table) {
-		component = new DeleteButtonPanel(table);
+		component = new DeleteButton(table);
+		component.setText("Delete");
 	}
 
 	@Override
