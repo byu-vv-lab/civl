@@ -109,8 +109,8 @@ public class Verifier extends Player {
 				out.println("{");
 				out.println("\"time\" : " + time + " ,");
 				out.println("\"mem\" : " + megabytes + " ,");
-				out.println("\"steps\" : " + executor.getNumSteps() + " ,");
-				out.println("\"trans\" : " + searcher.numTransitions() + " ,");
+				out.println("\"steps\" : " + searcher.numTransitions() + " ,");
+				out.println("\"trans\" : " + executor.getNumSteps() + " ,");
 				out.println("\"seen\" : " + searcher.numStatesSeen() + " ,");
 				out.println("\"saved\" : " + stateManager.getNumStatesSaved()
 						+ " ,");
