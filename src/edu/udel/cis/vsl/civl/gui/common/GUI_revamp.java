@@ -151,7 +151,7 @@ public class GUI_revamp extends JFrame {
 
 		String homeDir = System.getProperty("user.home");
 		setSerializePath(homeDir + "/.CIVL");
-		File f = new File(homeDir);
+		File f = new File(homeDir + "/.CIVL");
 		f.mkdirs();
 
 		loadSavedConfigsMap();
@@ -211,14 +211,13 @@ public class GUI_revamp extends JFrame {
 				String name = fileEntry.getName();
 				if (!name.equals("entries")) {
 					RunConfigDataNode config = temp.deserialize();
-					
+
 					if (!config.isMarkedForDelete()) {
 						savedConfigs.put(name, config);
-						newConfigsNum++;						
+						newConfigsNum++;
 					}
-					
-					
-					//if the config is marked for delete, delete it.
+
+					// if the config is marked for delete, delete it.
 					else {
 						fileEntry.delete();
 					}
@@ -521,8 +520,10 @@ public class GUI_revamp extends JFrame {
 			inputList.add(input);
 
 			// Add the inputs to the value map in GMCSection
-			gmcs.putMapEntry(CIVLConstants.inputO, input.getName(),
-					input.getValue());
+			if (init.equals("")) {
+				gmcs.putMapEntry(CIVLConstants.inputO, input.getName(),
+						input.getValue());
+			}
 		}
 
 	}
@@ -1029,9 +1030,7 @@ public class GUI_revamp extends JFrame {
 
 					drawView();
 					tf_name.setText("");
-					// currCommand = getCommand(node.toString());
 					headerText += "  " + node.toString(); // + ": " +
-															// currCommand.getDescription();
 					ta_header.setText(headerText);
 				}
 
@@ -1348,8 +1347,10 @@ public class GUI_revamp extends JFrame {
 
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				currConfig.setName(tf_name.getText());
-				currConfig.setUserObject(currConfig.getName());
+				if (currConfig != null) {
+					currConfig.setName(tf_name.getText());
+					currConfig.setUserObject(currConfig.getName());
+				}
 			}
 
 			@Override
@@ -1362,8 +1363,10 @@ public class GUI_revamp extends JFrame {
 
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				currConfig.setName(tf_name.getText());
-				currConfig.setUserObject(currConfig.getName());
+				if (currConfig != null) {
+					currConfig.setName(tf_name.getText());
+					currConfig.setUserObject(currConfig.getName());
+				}
 			}
 		});
 	}
