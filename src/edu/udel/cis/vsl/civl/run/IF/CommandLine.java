@@ -10,6 +10,17 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
  */
 public interface CommandLine {
 
+	/**
+	 * This contains the names of all commands supported by CIVL, either it is a
+	 * normal command or a compare comamnd.
+	 * 
+	 * @author zmanchun
+	 *
+	 */
+	public enum CommandName {
+		CONFIG, COMPARE, GUI, HELP, REPLAY, RUN, SHOW, VERIFY, COMPARE_REPLAY
+	}
+
 	public final static String CONFIG = "config";
 	public final static String COMPARE = "compare";
 	public final static String GUI = "gui";
