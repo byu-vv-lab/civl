@@ -1,5 +1,4 @@
-#ifdef __SCHED__
-#else
+#ifndef __SCHED__
 #define __SCHED__
 
 #include <pthread.h>

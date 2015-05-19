@@ -1,5 +1,4 @@
-#ifdef __PTHREAD_TYPES__
-#else
+#ifndef __PTHREAD_TYPES__
 #define __PTHREAD_TYPES__
 #include <sched.cvl>
 

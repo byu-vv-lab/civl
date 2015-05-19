@@ -1,7 +1,6 @@
 /* CIVL implementation of time.h */
 
-#ifdef __TIME_CIVL__
-#else
+#ifndef __TIME_CIVL__
 #define __TIME_CIVL__
 
 #include<time.h>

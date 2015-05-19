@@ -1,7 +1,6 @@
 /* CIVL model of stdlib.c */
 
-#ifdef __STDLIB_CIVL__
-#else
+#ifndef __STDLIB_CIVL__
 #define __STDLIB_CIVL__
 
 #include<stdlib.h>

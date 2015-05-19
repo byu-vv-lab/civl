@@ -1,4 +1,3 @@
-#include <civlc.cvh>
 /* CIVL model of math.h.  Part of functions have optional assumption
  * models which are controlled by two macros:
  * 1. MATH_ELABORATE_ASSUMPTIONS: replacing a complicated assumption
@@ -9,9 +8,9 @@
  * important, it's no need to add any assumption.
  */
 
-#ifdef __CIVL_MATH__
-#else
+#ifndef __CIVL_MATH__
 #define __CIVL_MATH__
+#include <civlc.cvh>
 #include <math.h>
 
 double acos(double x) {

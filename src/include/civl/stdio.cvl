@@ -4,8 +4,7 @@
  * encapsulates the state of the entire file system: all files and their contents.
  *
  */
- #ifdef __STDIO_CVL__
- #else
+ #ifndef __STDIO_CVL__
  #define __STDIO_CVL__
  
  #include <civlc.cvh>

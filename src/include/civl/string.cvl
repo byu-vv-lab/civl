@@ -1,7 +1,6 @@
 /* CIVL implementation of string.h */
 
-#ifdef __STRING_CIVL__
-#else
+#ifndef __STRING_CIVL__
 #define __STRING_CIVL__
 
 #include<string.h>

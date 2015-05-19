@@ -1,8 +1,7 @@
-#include <civlc.cvh>
-#ifdef __CIVL_PTHREAD__
-#else
+#ifndef __CIVL_PTHREAD__
 #define __CIVL_PTHREAD__
 
+#include <civlc.cvh>
 #include <stdbool.h>
 #include <civl-pthread.cvh>
 #include <concurrency.cvh>

@@ -1,12 +1,10 @@
-#include <civlc.cvh>
 /* This file completes the definitions of some types and functions
  * for communication, which are declared in comm-common.cvh.
  */
  
-#ifdef __CIVLC_COMM__
-#else
+#ifndef __CIVLC_COMM__
 #define __CIVLC_COMM__
-
+#include <civlc.cvh>
 #include<comm.cvh>
 
 /* *********************** Types *********************** */

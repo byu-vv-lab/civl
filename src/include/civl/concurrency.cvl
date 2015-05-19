@@ -2,8 +2,7 @@
  * for concurrency, which are declared in concurrency.cvh.
  */
  
-#ifdef __CIVLC_CONCURRENCY__
-#else
+#ifndef __CIVLC_CONCURRENCY__
 #define __CIVLC_CONCURRENCY__
 
 #include<concurrency.cvh>

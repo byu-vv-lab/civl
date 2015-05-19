@@ -1,7 +1,7 @@
-#include <civlc.cvh>
-#ifdef __PTHREAD_FUNCTIONS__
-#else
+#ifndef __PTHREAD_FUNCTIONS__
 #define __PTHREAD_FUNCTIONS__
+#include <civlc.cvh>
+
 extern void *value_ptr_value = NULL;
 __pthread_pool_t _pool={.len = 0};
 

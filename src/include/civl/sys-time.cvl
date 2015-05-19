@@ -1,5 +1,4 @@
-#ifdef __CIVL_SYSTIME__
-#else
+#ifndef __CIVL_SYSTIME__
 #define __CIVL_SYSTIME__
 
 #include <sys/time.h>
