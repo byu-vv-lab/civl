@@ -7,11 +7,15 @@ import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 
+/**
+ * The Cell Editor that is associated with the BrowseButton
+ * @author StevenNoyes
+ *
+ */
 public class BrowseButtonCellEditor extends AbstractCellEditor implements TableCellEditor {
 	/**
 	 * The component that will be edited by the editor.
 	 */
-	//private JPanel component;
 	private JButton component;
 	
 	/**

@@ -7,10 +7,12 @@ import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 
+/**
+ * The TableCellEditor for the DeleteButton in the CIVL_Table.
+ * @author StevenNoyes
+ *
+ */
 public class DeleteButtonCellEditor extends AbstractCellEditor implements TableCellEditor {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	/**
 	 * The component that will be edited by the editor.

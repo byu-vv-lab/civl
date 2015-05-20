@@ -6,13 +6,15 @@ import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.table.DefaultTableModel;
 
+/**
+ * The DeleteButton will delete files out of the Browse File Table.
+ * 
+ * @author StevenNoyes
+ *
+ */
 public class DeleteButton extends JButton { 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
-	//implements ActionListener, MouseListener {
 	/**
 	 * The action that the button will perform
 	 */
@@ -28,11 +30,11 @@ public class DeleteButton extends JButton {
 		initAction();
 	}
 	
+	/**
+	 * Creates the Action that will delete files out of the Browse File Table
+	 */
 	private void initAction(){
 		act = new AbstractAction() {
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			public void actionPerformed(ActionEvent e) {
@@ -46,6 +48,10 @@ public class DeleteButton extends JButton {
 		};
 		this.setAction(act);
 	}
+	
+	/*
+	 * Getters & Setters
+	 */
 
 	public CIVLTable getTable() {
 		return table;

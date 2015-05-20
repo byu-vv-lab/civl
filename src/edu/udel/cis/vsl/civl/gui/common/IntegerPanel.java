@@ -11,51 +11,60 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class IntegerPanel extends JPanel{
-	
+/**
+ * The JPanel that will hold the Spinner and other Components needed to display
+ * an Integer
+ * 
+ * @author StevenNoyes
+ * 
+ */
+public class IntegerPanel extends JPanel {
+	/**
+	 * The Spinner that will be used to increment/decrement the number.
+	 */
 	private JSpinner spinner;
-	
+
+	/**
+	 * The value of the int in the JSpinner.
+	 */
 	private int val;
-	
-	public IntegerPanel(){
+
+	public IntegerPanel() {
 		super();
 		SpinnerModel model = new SpinnerNumberModel();
 		setSpinner(new JSpinner(model));
-		spinner.addFocusListener(new FocusListener(){
+
+		/*
+		 * Adds listeners so that the CIVL_Table knows what the value in the
+		 * IntegerPanel is at all times.
+		 */
+		spinner.addFocusListener(new FocusListener() {
 
 			@Override
 			public void focusGained(FocusEvent e) {
-				
+
 			}
 
 			@Override
 			public void focusLost(FocusEvent e) {
 				val = (int) spinner.getValue();
 			}
-			
+
 		});
-		
-		spinner.addChangeListener(new ChangeListener(){
+
+		spinner.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				val = (int) spinner.getValue();
-				
+
 			}
-			
+
 		});
-		
+
 		this.add(spinner);
 	}
 
-	public int getVal() {
-		return val;
-	}
-
-	public void setVal(int val) {
-		this.val = val;
-	}
-	
 	/**
 	 * Updates the data contained in this <code>RadioPanel</code>.
 	 * 
@@ -70,14 +79,15 @@ public class IntegerPanel extends JPanel{
 		this.val = val;
 		this.spinner.setValue(val);
 		/*
-		if (isSelected) {
-			setBackground(table.getSelectionBackground());
-		} else {
-			setBackground(table.getSelectionForeground());
-		}
-		*/
+		 * if (isSelected) { setBackground(table.getSelectionBackground()); }
+		 * else { setBackground(table.getSelectionForeground()); }
+		 */
 	}
-
+	
+	/*
+	 * Getters & Setters
+	 */
+	
 	public JSpinner getSpinner() {
 		return spinner;
 	}
@@ -86,4 +96,12 @@ public class IntegerPanel extends JPanel{
 		this.spinner = spinner;
 	}
 	
+	public int getVal() {
+		return val;
+	}
+
+	public void setVal(int val) {
+		this.val = val;
+	}
+
 }

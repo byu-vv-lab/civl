@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,10 +55,14 @@ import javax.swing.tree.TreePath;
 
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
+import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandLineKind;
+import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandName;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.run.common.CIVLCommand;
+import edu.udel.cis.vsl.civl.run.common.CompareCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
 import edu.udel.cis.vsl.gmc.CommandLineException;
@@ -98,7 +101,7 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * The currently enabled {@link CIVL_Command}.
 	 */
-	private NormalCommandKind currCommand;
+	private CommandName currCommand;
 
 	/**
 	 * See the method {@link #addToMap(Component)}.
@@ -131,23 +134,12 @@ public class GUI_revamp extends JFrame {
 	 */
 	private NormalCommandLine commandLine;
 
-	// TODO: Find uses for these or delete them
-	private NormalCommandKind[] comTypesForNodes;
-	protected RunConfigDataNode cachedConfig;
-
 	public GUI_revamp() {
 		setVisible(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setSize(1200, 700);
+		setSize(850, 700);
 		componentMap = new HashMap<String, Component>();
 		newConfigsNum = 0;
-
-		String currDirect = null;
-		try {
-			currDirect = new File(".").getCanonicalPath();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		String homeDir = System.getProperty("user.home");
 		setSerializePath(homeDir + "/.CIVL");
@@ -203,14 +195,14 @@ public class GUI_revamp extends JFrame {
 			if (fileEntry.isDirectory()) {
 				listFilesForFolder(fileEntry);
 			} else {
-				RunConfigDataNode temp = new RunConfigDataNode(
-						NormalCommandKind.RUN);
+				RunConfigDataNode temp = new RunConfigDataNode(null);
 				temp.setName(fileEntry.getName());
 				temp.setSerializeDestination(serializePath);
 				System.out.println(fileEntry.getName());
 				String name = fileEntry.getName();
 				if (!name.equals("entries")) {
 					RunConfigDataNode config = temp.deserialize();
+					System.out.println(config.comLine.commandLineKind());
 
 					if (!config.isMarkedForDelete()) {
 						savedConfigs.put(name, config);
@@ -252,7 +244,7 @@ public class GUI_revamp extends JFrame {
 	 */
 	public Component getComponentByName(String name) {
 		if (componentMap.containsKey(name)) {
-			return (Component) componentMap.get(name);
+			return componentMap.get(name);
 		} else {
 			System.out.println("Couldn't find " + name + " in map!");
 			return null;
@@ -311,7 +303,9 @@ public class GUI_revamp extends JFrame {
 		}
 
 		else {
-			ci.setInitializer(i.toString());
+			String def = ((ConstantNode) i).getConstantValue().toString();
+			System.out.println(def);
+			ci.setInitializer(def);
 		}
 
 		return ci;
@@ -342,30 +336,90 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
+	 * Converts a CommandName to a NormalCommandKind
+	 * 
+	 * @param name
+	 *            the CommandName of the command
+	 * @return The converted NormalCommandKind
+	 */
+	public NormalCommandKind comNameToComKind(CommandName name) {
+		if (name.equals(CommandName.CONFIG)) {
+			return NormalCommandKind.CONFIG;
+		}
+
+		else if (name.equals(CommandName.HELP)) {
+			return NormalCommandKind.HELP;
+		}
+
+		else if (name.equals(CommandName.REPLAY)) {
+			return NormalCommandKind.REPLAY;
+		}
+
+		else if (name.equals(CommandName.RUN)) {
+			return NormalCommandKind.RUN;
+		}
+
+		else if (name.equals(CommandName.SHOW)) {
+			return NormalCommandKind.SHOW;
+		}
+
+		else if (name.equals(CommandName.VERIFY)) {
+			return NormalCommandKind.VERIFY;
+		}
+
+		else {
+			return null;
+		}
+	}
+
+	/**
 	 * Creates a command line object that the GUI will use to run the
 	 * configurations
 	 * 
 	 * @return The command line for the desired configuration
 	 */
-	public NormalCommandLine createCommandLine() {
+	public NormalCommandLine createNormalCommandLine() {
 		// TODO: do this for all commands
 		// File[] files = new File[1];//TODO: Change this so that we can add
 		// more files not just one
 		// files[0] = currConfig.getSelectedFile();
 		Collection<String> files = new ArrayList<String>();
 		// TODO: FIX THIS by using compute core file???
+
+		NormalCommandLine line = new NormalCommandLine();
+		if (currConfig != null) {
+			if (!currConfig.getSelectedFiles().isEmpty()) {
+				files.add(currConfig.getSelectedFiles().get(0).getPath());
+				line.setFiles(files);
+			}
+
+			GMCSection cmdSection = currConfig.getGmcConfig()
+					.getAnonymousSection();
+			line.setGMCConfig(currConfig.getGmcConfig());
+			line.setGMCSection(cmdSection);
+			line.complete();
+		}
+
+		line.setCommand(comNameToComKind(currCommand));
+		this.commandLine = line;
+		return line;
+	}
+
+	public CompareCommandLine createCompareCommandLine() {
+		Collection<String> files = new ArrayList<String>();
+		// TODO: FIX THIS by using compute core file???
 		files.add(currConfig.getSelectedFiles().get(0).getPath());
 		NormalCommandLine line = new NormalCommandLine();
 		GMCSection cmdSection = currConfig.getGmcConfig().getAnonymousSection();
-		NormalCommandKind cmd = currCommand;
-		line.setCommand(cmd);
+		CommandName cmd = currCommand;
+		line.setCommand(comNameToComKind(cmd));
 		line.setFiles(files);
 		line.setGMCConfig(currConfig.getGmcConfig());
 		line.setGMCSection(cmdSection);
 
 		line.complete();
 		this.commandLine = line;
-		return line;
+		return null;
 	}
 
 	/**
@@ -427,14 +481,12 @@ public class GUI_revamp extends JFrame {
 			tbl_inputTable.clearSelection();
 		}
 
-		GMCSection gmcs = currConfig.getGmcConfig().getAnonymousSection();
+		//GMCSection gmcs = currConfig.getGmcConfig().getAnonymousSection();
 		ArrayList<CIVL_Input> inputList = currConfig.getInputs();
 		for (int i = 0; i < inputList.size(); i++) {
 			CIVL_Input input = inputList.get(i);
 			inputModel.addRow(new Object[] { input.getName(), input.getType(),
 					input.getValue(), input.getInitializer() });
-			gmcs.putMapEntry(CIVLConstants.inputO, input.getName(),
-					input.getValue());
 		}
 
 	}
@@ -520,7 +572,7 @@ public class GUI_revamp extends JFrame {
 			inputList.add(input);
 
 			// Add the inputs to the value map in GMCSection
-			if (init.equals("")) {
+			if (!value.toString().equals("")) {
 				gmcs.putMapEntry(CIVLConstants.inputO, input.getName(),
 						input.getValue());
 			}
@@ -556,11 +608,6 @@ public class GUI_revamp extends JFrame {
 		section.setScalarValue(option, value);
 		System.out.println(section.getValue(option));
 
-	}
-
-	// TODO: Possibly delete as it is not needed
-	public NormalCommandKind getCommandType(String com) {
-		return currCommand;
 	}
 
 	/**
@@ -602,7 +649,7 @@ public class GUI_revamp extends JFrame {
 			} else
 				tf_chooseFile.setText("");
 
-			NormalCommandKind currCommand = currConfig.commandKind;
+			NormalCommandKind currCommand = currConfig.getNormalCommandKind();
 			// CONFIG, SHOW, VERIFY, REPLAY, GUI, HELP, RUN
 			if (currCommand.equals(NormalCommandKind.CONFIG)) {
 				tp_commandView.addTab("Choose File", p_chooseFile);
@@ -691,7 +738,8 @@ public class GUI_revamp extends JFrame {
 		bt_new.setIcon(new ImageIcon("Images/new.png"));
 		bt_duplicate.setIcon(new ImageIcon("Images/duplicate.png"));
 
-		// bt_deleteConfig.setPreferredSize(bt_new.getSize());
+		bt_deleteConfig.setEnabled(false);
+		bt_duplicate.setEnabled(false);
 
 		p_tree.setLayout(null);
 
@@ -711,8 +759,6 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * Creates the container {@link JPanel}.
 	 */
-	// TODO: have a unsaved changes pop up window like eclipse run configs(in
-	// progress)
 	public void initContainer() {
 		JPanel p_container = new JPanel();
 		JPanel p_view = new JPanel();
@@ -806,6 +852,7 @@ public class GUI_revamp extends JFrame {
 
 		tf_name.setEnabled(false);
 		bt_apply.setEnabled(false);
+
 		tbl_fileTable.getModel().addTableModelListener(
 				new TableModelListener() {
 
@@ -914,23 +961,6 @@ public class GUI_revamp extends JFrame {
 	}
 
 	/**
-	 * Adds the desired RunConfigDataNode to the CommandNode
-	 * 
-	 * @param rcdn
-	 * @param top
-	 */
-	public void addToNode(RunConfigDataNode rcdn, DefaultMutableTreeNode top) {
-		int comTypesNum = top.getChildCount();
-		ArrayList<CommandNode> list = Collections.list(top.children());
-		for (int i = 0; i < comTypesNum; i++) {
-			if (rcdn.commandKind.equals(list.get(i).commandKind)) {
-				list.get(i).add(rcdn);
-				break;
-			}
-		}
-	}
-
-	/**
 	 * Creates all of the the {@link DefaultMutableTreeNode} that will be used
 	 * for the {@link JTree}, jt_commands.
 	 * 
@@ -942,18 +972,43 @@ public class GUI_revamp extends JFrame {
 		Collection<RunConfigDataNode> c = savedConfigs.values();
 
 		Object[] configs = c.toArray();
-		Object[] vals = NormalCommandKind.values();
+		Object[] vals = CommandName.values();
 
 		for (int i = 0; i < vals.length; i++) {
 			String nodeName = vals[i].toString();
-			CommandNode node = new CommandNode(nodeName,
-					(NormalCommandKind) vals[i]);
+			CommandNode node = new CommandNode(nodeName, (CommandName) vals[i]);
 			top.add(node);
 		}
 
 		for (int i = 0; i < configs.length; i++) {
 			RunConfigDataNode curr = (RunConfigDataNode) configs[i];
-			addToNode(curr, top);
+
+			if (curr.comLine.commandLineKind() == CommandLineKind.COMPARE) {
+				CommandNode node;
+				while (top.children().hasMoreElements()) {
+					Object currNode = top.children().nextElement();
+					node = (CommandNode) currNode;
+					if (node.commandName == CommandName.COMPARE) {
+						node.add(curr);
+					}
+				}
+			}
+
+			else if (curr.comLine.commandLineKind() == CommandLineKind.NORMAL) {
+				System.out.println("normal");
+				CommandNode node;
+				Enumeration<CommandNode> e = top.children();
+				while (e.hasMoreElements()) {
+					Object currNode = e.nextElement();
+					node = (CommandNode) currNode;
+					if (comNameToComKind(node.commandName) == curr
+							.getNormalCommandKind()) {
+						node.add(curr);
+						break;
+					}
+					System.out.println(node.commandName.toString());
+				}
+			}
 		}
 
 		return top;
@@ -971,6 +1026,7 @@ public class GUI_revamp extends JFrame {
 		final JButton bt_apply = (JButton) getComponentByName("bt_apply");
 		final JButton bt_browseFile = (JButton) getComponentByName("bt_browseFile");
 		final JButton bt_deleteConfig = (JButton) getComponentByName("bt_deleteConfig");
+		final JButton bt_duplicate = (JButton) getComponentByName("bt_duplicate");
 		final JTextField tf_name = (JTextField) getComponentByName("tf_name");
 		final JTextField tf_chooseFile = (JTextField) getComponentByName("tf_chooseFile");
 		final CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
@@ -997,6 +1053,8 @@ public class GUI_revamp extends JFrame {
 					tf_name.setEnabled(false);
 					bt_run.setEnabled(false);
 					bt_apply.setEnabled(false);
+					bt_deleteConfig.setEnabled(false);
+					bt_duplicate.setEnabled(false);
 					tf_name.setText("");
 					drawView();
 					repaint();
@@ -1006,27 +1064,11 @@ public class GUI_revamp extends JFrame {
 					tf_name.setEnabled(false);
 					bt_run.setEnabled(false);
 					bt_apply.setEnabled(false);
+					bt_deleteConfig.setEnabled(false);
+					bt_duplicate.setEnabled(false);
 
-					if (currConfig != null && !currConfig.isBrandNew()) {
-						if (currConfig.isChanged()) {
-							boolean saveConfig;
-							// int response =
-							// JOptionPane.showConfirmDialog(gui,"There are unsaved changes in the current "+
-							// "Run Configuration, do you want to save changes?","Save Changes?",JOptionPane.YES_NO_OPTION);
-							int response = 0;
-							if (response == 1)
-								saveConfig = false;
-
-							else {
-								saveConfig = true;
-							}
-
-							currConfig.saveChanges(saveConfig);
-						}
-					}
-					cachedConfig = currConfig;
 					currConfig = null;
-					currCommand = ((CommandNode) node).commandKind;
+					currCommand = ((CommandNode) node).commandName;
 
 					drawView();
 					tf_name.setText("");
@@ -1038,36 +1080,19 @@ public class GUI_revamp extends JFrame {
 					tf_name.setEnabled(true);
 					bt_run.setEnabled(true);
 					bt_apply.setEnabled(true);
+					bt_deleteConfig.setEnabled(true);
+					bt_duplicate.setEnabled(true);
 
 					if (currConfig == null) {
 						currConfig = (RunConfigDataNode) node;
-						currCommand = currConfig.commandKind;
+						// currCommand = currConfig.get
 						currConfig.setBrandNew(false);
 						tf_name.setText(currConfig.getName());
 						drawView();
 					}
 
-					if (currConfig != null && !currConfig.isBrandNew()) {
-						if (currConfig.isChanged()) {
-							boolean saveConfig;
-							// int response =
-							// JOptionPane.showConfirmDialog(gui,"There are unsaved changes in the current "+
-							// "Run Configuration, do you want to save changes?","Save Changes?",JOptionPane.YES_NO_OPTION);
-							int response = 0;
-							if (response == 1)
-								saveConfig = false;
-
-							else {
-								saveConfig = true;
-							}
-
-							currConfig.saveChanges(saveConfig);
-						}
-					}
-
-					cachedConfig = currConfig;
 					currConfig = (RunConfigDataNode) node;
-					currCommand = currConfig.commandKind;
+					currCommand = ((CommandNode) currConfig.getParent()).commandName;
 					currConfig.setBrandNew(false);
 					tf_name.setText(currConfig.getName());
 					drawView();
@@ -1127,7 +1152,7 @@ public class GUI_revamp extends JFrame {
 							inputList.add(ci);
 							currInputModel.addRow(new Object[] { vdn.getName(),
 									vdn.getTypeNode().prettyRepresentation(),
-									"", vdn.getInitializer() });
+									"", ci.getInitializer() });
 
 						}
 
@@ -1174,7 +1199,6 @@ public class GUI_revamp extends JFrame {
 		ActionListener apply = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (currConfig != null) {
-					currConfig.saveChanges(true);
 					setOptions();
 					setInputs();
 					currConfig.setUserObject(currConfig.getName());
@@ -1194,11 +1218,15 @@ public class GUI_revamp extends JFrame {
 		ActionListener run = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				// currConfig = currConfig.deserialize();
-				// currCommand = currConfig.getCommand();
 				UserInterface ui = new UserInterface();
 				System.out.println(currConfig.getGmcConfig()
 						.getAnonymousSection());
-				createCommandLine();
+				if (currCommand.equals(CommandName.COMPARE)
+						|| currCommand.equals(CommandName.COMPARE_REPLAY)) {
+					createCompareCommandLine();
+				} else {
+					createNormalCommandLine();
+				}
 				Collection<String> files = new ArrayList<String>();
 				// currConfig.getSelectedFile();
 				files.add(currConfig.getSelectedFiles().get(0).getName());
@@ -1246,7 +1274,6 @@ public class GUI_revamp extends JFrame {
 					}
 				}
 				currConfig = null;
-				cachedConfig = null;
 				jt_commands.setSelectionRow(0);
 				revalidate();
 				repaint();
@@ -1280,8 +1307,16 @@ public class GUI_revamp extends JFrame {
 
 					// DefaultMutableTreeNode newChild = new
 					// RunConfigDataNode(selectedCom);
-					DefaultMutableTreeNode newChild = new RunConfigDataNode(
-							currCommand);
+					DefaultMutableTreeNode newChild = null;
+					if (currCommand.equals(CommandName.COMPARE)
+							|| currCommand.equals(CommandName.COMPARE_REPLAY)) {
+						newChild = new RunConfigDataNode(
+								createCompareCommandLine());
+					} else {
+						newChild = new RunConfigDataNode(
+								createNormalCommandLine());
+					}
+
 					String newName = tf_name.getText();
 					if (tf_name.getText().equals(null)
 							|| tf_name.getText().equals("")) {
@@ -1299,6 +1334,7 @@ public class GUI_revamp extends JFrame {
 					newChild.setUserObject(newName);
 					currConfig = (RunConfigDataNode) newChild;
 					currConfig.setName(newName);
+					System.out.println(currConfig.getName());
 					((RunConfigDataNode) currConfig)
 							.setSerializeDestination(serializePath);
 					// showOptions();
@@ -1325,7 +1361,22 @@ public class GUI_revamp extends JFrame {
 			}
 		};
 		bt_new.addActionListener(newConfig);
+		
+		/**
+		 * The action for duplicating a configuration
+		 */
+		ActionListener duplicate = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//TODO: find a way to DEEP copy a RunConfigDataNode
+			}
+		};
+		
+		bt_duplicate.addActionListener(duplicate );
 
+		/**
+		 * Listener that detects when the user is editing the name of the run
+		 * configuration
+		 */
 		tf_name.addFocusListener(new FocusListener() {
 
 			@Override
@@ -1343,6 +1394,10 @@ public class GUI_revamp extends JFrame {
 
 		});
 
+		/**
+		 * Listener that detects when the user is editing the name of the run
+		 * configuration
+		 */
 		tf_name.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
@@ -1402,10 +1457,9 @@ public class GUI_revamp extends JFrame {
 		p_header.setBorder(etched);
 		p_container.setBorder(etched);
 		p_commands.setBorder(etched);
-		p_execute.setBorder(etched);
-		p_view.setBorder(etched);
-		p_tree.setBorder(etched);
-		p_buttons.setBorder(etched);
+		// p_execute.setBorder(etched);
+		// p_view.setBorder(etched);
+		// p_buttons.setBorder(etched);
 
 		p_buttons.setLayout(new FlowLayout(FlowLayout.LEFT, 25, 2));
 		p_chooseFile.setLayout(new FlowLayout(FlowLayout.LEFT, 6, 1));
@@ -1413,6 +1467,7 @@ public class GUI_revamp extends JFrame {
 		p_info.setLayout(null);
 
 		// GroupLayout for main JFrame
+		// If you want to change this, use something like netbeans or read more into group layouts
 		GroupLayout groupLayout = new GroupLayout(getContentPane());
 		groupLayout
 				.setHorizontalGroup(groupLayout

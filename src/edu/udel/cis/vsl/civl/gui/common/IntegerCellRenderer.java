@@ -5,6 +5,11 @@ import java.awt.Component;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+/**
+ * The TableCellRenderer for displaying Integers in the CIVL_Table.
+ * @author StevenNoyes
+ *
+ */
 public class IntegerCellRenderer implements TableCellRenderer {
 	/**
 	 * The component that will be rendered by the renderer.

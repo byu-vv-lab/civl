@@ -38,14 +38,6 @@ public class CIVL_Command implements Serializable{
 	 */
 	private boolean allowInputs;
 	
-	/**
-	 * Constructs a new CIVL_Command.
-	 * @param name 
-	 * @param description
-	 * @param allowedOptions
-	 * @param allowInputs
-	 */
-	//TODO: finish documentation
 	public CIVL_Command(String name, String description,
 			Option[] allowedOptions, boolean allowInputs) {
 		this.name = name;

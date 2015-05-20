@@ -6,6 +6,11 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 
+/**
+ * The TableCellEditor for displaying Integers in the CIVL_Table.
+ * @author StevenNoyes
+ *
+ */
 public class IntegerCellEditor extends AbstractCellEditor implements
 		TableCellEditor {
 	private static final long serialVersionUID = 1L;

@@ -18,7 +18,10 @@ import javax.swing.table.TableCellEditor;
 public class FormattedTextFieldEditor extends AbstractCellEditor implements
 		TableCellEditor {
 	private static final long serialVersionUID = 1L;
-
+	
+	/**
+	 * The text field associated with this Editor.
+	 */
 	private JFormattedTextField jftf;
 
 	public FormattedTextFieldEditor() {

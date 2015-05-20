@@ -2,27 +2,23 @@ package edu.udel.cis.vsl.civl.gui.common;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.SortedMap;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine;
-import edu.udel.cis.vsl.civl.run.IF.UserInterface;
+import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandLineKind;
 import edu.udel.cis.vsl.civl.run.common.CIVLCommand;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
-import edu.udel.cis.vsl.gmc.GMCSection;
 import edu.udel.cis.vsl.gmc.Option;
 
 /**
@@ -90,95 +86,81 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	/**
 	 * The NormalCommandKind associated with this RunConfigurationDataNode
 	 */
-	public NormalCommandKind commandKind;
 
-	public boolean tableChanged;
+	public CommandLine comLine;
 
-	// Temporary Values of all fields that can be saved to their permanent
-	// counterparts.
-	// TODO: change to private or possibly delete these
-	transient private String temp_name;
-	transient private File temp_selectedFile;
-	transient private CIVL_Input[] temp_inputs;
-	transient private Object[] temp_values;
-
+	/**
+	 * A boolean denoting whether a RunConfigurationDataNode is to be deleted or
+	 * not.
+	 */
 	private boolean markedForDelete;
 
-	// TODO: add documentation to constructor
-	public RunConfigDataNode(NormalCommandKind commandKind) {
+	// TODO: figure out use for this
+	public boolean tableChanged;
+
+	public RunConfigDataNode(CommandLine comLine) {
 		SortedMap<String, Option> map = null;
 		this.selectedFiles = new ArrayList<File>();
 		this.inputs = new ArrayList<CIVL_Input>();
 		this.markedForDelete = false;
 		GMCConfiguration c = null;
 
-		if (commandKind.equals(NormalCommandKind.RUN)) {
-			map = CIVLCommand.getRunOptions();
-			c = new GMCConfiguration(map.values());
+		if (comLine == null) {
+			System.out.println("NULL");
 		}
 
-		else if (commandKind.equals(NormalCommandKind.VERIFY)) {
+		else if (comLine.commandLineKind() == CommandLineKind.COMPARE) {
 			map = CIVLCommand.getVerifyOrCompareOptions();
 			c = new GMCConfiguration(map.values());
 		}
 
-		else if (commandKind.equals(NormalCommandKind.SHOW)) {
-			map = CIVLCommand.getShowOptions();
-			c = new GMCConfiguration(map.values());
-		}
+		else if (comLine.commandLineKind() == CommandLineKind.NORMAL) {
+			NormalCommandKind commandKind = ((NormalCommandLine) comLine)
+					.normalCommandKind();
+			System.out.println(commandKind);
+			if (commandKind.equals(NormalCommandKind.RUN)) {
+				map = CIVLCommand.getRunOptions();
+				c = new GMCConfiguration(map.values());
+			}
 
+			else if (commandKind.equals(NormalCommandKind.VERIFY)) {
+				map = CIVLCommand.getVerifyOrCompareOptions();
+				c = new GMCConfiguration(map.values());
+			}
+
+			else if (commandKind.equals(NormalCommandKind.SHOW)) {
+				map = CIVLCommand.getShowOptions();
+				c = new GMCConfiguration(map.values());
+			}
+		}
 		this.setGmcConfig(c);
-		this.commandKind = commandKind;
 
 		int size = CIVLConstants.getAllOptions().length;
 		this.setValues(new Object[size]); // DEPRECIATED
 		this.setChanged(false);
 		this.brandNew = true;
 		this.tableChanged = false;
+		this.comLine = comLine;
 	}
 
 	/**
-	 * Checks if the RunConfigDataNode has unsaved data and returns true if it
-	 * does.
+	 * Returns the command type of a CommandLine object that is NORMAL. Returns
+	 * null if the CommandLine command kind object isn't NORMAL
 	 * 
-	 * @return Whether or not there is unsaved data present in the
-	 *         RunConfigDataNode.
+	 * @return The NormalCommandKind of the CommandLine
 	 */
-	public boolean checkForUnsavedData() {
-		boolean changedData = false;
-		if (name != temp_name)
-			changedData = true;
-
-		if (selectedFile != temp_selectedFile)
-			changedData = true;
-
-		if (values != temp_values)
-			changedData = true;
-
-		return changedData;
+	public NormalCommandKind getNormalCommandKind() {
+		if (comLine.commandLineKind() == CommandLineKind.NORMAL) {
+			return ((NormalCommandLine) comLine).normalCommandKind();
+		} else
+			return null;
 	}
 
-	/**
-	 * Saves the unsaved changes to the RunConfigDataNode, if desired.
-	 * 
-	 * @param saveConfig
-	 *            True if the changes are to be saved, false otherwise.
+	/*
+	 * public CommandKind getCompareCommandKind() { if
+	 * (comLine.commandLineKind()==CommandLineKind.COMPARE) { return
+	 * CommandLine.COMPARE; } else return null; }
 	 */
-	public void saveChanges(boolean saveConfig) {
-		/*
-		 * if (saveConfig) { if (temp_name != null) { name = temp_name;
-		 * this.setUserObject(name); } if (temp_selectedFile != null)
-		 * selectedFile = temp_selectedFile; if (temp_inputs != null) inputs =
-		 * temp_inputs; if (temp_values != null) values = temp_values;
-		 * 
-		 * changed = false; } else { temp_name = null; temp_selectedFile = null;
-		 * temp_inputs = null; temp_values = null; changed = false;
-		 * System.out.println("Changes not saved to the config: " + name); }
-		 */
-		if (saveConfig) {
-
-		}
-	}
 
 	/**
 	 * Serializes the RunConfigDataNode so that it can be accessed later.
@@ -199,13 +181,20 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		}
 	}
 
-	public RunConfigDataNode deserialize(){
+	/**
+	 * Deserializes the RunConfigurationDataNode and returns the associated
+	 * object
+	 * 
+	 * @return The RunConfigurationDataNode from the ObjectStream
+	 */
+	public RunConfigDataNode deserialize() {
 		RunConfigDataNode config = null;
 		try {
 			FileInputStream fileIn = new FileInputStream(serializeDestination
 					+ "/" + name);
 			ObjectInputStream in = new ObjectInputStream(fileIn);
 			config = (RunConfigDataNode) in.readObject();
+			System.out.println(config.getNormalCommandKind());
 			in.close();
 			fileIn.close();
 			if (!config.isMarkedForDelete()) {
@@ -215,7 +204,6 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 					System.out.println("File: "
 							+ config.getSelectedFiles().get(i));
 				}
-				System.out.println("Command: " + config.commandKind);
 			}
 			return config;
 
@@ -228,10 +216,17 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 			return null;
 		}
 	}
-
+	
+	/**
+	 * Marks the RunConfigurationDataNode for delete
+	 */
 	public void deleteConfig() {
 		this.markedForDelete = true;
 	}
+	
+	/*
+	 * Getters & Setters
+	 */
 
 	public boolean isMarkedForDelete() {
 		return markedForDelete;
@@ -292,44 +287,6 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	public void setBrandNew(boolean brandNew) {
 		this.brandNew = brandNew;
 
-	}
-
-	// Getters/Setters for temporary fields
-
-	public String getTemp_name() {
-		return temp_name;
-	}
-
-	public void setTemp_name(String temp_name) {
-		changed = true;
-		this.temp_name = temp_name;
-	}
-
-	public File getTemp_selectedFile() {
-		return temp_selectedFile;
-	}
-
-	public void setTemp_selectedFile(File temp_selectedFile) {
-		changed = true;
-		this.temp_selectedFile = temp_selectedFile;
-	}
-
-	public CIVL_Input[] getTemp_inputs() {
-		return temp_inputs;
-	}
-
-	public void setTemp_inputs(CIVL_Input[] temp_inputs) {
-		changed = true;
-		this.temp_inputs = temp_inputs;
-	}
-
-	public Object[] getTemp_values() {
-		return temp_values;
-	}
-
-	public void setTemp_values(Object[] temp_values) {
-		changed = true;
-		this.temp_values = temp_values;
 	}
 
 	public String getSerializeDestination() {

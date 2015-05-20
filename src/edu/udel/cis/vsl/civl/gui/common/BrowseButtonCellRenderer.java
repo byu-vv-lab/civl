@@ -6,12 +6,16 @@ import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+/**
+ * The TableCellRenderer associated with the BrowseButton
+ * @author StevenNoyes
+ *
+ */
 public class BrowseButtonCellRenderer implements TableCellRenderer {
 	
 	/**
 	 * The component that will be rendered by the renderer.
 	 */
-	//private JPanel component;
 	private JButton component;
 	
 	/**
@@ -21,7 +25,6 @@ public class BrowseButtonCellRenderer implements TableCellRenderer {
 	
 	public BrowseButtonCellRenderer(String optName, GUI_revamp parent) {
 		this.optName = optName;
-		//component = new BrowseButtonPanel();
 		component = new BrowseButton(optName, parent);
 		component.setText("Browse...");
 	}

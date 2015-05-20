@@ -16,7 +16,6 @@ import javax.swing.table.TableCellEditor;
  */
 public class BooleanCellEditor extends AbstractCellEditor implements
 		TableCellEditor {
-	private static final long serialVersionUID = 1L;
 	/**
 	 * The component that will be edited by the editor.
 	 */

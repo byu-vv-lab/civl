@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandName;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
 
 /**
@@ -11,11 +12,14 @@ import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
  * @author StevenNoyes
  *
  */
-public class CommandNode extends DefaultMutableTreeNode implements Serializable {
-	public NormalCommandKind commandKind;
+public class CommandNode extends DefaultMutableTreeNode implements Serializable {	
+	/**
+	 * The name of the Command.
+	 */
+	public CommandName commandName;
 	
-	public CommandNode(String name, NormalCommandKind commandKind){
+	public CommandNode(String name, CommandName comName){
 		super(name);
-		this.commandKind = commandKind;
+		this.commandName = comName;
 	}
 }

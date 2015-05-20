@@ -6,6 +6,11 @@ import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+/**
+ * The TableCellRenderer for the DeleteButton in the CIVL_Table.
+ * @author StevenNoyes
+ *
+ */
 public class DeleteButtonCellRenderer implements TableCellRenderer {
 	
 	/**
