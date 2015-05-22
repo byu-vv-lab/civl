@@ -465,6 +465,14 @@ public class GeneralWorker extends BaseWorker {
 	}
 
 	// TODO can you have static for function parameters?
+	/**
+	 * Computes the new name map of static variables. A static variable "var" is
+	 * renamed to "var$n", where n is the current static variable ID.
+	 * 
+	 * @param node
+	 * @param newNames
+	 * @return
+	 */
 	private Map<Entity, String> newNameMapOfStaticVariables(ASTNode node,
 			Map<Entity, String> newNames) {
 		if (node instanceof VariableDeclarationNode) {
