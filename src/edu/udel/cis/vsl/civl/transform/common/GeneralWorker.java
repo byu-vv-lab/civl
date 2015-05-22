@@ -42,6 +42,20 @@ import edu.udel.cis.vsl.abc.transform.IF.NameTransformer;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 
+/**
+ * The general transformer performs the following transformations:
+ * 
+ * <ul>
+ * <li>malloc(...) to $malloc($gen_root, ...); where $gen_root is the root scope
+ * of this AST (which is reserved as a relative root if other transformers make
+ * this AST as part of another)</li>
+ * <li>arguments of the main function argc and argv become input variables</li>
+ * <li>static variables are all moved to the root scope</li>
+ * </ul>
+ * 
+ * @author zmanchun
+ *
+ */
 public class GeneralWorker extends BaseWorker {
 
 	private final static String MALLOC = "malloc";
@@ -56,6 +70,9 @@ public class GeneralWorker extends BaseWorker {
 	private String newArgvName;
 	private StatementNode argcAssumption = null;
 	private Source mainSource;
+	/**
+	 * static variable declaration nodes of this AST
+	 */
 	private List<VariableDeclarationNode> static_variables = new LinkedList<>();
 
 	public GeneralWorker(ASTFactory astFactory) {
@@ -465,6 +482,8 @@ public class GeneralWorker extends BaseWorker {
 	}
 
 	// TODO can you have static for function parameters?
+	// TODO what if the initializer of the variable node access some variables
+	// not declared in the root scope?
 	/**
 	 * Computes the new name map of static variables. A static variable "var" is
 	 * renamed to "var$n", where n is the current static variable ID.
