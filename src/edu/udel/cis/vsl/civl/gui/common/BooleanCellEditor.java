@@ -17,6 +17,10 @@ import javax.swing.table.TableCellEditor;
 public class BooleanCellEditor extends AbstractCellEditor implements
 		TableCellEditor {
 	/**
+	 * required by eclipse
+	 */
+	private static final long serialVersionUID = 1L;
+	/**
 	 * The component that will be edited by the editor.
 	 */
 	private RadioPanel component;
