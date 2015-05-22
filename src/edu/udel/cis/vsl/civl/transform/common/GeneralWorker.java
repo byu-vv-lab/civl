@@ -502,6 +502,8 @@ public class GeneralWorker extends BaseWorker {
 		for (int i = 0; i < count; i++) {
 			BlockItemNode child = root.getSequenceChild(i);
 
+			if (child == null)
+				continue;
 			child.remove();
 			newChildren.add(child);
 		}
