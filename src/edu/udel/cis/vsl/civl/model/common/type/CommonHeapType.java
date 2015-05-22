@@ -101,4 +101,9 @@ public class CommonHeapType extends CommonType implements CIVLHeapType {
 	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
 		return this;
 	}
+
+	@Override
+	public boolean areSubtypesScalar() {
+		return false;
+	}
 }

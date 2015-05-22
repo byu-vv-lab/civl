@@ -204,10 +204,19 @@ public class CommonStructOrUnionType extends CommonType implements
 		CIVLStructOrUnionType newType = new CommonStructOrUnionType(newId,
 				isHandleObject);
 		List<StructOrUnionField> newFields = new ArrayList<>(this.numFields());
-		
-		for(StructOrUnionField field: fields)
+
+		for (StructOrUnionField field : fields)
 			newFields.add(field.copyAs(type, universe));
 		newType.complete(newFields);
 		return newType;
+	}
+
+	@Override
+	public boolean areSubtypesScalar() {
+		for (StructOrUnionField field : this.fields) {
+			if (!field.type().isScalar())
+				return false;
+		}
+		return true;
 	}
 }

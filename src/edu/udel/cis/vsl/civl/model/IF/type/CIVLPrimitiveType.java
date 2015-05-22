@@ -16,7 +16,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 public interface CIVLPrimitiveType extends CIVLType {
 
 	public enum PrimitiveTypeKind {
-		BOOL, DYNAMIC, INT, PROCESS, REAL, SCOPE, VOID, CHAR
+		BOOL, DYNAMIC, INT, PROCESS, REAL, SCOPE, VOID, CHAR, MEMORY
 	};
 
 	/**

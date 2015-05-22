@@ -109,4 +109,9 @@ public class CommonDomainType extends CommonType implements CIVLDomainType {
 	public boolean isComplete() {
 		return (this instanceof CIVLCompleteDomainType);
 	}
+
+	@Override
+	public boolean areSubtypesScalar() {
+		return false;
+	}
 }

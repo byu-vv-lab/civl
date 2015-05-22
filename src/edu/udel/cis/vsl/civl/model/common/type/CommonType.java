@@ -162,4 +162,14 @@ public abstract class CommonType implements CIVLType {
 	public boolean isSuperTypeOf(CIVLType subtype) {
 		return this.equals(subtype);
 	}
+
+	@Override
+	public boolean isScalar() {
+		return false;
+	}
+
+	@Override
+	public boolean areSubtypesScalar() {
+		return true;
+	}
 }

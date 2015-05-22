@@ -108,4 +108,9 @@ public class CommonArrayType extends CommonType implements CIVLArrayType {
 		return false;
 	}
 
+	@Override
+	public boolean areSubtypesScalar() {
+		return this.elementType.isScalar();
+	}
+
 }

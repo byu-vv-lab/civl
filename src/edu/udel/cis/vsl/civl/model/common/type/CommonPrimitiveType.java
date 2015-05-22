@@ -88,6 +88,8 @@ public class CommonPrimitiveType extends CommonType implements
 			return "void";
 		case CHAR:
 			return "char";
+		case MEMORY:
+			return "$memory";
 		default:
 			throw new CIVLInternalException("Unknown primitive type kind: "
 					+ kind, (CIVLSource) null);
@@ -196,5 +198,10 @@ public class CommonPrimitiveType extends CommonType implements
 	@Override
 	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
 		return type;
+	}
+
+	@Override
+	public boolean isScalar() {
+		return true;
 	}
 }

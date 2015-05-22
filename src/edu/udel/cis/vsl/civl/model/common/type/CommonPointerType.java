@@ -84,4 +84,9 @@ public class CommonPointerType extends CommonType implements CIVLPointerType {
 		}
 		return false;
 	}
+
+	@Override
+	public boolean isScalar() {
+		return true;
+	}
 }

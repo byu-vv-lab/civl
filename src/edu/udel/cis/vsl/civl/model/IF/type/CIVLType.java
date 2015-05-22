@@ -191,4 +191,18 @@ public interface CIVLType {
 	 * @return
 	 */
 	boolean isSuperTypeOf(CIVLType subtype);
+
+	/**
+	 * Is this type a scalar type?
+	 * 
+	 * @return
+	 */
+	boolean isScalar();
+
+	/**
+	 * Are all the sub-types of this type scalar?
+	 * 
+	 * @return
+	 */
+	boolean areSubtypesScalar();
 }

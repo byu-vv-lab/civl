@@ -96,4 +96,9 @@ public class CommonEnumType extends CommonType implements CIVLEnumType {
 		return false;
 	}
 
+	@Override
+	public boolean isScalar() {
+		return true;
+	}
+
 }

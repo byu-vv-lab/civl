@@ -119,4 +119,9 @@ public class CommonBundleType extends CommonType implements CIVLBundleType {
 			return true;
 		return false;
 	}
+
+	@Override
+	public boolean areSubtypesScalar() {
+		return false;
+	}
 }
