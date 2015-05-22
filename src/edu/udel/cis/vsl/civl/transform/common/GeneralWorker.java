@@ -3,11 +3,13 @@ package edu.udel.cis.vsl.civl.transform.common;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
+import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.entity.IF.OrdinaryEntity;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
@@ -36,6 +38,8 @@ import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.abc.transform.IF.NameTransformer;
+import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 
 public class GeneralWorker extends BaseWorker {
@@ -43,13 +47,16 @@ public class GeneralWorker extends BaseWorker {
 	private final static String MALLOC = "malloc";
 	final static String GENERAL_ROOT = "$gen_root";
 	private final static String MAX_ARGC = "10";
+	private final static String separator = "$";
 
 	private final static String INPUT_PREFIX = "CIVL_";
+	private int static_var_count = 0;
 
 	private String argvName;
 	private String newArgvName;
 	private StatementNode argcAssumption = null;
 	private Source mainSource;
+	private List<VariableDeclarationNode> static_variables = new LinkedList<>();
 
 	public GeneralWorker(ASTFactory astFactory) {
 		super("GeneralTransformer", astFactory);
@@ -78,9 +85,10 @@ public class GeneralWorker extends BaseWorker {
 		Function mainFunction = (Function) mainEntity;
 		FunctionDefinitionNode mainDef = mainFunction.getDefinition();
 
+		unit = renameStaticVariables(unit);
 		unit.release();
+		root = moveStaticVariables(root);
 		processMalloc(root);
-
 		// remove main prototypes...
 		for (DeclarationNode decl : mainFunction.getDeclarations()) {
 			if (!decl.isDefinition()) {
@@ -444,6 +452,61 @@ public class GeneralWorker extends BaseWorker {
 		}
 		return nodeFactory.newCompoundStatementNode(compoundNode.getSource(),
 				nodeList);
+	}
+
+	private AST renameStaticVariables(AST ast) throws SyntaxException {
+		Map<Entity, String> newNameMap = new HashMap<>();
+		NameTransformer staticVariableNameTransformer;
+
+		newNameMap = newNameMapOfStaticVariables(ast.getRootNode(), newNameMap);
+		staticVariableNameTransformer = Transform.nameTransformer(newNameMap,
+				astFactory);
+		return staticVariableNameTransformer.transform(ast);
+	}
+
+	// TODO can you have static for function parameters?
+	private Map<Entity, String> newNameMapOfStaticVariables(ASTNode node,
+			Map<Entity, String> newNames) {
+		if (node instanceof VariableDeclarationNode) {
+			VariableDeclarationNode variable = (VariableDeclarationNode) node;
+
+			if (variable.hasStaticStorage()) {
+				String oldName = variable.getName();
+				String newName = oldName + separator + this.static_var_count++;
+
+				newNames.put(variable.getEntity(), newName);
+				this.static_variables.add(variable);
+			}
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child == null)
+					continue;
+				newNames = newNameMapOfStaticVariables(child, newNames);
+			}
+		}
+		return newNames;
+	}
+
+	private SequenceNode<BlockItemNode> moveStaticVariables(
+			SequenceNode<BlockItemNode> root) {
+		if (this.static_variables.size() < 1)
+			return root;
+
+		List<BlockItemNode> newChildren = new LinkedList<>();
+		int count = root.numChildren();
+
+		for (VariableDeclarationNode var : this.static_variables) {
+			var.remove();
+			newChildren.add(var);
+		}
+		for (int i = 0; i < count; i++) {
+			BlockItemNode child = root.getSequenceChild(i);
+
+			child.remove();
+			newChildren.add(child);
+		}
+		return nodeFactory
+				.newTranslationUnitNode(root.getSource(), newChildren);
 	}
 
 }

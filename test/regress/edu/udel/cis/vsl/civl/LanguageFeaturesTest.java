@@ -544,6 +544,11 @@ public class LanguageFeaturesTest {
 	public void int2float() {
 		assertTrue(ui.run("verify ", filename("int2float.cvl")));
 	}
+	
+	@Test
+	public void staticVar() {
+		assertTrue(ui.run("verify ", filename("staticVar.cvl")));
+	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
