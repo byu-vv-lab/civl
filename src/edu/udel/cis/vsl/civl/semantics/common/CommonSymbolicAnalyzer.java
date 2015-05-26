@@ -818,7 +818,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	 */
 	private String symbolicExpressionToString(CIVLSource source, State state,
 			CIVLType civlType, SymbolicExpression symbolicExpression,
-			boolean atomize, String prefix, String separate, boolean showType) {
+			boolean atomize, String prefix, String separator, boolean showType) {
 		StringBuffer result = new StringBuffer();
 		SymbolicType type = symbolicExpression.type();
 		SymbolicType charType = typeFactory.charType().getDynamicType(universe);
@@ -835,7 +835,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		} else if (type.equals(this.dynamicHeapType)) {
 			// heap
 			return heapValueToString(source, state, symbolicExpression, prefix,
-					separate);
+					separator);
 		} else if (symbolicExpression.operator() == SymbolicOperator.CONCRETE
 				&& type instanceof SymbolicArrayType
 				&& ((SymbolicArrayType) type).elementType().equals(charType)) {
@@ -945,6 +945,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 						@SuppressWarnings("unchecked")
 						SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
 						int elementIndex = 0;
+						boolean needNewLine = civlType != null ? !civlType
+								.areSubtypesScalar() : false;
+						String padding = "\n" + prefix + separator;
 
 						result.append("{");
 						for (SymbolicExpression symbolicElement : symbolicCollection) {
@@ -953,6 +956,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 							if (elementIndex != 0)
 								result.append(", ");
+							if (needNewLine)
+								result.append(padding);
 							elementIndex++;
 							if (elementNameAndType.left != null)
 								result.append("." + elementNameAndType.left
@@ -982,12 +987,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case DENSE_ARRAY_WRITE: {
 				int count = 0;
 				boolean first = true;
-				int eleIndex = 0;
+				boolean needNewLine = !civlType.areSubtypesScalar();
+				String padding = "\n" + prefix + separator;
 
 				if (arguments[0] instanceof SymbolicExpression)
 					result.append(this.symbolicExpressionToString(source,
 							state, null, (SymbolicExpression) arguments[0],
-							atomize, prefix, separate, false));
+							atomize, prefix, separator, false));
 				else
 					result.append(arguments[0].toStringBuffer(true));
 				result.append("{");
@@ -997,10 +1003,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 							first = false;
 						else
 							result.append(", ");
+						if (needNewLine)
+							result.append(padding);
 						result.append("[" + count + "]" + "=");
 						result.append(symbolicExpressionToString(source, state,
-								this.subType(civlType, eleIndex++).right,
-								value, false, "", "", false));
+								this.subType(civlType, count).right, value,
+								false, prefix, separator, false));
 						// result.append(value.toStringBuffer(false));
 					}
 					count++;
