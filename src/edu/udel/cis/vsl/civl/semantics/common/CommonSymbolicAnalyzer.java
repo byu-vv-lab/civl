@@ -1206,14 +1206,29 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				if (atomize)
 					atomize(result);
 				return result.toString();
-			case TUPLE_WRITE:
+			case TUPLE_WRITE: {
+				boolean needNewLine = !civlType.areSubtypesScalar();
+				String padding = "\n" + prefix + separator;
+				String newPrefix = needNewLine ? prefix + separator : prefix;
+				int fieldIndex = ((IntObject) symbolicExpression.argument(1))
+						.getInt();
+				StructOrUnionField field = ((CIVLStructOrUnionType) civlType)
+						.getField(fieldIndex);
+
 				result.append(arguments[0].toStringBuffer(true));
-				result.append("{.");
-				result.append(arguments[1].toStringBuffer(false));
+				result.append("{");
+				if (needNewLine)
+					result.append(padding);
+				result.append(".");
+				result.append(field.name().name());
+				// result.append(arguments[1].toStringBuffer(false));
 				result.append(":=");
-				result.append(arguments[2].toStringBuffer(false));
+				result.append(this.symbolicExpressionToString(source, state,
+						field.type(), symbolicExpression, newPrefix, separator));
+				// result.append(arguments[2].toStringBuffer(false));
 				result.append("}");
 				return result.toString();
+			}
 			case UNION_EXTRACT:
 				result.append("extract(");
 				result.append(arguments[0].toStringBuffer(false));
