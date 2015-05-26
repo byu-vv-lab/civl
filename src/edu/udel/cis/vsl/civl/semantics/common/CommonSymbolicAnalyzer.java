@@ -916,14 +916,27 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(arguments[1].toStringBuffer(false));
 				result.append("]");
 				return result.toString();
-			case ARRAY_WRITE:
+			case ARRAY_WRITE: {
+				boolean needNewLine = !civlType.areSubtypesScalar();
+				String padding = "\n" + prefix + separator;
+				String newPrefix = needNewLine ? prefix + separator : prefix;
+
 				result.append(arguments[0].toStringBuffer(true));
-				result.append("{[");
+				result.append("{");
+				if (needNewLine)
+					result.append(padding);
+				result.append("[");
 				result.append(arguments[1].toStringBuffer(false));
 				result.append("]=");
-				result.append(arguments[2].toStringBuffer(false));
+				result.append(this
+						.symbolicExpressionToString(source, state,
+								((CIVLArrayType) civlType).elementType(),
+								(SymbolicExpression) arguments[2], newPrefix,
+								separator));
+				// result.append(arguments[2].toStringBuffer(false));
 				result.append("}");
 				return result.toString();
+			}
 			case CAST:
 				result.append('(');
 				result.append(type.toStringBuffer(false));
@@ -948,6 +961,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 						boolean needNewLine = civlType != null ? !civlType
 								.areSubtypesScalar() : false;
 						String padding = "\n" + prefix + separator;
+						String newPrefix = needNewLine ? prefix + separator
+								: prefix;
 
 						result.append("{");
 						for (SymbolicExpression symbolicElement : symbolicCollection) {
@@ -964,7 +979,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 										+ "=");
 							result.append(symbolicExpressionToString(source,
 									state, elementNameAndType.right,
-									symbolicElement, false, "", "", false));
+									symbolicElement, false, newPrefix,
+									separator, false));
 						}
 						result.append("}");
 					} else {
@@ -989,11 +1005,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				boolean first = true;
 				boolean needNewLine = !civlType.areSubtypesScalar();
 				String padding = "\n" + prefix + separator;
+				String newPrefix = needNewLine ? prefix + separator : prefix;
 
 				if (arguments[0] instanceof SymbolicExpression)
 					result.append(this.symbolicExpressionToString(source,
 							state, null, (SymbolicExpression) arguments[0],
-							atomize, prefix, separator, false));
+							atomize, "", "", false));
 				else
 					result.append(arguments[0].toStringBuffer(true));
 				result.append("{");
@@ -1008,7 +1025,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 						result.append("[" + count + "]" + "=");
 						result.append(symbolicExpressionToString(source, state,
 								this.subType(civlType, count).right, value,
-								false, prefix, separator, false));
+								false, newPrefix, separator, false));
 						// result.append(value.toStringBuffer(false));
 					}
 					count++;
@@ -1019,6 +1036,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case DENSE_TUPLE_WRITE: {
 				boolean first = true;
 				int eleIndex = 0;
+				boolean needNewLine = !civlType.areSubtypesScalar();
+				String padding = "\n" + prefix + separator;
+				String newPrefix = needNewLine ? prefix + separator : prefix;
 
 				result.append(arguments[0].toStringBuffer(true));
 				result.append("{");
@@ -1031,12 +1051,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 							first = false;
 						else
 							result.append(", ");
+						if (needNewLine)
+							result.append(padding);
 						result.append("." + eleNameAndType.left + "=");
-						// result.append(count + "=");
-						// result.append(value.toStringBuffer(false));
 						result.append(symbolicExpressionToString(source, state,
-								eleNameAndType.right, value, false, "", "",
-								false));
+								eleNameAndType.right, value, false, newPrefix,
+								separator, false));
 					}
 				}
 				result.append("}");
