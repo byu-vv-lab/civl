@@ -373,18 +373,31 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 
 		if (symbolicUtil.isNullPointer(left)
 				|| symbolicUtil.isNullPointer(right)) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
-					"The arguments of $copy() must both be non-null pointers.\n"
-							+ "actual value of first argument: "
-							+ symbolicAnalyzer.symbolicExpressionToString(
-									sourceLeft, state, left)
-							+ "\n"
-							+ "actual value of second argument: "
-							+ symbolicAnalyzer.symbolicExpressionToString(
-									sourceRight, state, right),
-					symbolicAnalyzer.stateToString(state), source);
+			StringBuffer msg = new StringBuffer();
+			CIVLExecutionException err;
 
+			msg.append("The arguments of $copy() must both be non-null pointers.\n");
+			msg.append("first argument:\n");
+			msg.append("    ");
+			msg.append(arguments[0]);
+			msg.append("    ");
+			msg.append(symbolicAnalyzer.expressionEvaluation(state, pid,
+					arguments[0], false).right);
+			msg.append("\n    ");
+			msg.append(symbolicAnalyzer.symbolicExpressionToString(sourceLeft,
+					state, left));
+			msg.append("\nsecond argument:\n");
+			msg.append("    ");
+			msg.append(arguments[1]);
+			msg.append("    ");
+			msg.append(symbolicAnalyzer.expressionEvaluation(state, pid,
+					arguments[1], false).right);
+			msg.append("\n    ");
+			msg.append(symbolicAnalyzer.symbolicExpressionToString(sourceRight,
+					state, right));
+			err = new CIVLExecutionException(ErrorKind.DEREFERENCE,
+					Certainty.PROVEABLE, process, msg.toString(),
+					symbolicAnalyzer.stateToString(state), source);
 			this.errorLogger.reportError(err);
 			return state;
 		} else {
@@ -395,19 +408,30 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					sourceRight, state, right);
 
 			if (!objTypeLeft.equals(objTypeRight)) {
-				CIVLExecutionException err = new CIVLExecutionException(
-						ErrorKind.DEREFERENCE,
-						Certainty.PROVEABLE,
-						process,
-						"The objects pointed to by the two given pointers of $copy() "
-								+ "must have the same type.\n"
-								+ "actual type of the object of the first argument: "
-								+ objTypeLeft
-								+ "\n"
-								+ "actual type of the object of the second argument: "
-								+ objTypeRight,
-						symbolicAnalyzer.stateToString(state), source);
+				StringBuffer msg = new StringBuffer();
+				CIVLExecutionException err;
 
+				msg.append("The objects pointed to by the two given pointers of $copy() "
+						+ "must have the same type.\n");
+				msg.append("first argument:\n");
+				msg.append("    ");
+				msg.append(arguments[0]);
+				msg.append("    ");
+				msg.append(symbolicAnalyzer.expressionEvaluation(state, pid,
+						arguments[0], false).right);
+				msg.append("\nactual type of the object: ");
+				msg.append(objTypeLeft);
+				msg.append("\nsecond argument:\n");
+				msg.append("    ");
+				msg.append(arguments[1]);
+				msg.append("    ");
+				msg.append(symbolicAnalyzer.expressionEvaluation(state, pid,
+						arguments[1], false).right);
+				msg.append("\nactual type of the object: ");
+				msg.append(objTypeRight);
+				err = new CIVLExecutionException(ErrorKind.DEREFERENCE,
+						Certainty.PROVEABLE, process, msg.toString(),
+						symbolicAnalyzer.stateToString(state), source);
 				this.errorLogger.reportError(err);
 				return state;
 			}

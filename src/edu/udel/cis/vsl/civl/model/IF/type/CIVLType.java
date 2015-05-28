@@ -205,4 +205,6 @@ public interface CIVLType {
 	 * @return
 	 */
 	boolean areSubtypesScalar();
+
+	boolean isFunction();
 }

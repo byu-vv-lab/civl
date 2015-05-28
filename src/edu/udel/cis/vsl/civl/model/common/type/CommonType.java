@@ -172,4 +172,9 @@ public abstract class CommonType implements CIVLType {
 	public boolean areSubtypesScalar() {
 		return true;
 	}
+
+	@Override
+	public boolean isFunction() {
+		return false;
+	}
 }

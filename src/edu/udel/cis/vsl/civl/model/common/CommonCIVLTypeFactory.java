@@ -305,7 +305,8 @@ public class CommonCIVLTypeFactory implements CIVLTypeFactory {
 	@Override
 	public CIVLFunctionType functionType(CIVLType returnType,
 			CIVLType[] paraTypes) {
-		return new CommonFunctionType(returnType, paraTypes);
+		return new CommonFunctionType(returnType, paraTypes,
+				this.functionPointerSymbolicType);
 	}
 
 	@Override
@@ -556,7 +557,7 @@ public class CommonCIVLTypeFactory implements CIVLTypeFactory {
 				.symbolicConstant(universe.stringObject(name),
 						universe.integerType());
 
-		if(!ModelConfiguration.RESERVE_NAMES.contains(name))
+		if (!ModelConfiguration.RESERVE_NAMES.contains(name))
 			ModelConfiguration.RESERVE_NAMES.add(name);
 		result = (NumericExpression) universe.canonic(result);
 		return result;

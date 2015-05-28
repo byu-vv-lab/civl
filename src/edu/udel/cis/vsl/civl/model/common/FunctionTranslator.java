@@ -856,10 +856,23 @@ public class FunctionTranslator {
 						"Function call must use identifier of variables or functions for now: "
 								+ functionExpression.getSource());
 			}
-		} else
-			throw new CIVLUnimplementedFeatureException(
-					"Function call must use identifier for now: "
-							+ functionExpression.getSource());
+		} else {
+			Expression function = this.translateExpressionNode(
+					functionExpression, scope, true);
+
+			callee = null;
+			result = modelFactory.callOrSpawnStatement(source, location,
+					isCall, function, arguments, null);
+			// added function guard expression since the function could be a
+			// system function which has an outstanding guard, only when it
+			// is a call statement
+			if (isCall)
+				result.setGuard(modelFactory.functionGuardExpression(source,
+						function, arguments));
+		}
+		// throw new CIVLUnimplementedFeatureException(
+		// "Function call must use identifier for now: "
+		// + functionExpression.getSource());
 		result.setLhs(lhs);
 		if (callee != null)
 			modelBuilder.callStatements.put(result, callee);
@@ -1917,7 +1930,7 @@ public class FunctionTranslator {
 		// modelFactory.sourceOfBeginning(functionCallNode);TODO:Changed
 		ArrayList<Expression> arguments = new ArrayList<Expression>();
 		Location location;
-		CIVLFunction abstractFunction;
+		CIVLFunction abstractFunction = null;
 		Function callee;
 		ExpressionNode functionExpression = functionCallNode.getFunction();
 
@@ -1928,12 +1941,13 @@ public class FunctionTranslator {
 			if (entity.getEntityKind() == EntityKind.FUNCTION) {
 				callee = (Function) entity;
 				abstractFunction = modelBuilder.functionMap.get(callee);
-			} else
-				abstractFunction = null;
-		} else
-			throw new CIVLUnimplementedFeatureException(
-					"Function call must use identifier for now: "
-							+ functionExpression.getSource());
+			}
+		}
+
+		// else
+		// throw new CIVLUnimplementedFeatureException(
+		// "Function call must use identifier for now: "
+		// + functionExpression.getSource());
 		for (int i = 0; i < functionCallNode.getNumberOfArguments(); i++) {
 			Expression actual = translateExpressionNode(
 					functionCallNode.getArgument(i), scope, true);
@@ -4424,7 +4438,10 @@ public class FunctionTranslator {
 				Type referencedType = pointerType.referencedType();
 				CIVLType baseType = translateABCType(source, scope,
 						referencedType);
-
+				
+				if(baseType.isFunction())
+					result=baseType;
+				else
 				result = typeFactory.pointerType(baseType);
 				break;
 			}

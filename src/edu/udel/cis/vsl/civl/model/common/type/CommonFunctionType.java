@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.model.common.type;
 
-import java.util.LinkedList;
-
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -38,9 +36,11 @@ public class CommonFunctionType extends CommonType implements CIVLFunctionType {
 	 * @param parasTypes
 	 *            The types of the parameter list.
 	 */
-	public CommonFunctionType(CIVLType returnType, CIVLType[] parasTypes) {
+	public CommonFunctionType(CIVLType returnType, CIVLType[] parasTypes,
+			SymbolicType functionPointerType) {
 		this.returnType = returnType;
 		this.parameterTypes = parasTypes;
+		this.dynamicType = functionPointerType;
 	}
 
 	/* ******************* Methods from CIVLFunctionType ******************* */
@@ -58,18 +58,8 @@ public class CommonFunctionType extends CommonType implements CIVLFunctionType {
 
 	@Override
 	public SymbolicType getDynamicType(SymbolicUniverse universe) {
-		if (dynamicType != null)
-			return dynamicType;
-		else {
-			LinkedList<SymbolicType> parameterDynamicTypes = new LinkedList<>();
-
-			parameterDynamicTypes.add(returnType.getDynamicType(universe));
-			for (CIVLType parameterType : this.parameterTypes) {
-				parameterDynamicTypes.add(parameterType
-						.getDynamicType(universe));
-			}
-			return this.dynamicType;
-		}
+		assert this.dynamicType != null;
+		return this.dynamicType;
 	}
 
 	@Override
@@ -115,6 +105,11 @@ public class CommonFunctionType extends CommonType implements CIVLFunctionType {
 	@Override
 	public CIVLType copyAs(CIVLPrimitiveType type, SymbolicUniverse universe) {
 		return type;
+	}
+
+	@Override
+	public boolean isFunction() {
+		return true;
 	}
 
 }

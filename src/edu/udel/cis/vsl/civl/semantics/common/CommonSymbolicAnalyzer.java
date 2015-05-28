@@ -470,8 +470,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				CIVLFunction function = dyScope.lexicalScope().getFunction(fid);
 
 				result.append("<");
-				result.append("scope ");
-				result.append(dyScope.lexicalScope().id());
+				result.append(dyScope.name());				
 				result.append(">");
 				result.append(function.toString());
 				return result.toString();
