@@ -1,9 +1,11 @@
 package edu.udel.cis.vsl.civl.run.common;
 
+import java.io.Serializable;
+
 import edu.udel.cis.vsl.civl.run.IF.CommandLine;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
-public abstract class BaseCommandLine implements CommandLine {
+public abstract class BaseCommandLine implements CommandLine, Serializable {
 	protected String commandString;
 	protected CommandLineKind commandlineKind;
 	protected GMCConfiguration gmcConfig;
