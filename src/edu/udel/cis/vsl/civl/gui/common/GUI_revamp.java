@@ -146,6 +146,7 @@ public class GUI_revamp extends JFrame {
 		setSerializePath(homeDir + "/.CIVL");
 		File f = new File(homeDir + "/.CIVL");
 		f.mkdirs();
+		
 
 		loadSavedConfigsMap();
 		initCommandsPanel();
@@ -199,12 +200,9 @@ public class GUI_revamp extends JFrame {
 				RunConfigDataNode temp = new RunConfigDataNode(null);
 				temp.setName(fileEntry.getName());
 				temp.setSerializeDestination(serializePath);
-				System.out.println(fileEntry.getName());
 				String name = fileEntry.getName();
 				if (!name.equals("entries")) {
 					RunConfigDataNode config = temp.deserialize();
-					System.out.println(config.comLine.commandLineKind());
-
 					if (!config.isMarkedForDelete()) {
 						savedConfigs.put(name, config);
 						newConfigsNum++;
@@ -733,7 +731,7 @@ public class GUI_revamp extends JFrame {
 		jt_commands.setName("jt_commands");
 		p_tree.setName("p_tree");
 		p_buttons.setName("p_buttons");
-
+		
 		bt_deleteConfig.setIcon(new ImageIcon("Images/delete.png"));
 		bt_new.setIcon(new ImageIcon("Images/new.png"));
 		bt_duplicate.setIcon(new ImageIcon("Images/duplicate.png"));
@@ -960,7 +958,8 @@ public class GUI_revamp extends JFrame {
 		ta_header.setDragEnabled(false);
 		ta_header.setText("  Create, manage and run configurations\n"
 				+ "  Choose a Command");
-
+		
+		
 		lb_icon.setIcon(new ImageIcon("Images/logo.png"));
 
 		p_header.add(ta_header);
@@ -1057,14 +1056,15 @@ public class GUI_revamp extends JFrame {
 		 */
 		jt_commands.setExpandsSelectedPaths(true);
 		jt_commands.addTreeSelectionListener(new TreeSelectionListener() {
+			@SuppressWarnings("unused")
 			public void valueChanged(TreeSelectionEvent e) {
 				String headerText = "  Create, manage and run configurations\n";
 				TreePath selected = jt_commands.getSelectionPath();
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
 				
-				/*
-				if(currConfig != null) {
+				
+				if(currConfig != null && false) {
 					if(!currConfig.applyClicked && !currConfig.isBrandNew()) {
 						String message = "Do you want to save your run Configuration?";
 						int answer = JOptionPane.showConfirmDialog(gui, message);
@@ -1090,7 +1090,7 @@ public class GUI_revamp extends JFrame {
 						}
 					}
 				}
-				*/
+				
 				
 				if (selected == null) {
 					System.out.println("Node no longer exists");
@@ -1141,6 +1141,7 @@ public class GUI_revamp extends JFrame {
 					if (currConfig == null) {
 						currConfig = (RunConfigDataNode) node;
 						currConfig.setBrandNew(false);
+						currCommand = ((CommandNode) currConfig.getParent()).commandName;
 						tf_name.setText(currConfig.getName());
 						drawView();
 					}
