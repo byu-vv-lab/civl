@@ -94,11 +94,17 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 * not.
 	 */
 	private boolean markedForDelete;
+	
+	/**
+	 * Whether or not the apply button has been clicked.
+	 */
+	public boolean applyClicked;
 
 	// TODO: figure out use for this
 	public boolean tableChanged;
 
 	public RunConfigDataNode(CommandLine comLine) {
+		this.applyClicked = false;
 		SortedMap<String, Option> map = null;
 		this.selectedFiles = new ArrayList<File>();
 		this.inputs = new ArrayList<CIVL_Input>();
@@ -223,7 +229,7 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	public void deleteConfig() {
 		this.markedForDelete = true;
 	}
-	
+	   
 	/*
 	 * Getters & Setters
 	 */

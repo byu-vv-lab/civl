@@ -41,7 +41,10 @@ public class DeleteButton extends JButton {
 				table.deleting = true;
 				final DefaultTableModel currFileModel = (DefaultTableModel) table.getModel();
 				int modelRow = table.getSelectedRow();
-				currFileModel.removeRow(modelRow);
+				
+				if(modelRow != -1)
+					currFileModel.removeRow(modelRow);
+				
 				table.deleting = false;
 				repaint();
 			}
