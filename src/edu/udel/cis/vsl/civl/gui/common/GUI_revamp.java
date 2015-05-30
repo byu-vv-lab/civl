@@ -377,8 +377,7 @@ public class GUI_revamp extends JFrame {
 	 */
 	public NormalCommandLine createNormalCommandLine() {
 		Collection<String> files = new ArrayList<String>();
-		// TODO: FIX THIS by using compute core file???
-
+		
 		NormalCommandLine line = new NormalCommandLine();
 		if (currConfig != null) {
 			if (!currConfig.getSelectedFiles().isEmpty()) {
@@ -388,6 +387,7 @@ public class GUI_revamp extends JFrame {
 
 			GMCSection cmdSection = currConfig.getGmcConfig()
 					.getAnonymousSection();
+
 			line.setGMCConfig(currConfig.getGmcConfig());
 			line.setGMCSection(cmdSection);
 			line.complete();
@@ -400,7 +400,6 @@ public class GUI_revamp extends JFrame {
 
 	public CompareCommandLine createCompareCommandLine() {
 		Collection<String> files = new ArrayList<String>();
-		// TODO: FIX THIS by using compute core file???
 		files.add(currConfig.getSelectedFiles().get(0).getPath());
 		NormalCommandLine line = new NormalCommandLine();
 		GMCSection cmdSection = currConfig.getGmcConfig().getAnonymousSection();
@@ -446,7 +445,7 @@ public class GUI_revamp extends JFrame {
 
 		for (int i = 0; i < vals.size(); i++) {
 			Option currOpt = (Option) opts[i];
-
+			/*
 			if (currOpt.name().equals("sysIncludePath")) {
 				optionModel.addRow(new Object[] { currOpt, "sysIncludePath",
 						"Default" });
@@ -456,11 +455,11 @@ public class GUI_revamp extends JFrame {
 				optionModel.addRow(new Object[] { currOpt, "userIncludePath",
 						"Default" });
 			}
-
-			else {
+			*/
+			//else {
 				optionModel.addRow(new Object[] { currOpt, vals.get(i),
 						"Default" });
-			}
+			//}
 		}
 	}
 
@@ -517,8 +516,8 @@ public class GUI_revamp extends JFrame {
 				.getModel();
 
 		Object[] opts = currConfig.getGmcConfig().getOptions().toArray();
-		GMCSection section = currConfig.getGmcConfig().getSection(
-				GMCConfiguration.ANONYMOUS_SECTION);
+		GMCSection section = currConfig.getGmcConfig().getAnonymousSection();
+				
 		Collection<Option> options = currConfig.getGmcConfig().getOptions();
 		Iterator<Option> iter_opt = options.iterator();
 		List<Object> vals = new ArrayList<Object>();
@@ -536,7 +535,16 @@ public class GUI_revamp extends JFrame {
 						&& currOpt.type().equals(OptionType.INTEGER)) {
 					Integer value = Integer.valueOf((String) val);
 					section.setScalarValue(currOpt, value);
-				} else
+				}
+				/*
+				else if(val == null) {
+					section.setScalarValue(currOpt, "");
+				}
+				*/
+				else
+					if(true) {
+						System.out.println("val: " + val);
+					}
 					section.setScalarValue(currOpt, val);
 			}
 		}
@@ -1249,7 +1257,7 @@ public class GUI_revamp extends JFrame {
 					// MAIN DEFAULT ACTION:
 					tbl_optionTable.setValueAt(defValue, modelRow, 1);
 				}
-
+ 
 				else
 					currOptModel.setValueAt(optToDefault.defaultValue(),
 							modelRow, 1);
@@ -1289,22 +1297,35 @@ public class GUI_revamp extends JFrame {
 
 				else {
 					UserInterface ui = new UserInterface();
+					
+					setOptions();
 					if (currCommand.equals(CommandName.COMPARE)
 							|| currCommand.equals(CommandName.COMPARE_REPLAY)) {
-						createCompareCommandLine();
+						currConfig.comLine = createCompareCommandLine();
 					} else {
-						createNormalCommandLine();
+						currConfig.comLine = createNormalCommandLine();
 					}
+					
 					Collection<String> files = new ArrayList<String>();
 					files.add(currConfig.getSelectedFiles().get(0).getName());
 
-					commandLine.setGMCConfig(currConfig.getGmcConfig());
-					String com = currCommand.name() + " ";
+					currConfig.comLine.setGMCConfig(currConfig.getGmcConfig());
+					
+					GMCSection section = currConfig.getGmcConfig().getSection(
+							GMCConfiguration.ANONYMOUS_SECTION);
+					
+					Option option = currConfig.getGmcConfig().getOption("showProgram");				
+					
+					//System.out.println(currConfig.comLine.gmcConfig().getAnonymousSection().getValue(option));
+					currConfig.comLine.setGMCConfig(currConfig.getGmcConfig());
+					
+					String com = currCommand.name().toLowerCase();
+					com += " ";
 					com += currConfig.getSelectedFiles().get(0).getName();
-					commandLine.setCommandString(com);
+					currConfig.comLine.setCommandString(com);				
 
 					try {
-						ui.runNormalCommand(commandLine);
+						ui.runNormalCommand((NormalCommandLine) currConfig.comLine);
 					} catch (CommandLineException | ABCException | IOException
 							| MisguidedExecutionException e1) {
 						e1.printStackTrace();

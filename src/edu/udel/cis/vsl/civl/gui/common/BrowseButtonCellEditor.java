@@ -39,7 +39,8 @@ public class BrowseButtonCellEditor extends AbstractCellEditor implements TableC
 
 	@Override
 	public Object getCellEditorValue() {
-		return optName;
+		//TODO: enable this
+		return "";
 	}
 
 	public String getOptName() {

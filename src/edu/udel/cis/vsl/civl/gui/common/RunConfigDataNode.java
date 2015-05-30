@@ -110,7 +110,7 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		this.inputs = new ArrayList<CIVL_Input>();
 		this.markedForDelete = false;
 		GMCConfiguration c = null;
-
+		
 		if (comLine == null) {
 		}
 
@@ -171,14 +171,13 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 */
 	public void serialize() {
 		try {
-			// TODO: make this save in a user-specified location
 			FileOutputStream fileOut = new FileOutputStream(
 					serializeDestination + "/" + name);
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 			out.writeObject(this);
 			out.close();
 			fileOut.close();
-			System.out.printf("Serialized data is saved in "
+			System.out.println("Serialized data is saved in "
 					+ serializeDestination);
 		} catch (IOException i) {
 			i.printStackTrace();
