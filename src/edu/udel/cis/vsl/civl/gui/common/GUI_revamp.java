@@ -146,7 +146,6 @@ public class GUI_revamp extends JFrame {
 		setSerializePath(homeDir + "/.CIVL");
 		File f = new File(homeDir + "/.CIVL");
 		f.mkdirs();
-		
 
 		loadSavedConfigsMap();
 		initCommandsPanel();
@@ -303,7 +302,6 @@ public class GUI_revamp extends JFrame {
 
 		else {
 			String def = ((ConstantNode) i).getConstantValue().toString();
-			System.out.println(def);
 			ci.setInitializer(def);
 		}
 
@@ -424,7 +422,7 @@ public class GUI_revamp extends JFrame {
 		CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
 		DefaultTableModel optionModel = (DefaultTableModel) tbl_optionTable
 				.getModel();
-		
+
 		if (optionModel.getRowCount() != 0) {
 			optionModel.setRowCount(0);
 			tbl_optionTable.clearSelection();
@@ -473,12 +471,12 @@ public class GUI_revamp extends JFrame {
 		CIVLTable tbl_inputTable = (CIVLTable) getComponentByName("tbl_inputTable");
 		DefaultTableModel inputModel = (DefaultTableModel) tbl_inputTable
 				.getModel();
-		
+
 		if (inputModel.getRowCount() != 0) {
 			inputModel.setRowCount(0);
 			tbl_inputTable.clearSelection();
 		}
-		
+
 		// GMCSection gmcs = currConfig.getGmcConfig().getAnonymousSection();
 		ArrayList<CIVL_Input> inputList = currConfig.getInputs();
 		for (int i = 0; i < inputList.size(); i++) {
@@ -600,11 +598,9 @@ public class GUI_revamp extends JFrame {
 	 */
 	public void save(String value, String optName) {
 		Option option = currConfig.getGmcConfig().getOption(optName);
-		// System.out.println(option.name());
 		GMCSection section = currConfig.getGmcConfig().getSection(
 				GMCConfiguration.ANONYMOUS_SECTION);
 		section.setScalarValue(option, value);
-		System.out.println(section.getValue(option));
 
 	}
 
@@ -674,13 +670,10 @@ public class GUI_revamp extends JFrame {
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Inputs", p_inputs);
 				p_view.add(tp_commandView);
-				// showOptions();
-				// showInputs();
 				showSelectedFiles();
 				p_view.validate();
 
 			} else if (currCommand.equals(NormalCommandKind.RUN)) {
-				// System.out.println(currConfig.getCommand().getName());
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Inputs", p_inputs);
@@ -731,7 +724,7 @@ public class GUI_revamp extends JFrame {
 		jt_commands.setName("jt_commands");
 		p_tree.setName("p_tree");
 		p_buttons.setName("p_buttons");
-		
+
 		bt_deleteConfig.setIcon(new ImageIcon("Images/delete.png"));
 		bt_new.setIcon(new ImageIcon("Images/new.png"));
 		bt_duplicate.setIcon(new ImageIcon("Images/duplicate.png"));
@@ -774,6 +767,8 @@ public class GUI_revamp extends JFrame {
 		JButton bt_revert = new JButton("Revert");
 		JButton bt_apply = new JButton("Apply");
 		JButton bt_browseFile = new JButton("Browse...");
+		
+		bt_revert.hide();
 
 		JLabel lb_name = new JLabel("Name: ");
 		JLabel lb_new = new JLabel(
@@ -791,11 +786,13 @@ public class GUI_revamp extends JFrame {
 
 		JTable tbl_optionTable = new CIVLTable(new int[] { 1, 2 }, "option",
 				this);
-		final JTable tbl_inputTable = new CIVLTable(new int[] { 2 }, "input", this);
+		final JTable tbl_inputTable = new CIVLTable(new int[] { 2 }, "input",
+				this);
 		final JTable tbl_fileTable = new CIVLTable(new int[] { 2 }, "file",
 				this);
-		
-		tbl_optionTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+
+		tbl_optionTable.putClientProperty("terminateEditOnFocusLost",
+				Boolean.TRUE);
 
 		tf_chooseFile.setColumns(58);
 		tf_name.setColumns(10);
@@ -841,14 +838,17 @@ public class GUI_revamp extends JFrame {
 		tbl_optionTable.setCellSelectionEnabled(true);
 		tbl_inputTable.setCellSelectionEnabled(true);
 		tbl_fileTable.setCellSelectionEnabled(true);
+		
+		tbl_optionTable.setShowGrid(true);
+		tbl_optionTable.setGridColor(Color.BLUE);
 
 		tbl_optionTable.setRowHeight(35);
 		tbl_inputTable.setRowHeight(35);
 		tbl_fileTable.setRowHeight(35);
 
-		setColumnSize((CIVLTable) tbl_optionTable, 145, 0);
-		setColumnSize((CIVLTable) tbl_optionTable, 145, 1);
-		setColumnSize((CIVLTable) tbl_optionTable, 75, 2);
+		setColumnSize((CIVLTable) tbl_optionTable, 215, 0);
+		setColumnSize((CIVLTable) tbl_optionTable, 215, 1);
+		setColumnSize((CIVLTable) tbl_optionTable, 105, 2);
 
 		tf_name.setEnabled(false);
 		bt_apply.setEnabled(false);
@@ -866,10 +866,10 @@ public class GUI_revamp extends JFrame {
 							if (((CIVLTable) tbl_fileTable).deleting
 									&& e.getType() == TableModelEvent.DELETE) {
 								deleteSelectedFile(e.getLastRow());
-								
+
 								DefaultTableModel inputModel = (DefaultTableModel) tbl_inputTable
 										.getModel();
-								
+
 								if (inputModel.getRowCount() != 0) {
 									inputModel.setRowCount(0);
 									tbl_inputTable.clearSelection();
@@ -958,8 +958,7 @@ public class GUI_revamp extends JFrame {
 		ta_header.setDragEnabled(false);
 		ta_header.setText("  Create, manage and run configurations\n"
 				+ "  Choose a Command");
-		
-		
+
 		lb_icon.setIcon(new ImageIcon("Images/logo.png"));
 
 		p_header.add(ta_header);
@@ -991,7 +990,9 @@ public class GUI_revamp extends JFrame {
 			// stops them from showing in the tree until they work correctly
 			if (!nodeName.equals("HELP") && !nodeName.equals("CONFIG")
 					&& !nodeName.equals("GUI") && !nodeName.equals("COMPARE")
-					&& !nodeName.equals("COMPARE_REPLAY")) {
+					&& !nodeName.equals("COMPARE_REPLAY")
+					&& !nodeName.equals("REPLAY")
+					&& !nodeName.equals("SHOW")) {
 				CommandNode node = new CommandNode(nodeName,
 						(CommandName) vals[i]);
 				top.add(node);
@@ -1013,7 +1014,6 @@ public class GUI_revamp extends JFrame {
 			}
 
 			else if (curr.comLine.commandLineKind() == CommandLineKind.NORMAL) {
-				// System.out.println("normal");
 				CommandNode node;
 				Enumeration<CommandNode> e = top.children();
 				while (e.hasMoreElements()) {
@@ -1024,7 +1024,6 @@ public class GUI_revamp extends JFrame {
 						node.add(curr);
 						break;
 					}
-					// System.out.println(node.commandName.toString());
 				}
 			}
 		}
@@ -1040,6 +1039,7 @@ public class GUI_revamp extends JFrame {
 		final JTree jt_commands = (JTree) getComponentByName("jt_commands");
 		final JTextArea ta_header = (JTextArea) getComponentByName("ta_header");
 		final JButton bt_new = (JButton) getComponentByName("bt_new");
+		final JButton bt_cancel = (JButton) getComponentByName("bt_cancel");
 		final JButton bt_run = (JButton) getComponentByName("bt_run");
 		final JButton bt_apply = (JButton) getComponentByName("bt_apply");
 		final JButton bt_browseFile = (JButton) getComponentByName("bt_browseFile");
@@ -1063,21 +1063,24 @@ public class GUI_revamp extends JFrame {
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
 				
-				
-				if(currConfig != null && false) {
-					if(!currConfig.applyClicked && !currConfig.isBrandNew()) {
+				//To be implemented when we want a dialogue box that asks if you want to
+				//Save a run Configuration
+				/*
+				if (currConfig != null) {
+					if (!currConfig.applyClicked && !currConfig.isBrandNew()) {
 						String message = "Do you want to save your run Configuration?";
-						int answer = JOptionPane.showConfirmDialog(gui, message);
-						
-						if(answer == JOptionPane.CANCEL_OPTION) {
-							
+						int answer = JOptionPane
+								.showConfirmDialog(gui, message);
+
+						if (answer == JOptionPane.CANCEL_OPTION) {
+
 						}
-						
-						else if(answer == JOptionPane.NO_OPTION) {
-							
+
+						else if (answer == JOptionPane.NO_OPTION) {
+
 						}
-						
-						else if(answer == JOptionPane.YES_OPTION) {
+
+						else if (answer == JOptionPane.YES_OPTION) {
 							if (currConfig != null) {
 								currConfig.applyClicked = true;
 								setOptions();
@@ -1090,13 +1093,12 @@ public class GUI_revamp extends JFrame {
 						}
 					}
 				}
-				
-				
+				*/
+
 				if (selected == null) {
 					System.out.println("Node no longer exists");
 				}
-				
-				
+
 				// Head node of tree
 				else if (selected.getPathCount() == 1) {
 					currConfig = null;
@@ -1109,7 +1111,7 @@ public class GUI_revamp extends JFrame {
 					drawView();
 					repaint();
 				}
-				
+
 				// Command Level Nodes(i.e RUN, VERIFY etc.)
 				else if (selected.getPathCount() == 2) {
 					tf_name.setEnabled(false);
@@ -1126,12 +1128,12 @@ public class GUI_revamp extends JFrame {
 					headerText += "  " + node.toString();
 					ta_header.setText(headerText);
 				}
-				
+
 				// Configuration Level Nodes(i.e New Configuration(0))
 				else if (selected.getPathCount() == 3) {
 					DefaultTableModel currOptModel = (DefaultTableModel) tbl_optionTable
 							.getModel();
-					
+
 					tf_name.setEnabled(true);
 					bt_run.setEnabled(true);
 					bt_apply.setEnabled(true);
@@ -1147,7 +1149,7 @@ public class GUI_revamp extends JFrame {
 					}
 
 					else {
-						if(tbl_optionTable.isEditing()) {
+						if (tbl_optionTable.isEditing()) {
 							tbl_optionTable.getCellEditor().stopCellEditing();
 						}
 						currConfig.applyClicked = false;
@@ -1157,7 +1159,7 @@ public class GUI_revamp extends JFrame {
 						tf_name.setText(currConfig.getName());
 						drawView();
 					}
-					
+
 				} else {
 					ta_header.setText(headerText + "  Choose a Command");
 					tf_name.setText("");
@@ -1320,10 +1322,8 @@ public class GUI_revamp extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				DefaultTableModel currOptModel = (DefaultTableModel) tbl_optionTable
 						.getModel();
-				
+
 				// File folder = new File(serializePath);
-				System.out.println(currConfig.getInputs().size());
-				
 				// savedConfigs.remove(currConfig.getName());
 				DefaultTreeModel model = (DefaultTreeModel) jt_commands
 						.getModel();
@@ -1392,7 +1392,6 @@ public class GUI_revamp extends JFrame {
 					}
 
 					if (savedConfigs.containsKey(newName)) {
-						System.out.println(savedConfigs.size());
 						dontCreate = true;
 
 					}
@@ -1442,6 +1441,13 @@ public class GUI_revamp extends JFrame {
 		};
 
 		bt_duplicate.addActionListener(duplicate);
+		
+		ActionListener cancel = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }};
+		
+        bt_cancel.addActionListener(cancel);
 
 		/**
 		 * Listener that detects when the user is editing the name of the run

@@ -112,7 +112,6 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		GMCConfiguration c = null;
 
 		if (comLine == null) {
-			System.out.println("NULL");
 		}
 
 		else if (comLine.commandLineKind() == CommandLineKind.COMPARE) {
@@ -123,7 +122,6 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		else if (comLine.commandLineKind() == CommandLineKind.NORMAL) {
 			NormalCommandKind commandKind = ((NormalCommandLine) comLine)
 					.normalCommandKind();
-			System.out.println(commandKind);
 			if (commandKind.equals(NormalCommandKind.RUN)) {
 				map = CIVLCommand.getRunOptions();
 				c = new GMCConfiguration(map.values());
