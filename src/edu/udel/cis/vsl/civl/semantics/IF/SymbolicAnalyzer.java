@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
-import java.util.Map;
-
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -10,6 +8,7 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -51,7 +50,6 @@ public interface SymbolicAnalyzer {
 
 	StringBuffer stateToString(State state);
 
-	
 	/**
 	 * <p>
 	 * Computes the user-friendly string representation of a symbolic
@@ -127,58 +125,60 @@ public interface SymbolicAnalyzer {
 			SymbolicExpression pointer);
 
 	/**
+	 * pre-condition:
+	 * <ol>
+	 * <li>"arrayPtr" must point to an array</li>
+	 * <li>"source" is the @{link CIVLSource} of the pointer expression</li>
+	 * </ol>
+	 * post-condition:
+	 * <ol>
+	 * <li>the returned {@link CIVLType} must not be an array type</li>
+	 * <li>the returned object cannot be null</li>
+	 * </ol>
 	 * Get the type of the non-array element of an array by given a pointer to
 	 * an array
 	 * 
 	 * @param array
 	 * @return the type of the non-array element of an array
 	 */
-	CIVLType getFlattenedArrayElementType(State state, CIVLSource source,
+	CIVLType getArrayBaseType(State state, CIVLSource source,
 			SymbolicExpression arrayPtr);
 
 	/**
-	 * Computes the array element indexes in an array element reference.<br>
-	 * Indexes are stored in a map whose keys indicate the dimension of the
-	 * array. Here 0 marks the deepest dimension and 1 marks the second deepest
-	 * dimension and so forth.
 	 * 
-	 * @param state
-	 *            The current state
-	 * @param source
-	 *            The CIVL source of the pointer
-	 * @param pointer
-	 *            The array element reference pointer
-	 * @param ignoreDiffBetweenHeapAndArray
-	 *            flag indicates if returning all indexes from a pointer to heap
-	 *            object. Since in CIVL, heap is represented as two dimensional
-	 *            array which may be lumped with nested array incorrectly. Set
-	 *            this flag to false, this function will ignore the difference
-	 *            between heap and nested arrays(which currently is just used by
-	 *            pointer subtraction).
-	 * @return
-	 */
-	Map<Integer, NumericExpression> arrayIndexesByPointer(State state,
-			CIVLSource source, SymbolicExpression pointer,
-			boolean ignoreDiffBetweenHeapAndArray);
-
-	// TODO: need a better name
-	/**
-	 * Cast an pointer to the deepest array element reference pointer if the
-	 * pointed object is an array.
+	 * pre-condition:
+	 * <ol>
+	 * <li>"source" is the @{link CIVLSource} of the pointer expression</li>
+	 * </ol>
+	 * post-condition:
+	 * <ol>
+	 * <li>the returned object cannot be null</li>
+	 * </ol>
+	 * Returns the {@link ReferenceExpression} directly to the object which has
+	 * the physical base type of the pointed array (or object) residing in
+	 * memory. <br>
+	 * Note: The "physical base type" means the base type of the a physical
+	 * sequence of objects in memory space. For example: <code> 
+	 * int ** a; 
+	 * int b[2][2];
+	 * int c;
+	 * 
+	 * a = (int **)malloc(..);
+	 * </code> The "physical base type" of "a" is "int *" while both of "b" and
+	 * of "c" is "int".
+	 * 
 	 * 
 	 * @author Ziqing Luo
 	 * @param state
 	 *            The current state
 	 * @param process
 	 *            The information of the process
-	 * @param pointer
-	 *            The pointer needs being casted
 	 * @param source
 	 *            The CIVL source of the pointer
-	 * @return The casted pointer
+	 * @return The Reference to the object that has physical base type
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	SymbolicExpression castToArrayElementReference(State state,
+	ReferenceExpression getMemBaseReference(State state,
 			SymbolicExpression pointer, CIVLSource source);
 
 	/**

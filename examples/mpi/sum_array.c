@@ -14,7 +14,7 @@
 #define MSG_DATA 100
 #define MSG_RESULT 101
 #ifdef _CIVL
-$input int _NPROCS_LOWER_BOUND = 1;
+$input int _NPROCS_LOWER_BOUND = 2;
 $input int _NPROCS_UPPER_BOUND = 5;
 $input long NB = 20;               // upper bound of N
 $input long N;                     // length of the array

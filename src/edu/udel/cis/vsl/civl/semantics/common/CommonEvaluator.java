@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
@@ -2612,29 +2611,52 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	/* ********************* Pointer addition helpers ************************ */
-/**
-	 * Helper function for {@link Evaluator#pointerAdd(State, int, String, BinaryExpression, SymbolicExpression, NumericExpression)
-	 * . Returns the new pointer after adding an increment or decrement and the
-	 * array capacities information of the array pointed
-	 * by the original pointer. If the pointer addition operation can be done
-	 * only on one dimension (like for<code>int a[3][3];</code>, addition
-	 * operation "&a[0][0] + 2" can be done without known the whole array
-	 * information), the returned map container will be null.
+	/**
+	 * This is a Helper function for
+	 * {@link Evaluator#pointerAdd(State, int, String, BinaryExpression, SymbolicExpression, NumericExpression)}
+	 * . <br>
+	 * It returns:<br>
+	 * The {@link Evaluation} object wraps the new pointer after adding an
+	 * increment or decrement.<br>
 	 * 
-	 * @author Ziqing Luo
+	 * The {@link ArrayList} of {@link NumericExpression} is an appendix of the
+	 * returned objects which is aiming to reduce redundant computation. It
+	 * stores the dimension information for each dimension of the array pointed
+	 * by the input pointer. NOTE: the appendix will be returned only if it's
+	 * computed during the execution of this function, otherwise it null.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The String identifier of the process
+	 * @param pointer
+	 *            The {@link SymbolicExpression} of the original pointer before
+	 *            addition
+	 * @param offset
+	 *            The {@link NumericExpression} of the offset will be added on
+	 *            the pointer
+	 * @param checkOutput
+	 *            Dereferencing operation has to check if the object pointed by
+	 *            input pointer is an output variable if this flag is set TRUE
+	 * @param source
+	 *            {@link CIVLSource} of the pointer addition statement
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 * 
+	 * @author ziqing
 	 */
-
-	private Pair<Evaluation, ArrayList<NumericExpression>> pointerAddWorker(
-			State state, String process, SymbolicExpression pointer,
+	private Pair<Evaluation, NumericExpression[]> pointerAddWorker(State state,
+			String process, SymbolicExpression pointer,
 			NumericExpression offset, boolean checkOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression arrayPtr;
-		SymbolicExpression parentPtr;
 		ReferenceExpression parentRef;
 		NumericExpression extent, index;
 		ReferenceExpression ref;
 		ReferenceExpression newRef;
-		BooleanExpression claim, notOver, notEqual, notDrown;
+		BooleanExpression claim, notEqual;
+		BooleanExpression notOver;// pred:ptr add doesn't beyond bound
+		BooleanExpression notDrown;// pred:ptr add doesn't lower than bound
 		Evaluation eval;
 		int scopeId, vid;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
@@ -2700,170 +2722,13 @@ public class CommonEvaluator implements Evaluator {
 				}
 			}
 			if (isOutBound) {
-				NumericExpression newIndex, remainder = zero;
-				NumericExpression capacity = one;
-				SymbolicExpression arrayRootPtr;
-				List<NumericExpression> indexes = new LinkedList<>();
-				ArrayList<NumericExpression> dimExtents;
-				ArrayList<NumericExpression> dimCapacities;
-				ArrayList<NumericExpression> oldIndexes;
-				int dim;
-				int arrayDim;
-				// Here is the difference between the 2 variable above "dim" and
-				// "arrayDim": "dim" is the dimension of the array pointed
-				// directly by the given pointer. Since arrays in CIVL-C are
-				// logically nested, the array pointed may have child arrays as
-				// its elements but we ignore them when we look at "dim". e.g.
-				// array "int a[2][3][4]" is pointed by pointer "a[0][0]", the
-				// "dim" will be 2 which includes the outer most 2 nested arrays
-				// (with extents 2 and 3).
-				// In contrast, "arrayDim" is always store the dimension of the
-				// whole array object pointed by the pointer. Continue to the
-				// example above, "arrayDim" should be 3.
-
 				// Checking if the array is an allocated memory space
-				if (vid == 0) {
-					state = errorLogger
-							.logError(
-									source,
-									state,
-									process,
-									symbolicAnalyzer.stateInformation(state),
-									outCondExpr,
-									resultType,
-									ErrorKind.OUT_OF_BOUNDS,
-									"Pointer addition results in an index out of bound error on object allocated in memory: "
-											+ symbolicAnalyzer
-													.symbolicExpressionToString(
-															source, state,
-															eval.value)
-											+ ".\nArray extent: "
-											+ symbolicAnalyzer
-													.symbolicExpressionToString(
-															source, state,
-															extent)
-											+ "\nOriginal pointer: "
-											+ symbolicAnalyzer
-													.symbolicExpressionToString(
-															source, state,
-															pointer)
-											+ "\nPointer addtion offset: "
-											+ symbolicAnalyzer
-													.symbolicExpressionToString(
-															source, state,
-															offset));
-				}
-				// Computes remainder
-				oldIndexes = new ArrayList<>();
-				parentPtr = pointer;
-				while (symbolicUtil.getSymRef(parentPtr) instanceof ArrayElementReference) {
-					ArrayElementReference arrayRef;
-
-					arrayRef = (ArrayElementReference) symbolicUtil
-							.getSymRef(parentPtr);
-					oldIndexes.add(arrayRef.getIndex());
-					parentPtr = symbolicUtil.parentPointer(source, parentPtr);
-				}
-				dim = oldIndexes.size();
-				arrayRootPtr = symbolicUtil.arrayRootPtr(arrayPtr, source);
-				eval = dereference(source, state, process, null, arrayRootPtr,
-						false);
-				state = eval.state;
-				dimExtents = symbolicUtil.arrayExtents(source, eval.value, dim);
-				dimCapacities = symbolicUtil.getArrayElementsSizes(eval.value,
-						dimExtents, source);
-				arrayDim = dimExtents.size();
-				for (int i = 0; i < dim; i++) {
-					NumericExpression oldIndex;
-
-					oldIndex = oldIndexes.get(i);
-					capacity = dimCapacities.get(arrayDim - dim + i);
-					remainder = universe.add(remainder,
-							universe.multiply(oldIndex, capacity));
-				}
-				// The remainder computed here represents the number of elements
-				// in whole array minus one (starts from zero).
-				remainder = universe.add(remainder, offset);
-				// Computes new indexes
-				for (int i = 0; i < dim; i++) {
-					BooleanExpression checkClaim;
-					ResultType checkResultType;
-
-					capacity = dimCapacities.get(arrayDim - 1 - i);
-					newIndex = universe.divide(remainder, capacity);
-					checkClaim = universe.lessThan(newIndex,
-							dimExtents.get(arrayDim - 1 - i));
-					// TODO change to andTo
-					checkClaim = universe.and(checkClaim,
-							universe.lessThanEquals(zero, newIndex));
-					checkResultType = reasoner.valid(checkClaim)
-							.getResultType();
-					if (!checkResultType.equals(ResultType.YES)) {
-						BooleanExpression equalExtentClaim = universe.equals(
-								newIndex, dimExtents.get(arrayDim - 1 - i));
-
-						checkResultType = reasoner.valid(equalExtentClaim)
-								.getResultType();
-						if (checkResultType.equals(ResultType.YES)) {
-							// If it equals the extent but not at the deepest
-							// index position, minus one. This process will
-							// reveal a valid pointer addition while the pointer
-							// of result cannot be dereferenced(Pointer to the
-							// very end of an array).
-							if (i < dim - 1)
-								newIndex = universe.subtract(newIndex, one);
-						} else {
-							// report error
-							state = errorLogger
-									.logError(
-											source,
-											state,
-											process,
-											symbolicAnalyzer
-													.stateInformation(state),
-											equalExtentClaim,
-											checkResultType,
-											ErrorKind.OUT_OF_BOUNDS,
-											"Pointer addition results in an out of bound error\nOriginal pointer: "
-													+ symbolicAnalyzer
-															.symbolicExpressionToString(
-																	source,
-																	state,
-																	pointer)
-													+ "\nPointer addition offset: "
-													+ symbolicAnalyzer
-															.symbolicExpressionToString(
-																	source,
-																	state,
-																	offset)
-													+ "\nArray extent: "
-													+ symbolicAnalyzer
-															.symbolicExpressionToString(
-																	source,
-																	state,
-																	dimExtents
-																			.get(arrayDim
-																					- 1
-																					- i))
-													+ "\nNew array index: "
-													+ symbolicAnalyzer
-															.symbolicExpressionToString(
-																	source,
-																	state,
-																	newIndex));
-						}
-					}
-					remainder = universe.subtract(
-							remainder,
-							universe.multiply(newIndex,
-									dimCapacities.get(arrayDim - 1 - i)));
-					indexes.add(newIndex);
-				}
-				newRef = symbolicUtil.updateArrayElementReference(
-						(ArrayElementReference) ref, indexes);
-				eval = new Evaluation(state, symbolicUtil.makePointer(scopeId,
-						vid, newRef));
-				return new Pair<>(eval, dimCapacities);
+				if (vid == 0)
+					state = this.reportPtrAddOutOfBoundError(source, state,
+							process, outCondExpr, resultType, eval.value,
+							pointer, offset, false);
+				return recomputeArrayIndices(state, process, vid, scopeId,
+						pointer, offset, reasoner, source);
 			} else {
 				// The (offset + index) < extent at the given dimension,
 				// return new pointer easily.
@@ -3367,10 +3232,9 @@ public class CommonEvaluator implements Evaluator {
 		int leftVid, leftSid, rightVid, rightSid;
 		SymbolicExpression array, arrayPtr;
 		NumericExpression leftPos = zero, rightPos = zero;
-		Map<Integer, NumericExpression> leftPtrIndexes, rightPtrIndexes;
-		ArrayList<NumericExpression> dimCapacities;
+		NumericExpression[] leftPtrIndices, rightPtrIndices;
+		NumericExpression[] arraySliceSizes;
 		Evaluation eval;
-		int dim = 0;
 
 		// ModelFactory already checked type compatibility, so here we just
 		// check if these two pointers are pointing to same object and array
@@ -3406,10 +3270,12 @@ public class CommonEvaluator implements Evaluator {
 		// Get the pointer to the whole array
 		arrayPtr = symbolicUtil.arrayRootPtr(leftPtr, expression.left()
 				.getSource());
-		leftPtrIndexes = symbolicAnalyzer.arrayIndexesByPointer(state,
-				expression.left().getSource(), leftPtr, true);
-		rightPtrIndexes = symbolicAnalyzer.arrayIndexesByPointer(state,
-				expression.right().getSource(), rightPtr, true);
+		leftPtrIndices = symbolicUtil
+				.stripIndicesFromReference((ArrayElementReference) symbolicUtil
+						.getSymRef(leftPtr));
+		rightPtrIndices = symbolicUtil
+				.stripIndicesFromReference((ArrayElementReference) symbolicUtil
+						.getSymRef(rightPtr));
 		// Check compatibility for heap objects:
 		// If VID == 0, all ancestor indexes of left pointer should be same as
 		// right pointer. Because different heap objects all have variable ID of
@@ -3417,12 +3283,14 @@ public class CommonEvaluator implements Evaluator {
 		// objects.
 		if (leftVid == 0) {
 			boolean isCompatiable = true;
+			int temp = leftPtrIndices.length - 1;
 
-			if (leftPtrIndexes.size() != rightPtrIndexes.size())
+			if (leftPtrIndices.length != rightPtrIndices.length)
 				isCompatiable = false;
 			else {
-				for (int i = leftPtrIndexes.size() - 1; i >= 1; i--) {
-					if (!(leftPtrIndexes.get(i).equals(rightPtrIndexes.get(i)))) {
+
+				for (int i = 0; i < temp; i++) {
+					if (!(leftPtrIndices[i].equals(rightPtrIndices[i]))) {
 						isCompatiable = false;
 						break;
 					}
@@ -3437,8 +3305,8 @@ public class CommonEvaluator implements Evaluator {
 			// Since they are in the same heap object, the result is directly
 			// do a subtraction between two indexes
 			eval = new Evaluation(state, null);
-			eval.value = universe.subtract(leftPtrIndexes.get(0),
-					rightPtrIndexes.get(0));
+			eval.value = universe.subtract(leftPtrIndices[temp],
+					rightPtrIndices[temp]);
 			return eval;
 		}
 		// Get array by dereferencing array pointer
@@ -3446,19 +3314,20 @@ public class CommonEvaluator implements Evaluator {
 				null, arrayPtr, false);
 		state = eval.state;
 		array = eval.value;
-		dimCapacities = symbolicUtil.getArrayElementsSizes(array, expression
-				.left().getSource());
-		while (leftPtrIndexes.containsKey(dim)) {
+		arraySliceSizes = symbolicUtil
+				.arraySlicesSizes(symbolicUtil
+						.arrayCoordinateSizes((SymbolicCompleteArrayType) array
+								.type()));
+		for (int i = leftPtrIndices.length, j = arraySliceSizes.length - 1; --i >= 0; j--) {
 			NumericExpression leftIdx, rightIdx;
-			NumericExpression capacity = dimCapacities.get(dim);
+			NumericExpression sliceSizes = arraySliceSizes[j];
 
-			leftIdx = leftPtrIndexes.get(dim);
-			rightIdx = rightPtrIndexes.get(dim);
+			leftIdx = leftPtrIndices[i];
+			rightIdx = rightPtrIndices[i];
 			leftPos = universe.add(leftPos,
-					universe.multiply(leftIdx, capacity));
+					universe.multiply(leftIdx, sliceSizes));
 			rightPos = universe.add(rightPos,
-					universe.multiply(rightIdx, capacity));
-			dim++;
+					universe.multiply(rightIdx, sliceSizes));
 		}
 		eval.state = state;
 		eval.value = universe.subtract(leftPos, rightPos);
@@ -3536,12 +3405,13 @@ public class CommonEvaluator implements Evaluator {
 	}
 
 	@Override
-	public Pair<Evaluation, ArrayList<NumericExpression>> evaluatePointerAdd(
+	public Pair<Evaluation, NumericExpression[]> evaluatePointerAdd(
 			State state, String process, SymbolicExpression ptr,
 			NumericExpression offset, boolean ifCheckOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression newPtr = symbolicAnalyzer
-				.castToArrayElementReference(state, ptr, source);
+		SymbolicExpression newPtr = symbolicUtil.makePointer(ptr,
+				symbolicAnalyzer.getMemBaseReference(state, ptr, source));
+
 		return this.pointerAddWorker(state, process, newPtr, offset,
 				ifCheckOutput, source);
 	}
@@ -3671,5 +3541,186 @@ public class CommonEvaluator implements Evaluator {
 	@Override
 	public MemoryUnitExpressionEvaluator memoryUnitEvaluator() {
 		return this.memUnitEvaluator;
+	}
+
+	/**
+	 * Logging an out of bound error caused by pointer addition. Returns the new
+	 * state after logging.
+	 * 
+	 * @param source
+	 *            The {@link CIVLSource} of the pointer addition statement
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The String identifier of the process
+	 * @param claim
+	 *            The failure bound checking predicate
+	 * @param resultType
+	 *            The {@link ResultType} of the result of reasoning the bound
+	 *            checking predicate
+	 * @param array
+	 *            The {@link SymbolicExpression} of the array on where the
+	 *            pointer addition happens.
+	 * @param pointer
+	 *            The pointer of the pointer addition operation
+	 * @param offset
+	 *            The offset of the pointer addition operation
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State reportPtrAddOutOfBoundError(CIVLSource source, State state,
+			String process, BooleanExpression claim, ResultType resultType,
+			SymbolicExpression array, SymbolicExpression pointer,
+			SymbolicExpression offset, boolean multiDimensional)
+			throws UnsatisfiablePathConditionException {
+		String msg = (multiDimensional) ? "Array object"
+				: "A allocated sequence of memory space";
+
+		return errorLogger.logError(
+				source,
+				state,
+				process,
+				symbolicAnalyzer.stateInformation(state),
+				claim,
+				resultType,
+				ErrorKind.OUT_OF_BOUNDS,
+				"Pointer addition results in an index out of bound error on "
+						+ msg
+						+ ": "
+						+ symbolicAnalyzer.symbolicExpressionToString(source,
+								state, array)
+						+ "\nOriginal pointer: "
+						+ symbolicAnalyzer.symbolicExpressionToString(source,
+								state, pointer)
+						+ "\nPointer addtion offset: "
+						+ symbolicAnalyzer.symbolicExpressionToString(source,
+								state, offset));
+	}
+
+	/**
+	 * pre-condition:
+	 * <ol>
+	 * <li>The object pointed by the "pointer" must have an array type</li>
+	 * <li>"reasoner" must be initialized</li>
+	 * </ol>
+	 * post-condition:
+	 * <ol>
+	 * <li>The left side of the pair must be an pointer, cannot be "null"</li>
+	 * <li>The right side of the pair may be "null"</li>
+	 * </ol>
+	 * post-condition: A helper function for pointer addition. Recomputing array
+	 * element referencing indices when more than one dimensional coordinates
+	 * need to be changed.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The String identifier of the process
+	 * @param pointedVid
+	 *            The variable id of the pointed array object
+	 * @param pointedSid
+	 *            The variable id of the pointed array object
+	 * @param pointer
+	 *            The pointer points to the array object
+	 * @param offset
+	 *            The offset added to the pointer
+	 * @param reasoner
+	 *            An instance reference of a {@link Reasoner} object
+	 * @param source
+	 *            The CIVLSource of the statement
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Pair<Evaluation, NumericExpression[]> recomputeArrayIndices(
+			State state, String process, int pointedVid, int pointedSid,
+			SymbolicExpression pointer, NumericExpression offset,
+			Reasoner reasoner, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		NumericExpression newIndex, totalOffset = zero;
+		NumericExpression sliceSize = one;
+		SymbolicExpression arrayRootPtr, wholeArray;
+		NumericExpression[] indices;
+		NumericExpression[] coordinateSizes;
+		NumericExpression[] sliceSizes;
+		NumericExpression[] oldIndices;
+		BooleanExpression claim;
+		ReferenceExpression oldRef, newRef;
+		ResultType resultType;
+		Evaluation eval;
+		int dim;
+
+		arrayRootPtr = symbolicUtil.arrayRootPtr(pointer, source);
+		eval = dereference(source, state, process, null, arrayRootPtr, false);
+		state = eval.state;
+		wholeArray = eval.value;
+		coordinateSizes = symbolicUtil
+				.arrayCoordinateSizes((SymbolicCompleteArrayType) eval.value
+						.type());
+		sliceSizes = symbolicUtil.arraySlicesSizes(coordinateSizes);
+		dim = coordinateSizes.length;
+		oldRef = symbolicAnalyzer.getMemBaseReference(state, pointer, source);
+		assert oldRef.isArrayElementReference();
+		oldIndices = symbolicUtil
+				.stripIndicesFromReference((ArrayElementReference) oldRef);
+		// computes total offset from the first element
+		for (int i = 0; i < dim; i++) {
+			NumericExpression oldIndex;
+
+			oldIndex = oldIndices[i];
+			sliceSize = sliceSizes[i];
+			totalOffset = universe.add(totalOffset,
+					universe.multiply(oldIndex, sliceSize));
+		}
+		totalOffset = universe.add(totalOffset, offset);
+		// if totalOffset less than zero, report error
+		claim = universe.lessThanEquals(zero, totalOffset);
+		resultType = reasoner.valid(claim).getResultType();
+		if (!resultType.equals(ResultType.YES))
+			state = this.reportPtrAddOutOfBoundError(source, state, process,
+					claim, resultType, wholeArray, pointer, offset, false);
+		// Computes new indexes
+		indices = new NumericExpression[dim];
+		for (int i = 0; i < dim; i++) {
+			BooleanExpression checkClaim;
+			ResultType checkResultType;
+			Pair<NumericExpression, NumericExpression> newIndex_remainder;
+
+			sliceSize = sliceSizes[i];
+			newIndex_remainder = symbolicUtil.arithmeticIntDivide(totalOffset,
+					sliceSize);
+			newIndex = newIndex_remainder.left;
+			totalOffset = newIndex_remainder.right;
+			checkClaim = universe.lessThan(newIndex, coordinateSizes[i]);
+			// TODO change to andTo
+			checkResultType = reasoner.valid(checkClaim).getResultType();
+			if (!checkResultType.equals(ResultType.YES)) {
+				BooleanExpression equalExtentClaim = universe.equals(newIndex,
+						coordinateSizes[i]);
+
+				checkResultType = reasoner.valid(equalExtentClaim)
+						.getResultType();
+				if (checkResultType.equals(ResultType.YES)) {
+					if (i < dim - 1) {
+						newIndex = universe.subtract(newIndex, one);
+						totalOffset = universe.add(totalOffset, sliceSizes[i]);
+					}
+				} else
+					state = this.reportPtrAddOutOfBoundError(source, state,
+							process, equalExtentClaim, checkResultType,
+							wholeArray, pointer, offset, false);
+			}
+			indices[i] = newIndex;
+		}
+		// if totalOffset still not equal to zero, report error
+		claim = universe.equals(totalOffset, zero);
+		resultType = reasoner.valid(claim).getResultType();
+		if (!resultType.equals(ResultType.YES))
+			state = this.reportPtrAddOutOfBoundError(source, state, process,
+					claim, resultType, wholeArray, pointer, offset, false);
+		newRef = symbolicUtil.makeArrayElementReference(
+				symbolicUtil.getSymRef(arrayRootPtr), indices);
+		eval = new Evaluation(state, symbolicUtil.makePointer(pointedSid,
+				pointedVid, newRef));
+		return new Pair<>(eval, sliceSizes);
 	}
 }

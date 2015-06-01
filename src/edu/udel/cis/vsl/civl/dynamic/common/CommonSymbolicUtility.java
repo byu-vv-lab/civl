@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.dynamic.common;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -269,7 +270,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return this.falseValue;
 		offset = numRefs2 - numRefs1;
 		for (int i = offset; i < numRefs1; i++) {
-			//TODO change to andTo
+			// TODO change to andTo
 			result = universe.and(result, universe.equals(refComps1.get(i),
 					refComps2.get(i + offset)));
 		}
@@ -421,7 +422,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				(NumericExpression) step);
 		BooleanExpression negativeStep = universe.lessThan(
 				(NumericExpression) step, zero);
-		//TODO change to andTo
+		// TODO change to andTo
 		BooleanExpression positiveStepResult = universe.and(positiveStep,
 				universe.lessThanEquals((NumericExpression) value,
 						(NumericExpression) high));
@@ -628,97 +629,54 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public ReferenceExpression updateArrayElementReference(
-			ArrayElementReference arrayReference,
-			List<NumericExpression> newIndexes) {
-		int dimension = newIndexes.size();
-		ReferenceExpression rootParent = arrayReference;
+	public ReferenceExpression makeArrayElementReference(
+			ReferenceExpression arrayReference, NumericExpression[] newIndices) {
+		int dimension = newIndices.length;
 		ReferenceExpression newRef;
 
-		for (int i = 0; i < dimension; i++)
-			rootParent = ((ArrayElementReference) rootParent).getParent();
-		newRef = rootParent;
+		newRef = arrayReference;
 		for (int i = 0; i < dimension; i++) {
-			newRef = universe.arrayElementReference(newRef, newIndexes.get(i));
+			newRef = universe.arrayElementReference(newRef, newIndices[i]);
 		}
 		return newRef;
 	}
 
 	/* *********************** Package-Private Methods ********************* */
-
 	@Override
-	public ArrayList<NumericExpression> getArrayElementsSizes(
-			SymbolicExpression array, CIVLSource source)
+	public NumericExpression[] arraySlicesSizes(
+			NumericExpression[] coordinateSizes)
 			throws UnsatisfiablePathConditionException {
-		NumericExpression elementSize = one;
-		ArrayList<NumericExpression> dimExtents;
-		ArrayList<NumericExpression> dimCapacities;
-		int dim;
+		int dim = coordinateSizes.length;
+		NumericExpression[] sliceSizes = new NumericExpression[dim];
+		NumericExpression sliceSize = one;
 
-		dimExtents = this.arrayExtents(source, array);
-		dim = dimExtents.size();
-		dimCapacities = new ArrayList<>(dim);
-		for (int i = 0; i < dim; i++) {
-			dimCapacities.add(elementSize);
-			elementSize = universe.multiply(elementSize, dimExtents.get(i));
+		for (int i = dim; --i >= 0;) {
+			sliceSizes[i] = sliceSize;
+			sliceSize = universe.multiply(sliceSize, coordinateSizes[i]);
 		}
-		return dimCapacities;
+		return sliceSizes;
 	}
 
 	@Override
-	public ArrayList<NumericExpression> getArrayElementsSizes(
-			SymbolicExpression array, ArrayList<NumericExpression> dimExtents,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
-		NumericExpression elementSize = one;
-		ArrayList<NumericExpression> dimCapacities;
-		int dim;
+	public NumericExpression[] arrayCoordinateSizes(
+			SymbolicCompleteArrayType arrayType) {
+		int dimension, counter;
+		NumericExpression[] coordinates;
+		SymbolicType childType;
 
-		dim = dimExtents.size();
-		dimCapacities = new ArrayList<>(dim);
-		for (int i = 0; i < dim; i++) {
-			dimCapacities.add(elementSize);
-			elementSize = universe.multiply(elementSize, dimExtents.get(i));
-		}
-		return dimCapacities;
-	}
+		dimension = universe.arrayDimensionAndBaseType(arrayType).left;
+		coordinates = new NumericExpression[dimension];
+		childType = arrayType;
+		counter = 0;
+		do {
+			assert childType instanceof SymbolicCompleteArrayType : "Cannot get coordinate's sizes from incomplete arrays";
+			arrayType = (SymbolicCompleteArrayType) childType;
+			coordinates[counter] = arrayType.extent();
+			childType = arrayType.elementType();
+			counter++;
+		} while (childType.typeKind().equals(SymbolicTypeKind.ARRAY));
 
-	@Override
-	public ArrayList<NumericExpression> arrayExtents(CIVLSource source,
-			SymbolicExpression array, int fakeDim) {
-		SymbolicType type = array.type();
-		ArrayList<NumericExpression> dimExtents = new ArrayList<>();
-		ArrayList<NumericExpression> retDimExtents;
-		int tempFakeDim = fakeDim;
-		int dim;
-
-		assert fakeDim > 0;
-		if (!(type instanceof SymbolicArrayType))
-			throw new CIVLInternalException(
-					"Cannot get extents from an non-array object", source);
-		while (type instanceof SymbolicCompleteArrayType && tempFakeDim > 0) {
-			if (type instanceof SymbolicCompleteArrayType)
-				dimExtents.add(((SymbolicCompleteArrayType) type).extent());
-			type = ((SymbolicCompleteArrayType) type).elementType();
-			tempFakeDim--;
-		}
-		// If the deepest element type is still an array, then report there is
-		// something wrong here.
-		if (type instanceof SymbolicArrayType && tempFakeDim > 0)
-			throw new CIVLInternalException(
-					"SymbolicUtility.arrayExtents(CIVLSource, SymbolicExpression) cannot extract extents of all dimensions completely.\n",
-					source);
-		// Reverse the order of all elements in ArrayList
-		dim = dimExtents.size();
-		retDimExtents = new ArrayList<>(dim);
-		for (int i = 0; i < dim; i++)
-			retDimExtents.add(dimExtents.get(dim - 1 - i));
-		return retDimExtents;
-	}
-
-	@Override
-	public ArrayList<NumericExpression> arrayExtents(CIVLSource source,
-			SymbolicExpression array) {
-		return this.arrayExtents(source, array, Integer.MAX_VALUE);
+		return coordinates;
 	}
 
 	@Override
@@ -730,6 +688,27 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			arrayRootPtr = parentPointer(source, arrayRootPtr);
 
 		return arrayRootPtr;
+	}
+
+	@Override
+	public NumericExpression[] stripIndicesFromReference(
+			ArrayElementReference eleRef) {
+		ArrayDeque<NumericExpression> tmpStack = new ArrayDeque<>(5);
+		NumericExpression[] indices;
+		ReferenceExpression ref = eleRef;
+		int dimension;
+
+		while (ref.isArrayElementReference()) {
+			ArrayElementReference tmpEleRef = (ArrayElementReference) ref;
+
+			tmpStack.push((tmpEleRef).getIndex());
+			ref = tmpEleRef.getParent();
+		}
+		dimension = tmpStack.size();
+		indices = new NumericExpression[dimension];
+		for (int i = 0; !tmpStack.isEmpty(); i++)
+			indices[i] = tmpStack.pop();
+		return indices;
 	}
 
 	/* ************************ Domain Operations **************************** */
@@ -1319,4 +1298,16 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		return this.isInRange(next, range);
 	}
 
+	@Override
+	public Pair<NumericExpression, NumericExpression> arithmeticIntDivide(
+			NumericExpression dividend, NumericExpression denominator) {
+		NumericExpression quotient, remainder;
+
+		assert dividend.type().isInteger();
+		assert denominator.type().isInteger();
+		quotient = universe.divide(dividend, denominator);
+		remainder = universe.subtract(dividend,
+				universe.multiply(quotient, denominator));
+		return new Pair<>(quotient, remainder);
+	}
 }

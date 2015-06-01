@@ -304,7 +304,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 			BooleanExpression claim;
 
-			elementType = symbolicAnalyzer.getFlattenedArrayElementType(state,
+			elementType = symbolicAnalyzer.getArrayBaseType(state,
 					arguments[0].getSource(), pointer).getDynamicType(universe);
 			count = universe.divide(size,
 					symbolicUtil.sizeof(arguments[1].getSource(), elementType));
@@ -312,13 +312,13 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			// first non-array element.
 			claim = universe.equals(count, one);
 			if (!reasoner.isValid(claim)) {
-				eval = libevaluator.getDataFrom(state, process, pointer, count,
-						false, arguments[0].getSource());
+				eval = libevaluator.getDataFrom(state, process, arguments[0],
+						pointer, count, false, arguments[0].getSource());
 				state = eval.state;
 				arrayInBundle = eval.value;
 			} else {
-				eval = evaluator.dereference(source, state, process, null, pointer,
-						true);
+				eval = evaluator.dereference(source, state, process, null,
+						pointer, true);
 				if (eval.value.type() instanceof SymbolicArrayType) {
 					SymbolicExpression arraySubObj = eval.value;
 
@@ -394,7 +394,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			return state;
 		}
 		eval_and_pointer = libevaluator.bundleUnpack(state, process,
-				(SymbolicExpression) bundle.argument(1), pointer, source);
+				(SymbolicExpression) bundle.argument(1), arguments[0], pointer,
+				source);
 		eval = eval_and_pointer.left;
 		// bufPointer is the pointer to targetObj which may be the ancestor
 		// of the original pointer.
@@ -492,7 +493,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		if (firOperand.isNull() || firOperand == null)
 			return state;
 		// Get the second operand from pointer
-		eval = libevaluator.getDataFrom(state, process, pointer,
+		eval = libevaluator.getDataFrom(state, process, arguments[1], pointer,
 				universe.multiply(count, universe.integer(countStep)), false,
 				source);
 		state = eval.state;
@@ -528,7 +529,7 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			newArray = this.libevaluator.arrayFlatten(state, process, newArray,
 					source);
 			eval_and_pointer = libevaluator.setDataFrom(state, process,
-					pointer,
+					arguments[1], pointer,
 					universe.multiply(count, universe.integer(countStep)),
 					newArray, false, source);
 			eval = eval_and_pointer.left;
@@ -601,7 +602,8 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 			i = universe.add(i, one);
 			claim = universe.lessThan(i, count);
 		}
-		eval_and_pointer = libevaluator.setDataFrom(state, process, pointer,
+		eval_and_pointer = libevaluator.setDataFrom(state, process,
+				arguments[1], pointer,
 				universe.multiply(count, universe.integer(countStep)),
 				secOperand, false, source);
 		eval = eval_and_pointer.left;

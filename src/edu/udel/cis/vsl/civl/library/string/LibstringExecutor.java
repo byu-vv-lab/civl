@@ -3,7 +3,6 @@
  */
 package edu.udel.cis.vsl.civl.library.string;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -423,7 +422,7 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		ResultType resultType;
 		Evaluation eval;
 		LibbundleEvaluator libEvaluator;
-		Pair<Evaluation, ArrayList<NumericExpression>> ptrAddRet;
+		Pair<Evaluation, NumericExpression[]> ptrAddRet;
 		Pair<Evaluation, SymbolicExpression> setDataRet;
 		edu.udel.cis.vsl.sarl.IF.number.Number num_length;
 		int int_length;
@@ -446,9 +445,8 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 							+ " value to the given address");
 		}
 		size = (NumericExpression) argumentValues[2];
-		objectElementType = symbolicAnalyzer.getFlattenedArrayElementType(
-				state, arguments[0].getSource(), pointer).getDynamicType(
-				universe);
+		objectElementType = symbolicAnalyzer.getArrayBaseType(state,
+				arguments[0].getSource(), pointer).getDynamicType(universe);
 		dataTypeSize = symbolicUtil.sizeof(arguments[0].getSource(),
 				objectElementType);
 		for (SymbolicObject obj : size.arguments()) {
@@ -508,8 +506,8 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 			libEvaluator = (LibbundleEvaluator) this.libEvaluatorLoader
 					.getLibraryEvaluator("bundle", evaluator, modelFactory,
 							symbolicUtil, symbolicAnalyzer);
-			setDataRet = libEvaluator.setDataFrom(state, process, pointer,
-					length, zerosArray, false, source);
+			setDataRet = libEvaluator.setDataFrom(state, process, arguments[0],
+					pointer, length, zerosArray, false, source);
 			eval = setDataRet.left;
 			state = eval.state;
 			state = this.primaryExecutor.assign(source, state, process,

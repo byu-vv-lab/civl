@@ -744,7 +744,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									source, state, ptr));
 		}
-		primitiveTypePointed = symbolicAnalyzer.getFlattenedArrayElementType(
+		primitiveTypePointed = symbolicAnalyzer.getArrayBaseType(
 				state, arguments[0].getSource(), ptr).getDynamicType(universe);
 		ptr_primType_size = symbolicUtil.sizeof(arguments[0].getSource(),
 				primitiveTypePointed);

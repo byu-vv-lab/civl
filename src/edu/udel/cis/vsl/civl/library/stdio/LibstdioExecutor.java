@@ -878,6 +878,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				}
 				if (conversionFunction != null) {
 					SymbolicExpression assignedOutputArgPtr, origOutputArgPtr;
+					Expression origOutputArgPtrExpr;
 
 					// TODO: Improvement: Width specified by format is max width
 					// which means the real width can be less than the given
@@ -886,6 +887,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 					data = universe.apply(conversionFunction,
 							Arrays.asList(format, currentString));
 					assignedOutputArgPtr = origOutputArgPtr = argumentValues[dataPointerIndex];
+					origOutputArgPtrExpr = arguments[dataPointerIndex];
 					// Only character array(or string) will make assigned
 					// pointer different.
 					// TODO: what about %[ ?
@@ -931,7 +933,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 								data = symbolicAnalyzer.getSubArray(data, zero,
 										realDataLength, state, process, source);
 								libevaluator.setOutputArgument(state, process,
-										data, origOutputArgPtr, realDataLength,
+										data, origOutputArgPtrExpr,
+										origOutputArgPtr, realDataLength,
 										source);
 								state = primaryExecutor.assign(source, state,
 										process, assignedOutputArgPtr, data);
@@ -940,7 +943,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 							} else {
 								eval_and_assignedPtr = libevaluator
 										.setOutputArgument(state, process,
-												data, origOutputArgPtr,
+												data, origOutputArgPtrExpr,
+												origOutputArgPtr,
 												charsLengthNumExpr, source);
 								eval = eval_and_assignedPtr.left;
 								state = eval.state;

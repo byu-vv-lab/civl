@@ -1,12 +1,13 @@
 package edu.udel.cis.vsl.civl.dynamic.IF;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -14,6 +15,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
@@ -450,22 +452,23 @@ public interface SymbolicUtility {
 	SymbolicExpression sizeofFunction();
 
 	/**
-	 * Updates the array references for an multi-dimensional array by using a
-	 * set of indexes and a given reference to an array element. e.g. If the
-	 * arrayReference is <code>a[x][y]</code>, then the size of newIndexes
-	 * should be 2. And the return reference will be
-	 * <code>a[newIndexes[0]][newIndexes[1]]</code>.
+	 * Returns an array element reference by giving the array reference and the
+	 * coordinates to indexing the element.
+	 * 
+	 * This function makes the {@link ArrayElementReference} based on the given
+	 * array reference. For example, for an array "int a[2][3][4]", giving the
+	 * reference to "a[1]" and an indices array {1,2}, it returns the new
+	 * reference to "a[1][1][2]".
 	 * 
 	 * @author Ziqing Luo
 	 * @param arrayReference
 	 *            An reference to an array
-	 * @param newIndexes
+	 * @param newIndices
 	 *            indexes for referencing the element
 	 * @return the new arrayElementReference
 	 */
-	ReferenceExpression updateArrayElementReference(
-			ArrayElementReference arrayReference,
-			List<NumericExpression> newIndexes);
+	ReferenceExpression makeArrayElementReference(
+			ReferenceExpression arrayReference, NumericExpression[] newIndices);
 
 	/**
 	 * Returns the undefined pointer of CIVL, which is a tuple <-2, -2, NULL>.
@@ -602,44 +605,37 @@ public interface SymbolicUtility {
 	boolean isEmptyDomain(SymbolicExpression domain, int dim, CIVLSource source);
 
 	/* ****************** End of Domain Operation section ********************* */
-
 	/**
-	 * Computes the array capacity informations of the given array. Array
-	 * capacity informations are stored in an ArrayList where indexes are
-	 * indicating dimensions. Here, index 0 marks the deepest dimension, index 1
-	 * marks the second deepest dimension and so forth. e.g. array
-	 * <code>int a[2][3];</code>, cells in deepest dimension contains one
-	 * element and cells in second deepest dimension contains three elements.
+	 * pre-condition:
+	 * <ol>
+	 * <li>"coordinateSizes" must not be null</li>
+	 * </ol>
+	 * post-condition:
+	 * <ol>
+	 * <li>the returned {@link CIVLType} must not be null</li>
+	 * </ol>
+	 * Computing sizes of all slices of the given array. Here an array slice is
+	 * a sub-array with a lower dimension of the given array.
 	 * 
-	 * 
-	 * @param array
-	 *            The target array
-	 * @param source
-	 *            The CIVL source of the array or the pointer to the array
-	 * 
-	 * @return
+	 * @param coordinateSizes
+	 *            Sizes of coordinates representing an array. e.g. {2,3,4}
+	 *            stands for an array T a[2][3][4].
+	 * @return Sizes of all array slices. e.g. input:{2,3,4} ==> output:{12, 4,
+	 *         1}
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	ArrayList<NumericExpression> getArrayElementsSizes(
-			SymbolicExpression array, CIVLSource source)
+	NumericExpression[] arraySlicesSizes(NumericExpression[] coordinateSizes)
 			throws UnsatisfiablePathConditionException;
 
 	/**
-	 * Same function as {@link getArrayElementsSizes} but the extents set of all
-	 * dimensions is passed in as an argument so that no need computing again
-	 * (which also makes it be able to omit "fakeDim").
-	 * 
-	 * @param array
-	 * @param dimExtents
-	 * @param source
-	 * @return
-	 * @throws UnsatisfiablePathConditionException
-	 */
-	ArrayList<NumericExpression> getArrayElementsSizes(
-			SymbolicExpression array, ArrayList<NumericExpression> dimExtents,
-			CIVLSource source) throws UnsatisfiablePathConditionException;
-
-	/**
+	 * pre-condition:
+	 * <ol>
+	 * <li>"arrayPtr" must not be "null"</li>
+	 * </ol>
+	 * post-condition:
+	 * <ol>
+	 * <li>the returned object must not be "null"</li>
+	 * </ol>
 	 * Get the most ancestor pointer of the given array element reference
 	 * pointer.
 	 * 
@@ -653,40 +649,40 @@ public interface SymbolicUtility {
 			CIVLSource source);
 
 	/**
-	 * Computes extents of every dimension of an array.<br>
-	 * The extents informations are stored in an ArrayList whose indexes
-	 * indicate the dimension of the array. Here 0 marks the deepest dimension,
-	 * 1 marks the second deepest dimension and so forth.
+	 * Returns an array of indices in the given {@link ArrayElementReference}.
+	 * Note: The order of indices is from right to left which is same as the
+	 * visual expression order.
 	 * 
-	 * @param source
-	 *            The CIVL source of the array or the pointer to the array
-	 * @param array
-	 *            The target array.
-	 * @param fakeDim
-	 *            This argument is decided by caller. This argument allows
-	 *            caller control this method to process nested arrays in a
-	 *            logical way. For example, for a nested array
-	 *            "int a[2][3][4];", if the fakeDim is 2, then this method will
-	 *            take the deepest dimension as a pure element that makes the
-	 *            input array "int a[2][3]". Intuitively, the returned list will
-	 *            be different.
-	 * @return The Map contains array extents information.
+	 * @param eleRef
+	 *            A reference of element of an array
+	 * @return
 	 */
-	ArrayList<NumericExpression> arrayExtents(CIVLSource source,
-			SymbolicExpression array, int fakeDim);
+	NumericExpression[] stripIndicesFromReference(ArrayElementReference eleRef);
 
 	/**
-	 * Computes extents of every dimension of an array.<br>
-	 * The extents informations are stored in an ArrayList whose indexes
-	 * indicate the dimension of the array. Here 0 marks the deepest dimension,
-	 * 1 marks the second deepest dimension and so forth.
+	 * Computes size of each coordinate of a given array. Returns an Java Array
+	 * of those coordinate sizes which are in the same order as the array being
+	 * declared.<br>
+	 * For example, giving an array "int a[2][3][4]" returns {2, 3, 4}.
 	 * 
-	 * @param source
-	 *            The CIVL source of the array or the pointer to the array
 	 * @param array
 	 *            The target array.
-	 * @return The Map contains array extents information.
+	 * @return The Java Array contains array extents information.
 	 */
-	ArrayList<NumericExpression> arrayExtents(CIVLSource source,
-			SymbolicExpression array);
+	NumericExpression[] arrayCoordinateSizes(SymbolicCompleteArrayType arrayType);
+
+	/**
+	 * This function does an arithmetic integer division, returns the quotient
+	 * and remainder
+	 * 
+	 * @param dividend
+	 *            The {@link NumericExpression} of the quotient, must be a
+	 *            Integer number
+	 * @param denominator
+	 *            The {@link NumericExpression} of the denominator, must be a
+	 *            Integer number
+	 * @return A {@link Pair} of quotient (left) and remainder (right)
+	 */
+	public Pair<NumericExpression, NumericExpression> arithmeticIntDivide(
+			NumericExpression dividend, NumericExpression denominator);
 }

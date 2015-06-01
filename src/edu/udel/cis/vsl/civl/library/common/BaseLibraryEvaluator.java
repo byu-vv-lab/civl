@@ -1,19 +1,16 @@
 package edu.udel.cis.vsl.civl.library.common;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
@@ -26,15 +23,18 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
-import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
+import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
 
 /**
  * This class provides the common data and operations of library evaluators.
@@ -94,6 +94,215 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 
 	/* ******************** Public Array Utility functions ****************** */
 	/**
+	 * Pre-conditions:
+	 * <ol>
+	 * <li>"pointer" is a valid pointer</li>
+	 * <li>"count" greater than zero</li>
+	 * <li>"dataArray" is an one dimensional array</li>
+	 * <li>"pointer" must points to a compatible type with the "dataArray"</li>
+	 * </ol>
+	 * post_condition:
+	 * <ol>
+	 * <li>Return a sequence of data with length "count" from the pointed object
+	 * starting from the pointed position</li>
+	 * </ol>
+	 * Setting a sequence of data starting from a pointer
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The information of the process
+	 * @param pointer
+	 *            The pointer to the start position
+	 * @param count
+	 *            The number of cells in the array of data
+	 * @param dataArray
+	 *            The sequence of data is going to be set
+	 * @param checkOutput
+	 *            Flag for check output variable
+	 * @param source
+	 *            CIVL source of the statement
+	 * @return A pair of evaluation and pointer.The data in form of an array
+	 *         which can be assigned to the returned pointer.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public Pair<Evaluation, SymbolicExpression> setDataFrom(State state,
+			String process, Expression ptrExpr, SymbolicExpression pointer,
+			NumericExpression count, SymbolicExpression dataArray,
+			boolean checkOutput, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		NumericExpression[] arraySlicesSizes;
+		NumericExpression startPos;
+		NumericExpression dataSeqLength = universe.length(dataArray);
+		SymbolicExpression startPtr, endPtr;
+		Evaluation eval;
+		Pair<Evaluation, NumericExpression[]> eval_and_slices;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		ReferenceExpression symref;
+		BooleanExpression claim;
+		ResultType resultType;
+		int dim;
+
+		// If data length > count, report an error:
+		claim = universe.lessThan(dataSeqLength, count);
+		resultType = reasoner.valid(claim).getResultType();
+		if (resultType.equals(ResultType.YES)) {
+			state = reportOutOfBoundError(state, process, claim, resultType,
+					pointer, dataSeqLength, count, source);
+			return new Pair<>(new Evaluation(state, dataArray), pointer);
+		}
+		// If count is one:
+		if (reasoner.isValid(universe.equals(count, one))) {
+			SymbolicExpression data = universe.arrayRead(dataArray, zero);
+
+			return new Pair<>(new Evaluation(state, data), pointer);
+		}
+		// Else, count greater than one:
+		startPtr = pointer;
+		eval_and_slices = evaluator.evaluatePointerAdd(state, process,
+				startPtr, count, checkOutput, source);
+		eval = eval_and_slices.left;
+		endPtr = eval.value;
+		state = eval.state;
+		arraySlicesSizes = eval_and_slices.right;
+		// If the pointer addition happens to be done within one dimensional
+		// space, the "arraySlicesSizes" is null and we don't really need it.
+		if (arraySlicesSizes == null) {
+			arraySlicesSizes = new NumericExpression[1];
+			arraySlicesSizes[0] = one;
+		}
+		dim = arraySlicesSizes.length;
+		// "startPtr" may not point to a memory base type object yet
+		symref = symbolicAnalyzer.getMemBaseReference(state, startPtr, source);
+		startPtr = symbolicUtil.makePointer(startPtr, symref);
+		startPos = zero;
+		if (symref.isArrayElementReference()) {
+			NumericExpression[] startIndices = symbolicUtil
+					.stripIndicesFromReference((ArrayElementReference) symref);
+			int numIndices = startIndices.length;
+
+			for (int i = 1; !startPtr.equals(endPtr); i++) {
+				startPtr = symbolicUtil.parentPointer(source, startPtr);
+				endPtr = symbolicUtil.parentPointer((CIVLSource) null, endPtr);
+				startPos = universe.add(startPos, universe
+						.multiply(startIndices[numIndices - i],
+								arraySlicesSizes[dim - i]));
+			}
+		}
+		// here "startPtr" is already updated as the pointer to the common sub
+		// array.
+		eval = evaluator.dereference(source, state, process, ptrExpr, startPtr,
+				false);
+		state = eval.state;
+		if (eval.value.type().typeKind().equals(SymbolicTypeKind.ARRAY)) {
+			eval = this.setDataBetween(state, process, eval.value,
+					arraySlicesSizes, startPos, count, pointer, dataArray,
+					source);
+			return new Pair<>(eval, startPtr);
+		} else {
+			state = reportOutOfBoundError(state, process, null, null, startPtr,
+					one, count, source);
+			return new Pair<>(new Evaluation(state, dataArray), pointer);
+		}
+	}
+
+	/**
+	 * Pre-condition:
+	 * <ol>
+	 * <li>"pointer" is valid</li>
+	 * <li>"count" > 0</li>
+	 * </ol>
+	 * post_condition:
+	 * <ol>
+	 * <li>Return a sequence of data with length "count" from the pointed object
+	 * starting from the pointed position</li>
+	 * </ol>
+	 * Get a sequence of data starting from a pointer.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The information of the process
+	 * @param pointer
+	 *            The pointer to the start position of a sequence of data
+	 * @param count
+	 *            The number of cells in the array of data
+	 * @param checkOutput
+	 *            Flag for check output variable
+	 * @param source
+	 *            CIVL source of the statement
+	 * @return Evaluation contains the sequence of data which is in form of a
+	 *         one dimensional array.
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public Evaluation getDataFrom(State state, String process,
+			Expression pointerExpr, SymbolicExpression pointer,
+			NumericExpression count, boolean checkOutput, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		NumericExpression[] arraySlicesSizes;
+		NumericExpression startPos;
+		SymbolicExpression startPtr, endPtr;
+		SymbolicExpression commonArray;
+		ReferenceExpression symref;
+		Evaluation eval;
+		int dim;
+		Pair<Evaluation, NumericExpression[]> pointer_and_slices;
+		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+
+		// If "count" == 1:
+		if (reasoner.isValid(universe.equals(count, one))) {
+			eval = evaluator.dereference(source, state, process, pointerExpr,
+					pointer, true);
+			eval.value = universe.array(eval.value.type(),
+					Arrays.asList(eval.value));
+			eval.value = this.arrayFlatten(state, process, eval.value, source);
+			return eval;
+		}
+		// Else "count" > 1 :
+		startPtr = pointer;
+		pointer_and_slices = evaluator.evaluatePointerAdd(state, process,
+				startPtr, count, false, source);
+		arraySlicesSizes = pointer_and_slices.right;
+		eval = pointer_and_slices.left;
+		endPtr = eval.value;
+		// If the pointer addition happens to be done within one dimensional
+		// space, the "arraySlicesSizes" is null and we don't really need it.
+		if (arraySlicesSizes == null) {
+			arraySlicesSizes = new NumericExpression[1];
+			arraySlicesSizes[0] = one;
+		}
+		// startPtr may not be the memory base type reference form yet
+		symref = symbolicAnalyzer.getMemBaseReference(state, startPtr, source);
+		startPtr = symbolicUtil.makePointer(startPtr, symref);
+		startPos = zero;
+		if (symref.isArrayElementReference()) {
+			NumericExpression[] startPtrIndices = symbolicUtil
+					.stripIndicesFromReference((ArrayElementReference) symref);
+			int numIndices = startPtrIndices.length;
+
+			dim = arraySlicesSizes.length;
+			for (int i = 1; !startPtr.equals(endPtr); i++) {
+				startPtr = symbolicUtil.parentPointer(source, startPtr);
+				endPtr = symbolicUtil.parentPointer((CIVLSource) null, endPtr);
+				startPos = universe.add(startPos, universe.multiply(
+						startPtrIndices[numIndices - i], arraySlicesSizes[dim
+								- i]));
+			}
+		}
+		eval = evaluator.dereference(source, state, process, pointerExpr,
+				startPtr, true);
+		state = eval.state;
+		commonArray = eval.value;
+		if (commonArray.type().typeKind().equals(SymbolicTypeKind.ARRAY))
+			eval.value = getDataBetween(state, process, startPos, count,
+					commonArray, arraySlicesSizes, source);
+		else
+			state = reportOutOfBoundError(state, process, null, null, startPtr,
+					one, count, source);
+		return eval;
+	}
+
+	/**
 	 * Cast an array to another array. The two arrays before and after casting
 	 * must be able to hold same number of non-array elements.<br>
 	 * e.g. For arrays <code>int a[2][2]; int b[4]; int c[5]</code>, a and b can
@@ -114,55 +323,81 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	public SymbolicExpression arrayCasting(State state, String process,
-			SymbolicExpression oldArray, SymbolicExpression targetTypeArray,
-			CIVLSource source) throws UnsatisfiablePathConditionException {
+			SymbolicExpression oldArray,
+			SymbolicCompleteArrayType typeTemplate, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		BooleanExpression claim;
-		NumericExpression extent, chunkLength, oldArraySize;
-		List<SymbolicExpression> elements = new LinkedList<>();
+		NumericExpression[] coordinatesSizes, arraySlicesSizes;
+		// temporary arrays store dimensional slices
+		SymbolicExpression[] arraySlices;
+		SymbolicExpression flattenOldArray;
+		ResultType resultType;
+		IntegerNumber flattenLength;
+		IntegerNumber dimensionalSpace;
+		SymbolicType elementType;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
+		int dim, numElements;
 
-		if (!(oldArray.type() instanceof SymbolicCompleteArrayType))
-			throw new CIVLInternalException(
-					"Array casting cannot be applied on non-array type object or incomplete array",
-					source);
-		if (!(targetTypeArray.type() instanceof SymbolicCompleteArrayType))
-			throw new CIVLInternalException(
-					"Array casting cannot cast to non-array type object or incomplete array type",
-					source);
-		extent = universe.length(targetTypeArray);
-		oldArraySize = universe.length(oldArray);
-		chunkLength = universe.divide(oldArraySize, extent);
-		if (reasoner.isValid(universe.equals(chunkLength, one))
-				&& (!(((SymbolicArrayType) targetTypeArray.type())
-						.elementType() instanceof SymbolicArrayType)))
+		assert (typeTemplate.typeKind().equals(SymbolicTypeKind.ARRAY));
+		assert typeTemplate.isComplete() : "arrayCasting internal exception";
+		if (oldArray.type().equals(typeTemplate))
 			return oldArray;
-		else {
-			NumericExpression i = zero;
-			NumericExpression endIndex = chunkLength;
-			SymbolicExpression flattenOldArray = arrayFlatten(state, process,
-					oldArray, source);
-
-			if (!(((SymbolicArrayType) targetTypeArray.type()).elementType() instanceof SymbolicArrayType))
-				throw new CIVLInternalException(
-						"Array cannot be casted to an non-array type", source);
-			claim = universe.lessThan(i, extent);
-			while (reasoner.isValid(claim)) {
-				SymbolicExpression subArray = symbolicAnalyzer.getSubArray(
-						flattenOldArray, universe.multiply(i, chunkLength),
-						endIndex, state, process, source);
-				SymbolicExpression childArray;
-
-				childArray = arrayCasting(state, process, subArray,
-						universe.arrayRead(targetTypeArray, zero), source);
-
-				elements.add(childArray);
-				// update
-				i = universe.add(i, one);
-				endIndex = universe.add(endIndex, chunkLength);
-				claim = universe.lessThan(i, extent);
-			}
-			return universe.array(elements.get(0).type(), elements);
+		flattenOldArray = arrayFlatten(state, process, oldArray, source);
+		flattenLength = (IntegerNumber) reasoner.extractNumber(universe
+				.length(flattenOldArray));
+		if (flattenLength == null)
+			throw new CIVLUnimplementedFeatureException(
+					"Transform arrays with non-concrete sizes");
+		arraySlices = new SymbolicExpression[flattenLength.intValue()];
+		coordinatesSizes = symbolicUtil.arrayCoordinateSizes(typeTemplate);
+		arraySlicesSizes = symbolicUtil.arraySlicesSizes(coordinatesSizes);
+		elementType = ((SymbolicArrayType) flattenOldArray.type())
+				.elementType();
+		// check if the flatten array is compatible with the given array type
+		claim = universe.equals(universe.length(flattenOldArray),
+				universe.multiply(arraySlicesSizes[0], coordinatesSizes[0]));
+		resultType = reasoner.valid(claim).getResultType();
+		if (!resultType.equals(ResultType.YES))
+			throw new CIVLInternalException(
+					"Casting an array between incompatiable types", source);
+		dim = coordinatesSizes.length;
+		// Extracting sub-arrays out of SYMBOLIC flatten array
+		dimensionalSpace = (IntegerNumber) reasoner
+				.extractNumber(coordinatesSizes[dim - 1]);
+		if (dimensionalSpace == null)
+			throw new CIVLUnimplementedFeatureException(
+					"Transform arrays with non-concrete sizes");
+		numElements = flattenLength.intValue();
+		for (int j = 0, i = 0; j < flattenLength.intValue(); j += dimensionalSpace
+				.intValue()) {
+			arraySlices[i++] = symbolicAnalyzer.getSubArray(flattenOldArray,
+					universe.integer(j), universe.add(universe.integer(j),
+							coordinatesSizes[dim - 1]), state, process, source);
 		}
+		numElements /= dimensionalSpace.intValue();
+		elementType = universe
+				.arrayType(elementType, coordinatesSizes[dim - 1]);
+		// Keep compressing sub-arrays
+		for (int i = dim - 1; --i >= 0;) {
+			SymbolicExpression[] subArray;
+
+			dimensionalSpace = (IntegerNumber) reasoner
+					.extractNumber(coordinatesSizes[i]);
+			if (dimensionalSpace == null)
+				throw new CIVLUnimplementedFeatureException(
+						"Transform arrays with non-concrete sizes");
+			numElements /= dimensionalSpace.intValue();
+			for (int j = 0; j < numElements; j++) {
+				int offset = j * dimensionalSpace.intValue();
+
+				subArray = Arrays.copyOfRange(arraySlices, offset, offset
+						+ dimensionalSpace.intValue());
+				arraySlices[j] = universe.array(elementType,
+						Arrays.asList(subArray));
+			}
+			elementType = universe.arrayType(elementType, coordinatesSizes[i]);
+		}
+		return arraySlices[0];
 	}
 
 	/**
@@ -185,7 +420,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 			SymbolicExpression array, CIVLSource civlsource)
 			throws UnsatisfiablePathConditionException {
 		List<SymbolicExpression> flattenElementList;
-		ArrayList<NumericExpression> arrayElementsSizes;
+		NumericExpression[] arrayElementsSizes;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
 		if (array == null)
@@ -200,8 +435,14 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		// If the array has at least one dimension whose length is non-concrete,
 		// using array lambda to flatten it.
 		if (this.hasNonConcreteExtent(reasoner, array)) {
-			arrayElementsSizes = symbolicUtil.getArrayElementsSizes(array,
-					civlsource);
+			if (array.type().typeKind().equals(SymbolicTypeKind.ARRAY))
+				arrayElementsSizes = symbolicUtil.arraySlicesSizes(symbolicUtil
+						.arrayCoordinateSizes((SymbolicCompleteArrayType) array
+								.type()));
+			else {
+				arrayElementsSizes = new NumericExpression[1];
+				arrayElementsSizes[0] = one;
+			}
 			return this.arrayLambdaFlatten(state, array, arrayElementsSizes,
 					civlsource);
 		}
@@ -217,16 +458,23 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 			return universe.emptyArray(array.type());
 	}
 
-	/* ************* Output Argument Assignment Utility functions ************ */
-	/*
-	 * These utility functions are used for dealing with assigning objects to
-	 * output arguments. Since this kind of assignment usually involves
-	 * assigning a sequence of data to an object pointed by a pointer and some
-	 * objects are represented differently in CIVL implementation from C
-	 * language(e.g. Multi-dimensional arrays), following functions intend to be
-	 * reused and make implementing those assignments more convenient.
-	 */
+	/* ************* Private helper functions ************ */
 	/**
+	 * Pre-condition:
+	 * <ol>
+	 * <li>"pointer" points to the start position</li>
+	 * <li>"count" > 0</li>
+	 * <li>"count" >= length(dataSequence)</li>
+	 * <li>"array" has {@link SymbolicCompleteArrayType}</li>
+	 * <li>"dataSequence" is an one dimensional array</li>
+	 * </ol>
+	 * Post-condition:
+	 * <ol>
+	 * <li>left side of the pair: Return the new value of the pointed object
+	 * after assigning the given data sequence from pointed position</li>
+	 * <li>right side of the pair: Return the pointer which can be assigned with
+	 * the new value</li>
+	 * </ol>
 	 * Setting a sequence of data between two array element references. Returns
 	 * the settled new array and the pointer to that array.
 	 * 
@@ -241,9 +489,9 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 *            The pointer to the start position
 	 * @param endPtr
 	 *            The pointer to the end position
-	 * @param dataArray
+	 * @param dataSequence
 	 *            The sequence of data which is going to be set
-	 * @param arrayElementsSizes
+	 * @param arraySlicesSizes
 	 *            The capacity information of the array pointed by the startPtr
 	 *            or endPtr(These two pointers point to the same object).<br>
 	 *            Note: Here capacity information of an array means that for one
@@ -260,182 +508,66 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 * @throws UnsatisfiablePathConditionException
 	 * @author Ziqing Luo
 	 */
-	public Pair<Evaluation, SymbolicExpression> setDataBetween(State state,
-			String process, SymbolicExpression startPtr,
-			SymbolicExpression endPtr, SymbolicExpression dataArray,
-			ArrayList<NumericExpression> arrayElementsSizes, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression startPointer, endPointer;
-		SymbolicExpression flattenLeastCommonArray, leastCommonArray;
-		NumericExpression startPos = zero;
-		NumericExpression endPos = zero;
-		NumericExpression ptrInterval;
+	private Evaluation setDataBetween(State state, String process,
+			SymbolicExpression array, NumericExpression[] arraySlicesSizes,
+			NumericExpression startPos, NumericExpression count,
+			SymbolicExpression pointer, SymbolicExpression dataSequence,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression flattenArray;
 		NumericExpression dataSize;
 		NumericExpression i, j;
-		Evaluation eval;
 		BooleanExpression claim;
-		boolean sidMatch, vidMatch;
-		int dim = 0;
-		Map<Integer, NumericExpression> startIndexes;
-		Map<Integer, NumericExpression> endIndexes;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-		ResultType resultType;
 
-		// Checking if they are pointing to the same thing
-		sidMatch = (symbolicUtil.getDyscopeId(source, startPtr) == symbolicUtil
-				.getDyscopeId(source, endPtr));
-		vidMatch = (symbolicUtil.getVariableId(source, startPtr) == symbolicUtil
-				.getVariableId(source, endPtr));
-		if (!(sidMatch && vidMatch))
-			throw new CIVLInternalException("Object unmatch exception\n",
-					source);
-		startPointer = symbolicAnalyzer.castToArrayElementReference(state,
-				startPtr, source);
-		endPointer = symbolicAnalyzer.castToArrayElementReference(state,
-				endPtr, source);
-		startIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
-				startPointer, false);
-		endIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
-				endPointer, false);
-		while (!startPointer.equals(endPointer)) {
-			startPos = universe.add(
-					startPos,
-					universe.multiply(startIndexes.get(dim),
-							arrayElementsSizes.get(dim)));
-			endPos = universe.add(
-					endPos,
-					universe.multiply(endIndexes.get(dim),
-							arrayElementsSizes.get(dim)));
-			dim++;
-			startPointer = symbolicUtil.parentPointer(source, startPointer);
-			endPointer = symbolicUtil.parentPointer(source, endPointer);
-		}
-		ptrInterval = universe.subtract(endPos, startPos);
-		assert (reasoner.isValid(universe.lessThanEquals(zero, ptrInterval)));
-		dim = 1;
-		dataSize = universe.length(dataArray);
-		claim = universe.lessThanEquals(dataSize,
-				universe.add(ptrInterval, one));
-		resultType = reasoner.valid(claim).getResultType();
-		if (!resultType.equals(ResultType.YES))
-			state = errorLogger
-					.logError(
-							source,
-							state,
-							process,
-							symbolicAnalyzer.stateInformation(state),
-							claim,
-							resultType,
-							ErrorKind.OUT_OF_BOUNDS,
-							"Array index out of bound when writing data into the object pointed by "
-									+ symbolicAnalyzer
-											.symbolicExpressionToString(source,
-													state, startPtr)
-									+ ".\n"
-									+ "Number of elements in data: "
-									+ dataSize
-									+ ".\nNumber of elements can be stored in the object: "
-									+ universe.add(ptrInterval, one) + ".\n");
-		eval = evaluator.dereference(source, state, process, null,
-				startPointer, false);
-		state = eval.state;
-		leastCommonArray = eval.value;
-		// If the result of dereferencing is not an array type, then the
-		// dataSize should only be one.
-		if (!(leastCommonArray.type() instanceof SymbolicArrayType)) {
-			claim = universe.equals(dataSize, one);
-			resultType = reasoner.valid(claim).getResultType();
-			if (!resultType.equals(ResultType.YES))
-				state = errorLogger
-						.logError(
-								source,
-								state,
-								process,
-								symbolicAnalyzer.stateInformation(state),
-								claim,
-								resultType,
-								ErrorKind.OUT_OF_BOUNDS,
-								"Array index out of bound when unpacking bundle data into the object pointed by "
-										+ symbolicAnalyzer
-												.symbolicExpressionToString(
-														source, state, startPtr)
-										+ ".\n"
-										+ "Number of elements in data: "
-										+ dataSize
-										+ ".\nNumber of elements can be stored in the object: 1\n");
-			eval = new Evaluation(state, universe.arrayRead(dataArray, zero));
-			return new Pair<>(eval, startPtr);
-		}
+		dataSize = universe.length(dataSequence);
 		// Direct assignment conditions:
 		// 1. start position is zero.
 		// 2. Interval between pointers equals to data size.
 		// 3. The least common array capacity equals to data size.
 		if (reasoner.isValid(universe.equals(startPos, zero))) {
-			NumericExpression arrayCapacity = this.arraySize(leastCommonArray,
-					source);
+			NumericExpression arraySize = universe.length(array);
 
-			claim = universe.and(
-					universe.equals(dataSize, universe.add(ptrInterval, one)),
-					universe.equals(dataSize, arrayCapacity));
+			claim = universe.and(universe.equals(dataSize, count),
+					universe.equals(dataSize, arraySize));
 			if (reasoner.isValid(claim)) {
-				dataArray = arrayCasting(state, process, dataArray,
-						leastCommonArray, source);
-				eval = new Evaluation(state, dataArray);
-				return new Pair<Evaluation, SymbolicExpression>(eval,
-						startPointer);
+				if (array.type().typeKind().equals(SymbolicTypeKind.ARRAY))
+					dataSequence = arrayCasting(state, process, dataSequence,
+							(SymbolicCompleteArrayType) array.type(), source);
+				return new Evaluation(state, dataSequence);
 			}
-		}
-		flattenLeastCommonArray = arrayFlatten(state, process,
-				leastCommonArray, source);
+		}// TODO: what if the length of dataSize is non-concrete and cannot be
+			// decided by reasoner?
+		flattenArray = arrayFlatten(state, process, array, source);
 		i = startPos;
 		j = zero;
 		claim = universe.lessThan(j, dataSize);
 		while (reasoner.isValid(claim)) {
 			SymbolicExpression elementInDataArray = null;
 
-			try {
-				elementInDataArray = universe.arrayRead(dataArray, j);
-			} catch (SARLException e) {
-				CIVLExecutionException err = new CIVLExecutionException(
-						ErrorKind.OUT_OF_BOUNDS, Certainty.CONCRETE, process,
-						"Array index out of bound when reading data object "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, dataArray)
-								+ " at position "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, startPtr)
-								+ " + offset :" + j, source);
-
-				errorLogger.reportError(err);
-			}
-			try {
-				flattenLeastCommonArray = universe.arrayWrite(
-						flattenLeastCommonArray, i, elementInDataArray);
-			} catch (SARLException e) {
-				CIVLExecutionException err = new CIVLExecutionException(
-						ErrorKind.OUT_OF_BOUNDS, Certainty.CONCRETE, process,
-						"Array index out of bound when writing object "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, leastCommonArray)
-								+ " at position "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, startPtr)
-								+ " + offset :" + i, source);
-
-				errorLogger.reportError(err);
-			}
+			elementInDataArray = universe.arrayRead(dataSequence, j);
+			flattenArray = universe.arrayWrite(flattenArray, i,
+					elementInDataArray);
 			i = universe.add(i, one);
 			j = universe.add(j, one);
 			claim = universe.lessThan(j, dataSize);
 		}
-
-		flattenLeastCommonArray = arrayCasting(state, process,
-				flattenLeastCommonArray, leastCommonArray, source);
-		eval = new Evaluation(state, flattenLeastCommonArray);
-		return new Pair<Evaluation, SymbolicExpression>(eval, startPointer);
+		flattenArray = arrayCasting(state, process, flattenArray,
+				(SymbolicCompleteArrayType) array.type(), source);
+		return new Evaluation(state, flattenArray);
 	}
 
 	/**
+	 * pre-condition:
+	 * <ol>
+	 * <li>endPos - startPos > 0</li>
+	 * <li>array has {@link SymbolicCompleteArrayType}</li>
+	 * <li>arraySlicesSize[0] >= endPos - startPos</li>
+	 * </ol>
+	 * post_condition:
+	 * <ol>
+	 * <li>Return a sequence of data with length "count" from the pointed object
+	 * starting from the pointed position</li>
+	 * </ol>
 	 * Get sequence of data between two array element references. Returns the
 	 * sequence of data which is in form of an one dimensional array.
 	 * 
@@ -458,106 +590,18 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 * @return a sequence of data which is in form of an one dimensional array.
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	public SymbolicExpression getDataBetween(State state, String process,
-			SymbolicExpression startPtr, SymbolicExpression endPtr,
-			ArrayList<NumericExpression> arrayElementsSizes, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression startPointer, endPointer;
-		SymbolicExpression oldLeastCommonArray = null;
-		SymbolicExpression flattenedLeastComArray;
-		NumericExpression startPos = zero;
-		NumericExpression endPos = zero;
-		NumericExpression dataLength;
-		Map<Integer, NumericExpression> startIndexes;
-		Map<Integer, NumericExpression> endIndexes;
-		boolean sidMatch, vidMatch;
-		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-		int dim = 0;
-		ResultType resultType;
+	private SymbolicExpression getDataBetween(State state, String process,
+			NumericExpression startPos, NumericExpression count,
+			SymbolicExpression array, NumericExpression[] arraySlicesSizes,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression flattenArray;
 
-		// Checking if both of the pointers are pointing to the same obejct
-		sidMatch = (symbolicUtil.getDyscopeId(source, startPtr) == symbolicUtil
-				.getDyscopeId(source, endPtr));
-		vidMatch = (symbolicUtil.getVariableId(source, startPtr) == symbolicUtil
-				.getVariableId(source, endPtr));
-		if (!(sidMatch && vidMatch))
-			throw new CIVLInternalException("Object unmatch exception\n",
-					source);
-		// Cast pointers to the form of an array element reference
-		startPointer = symbolicAnalyzer.castToArrayElementReference(state,
-				startPtr, source);
-		endPointer = endPtr;
-		startIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
-				startPointer, false);
-		endIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
-				endPointer, false);
-		// If sizes of the two sets are not equal which means endPointer is
-		// still pointing to a array type component. Then we need cast it.
-		if (startIndexes.size() != endIndexes.size()) {
-			endPointer = symbolicAnalyzer.castToArrayElementReference(state,
-					endPtr, source);
-			endIndexes = symbolicAnalyzer.arrayIndexesByPointer(state, source,
-					endPointer, false);
-		}
-		while (!startPointer.equals(endPointer)) {
-			startPos = universe.add(
-					startPos,
-					universe.multiply(startIndexes.get(dim),
-							arrayElementsSizes.get(dim)));
-			endPos = universe.add(
-					endPos,
-					universe.multiply(endIndexes.get(dim),
-							arrayElementsSizes.get(dim)));
-			dim++;
-			startPointer = symbolicUtil.parentPointer(source, startPointer);
-			endPointer = symbolicUtil.parentPointer(source, endPointer);
-		}
-		dataLength = universe.add(universe.subtract(endPos, startPos), one);
-		assert (reasoner.isValid(universe.lessThanEquals(zero, dataLength)));
-		oldLeastCommonArray = evaluator.dereference(source, state, process,
-				null, startPointer, false).value;
-		if (!(oldLeastCommonArray.type() instanceof SymbolicArrayType)) {
-			BooleanExpression claim = universe.equals(dataLength, one);
-
-			resultType = reasoner.valid(claim).getResultType();
-			if (!resultType.equals(ResultType.YES)) {
-				state = errorLogger.logError(
-						source,
-						state,
-						process,
-						symbolicAnalyzer.stateInformation(state),
-						claim,
-						resultType,
-						ErrorKind.OUT_OF_BOUNDS,
-						"Array index out of bound when reading from object pointed by "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, startPtr) + ".\n"
-								+ "Data size: 1\n" + "Expected data size: "
-								+ dataLength + "\n");
-			}
-			return universe.array(oldLeastCommonArray.type(),
-					Arrays.asList(oldLeastCommonArray));
-		}
-		flattenedLeastComArray = arrayFlatten(state, process,
-				oldLeastCommonArray, source);
-		try {
-			// TODO: throw null pointer exception is bug in get sub array
-			flattenedLeastComArray = symbolicAnalyzer.getSubArray(
-					flattenedLeastComArray, startPos,
-					universe.add(endPos, one), state, process, source);
-		} catch (java.lang.NullPointerException e) {
-			throw new CIVLInternalException("Get subarray from index:"
-					+ startPos
-					+ " to "
-					+ endPos
-					+ " on array:"
-					+ symbolicAnalyzer.symbolicExpressionToString(source,
-							state, flattenedLeastComArray), source);
-		}
-		return flattenedLeastComArray;
+		// TODO: getSubArray not support non-concrete length
+		flattenArray = arrayFlatten(state, process, array, source);
+		return symbolicAnalyzer.getSubArray(flattenArray, startPos,
+				universe.add(startPos, count), state, process, source);
 	}
 
-	/* ******************* Output Args Assignment Helpers ******************** */
 	/**
 	 * Recursively flatten the given array. Only can be used on arrays have
 	 * concrete lengths.
@@ -610,8 +654,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	 * Used for dealing with arrays have non-concrete lengths.
 	 */
 	private SymbolicExpression arrayLambdaFlatten(State state,
-			SymbolicExpression array,
-			ArrayList<NumericExpression> arrayElementsSizes,
+			SymbolicExpression array, NumericExpression[] arrayElementsSizes,
 			CIVLSource civlsource) {
 		// Temporary array object during processing
 		SymbolicExpression tempArray = array;
@@ -629,13 +672,13 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		index = (NumericSymbolicConstant) universe.symbolicConstant(
 				universe.stringObject("i"), universe.integerType());
 		// From outer to inner. later from inner to outer
-		dim = arrayElementsSizes.size();
+		dim = arrayElementsSizes.length;
 		tempIndex = index;
 		newExtent = one;
 		for (int i = 0; i < dim; i++) {
 			NumericExpression newIndex; // new index is remainder
 
-			capacity = arrayElementsSizes.get(dim - 1 - i);
+			capacity = arrayElementsSizes[i];
 			newIndex = universe.divide(tempIndex, capacity);
 			newExtent = universe
 					.multiply(newExtent, universe.length(tempArray));
@@ -674,25 +717,55 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 	}
 
 	/**
-	 * Computes the size of the given array. Here size means the number of
-	 * non-array elements that the given array can hold.
+	 * Helper function of report an out of bound error.
 	 * 
-	 * @param array
-	 *            Target array
+	 * @param state
+	 *            The current state
+	 * @param process
+	 *            The string identifier of the process
+	 * @param claim
+	 *            The {@link BooleanExpression} of the predicate (optional, can
+	 *            be null)
+	 * @param resultType
+	 *            The {@link ResultType} of reasoning the predicate (optional,
+	 *            can be null)
+	 * @param pointer
+	 *            The pointer to the array
+	 * @param arrayLength
+	 *            The length of the array
+	 * @param offset
+	 *            The offset of the element from the position pointed by pointer
 	 * @param source
-	 *            CIVL source of the array or the pointer to the array
-	 * @return the size of the array
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	private NumericExpression arraySize(SymbolicExpression array,
-			CIVLSource source) {
-		ArrayList<NumericExpression> dimExtents;
-		NumericExpression size = one;
-		int dim = 0;
+	private State reportOutOfBoundError(State state, String process,
+			BooleanExpression claim, ResultType resultType,
+			SymbolicExpression pointer, NumericExpression arrayLength,
+			NumericExpression offset, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		String message = "Out of bound error may happen when access on an array element.\n"
+				+ "Pointer:"
+				+ symbolicAnalyzer.symbolicExpressionToString(source, state,
+						pointer)
+				+ "\n"
+				+ "Offset:"
+				+ symbolicAnalyzer.symbolicExpressionToString(source, state,
+						offset)
+				+ "\n"
+				+ "Array length:"
+				+ symbolicAnalyzer.symbolicExpressionToString(source, state,
+						arrayLength);
 
-		dimExtents = symbolicUtil.arrayExtents(source, array);
-		dim = dimExtents.size();
-		for (int i = 0; i < dim; i++)
-			size = universe.multiply(size, dimExtents.get(i));
-		return size;
+		if (claim == null || resultType == null) {
+			errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateToString(state),
+					ErrorKind.OUT_OF_BOUNDS, message);
+			return state;
+		}
+		return errorLogger.logError(source, state, process,
+				symbolicAnalyzer.stateToString(state), claim, resultType,
+				ErrorKind.OUT_OF_BOUNDS, message);
+
 	}
 }

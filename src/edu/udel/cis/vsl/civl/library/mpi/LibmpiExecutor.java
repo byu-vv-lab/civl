@@ -329,7 +329,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			return state;
 		}
 		reasoner = universe.reasoner(state.getPathCondition());
-		realType = symbolicAnalyzer.getFlattenedArrayElementType(state,
+		realType = symbolicAnalyzer.getArrayBaseType(state,
 				ptrSource, pointer);
 		realSymType = realType.getDynamicType(universe);
 		assertedTypeEnum = (IntegerNumber) reasoner.extractNumber(assertedType);

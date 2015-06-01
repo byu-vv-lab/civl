@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -325,7 +324,7 @@ public interface Evaluator {
 	 *         pointed by the given pointer which helps saving computing time
 	 *         for caller functions.
 	 */
-	public Pair<Evaluation, ArrayList<NumericExpression>> evaluatePointerAdd(
+	public Pair<Evaluation, NumericExpression[]> evaluatePointerAdd(
 			State state, String process, SymbolicExpression ptr,
 			NumericExpression offset, boolean ifCheckOutput, CIVLSource source)
 			throws UnsatisfiablePathConditionException;

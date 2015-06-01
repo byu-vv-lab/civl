@@ -266,7 +266,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 
 		lowerPart = nodeFactory.newOperatorNode(this.newSource(
 				"lower bound of variable " + variable, CParser.EXPR),
-				Operator.LT, Arrays.asList(lowerBoundExpression,
+				Operator.LTE, Arrays.asList(lowerBoundExpression,
 						variableExpression));
 		variableExpression = variableExpression.copy();
 		upperPart = nodeFactory.newOperatorNode(this.newSource(

@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.library.stdio;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
@@ -8,6 +7,7 @@ import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluator;
@@ -61,24 +61,12 @@ public class LibstdioEvaluator extends BaseLibraryEvaluator implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	Pair<Evaluation, SymbolicExpression> setOutputArgument(State state,
-			String process, SymbolicExpression data, SymbolicExpression argPtr,
-			NumericExpression offset, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		SymbolicExpression endPtr;
-		Pair<Evaluation, ArrayList<NumericExpression>> eval_and_arrayInfo;
-		Evaluation eval;
-
-		eval_and_arrayInfo = evaluator.evaluatePointerAdd(state, process,
-				argPtr, universe.subtract(offset, one), false, source);
-		eval = eval_and_arrayInfo.left;
-		state = eval.state;
-		endPtr = eval.value;
-		if (eval_and_arrayInfo.right == null) {
-			eval_and_arrayInfo.right = new ArrayList<>();
-			eval_and_arrayInfo.right.add(one);
-		}
-		return this.setDataBetween(state, process, argPtr, endPtr, data,
-				eval_and_arrayInfo.right, source);
+			String process, SymbolicExpression data, Expression argPtrExpr,
+			SymbolicExpression argPtr, NumericExpression offset,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		data = this.arrayFlatten(state, process, data, source);
+		return this.setDataFrom(state, process, argPtrExpr, argPtr, offset,
+				data, true, source);
 	}
 
 	/**
