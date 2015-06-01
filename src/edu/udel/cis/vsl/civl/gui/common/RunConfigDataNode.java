@@ -8,6 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.SortedMap;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -94,7 +95,7 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 	 * not.
 	 */
 	private boolean markedForDelete;
-	
+
 	/**
 	 * Whether or not the apply button has been clicked.
 	 */
@@ -109,14 +110,15 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 		this.selectedFiles = new ArrayList<File>();
 		this.inputs = new ArrayList<CIVL_Input>();
 		this.markedForDelete = false;
-		GMCConfiguration c = null;
-		
+		GMCConfiguration c = c = new GMCConfiguration(
+				Arrays.asList(CIVLConstants.getAllOptions()));
+
 		if (comLine == null) {
 		}
 
 		else if (comLine.commandLineKind() == CommandLineKind.COMPARE) {
 			map = CIVLCommand.getVerifyOrCompareOptions();
-			c = new GMCConfiguration(map.values());
+//			c = new GMCConfiguration(map.values());
 		}
 
 		else if (comLine.commandLineKind() == CommandLineKind.NORMAL) {
@@ -124,17 +126,17 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 					.normalCommandKind();
 			if (commandKind.equals(NormalCommandKind.RUN)) {
 				map = CIVLCommand.getRunOptions();
-				c = new GMCConfiguration(map.values());
+//				c = new GMCConfiguration(map.values());
 			}
 
 			else if (commandKind.equals(NormalCommandKind.VERIFY)) {
 				map = CIVLCommand.getVerifyOrCompareOptions();
-				c = new GMCConfiguration(map.values());
+//				c = new GMCConfiguration(map.values());
 			}
 
 			else if (commandKind.equals(NormalCommandKind.SHOW)) {
 				map = CIVLCommand.getShowOptions();
-				c = new GMCConfiguration(map.values());
+//				c = new GMCConfiguration(map.values());
 			}
 		}
 		this.setGmcConfig(c);
@@ -219,14 +221,14 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Marks the RunConfigurationDataNode for delete
 	 */
 	public void deleteConfig() {
 		this.markedForDelete = true;
 	}
-	   
+
 	/*
 	 * Getters & Setters
 	 */
