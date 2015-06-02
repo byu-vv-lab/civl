@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.run.common;
 
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.CIVLMacroO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.analyzeAbsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.astO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectHeapsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectProcessesO;
@@ -37,6 +38,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showSavedStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTimeO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showUnreachedCodeO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
@@ -82,7 +84,7 @@ public class CIVLCommand {
 				showProgramO, showPathConditionO, ompNoSimplifyO,
 				ompLoopDecompO, collectProcessesO, collectScopesO,
 				collectHeapsO, macroO, preprocO, astO, showTimeO,
-				showMemoryUnitsO, CIVLMacroO);
+				showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO, analyzeAbsO);
 		CIVLCommand.addReplayOption(showModelO, verboseO, debugO, echoO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,
@@ -191,20 +193,20 @@ public class CIVLCommand {
 			return verifyOrCompareOptions.containsKey(option.name());
 		}
 	}
-	
-	public static SortedMap<String, Option> getReplayOptions(){
+
+	public static SortedMap<String, Option> getReplayOptions() {
 		return replayOptions;
 	}
-	
-	public static SortedMap<String, Option> getRunOptions(){
+
+	public static SortedMap<String, Option> getRunOptions() {
 		return runOptions;
 	}
-	
-	public static SortedMap<String, Option> getShowOptions(){
+
+	public static SortedMap<String, Option> getShowOptions() {
 		return showOptions;
 	}
-	
-	public static SortedMap<String, Option> getVerifyOrCompareOptions(){
+
+	public static SortedMap<String, Option> getVerifyOrCompareOptions() {
 		return verifyOrCompareOptions;
 	}
 }

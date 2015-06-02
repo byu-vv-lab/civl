@@ -48,4 +48,6 @@ public interface CIVLSource {
 	 */
 	boolean isSystemSource();
 
+	String getFileName();
+
 }

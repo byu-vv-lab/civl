@@ -23,7 +23,8 @@ public class CommonSourceable implements Sourceable {
 		return source;
 	}
 
-	public void setSource(CIVLSource source) {
+	@Override
+	public void setCIVLSource(CIVLSource source) {
 		this.source = source;
 	}
 

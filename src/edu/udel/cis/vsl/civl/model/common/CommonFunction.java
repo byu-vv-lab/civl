@@ -536,4 +536,21 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		return this.fid;
 	}
 
+	@Override
+	public StringBuffer unreachedCode() {
+
+		StringBuffer result = new StringBuffer("");
+
+		for (Location location : locations) {
+			for (Statement stmt : location.outgoing()) {
+				if (!(stmt instanceof NoopStatement) && !stmt.reachable()) {
+					CIVLSource source = stmt.getSource();
+
+					result.append(source.getSummary());
+					result.append("\n");
+				}
+			}
+		}
+		return result;
+	}
 }

@@ -16,6 +16,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showQueriesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showSavedStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showStatesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showUnreachedCodeO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statsBar;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
@@ -50,6 +51,7 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.Combiner;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
+import edu.udel.cis.vsl.civl.analysis.IF.Analysis;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
@@ -84,7 +86,7 @@ import edu.udel.cis.vsl.sarl.IF.config.Configurations;
 import edu.udel.cis.vsl.sarl.IF.config.ProverInfo;
 
 /**
- * Basic command line and API user interface for CIVL tools. 
+ * Basic command line and API user interface for CIVL tools.
  * 
  * Modularization of the user interface:
  * 
@@ -243,7 +245,7 @@ public class UserInterface {
 				setToDefault(gmcSection, Arrays.asList(showModelO, verboseO,
 						debugO, showStatesO, showSavedStatesO, showQueriesO,
 						showProverQueriesO, enablePrintfO, statelessPrintfO,
-						showTransitionsO));
+						showTransitionsO, showUnreachedCodeO));
 				// gmcSection.setScalarValue(showTransitionsO, true);
 				gmcSection.setScalarValue(collectScopesO, false);
 				gmcSection.setScalarValue(collectProcessesO, false);
@@ -317,13 +319,16 @@ public class UserInterface {
 			anonymousSection = gmcConfig.getAnonymousSection();
 			setToDefault(anonymousSection, Arrays.asList(showModelO, verboseO,
 					debugO, showStatesO, showQueriesO, showProverQueriesO,
-					enablePrintfO, statelessPrintfO, showTransitionsO));
+					enablePrintfO, statelessPrintfO, showTransitionsO,
+					showUnreachedCodeO));
 			// anonymousSection.setScalarValue(showTransitionsO, true);
 			anonymousSection.setScalarValue(collectScopesO, false);
 			anonymousSection.setScalarValue(collectProcessesO, false);
 			anonymousSection.setScalarValue(collectHeapsO, false);
 			anonymousSection.read(compareCommand.gmcConfig()
 					.getAnonymousSection());
+		} else {
+			setToDefault(anonymousSection, Arrays.asList(showUnreachedCodeO));
 		}
 		specSection = gmcConfig.getSection(CompareCommandLine.SPEC);
 		implSection = gmcConfig.getSection(CompareCommandLine.IMPL);
@@ -517,7 +522,7 @@ public class UserInterface {
 				CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
 			}
 			printCommand(out, command);
-//			printTimeAndMemory(out);
+			// printTimeAndMemory(out);
 			replayer.printStats();
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();
@@ -542,7 +547,7 @@ public class UserInterface {
 			out.flush();
 			result = player.run().result();
 			this.printCommand(out, command);
-//			printTimeAndMemory(out);
+			// printTimeAndMemory(out);
 			player.printStats();
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();
@@ -582,8 +587,15 @@ public class UserInterface {
 				verifier.terminateUpdater();
 				throw e;
 			}
+			if (modelTranslator.config.showUnreach()) {
+				out.println("=== unreached code ===");
+				model.printUnreachedCode(out);
+			}
+			if (modelTranslator.config.analyzeAbs()) {
+				Analysis.printResults(model.factory().codeAnalyzers(), out);
+			}
 			this.printCommand(out, command);
-//			printTimeAndMemory(out);
+			// printTimeAndMemory(out);
 			verifier.printStats();
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();
@@ -659,7 +671,7 @@ public class UserInterface {
 			throw e;
 		}
 		this.printCommand(out, command);
-//		this.printTimeAndMemory(out);
+		// this.printTimeAndMemory(out);
 		verifier.printStats();
 		printUniverseStats(out, universe);
 		out.println();

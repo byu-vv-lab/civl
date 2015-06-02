@@ -5,6 +5,7 @@ package edu.udel.cis.vsl.civl.model.IF.statement;
 
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
@@ -216,4 +217,19 @@ public interface Statement extends Sourceable {
 	Scope lowestScope();
 
 	void calculateConstantValue(SymbolicUniverse universe);
+
+	/**
+	 * Mark this statement as reached.
+	 */
+	void reached();
+
+	/**
+	 * Returns true if the statement has been reached at least once during the
+	 * verification.
+	 * 
+	 * @return
+	 */
+	boolean reachable();
+
+	void setCIVLSource(CIVLSource source);
 }

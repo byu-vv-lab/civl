@@ -85,6 +85,11 @@ public class CIVLConfiguration {
 	private boolean showTransitions = false;
 
 	/**
+	 * Should CIVL show unreachable code?
+	 */
+	private boolean showUnreach = false;
+
+	/**
 	 * Should CIVL simplify states using the path condition?
 	 */
 	private boolean simplify = true;
@@ -187,6 +192,8 @@ public class CIVLConfiguration {
 	 */
 	private boolean isReplay = false;
 
+	private boolean absAnalysis = false;
+
 	/**
 	 * Constructs a new CIVL configuration object from the command line
 	 * configuration.
@@ -242,6 +249,8 @@ public class CIVLConfiguration {
 		this.showSavedStates = config.isTrue(CIVLConstants.showSavedStatesO);
 		this.showStates = config.isTrue(CIVLConstants.showStatesO);
 		this.showTransitions = config.isTrue(CIVLConstants.showTransitionsO);
+		this.setShowUnreach(config.isTrue(CIVLConstants.showUnreachedCodeO));
+		this.setAbsAnalysis(config.isTrue(CIVLConstants.analyzeAbsO));
 		this.simplify = config.isTrue(CIVLConstants.simplifyO);
 		this.statelessPrintf = config.isTrue(CIVLConstants.statelessPrintfO);
 		this.verbose = config.isTrue(CIVLConstants.verboseO);
@@ -260,6 +269,7 @@ public class CIVLConfiguration {
 		this.showTime = config.isTrue(CIVLConstants.showTimeO);
 		this.procBound = (Integer) config
 				.getValueOrDefault(CIVLConstants.procBoundO);
+
 	}
 
 	public void setOut(PrintStream out) {
@@ -516,5 +526,34 @@ public class CIVLConfiguration {
 
 	public void setReplay(boolean isReplay) {
 		this.isReplay = isReplay;
+	}
+
+	/**
+	 * @return the showUnreach
+	 */
+	public boolean showUnreach() {
+		return showUnreach;
+	}
+
+	/**
+	 * @param showUnreach
+	 *            the showUnreach to set
+	 */
+	public void setShowUnreach(boolean showUnreach) {
+		this.showUnreach = showUnreach;
+	}
+
+	/**
+	 * @return the absAnalysis
+	 */
+	public boolean analyzeAbs() {
+		return absAnalysis;
+	}
+
+	/**
+	 * @param absAnalysis the absAnalysis to set
+	 */
+	public void setAbsAnalysis(boolean absAnalysis) {
+		this.absAnalysis = absAnalysis;
 	}
 }

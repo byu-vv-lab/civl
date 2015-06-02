@@ -6,6 +6,10 @@ import edu.udel.cis.vsl.civl.run.IF.CommandLine;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
 
 public abstract class BaseCommandLine implements CommandLine, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5277715072720777165L;
 	protected String commandString;
 	protected CommandLineKind commandlineKind;
 	protected GMCConfiguration gmcConfig;

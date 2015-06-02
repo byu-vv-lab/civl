@@ -313,4 +313,20 @@ public class CommonStatementList implements StatementList {
 		return null;
 	}
 
+	@Override
+	public void reached() {
+		for (Statement stmt : statements)
+			stmt.reached();
+	}
+
+	@Override
+	public boolean reachable() {
+		return false;
+	}
+
+	@Override
+	public void setCIVLSource(CIVLSource source) {
+		// TODO Auto-generated method stub
+		
+	}
 }

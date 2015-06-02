@@ -36,57 +36,8 @@ public class CommonModel extends CommonSourceable implements Model {
 	private Map<String, Variable> externVariables;
 	private CIVLType queueType;
 	private CIVLType messageType;
-	// private CIVLType commType;
-	// private CIVLType gcommType;
 	private CIVLBundleType bundleType;
 	private Program program;
-	// /**
-	// * The base type of the pointer type $filesystem; a structure type with
-	// * fields (0) scope, and (1) files. NULL if there is no IO operation.
-	// */
-	// private CIVLStructOrUnionType basedFilesystemType;
-	//
-	// /**
-	// * The CIVL struct type $file, defined in stdio. NULL if there is no IO
-	// * operation.
-	// */
-	// private CIVLStructOrUnionType fileType;
-	//
-	// /**
-	// * The CIVL type FILE, defined in stdio. NULL if there is no IO operation.
-	// */
-	// private CIVLStructOrUnionType FILEtype;
-	//
-	// /**
-	// * The base type of the handle type $barrier. NULL if there is no barrier
-	// * operation.
-	// */
-	// private CIVLType barrierType;
-	//
-	// /**
-	// * The base type of the handle type $gbarrier. NULL if there is no barrier
-	// * operation.
-	// */
-	// private CIVLType gbarrierType;
-	//
-	// /**
-	// * The base type of the handle type $omp_gws. NULL if there is no omp_gws
-	// * operation.
-	// */
-	// private CIVLType ompGwsType;
-	//
-	// /**
-	// * The base type of the handle type $omp_ws. NULL if there is no omp_ws
-	// * operation.
-	// */
-	// private CIVLType ompWsType;
-	//
-	// /**
-	// * The base type of the handle type $int_iter. NULL if there is no integer
-	// * iterator operation.
-	// */
-	// private CIVLType intIterType;
-
 	private ArrayList<MallocStatement> mallocStatements;
 
 	private boolean hasFscanf;
@@ -110,26 +61,6 @@ public class CommonModel extends CommonSourceable implements Model {
 		functions.add(system);
 		this.program = program;
 	}
-
-	// /**
-	// * A model of a CIVL program.
-	// *
-	// * @param source
-	// * The CIVL source of the model
-	// * @param factory
-	// * The ModelFactory responsible for creating this model.
-	// * @param system
-	// * The designated outermost function, called "System."
-	// * @param functions
-	// * The set of all functions in the model, including "System."
-	// */
-	// public CommonModel(CIVLSource source, ModelFactory factory,
-	// CIVLFunction system, Set<CIVLFunction> functions) {
-	// super(source);
-	// this.modelFactory = factory;
-	// this.system = system;
-	// this.functions = new LinkedList<CIVLFunction>(functions);
-	// }
 
 	/**
 	 * @return The model factory that created this model.
@@ -206,14 +137,6 @@ public class CommonModel extends CommonSourceable implements Model {
 	public void setMessageType(CIVLType messageType) {
 		this.messageType = messageType;
 	}
-
-	// /**
-	// * @param commType
-	// * The comm type used by this model.
-	// */
-	// public void setCommType(CIVLType commType) {
-	// this.commType = commType;
-	// }
 
 	/**
 	 * Get a function based on its name.
@@ -296,11 +219,6 @@ public class CommonModel extends CommonSourceable implements Model {
 		return messageType;
 	}
 
-	// @Override
-	// public CIVLType commType() {
-	// return commType;
-	// }
-
 	@Override
 	public CIVLBundleType bundleType() {
 		return this.bundleType;
@@ -310,16 +228,6 @@ public class CommonModel extends CommonSourceable implements Model {
 	public void setBundleType(CIVLBundleType type) {
 		this.bundleType = type;
 	}
-
-	// @Override
-	// public CIVLType gcommType() {
-	// return this.gcommType;
-	// }
-
-	// @Override
-	// public void setGcommType(CIVLType gcommType) {
-	// this.gcommType = gcommType;
-	// }
 
 	@Override
 	public void complete() {
@@ -338,86 +246,6 @@ public class CommonModel extends CommonSourceable implements Model {
 		}
 	}
 
-	// @Override
-	// public CIVLStructOrUnionType basedFilesystemType() {
-	// return this.basedFilesystemType;
-	// }
-	//
-	// @Override
-	// public void setBasedFilesystemType(CIVLStructOrUnionType type) {
-	// this.basedFilesystemType = type;
-	// }
-	//
-	// @Override
-	// public CIVLStructOrUnionType fileType() {
-	// return this.fileType;
-	// }
-	//
-	// @Override
-	// public void setFileType(CIVLStructOrUnionType type) {
-	// this.fileType = type;
-	// }
-	//
-	// @Override
-	// public CIVLStructOrUnionType FILEtype() {
-	// return this.FILEtype;
-	// }
-	//
-	// @Override
-	// public void setFILEType(CIVLStructOrUnionType type) {
-	// this.FILEtype = type;
-	// }
-	//
-	// @Override
-	// public CIVLType gbarrierType() {
-	// return this.gbarrierType;
-	// }
-	//
-	// @Override
-	// public void setGbarrierType(CIVLType gbarrierType) {
-	// this.gbarrierType = gbarrierType;
-	// }
-	//
-	// @Override
-	// public CIVLType barrierType() {
-	// return this.barrierType;
-	// }
-	//
-	// @Override
-	// public void setBarrierType(CIVLType barrierType) {
-	// this.barrierType = barrierType;
-	// }
-	//
-	// @Override
-	// public CIVLType intIterType() {
-	// return this.intIterType;
-	// }
-	//
-	// @Override
-	// public void setIntIterType(CIVLType intIterType) {
-	// this.intIterType = intIterType;
-	// }
-	//
-	// @Override
-	// public void setOmpGwsType(CIVLType ompGwsType) {
-	// this.ompGwsType = ompGwsType;
-	// }
-	//
-	// @Override
-	// public void setOmpWsType(CIVLType ompWsType) {
-	// this.ompWsType = ompWsType;
-	// }
-	//
-	// @Override
-	// public CIVLType ompGwsType() {
-	// return this.ompGwsType;
-	// }
-	//
-	// @Override
-	// public CIVLType ompWsType() {
-	// return this.ompWsType;
-	// }
-
 	@Override
 	public void setHasFscanf(boolean value) {
 		this.hasFscanf = value;
@@ -431,5 +259,22 @@ public class CommonModel extends CommonSourceable implements Model {
 	@Override
 	public Program program() {
 		return this.program;
+	}
+
+	@Override
+	public void printUnreachedCode(PrintStream out) {
+		boolean noUnreachedCode = true;
+
+		for (CIVLFunction function : functions) {
+			StringBuffer unreached = function.unreachedCode();
+
+			if (!unreached.toString().equals("")) {
+				noUnreachedCode = false;
+				out.print(unreached);
+			}
+		}
+		if (noUnreachedCode)
+			out.println("This program doesn't have any unreachable code.");
+		out.println();
 	}
 }

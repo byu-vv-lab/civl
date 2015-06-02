@@ -26,4 +26,9 @@ public class SystemCIVLSource implements CIVLSource {
 		return true;
 	}
 
+	@Override
+	public String getFileName() {
+		return "CIVL System object";
+	}
+
 }

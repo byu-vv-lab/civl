@@ -39,6 +39,12 @@ void exit(int status){
   $exit();
 }
 
+int abs(int x){
+  if(x >= 0)
+    return x;
+  return (-x);
+}
+
 #ifdef _LINUX
 int _rand_count_r = 0;
 
@@ -46,7 +52,6 @@ int rand_r(unsigned int *seedp){
   _rand_count_r++;
   return rand_work(_rand_count);
 }
-
 #endif
 
 #endif

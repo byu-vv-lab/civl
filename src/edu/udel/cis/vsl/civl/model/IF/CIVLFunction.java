@@ -240,4 +240,6 @@ public interface CIVLFunction extends Sourceable {
 	void setReturnType(CIVLType returnType);
 
 	void setParameterTypes(CIVLType[] types);
+
+	StringBuffer unreachedCode();
 }

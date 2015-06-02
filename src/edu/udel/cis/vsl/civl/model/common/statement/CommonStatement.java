@@ -45,6 +45,11 @@ public abstract class CommonStatement extends CommonSourceable implements
 	protected Scope lowestScope = null;
 
 	/**
+	 * Has this statement been reached? false initially.
+	 */
+	protected boolean reached = false;
+
+	/**
 	 * The parent of all statements.
 	 * 
 	 * @param source
@@ -301,4 +306,13 @@ public abstract class CommonStatement extends CommonSourceable implements
 
 	protected abstract void calculateConstantValueWork(SymbolicUniverse universe);
 
+	@Override
+	public void reached() {
+		this.reached = true;
+	}
+
+	@Override
+	public boolean reachable() {
+		return this.reached;
+	}
 }

@@ -169,6 +169,13 @@ public class CIVLConstants {
 			"set the random seed; applies only to run", null);
 
 	/**
+	 * Analyze abs calls? false by default.
+	 */
+	public final static Option analyzeAbsO = Option.newScalarOption(
+			"analyze_abs", BOOLEAN, "analyze abs calls? false by default",
+			false);
+
+	/**
 	 * Show the AST of the program? false by default.
 	 */
 	public final static Option astO = Option.newScalarOption("ast", BOOLEAN,
@@ -245,6 +252,12 @@ public class CIVLConstants {
 	 */
 	public final static Option showTransitionsO = Option.newScalarOption(
 			"showTransitions", BOOLEAN, "print transitions", false);
+
+	/**
+	 * Show unreachable code? false by default;
+	 */
+	public final static Option showUnreachedCodeO = Option.newScalarOption(
+			"showUnreached", BOOLEAN, "print the unreachable code", false);
 
 	/**
 	 * Simplify states using path conditions? true by default.
@@ -412,9 +425,10 @@ public class CIVLConstants {
 				showAmpleSetWtStatesO, showInputVarsO, showMemoryUnitsO,
 				showModelO, showPathConditionO, showProgramO,
 				showProverQueriesO, showQueriesO, showSavedStatesO,
-				showStatesO, showTimeO, showTransitionsO, simplifyO, solveO,
-				statelessPrintfO, svcompO, sysIncludePathO, traceO,
-				userIncludePathO, verboseO, webO, CIVLMacroO };
+				showStatesO, showTimeO, showTransitionsO, showUnreachedCodeO,
+				simplifyO, solveO, statelessPrintfO, svcompO, sysIncludePathO,
+				traceO, userIncludePathO, verboseO, webO, CIVLMacroO,
+				analyzeAbsO };
 	}
 
 	// headers...

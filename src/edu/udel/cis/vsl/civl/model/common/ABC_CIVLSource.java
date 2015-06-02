@@ -57,4 +57,9 @@ public class ABC_CIVLSource implements CIVLSource {
 		return false;
 	}
 
+	@Override
+	public String getFileName() {
+		return abcSource.getFirstToken().getFormation().getLastFile().getName();
+	}
+
 }

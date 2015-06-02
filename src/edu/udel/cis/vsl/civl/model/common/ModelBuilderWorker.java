@@ -25,6 +25,9 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SourceFile;
+import edu.udel.cis.vsl.civl.analysis.IF.Analysis;
+import edu.udel.cis.vsl.civl.analysis.IF.CodeAnalyzer;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -194,6 +197,8 @@ public class ModelBuilderWorker {
 	 */
 	private GMCSection config;
 
+	private CIVLConfiguration civlConfig;
+
 	private boolean debugging = false;
 
 	private PrintStream debugOut = System.out;
@@ -314,6 +319,7 @@ public class ModelBuilderWorker {
 			Program program, String name, boolean debugging,
 			PrintStream debugOut) {
 		this.config = config;
+		this.civlConfig = new CIVLConfiguration(config);
 		this.inputInitMap = config.getMapValue(CIVLConstants.inputO);
 		this.factory = factory;
 		this.program = program;
@@ -487,17 +493,6 @@ public class ModelBuilderWorker {
 					working.push(func);
 			}
 		}
-		// for (Entry<CIVLFunction, StatementNode> funcPair :
-		// this.parProcFunctions
-		// .entrySet()) {
-		// CIVLFunction function = funcPair.getKey();
-		// StatementNode bodyNode = funcPair.getValue();
-		// FunctionTranslator translator = new FunctionTranslator(this,
-		// factory, bodyNode, function);
-		//
-		// translator.translateFunction();
-		//
-		// }
 	}
 
 	/* *********************************************************************
@@ -623,17 +618,6 @@ public class ModelBuilderWorker {
 		model = factory.model(system.getSource(), system, this.program);
 		model.setMessageType(messageType);
 		model.setQueueType(queueType);
-		// model.setCommType(commType);
-		// model.setGcommType(gcommType);
-		// model.setBarrierType(this.barrierType);
-		// model.setGbarrierType(gbarrierType);
-		// model.setBasedFilesystemType(this.basedFilesystemType);
-		// model.setFileType(this.fileType);
-		// model.setFILEType(this.FILEtype);
-		// model.setBundleType(this.bundleType);
-		// model.setIntIterType(this.intIterType);
-		// model.setOmpGwsType(this.ompGwsType);
-		// model.setOmpWsType(this.ompWsType);
 		model.setName(modelName);
 		// add all functions to model except main:
 		for (CIVLFunction f : functionMap.values()) {
@@ -667,6 +651,7 @@ public class ModelBuilderWorker {
 		Set<Variable> addressedOfVariables = new HashSet<>();
 		MemoryUnitExpressionAnalyzer memUnitAnalyzer = new MemoryUnitExpressionAnalyzer(
 				this.factory);
+		List<CodeAnalyzer> analyzers = factory.codeAnalyzers();
 
 		for (CIVLFunction f : model.functions()) {
 			// identify all purely local variables
@@ -680,6 +665,7 @@ public class ModelBuilderWorker {
 				}
 				s.setModel(model);
 				s.calculateDerefs();
+				Analysis.staticAnalysis(s, analyzers);
 			}
 		}
 		if (debugging) {
@@ -952,6 +938,8 @@ public class ModelBuilderWorker {
 		completeTimeVar();
 		completeModel(system);
 		this.calculateConstantValue();
+		this.factory.setCodeAnalyzers(Analysis.getAnalyzers(civlConfig,
+				universe));
 		this.staticAnalysis();
 	}
 

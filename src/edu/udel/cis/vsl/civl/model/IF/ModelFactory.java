@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
+import edu.udel.cis.vsl.civl.analysis.IF.CodeAnalyzer;
 import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
@@ -1484,5 +1485,14 @@ public interface ModelFactory {
 	 */
 	Variable newAnonymousVariable(CIVLSource sourceOf, Scope scope,
 			CIVLType type);
+
+	/**
+	 * The list of code analyzers associate with this model.
+	 * 
+	 * @return
+	 */
+	List<CodeAnalyzer> codeAnalyzers();
+
+	void setCodeAnalyzers(List<CodeAnalyzer> analyzers);
 
 }

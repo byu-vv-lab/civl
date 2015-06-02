@@ -8,6 +8,11 @@ import edu.udel.cis.vsl.gmc.GMCSection;
 
 public class NormalCommandLine extends BaseCommandLine implements CommandLine{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -341899547503954421L;
+
 	public enum NormalCommandKind {
 		CONFIG, SHOW, VERIFY, REPLAY, GUI, HELP, RUN
 	}

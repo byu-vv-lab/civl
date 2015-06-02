@@ -4,6 +4,6 @@ public interface Sourceable {
 
 	CIVLSource getSource();
 
-	//void setSource(CIVLSource source);
+	void setCIVLSource(CIVLSource source);
 
 }

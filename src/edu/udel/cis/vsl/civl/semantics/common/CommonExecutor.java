@@ -12,6 +12,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.analysis.IF.Analysis;
+import edu.udel.cis.vsl.civl.analysis.IF.CodeAnalyzer;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -146,6 +148,8 @@ public class CommonExecutor implements Executor {
 	 */
 	private Set<Character> numbers;
 
+	private List<CodeAnalyzer> analyzers;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -189,6 +193,7 @@ public class CommonExecutor implements Executor {
 		for (int i = 0; i < 10; i++) {
 			numbers.add(Character.forDigit(i, 10));
 		}
+		this.analyzers = modelFactory.codeAnalyzers();
 	}
 
 	/* ************************** Private methods ************************** */
@@ -252,6 +257,7 @@ public class CommonExecutor implements Executor {
 				state = eval.state;
 				arguments[i] = eval.value;
 			}
+			Analysis.analyzeCall(this.analyzers, state, pid, statement, arguments);
 			if (function == null) {
 				Triple<State, CIVLFunction, Integer> eval = evaluator
 						.evaluateFunctionIdentifier(state, pid,
@@ -569,6 +575,7 @@ public class CommonExecutor implements Executor {
 	private State executeStatement(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException {
 		try {
+			statement.reached();
 			return executeWork(state, pid, statement);
 		} catch (SARLException e) {
 			// e.printStackTrace(System.err);

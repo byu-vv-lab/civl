@@ -4,7 +4,11 @@ import edu.udel.cis.vsl.civl.run.IF.CommandLine;
 
 public class HelpCommandLine extends NormalCommandLine implements CommandLine {
 	/**
-	 * The argument of the help command, which could be one of the following: 
+	 * 
+	 */
+	private static final long serialVersionUID = 6455237632409616768L;
+	/**
+	 * The argument of the help command, which could be one of the following:
 	 */
 	private String arg;
 

@@ -5,6 +5,11 @@ import edu.udel.cis.vsl.civl.run.IF.CommandLine;
 public class CompareCommandLine extends BaseCommandLine implements CommandLine {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7987487073665135306L;
+
+	/**
 	 * The name of the specification section of the command line
 	 */
 	public final static String SPEC = "spec";

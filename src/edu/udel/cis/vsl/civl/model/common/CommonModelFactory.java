@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.abc.program.IF.Program;
 import edu.udel.cis.vsl.abc.token.IF.CToken;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.TokenFactory;
+import edu.udel.cis.vsl.civl.analysis.IF.CodeAnalyzer;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
@@ -268,6 +269,8 @@ public class CommonModelFactory implements ModelFactory {
 	 * traversed.
 	 */
 	ModelBuilderWorker modelBuilder;
+
+	private List<CodeAnalyzer> codeAnalyzers;
 
 	/** A list of nulls of length CACHE_INCREMENT */
 	private List<SymbolicExpression> nullList = new LinkedList<SymbolicExpression>();
@@ -1142,7 +1145,11 @@ public class CommonModelFactory implements ModelFactory {
 
 		} else {
 			ifBranch = statement.replaceWith(expression, ifValue);
+			ifBranch.setCIVLSource(this.expandedSource(ifValue.getSource(),
+					statement.getSource()));
 			elseBranch = statement.replaceWith(expression, elseValue);
+			elseBranch.setCIVLSource(this.expandedSource(elseValue.getSource(),
+					statement.getSource()));
 			ifBranch.setGuard(ifGuard);
 			elseBranch.setGuard(elseGuard);
 			lastStatements.add(ifBranch);
@@ -1152,7 +1159,10 @@ public class CommonModelFactory implements ModelFactory {
 		}
 		startLocation.removeOutgoing(statement);
 		return result;
+	}
 
+	private CIVLSource expandedSource(CIVLSource expanded, CIVLSource base) {
+		return new ExpandedCIVL(expanded, base);
 	}
 
 	@Override
@@ -2080,5 +2090,15 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private ConditionalExpression pollFirstConditionaExpression() {
 		return conditionalExpressions.peek().pollFirst();
+	}
+
+	@Override
+	public List<CodeAnalyzer> codeAnalyzers() {
+		return this.codeAnalyzers;
+	}
+
+	@Override
+	public void setCodeAnalyzers(List<CodeAnalyzer> analyzers) {
+		this.codeAnalyzers = analyzers;
 	}
 }
