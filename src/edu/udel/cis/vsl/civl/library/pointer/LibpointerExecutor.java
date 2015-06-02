@@ -397,7 +397,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					state, right));
 			err = new CIVLExecutionException(ErrorKind.DEREFERENCE,
 					Certainty.PROVEABLE, process, msg.toString(),
-					symbolicAnalyzer.stateToString(state), source);
+					symbolicAnalyzer.stateInformation(state), source);
 			this.errorLogger.reportError(err);
 			return state;
 		} else {
@@ -416,22 +416,22 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 				msg.append("first argument:\n");
 				msg.append("    ");
 				msg.append(arguments[0]);
-				msg.append("    ");
+				msg.append("\n    ");
 				msg.append(symbolicAnalyzer.expressionEvaluation(state, pid,
 						arguments[0], false).right);
-				msg.append("\nactual type of the object: ");
+				msg.append("\n    type of the object: ");
 				msg.append(objTypeLeft);
 				msg.append("\nsecond argument:\n");
 				msg.append("    ");
 				msg.append(arguments[1]);
-				msg.append("    ");
+				msg.append("\n    ");
 				msg.append(symbolicAnalyzer.expressionEvaluation(state, pid,
 						arguments[1], false).right);
-				msg.append("\nactual type of the object: ");
+				msg.append("\n    type of the object: ");
 				msg.append(objTypeRight);
 				err = new CIVLExecutionException(ErrorKind.DEREFERENCE,
 						Certainty.PROVEABLE, process, msg.toString(),
-						symbolicAnalyzer.stateToString(state), source);
+						symbolicAnalyzer.stateInformation(state), source);
 				this.errorLogger.reportError(err);
 				return state;
 			}
@@ -489,7 +489,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									arguments[invalidArg].getSource(), state,
 									invalidValue),
-					symbolicAnalyzer.stateToString(state),
+					symbolicAnalyzer.stateInformation(state),
 					arguments[invalidArg].getSource());
 
 			this.errorLogger.reportError(err);
@@ -552,7 +552,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 						arguments[1].getSource(), state, secondPtr);
 			}
 			errorLogger.logSimpleError(source, state, process,
-					symbolicAnalyzer.stateToString(state),
+					symbolicAnalyzer.stateInformation(state),
 					ErrorKind.DEREFERENCE,
 					"Attempt to dereference a invalid pointer:" + msg);
 		}
@@ -682,7 +682,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 								+ symbolicAnalyzer.symbolicExpressionToString(
 										arguments[0].getSource(), state,
 										pointer),
-						symbolicAnalyzer.stateToString(state), source);
+						symbolicAnalyzer.stateInformation(state), source);
 
 				this.errorLogger.reportError(err);
 				return state;
@@ -738,7 +738,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					source,
 					state,
 					process,
-					symbolicAnalyzer.stateToString(state),
+					symbolicAnalyzer.stateInformation(state),
 					ErrorKind.DEREFERENCE,
 					"$pointer_add() doesn't accept an invalid pointer:"
 							+ symbolicAnalyzer.symbolicExpressionToString(
