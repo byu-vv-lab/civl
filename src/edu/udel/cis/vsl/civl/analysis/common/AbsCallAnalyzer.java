@@ -107,17 +107,17 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		return reasoner.isValid(leZero);
 	}
 
-	private boolean isGtZero(Reasoner reasoner, NumericExpression value) {
-		BooleanExpression gtZero = universe.lessThan(zero, value);
-
-		return reasoner.isValid(gtZero);
-	}
-
-	private boolean isLtZero(Reasoner reasoner, NumericExpression value) {
-		BooleanExpression ltZero = universe.lessThan(value, zero);
-
-		return reasoner.isValid(ltZero);
-	}
+	// private boolean isGtZero(Reasoner reasoner, NumericExpression value) {
+	// BooleanExpression gtZero = universe.lessThan(zero, value);
+	//
+	// return reasoner.isValid(gtZero);
+	// }
+	//
+	// private boolean isLtZero(Reasoner reasoner, NumericExpression value) {
+	// BooleanExpression ltZero = universe.lessThan(value, zero);
+	//
+	// return reasoner.isValid(ltZero);
+	// }
 
 	private boolean isZero(Reasoner reasoner, NumericExpression value) {
 		BooleanExpression isZero = universe.equals(value, zero);
@@ -138,9 +138,9 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			case NONE: {
 				if (isZero(reasoner, value))
 					results.put(statement, AbsValue.ZERO);
-				else if (isGtZero(reasoner, value))
+				else if (isGeZero(reasoner, value))
 					results.put(statement, AbsValue.GE);
-				else if (isLtZero(reasoner, value))
+				else if (isLeZero(reasoner, value))
 					results.put(statement, AbsValue.LE);
 				else
 					results.put(statement, AbsValue.ANY);
@@ -153,9 +153,9 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			}
 			case ZERO: {
 				if (!isZero(reasoner, value))
-					if (isGtZero(reasoner, value))
+					if (isGeZero(reasoner, value))
 						results.put(statement, AbsValue.GE);
-					else if (isLtZero(reasoner, value))
+					else if (isLeZero(reasoner, value))
 						results.put(statement, AbsValue.LE);
 				break;
 			}
