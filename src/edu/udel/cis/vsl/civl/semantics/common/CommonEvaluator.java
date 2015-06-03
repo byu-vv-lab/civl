@@ -3215,16 +3215,16 @@ public class CommonEvaluator implements Evaluator {
 				resultType = universe.reasoner(assumption).valid(claim)
 						.getResultType();
 				if (resultType.equals(ResultType.YES))
-					return new Evaluation(state, universe.offsetReference(
-							symRef, one));
+					return new Evaluation(state, symbolicUtil.makePointer(
+							pointer, universe.offsetReference(symRef, one)));
 				else {
 					state = errorLogger.logError(expression.getSource(), state,
 							process, symbolicAnalyzer.stateInformation(state),
 							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 							"Pointer addition resulted in out of bounds object pointer:\noffset = "
 									+ offset);
-					return new Evaluation(state, universe.offsetReference(
-							symRef, offset));
+					return new Evaluation(state, symbolicUtil.makePointer(
+							pointer, universe.offsetReference(symRef, offset)));
 				}
 			} else
 				throw new CIVLUnimplementedFeatureException(

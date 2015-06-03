@@ -305,6 +305,16 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
+	public void pointerAddBad5() throws ABCException {
+		assertFalse(ui.run("verify", filename("pointerAddBad5.c")));
+	}
+
+	@Test
+	public void pointerAddBad6() throws ABCException {
+		assertFalse(ui.run("verify", filename("pointerAddBad6.c")));
+	}
+
+	@Test
 	public void quantifiers() {
 		assertTrue(ui.run("verify", filename("quantifiers.cvl")));
 	}
@@ -544,7 +554,7 @@ public class LanguageFeaturesTest {
 	public void int2float() {
 		assertTrue(ui.run("verify ", filename("int2float.cvl")));
 	}
-	
+
 	@Test
 	public void staticVar() {
 		assertTrue(ui.run("verify ", filename("staticVar.cvl")));
