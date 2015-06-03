@@ -3204,19 +3204,28 @@ public class CommonEvaluator implements Evaluator {
 				BooleanExpression assumption;
 				ResultType resultType;
 
-				claim = universe.or(universe.equals(zero, offset),
-						universe.equals(one, offset));
+				claim = universe.equals(zero, offset);
 				assumption = state.getPathCondition();
 				resultType = universe.reasoner(assumption).valid(claim)
 						.getResultType();
-				if (resultType != ResultType.YES) {
+				if (resultType.equals(ResultType.YES))
+					return new Evaluation(state, pointer);
+				claim = universe.equals(one, offset);
+				assumption = state.getPathCondition();
+				resultType = universe.reasoner(assumption).valid(claim)
+						.getResultType();
+				if (resultType.equals(ResultType.YES))
+					return new Evaluation(state, universe.offsetReference(
+							symRef, one));
+				else {
 					state = errorLogger.logError(expression.getSource(), state,
 							process, symbolicAnalyzer.stateInformation(state),
 							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
 							"Pointer addition resulted in out of bounds object pointer:\noffset = "
 									+ offset);
+					return new Evaluation(state, universe.offsetReference(
+							symRef, offset));
 				}
-				return new Evaluation(state, pointer);
 			} else
 				throw new CIVLUnimplementedFeatureException(
 						"Pointer addition for anything other than array elements or variables",
