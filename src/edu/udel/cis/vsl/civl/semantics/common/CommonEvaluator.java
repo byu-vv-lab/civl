@@ -3193,8 +3193,8 @@ public class CommonEvaluator implements Evaluator {
 					state = errorLogger.logError(expression.getSource(), state,
 							process, symbolicAnalyzer.stateInformation(state),
 							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
-							"Pointer addition resulted in out of bounds object pointer:\n"
-									+ "offset = " + newOffset);
+							"Pointer addition resulted in out of bounds.\nobject pointer:"
+									+ pointer + "\n" + "offset = " + offset);
 				}
 				eval = new Evaluation(state, symbolicUtil.setSymRef(pointer,
 						universe.offsetReference(offsetRef.getParent(),
@@ -3222,8 +3222,8 @@ public class CommonEvaluator implements Evaluator {
 					state = errorLogger.logError(expression.getSource(), state,
 							process, symbolicAnalyzer.stateInformation(state),
 							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
-							"Pointer addition resulted in out of bounds object pointer:\noffset = "
-									+ offset);
+							"Pointer addition resulted in out of bounds.\nobject pointer:"
+									+ pointer + "\noffset = " + offset);
 					return new Evaluation(state, symbolicUtil.makePointer(
 							pointer, universe.offsetReference(symRef, offset)));
 				}
