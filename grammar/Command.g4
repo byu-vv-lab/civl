@@ -109,6 +109,7 @@ REPLAY
 OPTION_NAME
     :
      '-_CIVL'
+    | '-analyze_abs'
     | '-ast'
     | '-collectHeaps'
     | '-collectProcesses'
@@ -144,6 +145,7 @@ OPTION_NAME
     | '-showStates'
     | '-showTime'
     | '-showTransitions'
+    | '-showUnreached'
     | '-simplify'
     | '-solve'
     | '-statelessPrintf'
