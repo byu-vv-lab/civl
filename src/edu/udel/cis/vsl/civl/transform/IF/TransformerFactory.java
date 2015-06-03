@@ -39,6 +39,8 @@ public class TransformerFactory {
 
 	private Transformer openMP2CivlTransformer;
 
+	private Transformer openMPOrphanTransformer;
+
 	private Transformer pthread2CivlTransformer;
 
 	private Transformer cuda2CivlTransformer;
@@ -82,6 +84,12 @@ public class TransformerFactory {
 			openMP2CivlTransformer = new OpenMP2CIVLTransformer(astFactory,
 					config);
 		return openMP2CivlTransformer;
+	}
+
+	public Transformer getOpenMPOrphanTransformer() {
+		if (openMPOrphanTransformer == null)
+			openMPOrphanTransformer = new OpenMPOrphanTransformer(astFactory);
+		return openMPOrphanTransformer;
 	}
 
 	public Transformer getPthread2CIVLTransformer() {

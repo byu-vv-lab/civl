@@ -550,9 +550,16 @@ public class ModelTranslator {
 				if (config.debugOrVerbose())
 					this.out.println("Apply OpenMP simplifier...");
 				program.apply(transformerFactory.getOpenMPSimplifier());
+				if (config.debugOrVerbose())
+					program.prettyPrint(out);
 			}
 			if (config.debugOrVerbose())
-				this.out.println("Apply OpenMP transformer...");
+				this.out.println("Apply OpenMP Orphan transformer...");
+			program.apply(transformerFactory.getOpenMPOrphanTransformer());
+			if (config.debugOrVerbose())
+				program.prettyPrint(out);
+			if (config.debugOrVerbose())
+				this.out.println("Apply OpenMP-2-CIVL transformer...");
 			program.apply(transformerFactory.getOpenMP2CIVLTransformer(config));
 			if (config.debugOrVerbose())
 				program.prettyPrint(out);

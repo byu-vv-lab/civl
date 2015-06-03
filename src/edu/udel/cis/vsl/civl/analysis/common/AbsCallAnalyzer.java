@@ -176,17 +176,20 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 	@Override
 	public void printAnalysis(PrintStream out) {
 		out.println("=== abs call analysis ===");
-		if (results.size() > 0)
+		if (results.size() > 0) {
 			for (Map.Entry<CallOrSpawnStatement, AbsValue> entry : results
 					.entrySet()) {
 				CallOrSpawnStatement key = entry.getKey();
 				AbsValue value = entry.getValue();
 
-				// assert value != AbsValue.NONE;
-				out.println(key + ": " + value + " at "
-						+ key.getSource().getLocation());
+				out.println(value + " " + key.getSource().getSummary());
 			}
-		else
+			out.println();
+			out.println("+: all calls with the argument >= 0 and at least one call with the argument > 0");
+			out.println("-: all calls with the argument < 0 and at least one call with the argument < 0");
+			out.println("0: all calls with the argument = 0");
+			out.println("*: argument could be anything");
+		} else
 			out.println("The program doesn't have any reachable abs function call.");
 	}
 
