@@ -26,7 +26,7 @@ public class ExpandedCIVL implements CIVLSource {
 
 	@Override
 	public String getSummary() {
-		return expandedSource.getSummary() + " expanded from "
+		return expandedSource.getSummary() + " from "
 				+ baseSource.getSummary();
 	}
 
