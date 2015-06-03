@@ -2657,10 +2657,12 @@ public class CommonEvaluator implements Evaluator {
 		BooleanExpression claim, notEqual;
 		BooleanExpression notOver;// pred:ptr add doesn't beyond bound
 		BooleanExpression notDrown;// pred:ptr add doesn't lower than bound
+		BooleanExpression outCondExpr;
 		Evaluation eval;
 		int scopeId, vid;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		ResultType resultType;
+		boolean isOutBound = false;
 
 		claim = universe.equals(offset, zero);
 		if (reasoner.isValid(claim))
@@ -2670,79 +2672,70 @@ public class CommonEvaluator implements Evaluator {
 		ref = symbolicUtil.getSymRef(pointer);
 		// Checking if the pointer addition will be out of bound at the current
 		// dimension.
-		if (ref.isArrayElementReference()) {
-			boolean isOutBound = false;
-			BooleanExpression outCondExpr;
+		assert ref.isArrayElementReference();
 
-			arrayPtr = symbolicUtil.parentPointer(source, pointer);
-			index = ((ArrayElementReference) ref).getIndex();
-			eval = dereference(source, state, process, null, arrayPtr, false);
-			state = eval.state;
-			if (!(eval.value.type() instanceof SymbolicCompleteArrayType)) {
-				errorLogger
-						.logSimpleError(source, state, process,
-								symbolicAnalyzer.stateToString(state),
-								ErrorKind.POINTER,
-								"Pointer addition on an element reference on an incomplete array");
-				return new Pair<>(new Evaluation(state,
-						symbolicUtil.makePointer(pointer,
-								universe.offsetReference(ref, offset))), null);
-			}
-			extent = ((SymbolicCompleteArrayType) eval.value.type()).extent();
-			// Not beyond the bound
-			notOver = universe.lessThanEquals(universe.add(index, offset),
-					extent);
-			// Not lower than the bound
-			notDrown = universe.lessThanEquals(zero,
-					universe.add(index, offset));
-			// Not exactly equal to the extent
-			notEqual = universe.neq(universe.add(index, offset), extent);
-			// Conditions of out of bound:
-			// If index + offset > extent, out of bound.
-			// If index + offset < 0, out of bound.
-			// If index + offset == extent and the parent reference is an array
-			// element reference, out of bound.(e.g. int a[2], b[2][2]. &a[2] is
-			// a valid pointer, &b[0][2] should be cast to &b[1][0] unless it's
-			// a sequence of memory space)
-			isOutBound = true;
-			outCondExpr = notOver;
-			resultType = reasoner.valid(notOver).getResultType();
+		arrayPtr = symbolicUtil.parentPointer(source, pointer);
+		index = ((ArrayElementReference) ref).getIndex();
+		eval = dereference(source, state, process, null, arrayPtr, false);
+		state = eval.state;
+		if (!(eval.value.type() instanceof SymbolicCompleteArrayType)) {
+			errorLogger
+					.logSimpleError(source, state, process,
+							symbolicAnalyzer.stateToString(state),
+							ErrorKind.POINTER,
+							"Pointer addition on an element reference on an incomplete array");
+			return new Pair<>(new Evaluation(state, symbolicUtil.makePointer(
+					pointer, universe.offsetReference(ref, offset))), null);
+		}
+		extent = ((SymbolicCompleteArrayType) eval.value.type()).extent();
+		// Not beyond the bound
+		notOver = universe.lessThanEquals(universe.add(index, offset), extent);
+		// Not lower than the bound
+		notDrown = universe.lessThanEquals(zero, universe.add(index, offset));
+		// Not exactly equal to the extent
+		notEqual = universe.neq(universe.add(index, offset), extent);
+		// Conditions of out of bound:
+		// If index + offset > extent, out of bound.
+		// If index + offset < 0, out of bound.
+		// If index + offset == extent and the parent reference is an array
+		// element reference, out of bound.(e.g. int a[2], b[2][2]. &a[2] is
+		// a valid pointer, &b[0][2] should be cast to &b[1][0] unless it's
+		// a sequence of memory space)
+		isOutBound = true;
+		outCondExpr = notOver;
+		resultType = reasoner.valid(notOver).getResultType();
+		if (resultType.equals(ResultType.YES)) {
+			// not over
+			outCondExpr = notDrown;
+			resultType = reasoner.valid(notDrown).getResultType();
 			if (resultType.equals(ResultType.YES)) {
-				// not over
-				outCondExpr = notDrown;
-				resultType = reasoner.valid(notDrown).getResultType();
-				if (resultType.equals(ResultType.YES)) {
-					// not drown
-					outCondExpr = notEqual;
-					resultType = reasoner.valid(notEqual).getResultType();
-					if (resultType.equals(ResultType.YES)) // not equal
-						isOutBound = false;
-					else if (!symbolicUtil.getSymRef(arrayPtr)
-							.isArrayElementReference() || vid == 0)
-						isOutBound = false; // equal but valid
-				}
+				// not drown
+				outCondExpr = notEqual;
+				resultType = reasoner.valid(notEqual).getResultType();
+				if (resultType.equals(ResultType.YES)) // not equal
+					isOutBound = false;
+				else if (!symbolicUtil.getSymRef(arrayPtr)
+						.isArrayElementReference() || vid == 0)
+					isOutBound = false; // equal but valid
 			}
-			if (isOutBound) {
-				// Checking if the array is an allocated memory space
-				if (vid == 0)
-					state = this.reportPtrAddOutOfBoundError(source, state,
-							process, outCondExpr, resultType, eval.value,
-							pointer, offset, false);
-				return recomputeArrayIndices(state, process, vid, scopeId,
-						pointer, offset, reasoner, source);
-			} else {
-				// The (offset + index) < extent at the given dimension,
-				// return new pointer easily.
-				parentRef = symbolicUtil.getSymRef(arrayPtr);
-				newRef = universe.arrayElementReference(parentRef,
-						universe.add(index, offset));
-				eval = new Evaluation(state, symbolicUtil.makePointer(scopeId,
-						vid, newRef));
-				return new Pair<>(eval, null);
-			}
+		}
+		if (isOutBound) {
+			// Checking if the array is an allocated memory space
+			if (vid == 0)
+				state = this.reportPtrAddOutOfBoundError(source, state,
+						process, outCondExpr, resultType, eval.value, pointer,
+						offset, false);
+			return recomputeArrayIndices(state, process, vid, scopeId, pointer,
+					offset, reasoner, source);
 		} else {
-			throw new CIVLUnimplementedFeatureException(
-					"Pointer addition on non array element references");
+			// The (offset + index) < extent at the given dimension,
+			// return new pointer easily.
+			parentRef = symbolicUtil.getSymRef(arrayPtr);
+			newRef = universe.arrayElementReference(parentRef,
+					universe.add(index, offset));
+			eval = new Evaluation(state, symbolicUtil.makePointer(scopeId, vid,
+					newRef));
+			return new Pair<>(eval, null);
 		}
 	}
 
