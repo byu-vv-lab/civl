@@ -2662,11 +2662,6 @@ public class CommonEvaluator implements Evaluator {
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		ResultType resultType;
 
-		if (pointer.operator() != SymbolicOperator.CONCRETE)
-			errorLogger.logSimpleError(source, state, process,
-					symbolicAnalyzer.stateInformation(state),
-					ErrorKind.DEREFERENCE,
-					"Attempt to dereference a invalid pointer");
 		claim = universe.equals(offset, zero);
 		if (reasoner.isValid(claim))
 			return new Pair<>(new Evaluation(state, pointer), null);
@@ -2683,10 +2678,16 @@ public class CommonEvaluator implements Evaluator {
 			index = ((ArrayElementReference) ref).getIndex();
 			eval = dereference(source, state, process, null, arrayPtr, false);
 			state = eval.state;
-			if (!(eval.value.type() instanceof SymbolicCompleteArrayType))
-				throw new CIVLInternalException(
-						"Pointer addition on a pointer to incomplete array",
-						source);
+			if (!(eval.value.type() instanceof SymbolicCompleteArrayType)) {
+				errorLogger
+						.logSimpleError(source, state, process,
+								symbolicAnalyzer.stateToString(state),
+								ErrorKind.POINTER,
+								"Pointer addition on an element reference on an incomplete array");
+				return new Pair<>(new Evaluation(state,
+						symbolicUtil.makePointer(pointer,
+								universe.offsetReference(ref, offset))), null);
+			}
 			extent = ((SymbolicCompleteArrayType) eval.value.type()).extent();
 			// Not beyond the bound
 			notOver = universe.lessThanEquals(universe.add(index, offset),
