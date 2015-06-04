@@ -3642,10 +3642,7 @@ public class CommonEvaluator implements Evaluator {
 		NumericExpression newIndex, totalOffset = zero;
 		NumericExpression sliceSize = one;
 		SymbolicExpression arrayRootPtr, wholeArray;
-		NumericExpression[] indices;
-		NumericExpression[] coordinateSizes;
-		NumericExpression[] sliceSizes;
-		NumericExpression[] oldIndices;
+		NumericExpression[] indices, coordinateSizes, sliceSizes, oldIndices;
 		BooleanExpression claim;
 		ReferenceExpression oldRef, newRef;
 		ResultType resultType;
