@@ -7,6 +7,7 @@ int main(int argc, char * argv[]) {
 #else
   void *p = (&a + 2);
 #endif
+  p += 0;
   int *t = (int *)&a + 0 ;
 
   t = (int *)(p + 2);
