@@ -175,7 +175,7 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 
 	@Override
 	public void printAnalysis(PrintStream out) {
-		out.println("=== abs call analysis ===");
+		out.println("\n=== abs call analysis ===");
 		if (results.size() > 0) {
 			for (Map.Entry<CallOrSpawnStatement, AbsValue> entry : results
 					.entrySet()) {

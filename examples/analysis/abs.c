@@ -1,11 +1,27 @@
 #include <stdlib.h>
+#include <civlc.cvh>
 
+$input int i;
+$input int x;
+$input int y;
+$input int z;
+$assume(x<0);
+$assume(y>0);
 void main(){
     int a = 9;
     
-    for(int i =0; i < 10; i++){
-        a= abs(i * (i%3-1));
-        a= abs(i * (i%2-1));
-        a= abs(i * 0);
-    }
+    a=abs(0); // 0
+    a=abs(x); // -
+    a=abs(y); // +
+    a=abs(z); // *
+    a=abs(x*y*z); // *
+    
+    a=abs(x*y); // -
+    $assert(x*y<=0);
+    
+    a=abs(x%y); //+
+    $assert(x%y>=0);
+    
+    a=abs((-x)%y); // +
+    $assert((-x)%y>=0);
 }

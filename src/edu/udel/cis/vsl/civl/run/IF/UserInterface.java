@@ -588,7 +588,7 @@ public class UserInterface {
 				throw e;
 			}
 			if (modelTranslator.config.showUnreach()) {
-				out.println("=== unreached code ===");
+				out.println("\n=== unreached code ===");
 				model.printUnreachedCode(out);
 			}
 			if (modelTranslator.config.analyzeAbs()) {
