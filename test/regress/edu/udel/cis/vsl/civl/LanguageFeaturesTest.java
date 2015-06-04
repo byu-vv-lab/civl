@@ -311,9 +311,9 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void pointerAddBad6() throws ABCException {
-		assertFalse(ui.run("verify", filename("pointerAddBad6.c")));
-		assertFalse(ui
-				.run("verify -DADDONOFFSET", filename("pointerAddBad6.c")));
+		assertFalse(ui.run("verify -errorBound=2", filename("pointerAddBad6.c")));
+//		assertFalse(ui
+//				.run("verify -DADDONOFFSET", filename("pointerAddBad6.c")));
 	}
 
 	@Test
