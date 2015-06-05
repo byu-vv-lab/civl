@@ -42,12 +42,27 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  *
  */
 public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer {
+	public enum AbsV {
+		NONE, // initial
+		YES, // greater than or equal to zero
+		NO, // greater than
+		MAYBE // less than or equal to zero
+	}
+
+	class AbsStatus {
+		AbsV positive = AbsV.NONE;
+		AbsV negative = AbsV.NONE;
+		AbsV zero = AbsV.NONE;
+	}
 
 	public enum AbsValue {
 		NONE, // initial
-		GE, // greater or equal to zero
-		LE, // less or equal to zero
+		GE, // greater than or equal to zero
+		GT, // greater than
+		LE, // less than or equal to zero
+		LT, // less than
 		ZERO, // zero
+		GTLT, // greater or less than
 		ANY; // wild card
 
 		@Override
@@ -56,13 +71,19 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			case NONE:
 				return "NONE";
 			case GE:
+				return "0+";
+			case GT:
 				return "+";
 			case LE:
+				return "-0";
+			case LT:
 				return "-";
+			case GTLT:
+				return "-+";
 			case ZERO:
 				return "0";
 			case ANY:
-				return "*";
+				return "-0+";
 			default:
 				return "";
 			}
@@ -71,6 +92,8 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 
 	private Set<CallOrSpawnStatement> unpreprocessedStatements = new HashSet<>();
 	private Map<CallOrSpawnStatement, AbsValue> results = new LinkedHashMap<>();
+	@SuppressWarnings("unused")
+	private Map<CallOrSpawnStatement, AbsStatus> absResults = new LinkedHashMap<>();
 	private SymbolicUniverse universe;
 	private NumericExpression zero;
 
@@ -107,22 +130,28 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		return reasoner.isValid(leZero);
 	}
 
-	// private boolean isGtZero(Reasoner reasoner, NumericExpression value) {
-	// BooleanExpression gtZero = universe.lessThan(zero, value);
-	//
-	// return reasoner.isValid(gtZero);
-	// }
-	//
-	// private boolean isLtZero(Reasoner reasoner, NumericExpression value) {
-	// BooleanExpression ltZero = universe.lessThan(value, zero);
-	//
-	// return reasoner.isValid(ltZero);
-	// }
+	private boolean isGtZero(Reasoner reasoner, NumericExpression value) {
+		BooleanExpression gtZero = universe.lessThan(zero, value);
+
+		return reasoner.isValid(gtZero);
+	}
+
+	private boolean isLtZero(Reasoner reasoner, NumericExpression value) {
+		BooleanExpression ltZero = universe.lessThan(value, zero);
+
+		return reasoner.isValid(ltZero);
+	}
 
 	private boolean isZero(Reasoner reasoner, NumericExpression value) {
 		BooleanExpression isZero = universe.equals(value, zero);
 
 		return reasoner.isValid(isZero);
+	}
+
+	private boolean isGtLtZero(Reasoner reasoner, NumericExpression value) {
+		BooleanExpression nonZero = universe.neq(value, zero);
+
+		return reasoner.isValid(nonZero);
 	}
 
 	@Override
@@ -138,10 +167,16 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			case NONE: {
 				if (isZero(reasoner, value))
 					results.put(statement, AbsValue.ZERO);
+				else if (isGtZero(reasoner, value))
+					results.put(statement, AbsValue.GT);
 				else if (isGeZero(reasoner, value))
 					results.put(statement, AbsValue.GE);
+				else if (isLtZero(reasoner, value))
+					results.put(statement, AbsValue.LT);
 				else if (isLeZero(reasoner, value))
 					results.put(statement, AbsValue.LE);
+				else if (isGtLtZero(reasoner, value))
+					results.put(statement, AbsValue.GTLT);
 				else
 					results.put(statement, AbsValue.ANY);
 				break;
@@ -161,6 +196,31 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			}
 			case LE: {
 				if (!isLeZero(reasoner, value))
+					results.put(statement, AbsValue.ANY);
+				break;
+			}
+			case GT: {
+				if (!isGtZero(reasoner, value))
+					if (isGeZero(reasoner, value))
+						results.put(statement, AbsValue.GE);
+					else if (isGtLtZero(reasoner, value))
+						results.put(statement, AbsValue.GTLT);
+					else
+						results.put(statement, AbsValue.ANY);
+				break;
+			}
+			case LT: {
+				if (!isLtZero(reasoner, value))
+					if (isLeZero(reasoner, value))
+						results.put(statement, AbsValue.LE);
+					else if (isGtLtZero(reasoner, value))
+						results.put(statement, AbsValue.GTLT);
+					else
+						results.put(statement, AbsValue.ANY);
+				break;
+			}
+			case GTLT: {
+				if (!isGtLtZero(reasoner, value))
 					results.put(statement, AbsValue.ANY);
 				break;
 			}
@@ -185,9 +245,12 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 				out.println(value + " " + key.getSource().getSummary());
 			}
 			out.println();
-			out.println("+: all calls with the argument >= 0 and at least one call with the argument > 0");
-			out.println("-: all calls with the argument < 0 and at least one call with the argument < 0");
+			out.println("+: all calls with the argument > 0");
+			out.println("-: all calls with the argument < 0");
 			out.println("0: all calls with the argument = 0");
+			out.println("0+: all calls with the argument >= 0");
+			out.println("-0: all calls with the argument <= 0");
+			out.println("-+: all calls with the argument <0 or >0");
 			out.println("*: argument could be anything");
 		} else
 			out.println("The program doesn't have any reachable abs function call.");
