@@ -1640,7 +1640,8 @@ public class FunctionTranslator {
 		for (int i = 0; i < statementNode.numChildren(); i++) {
 			BlockItemNode node = statementNode.getSequenceChild(i);
 
-			if (node instanceof VariableDeclarationNode) {
+			if (node instanceof VariableDeclarationNode
+					|| node instanceof FunctionDeclarationNode) {
 				newScopeNeeded = true;
 				break;
 			}
@@ -4438,11 +4439,11 @@ public class FunctionTranslator {
 				Type referencedType = pointerType.referencedType();
 				CIVLType baseType = translateABCType(source, scope,
 						referencedType);
-				
-				if(baseType.isFunction())
-					result=baseType;
+
+				if (baseType.isFunction())
+					result = baseType;
 				else
-				result = typeFactory.pointerType(baseType);
+					result = typeFactory.pointerType(baseType);
 				break;
 			}
 			case PROCESS:

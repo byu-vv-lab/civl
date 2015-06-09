@@ -356,6 +356,7 @@ public class ModelBuilderWorker {
 
 			translateFunctionDefinitionNode(functionDefinition);
 		}
+		unprocessedFunctions.clear();
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -932,6 +933,7 @@ public class ModelBuilderWorker {
 		// initialization);
 		translateUndefinedFunctions();
 		translateParProcFunctions();
+		translateUndefinedFunctions();
 		completeCallOrSpawnStatements();
 		completeBundleType();
 		completeHeapType();

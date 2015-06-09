@@ -38,23 +38,13 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * argument which could be &gt;0 (i.e., you could not prove arg&lt;=0)</li>
  * </ul>
  * 
+ * +: Y (pc && arg &gt; 0) +: N (pc -&gt; arg &lt;=0) +: ? (none of the above)
+ * -: Y -: N -: ? 0: Y 0: N 0: ?
+ * 
  * @author zmanchun
  *
  */
 public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer {
-	public enum AbsV {
-		NONE, // initial
-		YES, // greater than or equal to zero
-		NO, // greater than
-		MAYBE // less than or equal to zero
-	}
-
-	class AbsStatus {
-		AbsV positive = AbsV.NONE;
-		AbsV negative = AbsV.NONE;
-		AbsV zero = AbsV.NONE;
-	}
-
 	public enum AbsValue {
 		NONE, // initial
 		GE, // greater than or equal to zero
@@ -71,19 +61,19 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			case NONE:
 				return "NONE";
 			case GE:
-				return "0+";
+				return "-:N 0:? +:?";
 			case GT:
-				return "+";
+				return "-:N 0:N +:Y";
 			case LE:
-				return "-0";
+				return "-:? 0:? +:N";
 			case LT:
-				return "-";
+				return "-:Y 0:N +:N";
 			case GTLT:
-				return "-+";
+				return "-:? 0:N +:?";
 			case ZERO:
-				return "0";
+				return "-:N 0:Y +:N";
 			case ANY:
-				return "-0+";
+				return "-:? 0:? +:?";
 			default:
 				return "";
 			}
@@ -92,14 +82,15 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 
 	private Set<CallOrSpawnStatement> unpreprocessedStatements = new HashSet<>();
 	private Map<CallOrSpawnStatement, AbsValue> results = new LinkedHashMap<>();
-	@SuppressWarnings("unused")
-	private Map<CallOrSpawnStatement, AbsStatus> absResults = new LinkedHashMap<>();
 	private SymbolicUniverse universe;
 	private NumericExpression zero;
+	private Reasoner reasoner;
+	private Reasoner pcReasoner;
 
 	public AbsCallAnalyzer(SymbolicUniverse universe) {
 		this.universe = universe;
 		this.zero = universe.zeroInt();
+		this.pcReasoner = universe.reasoner(universe.trueExpression());
 	}
 
 	@Override
@@ -118,40 +109,52 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		}
 	}
 
-	private boolean isGeZero(Reasoner reasoner, NumericExpression value) {
+	private boolean isGeZero(BooleanExpression pathCondition,
+			NumericExpression value) {
 		BooleanExpression geZero = universe.lessThanEquals(zero, value);
 
-		return reasoner.isValid(geZero);
+		return !pcReasoner.isValid(universe.not(pathCondition))
+				&& reasoner.isValid(geZero);
 	}
 
-	private boolean isLeZero(Reasoner reasoner, NumericExpression value) {
+	private boolean isLeZero(BooleanExpression pathCondition,
+			NumericExpression value) {
 		BooleanExpression leZero = universe.lessThanEquals(value, zero);
 
-		return reasoner.isValid(leZero);
+		return !pcReasoner.isValid(universe.not(pathCondition))
+				&& reasoner.isValid(leZero);
 	}
 
-	private boolean isGtZero(Reasoner reasoner, NumericExpression value) {
+	private boolean isGtZero(BooleanExpression pathCondition,
+			NumericExpression value) {
 		BooleanExpression gtZero = universe.lessThan(zero, value);
 
-		return reasoner.isValid(gtZero);
+		return !pcReasoner.isValid(universe.not(pathCondition))
+				&& reasoner.isValid(gtZero);
 	}
 
-	private boolean isLtZero(Reasoner reasoner, NumericExpression value) {
+	private boolean isLtZero(BooleanExpression pathCondition,
+			NumericExpression value) {
 		BooleanExpression ltZero = universe.lessThan(value, zero);
 
-		return reasoner.isValid(ltZero);
+		return !pcReasoner.isValid(universe.not(pathCondition))
+				&& reasoner.isValid(ltZero);
 	}
 
-	private boolean isZero(Reasoner reasoner, NumericExpression value) {
+	private boolean isZero(BooleanExpression pathCondition,
+			NumericExpression value) {
 		BooleanExpression isZero = universe.equals(value, zero);
 
-		return reasoner.isValid(isZero);
+		return !pcReasoner.isValid(universe.not(pathCondition))
+				&& reasoner.isValid(isZero);
 	}
 
-	private boolean isGtLtZero(Reasoner reasoner, NumericExpression value) {
+	private boolean isGtLtZero(BooleanExpression pathCondition,
+			NumericExpression value) {
 		BooleanExpression nonZero = universe.neq(value, zero);
 
-		return reasoner.isValid(nonZero);
+		return !pcReasoner.isValid(universe.not(pathCondition))
+				&& reasoner.isValid(nonZero);
 	}
 
 	@Override
@@ -160,67 +163,68 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		AbsValue old = this.results.get(statement);
 
 		if (old != null && old != AbsValue.ANY) {
-			Reasoner reasoner = universe.reasoner(state.getPathCondition());
+			BooleanExpression pc = state.getPathCondition();
 			NumericExpression value = (NumericExpression) argumentValues[0];
 
+			reasoner = universe.reasoner(pc);
 			switch (old) {
 			case NONE: {
-				if (isZero(reasoner, value))
+				if (isZero(pc, value))
 					results.put(statement, AbsValue.ZERO);
-				else if (isGtZero(reasoner, value))
+				else if (isGtZero(pc, value))
 					results.put(statement, AbsValue.GT);
-				else if (isGeZero(reasoner, value))
+				else if (isGeZero(pc, value))
 					results.put(statement, AbsValue.GE);
-				else if (isLtZero(reasoner, value))
+				else if (isLtZero(pc, value))
 					results.put(statement, AbsValue.LT);
-				else if (isLeZero(reasoner, value))
+				else if (isLeZero(pc, value))
 					results.put(statement, AbsValue.LE);
-				else if (isGtLtZero(reasoner, value))
+				else if (isGtLtZero(pc, value))
 					results.put(statement, AbsValue.GTLT);
 				else
 					results.put(statement, AbsValue.ANY);
 				break;
 			}
 			case GE: {
-				if (!isGeZero(reasoner, value))
+				if (!isGeZero(pc, value))
 					results.put(statement, AbsValue.ANY);
 				break;
 			}
 			case ZERO: {
-				if (!isZero(reasoner, value))
-					if (isGeZero(reasoner, value))
+				if (!isZero(pc, value))
+					if (isGeZero(pc, value))
 						results.put(statement, AbsValue.GE);
-					else if (isLeZero(reasoner, value))
+					else if (isLeZero(pc, value))
 						results.put(statement, AbsValue.LE);
 				break;
 			}
 			case LE: {
-				if (!isLeZero(reasoner, value))
+				if (!isLeZero(pc, value))
 					results.put(statement, AbsValue.ANY);
 				break;
 			}
 			case GT: {
-				if (!isGtZero(reasoner, value))
-					if (isGeZero(reasoner, value))
+				if (!isGtZero(pc, value))
+					if (isGeZero(pc, value))
 						results.put(statement, AbsValue.GE);
-					else if (isGtLtZero(reasoner, value))
+					else if (isGtLtZero(pc, value))
 						results.put(statement, AbsValue.GTLT);
 					else
 						results.put(statement, AbsValue.ANY);
 				break;
 			}
 			case LT: {
-				if (!isLtZero(reasoner, value))
-					if (isLeZero(reasoner, value))
+				if (!isLtZero(pc, value))
+					if (isLeZero(pc, value))
 						results.put(statement, AbsValue.LE);
-					else if (isGtLtZero(reasoner, value))
+					else if (isGtLtZero(pc, value))
 						results.put(statement, AbsValue.GTLT);
 					else
 						results.put(statement, AbsValue.ANY);
 				break;
 			}
 			case GTLT: {
-				if (!isGtLtZero(reasoner, value))
+				if (!isGtLtZero(pc, value))
 					results.put(statement, AbsValue.ANY);
 				break;
 			}
@@ -248,10 +252,10 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			out.println("+: all calls with the argument > 0");
 			out.println("-: all calls with the argument < 0");
 			out.println("0: all calls with the argument = 0");
-			out.println("0+: all calls with the argument >= 0");
-			out.println("-0: all calls with the argument <= 0");
-			out.println("-+: all calls with the argument <0 or >0");
-			out.println("*: argument could be anything");
+			out.println("Y: Yes");
+			out.println("N: No");
+			out.println("?: Maybe");
+			// out.println("*: argument could be anything");
 		} else
 			out.println("The program doesn't have any reachable abs function call.");
 	}
