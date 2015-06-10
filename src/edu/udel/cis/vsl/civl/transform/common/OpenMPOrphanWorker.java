@@ -1,10 +1,10 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import edu.udel.cis.vsl.abc.analysis.common.CallAnalyzer;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
@@ -22,12 +22,16 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.util.IF.Triple;
 
 /**
  * This transformer transforms away the orphaned constructs of OpenMP programs.
  * 
  */
 public class OpenMPOrphanWorker extends BaseWorker {
+	
+	private ArrayList<Triple<FunctionDefinitionNode, FunctionCallNode, Boolean>> functionCalls = new ArrayList<Triple<FunctionDefinitionNode, FunctionCallNode, Boolean>>();
+
 
 	public OpenMPOrphanWorker(ASTFactory astFactory) {
 		super("OpenMPOrphanTransformer", astFactory);
@@ -36,19 +40,19 @@ public class OpenMPOrphanWorker extends BaseWorker {
 
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
-		CallAnalyzer callAnalyzer = new CallAnalyzer();
-		callAnalyzer.analyze(ast);
 		SequenceNode<BlockItemNode> root = ast.getRootNode();
 		AST newAst;
 		ast.release();
-		ompOrphan(root, null);
+		ompOrphan(root, null, false);
 		newAst = astFactory.newAST(root, ast.getSourceFiles());
 		//newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
-	private void ompOrphan(ASTNode node, Set<Function> callees){
-		if(node instanceof FunctionDefinitionNode){
+	private void ompOrphan(ASTNode node, Set<Function> callees, boolean isInParallel){
+		if(node instanceof OmpParallelNode){
+			isInParallel = true;
+		} else if(node instanceof FunctionDefinitionNode){
 			callees = ((FunctionDefinitionNode) node).getEntity().getCallees();
 		} else if (node instanceof FunctionCallNode) {
 			String funcName = ((IdentifierExpressionNode) ((FunctionCallNode) node).getFunction()).getIdentifier().name();
@@ -57,31 +61,56 @@ public class OpenMPOrphanWorker extends BaseWorker {
 				for(Function call : callees){
 					if(call.getName().equals(funcName)){
 						FunctionDefinitionNode orphan = call.getDefinition();
-
 						boolean isOrphan = checkOrphan(orphan);
 
 						if(isOrphan){
+							ArrayList<FunctionDefinitionNode> funcs = new ArrayList<FunctionDefinitionNode>();
+							funcs.add(orphan);
 							ASTNode parent = node;
-							while(parent != null){
-								if(parent instanceof OmpParallelNode){
-									StatementNode statement = ((OmpParallelNode) parent).statementNode();
-									int index = statement.childIndex();
-									CompoundStatementNode body;
-									orphan.remove();
-									if(!(statement instanceof CompoundStatementNode)){
-										List<BlockItemNode> items = new LinkedList<BlockItemNode>();
-										statement.remove();
-										items.add(orphan.copy());
-										items.add(statement);
-										body = nodeFactory.newCompoundStatementNode(newSource("Orphan", CParser.COMPOUND_STATEMENT), items);
-										parent.setChild(index, body);
-									} else {
-										insertChildAt(0, statement, orphan.copy());
-									}
-
+							boolean direct = false;
+							direct = insertFuncs((FunctionCallNode) node, funcs);
+							
+							if(!direct){
+								parent = node;
+								while(!(parent instanceof FunctionDefinitionNode)){
+									parent = parent.parent();
 								}
-								parent = parent.parent();
+								boolean foundPar = false;
+								int count=0;
+								FunctionDefinitionNode currDef = orphan;
+								FunctionCallNode origCall = null;
+								funcs = new ArrayList<FunctionDefinitionNode>();
+								while(!foundPar && count < functionCalls.size()){
+									for (Triple<FunctionDefinitionNode, FunctionCallNode, Boolean> triple : functionCalls){
+										if(((IdentifierExpressionNode) triple.second.getFunction()).getIdentifier().name().equals(currDef.getIdentifier().name())){
+											funcs.add(currDef);
+											currDef = triple.first; 
+											count = 0;
+											if(triple.third){
+												foundPar = true;
+												origCall = triple.second;
+											}
+											break;
+										}
+										count++;
+									}
+								}	
+								if(foundPar){
+									insertFuncs(origCall, funcs);
+								}
 							}
+						}
+						if(orphan != null){
+							
+							ASTNode parentFunc = node.parent();
+							while(!(parentFunc instanceof FunctionDefinitionNode)){
+								parentFunc = parentFunc.parent();
+							}	
+							
+							Triple<FunctionDefinitionNode, FunctionCallNode, Boolean> temp;
+							temp = new Triple<>((FunctionDefinitionNode)parentFunc, (FunctionCallNode)node, isInParallel);
+							functionCalls.add(temp);
+							ompOrphan(orphan, callees, false);
 						}
 					}
 				}
@@ -91,10 +120,43 @@ public class OpenMPOrphanWorker extends BaseWorker {
 		if(node != null){
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				ompOrphan(child, callees);
+				ompOrphan(child, callees, isInParallel);
 			}
 		}
 		
+	}
+	
+	private boolean insertFuncs(FunctionCallNode node, ArrayList<FunctionDefinitionNode> funcs){
+		ASTNode parent = node;
+		boolean direct = false;
+		while(parent != null){
+			if(parent instanceof OmpParallelNode){
+				direct = true;
+				StatementNode statement = ((OmpParallelNode) parent).statementNode();
+				int index = statement.childIndex();
+				CompoundStatementNode body;
+				for(FunctionDefinitionNode func : funcs){
+					func.remove();
+				}
+				if(!(statement instanceof CompoundStatementNode)){
+					List<BlockItemNode> items = new LinkedList<BlockItemNode>();
+					statement.remove();
+					for(FunctionDefinitionNode func : funcs){
+						items.add(func.copy());
+					}
+					items.add(statement);
+					body = nodeFactory.newCompoundStatementNode(newSource("Orphan", CParser.COMPOUND_STATEMENT), items);
+					parent.setChild(index, body);
+				} else {
+					for(FunctionDefinitionNode func : funcs){
+						insertChildAt(0, statement, func.copy());
+					}
+				}
+
+			}
+			parent = parent.parent();
+		}
+		return direct;
 	}
 	
 	private boolean checkOrphan(ASTNode node){
@@ -116,6 +178,8 @@ public class OpenMPOrphanWorker extends BaseWorker {
 				parent = parent.parent();
 			}
 		}
+		
+		
 		
 		if(node != null){
 			Iterable<ASTNode> children = node.children();

@@ -6,13 +6,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
-import edu.udel.cis.vsl.abc.analysis.common.CallAnalyzer;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
-import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Variable;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
@@ -646,8 +643,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		this.source = root.getSource();
 		assert this.astFactory == ast.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
-		CallAnalyzer callAnalyzer = new CallAnalyzer();
-		callAnalyzer.analyze(ast);
 		ast.release();
 		
 		// declaring $input int THREAD_MAX;
@@ -661,7 +656,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		
 		
 		// Recursive call to replace all omp code
-		replaceOMPPragmas(root, null, null, null, null, threadPrivateList, null);
+		replaceOMPPragmas(root, null, null, null, null, threadPrivateList);
 
 		for (ASTNode key : sharedWrite.keySet()) {
 			ArrayList<Pair<VariableDeclarationNode, ExpressionStatementNode>> statements = sharedWrite
@@ -762,8 +757,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			SequenceNode<IdentifierExpressionNode> sharedIDs,
 			SequenceNode<IdentifierExpressionNode> reductionIDs,
 			SequenceNode<IdentifierExpressionNode> firstPrivateIDs,
-			SequenceNode<IdentifierExpressionNode> threadPrivateIDs, 
-			Set<Function> callees)
+			SequenceNode<IdentifierExpressionNode> threadPrivateIDs)
 			throws SyntaxException {
 		
 		if (node instanceof OmpExecutableNode){
@@ -800,11 +794,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			
 		}
 		if(node instanceof FunctionDefinitionNode){
-			Set<Function> localcallees = null;
-			
-			if(((FunctionDefinitionNode) node).getEntity() != null){
-				localcallees = ((FunctionDefinitionNode) node).getEntity().getCallees();
-			}
+
 			boolean traverse = false;
 			if(((FunctionDefinitionNode) node).getName().equals("main") || containsParallel(node)){
 				traverse = true;
@@ -815,7 +805,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			Iterable<ASTNode> children = node.children();
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs, reductionIDs,
-						firstPrivateIDs, threadPrivateIDs, localcallees);
+						firstPrivateIDs, threadPrivateIDs);
 				}
 			}
 			
@@ -1493,7 +1483,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			for (ASTNode child : children) {
 				if (child.childIndex() >= childrenAdded) {
 					replaceOMPPragmas(child, privateList, sharedList,
-							reductionList, firstPrivateList, threadPrivateIDs, callees);
+							reductionList, firstPrivateList, threadPrivateIDs);
 				}
 			}
 		} else if (node instanceof OmpForNode) {
@@ -1876,7 +1866,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			// Visit all of the children to check for omp code
 			for (ASTNode child : children) {
 				replaceOMPPragmas(child, privateIDs, sharedIDs, reductionIDs,
-						firstPrivateIDs, threadPrivateIDs, callees);
+						firstPrivateIDs, threadPrivateIDs);
 			}
 
 		} else if (node instanceof OmpSyncNode) {
@@ -1920,7 +1910,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				// Visit all the child to check for omp code
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 
 			} else if(syncKind.equals("OMPATOMIC")){
@@ -1959,7 +1949,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				// Visit all the child to check for omp code
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			} else if (syncKind.equals("BARRIER")) {
 				// Replace omp barrier with $omp_barrier_and_flush
@@ -2050,7 +2040,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				// Visit all the child to check for omp code
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 
 			}
@@ -2254,7 +2244,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 
 			}
@@ -2492,7 +2482,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 
 			}
@@ -2553,7 +2543,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				*/
 				for (ASTNode child : node.children()) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			}
 		} else if (node instanceof IdentifierNode) {
@@ -2667,7 +2657,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						if (!isInReduction) {
 							sharedWrite((IdentifierNode) lhs, privateIDs,
 									sharedIDs, reductionIDs, firstPrivateIDs,
-									threadPrivateIDs, op, callees);
+									threadPrivateIDs, op);
 						}
 					}
 				}
@@ -2675,14 +2665,14 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				for (int i = 0; i < node.numChildren(); i++) {
 					ASTNode child = node.child(i);
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			}
 
 		} else if (node instanceof OperatorNode) {
 			for (int i = node.numChildren() - 1; i >= 0; i--) {
 				replaceOMPPragmas(node.child(i), privateIDs, sharedIDs,
-						reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+						reductionIDs, firstPrivateIDs, threadPrivateIDs);
 			}
 		} else if (node instanceof ForLoopNode && sharedIDs != null) {
 			ASTNode oldBody;
@@ -2797,13 +2787,13 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				Iterable<ASTNode> children = body.children();
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			} else {
 				Iterable<ASTNode> children = node.children();
 				for (ASTNode child : children) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
-							reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+							reductionIDs, firstPrivateIDs, threadPrivateIDs);
 				}
 			}
 
@@ -2847,7 +2837,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
 				replaceOMPPragmas(child, privateIDs, sharedIDs, reductionIDs,
-						firstPrivateIDs, threadPrivateIDs, callees);
+						firstPrivateIDs, threadPrivateIDs);
 			}
 		}
 
@@ -3098,8 +3088,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			SequenceNode<IdentifierExpressionNode> sharedIDs,
 			SequenceNode<IdentifierExpressionNode> reductionIDs,
 			SequenceNode<IdentifierExpressionNode> firstPrivateIDs,
-			SequenceNode<IdentifierExpressionNode> threadPrivateIDs, int opCode,
-			Set<Function> callees)
+			SequenceNode<IdentifierExpressionNode> threadPrivateIDs, int opCode)
 			throws SyntaxException, NoSuchElementException {
 		VariableDeclarationNode temp;
 		Type currentType = ((Variable) node.getEntity()).getType();
@@ -3176,7 +3165,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			}
 			if (parentOfID instanceof OperatorNode) {
 				checkArrayIndices((OperatorNode) parentOfID, privateIDs,
-						sharedIDs, reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+						sharedIDs, reductionIDs, firstPrivateIDs, threadPrivateIDs);
 			}
 
 			writeCall = write(
@@ -3770,15 +3759,14 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			SequenceNode<IdentifierExpressionNode> sharedIDs,
 			SequenceNode<IdentifierExpressionNode> reductionIDs,
 			SequenceNode<IdentifierExpressionNode> firstPrivateIDs,
-			SequenceNode<IdentifierExpressionNode> threadPrivateIDs,
-			Set<Function> callees)
+			SequenceNode<IdentifierExpressionNode> threadPrivateIDs)
 			throws SyntaxException, NoSuchElementException {
 		replaceOMPPragmas(op.child(1), privateIDs, sharedIDs, reductionIDs,
-				firstPrivateIDs, threadPrivateIDs, callees);
+				firstPrivateIDs, threadPrivateIDs);
 		ASTNode lhs = op.child(0);
 		while (lhs instanceof OperatorNode) {
 			replaceOMPPragmas(lhs.child(1), privateIDs, sharedIDs,
-					reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
+					reductionIDs, firstPrivateIDs, threadPrivateIDs);
 			lhs = lhs.child(0);
 		}
 	}
