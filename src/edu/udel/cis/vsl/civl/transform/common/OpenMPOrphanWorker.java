@@ -43,7 +43,8 @@ public class OpenMPOrphanWorker extends BaseWorker {
 		SequenceNode<BlockItemNode> root = ast.getRootNode();
 		AST newAst;
 		ast.release();
-		ompOrphan(root, null, false);
+		FunctionDefinitionNode main = ast.getMain().getDefinition();
+		ompOrphan(main, null, false);
 		newAst = astFactory.newAST(root, ast.getSourceFiles());
 		//newAst.prettyPrint(System.out, true);
 		return newAst;
@@ -63,6 +64,17 @@ public class OpenMPOrphanWorker extends BaseWorker {
 						FunctionDefinitionNode orphan = call.getDefinition();
 						boolean isOrphan = checkOrphan(orphan);
 
+						if(orphan != null){
+							ASTNode parentFunc = node.parent();
+							while(!(parentFunc instanceof FunctionDefinitionNode)){
+								parentFunc = parentFunc.parent();
+							}	
+							
+							Triple<FunctionDefinitionNode, FunctionCallNode, Boolean> temp;
+							temp = new Triple<>((FunctionDefinitionNode)parentFunc, (FunctionCallNode)node, isInParallel);
+							functionCalls.add(temp);
+						}
+						
 						if(isOrphan){
 							ArrayList<FunctionDefinitionNode> funcs = new ArrayList<FunctionDefinitionNode>();
 							funcs.add(orphan);
@@ -77,6 +89,7 @@ public class OpenMPOrphanWorker extends BaseWorker {
 								}
 								boolean foundPar = false;
 								int count=0;
+								
 								FunctionDefinitionNode currDef = orphan;
 								FunctionCallNode origCall = null;
 								funcs = new ArrayList<FunctionDefinitionNode>();
@@ -101,15 +114,6 @@ public class OpenMPOrphanWorker extends BaseWorker {
 							}
 						}
 						if(orphan != null){
-							
-							ASTNode parentFunc = node.parent();
-							while(!(parentFunc instanceof FunctionDefinitionNode)){
-								parentFunc = parentFunc.parent();
-							}	
-							
-							Triple<FunctionDefinitionNode, FunctionCallNode, Boolean> temp;
-							temp = new Triple<>((FunctionDefinitionNode)parentFunc, (FunctionCallNode)node, isInParallel);
-							functionCalls.add(temp);
 							ompOrphan(orphan, callees, false);
 						}
 					}
