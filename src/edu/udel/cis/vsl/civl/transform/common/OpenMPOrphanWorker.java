@@ -47,7 +47,7 @@ public class OpenMPOrphanWorker extends BaseWorker {
 		FunctionDefinitionNode main = ast.getMain().getDefinition();
 		ompOrphan(main, null, false);
 		newAst = astFactory.newAST(root, ast.getSourceFiles());
-		newAst.prettyPrint(System.out, true);
+		//newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
