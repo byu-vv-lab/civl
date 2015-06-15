@@ -282,7 +282,9 @@ public class CIVLConstants {
 	 * Set the system include path.
 	 */
 	public final static Option sysIncludePathO = Option.newScalarOption(
-			"sysIncludePath", STRING, "set the system include path", null);
+			"sysIncludePath", STRING,
+			"set the system include path, using : to separate multiple paths",
+			null);
 
 	/**
 	 * File name of trace to replay
@@ -294,7 +296,9 @@ public class CIVLConstants {
 	 * Sets user include path.
 	 */
 	public final static Option userIncludePathO = Option.newScalarOption(
-			"userIncludePath", STRING, "set the user include path", null);
+			"userIncludePath", STRING,
+			"set the user include path, using : to separate multiple paths",
+			null);
 
 	/**
 	 * Verbose mode? false by default
