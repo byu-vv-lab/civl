@@ -793,23 +793,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			
 			
 		}
-		if(node instanceof FunctionDefinitionNode){
-
-			boolean traverse = false;
-			if(((FunctionDefinitionNode) node).getName().equals("main") || containsParallel(node)){
-				traverse = true;
-			}
-			
-			
-			if(traverse){
-			Iterable<ASTNode> children = node.children();
-				for (ASTNode child : children) {
-					replaceOMPPragmas(child, privateIDs, sharedIDs, reductionIDs,
-						firstPrivateIDs, threadPrivateIDs);
-				}
-			}
-			
-		} else if (node instanceof OmpParallelNode) {
+		if (node instanceof OmpParallelNode) {
 			List<BlockItemNode> items;
 			CompoundStatementNode pragmaBody;
 			VariableDeclarationNode gteamVar;
@@ -3045,22 +3029,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				replaceSharedInsert(child, sharedIDs);
 			}
 		}
-	}
-	
-	private boolean containsParallel(ASTNode node){		
-		boolean found = false;
-		if(node != null){
-			if (node instanceof IdentifierNode) {
-				if(node instanceof OmpParallelNode){
-					return true;
-				}
-			} else if(node.getSource().getSummary(false).contains("parallelPragma")){ 
-				return true;
-			} else if (node != null) {
-				found = containsParallel(node.parent());
-			}
-		}
-		return found;
 	}
 
 	private boolean containsSharedVar(ASTNode node,
