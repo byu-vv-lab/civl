@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpExecutableNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode;
@@ -46,7 +47,7 @@ public class OpenMPOrphanWorker extends BaseWorker {
 		FunctionDefinitionNode main = ast.getMain().getDefinition();
 		ompOrphan(main, null, false);
 		newAst = astFactory.newAST(root, ast.getSourceFiles());
-		//newAst.prettyPrint(System.out, true);
+		newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
@@ -139,14 +140,13 @@ public class OpenMPOrphanWorker extends BaseWorker {
 				StatementNode statement = ((OmpParallelNode) parent).statementNode();
 				int index = statement.childIndex();
 				CompoundStatementNode body;
-				for(FunctionDefinitionNode func : funcs){
-					func.remove();
-				}
+
 				if(!(statement instanceof CompoundStatementNode)){
 					List<BlockItemNode> items = new LinkedList<BlockItemNode>();
 					statement.remove();
 					for(FunctionDefinitionNode func : funcs){
 						items.add(func.copy());
+						removeOmpConstruct(func);
 					}
 					items.add(statement);
 					body = nodeFactory.newCompoundStatementNode(newSource("Orphan", CParser.COMPOUND_STATEMENT), items);
@@ -182,9 +182,7 @@ public class OpenMPOrphanWorker extends BaseWorker {
 				parent = parent.parent();
 			}
 		}
-		
-		
-		
+			
 		if(node != null){
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
@@ -193,6 +191,98 @@ public class OpenMPOrphanWorker extends BaseWorker {
 		}
 		
 		return isOrphan && foundOmpNode;
+	}
+	
+	/*
+	 * This method assumes that all of the OMP statements that are encountered
+	 * can be safely removed or transformed into non-OMP equivalents.
+	 */
+	private void removeOmpConstruct(ASTNode node) {
+		if (node instanceof OmpExecutableNode) {
+			// Remove "statement" node from "omp statement" node
+			StatementNode stmt = ((OmpExecutableNode) node).statementNode();
+			int stmtIndex = getChildIndex(node, stmt);
+			assert stmtIndex != -1;
+			node.removeChild(stmtIndex);
+
+			// Link "statement" into the "omp workshare" parent
+			ASTNode parent = node.parent();
+			int parentIndex = getChildIndex(parent, node);
+			assert parentIndex != -1;
+			parent.setChild(parentIndex, stmt);
+
+			removeOmpConstruct(stmt);
+
+		} else if (node instanceof FunctionCallNode
+				&& ((FunctionCallNode) node).getFunction() instanceof IdentifierExpressionNode
+				&& ((IdentifierExpressionNode) ((FunctionCallNode) node)
+						.getFunction()).getIdentifier().name()
+						.startsWith("omp_")) {
+			/*
+			 * Replace
+			 */
+			String ompFunctionName = ((IdentifierExpressionNode) ((FunctionCallNode) node)
+					.getFunction()).getIdentifier().name();
+			ASTNode replacement = null;
+			if (ompFunctionName.equals("omp_get_thread_num")) {
+				try {
+					replacement = nodeFactory.newIntegerConstantNode(
+							node.getSource(), "0");
+				} catch (SyntaxException e) {
+					e.printStackTrace();
+				}
+			} else if (ompFunctionName.equals("omp_get_num_threads")
+					|| ompFunctionName.equals("omp_get_max_threads")
+					|| ompFunctionName.equals("omp_get_num_procs")
+					|| ompFunctionName.equals("omp_get_thread_limit")) {
+				try {
+					replacement = nodeFactory.newIntegerConstantNode(
+							node.getSource(), "1");
+				} catch (SyntaxException e) {
+					e.printStackTrace();
+				}
+
+			} else if (ompFunctionName.equals("omp_init_lock")
+					|| ompFunctionName.equals("omp_set_lock")
+					|| ompFunctionName.equals("omp_unset_lock")
+					|| ompFunctionName.equals("omp_set_num_threads")) {
+				// delete this node
+				replacement = nodeFactory
+						.newNullStatementNode(node.getSource());
+
+			} else if (ompFunctionName.equals("omp_get_wtime")) {
+				// this will be transformed by the OMP transformer
+
+			} else {
+				assert false : "Unsupported omp function call "
+						+ ompFunctionName
+						+ " cannot be replaced by OpenMP simplifier";
+			}
+
+			// Link "replacement" into the omp call's parent
+			ASTNode parent = node.parent();
+			int parentIndex = getChildIndex(parent, node);
+			assert parentIndex != -1;
+			parent.setChild(parentIndex, replacement);
+
+		} else if (node != null) {
+			Iterable<ASTNode> children = node.children();
+			for (ASTNode child : children) {
+				removeOmpConstruct(child);
+			}
+		}
+	}
+	
+	/*
+	 * Returns the index of "child" in the children of "node"; -1 if "child" is
+	 * not one of "node"'s children.
+	 */
+	private int getChildIndex(ASTNode node, ASTNode child) {
+		for (int childIndex = 0; childIndex < node.numChildren(); childIndex++) {
+			if (node.child(childIndex) == child)
+				return childIndex;
+		}
+		return -1;
 	}
 	
 	private void insertChildAt(int k, ASTNode parent, ASTNode nodeToInsert) {
