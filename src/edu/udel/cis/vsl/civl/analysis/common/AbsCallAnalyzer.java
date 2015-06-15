@@ -9,12 +9,12 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.analysis.IF.Analysis;
 import edu.udel.cis.vsl.civl.analysis.IF.CodeAnalyzer;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
-import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -45,52 +45,49 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  *
  */
 public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer {
-	public enum AbsValue {
-		NONE, // initial
-		GE, // greater than or equal to zero
-		GT, // greater than
-		LE, // less than or equal to zero
-		LT, // less than
-		ZERO, // zero
-		GTLT, // greater or less than
-		ANY; // wild card
-
+	public enum AbsType {
+		NONE, YES, // can be
+		NO, // never
+		MAYBE;// I don't know
 		@Override
 		public String toString() {
 			switch (this) {
+			case YES:
+				return "Y";
+			case NO:
+				return "N";
+			case MAYBE:
+				return "?";
 			case NONE:
-				return "NONE";
-			case GE:
-				return "-:N 0:? +:?";
-			case GT:
-				return "-:N 0:N +:Y";
-			case LE:
-				return "-:? 0:? +:N";
-			case LT:
-				return "-:Y 0:N +:N";
-			case GTLT:
-				return "-:? 0:N +:?";
-			case ZERO:
-				return "-:N 0:Y +:N";
-			case ANY:
-				return "-:? 0:? +:?";
+				return "NA";
 			default:
 				return "";
 			}
 		}
 	}
 
+	class AbsStatus {
+		AbsType positive = AbsType.NONE;
+		AbsType negative = AbsType.NONE;
+		AbsType zero = AbsType.NONE;
+
+		@Override
+		public String toString() {
+			return "-: " + negative + " " + "0: " + zero + " " + "+: "
+					+ positive;
+		}
+	}
+
 	private Set<CallOrSpawnStatement> unpreprocessedStatements = new HashSet<>();
-	private Map<CallOrSpawnStatement, AbsValue> results = new LinkedHashMap<>();
+	private Map<CallOrSpawnStatement, AbsStatus> result = new LinkedHashMap<>();
 	private SymbolicUniverse universe;
 	private NumericExpression zero;
 	private Reasoner reasoner;
-	private Reasoner pcReasoner;
 
 	public AbsCallAnalyzer(SymbolicUniverse universe) {
 		this.universe = universe;
 		this.zero = universe.zeroInt();
-		this.pcReasoner = universe.reasoner(universe.trueExpression());
+		this.reasoner = universe.reasoner(universe.trueExpression());
 	}
 
 	@Override
@@ -104,157 +101,256 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 				this.unpreprocessedStatements.add(call);
 			else if (function.name().name().equals(Analysis.ABS)
 					&& function.getSource().getFileName().equals("stdlib.cvl")) {
-				results.put(call, AbsValue.NONE);
+				result.put(call, new AbsStatus());
 			}
 		}
 	}
 
-	private boolean isGeZero(BooleanExpression pathCondition,
-			NumericExpression value) {
-		BooleanExpression geZero = universe.lessThanEquals(zero, value);
+	private ResultType isSatisfiable(BooleanExpression predicate) {
+		BooleanExpression claim = universe.not(predicate);
+		ResultType result = reasoner.valid(claim).getResultType();
 
-		return !pcReasoner.isValid(universe.not(pathCondition))
-				&& reasoner.isValid(geZero);
+		if (result == ResultType.YES)
+			return ResultType.NO;
+		else if (result == ResultType.NO)
+			return ResultType.YES;
+		return ResultType.MAYBE;
 	}
 
-	private boolean isLeZero(BooleanExpression pathCondition,
+	private BooleanExpression canNegative(BooleanExpression pathCondition,
 			NumericExpression value) {
-		BooleanExpression leZero = universe.lessThanEquals(value, zero);
+		BooleanExpression negative = universe.lessThan(value, zero);
 
-		return !pcReasoner.isValid(universe.not(pathCondition))
-				&& reasoner.isValid(leZero);
+		return universe.and(pathCondition, negative);
 	}
 
-	private boolean isGtZero(BooleanExpression pathCondition,
+	private BooleanExpression canPositive(BooleanExpression pathCondition,
 			NumericExpression value) {
-		BooleanExpression gtZero = universe.lessThan(zero, value);
+		BooleanExpression positive = universe.lessThan(zero, value);
 
-		return !pcReasoner.isValid(universe.not(pathCondition))
-				&& reasoner.isValid(gtZero);
+		return universe.and(pathCondition, positive);
 	}
 
-	private boolean isLtZero(BooleanExpression pathCondition,
+	private BooleanExpression canZero(BooleanExpression pathCondition,
 			NumericExpression value) {
-		BooleanExpression ltZero = universe.lessThan(value, zero);
+		BooleanExpression isZero = universe.equals(zero, value);
 
-		return !pcReasoner.isValid(universe.not(pathCondition))
-				&& reasoner.isValid(ltZero);
+		return universe.and(pathCondition, isZero);
 	}
 
-	private boolean isZero(BooleanExpression pathCondition,
+	/**
+	 * (pc -> arg != 0) is valid: equivalent to (pc -> arg != 0) with certainty
+	 * YES.
+	 * */
+	private ResultType neverZero(BooleanExpression pathCondition,
 			NumericExpression value) {
-		BooleanExpression isZero = universe.equals(value, zero);
+		BooleanExpression notZero = universe.neq(value, zero);
+		BooleanExpression claim = universe.implies(pathCondition, notZero);
 
-		return !pcReasoner.isValid(universe.not(pathCondition))
-				&& reasoner.isValid(isZero);
+		return reasoner.valid(claim).getResultType();
 	}
 
-	private boolean isGtLtZero(BooleanExpression pathCondition,
+	private ResultType neverPositive(BooleanExpression pathCondition,
 			NumericExpression value) {
-		BooleanExpression nonZero = universe.neq(value, zero);
+		BooleanExpression notPositive = universe.lessThanEquals(value, zero);
+		BooleanExpression claim = universe.implies(pathCondition, notPositive);
 
-		return !pcReasoner.isValid(universe.not(pathCondition))
-				&& reasoner.isValid(nonZero);
+		return reasoner.valid(claim).getResultType();
+	}
+
+	private ResultType neverNegative(BooleanExpression pathCondition,
+			NumericExpression value) {
+		BooleanExpression notNegative = universe.lessThanEquals(zero, value);
+		BooleanExpression claim = universe.implies(pathCondition, notNegative);
+
+		return reasoner.valid(claim).getResultType();
+	}
+
+	private void analyzeZero(AbsStatus status, BooleanExpression pathCondition,
+			NumericExpression argValue) {
+		ResultType newResult;
+
+		switch (status.zero) {
+		case YES:// no need to check any more
+			break;
+		case NO: {
+			newResult = this.neverZero(pathCondition, argValue);
+			switch (newResult) {
+			case YES:
+				break;
+			case NO:
+				if (this.isSatisfiable(canZero(pathCondition, argValue)) == ResultType.YES) {
+					status.zero = AbsType.YES;
+					break;
+				}
+			case MAYBE:
+				status.zero = AbsType.MAYBE;
+				break;
+			default:
+			}
+			break;
+		}
+		case MAYBE: {
+			newResult = this.isSatisfiable(canZero(pathCondition, argValue));
+
+			if (newResult == ResultType.YES)
+				status.zero = AbsType.YES;
+			break;
+		}
+		case NONE: {
+			newResult = this.isSatisfiable(canZero(pathCondition, argValue));
+
+			if (newResult == ResultType.YES)
+				status.zero = AbsType.YES;
+			else {
+				newResult = this.neverZero(pathCondition, argValue);
+
+				if (newResult == ResultType.YES)
+					status.zero = AbsType.NO;
+				else
+					status.zero = AbsType.MAYBE;
+			}
+			break;
+		}
+		default:
+		}
+	}
+
+	private void analyzePositive(AbsStatus status,
+			BooleanExpression pathCondition, NumericExpression argValue) {
+		ResultType newResult;
+
+		switch (status.positive) {
+		case YES:// no need to check any more
+			break;
+		case NO: {
+			newResult = this.neverPositive(pathCondition, argValue);
+			switch (newResult) {
+			case YES:
+				break;
+			case NO:
+				if (this.isSatisfiable(canPositive(pathCondition, argValue)) == ResultType.YES) {
+					status.positive = AbsType.YES;
+					break;
+				}
+			case MAYBE:
+				status.positive = AbsType.MAYBE;
+				break;
+			default:
+			}
+			break;
+		}
+		case MAYBE: {
+			newResult = this
+					.isSatisfiable(canPositive(pathCondition, argValue));
+
+			if (newResult == ResultType.YES)
+				status.positive = AbsType.YES;
+			break;
+		}
+		case NONE: {
+			newResult = this
+					.isSatisfiable(canPositive(pathCondition, argValue));
+
+			if (newResult == ResultType.YES)
+				status.positive = AbsType.YES;
+			else {
+				newResult = this.neverPositive(pathCondition, argValue);
+
+				if (newResult == ResultType.YES)
+					status.positive = AbsType.NO;
+				else
+					status.positive = AbsType.MAYBE;
+			}
+			break;
+		}
+		default:
+		}
+	}
+
+	private void analyzeNegative(AbsStatus status,
+			BooleanExpression pathCondition, NumericExpression argValue) {
+		ResultType newResult;
+
+		switch (status.negative) {
+		case YES:// no need to check any more
+			break;
+		case NO: {
+			newResult = this.neverNegative(pathCondition, argValue);
+			switch (newResult) {
+			case YES:
+				break;
+			case NO:
+				if (this.isSatisfiable(canNegative(pathCondition, argValue)) == ResultType.YES) {
+					status.negative = AbsType.YES;
+					break;
+				}
+			case MAYBE:
+				status.negative = AbsType.MAYBE;
+				break;
+			default:
+			}
+			break;
+		}
+		case MAYBE: {
+			newResult = this
+					.isSatisfiable(canNegative(pathCondition, argValue));
+
+			if (newResult == ResultType.YES)
+				status.negative = AbsType.YES;
+			break;
+		}
+		case NONE: {
+			newResult = this
+					.isSatisfiable(canNegative(pathCondition, argValue));
+
+			if (newResult == ResultType.YES)
+				status.negative = AbsType.YES;
+			else {
+				newResult = this.neverNegative(pathCondition, argValue);
+
+				if (newResult == ResultType.YES)
+					status.negative = AbsType.NO;
+				else
+					status.negative = AbsType.MAYBE;
+			}
+			break;
+		}
+		default:
+		}
 	}
 
 	@Override
 	public void analyze(State state, int pid, CallOrSpawnStatement statement,
 			SymbolicExpression[] argumentValues) {
-		AbsValue old = this.results.get(statement);
+		AbsStatus status = this.result.get(statement);
+		BooleanExpression pathCondition = state.getPathCondition();
+		NumericExpression argValue = (NumericExpression) argumentValues[0];
 
-		if (old != null && old != AbsValue.ANY) {
-			BooleanExpression pc = state.getPathCondition();
-			NumericExpression value = (NumericExpression) argumentValues[0];
-
-			reasoner = universe.reasoner(pc);
-			switch (old) {
-			case NONE: {
-				if (isZero(pc, value))
-					results.put(statement, AbsValue.ZERO);
-				else if (isGtZero(pc, value))
-					results.put(statement, AbsValue.GT);
-				else if (isGeZero(pc, value))
-					results.put(statement, AbsValue.GE);
-				else if (isLtZero(pc, value))
-					results.put(statement, AbsValue.LT);
-				else if (isLeZero(pc, value))
-					results.put(statement, AbsValue.LE);
-				else if (isGtLtZero(pc, value))
-					results.put(statement, AbsValue.GTLT);
-				else
-					results.put(statement, AbsValue.ANY);
-				break;
-			}
-			case GE: {
-				if (!isGeZero(pc, value))
-					results.put(statement, AbsValue.ANY);
-				break;
-			}
-			case ZERO: {
-				if (!isZero(pc, value))
-					if (isGeZero(pc, value))
-						results.put(statement, AbsValue.GE);
-					else if (isLeZero(pc, value))
-						results.put(statement, AbsValue.LE);
-				break;
-			}
-			case LE: {
-				if (!isLeZero(pc, value))
-					results.put(statement, AbsValue.ANY);
-				break;
-			}
-			case GT: {
-				if (!isGtZero(pc, value))
-					if (isGeZero(pc, value))
-						results.put(statement, AbsValue.GE);
-					else if (isGtLtZero(pc, value))
-						results.put(statement, AbsValue.GTLT);
-					else
-						results.put(statement, AbsValue.ANY);
-				break;
-			}
-			case LT: {
-				if (!isLtZero(pc, value))
-					if (isLeZero(pc, value))
-						results.put(statement, AbsValue.LE);
-					else if (isGtLtZero(pc, value))
-						results.put(statement, AbsValue.GTLT);
-					else
-						results.put(statement, AbsValue.ANY);
-				break;
-			}
-			case GTLT: {
-				if (!isGtLtZero(pc, value))
-					results.put(statement, AbsValue.ANY);
-				break;
-			}
-			default:
-				throw new CIVLInternalException(
-						"Unreachable location in abs call analyzer",
-						statement.getSource());
-			}
-		}
+		this.analyzeZero(status, pathCondition, argValue);
+		this.analyzePositive(status, pathCondition, argValue);
+		this.analyzeNegative(status, pathCondition, argValue);
 		return;
 	}
 
 	@Override
 	public void printAnalysis(PrintStream out) {
 		out.println("\n=== abs call analysis ===");
-		if (results.size() > 0) {
-			for (Map.Entry<CallOrSpawnStatement, AbsValue> entry : results
+		if (result.size() > 0) {
+			for (Map.Entry<CallOrSpawnStatement, AbsStatus> entry : result
 					.entrySet()) {
 				CallOrSpawnStatement key = entry.getKey();
-				AbsValue value = entry.getValue();
+				AbsStatus value = entry.getValue();
 
 				out.println(value + " " + key.getSource().getSummary());
 			}
 			out.println();
-			out.println("+: all calls with the argument > 0");
-			out.println("-: all calls with the argument < 0");
-			out.println("0: all calls with the argument = 0");
-			out.println("Y: Yes");
-			out.println("N: No");
-			out.println("?: Maybe");
+			out.println("+: argument > 0");
+			out.println("-: argument < 0");
+			out.println("0: argument = 0");
+			out.println("Y: at least one");
+			out.println("N: never");
+			out.println("?: unknown");
 			// out.println("*: argument could be anything");
 		} else
 			out.println("The program doesn't have any reachable abs function call.");
