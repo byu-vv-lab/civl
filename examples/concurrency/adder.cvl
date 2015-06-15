@@ -32,7 +32,7 @@ double adderPar(double *p, int n) {
     mutex = 0;
   }
 
-  $parfor (int j : ($domain){0 .. n-1})
+  $parfor (int j : 0 .. n-1)
     worker(j);
   return s;
 }

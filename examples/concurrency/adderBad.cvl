@@ -31,10 +31,8 @@ double adderPar(double *p, int n) {
     s = t;
   }
   
-  for (int j = 0; j < n; j++)
-    workers[j] = $spawn worker(j);
-  for (int j = 0; j < n; j++)
-    $wait(workers[j]);
+  $parfor(int i : 0 .. n-1)
+    worker(i);
   return s;
 }
 

@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.abc.ast.conversion.IF.FunctionConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.LvalueConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.NullPointerConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.PointerBoolConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.RegularRangeToDomainConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.VoidPointerConversion;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity.EntityKind;
@@ -3427,6 +3428,10 @@ public class FunctionTranslator {
 				// void*->T* or T*->void*
 				// ignore, pointer types are all the same
 				// all pointer types are using the same symbolic object type
+			} else if (conversion instanceof RegularRangeToDomainConversion) {
+				expression = modelFactory.recDomainLiteralExpression(source,
+						Arrays.asList(expression),
+						typeFactory.completeDomainType(expression.getExpressionType(), 1));
 			} else
 				throw new CIVLInternalException("Unknown conversion: "
 						+ conversion, source);
