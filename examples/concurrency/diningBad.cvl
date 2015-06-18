@@ -10,24 +10,24 @@ $input int B = 4; // upper bound on number of philosophers
 $input int n;     // number of philosophers
 $assume(2<=n && n<=B);
 
-int forks[n]; // Each fork will be on the table (0) or in a hand (1).
+_Bool forks[n]; // Each fork will be on the table ($true) or in a hand ($false).
 
 void dine(int id) {
   int left = id;
   int right = (id + 1) % n;
 
   while (1) {
-    $when (forks[left] == 0) forks[left] = 1;
-    $when (forks[right] == 0) forks[right] = 1;
-    forks[right] = 0;
-    forks[left] = 0;
+    $when (forks[left]) forks[left] = $false;
+    $when (forks[right]) forks[right] = $false;
+    forks[right] = $true;
+    forks[left] = $true;
   }
 }
 
 void main() { 
   elaborate(n);
   $for(int i: 0 .. n-1)
-    forks[i] = 0;
+    forks[i] = $true;
   $parfor(int i: 0 .. n-1)
     dine(i);
 }
