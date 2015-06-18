@@ -154,8 +154,8 @@ void update() {
 /* Executes the simulation. */
 int main(int argc, char *argv[]) {
   //elaborate nx to concrete value...
-  elaborate(nx);
-  elaborate(nsteps);
+  $elaborate(nx);
+  $elaborate(nsteps);
   MPI_Init(&argc, &argv);
   initialize();
   write_frame();

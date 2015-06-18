@@ -1210,13 +1210,23 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(arguments[1].toStringBuffer(false));
 				result.append(")");
 				return result.toString();
-			case UNION_INJECT:
-				result.append("inject(");
-				result.append(arguments[0].toStringBuffer(false));
-				result.append(",");
-				result.append(arguments[1].toStringBuffer(false));
-				result.append(")");
+			case UNION_INJECT: {
+//				IntObject memberIndex = (IntObject) arguments[0];
+//				CIVLType memberType;
+//				// result.append("inject(");
+//
+//				assert civlType instanceof CIVLStructOrUnionType;
+//				memberType = ((CIVLStructOrUnionType) civlType).getField(
+//						memberIndex.getInt()).type();
+				result.append(this.symbolicExpressionToString(source, state,
+						civlType, (SymbolicExpression) arguments[1], prefix,
+						separator));
+				// result.append(arguments[0].toStringBuffer(false));
+				// result.append(",");
+				// result.append(arguments[1].toStringBuffer(false));
+				// result.append(")");
 				return result.toString();
+			}
 			case UNION_TEST:
 				result.append("test(");
 				result.append(arguments[0].toStringBuffer(false));
@@ -1348,7 +1358,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(j);
 				result.append(": ");
 				result.append(this.symbolicExpressionToString(source, state,
-						heapObjType, heapObject, false, "", "", true));
+						heapObjType, heapObject, false, objectPrefix, separate,
+						true));
 			}
 		}
 		if (result.length() == 0)

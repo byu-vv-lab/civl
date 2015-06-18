@@ -73,8 +73,7 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 
 		@Override
 		public String toString() {
-			return "-: " + negative + " " + "0: " + zero + " " + "+: "
-					+ positive;
+			return "-:" + negative + " " + "0:" + zero + " " + "+:" + positive;
 		}
 	}
 
@@ -342,7 +341,7 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 				CallOrSpawnStatement key = entry.getKey();
 				AbsStatus value = entry.getValue();
 
-				out.println(value + " " + key.getSource().getSummary());
+				out.println(value + " " + key.getSource().getContent());
 			}
 			out.println();
 			out.println("+: argument > 0");

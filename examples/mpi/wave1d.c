@@ -235,7 +235,7 @@ int main(int argc, char * argv[]) {
 #ifdef _CIVL
 
   // elaborate nx to concrete value...
-  elaborate(nx);
+  $elaborate(nx);
 
 #endif
   MPI_Init(&argc, &argv);

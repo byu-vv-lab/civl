@@ -31,4 +31,9 @@ public class SystemCIVLSource implements CIVLSource {
 		return "CIVL System object";
 	}
 
+	@Override
+	public String getContent() {
+		return "CIVL System object";
+	}
+
 }

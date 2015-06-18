@@ -97,8 +97,8 @@ void initialization() {
   double pi = 0.0;
   double avepi = 0.0;
 
-  elaborate(DARTS);
-  elaborate(ROUNDS);
+  $elaborate(DARTS);
+  $elaborate(ROUNDS);
   $assume(N == DARTSB * _NPROCS * ROUNDSB * 2);
   if(taskid == 0) {
     for(curr_round=0; curr_round < ROUNDS; curr_round++) {

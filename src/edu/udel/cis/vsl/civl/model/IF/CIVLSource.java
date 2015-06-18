@@ -50,4 +50,6 @@ public interface CIVLSource {
 
 	String getFileName();
 
+	String getContent();
+
 }

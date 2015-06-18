@@ -26,8 +26,8 @@ double rbound; /* right fixed boundary value */
 
 int main() {
   //elaborate nx to concrete value...
-  elaborate(nx);
-  elaborate(nsteps);
+  $elaborate(nx);
+  $elaborate(nsteps);
   double u[nsteps][nx+2];
   int counter = 0;
 

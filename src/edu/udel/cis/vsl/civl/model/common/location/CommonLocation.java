@@ -631,6 +631,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 
 		workings.push(this);
 		checkedLocationIDs.set(this.id());
+		this.reachableLoacations.add(this);
 		while (!workings.isEmpty()) {
 			Location location = workings.pop();
 
@@ -641,6 +642,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 					if (!checkedLocationIDs.get(target.id())) {
 						workings.push(target);
 						checkedLocationIDs.set(target.id());
+						this.reachableLoacations.add(target);
 					}
 				if (statement instanceof CallOrSpawnStatement) {
 					CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
@@ -658,6 +660,7 @@ public class CommonLocation extends CommonSourceable implements Location {
 									if (!checkedLocationIDs.get(funcLocID)) {
 										workings.push(functionLoc);
 										checkedLocationIDs.set(funcLocID);
+										this.reachableLoacations.add(target);
 									}
 								}
 							}

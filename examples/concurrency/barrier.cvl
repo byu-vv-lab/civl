@@ -43,7 +43,7 @@ void run(int tid) {
 }
 
 void main() {
-  elaborate(N);
+  $elaborate(N);
   init();
   $parfor(int i: 0 .. N-1)
     run(i);

@@ -38,7 +38,7 @@ void init() {
 }
 
 void main() { 
-  elaborate(n);
+  $elaborate(n);
   init();
   $parfor(int i: 0 .. n-1)
     dine(i);

@@ -546,7 +546,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 				if (!(stmt instanceof NoopStatement) && !stmt.reachable()) {
 					CIVLSource source = stmt.getSource();
 
-					result.append(source.getSummary());
+					result.append(source.getContent());
 					result.append("\n");
 				}
 			}

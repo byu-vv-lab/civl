@@ -61,7 +61,7 @@ void main() {
     }
   }
   
-  elaborate(N);
+  $elaborate(N);
   CIVL_Barrier_init(N, &b, barrier_array);
   $parfor(int i: 0 .. N-1)
     run(i);  

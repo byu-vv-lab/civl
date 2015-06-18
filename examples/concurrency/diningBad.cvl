@@ -25,7 +25,7 @@ void dine(int id) {
 }
 
 void main() { 
-  elaborate(n);
+  $elaborate(n);
   $for(int i: 0 .. n-1)
     forks[i] = $true;
   $parfor(int i: 0 .. n-1)

@@ -36,6 +36,11 @@ public class ABC_CIVLSource implements CIVLSource {
 	}
 
 	@Override
+	public String getContent() {
+		return abcSource.getContent(false);
+	}
+
+	@Override
 	public void print(PrintStream out) {
 		abcSource.print(out);
 	}
