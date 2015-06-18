@@ -329,6 +329,11 @@ public class LanguageFeaturesTest {
 	public void quantifiers() {
 		assertTrue(ui.run("verify", filename("quantifiers.cvl")));
 	}
+	
+	@Test
+	public void quantifiersBad() {
+		assertTrue(ui.run("verify", filename("quantifiersBad.cvl")));
+	}
 
 	@Test
 	public void removedHeapPointer() throws ABCException {
