@@ -43,7 +43,7 @@ public class CIVLConstants {
 			File.separator + "include"), "civl");
 
 	/** The version of this release of CIVL. */
-	public final static String version = "1.1";
+	public final static String version = "1.1+";
 
 	/**
 	 * The date of this release of CIVL. Format: YYYY-MM-DD in accordance with
