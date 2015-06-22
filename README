@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v1.0
+                               v1.1
 
 ------------------------------ Overview -------------------------------
 
@@ -41,16 +41,21 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v 0.17 -------------------------
+-------------------------- Updates from v1.0 -------------------------
 
-1. Adding supports for MPI collective routines and multiple communicators;
+New features:
+- new option -analyze_abs for analyzing the invocations of the 
+  absolute value function abs of stdlib.h
+- new option -showUnreached for displaying code that are never 
+  executed/reached during model checking
+(See examples in examples/analysis for more details.)
 
-2. Adding verification of potential deadlocks;
-   
-3. Improving the printing of states and error messages;
+Bugs fixed: 
+- bad format in the pretty printing of states
+- incorrect modeling of static variables
+- incorrect evaluation of some quantifier expressions
+- exception thrown for $bundle_pack/unpack
 
-4. Simplifying the language by changing $assert and $assume to 
-   be system functions of civlc.cvh.
    
 ------------------------- Binary Installation -------------------------
 
@@ -178,7 +183,7 @@ done so.
 
 5. If you already have the VSL dependencies library, you may
    skip this step. Otherwise, download the tgz archive of VSL
-   dependencies from http://vsl.cis.udel.edu/tools/vsl_depend
+   dependencies from http://vsl.cis.udel.edu/lib/tools/vsl_depend
    Unzip the .tgz file and you will have the folder vsl.
    Move vsl to /opt.
    Note: you probably will need to use sudo for this.

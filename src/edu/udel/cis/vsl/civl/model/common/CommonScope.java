@@ -398,7 +398,7 @@ public class CommonScope extends CommonSourceable implements Scope {
 	private boolean containsScopeType(CIVLType type) {
 		boolean containsScopeType = false;
 
-		if (type.isScopeType()) {
+		if (type.isScopeType() || type.isFunction() || type.isPointerType()) {
 			containsScopeType = true;
 		} else if (type.isArrayType()) {
 			containsScopeType = containsScopeType(((CIVLArrayType) type)

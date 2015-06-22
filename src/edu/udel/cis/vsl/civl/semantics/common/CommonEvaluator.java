@@ -1789,9 +1789,11 @@ public class CommonEvaluator implements Evaluator {
 			Evaluation lower = evaluate(state, pid, expression.lower());
 			Evaluation upper = evaluate(state, pid, expression.upper());
 			SymbolicExpression rangeRestriction;
+			NumericExpression upperBound;
 
 			assert lower.value instanceof NumericExpression;
 			assert upper.value instanceof NumericExpression;
+			upperBound = universe.add(one, (NumericExpression) upper.value);
 			// TODO change to andTo
 			rangeRestriction = universe.and(universe.lessThanEquals(
 					(NumericExpression) lower.value,
@@ -1808,22 +1810,19 @@ public class CommonEvaluator implements Evaluator {
 			case EXISTS:
 				result = new Evaluation(state, universe.existsInt(
 						(NumericSymbolicConstant) boundVariable,
-						(NumericExpression) lower.value,
-						(NumericExpression) upper.value,
+						(NumericExpression) lower.value, upperBound,
 						(BooleanExpression) quantifiedExpression.value));
 				break;
 			case FORALL:
 				result = new Evaluation(state, universe.forallInt(
 						(NumericSymbolicConstant) boundVariable,
-						(NumericExpression) lower.value,
-						(NumericExpression) upper.value,
+						(NumericExpression) lower.value, upperBound,
 						(BooleanExpression) quantifiedExpression.value));
 				break;
 			case UNIFORM:
 				result = new Evaluation(state, universe.forallInt(
 						(NumericSymbolicConstant) boundVariable,
-						(NumericExpression) lower.value,
-						(NumericExpression) upper.value,
+						(NumericExpression) lower.value, upperBound,
 						(BooleanExpression) quantifiedExpression.value));
 				break;
 			default:

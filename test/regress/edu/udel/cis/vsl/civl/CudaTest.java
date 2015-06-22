@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -23,10 +24,11 @@ public class CudaTest {
 
 	/* *************************** Test Methods **************************** */
 
+	@Ignore
 	@Test
 	public void sum() {
 		assertTrue(ui
-				.run("verify -debug=false -enablePrintf=false -inputN=8 -inputNBLOCKS=4",
+				.run("verify -debug=false -enablePrintf=false -inputN=4 -inputNBLOCKS=2",
 						filename("sum.cu")));
 	}
 
