@@ -6,6 +6,7 @@
 
 $output int out;
 $input int x;
+$input int *x_ptr;
 void main() {
   int a;
   int* b, *c;
@@ -16,8 +17,10 @@ void main() {
   free(b);
   a = *(&out);
   $choose {
+    $when(x == 2) {a = *x_ptr;}
+    $when(x == 1) {c = &a + 1; a = *c;}
     $when(x == 0) {a = *c;}
-    $when(x >=1 ) {a = *b;}
+    $when(x >=3 ) {a = *b;}
     $when(x < 0 ) {a = *nilPtr;}
   }
 }
