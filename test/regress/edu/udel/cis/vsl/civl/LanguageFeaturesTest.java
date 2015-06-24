@@ -276,7 +276,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void pointersBad() throws ABCException {
-		assertFalse(ui.run("verify -errorBound=5", filename("pointersBad.cvl")));
+		assertFalse(ui.run("verify -errorBound=10", filename("pointersBad.cvl")));
 	}
 
 	@Test
