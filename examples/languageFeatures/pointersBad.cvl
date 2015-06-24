@@ -15,12 +15,12 @@ void main() {
   c = (void *)(-1);
   b = (int *)malloc(sizeof(int));
   free(b);
-  a = *(&out);
   $choose {
+    $when(x == 3) {a = *(&out);}
     $when(x == 2) {a = *x_ptr;}
     $when(x == 1) {c = &a + 1; a = *c;}
     $when(x == 0) {a = *c;}
-    $when(x >=3 ) {a = *b;}
-    $when(x < 0 ) {a = *nilPtr;}
+    $when(x >= 4) {a = *b;}
+    $when(x < 0) {a = *nilPtr;}
   }
 }
