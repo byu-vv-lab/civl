@@ -271,7 +271,12 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void pointers() throws ABCException {
-		assertTrue(ui.run("verify -errorBound=5", filename("pointers.cvl")));
+		assertTrue(ui.run("verify", filename("pointers.cvl")));
+	}
+
+	@Test
+	public void pointersBad() throws ABCException {
+		assertFalse(ui.run("verify -errorBound=5", filename("pointersBad.cvl")));
 	}
 
 	@Test
@@ -329,7 +334,7 @@ public class LanguageFeaturesTest {
 	public void quantifiers() {
 		assertTrue(ui.run("verify", filename("quantifiers.cvl")));
 	}
-	
+
 	@Test
 	public void quantifiersBad() {
 		assertTrue(ui.run("verify", filename("quantifiersBad.cvl")));
