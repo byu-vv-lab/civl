@@ -202,6 +202,12 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 		SymbolicExpression result = trueValue;
 
+		if (modelFactory.isProcNull(arguments[1].getSource(), proc)) {
+			if (lhs != null)
+				state = this.primaryExecutor.assign(state, pid, process, lhs,
+						universe.falseExpression());
+			return state;
+		}
 		eval = this.evaluator.dereference(source, state, process, arguments[0],
 				pool, false);
 		poolObject = eval.value;
