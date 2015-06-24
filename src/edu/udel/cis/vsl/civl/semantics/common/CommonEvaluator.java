@@ -424,6 +424,9 @@ public class CommonEvaluator implements Evaluator {
 			Expression pointerExpression, SymbolicExpression pointer,
 			boolean checkOutput, boolean analysisOnly)
 			throws UnsatisfiablePathConditionException {
+		boolean throwPCException = false;
+		SymbolicExpression deref = null;
+
 		if (!pointer.type().equals(this.pointerType)) {
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
@@ -431,7 +434,7 @@ public class CommonEvaluator implements Evaluator {
 					this.symbolicAnalyzer.stateInformation(state), source);
 
 			errorLogger.reportError(se);
-			throw new UnsatisfiablePathConditionException();
+			throwPCException = true;
 		} else if (pointer.operator() != SymbolicOperator.CONCRETE) {
 			CIVLExecutionException se = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
@@ -439,7 +442,7 @@ public class CommonEvaluator implements Evaluator {
 					this.symbolicAnalyzer.stateInformation(state), source);
 
 			errorLogger.reportError(se);
-			throw new UnsatisfiablePathConditionException();
+			throwPCException = true;
 		} else if (symbolicUtil.isNullPointer(pointer)) {
 			// null pointer dereference
 			CIVLExecutionException se = new CIVLExecutionException(
@@ -448,7 +451,7 @@ public class CommonEvaluator implements Evaluator {
 					this.symbolicAnalyzer.stateInformation(state), source);
 
 			errorLogger.reportError(se);
-			throw new UnsatisfiablePathConditionException();
+			throwPCException = true;
 		} else {
 			try {
 				int sid = symbolicUtil.getDyscopeId(source, pointer);
@@ -469,13 +472,12 @@ public class CommonEvaluator implements Evaluator {
 													.symbolicExpressionToString(
 															source, state,
 															pointer));
-					throw new UnsatisfiablePathConditionException();
+					throwPCException = true;
 				} else {
 					int vid = symbolicUtil.getVariableId(source, pointer);
 					ReferenceExpression symRef = symbolicUtil
 							.getSymRef(pointer);
 					SymbolicExpression variableValue;
-					SymbolicExpression deref;
 
 					if (!analysisOnly && checkOutput) {
 						Variable variable = state.getDyscope(sid)
@@ -487,7 +489,7 @@ public class CommonEvaluator implements Evaluator {
 									ErrorKind.OUTPUT_READ,
 									"Attempt to read output variable "
 											+ variable.name().name());
-							throw new UnsatisfiablePathConditionException();
+							throwPCException = true;
 						}
 					}
 					variableValue = state.getDyscope(sid).getValue(vid);
@@ -502,7 +504,7 @@ public class CommonEvaluator implements Evaluator {
 								ErrorKind.DEREFERENCE,
 								"Illegal pointer dereference: "
 										+ e.getMessage());
-						throw new UnsatisfiablePathConditionException();
+						throwPCException = true;
 					}
 					return new Evaluation(state, deref);
 				}
@@ -513,9 +515,13 @@ public class CommonEvaluator implements Evaluator {
 						this.symbolicAnalyzer.stateInformation(state), source);
 
 				errorLogger.reportError(se);
-				throw new UnsatisfiablePathConditionException();
+				throwPCException = true;
 			}
 		}
+		if (throwPCException || null == deref)
+			throw new UnsatisfiablePathConditionException();
+		else
+			return new Evaluation(state, deref);
 	}
 
 	/**
