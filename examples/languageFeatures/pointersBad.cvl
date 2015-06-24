@@ -1,0 +1,16 @@
+/* Commandline execution:
+ *		civl verify pointersBad.cvl
+ * */
+#include<civlc.cvh>
+#include<stdlib.h>
+
+$output int out;
+void main() {
+  int a;
+  int* b;
+
+  b = (int *)malloc(sizeof(int));
+  free(b);
+  a = *(&out);
+  a = *b;
+}
