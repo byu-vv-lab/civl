@@ -5,12 +5,19 @@
 #include<stdlib.h>
 
 $output int out;
+$input int x;
 void main() {
   int a;
-  int* b;
+  int* b, *c;
+  int * nilPtr = NULL;
 
+  c = (void *)(-1);
   b = (int *)malloc(sizeof(int));
   free(b);
   a = *(&out);
-  a = *b;
+  $choose {
+    $when(x == 0) {a = *c;}
+    $when(x >=1 ) {a = *b;}
+    $when(x < 0 ) {a = *nilPtr;}
+  }
 }
