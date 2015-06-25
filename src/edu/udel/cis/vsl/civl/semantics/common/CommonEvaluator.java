@@ -453,72 +453,56 @@ public class CommonEvaluator implements Evaluator {
 			errorLogger.reportError(se);
 			throwPCException = true;
 		} else {
-			try {
-				int sid = symbolicUtil.getDyscopeId(source, pointer);
+			int sid = symbolicUtil.getDyscopeId(source, pointer);
 
-				if (sid < 0) {
-					errorLogger
-							.logSimpleError(
-									source,
-									state,
-									process,
-									symbolicAnalyzer.stateInformation(state),
-									ErrorKind.DEREFERENCE,
-									"Attempt to dereference pointer into scope"
-											+ " which has been removed from state: \npointer expression: "
-											+ pointerExpression.toString()
-											+ "\nevaluation: "
-											+ this.symbolicAnalyzer
-													.symbolicExpressionToString(
-															source, state,
-															pointer));
-					throwPCException = true;
-				} else {
-					int vid = symbolicUtil.getVariableId(source, pointer);
-					ReferenceExpression symRef = symbolicUtil
-							.getSymRef(pointer);
-					SymbolicExpression variableValue;
-
-					if (!analysisOnly && checkOutput) {
-						Variable variable = state.getDyscope(sid)
-								.lexicalScope().variable(vid);
-
-						if (variable.isOutput()) {
-							errorLogger.logSimpleError(source, state, process,
-									symbolicAnalyzer.stateInformation(state),
-									ErrorKind.OUTPUT_READ,
-									"Attempt to read output variable "
-											+ variable.name().name());
-							throwPCException = true;
-						}
-					}
-					variableValue = state.getDyscope(sid).getValue(vid);
-					try {
-						deref = universe.dereference(variableValue, symRef);
-					} catch (SARLException e) {
-						errorLogger.logSimpleError(
+			if (sid < 0) {
+				errorLogger
+						.logSimpleError(
 								source,
 								state,
 								process,
 								symbolicAnalyzer.stateInformation(state),
 								ErrorKind.DEREFERENCE,
-								"Illegal pointer dereference: "
-										+ e.getMessage());
+								"Attempt to dereference pointer into scope"
+										+ " which has been removed from state: \npointer expression: "
+										+ pointerExpression.toString()
+										+ "\nevaluation: "
+										+ this.symbolicAnalyzer
+												.symbolicExpressionToString(
+														source, state, pointer));
+				throwPCException = true;
+			} else {
+				int vid = symbolicUtil.getVariableId(source, pointer);
+				ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
+				SymbolicExpression variableValue;
+
+				if (!analysisOnly && checkOutput) {
+					Variable variable = state.getDyscope(sid).lexicalScope()
+							.variable(vid);
+
+					if (variable.isOutput()) {
+						errorLogger.logSimpleError(source, state, process,
+								symbolicAnalyzer.stateInformation(state),
+								ErrorKind.OUTPUT_READ,
+								"Attempt to read output variable "
+										+ variable.name().name());
 						throwPCException = true;
 					}
-					return new Evaluation(state, deref);
 				}
-			} catch (CIVLInternalException e) {
-				CIVLExecutionException se = new CIVLExecutionException(
-						ErrorKind.DEREFERENCE, Certainty.MAYBE, process,
-						"Undefined pointer value?",
-						this.symbolicAnalyzer.stateInformation(state), source);
-
-				errorLogger.reportError(se);
-				throwPCException = true;
+				variableValue = state.getDyscope(sid).getValue(vid);
+				try {
+					// this function should never return a java null
+					deref = universe.dereference(variableValue, symRef);
+				} catch (SARLException e) {
+					errorLogger.logSimpleError(source, state, process,
+							symbolicAnalyzer.stateInformation(state),
+							ErrorKind.DEREFERENCE,
+							"Illegal pointer dereference: " + e.getMessage());
+					throwPCException = true;
+				}
 			}
 		}
-		if (throwPCException || null == deref)
+		if (throwPCException)
 			throw new UnsatisfiablePathConditionException();
 		else
 			return new Evaluation(state, deref);
