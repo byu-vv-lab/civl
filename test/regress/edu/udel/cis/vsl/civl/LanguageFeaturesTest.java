@@ -167,6 +167,11 @@ public class LanguageFeaturesTest {
 	public void cast() throws ABCException {
 		assertTrue(ui.run("verify", filename("cast.cvl")));
 	}
+	
+	@Test
+	public void castInt2Bool() throws ABCException {
+		assertTrue(ui.run("verify", filename("castInt2Bool.cvl")));
+	}
 
 	@Test
 	public void charTest() throws ABCException {
