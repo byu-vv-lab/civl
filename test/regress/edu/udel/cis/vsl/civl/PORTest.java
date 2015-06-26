@@ -81,10 +81,10 @@ public class PORTest {
 		assertFalse(ui.run("verify", filename("wait.cvl")));
 	}
 
-	@Test
-	public void spawns() {
-		assertFalse(ui.run("verify", filename("spawns.cvl")));
-	}
+	// @Test
+	// public void spawns() {
+	// assertFalse(ui.run("verify", filename("spawns.cvl")));
+	// }
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
