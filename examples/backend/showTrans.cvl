@@ -10,9 +10,11 @@ int times2(int k, int t){
 }
 
 void f(){
+  $atomic{
   int x=0;
 
   x++;
+  }
 }
 
 void main(){
@@ -24,6 +26,7 @@ void main(){
   $domain(2) dom=($domain(2)){1 .. 4#2, 1 .. 4#2};
   point_t pt;  
 
+  a=a>0?times2(3, a*5):times2(a, a+6);
   pt.x=1;
   pt.y=pt.x+5;
   $wait(p);
