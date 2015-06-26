@@ -439,7 +439,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void outputBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("outputBad.cvl")));
+		assertFalse(ui.run("verify -errorBound=5", filename("outputBad.cvl")));
 	}
 
 	@Test
