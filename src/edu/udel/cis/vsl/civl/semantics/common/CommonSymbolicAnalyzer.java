@@ -28,8 +28,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression.LHSExpressionKind;
-import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -1658,7 +1656,6 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			result.append(this.symbolicExpressionToString(
 					expression.getSource(), state, eval.value));
 		} else {
-
 			switch (kind) {
 			case ABSTRACT_FUNCTION_CALL: {
 				AbstractFunctionCallExpression abstractFuncCall = (AbstractFunctionCallExpression) expression;
@@ -1668,6 +1665,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				for (Expression argument : abstractFuncCall.arguments()) {
 					if (i != 0)
 						result.append(", ");
+					i++;
 					temp = expressionEvaluationWorker(state, pid, argument,
 							resultOnly, false);
 					result.append(temp.right);
@@ -1765,54 +1763,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				break;
 			}
 			case QUANTIFIER: {
-				QuantifiedExpression quantified = (QuantifiedExpression) expression;
-				Quantifier quantifier = quantified.quantifier();
-
-				switch (quantifier) {
-				case FORALL:
-					result.append("forall");
-					break;
-				case EXISTS:
-					result.append("exits");
-					break;
-				case UNIFORM:
-					result.append("uniform");
-					break;
-				default:
-					throw new CIVLUnimplementedFeatureException(
-							"printing the evaluation of quantified expression with "
-									+ quantifier + " quantifier",
-							quantified.getSource());
-				}
-				result.append("{");
-				result.append(quantified.boundVariableName().name());
-				if (quantified.isRange()) {
-					Evaluation rangeEval = this.evaluator.evaluate(state, pid,
-							quantified.lower());
-
-					state = rangeEval.state;
-					result.append("=");
-					result.append(this.symbolicExpressionToString(quantified
-							.lower().getSource(), state, rangeEval.value));
-					result.append("..");
-					rangeEval = this.evaluator.evaluate(state, pid,
-							quantified.upper());
-					state = rangeEval.state;
-					result.append(this.symbolicExpressionToString(quantified
-							.lower().getSource(), state, rangeEval.value));
-				} else {
-					// temp = this.expressionEvaluationWorker(state, pid,
-					// quantified.boundRestriction(), resultOnly, true);
-					// state = temp.left;
-					// result.append(temp.right);
-					result.append(quantified.boundRestriction());
-				}
-				result.append("} ");
-				// temp = this.expressionEvaluationWorker(state, pid,
-				// quantified.expression(), resultOnly, true);
-				// state = temp.left;
-				result.append(quantified.expression().toString());
-				// result.append(temp.right);
+				result.append(expression.toString());
 				break;
 			}
 			case UNARY: {
