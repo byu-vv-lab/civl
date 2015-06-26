@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.semantics.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
@@ -197,5 +198,8 @@ public interface SymbolicAnalyzer {
 	 */
 	Pair<State, String> expressionEvaluation(State state, int pid,
 			Expression expression, boolean resultOnly)
+			throws UnsatisfiablePathConditionException;
+
+	StringBuffer statementEvaluation(State state, int pid, Statement statement)
 			throws UnsatisfiablePathConditionException;
 }

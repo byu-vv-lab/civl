@@ -1,6 +1,6 @@
 package edu.udel.cis.vsl.civl.model.IF.statement;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A list a statements that to be executed as one (atomic) step.
@@ -9,7 +9,7 @@ import java.util.ArrayList;
  *
  */
 public interface StatementList extends Statement {
-	ArrayList<Statement> statements();
+	List<Statement> statements();
 
 	void add(Statement statement);
 }

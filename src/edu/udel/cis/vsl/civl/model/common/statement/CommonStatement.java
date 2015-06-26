@@ -253,12 +253,9 @@ public abstract class CommonStatement extends CommonSourceable implements
 	@Override
 	public String toStepString(AtomicKind atomicKind, int atomCount,
 			boolean atomicLockVarChanged) {
-		String result = "  " + (source == null ? "??" : source.id()) + "->";
+		String result = "  " + this.locationStepString();
 
-		if (this.target != null)
-			result += target.id() + ": ";
-		else
-			result += "RET: ";
+		result += ": ";
 		switch (atomicKind) {
 		case ATOMIC_ENTER:
 			if (atomicLockVarChanged) {
@@ -285,11 +282,28 @@ public abstract class CommonStatement extends CommonSourceable implements
 		default:
 			result += toString();
 		}
-		if (getSource() != null)
-			result += " at " + getSource().getSummary();
-		else
-			result += " at " + source.getSource().getSummary();
+		result += " at ";
+		result += this.summaryOfSource();
 		result += ";";
+		return result;
+	}
+
+	@Override
+	public String summaryOfSource() {
+		if (getSource() != null)
+			return getSource().getSummary();
+		else
+			return source.getSource().getSummary();
+	}
+
+	@Override
+	public String locationStepString() {
+		String result = (source == null ? "??" : source.id()) + "->";
+
+		if (this.target != null)
+			result += target.id();
+		else
+			result += "RET";
 		return result;
 	}
 

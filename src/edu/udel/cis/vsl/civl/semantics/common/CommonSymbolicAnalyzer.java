@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.semantics.common;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -21,12 +22,27 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression.LHSExpressionKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
+import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
+import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.AtomicLockAssignStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
+import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
@@ -92,8 +108,6 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	private SymbolicUniverse universe;
 
 	private NumericExpression zero;
-
-	// private NumericExpression one;
 
 	private IntObject oneObj;
 
@@ -842,14 +856,16 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 		} else if (type.equals(scopeType)) {
 			// $scope's
-			int scopeId = modelFactory.getScopeId(source, symbolicExpression);
+			if (symbolicExpression.operator() != SymbolicOperator.CONCRETE)
+				return symbolicExpression.toString();
+			else {
+				int scopeId = modelFactory.getScopeId(source,
+						symbolicExpression);
 
-			if (!modelFactory.isScopeIdDefined(scopeId))
-				return "UNDEFINED";
-			if (scopeId < 0)
-				return "$scope_null";
-			else
+				if (!modelFactory.isScopeIdDefined(scopeId))
+					return "UNDEFINED";
 				return state.getDyscope(scopeId).name();
+			}
 		} else {
 			SymbolicOperator operator = symbolicExpression.operator();
 			SymbolicObject[] arguments = symbolicExpression.arguments();
@@ -1211,13 +1227,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(")");
 				return result.toString();
 			case UNION_INJECT: {
-//				IntObject memberIndex = (IntObject) arguments[0];
-//				CIVLType memberType;
-//				// result.append("inject(");
-//
-//				assert civlType instanceof CIVLStructOrUnionType;
-//				memberType = ((CIVLStructOrUnionType) civlType).getField(
-//						memberIndex.getInt()).type();
+				// IntObject memberIndex = (IntObject) arguments[0];
+				// CIVLType memberType;
+				// // result.append("inject(");
+				//
+				// assert civlType instanceof CIVLStructOrUnionType;
+				// memberType = ((CIVLStructOrUnionType) civlType).getField(
+				// memberIndex.getInt()).type();
 				result.append(this.symbolicExpressionToString(source, state,
 						civlType, (SymbolicExpression) arguments[1], prefix,
 						separator));
@@ -1415,6 +1431,234 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				resultOnly, true);
 	}
 
+	private Pair<State, String> expressionEvaluation(State state, int pid,
+			Expression expression) throws UnsatisfiablePathConditionException {
+		return this.expressionEvaluation(state, pid, expression, false);
+	}
+
+	private StringBuffer evaluateLHSExpression(State state, int pid,
+			LHSExpression lhs) throws UnsatisfiablePathConditionException {
+		LHSExpressionKind kind = lhs.lhsExpressionKind();
+		StringBuffer result = new StringBuffer();
+
+		switch (kind) {
+		case DEREFERENCE: {
+			result.append("*(");
+			result.append(this.expressionEvaluation(state, pid,
+					((DereferenceExpression) lhs).pointer(), true).right);
+			result.append(")");
+			break;
+		}
+		case DOT: {
+			DotExpression dot = (DotExpression) lhs;
+			Expression structOrUnion = dot.structOrUnion();
+
+			result.append("(");
+			if (structOrUnion instanceof LHSExpression)
+				result.append(this.evaluateLHSExpression(state, pid,
+						(LHSExpression) structOrUnion));
+			else
+				result.append(this.expressionEvaluation(state, pid,
+						structOrUnion).right);
+			result.append(").");
+			assert structOrUnion.getExpressionType() instanceof CIVLStructOrUnionType;
+			result.append(((CIVLStructOrUnionType) structOrUnion
+					.getExpressionType()).getField(dot.fieldIndex()).name()
+					.name());
+			break;
+		}
+		case SUBSCRIPT: {
+			SubscriptExpression subscript = (SubscriptExpression) lhs;
+
+			result.append(this.evaluateLHSExpression(state, pid,
+					subscript.array()));
+			result.append("[");
+			result.append(this.expressionEvaluation(state, pid,
+					subscript.index()).right);
+			result.append("]");
+			break;
+		}
+		case VARIABLE:
+			result.append(((VariableExpression) lhs).variable().name().name());
+			break;
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"evaluating left-hand-side expression of " + kind + " kind",
+					lhs.getSource());
+		}
+		return result;
+	}
+
+	@Override
+	public StringBuffer statementEvaluation(State state, int pid,
+			Statement statement) throws UnsatisfiablePathConditionException {
+		StatementKind kind = statement.statementKind();
+		StringBuffer result = new StringBuffer();
+		Pair<State, String> tmp;
+
+		switch (kind) {
+		case ASSIGN: {
+			if (statement instanceof AtomicLockAssignStatement) {
+				result.append(statement.toString());
+			} else {
+				AssignStatement assign = (AssignStatement) statement;
+
+				result.append(this.evaluateLHSExpression(state, pid,
+						assign.getLhs()));
+				result.append("=");
+				tmp = this
+						.expressionEvaluation(state, pid, assign.rhs(), false);
+				result.append(tmp.right);
+			}
+			break;
+		}
+		case CALL_OR_SPAWN: {
+			CallOrSpawnStatement callOrSpawn = (CallOrSpawnStatement) statement;
+			CIVLFunction function = callOrSpawn.function();
+			List<Expression> args = callOrSpawn.arguments();
+			int numArgs = args.size();
+
+			if (callOrSpawn.lhs() != null) {
+				result.append(this.evaluateLHSExpression(state, pid,
+						callOrSpawn.lhs()));
+				result.append("=");
+			}
+			if (callOrSpawn.isSpawn())
+				result.append("$spawn ");
+			if (function == null) {
+				function = this.evaluator.evaluateFunctionIdentifier(state,
+						pid, callOrSpawn.functionExpression(),
+						callOrSpawn.getSource()).second;
+				assert function != null;
+			}
+			result.append(function.name().name());
+			result.append("(");
+			for (int i = 0; i < numArgs; i++) {
+				Expression arg = args.get(i);
+
+				if (i != 0)
+					result.append(", ");
+				tmp = this.expressionEvaluation(state, pid, arg);
+				result.append(tmp.right);
+			}
+			result.append(")");
+			break;
+		}
+		case CIVL_FOR_ENTER: {
+			CivlForEnterStatement civlForEnter = (CivlForEnterStatement) statement;
+			List<Variable> loopVars = civlForEnter.loopVariables();
+			int dim = loopVars.size();
+
+			result.append("$for((");
+			for (int i = 0; i < dim; i++) {
+				Variable loopVar = loopVars.get(i);
+
+				if (i != 0)
+					result.append(", ");
+				result.append(this.symbolicExpressionToString(
+						loopVar.getSource(), state, state.valueOf(pid, loopVar)));
+			}
+			result.append(") has next in ");
+			tmp = this.expressionEvaluation(state, pid, civlForEnter.domain(),
+					true);
+			result.append(tmp.right);
+			break;
+		}
+		case CIVL_PAR_FOR_ENTER: {
+			// $parfor(i0, i1, i2: dom) $spawn function(i0, i1, i2);
+			CivlParForEnterStatement parForEnter = (CivlParForEnterStatement) statement;
+			StringBuffer arguments = new StringBuffer();
+
+			for (int i = 0; i < parForEnter.dimension(); i++) {
+				if (i != 0)
+					arguments.append(",");
+				arguments.append("i");
+				arguments.append(i);
+			}
+			result.append("$parfor(");
+			result.append(arguments);
+			result.append(": ");
+			result.append(this.expressionEvaluation(state, pid,
+					parForEnter.domain(), true).right);
+			result.append(")");
+			result.append(" $spawn ");
+			result.append(parForEnter.parProcFunction().name().name());
+			result.append("(");
+			result.append(arguments);
+			result.append(")");
+			break;
+		}
+		case MALLOC: {
+			MallocStatement malloc = (MallocStatement) statement;
+			LHSExpression lhs = malloc.getLHS();
+
+			if (lhs != null) {
+				result.append(this.evaluateLHSExpression(state, pid, lhs));
+				result.append("=");
+			}
+			result.append("(");
+			result.append(malloc.getStaticElementType());
+			result.append("*)");
+			result.append("$malloc(");
+			result.append(this.expressionEvaluation(state, pid,
+					malloc.getScopeExpression()).right);
+			result.append(", ");
+			result.append(this.expressionEvaluation(state, pid,
+					malloc.getSizeExpression()).right);
+			result.append(")");
+			break;
+		}
+		case NOOP: {// TODO
+			result.append(statement.toString());
+			break;
+		}
+		case RETURN: {
+			// return expression (assigning to...)
+			// ProcessState procState=state.getProcessState(pid);
+			CIVLFunction function = state.getProcessState(pid).peekStack()
+					.location().function();
+			// String functionName;
+			Expression expression = ((ReturnStatement) statement).expression();
+
+			assert function != null;
+			result.append(function.name().name());
+			result.append("(...) return");
+			if (expression != null) {
+				// LHSExpression lhs = ((CallOrSpawnStatement) returnLocation
+				// .getSoleOutgoing()).lhs();
+				result.append(" ");
+				result.append(this.expressionEvaluation(state, pid, expression).right);
+				// if (lhs != null) {
+				// result.append("(assigning to ");
+				// result.append(this.evaluateLHSExpression(state, pid, lhs));
+				// result.append(")");
+				// }
+			}
+			break;
+		}
+		case STATEMENT_LIST: {
+			StatementList statementList = (StatementList) statement;
+			List<Statement> statements = statementList.statements();
+			int numStatements = statements.size();
+
+			for (int i = 0; i < numStatements; i++) {
+				Statement current = statements.get(i);
+
+				if (i != 0)
+					result.append("; ");
+				result.append(this.statementEvaluation(state, pid, current));
+			}
+			break;
+		}
+		default:
+			throw new CIVLUnimplementedFeatureException(
+					"evaluating statement of " + kind + " kind",
+					statement.getSource());
+		}
+		return result;
+
+	}
+
 	private Pair<State, String> expressionEvaluationWorker(State state,
 			int pid, Expression expression, boolean resultOnly,
 			boolean isTopLevel) throws UnsatisfiablePathConditionException {
@@ -1451,10 +1695,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				AddressOfExpression addressOf = (AddressOfExpression) expression;
 
 				result.append("&");
-				temp = this.expressionEvaluationWorker(state, pid,
-						addressOf.operand(), resultOnly, false);
-				state = temp.left;
-				result.append(temp.right);
+				result.append(this.evaluateLHSExpression(state, pid,
+						addressOf.operand()));
 				break;
 			}
 			case BINARY: {
@@ -1598,12 +1840,15 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(temp.right);
 				break;
 			}
+			case INITIAL_VALUE: {
+				result.append(expression.toString());
+				break;
+			}
 			case ARRAY_LITERAL:
 			case BOOLEAN_LITERAL:
 			case CHAR_LITERAL:
 			case DOT:
 			case DYNAMIC_TYPE_OF:
-			case INITIAL_VALUE:
 			case INTEGER_LITERAL:
 			case MEMORY_UNIT:
 			case NULL_LITERAL:

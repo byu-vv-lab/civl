@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
@@ -173,6 +174,7 @@ public class CommonStateManager implements StateManager {
 			printTransitionPrefix(oldState, processIdentifier);
 			printStatement(oldState, state, firstTransition, AtomicKind.NONE,
 					processIdentifier, false);
+			oldState = state;
 		}
 		traceStep.addAtomicStep(new CommonAtomicStep(state, firstTransition));
 		for (stateStatus = singleEnabled(state, pid, atomCount, process); stateStatus.val; stateStatus = singleEnabled(
@@ -408,13 +410,25 @@ public class CommonStateManager implements StateManager {
 	 * @param atomicLockVarChanged
 	 *            True iff the atomic lock variable is changed during the
 	 *            execution of the statement.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private void printStatement(State currentState, State newState,
 			Transition transition, AtomicKind atomicKind, int atomCount,
-			boolean atomicLockVarChanged) {
+			boolean atomicLockVarChanged)
+			throws UnsatisfiablePathConditionException {
+		Statement stmt = transition.statement();
+
+		config.out().print("  ");
+		config.out().print(stmt.locationStepString());
+		config.out().print(": ");
 		config.out().print(
-				transition.statement().toStepString(atomicKind, atomCount,
-						atomicLockVarChanged));
+				symbolicAnalyzer.statementEvaluation(currentState,
+						transition.pid(), stmt));
+		config.out().print(" at ");
+		config.out().print(stmt.summaryOfSource());
+		// config.out().print(
+		// transition.statement().toStepString(atomicKind, atomCount,
+		// atomicLockVarChanged));
 		config.out().println();
 	}
 

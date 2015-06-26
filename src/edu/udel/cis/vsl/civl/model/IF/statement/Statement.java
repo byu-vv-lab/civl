@@ -210,6 +210,21 @@ public interface Statement extends Sourceable {
 			boolean atomicLockVarChanged);
 
 	/**
+	 * Get the string representation in the form of: source location id -&gt;
+	 * target location id e.g. 3 -&gt; 8
+	 * 
+	 * @return
+	 */
+	String locationStepString();
+
+	/**
+	 * The summary of the source code information of the statement.
+	 * 
+	 * @return
+	 */
+	String summaryOfSource();
+
+	/**
 	 * Obtains the lowest scope of expression accessed by this statement.
 	 * 
 	 * @return the lowest scope of expression accessed by this statement.

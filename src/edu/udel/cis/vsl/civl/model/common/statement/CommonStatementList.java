@@ -327,6 +327,26 @@ public class CommonStatementList implements StatementList {
 	@Override
 	public void setCIVLSource(CIVLSource source) {
 		// TODO Auto-generated method stub
-		
+
+	}
+
+	@Override
+	public String locationStepString() {
+		String result = (this.source() == null ? "??" : this.source().id())
+				+ "->";
+
+		if (this.target() != null)
+			result += target().id();
+		else
+			result += "RET";
+		return result;
+	}
+
+	@Override
+	public String summaryOfSource() {
+		if (getSource() != null)
+			return getSource().getSummary();
+		else
+			return source().getSource().getSummary();
 	}
 }

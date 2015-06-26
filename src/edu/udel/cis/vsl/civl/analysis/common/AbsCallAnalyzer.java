@@ -178,10 +178,8 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			case YES:
 				break;
 			case NO:
-				if (this.isSatisfiable(canZero(pathCondition, argValue)) == ResultType.YES) {
-					status.zero = AbsType.YES;
-					break;
-				}
+				status.zero = AbsType.YES;
+				break;
 			case MAYBE:
 				status.zero = AbsType.MAYBE;
 				break;
@@ -228,10 +226,8 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			case YES:
 				break;
 			case NO:
-				if (this.isSatisfiable(canPositive(pathCondition, argValue)) == ResultType.YES) {
-					status.positive = AbsType.YES;
-					break;
-				}
+				status.positive = AbsType.YES;
+				break;
 			case MAYBE:
 				status.positive = AbsType.MAYBE;
 				break;
@@ -280,10 +276,8 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			case YES:
 				break;
 			case NO:
-				if (this.isSatisfiable(canNegative(pathCondition, argValue)) == ResultType.YES) {
-					status.negative = AbsType.YES;
-					break;
-				}
+				status.negative = AbsType.YES;
+				break;
 			case MAYBE:
 				status.negative = AbsType.MAYBE;
 				break;
@@ -323,12 +317,15 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 	public void analyze(State state, int pid, CallOrSpawnStatement statement,
 			SymbolicExpression[] argumentValues) {
 		AbsStatus status = this.result.get(statement);
-		BooleanExpression pathCondition = state.getPathCondition();
-		NumericExpression argValue = (NumericExpression) argumentValues[0];
 
-		this.analyzeZero(status, pathCondition, argValue);
-		this.analyzePositive(status, pathCondition, argValue);
-		this.analyzeNegative(status, pathCondition, argValue);
+		if (status != null) {
+			BooleanExpression pathCondition = state.getPathCondition();
+			NumericExpression argValue = (NumericExpression) argumentValues[0];
+
+			this.analyzeZero(status, pathCondition, argValue);
+			this.analyzePositive(status, pathCondition, argValue);
+			this.analyzeNegative(status, pathCondition, argValue);
+		}
 		return;
 	}
 

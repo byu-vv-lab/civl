@@ -1,0 +1,28 @@
+#include <civlc.cvh>
+
+int call(int f(int), int arg){
+  return f(arg);
+}
+
+int sum(int n){
+  int result=0;
+
+  for(int i=1; i<=n; i++)
+    result+=i;
+  return result;
+}
+
+$input int x;
+$input $proc p;
+$assume(p != $self);
+$input $scope sc;
+$assume(sc != $root);
+$proc p1;
+
+void main(){
+  int (*k)(int)=&sum;
+
+  call(k, 2);
+  p1=$spawn sum(1);
+  $wait(p1);
+}
