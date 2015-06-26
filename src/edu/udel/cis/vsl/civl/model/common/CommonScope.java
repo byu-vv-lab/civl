@@ -547,7 +547,6 @@ public class CommonScope extends CommonSourceable implements Scope {
 				return true;
 			parent = parent.parent();
 		}
-
 		return false;
 	}
 

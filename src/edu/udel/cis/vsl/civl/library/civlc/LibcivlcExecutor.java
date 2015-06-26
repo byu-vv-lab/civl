@@ -155,6 +155,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = this.executeIntIterNext(state, pid, process, lhs,
 					arguments, argumentValues, call.getSource());
 			break;
+		case "$pathCondition":
+			state = this.executePathCondition(state, pid, process, arguments,
+					argumentValues, call.getSource());
+			break;
 		case "$proc_defined":
 			state = this.executeProcDefined(state, pid, process, lhs,
 					arguments, argumentValues);
@@ -191,6 +195,17 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
+
+	private State executePathCondition(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		if (this.civlConfig.enablePrintf())
+			this.civlConfig.out().println(
+					"path condition: "
+							+ this.symbolicAnalyzer.symbolicExpressionToString(
+									source, state, state.getPathCondition()));
+		return state;
+	}
 
 	private State executeDefined(State state, int pid, String process,
 			LHSExpression lhs, Expression[] arguments,

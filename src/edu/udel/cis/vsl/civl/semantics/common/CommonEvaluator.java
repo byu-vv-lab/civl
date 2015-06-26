@@ -763,12 +763,10 @@ public class CommonEvaluator implements Evaluator {
 		case SHIFTRIGHT:
 			return evaluateShiftright(state, pid, expression);
 		case DIVIDE:
-		case EQUAL:
 		case LESS_THAN:
 		case LESS_THAN_EQUAL:
 		case MINUS:
 		case MODULO:
-		case NOT_EQUAL:
 		case PLUS:
 		case POINTER_ADD:
 		case POINTER_SUBTRACT:
@@ -782,6 +780,9 @@ public class CommonEvaluator implements Evaluator {
 				return evaluateNumericOperations(state, pid, process,
 						expression);
 			}
+		case NOT_EQUAL:
+		case EQUAL:
+			return evaluateNumericOperations(state, pid, process, expression);
 		default:
 			throw new CIVLUnimplementedFeatureException(
 					"Evaluating binary operator of " + operator + " kind");

@@ -217,7 +217,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 
 		if (place_num < 0) {
 			throw new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE, process, "Invalid place " + place_num
+					Certainty.PROVEABLE, process, "Invalid place " + place_num
 							+ " used in $barrier_create().", source);
 		}
 		eval = this.evaluator.dereference(civlsource, state, process,
@@ -232,7 +232,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		if (!resultType.equals(ResultType.YES)) {
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.OTHER,
-					Certainty.CONCRETE,
+					Certainty.PROVEABLE,
 					process,
 					"Place "
 							+ place_num

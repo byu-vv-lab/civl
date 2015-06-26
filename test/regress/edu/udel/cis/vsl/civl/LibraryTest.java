@@ -252,6 +252,11 @@ public class LibraryTest {
 		assertTrue(ui.run("verify", filename("funcPointer.cvl")));
 	}
 
+	@Test
+	public void pathcondition() throws ABCException {
+		assertTrue(ui.run("verify", filename(CIVLC, "pathcondition.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

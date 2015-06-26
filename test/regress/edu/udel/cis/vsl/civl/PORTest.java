@@ -30,7 +30,7 @@ public class PORTest {
 	public void adder2() {
 		assertTrue(ui.run("verify", "-inputN=4", filename("adder2.cvl")));
 	}
-	
+
 	@Test
 	public void atomic0() {
 		assertFalse(ui.run("verify", filename("atomic0.cvl")));
@@ -79,6 +79,11 @@ public class PORTest {
 	@Test
 	public void waitTest() {
 		assertFalse(ui.run("verify", filename("wait.cvl")));
+	}
+
+	@Test
+	public void spawns() {
+		assertFalse(ui.run("verify", filename("spawns.cvl")));
 	}
 
 	@AfterClass

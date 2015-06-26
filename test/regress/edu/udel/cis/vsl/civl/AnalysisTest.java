@@ -26,14 +26,20 @@ public class AnalysisTest {
 
 	@Test
 	public void unreached() {
-		assertTrue(ui.run("verify -showUnreached=true -analyze_abs=true",
+		assertTrue(ui.run("verify -showUnreached=true -analyze_abs=false",
 				filename("unreached.c")));
 	}
 
 	@Test
 	public void abs() {
-		assertTrue(ui.run("verify -analyze_abs=true -showUnreached=true",
+		assertTrue(ui.run("verify -analyze_abs=true -showUnreached=false",
 				filename("abs.c")));
+	}
+
+	@Test
+	public void abs2() {
+		assertTrue(ui.run("verify -analyze_abs=true -showUnreached=false",
+				filename("abs2.c")));
 	}
 
 	@AfterClass

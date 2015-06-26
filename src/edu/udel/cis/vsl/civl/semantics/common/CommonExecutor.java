@@ -652,6 +652,8 @@ public class CommonExecutor implements Executor {
 			return executeReturn(state, pid, process,
 					(ReturnStatement) statement);
 		case STATEMENT_LIST:
+//			throw new CIVLInternalException("Unknown statement kind: " + kind,
+//					statement);
 			return executeStatementList(state, pid, (StatementList) statement,
 					null);
 		case CIVL_FOR_ENTER:

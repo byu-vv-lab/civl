@@ -16,7 +16,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -333,50 +332,15 @@ public class CommonCallStatement extends CommonStatement implements
 	}
 
 	@Override
-	public String toStepString(AtomicKind atomicKind, int atomCount,
-			boolean atomicLockVarChanged) {
-		String targetString;
-		String result = "  " + (source() == null ? "??" : source().id()) + "->";
+	public String locationStepString() {
+		String result = (source() == null ? "??" : source().id()) + "->";
 		CIVLFunction function = this.function();
 
 		if (this.isCall && function != null && function.isNormal()) {
-			targetString = Integer.toString(function.startLocation().id());
+			result += Integer.toString(function.startLocation().id());
+			return result;
 		} else
-			return super.toStepString(atomicKind, atomCount,
-					atomicLockVarChanged);
-		result += targetString + ": ";
-		switch (atomicKind) {
-		case ATOMIC_ENTER:
-			if (atomicLockVarChanged) {
-				result += toString() + " ";
-			} else
-				result += "ENTER_ATOMIC (atomicCount++) ";
-			result += Integer.toString(atomCount - 1);
-			break;
-		case ATOMIC_EXIT:
-			if (atomicLockVarChanged) {
-				result += toString() + " ";
-			} else
-				result += "LEAVE_ATOMIC (atomicCount--) ";
-			result += Integer.toString(atomCount);
-			break;
-		case ATOM_ENTER:
-			result += toString() + " ";
-			result += Integer.toString(atomCount - 1);
-			break;
-		case ATOM_EXIT:
-			result += toString() + " ";
-			result += Integer.toString(atomCount);
-			break;
-		default:
-			result += toString();
-		}
-		if (getSource() != null)
-			result += " at " + getSource().getSummary();
-		else
-			result += " at " + source().getSource().getSummary();
-		result += ";";
-		return result;
+			return super.locationStepString();
 	}
 
 	@Override

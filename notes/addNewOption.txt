@@ -1,9 +1,12 @@
 
 1. edit grammar/Command.g4: add the new option in the rule OPTION_NAME;
 
-2. in civl.config.IF.CIVLConstants: add the new Option object:
-e.g.: public final static Option showTransitionsO = 
-Option.newScalarOption("showTransitions", BOOLEAN, "print transitions", false); 
+2. in civl.config.IF.CIVLConstants: 
+(1) add the new Option object:
+    e.g.: public final static Option showTransitionsO = 
+    Option.newScalarOption("showTransitions", BOOLEAN, "print transitions", false); 
+(2) modify the method getAllOptions by adding the new option 
+    to the return array 
 
 3. in civl.config.IF.CIVLConfiguration: 
 (1) add a new field to store the value of the new option, e.g., 
@@ -13,7 +16,7 @@ Option.newScalarOption("showTransitions", BOOLEAN, "print transitions", false);
     this.showTransitions = config.isTrue(CIVLConstants.showTransitionsO);
 (3) add getter and setter for the new field.
 
-3. edit the static code in civl.run.IF.UserInterface: add the new option to 
-the collection options, add it to CIVLCommand's option categories as it should be, 
+3. edit the static code in civl.run.IF.UserInterface: 
+add it to CIVLCommand's option categories as it should be, 
 for example, "traceO" is only applicable to replay command so just add it 
 by CIVLCommand.addReplayOption(...).

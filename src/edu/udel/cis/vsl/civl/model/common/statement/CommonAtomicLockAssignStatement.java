@@ -7,6 +7,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
+import edu.udel.cis.vsl.civl.model.IF.statement.AtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
 /**
@@ -23,7 +24,8 @@ import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
  * @author Manchun Zheng (zmanchun)
  * 
  */
-public class CommonAtomicLockAssignStatement extends CommonAssignStatement {
+public class CommonAtomicLockAssignStatement extends CommonAssignStatement
+		implements AtomicLockAssignStatement {
 
 	/* *************************** Instance Fields ************************* */
 
