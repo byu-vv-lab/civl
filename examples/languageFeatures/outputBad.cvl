@@ -5,11 +5,17 @@ typedef struct A{
   int b;
 } A;
 
-$output A k;
+int f(int x) {return x + 1;}
 
+$output A k;
+$output int x;
 void main(){
   int *p = &k.a;
   int ka;
   
-  ka = *p;
+  $choose {
+    {ka = *p;}
+    {f(x);}
+    {f(ka);}
+  }
 }

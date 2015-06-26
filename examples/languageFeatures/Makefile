@@ -11,7 +11,7 @@ functionPrototype functionPrototypeBad implies include1 include2 include3 \
 inputBad int2char int2charBad int2charBad2 int2float intToBool linkedList \
 malloc mallocBad mallocBad2 memLeak memoryLeak minimal nonbooleanCondition \
 noopBad not null outputBad pointerAdd pointerAdd1 pointerAdd2 pointerAddBad \
-pointerAddBad2 pointers pointerSubtraction pointerSubtractionBad pointerSubtractionBad2 \
+pointerAddBad2 pointers pointerSubtraction pointerSubtractionBad pointerSubtractionBad2 pointersBad\
 procBound processLeak procNull quantifiers removedHeapPointer scopeOperators \
 scoping self sideEffectLoop sideEffects sizeof spawnFoo stringTest struct \
 structArray structStruct switch undefHeapPointer undefPointer union 
@@ -252,6 +252,9 @@ pointerAddBad2: pointerAddBad2.cvl
 
 pointers: pointers.cvl
 	$(VERIFY) pointers.cvl
+
+pointersBad: pointersBad.cvl
+	$(VERIFY) -errorBound=10 pointersBad.cvl
 
 pointerSubtraction: pointerSubtraction.cvl
 	$(VERIFY) pointerSubtraction.cvl
