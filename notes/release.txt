@@ -66,3 +66,9 @@ log in, click on Admin, click on Milestones, choose a new milestone as the defau
 click Apply changes. Ditto for setting the default version.
 
 11. Send an email to civl-dev and civl-users announcing the new release.
+
+12. Append "+" to the fields named "version" in edu.udel.cis.vsl.civl.config.CIVLConstants.
+For example, the current version is 1.2, then it becomes 1.2+, which stands for
+unstable release between 1.2 andd 1.3.
+
+   
