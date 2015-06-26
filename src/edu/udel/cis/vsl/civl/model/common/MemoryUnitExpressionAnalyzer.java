@@ -291,8 +291,6 @@ public class MemoryUnitExpressionAnalyzer {
 		}
 		case NOOP:
 			break;
-		case STATEMENT_SET:
-			break;
 		case RETURN: {
 			ReturnStatement returnStatement = (ReturnStatement) statement;
 
@@ -301,11 +299,6 @@ public class MemoryUnitExpressionAnalyzer {
 						returnStatement.expression(), result);
 			break;
 		}
-		case STATEMENT_LIST:
-			throw new CIVLInternalException(
-					"Statement list is unreachable at memory unit analyzer "
-							+ "because they are only created by the enabler at runtime",
-					statement.getSource());
 		default:
 			throw new CIVLUnimplementedFeatureException(
 					"computing the impact memory units" + " of statements of "

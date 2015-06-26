@@ -42,12 +42,8 @@ public interface Statement extends Sourceable {
 		CIVL_FOR_ENTER, /** CIVL for loop ($for) enter statement */
 		CIVL_PAR_FOR_ENTER, /** CIVL parallel for ($par) enter statement */
 		MALLOC, /** Memory allocation */
-		NOOP, /** No operation */
-		STATEMENT_SET, /** Non-malicious statement, e.g., statement set */
-		// TODO get rid of this
-		RETURN, /** Return statement */
-		STATEMENT_LIST,
-		/** Statement list */
+		NOOP, /** No operation */		// TODO get rid of this
+		RETURN /** Return statement */
 	}
 
 	/* **************************** Public Methods ************************* */

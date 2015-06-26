@@ -44,7 +44,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
-import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
@@ -257,7 +256,8 @@ public class CommonExecutor implements Executor {
 				state = eval.state;
 				arguments[i] = eval.value;
 			}
-			Analysis.analyzeCall(this.analyzers, state, pid, statement, arguments);
+			Analysis.analyzeCall(this.analyzers, state, pid, statement,
+					arguments);
 			if (function == null) {
 				Triple<State, CIVLFunction, Integer> eval = evaluator
 						.evaluateFunctionIdentifier(state, pid,
@@ -587,19 +587,6 @@ public class CommonExecutor implements Executor {
 		}
 	}
 
-	private State executeStatementList(State state, int pid,
-			StatementList statement, SymbolicExpression value)
-			throws UnsatisfiablePathConditionException {
-		int count = statement.statements().size();
-
-		for (int i = 0; i < count; i++) {
-			Statement stmt = statement.statements().get(i);
-
-			state = executeWork(state, pid, stmt);
-		}
-		return state;
-	}
-
 	/**
 	 * Execute a generic statement. All statements except a Choose should be
 	 * handled by this method.
@@ -651,11 +638,6 @@ public class CommonExecutor implements Executor {
 		case RETURN:
 			return executeReturn(state, pid, process,
 					(ReturnStatement) statement);
-		case STATEMENT_LIST:
-//			throw new CIVLInternalException("Unknown statement kind: " + kind,
-//					statement);
-			return executeStatementList(state, pid, (StatementList) statement,
-					null);
 		case CIVL_FOR_ENTER:
 			return executeNextInDomain(state, pid,
 					(CivlForEnterStatement) statement);

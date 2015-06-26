@@ -87,7 +87,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
-import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
@@ -148,7 +147,6 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonLoopBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonMallocStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonNoopStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonReturnStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonStatementList;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonSwitchBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.variable.CommonVariable;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
@@ -1009,16 +1007,6 @@ public class CommonModelFactory implements ModelFactory {
 			Location source, Expression guard) {
 		return new CommonSwitchBranchStatement(civlSource, source,
 				guard != null ? guard : this.trueExpression(civlSource));
-	}
-
-	@Override
-	public StatementList statmentList(Statement stmt) {
-		return new CommonStatementList(stmt);
-	}
-
-	@Override
-	public StatementList statmentList(Statement stmt1, Statement stmt2) {
-		return new CommonStatementList(stmt1, stmt2);
 	}
 
 	@Override

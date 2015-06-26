@@ -42,7 +42,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement.StatementKind;
-import edu.udel.cis.vsl.civl.model.IF.statement.StatementList;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
@@ -1633,20 +1632,6 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				// result.append(this.evaluateLHSExpression(state, pid, lhs));
 				// result.append(")");
 				// }
-			}
-			break;
-		}
-		case STATEMENT_LIST: {
-			StatementList statementList = (StatementList) statement;
-			List<Statement> statements = statementList.statements();
-			int numStatements = statements.size();
-
-			for (int i = 0; i < numStatements; i++) {
-				Statement current = statements.get(i);
-
-				if (i != 0)
-					result.append("; ");
-				result.append(this.statementEvaluation(state, pid, current));
 			}
 			break;
 		}
