@@ -31,7 +31,7 @@ void main(){
   int a=2;
   int *b=&a;
   void (*g)(void)=&f;
-  $proc p=$spawn f();
+  $proc p=$spawn g();
   int c[2][2];
   $domain(2) dom=($domain(2)){1 .. 4#2, 1 .. 4#2};
   point_t pt;
