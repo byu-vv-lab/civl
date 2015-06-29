@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
 /**
@@ -32,7 +33,7 @@ import edu.udel.cis.vsl.civl.util.IF.Triple;
 public class OpenMPOrphanWorker extends BaseWorker {
 	
 	private ArrayList<Triple<FunctionDefinitionNode, FunctionCallNode, Boolean>> functionCalls = new ArrayList<Triple<FunctionDefinitionNode, FunctionCallNode, Boolean>>();
-
+	private ArrayList<Pair<StatementNode, FunctionDefinitionNode>> nodesToInsert = new ArrayList<Pair<StatementNode, FunctionDefinitionNode>>();
 
 	public OpenMPOrphanWorker(ASTFactory astFactory) {
 		super("OpenMPOrphanTransformer", astFactory);
@@ -46,6 +47,12 @@ public class OpenMPOrphanWorker extends BaseWorker {
 		ast.release();
 		FunctionDefinitionNode main = ast.getMain().getDefinition();
 		ompOrphan(main, null, false);
+		int i = 0;
+		for(Pair<StatementNode, FunctionDefinitionNode> insert : nodesToInsert){
+			insertChildAt(i, insert.left, insert.right);
+			i++;
+		}
+		
 		newAst = astFactory.newAST(root, ast.getSourceFiles());
 		//newAst.prettyPrint(System.out, true);
 		return newAst;
@@ -153,7 +160,9 @@ public class OpenMPOrphanWorker extends BaseWorker {
 					parent.setChild(index, body);
 				} else {
 					for(FunctionDefinitionNode func : funcs){
-						insertChildAt(0, statement, func.copy());
+						Pair<StatementNode, FunctionDefinitionNode> tempPair = new Pair<>(statement, func.copy());
+						nodesToInsert.add(tempPair);
+						removeOmpConstruct(func);
 					}
 				}
 
@@ -260,11 +269,13 @@ public class OpenMPOrphanWorker extends BaseWorker {
 			}
 
 			// Link "replacement" into the omp call's parent
-			ASTNode parent = node.parent();
-			int parentIndex = getChildIndex(parent, node);
-			assert parentIndex != -1;
-			parent.setChild(parentIndex, replacement);
-
+			
+			if(!ompFunctionName.equals("omp_get_wtime")){
+				ASTNode parent = node.parent();
+				int parentIndex = getChildIndex(parent, node);
+				assert parentIndex != -1;
+				parent.setChild(parentIndex, replacement);
+			}
 		} else if (node != null) {
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
