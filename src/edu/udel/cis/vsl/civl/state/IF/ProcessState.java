@@ -59,6 +59,13 @@ public interface ProcessState {
 	 * @return top frame on call stack.
 	 */
 	StackEntry peekStack();
+	
+	/**
+	 * Returns the second top frame on the call stack. Return NULL if the process has fewer than two stacks.
+	 * 
+	 * @return top frame on call stack.
+	 */
+	StackEntry peekSecondLastStack();
 
 	/**
 	 * Returns the length of the call stack.

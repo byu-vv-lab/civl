@@ -422,7 +422,7 @@ public class CommonStateManager implements StateManager {
 		config.out().print(stmt.locationStepString());
 		config.out().print(": ");
 		config.out().print(
-				symbolicAnalyzer.statementEvaluation(currentState,
+				symbolicAnalyzer.statementEvaluation(currentState, newState,
 						transition.pid(), stmt));
 		config.out().print(" at ");
 		config.out().print(stmt.summaryOfSource());

@@ -200,6 +200,6 @@ public interface SymbolicAnalyzer {
 			Expression expression, boolean resultOnly)
 			throws UnsatisfiablePathConditionException;
 
-	StringBuffer statementEvaluation(State state, int pid, Statement statement)
-			throws UnsatisfiablePathConditionException;
+	StringBuffer statementEvaluation(State preState, State postState, int pid,
+			Statement statement) throws UnsatisfiablePathConditionException;
 }

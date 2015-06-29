@@ -519,4 +519,11 @@ public class ImmutableProcessState implements ProcessState {
 				+ callStack.length + ")";
 	}
 
+	@Override
+	public StackEntry peekSecondLastStack() {
+		if (callStack != null && callStack.length >= 2)
+			return callStack[1];
+		return null;
+	}
+
 }

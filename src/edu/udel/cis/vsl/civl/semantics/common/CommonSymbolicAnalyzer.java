@@ -17,7 +17,6 @@ import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.AbstractFunctionCallExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.AddressOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
@@ -51,6 +50,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
+import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableDynamicScope;
@@ -83,6 +83,10 @@ import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 	/* *************************** Instance Fields ************************* */
+
+	private final String SEF_START = "[";
+	private final String SEF = ":=";
+	private final String SEF_END = "]";
 
 	private CIVLErrorLogger errorLogger;
 
@@ -455,7 +459,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				int fid = symbolicUtil.extractInt(source, funcIdExpr);
 				CIVLFunction function = dyScope.lexicalScope().getFunction(fid);
 
-				result.append("<");
+				result.append("&<");
 				result.append(dyScope.name());
 				result.append(">");
 				result.append(function.toString());
@@ -1433,6 +1437,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		return this.expressionEvaluation(state, pid, expression, false);
 	}
 
+	private Pair<State, String> expressionEvaluationFinalResult(State state,
+			int pid, Expression expression)
+			throws UnsatisfiablePathConditionException {
+		return this.expressionEvaluationWorker(state, pid, expression, true,
+				false);
+	}
+
 	private StringBuffer evaluateLHSExpression(State state, int pid,
 			LHSExpression lhs) throws UnsatisfiablePathConditionException {
 		LHSExpressionKind kind = lhs.lhsExpressionKind();
@@ -1442,7 +1453,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		case DEREFERENCE: {
 			result.append("*(");
 			result.append(this.expressionEvaluation(state, pid,
-					((DereferenceExpression) lhs).pointer(), true).right);
+					((DereferenceExpression) lhs).pointer()).right);
 			result.append(")");
 			break;
 		}
@@ -1470,7 +1481,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			result.append(this.evaluateLHSExpression(state, pid,
 					subscript.array()));
 			result.append("[");
-			result.append(this.expressionEvaluation(state, pid,
+			result.append(this.expressionEvaluationFinalResult(state, pid,
 					subscript.index()).right);
 			result.append("]");
 			break;
@@ -1487,8 +1498,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	}
 
 	@Override
-	public StringBuffer statementEvaluation(State state, int pid,
-			Statement statement) throws UnsatisfiablePathConditionException {
+	public StringBuffer statementEvaluation(State state, State postState,
+			int pid, Statement statement)
+			throws UnsatisfiablePathConditionException {
 		StatementKind kind = statement.statementKind();
 		StringBuffer result = new StringBuffer();
 		Pair<State, String> tmp;
@@ -1499,13 +1511,26 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(statement.toString());
 			} else {
 				AssignStatement assign = (AssignStatement) statement;
+				LHSExpression lhs = assign.getLhs();
+				Expression rhs = assign.rhs();
+				StringBuffer lhsString = this.evaluateLHSExpression(state, pid,
+						lhs);
+				String rhsString = this.expressionEvaluation(state, pid, rhs).right
+						.toString();
+				String newRhsString = this.expressionEvaluationFinalResult(
+						state, pid, rhs).right;
 
-				result.append(this.evaluateLHSExpression(state, pid,
-						assign.getLhs()));
+				result.append(lhsString);
 				result.append("=");
-				tmp = this
-						.expressionEvaluation(state, pid, assign.rhs(), false);
-				result.append(tmp.right);
+				result.append(rhsString);
+				if (!rhsString.equals(newRhsString)) {
+					result.append(" ");
+					result.append(SEF_START);
+					result.append(lhsString);
+					result.append(SEF);
+					result.append(newRhsString);
+					result.append(SEF_END);
+				}
 			}
 			break;
 		}
@@ -1514,10 +1539,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			CIVLFunction function = callOrSpawn.function();
 			List<Expression> args = callOrSpawn.arguments();
 			int numArgs = args.size();
+			LHSExpression lhs = callOrSpawn.lhs();
+			StringBuffer lhsString = null;
 
-			if (callOrSpawn.lhs() != null) {
-				result.append(this.evaluateLHSExpression(state, pid,
-						callOrSpawn.lhs()));
+			if (lhs != null) {
+				lhsString = this.evaluateLHSExpression(state, pid, lhs);
+				result.append(lhsString);
 				result.append("=");
 			}
 			if (callOrSpawn.isSpawn())
@@ -1539,6 +1566,21 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(tmp.right);
 			}
 			result.append(")");
+			if (lhs != null
+					&& (callOrSpawn.isSpawn() || callOrSpawn.isSystemCall())) {
+				String newLhsValue = this.expressionEvaluationFinalResult(
+						postState, pid, lhs).right;
+
+				if (newLhsValue != null) {
+					result.append(" ");
+					result.append(SEF_START);
+					result.append(lhsString);
+					result.append(SEF);
+					result.append(this.expressionEvaluationFinalResult(
+							postState, pid, lhs).right);
+					result.append(SEF_END);
+				}
+			}
 			break;
 		}
 		case CIVL_FOR_ENTER: {
@@ -1556,8 +1598,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 						loopVar.getSource(), state, state.valueOf(pid, loopVar)));
 			}
 			result.append(") has next in ");
-			tmp = this.expressionEvaluation(state, pid, civlForEnter.domain(),
-					true);
+			tmp = this.expressionEvaluation(state, pid, civlForEnter.domain());
 			result.append(tmp.right);
 			break;
 		}
@@ -1576,7 +1617,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			result.append(arguments);
 			result.append(": ");
 			result.append(this.expressionEvaluation(state, pid,
-					parForEnter.domain(), true).right);
+					parForEnter.domain()).right);
 			result.append(")");
 			result.append(" $spawn ");
 			result.append(parForEnter.parProcFunction().name().name());
@@ -1588,9 +1629,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		case MALLOC: {
 			MallocStatement malloc = (MallocStatement) statement;
 			LHSExpression lhs = malloc.getLHS();
+			StringBuffer lhsString = null;
+			String newLhsString;
 
 			if (lhs != null) {
-				result.append(this.evaluateLHSExpression(state, pid, lhs));
+				lhsString = this.evaluateLHSExpression(state, pid, lhs);
+				result.append(lhsString);
 				result.append("=");
 			}
 			result.append("(");
@@ -1602,10 +1646,19 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			result.append(", ");
 			result.append(this.expressionEvaluation(state, pid,
 					malloc.getSizeExpression()).right);
-			result.append(")");
+			result.append(") ");
+			newLhsString = this.expressionEvaluationFinalResult(postState, pid,
+					lhs).right;
+			if (newLhsString != null) {
+				result.append(SEF_START);
+				result.append(lhsString);
+				result.append(SEF);
+				result.append(newLhsString);
+				result.append(SEF_END);
+			}
 			break;
 		}
-		case NOOP: {// TODO
+		case NOOP: {
 			result.append(statement.toString());
 			break;
 		}
@@ -1616,20 +1669,33 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					.location().function();
 			// String functionName;
 			Expression expression = ((ReturnStatement) statement).expression();
+			StackEntry callerStack = state.getProcessState(pid)
+					.peekSecondLastStack();
+			CallOrSpawnStatement caller = null;
 
+			if (callerStack != null)
+				caller = (CallOrSpawnStatement) callerStack.location()
+						.getSoleOutgoing();
 			assert function != null;
 			result.append(function.name().name());
 			result.append("(...) return");
 			if (expression != null) {
-				// LHSExpression lhs = ((CallOrSpawnStatement) returnLocation
-				// .getSoleOutgoing()).lhs();
 				result.append(" ");
 				result.append(this.expressionEvaluation(state, pid, expression).right);
-				// if (lhs != null) {
-				// result.append("(assigning to ");
-				// result.append(this.evaluateLHSExpression(state, pid, lhs));
-				// result.append(")");
-				// }
+				if (caller != null) {
+					LHSExpression lhs = caller.lhs();
+
+					if (lhs != null) {
+						result.append(" ");
+						result.append(SEF_START);
+						result.append(this.evaluateLHSExpression(state, pid,
+								lhs));
+						result.append(SEF);
+						result.append(this.expressionEvaluationFinalResult(
+								state, pid, expression).right);
+						result.append(SEF_END);
+					}
+				}
 			}
 			break;
 		}
@@ -1650,8 +1716,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		Pair<State, String> temp;
 
 		if (resultOnly && !isTopLevel) {
-			Evaluation eval = this.evaluator.evaluate(state, pid, expression);
+			Evaluation eval;
 
+			try {
+				eval = this.evaluator.evaluate(state, pid, expression);
+			} catch (Exception ex) {
+				return new Pair<>(state, (String) null);
+			}
 			state = eval.state;
 			result.append(this.symbolicExpressionToString(
 					expression.getSource(), state, eval.value));
@@ -1672,14 +1743,6 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					state = temp.left;
 				}
 				result.append(")");
-				break;
-			}
-			case ADDRESS_OF: {
-				AddressOfExpression addressOf = (AddressOfExpression) expression;
-
-				result.append("&");
-				result.append(this.evaluateLHSExpression(state, pid,
-						addressOf.operand()));
 				break;
 			}
 			case BINARY: {
@@ -1780,11 +1843,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(expression.toString());
 				break;
 			}
+			case ADDRESS_OF:
 			case ARRAY_LITERAL:
 			case BOOLEAN_LITERAL:
 			case CHAR_LITERAL:
 			case DOT:
 			case DYNAMIC_TYPE_OF:
+			case HERE_OR_ROOT:
 			case INTEGER_LITERAL:
 			case MEMORY_UNIT:
 			case NULL_LITERAL:
@@ -1813,7 +1878,6 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case SELF:
 			case SYSTEM_GUARD:
 			case UNDEFINED_PROC:
-			case HERE_OR_ROOT:
 			case PROC_NULL: {
 				result.append(expression.toString());
 				break;
