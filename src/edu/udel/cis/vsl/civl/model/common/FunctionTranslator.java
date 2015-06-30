@@ -2672,6 +2672,8 @@ public class FunctionTranslator {
 		scope.addVariable(variable);
 		if (node.getTypeNode().isInputQualified()) {
 			variable.setIsInput(true);
+			modelFactory.addInputVariable(variable);
+			assert variable.scope().id() == 0;
 		}
 		if (node.getTypeNode().isOutputQualified()) {
 			variable.setIsOutput(true);
@@ -3429,9 +3431,11 @@ public class FunctionTranslator {
 				// ignore, pointer types are all the same
 				// all pointer types are using the same symbolic object type
 			} else if (conversion instanceof RegularRangeToDomainConversion) {
-				expression = modelFactory.recDomainLiteralExpression(source,
+				expression = modelFactory.recDomainLiteralExpression(
+						source,
 						Arrays.asList(expression),
-						typeFactory.completeDomainType(expression.getExpressionType(), 1));
+						typeFactory.completeDomainType(
+								expression.getExpressionType(), 1));
 			} else
 				throw new CIVLInternalException("Unknown conversion: "
 						+ conversion, source);

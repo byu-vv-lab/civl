@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.semantics.common;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -1900,5 +1901,22 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		if (this.config.isReplay())
 			return this.stateToString(state);
 		return state.callStackToString();
+	}
+
+	@Override
+	public StringBuffer inputVariablesToStringBuffer(State state) {
+		Map<Variable, SymbolicExpression> inputVariableValues = evaluator
+				.stateFactory().inputVariableValueMap(state);
+		StringBuffer result = new StringBuffer("");
+
+		for (Map.Entry<Variable, SymbolicExpression> entry : inputVariableValues
+				.entrySet()) {
+			result.append("\n");
+			result.append(entry.getKey().name().name());
+			result.append("=");
+			result.append(this.symbolicExpressionToString(entry.getKey()
+					.getSource(), state, entry.getValue()));
+		}
+		return result;
 	}
 }

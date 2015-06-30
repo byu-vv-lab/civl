@@ -202,4 +202,6 @@ public interface SymbolicAnalyzer {
 
 	StringBuffer statementEvaluation(State preState, State postState, int pid,
 			Statement statement) throws UnsatisfiablePathConditionException;
+
+	StringBuffer inputVariablesToStringBuffer(State state);
 }

@@ -210,6 +210,8 @@ public class CommonModelFactory implements ModelFactory {
 
 	/* ************************** Instance Fields ************************** */
 
+	private List<Variable> inputVariables = new LinkedList<>();
+
 	private int domSizeVariableId = 0;
 
 	private int parProcsVariableId = 0;
@@ -2088,5 +2090,15 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public void setCodeAnalyzers(List<CodeAnalyzer> analyzers) {
 		this.codeAnalyzers = analyzers;
+	}
+
+	@Override
+	public List<Variable> inputVariables() {
+		return this.inputVariables;
+	}
+
+	@Override
+	public void addInputVariable(Variable variable) {
+		this.inputVariables.add(variable);
 	}
 }

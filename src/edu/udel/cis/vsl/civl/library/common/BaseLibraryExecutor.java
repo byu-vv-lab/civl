@@ -44,8 +44,6 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 public abstract class BaseLibraryExecutor extends LibraryComponent implements
 		LibraryExecutor {
 
-	/* ************************** Protected Types ************************** */
-
 	/* ************************** Instance Fields ************************** */
 
 	/**
@@ -62,13 +60,6 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	 * The state factory for state-related computation.
 	 */
 	protected StateFactory stateFactory;
-
-	// /**
-	// * The static model of the program.
-	// */
-	// protected Model model;
-
-	// protected boolean statelessPrintf;
 
 	protected CIVLErrorLogger errorLogger;
 
@@ -135,9 +126,15 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			Pair<State, String> messageResult = this.symbolicAnalyzer
 					.expressionEvaluation(state, pid, arguments[0], false);
 			String firstEvaluation, secondEvaluation, result;
+			StringBuffer inputVariableMap;
 
 			state = messageResult.left;
-			message.append("\nContext: ");
+			inputVariableMap=symbolicAnalyzer.inputVariablesToStringBuffer(state);
+			if(!inputVariableMap.toString().isEmpty()){
+			message.append("\nInput variables:");
+			message.append(inputVariableMap);
+			}
+			message.append("\n\nContext: ");
 			message.append(this.symbolicAnalyzer.symbolicExpressionToString(
 					source, state, reasoner.getReducedContext()));
 			message.append("\n\nAssertion: ");

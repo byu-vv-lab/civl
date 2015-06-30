@@ -3,6 +3,8 @@
  */
 package edu.udel.cis.vsl.civl.state.IF;
 
+import java.util.Map;
+
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -587,4 +589,12 @@ public interface StateFactory {
 	int numSymbolicConstants(State state);
 
 	MemoryUnitFactory memUnitFactory();
+
+	/**
+	 * Returns the map of variable and value of input variables at the given
+	 * state.
+	 * 
+	 * @param state
+	 */
+	Map<Variable, SymbolicExpression> inputVariableValueMap(State state);
 }

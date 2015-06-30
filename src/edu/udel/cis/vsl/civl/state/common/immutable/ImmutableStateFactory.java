@@ -8,7 +8,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -171,6 +173,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private ReservedConstant isReservedSymbolicConstant;
 
+	private List<Variable> inputVariables;
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -180,6 +184,7 @@ public class ImmutableStateFactory implements StateFactory {
 			SymbolicUtility symbolicUtil, MemoryUnitFactory memFactory,
 			GMCConfiguration config) {
 		this.modelFactory = modelFactory;
+		this.inputVariables = modelFactory.inputVariables();
 		this.typeFactory = modelFactory.typeFactory();
 		this.symbolicUtil = symbolicUtil;
 		this.universe = modelFactory.universe();
@@ -581,7 +586,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 	@Override
 	public int processInAtomic(State state) {
-		//TODO use a field for vid
+		// TODO use a field for vid
 		SymbolicExpression symbolicAtomicPid = state.getVariableValue(0,
 				modelFactory.atomicLockVariableExpression().variable().vid());
 
@@ -1815,5 +1820,16 @@ public class ImmutableStateFactory implements StateFactory {
 				.extractNumber((NumericExpression) countValue);
 
 		return countNum.intValue();
+	}
+
+	@Override
+	public Map<Variable, SymbolicExpression> inputVariableValueMap(State state) {
+		Map<Variable, SymbolicExpression> result = new LinkedHashMap<>();
+
+		for (Variable variable : this.inputVariables) {
+			assert variable.scope().id() == 0;
+			result.put(variable, state.getVariableValue(0, variable.vid()));
+		}
+		return result;
 	}
 }

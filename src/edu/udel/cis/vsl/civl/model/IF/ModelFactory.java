@@ -1490,4 +1490,7 @@ public interface ModelFactory {
 
 	void setCodeAnalyzers(List<CodeAnalyzer> analyzers);
 
+	List<Variable> inputVariables();
+
+	void addInputVariable(Variable variable);
 }
