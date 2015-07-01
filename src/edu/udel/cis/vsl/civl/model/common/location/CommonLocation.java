@@ -555,14 +555,14 @@ public class CommonLocation extends CommonSourceable implements Location {
 				if (statement instanceof CallOrSpawnStatement) {
 					CallOrSpawnStatement call = (CallOrSpawnStatement) statement;
 
-					if (call.isCall()) {
-						CIVLFunction function = call.function();
+					// if (call.isCall()) {
+					CIVLFunction function = call.function();
 
-						if (function != null
-								&& !checkedFunctions.contains(function)) {
-							workingFunctions.add(function);
-						}
+					if (function != null
+							&& !checkedFunctions.contains(function)) {
+						workingFunctions.add(function);
 					}
+					// }
 				}
 			}
 		}

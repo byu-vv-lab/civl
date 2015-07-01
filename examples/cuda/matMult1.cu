@@ -39,6 +39,10 @@ $input int TILE_WIDTH;
 #define TILE_WIDTH 16
 #endif
 
+#ifdef _CIVL
+    $input double A[N*N];
+    $input double B[N*N];
+#endif
 
 /* MM kernel using global (not shared) memory.                          */
 __global__
@@ -118,10 +122,7 @@ int main (int argc, char** argv) {
     }
 
     /* Declare CPU arrays.                                              */
-#ifdef _CIVL
-    $input double A[N*N];
-    $input double B[N*N];
-#else
+#ifndef _CIVL
     double A[N*N],B[N*N];
 #endif
     double C[N*N];       /* linearized CPU double arrays  */ 

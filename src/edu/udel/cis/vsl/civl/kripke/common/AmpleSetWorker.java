@@ -164,11 +164,6 @@ public class AmpleSetWorker {
 	private BitSet activeProcesses = new BitSet();
 
 	/**
-	 * Processes that can reach a spawn statement from the current location.
-	 */
-	private BitSet spawningProcesses = new BitSet();
-
-	/**
 	 * The unique enabler used in the system. Used here for evaluating the guard
 	 * of statements.
 	 */
@@ -368,21 +363,6 @@ public class AmpleSetWorker {
 
 		workingProcessIDs.add(startPid);
 		ampleProcessIDs.set(startPid);
-		for (int otherPid = 0; otherPid < spawningProcesses.length(); otherPid++) {
-			otherPid = spawningProcesses.nextSetBit(otherPid);
-			if (otherPid == startPid)
-				continue;
-			if (this.activeProcesses.get(otherPid)) {
-				workingProcessIDs.add(otherPid);
-				ampleProcessIDs.set(otherPid);
-				myAmpleSetActiveSize++;
-				if (myAmpleSetActiveSize >= minAmpleSize
-						|| myAmpleSetActiveSize == activeProcesses
-								.cardinality()) {
-					return this.intersects(ampleProcessIDs, activeProcesses);
-				}
-			}
-		}
 		while (!workingProcessIDs.isEmpty()) {
 			int pid = workingProcessIDs.pop();
 			ProcessState procState = state.getProcessState(pid);
@@ -407,14 +387,14 @@ public class AmpleSetWorker {
 								if (otherPid == pid
 										|| ampleProcessIDs.get(otherPid))
 									continue;
-								if (this.spawningProcesses.get(otherPid)) {
-									// if (this.activeProcesses.get(otherPid)) {
-									// myAmpleSetActiveSize++;
-									// workingProcessIDs.add(otherPid);
-									// ampleProcessIDs.set(otherPid);
-									// } else
-									if (!this.activeProcesses.get(otherPid)
-											&& !this.isWaitingFor(otherPid, pid)
+								if (state.getProcessState(otherPid)
+										.getLocation().hasSpawn()) {
+									if (this.activeProcesses.get(otherPid)) {
+										myAmpleSetActiveSize++;
+										workingProcessIDs.add(otherPid);
+										ampleProcessIDs.set(otherPid);
+									} else if (!this
+											.isWaitingFor(otherPid, pid)
 											&& !state.getProcessState(otherPid)
 													.hasEmptyStack()) {
 										workingProcessIDs.add(otherPid);
@@ -816,8 +796,6 @@ public class AmpleSetWorker {
 			// reachableMemoryUnits.putAll(state
 			// .getReachableMemUnitsWtPointer(pid));
 			// impactMemUnitsMap.put(pid, this.impactMemoryUnitsOfProcess(pid));
-			if (state.getProcessState(pid).getLocation().hasSpawn())
-				this.spawningProcesses.set(pid);
 			this.impactMemUnits[pid] = this.impactMemoryUnitsOfProcess(pid);
 			// reachableMemUnitsMap.put(pid, reachableMemoryUnits);
 			if (debugging) {
