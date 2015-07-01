@@ -3,7 +3,6 @@ package edu.udel.cis.vsl.civl.model.IF;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.civl.model.common.ABC_CIVLSource;
 
-
 /**
  * A CIVL internal exception represents an error that is
  * "not supposed to happen." It can be used like an assertion, whenever you feel
@@ -19,10 +18,8 @@ public class CIVLInternalException extends CIVLException {
 	private static final long serialVersionUID = 6522079858283496490L;
 
 	public CIVLInternalException(String s, CIVLSource source) {
-		super(
-				"A CIVL internal error has occurred.\n"
-						+ "Please report the error at CIVL Trac (https://vsl.cis.udel.edu/trac/civl)"
-						+ " or send an email to civl-dev@udel.edu.\n" + s,
+		super("A CIVL internal error has occurred."
+				+ " Please report the error to civl-dev@udel.edu.\n" + s,
 				source);
 	}
 
