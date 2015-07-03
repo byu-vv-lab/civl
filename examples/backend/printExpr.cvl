@@ -1,4 +1,5 @@
 #include <civlc.cvh>
+#include <seq.cvh>
 
 typedef struct Point{
   double x;
@@ -12,7 +13,9 @@ typedef struct Line{
 
 $input int x;
 $input int y;
+$input int _A[];
 $input $proc p;
+$input Point pt;
 $assume(p != $self);
 $input $scope sc;
 $assume(sc != $root);
@@ -51,6 +54,7 @@ void main(){
   int*p;
   int n;
   _Bool b;
+  int null;
 
   A[1]=8;
   A[2]=9;
@@ -60,7 +64,22 @@ void main(){
   A[x]=9;
   n=A[x];
   n=x+y;
+  n=$seq_length(&_A);
   b = x && y;
+  b=x<y;
+  b=x<=y;
+  b=(_Bool)x;
+  $assume(x!=0);
+  n=y/x;
+  n=y%x;
+  n=x*y;
+  n=-y;
+  n=x!=y;
+  b=!b;
+  b= x||y;
+  n=x-y;
+  b=x==y;
+  n=pt.x;
   n=random(n);
   structs();
   p=(int*)$malloc($root, sizeof(int)*10);
