@@ -1,5 +1,39 @@
 #include <civlc.cvh>
 
+typedef struct Point{
+  double x;
+  double y;
+} Point;
+
+typedef struct Line{
+  Point start;
+  Point end;
+} Line;
+
+$input int x;
+$input int y;
+$input $proc p;
+$assume(p != $self);
+$input $scope sc;
+$assume(sc != $root);
+$proc p1;
+$abstract int random(int t);
+
+void structs(){
+  Point p0={0,0}, p1={1,1}, p2;
+  Line l0={p0, p1}, l1={p1,p2}, l2={p2, p0};
+  Line lines[3];
+
+  $assume(y>=0 && y<3);
+  lines[y]=l1;
+
+  p2.x=2;
+  p2.y=2;
+  lines[0]=l0;
+  lines[1]=l1;
+  lines[2]=l2;
+}
+
 int call(int f(int), int arg){
   return f(arg);
 }
@@ -12,17 +46,28 @@ int sum(int n){
   return result;
 }
 
-$input int x;
-$input $proc p;
-$assume(p != $self);
-$input $scope sc;
-$assume(sc != $root);
-$proc p1;
-
 void main(){
   int (*k)(int)=&sum;
+  int A[10];
+  int*p;
+  int n;
+  _Bool b;
 
+  A[1]=8;
+  A[2]=9;
+  A[3]=7;
+  n=A[2];
+  $assume(0<=x && x<10);
+  A[x]=9;
+  n=A[x];
+  n=x+y;
+  b = x && y;
+  n=random(n);
+  structs();
+  p=(int*)$malloc($root, sizeof(int)*10);
   call(k, 2);
   p1=$spawn sum(1);
+  p[5]=5;
   $wait(p1);
+  $free(p);
 }

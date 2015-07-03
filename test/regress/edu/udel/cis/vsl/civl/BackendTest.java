@@ -25,13 +25,22 @@ public class BackendTest {
 	/* **************************** Test Methods *************************** */
 	@Test
 	public void printExpr() {
-		assertTrue(ui.run("verify -showProgram -showSavedStates",
-				filename("printExpr.cvl")));
+		assertTrue(ui
+				.run("verify -showProgram=false -showSavedStates -showTransitions",
+						filename("printExpr.cvl")));
+	}
+	
+	@Test
+	public void arrayWrite() {
+		assertTrue(ui
+				.run("verify -showProgram=false -showSavedStates -showTransitions",
+						filename("arrayWrite.cvl")));
 	}
 
 	@Test
 	public void showTrans() {
-		assertTrue(ui.run("verify -showTransitions", filename("showTrans.cvl")));
+		assertTrue(ui.run("verify -showProgram -showTransitions",
+				filename("showTrans.cvl")));
 	}
 
 	@AfterClass
