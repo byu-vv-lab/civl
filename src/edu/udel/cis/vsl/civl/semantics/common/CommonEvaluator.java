@@ -2325,6 +2325,7 @@ public class CommonEvaluator implements Evaluator {
 			CIVLStructOrUnionType structType = (CIVLStructOrUnionType) type;
 			int numFields = structType.numFields();
 			LinkedList<SymbolicType> componentTypes = new LinkedList<SymbolicType>();
+			SymbolicType symbolicType;
 
 			for (int i = 0; i < numFields; i++) {
 				StructOrUnionField field = structType.getField(i);
@@ -2334,8 +2335,13 @@ public class CommonEvaluator implements Evaluator {
 				state = componentEval.state;
 				componentTypes.add(componentEval.type);
 			}
-			result = new TypeEvaluation(state, universe.tupleType(structType
-					.name().stringObject(), componentTypes));
+			if (structType.isStructType())
+				symbolicType = universe.tupleType(structType.name()
+						.stringObject(), componentTypes);
+			else
+				symbolicType = universe.unionType(structType.name()
+						.stringObject(), componentTypes);
+			result = new TypeEvaluation(state, symbolicType);
 		} else if (type instanceof CIVLBundleType) {
 			result = new TypeEvaluation(state, type.getDynamicType(universe));
 		} else if (type instanceof CIVLHeapType) {
