@@ -117,7 +117,7 @@ hypre_BoomerAMGBuildInterp( hypre_ParCSRMatrix   *A,
    
    int              my_id;
    int              num_procs;
-   int              num_threads;
+   int              num_threadsID;
    int              num_sends;
    int              index;
    int              ns, ne, size, rest;
@@ -127,7 +127,7 @@ hypre_BoomerAMGBuildInterp( hypre_ParCSRMatrix   *A,
 
    MPI_Comm_size(comm, &num_procs);   
    MPI_Comm_rank(comm,&my_id);
-   num_threads = hypre_NumThreads();
+   num_threadsID = hypre_NumThreads();
 
 
 #ifdef HYPRE_NO_GLOBAL_PARTITION
@@ -260,9 +260,9 @@ hypre_BoomerAMGBuildInterp( hypre_ParCSRMatrix   *A,
     *  Intialize counters and allocate mapping vector.
     *-----------------------------------------------------------------------*/
 
-   coarse_counter = hypre_CTAlloc(int, num_threads);
-   jj_count = hypre_CTAlloc(int, num_threads);
-   jj_count_offd = hypre_CTAlloc(int, num_threads);
+   coarse_counter = hypre_CTAlloc(int, num_threadsID);
+   jj_count = hypre_CTAlloc(int, num_threadsID);
+   jj_count_offd = hypre_CTAlloc(int, num_threadsID);
 
    fine_to_coarse = hypre_CTAlloc(int, n_fine);
 /*#define HYPRE_SMP_PRIVATE i
@@ -279,10 +279,10 @@ hypre_BoomerAMGBuildInterp( hypre_ParCSRMatrix   *A,
 /* RDF: this looks a little tricky, but doable */
 #define HYPRE_SMP_PRIVATE i,j,i1,jj,ns,ne,size,rest
 #include "../utilities/hypre_smp_forloop.h"
-   for (j = 0; j < num_threads; j++)
+   for (j = 0; j < num_threadsID; j++)
    {
-     size = n_fine/num_threads;
-     rest = n_fine - size*num_threads;
+     size = n_fine/num_threadsID;
+     rest = n_fine - size*num_threadsID;
      if (j < rest)
      {
         ns = j*size+j;
@@ -357,13 +357,13 @@ hypre_BoomerAMGBuildInterp( hypre_ParCSRMatrix   *A,
     *  Allocate  arrays.
     *-----------------------------------------------------------------------*/
 
-   for (i=0; i < num_threads-1; i++)
+   for (i=0; i < num_threadsID-1; i++)
    {
       coarse_counter[i+1] += coarse_counter[i];
       jj_count[i+1] += jj_count[i];
       jj_count_offd[i+1] += jj_count_offd[i];
    }
-   i = num_threads-1;
+   i = num_threadsID-1;
    jj_counter = jj_count[i];
    jj_counter_offd = jj_count_offd[i];
 
@@ -412,12 +412,12 @@ hypre_BoomerAMGBuildInterp( hypre_ParCSRMatrix   *A,
 
 #define HYPRE_SMP_PRIVATE i,j,ns,ne,size,rest,coarse_shift
 #include "../utilities/hypre_smp_forloop.h"
-   for (j = 0; j < num_threads; j++)
+   for (j = 0; j < num_threadsID; j++)
    {
      coarse_shift = 0;
      if (j > 0) coarse_shift = coarse_counter[j-1];
-     size = n_fine/num_threads;
-     rest = n_fine - size*num_threads;
+     size = n_fine/num_threadsID;
+     rest = n_fine - size*num_threadsID;
      if (j < rest)
      {
         ns = j*size+j;
@@ -462,10 +462,10 @@ hypre_BoomerAMGBuildInterp( hypre_ParCSRMatrix   *A,
     
 #define HYPRE_SMP_PRIVATE i,j,jl,i1,i2,jj,jj1,ns,ne,size,rest,sum,diagonal,distribute,P_marker,P_marker_offd,strong_f_marker,jj_counter,jj_counter_offd,sgn,c_num,jj_begin_row,jj_end_row,jj_begin_row_offd,jj_end_row_offd
 #include "../utilities/hypre_smp_forloop.h"
-   for (jl = 0; jl < num_threads; jl++)
+   for (jl = 0; jl < num_threadsID; jl++)
    {
-     size = n_fine/num_threads;
-     rest = n_fine - size*num_threads;
+     size = n_fine/num_threadsID;
+     rest = n_fine - size*num_threadsID;
      if (jl < rest)
      {
         ns = jl*size+jl;
@@ -1041,7 +1041,7 @@ hypre_BoomerAMGInterpTruncation( hypre_ParCSRMatrix *P,
     * number of dropped entries over thread i's row range. Cum_lost_per_thread
     * will temporarily store the cumulative number of dropped entries up to 
     * each thread. */
-   int my_thread_num, num_threads, start, stop;
+   int my_thread_num, num_threadsID, start, stop;
    int * max_num_threads = hypre_CTAlloc(int, 1);
    int * cum_lost_per_thread;
    int * num_lost_per_thread;
@@ -1059,11 +1059,11 @@ hypre_BoomerAMGInterpTruncation( hypre_ParCSRMatrix *P,
    }
 
 #ifdef HYPRE_USING_OPENMP
-#pragma omp parallel private(i,my_thread_num,num_threads,max_coef,j,start_j,row_sum,scale,num_lost,now_checking,next_open,num_lost_offd,now_checking_offd,next_open_offd,start,stop,cnt_diag,cnt_offd,num_elmts,cnt)
+#pragma omp parallel private(i,my_thread_num,num_threadsID,max_coef,j,start_j,row_sum,scale,num_lost,now_checking,next_open,num_lost_offd,now_checking_offd,next_open_offd,start,stop,cnt_diag,cnt_offd,num_elmts,cnt)
 #endif
    {
        my_thread_num = hypre_GetThreadNum();
-       num_threads = hypre_NumActiveThreads();
+       num_threadsID = hypre_NumActiveThreads();
 
        /* Compute each thread's range of rows to truncate and compress.  Note,
         * that i, j and data are all compressed as entries are dropped, but
@@ -1073,11 +1073,11 @@ hypre_BoomerAMGInterpTruncation( hypre_ParCSRMatrix *P,
         * the start of the next thread's row range.  */
 
        /* my row range */
-       start = (n_fine/num_threads)*my_thread_num;
-       if (my_thread_num == num_threads-1)
+       start = (n_fine/num_threadsID)*my_thread_num;
+       if (my_thread_num == num_threadsID-1)
        {  stop = n_fine; }
        else
-       {  stop = (n_fine/num_threads)*(my_thread_num+1); }
+       {  stop = (n_fine/num_threadsID)*(my_thread_num+1); }
 
        /* 
         * Truncate based on truncation tolerance 
@@ -1160,7 +1160,7 @@ hypre_BoomerAMGInterpTruncation( hypre_ParCSRMatrix *P,
     	  }
           /* store number of dropped elements and number of threads */
           if(my_thread_num == 0)
-          {   max_num_threads[0] = num_threads; }
+          {   max_num_threads[0] = num_threadsID; }
           num_lost_per_thread[my_thread_num] = num_lost;
           num_lost_offd_per_thread[my_thread_num] = num_lost_offd;
 

@@ -905,12 +905,12 @@ extern int hypre__global_error;
  *--------------------------------------------------------------------------*/
 
 void hypre_error_handler(char *filename, int line, int ierr);
-#define hypre_error(IERR)  hypre_error_handler(__FILE__, __LINE__, IERR)
+#define hypre_error(IERR)  hypre_error_handler("file", 1, IERR)
 #define hypre_error_in_arg(IARG)  hypre_error(HYPRE_ERROR_ARG | IARG<<3)
 #ifdef NDEBUG
 #define hypre_assert(EX)
 #else
-#define hypre_assert(EX) if (!(EX)) {fprintf(stderr,"hypre_assert failed: %s\n", #EX); hypre_error(1);}
+#define hypre_assert(EX) //if (!(EX)) {fprintf(stderr,"hypre_assert failed: %s\n", #EX); hypre_error(1);}
 #endif
 
 #endif

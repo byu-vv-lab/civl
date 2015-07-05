@@ -446,7 +446,7 @@ int hypre_GenerateSubComm(MPI_Comm comm, int participate, MPI_Comm *new_comm_ptr
 
    if (new_num_procs == 0)
    {
-      new_comm = MPI_COMM_NULL;
+      new_comm = (MPI_Comm)MPI_COMM_NULL;
       *new_comm_ptr = new_comm;
       return 0;
    }

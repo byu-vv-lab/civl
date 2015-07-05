@@ -1139,7 +1139,7 @@ hypre_StructVectorSetConstantValues( hypre_StructVector *vector,
 
 int 
 hypre_StructVectorSetFunctionValues( hypre_StructVector *vector,
-                                     double            (*fcn)() )
+                                     double            (*fcn)(int, int, int) )
 {
    int    ierr = 0;
 
