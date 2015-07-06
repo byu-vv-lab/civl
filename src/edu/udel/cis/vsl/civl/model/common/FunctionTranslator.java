@@ -13,17 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.udel.cis.vsl.abc.ast.conversion.IF.ArithmeticConversion;
-import edu.udel.cis.vsl.abc.ast.conversion.IF.ArrayConversion;
-import edu.udel.cis.vsl.abc.ast.conversion.IF.CompatiblePointerConversion;
-import edu.udel.cis.vsl.abc.ast.conversion.IF.CompatibleStructureOrUnionConversion;
 import edu.udel.cis.vsl.abc.ast.conversion.IF.Conversion;
-import edu.udel.cis.vsl.abc.ast.conversion.IF.FunctionConversion;
-import edu.udel.cis.vsl.abc.ast.conversion.IF.LvalueConversion;
-import edu.udel.cis.vsl.abc.ast.conversion.IF.NullPointerConversion;
-import edu.udel.cis.vsl.abc.ast.conversion.IF.PointerBoolConversion;
-import edu.udel.cis.vsl.abc.ast.conversion.IF.RegularRangeToDomainConversion;
-import edu.udel.cis.vsl.abc.ast.conversion.IF.VoidPointerConversion;
+import edu.udel.cis.vsl.abc.ast.conversion.IF.Conversion.ConversionKind;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Entity.EntityKind;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
@@ -3368,8 +3359,10 @@ public class FunctionTranslator {
 			Type newType = conversion.getNewType();
 			// Arithmetic, Array, CompatibleStructureOrUnion,
 			// Function, Lvalue, NullPointer, PointerBool, VoidPointer
+			ConversionKind kind = conversion.conversionKind();
 
-			if (conversion instanceof ArithmeticConversion) {
+			switch (kind) {
+			case ARITHMETIC: {
 				CIVLType oldCIVLType = translateABCType(source, scope, oldType);
 				CIVLType newCIVLType = translateABCType(source, scope, newType);
 
@@ -3386,9 +3379,9 @@ public class FunctionTranslator {
 						expression = modelFactory.castExpression(source,
 								newCIVLType, expression);
 				}
-			} else if (conversion instanceof CompatiblePointerConversion) {
-				// nothing to do
-			} else if (conversion instanceof ArrayConversion) {
+				break;
+			}
+			case ARRAY: {
 				if (expressionNode.expressionKind() == ExpressionKind.OPERATOR
 						&& ((OperatorNode) expressionNode).getOperator() == Operator.SUBSCRIPT) {
 					// we will ignore this one here because we want
@@ -3404,41 +3397,128 @@ public class FunctionTranslator {
 											.integerLiteralExpression(source,
 													BigInteger.ZERO)));
 				}
-
-			} else if (conversion instanceof CompatibleStructureOrUnionConversion) {
-				// think about this
+				break;
+			}
+			case COMPATIBLE_POINTER:// nothing to do
+				break;
+			case COMPATIBLE_STRUCT_UNION: {
+				// TODO think about how to implement this
 				throw new CIVLUnimplementedFeatureException(
 						"compatible structure or union conversion", source);
-			} else if (conversion instanceof FunctionConversion) {
-			} else if (conversion instanceof LvalueConversion) {
-				// nothing to do since ignore qualifiers anyway
-			} else if (conversion instanceof NullPointerConversion) {
+			}
+			case FUNCTION:
+				break;
+			case LVALUE:
+				break;
+			case MEMORY:
+				break;
+			case NULL_POINTER: {
 				// result is a null pointer to new type
 				CIVLPointerType newCIVLType = (CIVLPointerType) translateABCType(
 						source, scope, newType);
 
 				expression = modelFactory.nullPointerExpression(newCIVLType,
 						source);
-			} else if (conversion instanceof PointerBoolConversion) {
+				break;
+			}
+			case POINTER_BOOL: {
 				// pointer type to boolean type: p!=NULL
 				expression = modelFactory.binaryExpression(source,
 						BINARY_OPERATOR.NOT_EQUAL, expression, modelFactory
 								.nullPointerExpression(
 										(CIVLPointerType) expression
 												.getExpressionType(), source));
-			} else if (conversion instanceof VoidPointerConversion) {
-				// void*->T* or T*->void*
-				// ignore, pointer types are all the same
-				// all pointer types are using the same symbolic object type
-			} else if (conversion instanceof RegularRangeToDomainConversion) {
+				break;
+			}
+			case REG_RANGE_DOMAIN: {
+				// $range -> $domain(1)
 				expression = modelFactory.recDomainLiteralExpression(
 						source,
 						Arrays.asList(expression),
 						typeFactory.completeDomainType(
 								expression.getExpressionType(), 1));
-			} else
-				throw new CIVLInternalException("Unknown conversion: "
-						+ conversion, source);
+				break;
+			}
+			case VOID_POINTER:
+				// void*->T* or T*->void*
+				// ignore, pointer types are all the same
+				// all pointer types are using the same symbolic object type
+				break;
+			default:
+				throw new CIVLUnimplementedFeatureException("applying "
+						+ conversion + " conversion", source);
+			}
+
+//			if (conversion instanceof ArithmeticConversion) {
+//				CIVLType oldCIVLType = translateABCType(source, scope, oldType);
+//				CIVLType newCIVLType = translateABCType(source, scope, newType);
+//
+//				// need equals on Types
+//				if (oldCIVLType.isIntegerType() && newCIVLType.isIntegerType()
+//						|| oldCIVLType.isRealType() && newCIVLType.isRealType()) {
+//					// nothing to do
+//				} else {
+//					// Sometimes the conversion might have been done during
+//					// the translating the expression node, for example,
+//					// when translating a constant node, so only create a
+//					// cast expression if necessary.
+//					if (!expression.getExpressionType().equals(newCIVLType))
+//						expression = modelFactory.castExpression(source,
+//								newCIVLType, expression);
+//				}
+//			} else if (conversion instanceof CompatiblePointerConversion) {
+//				// nothing to do
+//			} else if (conversion instanceof ArrayConversion) {
+//				if (expressionNode.expressionKind() == ExpressionKind.OPERATOR
+//						&& ((OperatorNode) expressionNode).getOperator() == Operator.SUBSCRIPT) {
+//					// we will ignore this one here because we want
+//					// to keep it as array in subscript expressions
+//				} else if (expression.expressionKind() == Expression.ExpressionKind.ADDRESS_OF
+//						|| expression.expressionKind() == Expression.ExpressionKind.ARRAY_LITERAL) {
+//					// FIXME: Not sure why this needs to be checked...
+//				} else {
+//					assert expression instanceof LHSExpression;
+//					expression = modelFactory.addressOfExpression(source,
+//							modelFactory.subscriptExpression(source,
+//									(LHSExpression) expression, modelFactory
+//											.integerLiteralExpression(source,
+//													BigInteger.ZERO)));
+//				}
+//
+//			} else if (conversion instanceof CompatibleStructureOrUnionConversion) {
+//				// think about this
+//				throw new CIVLUnimplementedFeatureException(
+//						"compatible structure or union conversion", source);
+//			} else if (conversion instanceof FunctionConversion) {
+//			} else if (conversion instanceof LvalueConversion) {
+//				// nothing to do since ignore qualifiers anyway
+//			} else if (conversion instanceof NullPointerConversion) {
+//				// result is a null pointer to new type
+//				CIVLPointerType newCIVLType = (CIVLPointerType) translateABCType(
+//						source, scope, newType);
+//
+//				expression = modelFactory.nullPointerExpression(newCIVLType,
+//						source);
+//			} else if (conversion instanceof PointerBoolConversion) {
+//				// pointer type to boolean type: p!=NULL
+//				expression = modelFactory.binaryExpression(source,
+//						BINARY_OPERATOR.NOT_EQUAL, expression, modelFactory
+//								.nullPointerExpression(
+//										(CIVLPointerType) expression
+//												.getExpressionType(), source));
+//			} else if (conversion instanceof VoidPointerConversion) {
+//				// void*->T* or T*->void*
+//				// ignore, pointer types are all the same
+//				// all pointer types are using the same symbolic object type
+//			} else if (conversion instanceof RegularRangeToDomainConversion) {
+//				expression = modelFactory.recDomainLiteralExpression(
+//						source,
+//						Arrays.asList(expression),
+//						typeFactory.completeDomainType(
+//								expression.getExpressionType(), 1));
+//			} else
+//				throw new CIVLInternalException("Unknown conversion: "
+//						+ conversion, source);
 		}
 		return expression;
 	}
