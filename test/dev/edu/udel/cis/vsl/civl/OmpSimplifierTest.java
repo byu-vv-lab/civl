@@ -177,6 +177,11 @@ public class OmpSimplifierTest {
 	public void pi() throws ABCException, IOException {
 		check("pi");
 	}
+	
+	@Test
+	public void region1() throws ABCException, IOException {
+		//check("region1");
+	}
 
 	@SuppressWarnings("unused")
 	private static UserInterface ui = new UserInterface();

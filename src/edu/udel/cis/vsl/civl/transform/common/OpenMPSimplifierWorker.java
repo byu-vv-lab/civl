@@ -102,6 +102,8 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
+		
+		OpenMPParallelRegions ompRegions = new OpenMPParallelRegions(rootNode);
 
 		/*
 		 * TBD: We want a proper inter-procedural analysis. This is more of a
