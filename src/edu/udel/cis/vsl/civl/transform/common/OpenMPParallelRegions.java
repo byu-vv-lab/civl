@@ -42,51 +42,17 @@ import edu.udel.cis.vsl.abc.ast.util.ExpressionEvaluator;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
 /**
- * This transformer analyzes OpenMP constructs and converts them to simpler,
- * i.e., less concurrent, instances of constructs.
  * 
- * This transform operates in two phases:
- * 
- * 1) Analyze OpenMP workshares to determine those that are provably
- * thread-independent, i.e., execution of workshares in parallel is guaranteed
- * to compute the same result.
- * 
- * 2) Transform OpenMP constructs based on the analysis results.
- * 
- * TBD: a) support nowait clauses b) support collapse clauses (confirm whether
- * collapse uses variables or the first "k" row indices) c) what is the
- * semantics of a parallel region with no pragma, i.e., do we have to reason
- * about its independence to remove the parallel pragma d) intra-iteration
- * dependences, e.g., x[i] = x[i] + a; e) critical, barrier, master, single and
- * other workshares f) calling sensitive parallel workshare nesting, i.e.,
- * caller has parallel pragma, callee has workshare g) semantics of nowait for
- * that continues to method return h) treatment of omp_ calls, i.e., should we
- * preserve the parallelism since the calls likely depend on it i) detect
- * non-escaping heap data from within a omp pragma context, e.g.,
- * fig4.98-threadprivate.c j) default private/shared when there are explicit
- * shared/private clauses that don't mention the var
  * 
  * 
  * @author dwyer
  * 
  */
-public class OpenMPIndependenceAnalyzer extends BaseWorker {
+public class OpenMPParallelRegions  {
 
 	private Map<ASTNode,List<ASTNode>> regionsForParallel;
 
-	public OpenMPIndependenceAnalyzer(ASTFactory astFactory) {
-		super("OpenMPIndependenceAnalyzer", astFactory);
-		this.identifierPrefix = "$omp_sim_";
-	}
-
-	@Override
-	public AST transform(AST unit) throws SyntaxException {
-		SequenceNode<BlockItemNode> rootNode = unit.getRootNode();
-
-		assert this.astFactory == unit.getASTFactory();
-		assert this.nodeFactory == astFactory.getNodeFactory();
-		unit.release();
-		
+	public OpenMPParallelRegions(ASTNode rootNode) {
 		Map<ASTNode,List<ASTNode>> regionsForParallel = new HashMap<ASTNode,List<ASTNode>>();
 
 		collectRegions(rootNode);
@@ -103,8 +69,6 @@ public class OpenMPIndependenceAnalyzer extends BaseWorker {
 
 			
 		}
-
-		return astFactory.newAST(rootNode, unit.getSourceFiles());
 	}
 
 	/*
@@ -156,7 +120,7 @@ public class OpenMPIndependenceAnalyzer extends BaseWorker {
 			 */
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				transformOmpWorkshare(child);
+				collectRegionsForParallel(opn, child);
 			}
 		}
 	}
