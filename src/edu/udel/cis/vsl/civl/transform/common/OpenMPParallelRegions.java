@@ -40,28 +40,35 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.util.ExpressionEvaluator;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 
 /**
+ * A parallel region is a program fragment defined by an AST subtree rooted at a single 
+ * starting statement and delimited by a set of possible ending statements.   Thus a region
+ * is given by a pair, (stmt_s, Set<stmt_e>), with an interpretation that an execution path beginning
+ * at stmt_s and ending at some associated stmt_e is included in the region.  A region may include
+ * multiple execution paths.
  * 
- * 
+ * This class computes a set of regions for a given OpenMP parallel statement and makes that relation
+ * available through getter methods.
  * 
  * @author dwyer
  * 
  */
 public class OpenMPParallelRegions  {
 
-	private Map<ASTNode,List<ASTNode>> regionsForParallel;
+	private Map<ASTNode,List<Pair<ASTNode,List<ASTNode>>>> regionsForParallel;
 
 	public OpenMPParallelRegions(ASTNode rootNode) {
-		Map<ASTNode,List<ASTNode>> regionsForParallel = new HashMap<ASTNode,List<ASTNode>>();
+		Map<ASTNode, List<Pair<ASTNode, List<ASTNode>>>> regionsForParallel = new HashMap<ASTNode,List<Pair<ASTNode,List<ASTNode>>>>();
 
 		collectRegions(rootNode);
 		
 		for (ASTNode key : regionsForParallel.keySet()) {
-			List<ASTNode> regions = regionsForParallel.get(key);
+			List<Pair<ASTNode,List<ASTNode>>> regions = regionsForParallel.get(key);
 			System.out.println("For OMP Parallel Region found the following regions:");
 			int r = 0;
-			for (ASTNode region : regions) {
+			for (Pair<ASTNode,List<ASTNode>> region : regions) {
 				System.out.println("------------ region "+(r++)+" ---------------");
 				System.out.println("   "+region);
 			}
@@ -72,11 +79,13 @@ public class OpenMPParallelRegions  {
 	}
 
 	/*
-	 * Traverse the method declaration analyzing and simplifying omp constructs
 	 */
 	private void collectRegions(ASTNode node) {
 		if (node instanceof OmpParallelNode) {
-			OmpParallelNode opn = (OmpParallelNode) node;	
+			OmpParallelNode opn = (OmpParallelNode) node;
+			
+			List<Pair<ASTNode, List<ASTNode>>> setForParallel = new ArrayList<Pair<ASTNode,List<ASTNode>>>();
+			regionsForParallel.put(opn, setForParallel);
 
 			collectRegionsForParallel(opn,opn.statementNode());
 
@@ -84,12 +93,6 @@ public class OpenMPParallelRegions  {
 			System.out.println("Found non-Parallel OmpExecutableNode: "+node);
 
 		} else if (node != null) {
-			// BUG: can get here with null values in parallelfor.c example
-
-			/*
-			 * Could match other types here that have no ForLoopNode below them
-			 * and skip their traversal to speed things up.
-			 */
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
 				collectRegions(child);
@@ -98,33 +101,83 @@ public class OpenMPParallelRegions  {
 	}
 
 	/*
-	 * Initially we will assume that OMP work shares are not nested
+	 * There are two phases of this calculation.
+	 * 
+	 * 1) Compute the current region via DFS.
+	 * 	  A single region is terminated by an implicit or explicit barrier.
+	 * 
+	 * 2) Compute followon regions rooted at the frontier of the current region.
+	 *    Since this computation is done for an OpenMP parallel statement there is an 
+	 *    implicit barrier ending any final regions.
+	 * 
 	 */
-	private void collectRegionsForParallel(ASTNode opn, ASTNode node) {
+	private List<ASTNode> collectRegionsForParallel(ASTNode opn, ASTNode node) {
+		return null;
+	}
+	
+	/*
+	 * Recursively traverse the node and build up the set of frontier nodes, i.e.,
+	 * the statements following implicit/explicit barriers.
+	 */
+	private List<ASTNode> buildRegion(ASTNode node) {
 		if (node instanceof OmpForNode) {
 			OmpForNode ompFor = (OmpForNode) node;
+			if (!ompFor.nowait()) {
+				List<ASTNode> frontier = new ArrayList<ASTNode>();
+				frontier.add(successor(ompFor));
+			}
 
 		} else if (node instanceof OmpSyncNode) {
 			OmpSyncNode syncNode = (OmpSyncNode) node;
 
 		} else if (node instanceof OmpWorksharingNode) {
 			OmpWorksharingNode wsNode = (OmpWorksharingNode) node;
+			
+		} else if (node instanceof StatementNode) {
+			StatementNode sNode = (StatementNode) node;
 
-		} else if (node != null) {
-
-			// BUG: can get here with null values in parallelfor.c example
-
-			/*
-			 * Could match other types here that have no ForLoopNode below them
-			 * and skip their traversal to speed things up.
-			 */
+		}
+		
+		if (node != null) {
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				collectRegionsForParallel(opn, child);
+				buildRegion(child);
 			}
 		}
+		return null;
 	}
 
+	/* Computes the successor statement in the AST for a given node
+	 * If the node has a successor among its siblings (i.e., the next child of its parent) then return it.
+	 * Otherwise continue up the AST until a successor can be found.
+	 */
+	private ASTNode successor(ASTNode node) {
+		if (node instanceof StatementNode) {
+			ASTNode parent = node.parent();
+			int idx = 0;
+			
+			while ((idx = getChildIndex(parent, node))+1 >= parent.numChildren()) {
+				node = parent; // now we look for the successor of the parent
+				parent = node.parent();
+			}
+			return parent.child(idx+1);
 
+		} else {
+			assert false : "Expected statement node, but was called with "+node;
+		}
+		return null;
+	}
+	
+	/*
+	 * Returns the index of "child" in the children of "node"; -1 if "child" is
+	 * not one of "node"'s children.
+	 */
+	private int getChildIndex(ASTNode node, ASTNode child) {
+		for (int childIndex = 0; childIndex < node.numChildren(); childIndex++) {
+			if (node.child(childIndex) == child)
+				return childIndex;
+		}
+		return -1;
+	}
 
 }
