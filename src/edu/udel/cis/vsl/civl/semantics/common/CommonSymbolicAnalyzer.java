@@ -146,7 +146,6 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		this.oneObj = (IntObject) universe.canonic(universe.intObject(1));
 		this.twoObj = (IntObject) universe.canonic(universe.intObject(2));
 		zero = (NumericExpression) universe.canonic(universe.integer(0));
-		// one = (NumericExpression) universe.canonic(universe.integer(1));
 		this.config = config;
 	}
 
@@ -902,18 +901,26 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case ARRAY_LAMBDA:
 				return "(" + arguments[0] + ")";
 				// return symbolicExpression.toStringBufferLong().toString();
-			case ARRAY_READ:
+			case ARRAY_READ: {
 				result.append(arguments[0].toStringBuffer(true));
 				result.append("[");
 				result.append(arguments[1].toStringBuffer(false));
 				result.append("]");
 				return result.toString();
+			}
 			case ARRAY_WRITE: {
 				boolean needNewLine = !civlType.areSubtypesScalar();
 				String padding = "\n" + prefix + separator;
 				String newPrefix = needNewLine ? prefix + separator : prefix;
-
-				result.append(arguments[0].toStringBuffer(true));
+				
+				if (arguments[0] instanceof SymbolicExpression) {
+					result.append("(");
+					result.append(this.symbolicExpressionToString(source,
+							state, civlType, (SymbolicExpression) arguments[0],
+							atomize, prefix, separator, false));
+					result.append(")");
+				} else
+					result.append(arguments[0].toStringBuffer(true));
 				result.append("{");
 				if (needNewLine)
 					result.append(padding);
@@ -925,7 +932,6 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 								((CIVLArrayType) civlType).elementType(),
 								(SymbolicExpression) arguments[2], newPrefix,
 								separator));
-				// result.append(arguments[2].toStringBuffer(false));
 				result.append("}");
 				return result.toString();
 			}
@@ -999,11 +1005,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				String padding = "\n" + prefix + separator;
 				String newPrefix = needNewLine ? prefix + separator : prefix;
 
-				if (arguments[0] instanceof SymbolicExpression)
+				if (arguments[0] instanceof SymbolicExpression) {
+					result.append("(");
 					result.append(this.symbolicExpressionToString(source,
-							state, null, (SymbolicExpression) arguments[0],
-							atomize, "", "", false));
-				else
+							state, civlType, (SymbolicExpression) arguments[0],
+							atomize, prefix, separator, false));
+					result.append(")");
+				} else
 					result.append(arguments[0].toStringBuffer(true));
 				result.append("{");
 				for (SymbolicExpression value : (SymbolicSequence<?>) arguments[1]) {
@@ -1229,20 +1237,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(")");
 				return result.toString();
 			case UNION_INJECT: {
-				// IntObject memberIndex = (IntObject) arguments[0];
-				// CIVLType memberType;
-				// // result.append("inject(");
-				//
-				// assert civlType instanceof CIVLStructOrUnionType;
-				// memberType = ((CIVLStructOrUnionType) civlType).getField(
-				// memberIndex.getInt()).type();
 				result.append(this.symbolicExpressionToString(source, state,
 						civlType, (SymbolicExpression) arguments[1], prefix,
 						separator));
-				// result.append(arguments[0].toStringBuffer(false));
-				// result.append(",");
-				// result.append(arguments[1].toStringBuffer(false));
-				// result.append(")");
 				return result.toString();
 			}
 			case UNION_TEST:
