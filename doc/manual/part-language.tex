@@ -642,7 +642,16 @@ assigning the integer variables the components of the current tuple in
 the domain at the start of each iteration.  The scope of the variables
 extends to the end of \texttt{S}.  The iterations takes place in the
 order specified by the domain, e.g., dictionary order for a Caretesian
-domain.
+domain. Note that if a range expression can be used as \texttt{dom} here, which will be 
+automatically converted to one dimensional domain. For example, 
+ \begin{verbatim}
+  $for (int i1, ..., in : 0 .. 10) S
+\end{verbatim}
+is equivalent to
+\begin{verbatim}
+  $for (int i1, ..., in : ($domain(1){0 .. 10})) S
+\end{verbatim}
+
 
 Note that if a range expression can be used as \texttt{dom} here, which will be 
 automatically converted to one dimensional domain. For example, 
