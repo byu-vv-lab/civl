@@ -11,14 +11,24 @@ typedef struct Line{
   Point end;
 } Line;
 
+typedef union MyUnion{
+  int a;
+  double b;
+} MyUnion;
+
 $input int x;
 $input int y;
+$input MyUnion MU;
+$input double dx;
+$input double dy;
 $input int _A[];
+$input _Bool B;
 $input $proc p;
 $input Point pt;
 $assume(p != $self);
 $input $scope sc;
 $assume(sc != $root);
+$assume(dx!=0);
 $proc p1;
 $abstract int random(int t);
 
@@ -52,9 +62,11 @@ void main(){
   int (*k)(int)=&sum;
   int A[10];
   int*p;
-  int n;
-  _Bool b;
+  int n, n1, n2, n3, n4, n5, n6, n7, n8, n9;
+  _Bool b, b1, b2, b3;
+  double d1,d2;
   int null;
+  MyUnion mu;
 
   A[1]=8;
   A[2]=9;
@@ -70,17 +82,22 @@ void main(){
   b=x<=y;
   b=(_Bool)x;
   $assume(x!=0);
-  n=y/x;
-  n=y%x;
-  n=x*y;
-  n=-y;
-  n=x!=y;
-  b=!b;
-  b= x||y;
-  n=x-y;
+  n1=y/x;
+  d1=dy/dx;
+  n2=y%x;
+  n3=x*y;
+  n4=-y;
+  b1=x!=y;
+  b2=!B;
+  b3= B || b1;
+  n5=x-y;
   b=x==y;
-  n=pt.x;
-  n=random(n);
+  n6=pt.x;
+  n7=random(n);
+  n8=x*x*x*x*x;
+  n9=MU.a;
+  d2=MU.b;
+  mu.a=n6;
   structs();
   p=(int*)$malloc($root, sizeof(int)*10);
   call(k, 2);
