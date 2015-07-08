@@ -62,7 +62,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
@@ -119,7 +118,6 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonQuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRegularRangeExpression;
-import edu.udel.cis.vsl.civl.model.common.expression.CommonResultExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonScopeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpression;
@@ -689,17 +687,6 @@ public class CommonModelFactory implements ModelFactory {
 			BigDecimal value) {
 		return new CommonRealLiteralExpression(source, typeFactory.realType,
 				value);
-	}
-
-	/**
-	 * This expression is only used in an ensures clause of a function contract
-	 * to refer to the returned value.
-	 * 
-	 * @return A result expression.
-	 */
-	@Override
-	public ResultExpression resultExpression(CIVLSource source) {
-		return new CommonResultExpression(source);
 	}
 
 	@Override

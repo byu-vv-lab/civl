@@ -49,7 +49,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
@@ -2031,20 +2030,6 @@ public class CommonEvaluator implements Evaluator {
 						.toPlainString()))));
 	}
 
-	private Evaluation evaluateResult(State state, int pid,
-			ResultExpression expression) {
-		// TODO
-		// this is used in a contract post-condition as a variable to
-		// refer to the result returned by a function. $result.
-		// get rid of ResultExpression and instead create a variable
-		// in the outermost scope of any function with non-void
-		// return type, store the result of return in that variable.
-		// Add method in Function to get that variable. (and set it?)
-		// Model builder will translate $result to that variable.
-		throw new CIVLUnimplementedFeatureException(
-				"$result not yet implemented: " + expression.getSource());
-	}
-
 	private Evaluation evaluateScopeofExpression(State state, int pid,
 			String process, ScopeofExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -2828,9 +2813,6 @@ public class CommonEvaluator implements Evaluator {
 		case REGULAR_RANGE:
 			result = evaluateRegularRange(state, pid,
 					(RegularRangeExpression) expression);
-			break;
-		case RESULT:
-			result = evaluateResult(state, pid, (ResultExpression) expression);
 			break;
 		case SCOPEOF:
 			result = evaluateScopeofExpression(state, pid, process,

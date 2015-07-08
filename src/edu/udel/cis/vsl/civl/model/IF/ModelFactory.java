@@ -42,7 +42,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ResultExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
@@ -439,16 +438,6 @@ public interface ModelFactory {
 	 */
 	DomainGuardExpression domainGuard(CIVLSource source, List<Variable> vars,
 			Variable counter, Expression domain);
-
-	/**
-	 * This expression is only used in an ensures clause of a function contract
-	 * to refer to the returned value.
-	 * 
-	 * @param source
-	 *            The CIVL source
-	 * @return A result expression.
-	 */
-	ResultExpression resultExpression(CIVLSource source);
 
 	/**
 	 * Creates a new $scopeof expression using the given argument.
