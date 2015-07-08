@@ -11,7 +11,7 @@ int main (int argc, char *argv[]) {
 #pragma omp single
     for (i=0; i < N; i++)
       a[i] = 0;
-      
+
 /*
 // This omp construct is completely eliminated
 #pragma omp parallel for
