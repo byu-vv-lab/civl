@@ -138,7 +138,7 @@ public class AMGTest {
 		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
-				filename("test/amg2013.c"),filename("krylov_bug/gmres_bug.c")));
+				filename("krylov_bug/bug.c")));
 		
 	}
 
