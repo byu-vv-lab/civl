@@ -709,13 +709,12 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 				gcheck);
 		if (lhs != null) {
 			if (!isMatched)// checking doesn't passed
-			{
 				state = primaryExecutor.assign(state, pid, process, lhs,
 						universe.falseExpression());
-			} else {
+			else
 				state = primaryExecutor.assign(state, pid, process, lhs,
 						universe.trueExpression());
-			}
+
 		}
 		return state;
 	}
