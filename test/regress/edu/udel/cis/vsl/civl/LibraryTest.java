@@ -51,6 +51,13 @@ public class LibraryTest {
 	}
 
 	@Test
+	public void elaborate1() throws ABCException {
+		assertTrue(ui
+				.run("verify -showTransitions=false -showPathCondition=false -enablePrintf=false",
+						filename(CIVLC, "elaborate1.cvl")));
+	}
+
+	@Test
 	public void string() throws ABCException {
 		assertTrue(ui.run("verify", filename(STRING, "string_test.cvl")));
 	}
