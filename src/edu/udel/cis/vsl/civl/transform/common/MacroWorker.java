@@ -23,6 +23,9 @@ import edu.udel.cis.vsl.abc.token.IF.MacroExpansion;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 
+/**
+ * Recovers macros.
+ */
 public class MacroWorker extends BaseWorker {
 
 	public MacroWorker(ASTFactory astFactory) {

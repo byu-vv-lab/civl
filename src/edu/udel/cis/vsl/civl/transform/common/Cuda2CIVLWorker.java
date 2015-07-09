@@ -51,18 +51,24 @@ public class Cuda2CIVLWorker extends BaseWorker {
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
 		SequenceNode<BlockItemNode> root = ast.getRootNode();
+		AST newAST;
 
 		ast.release();
 		removeBuiltinDefinitions(root);
 		translateCudaMallocCalls(root);
 		translateKernelCalls(root);
+		
+		if (!this.has_mainFunction(root)) {
+			transformMainFunction(root);
+			createNewMainFunction(root);
+		}
 		translateMainDefinition(root);
 		translateKernelDefinitions(root);
-
-		// root.prettyPrint(System.out);
-		// System.out.println();
-		return astFactory.newAST(root, ast.getSourceFiles());
+		newAST = astFactory.newAST(root, ast.getSourceFiles());
+		return newAST;
 	}
+	
+	
 
 	protected String newTemporaryVariableName() {
 		return "_t" + tempVarNum++;
@@ -77,8 +83,7 @@ public class Cuda2CIVLWorker extends BaseWorker {
 				FunctionDefinitionNode definition = (FunctionDefinitionNode) child;
 				if (definition.getName() != null
 						&& definition.getName().equals("main")) {
-					root.setChild(child.childIndex(),
-							mainDefinitionTransform(definition));
+					transformMainFunctionDefinition(definition);
 				}
 			}
 		}
@@ -189,41 +194,28 @@ public class Cuda2CIVLWorker extends BaseWorker {
 		// create comma node
 		ExpressionNode finalExpression = nodeFactory.newOperatorNode(source,
 				Operator.COMMA, Arrays.asList(assignment, nodeFactory
-				.newEnumerationConstantNode(nodeFactory
-				.newIdentifierNode(source, "cudaSuccess"))));
+						.newEnumerationConstantNode(nodeFactory
+								.newIdentifierNode(source, "cudaSuccess"))));
 		return finalExpression;
 	}
 
-	protected FunctionDefinitionNode mainDefinitionTransform(
-			FunctionDefinitionNode oldMain) {
-		Source source = oldMain.getSource();
-		FunctionDefinitionNode innerMainDefinition = oldMain.copy();
-		innerMainDefinition.setIdentifier(nodeFactory.newIdentifierNode(source,
-				"_main"));
+	private void transformMainFunctionDefinition(
+			FunctionDefinitionNode mainFunction) {
+		Source source = mainFunction.getSource();
 		FunctionCallNode cudaInitCall = nodeFactory.newFunctionCallNode(source,
 				this.identifierExpression(source, "_cudaInit"),
-				Collections.<ExpressionNode> emptyList(), null);
-		FunctionCallNode innerMainCall = nodeFactory.newFunctionCallNode(
-				source, this.identifierExpression(source, "_main"),
 				Collections.<ExpressionNode> emptyList(), null);
 		FunctionCallNode cudaFinalizeCall = nodeFactory.newFunctionCallNode(
 				source, this.identifierExpression(source, "_cudaFinalize"),
 				Collections.<ExpressionNode> emptyList(), null);
-		CompoundStatementNode newMainBody = nodeFactory
-				.newCompoundStatementNode(
-						source,
-						Arrays.<BlockItemNode> asList(
-								innerMainDefinition,
-								nodeFactory
-										.newExpressionStatementNode(cudaInitCall),
-								nodeFactory
-										.newExpressionStatementNode(innerMainCall),
-								nodeFactory
-										.newExpressionStatementNode(cudaFinalizeCall)));
-		FunctionDefinitionNode newMain = nodeFactory.newFunctionDefinitionNode(
-				source, nodeFactory.newIdentifierNode(source, "main"), oldMain
-						.getTypeNode().copy(), null, newMainBody);
-		return newMain;
+		CompoundStatementNode body = mainFunction.getBody();
+
+		body = this.insertToCompoundStatement(body,
+				nodeFactory.newExpressionStatementNode(cudaInitCall), 0);
+		body = this.insertToCompoundStatement(body,
+				nodeFactory.newExpressionStatementNode(cudaFinalizeCall),
+				body.numChildren());
+		mainFunction.setBody(body);
 	}
 
 	private String transformKernelName(String name) {

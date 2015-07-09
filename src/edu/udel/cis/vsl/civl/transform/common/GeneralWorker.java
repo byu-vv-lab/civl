@@ -25,7 +25,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
@@ -36,6 +35,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
+import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.NameTransformer;
@@ -49,25 +49,30 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
  * <li>malloc(...) to $malloc($gen_root, ...); where $gen_root is the root scope
  * of this AST (which is reserved as a relative root if other transformers make
  * this AST as part of another)</li>
+ * <li>
+ * introduce input variables for argc and argv</li>
+ * <li>
+ * introduce new file scope function $gen_root_function that calls the main
+ * function</li>
  * <li>arguments of the main function argc and argv become input variables</li>
  * <li>static variables are all moved to the root scope</li>
  * </ul>
  * 
- * @author zmanchun
+ * @author Manchun Zheng
  *
  */
 public class GeneralWorker extends BaseWorker {
 
+	final static String NAME = "GeneralTransformer";
 	private final static String MALLOC = "malloc";
 	final static String GENERAL_ROOT = "$gen_root";
 	private final static String MAX_ARGC = "10";
 	private final static String separator = "$";
-
 	private final static String INPUT_PREFIX = "CIVL_";
 	private int static_var_count = 0;
-
-	private String argvName;
-	private String newArgvName;
+	private String CIVL_argc_name;
+	private String CIVL_argv_name;
+	final static String _argvName = "_argv";
 	private StatementNode argcAssumption = null;
 	private Source mainSource;
 	/**
@@ -76,7 +81,7 @@ public class GeneralWorker extends BaseWorker {
 	private List<VariableDeclarationNode> static_variables = new LinkedList<>();
 
 	public GeneralWorker(ASTFactory astFactory) {
-		super("GeneralTransformer", astFactory);
+		super(NAME, astFactory);
 		this.identifierPrefix = "$gen_";
 	}
 
@@ -86,9 +91,11 @@ public class GeneralWorker extends BaseWorker {
 		AST newAst;
 		List<VariableDeclarationNode> inputVars = new ArrayList<>();
 		List<BlockItemNode> newExternalList = new ArrayList<>();
-		Map<String, VariableDeclarationNode> macroVars = new HashMap<>();
-
-		OrdinaryEntity mainEntity = unit.getInternalOrExternalEntity("main");
+		OrdinaryEntity mainEntity = unit.getInternalOrExternalEntity(MAIN);
+		FunctionDefinitionNode newMainFunction = null;
+		// VariableDeclarationNode _argv = null;
+		Function mainFunction;
+		FunctionDefinitionNode mainDef;
 
 		if (mainEntity == null) {
 			throw new SyntaxException("missing main function", unit
@@ -98,10 +105,8 @@ public class GeneralWorker extends BaseWorker {
 			throw new SyntaxException("non-function entity with name \"main\"",
 					mainEntity.getFirstDeclaration().getSource());
 		}
-
-		Function mainFunction = (Function) mainEntity;
-		FunctionDefinitionNode mainDef = mainFunction.getDefinition();
-
+		mainFunction = (Function) mainEntity;
+		mainDef = mainFunction.getDefinition();
 		unit = renameStaticVariables(unit);
 		unit.release();
 		root = moveStaticVariables(root);
@@ -113,10 +118,15 @@ public class GeneralWorker extends BaseWorker {
 			}
 		}
 		this.mainSource = mainDef.getSource();
-		inputVars = processMainFunction(mainDef);
-		processArgvRefs(mainDef.getBody());
-		for (BlockItemNode inputVar : macroVars.values())
-			newExternalList.add(inputVar);
+		inputVars = getInputVariables(mainDef);
+		if (inputVars.size() > 0) {
+			// the original main has parameters, need to transform main to _main
+			// TODO add new argv _argv
+			transformMainFunction(root);
+			newMainFunction = createNewMainFunction();
+		}
+		// no need to modify the body of main
+		// processArgvRefs(mainDef.getBody());
 		for (BlockItemNode inputVar : inputVars)
 			newExternalList.add(inputVar);
 		if (this.argcAssumption != null) {
@@ -124,67 +134,193 @@ public class GeneralWorker extends BaseWorker {
 					.getSource()));
 			newExternalList.add(argcAssumption);
 		}
+		// if (_argv != null)
+		// newExternalList.add(_argv);
 		// add my root
-		newExternalList.add(this.myRootNode());
+		newExternalList.add(this.generalRootScopeNode());
 		for (BlockItemNode child : root) {
 			if (child != null) {
 				newExternalList.add(child);
 				child.parent().removeChild(child.childIndex());
 			}
 		}
+		if (newMainFunction != null)
+			newExternalList.add(newMainFunction);
 		root = nodeFactory.newSequenceNode(root.getSource(), "TranslationUnit",
 				newExternalList);
 		this.completeSources(root);
 		newAst = astFactory.newAST(root, unit.getSourceFiles());
+//		newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
-	private VariableDeclarationNode myRootNode() {
+	private VariableDeclarationNode create_argv() throws SyntaxException {
+		TypeNode arrayOfCharPointer = nodeFactory.newArrayTypeNode(this
+				.newSource("new main function", CParser.TYPE), nodeFactory
+				.newPointerTypeNode(
+						this.newSource("new main function", CParser.POINTER),
+						this.basicType(BasicTypeKind.CHAR)), nodeFactory
+				.newIntegerConstantNode(this.newSource("new main function",
+						CParser.INTEGER_CONSTANT), MAX_ARGC));
+
+		return this.variableDeclaration(_argvName, arrayOfCharPointer);
+	}
+
+	/**
+	 * creates a new main function:
+	 * 
+	 * <pre>
+	 * void main(){
+	 *     for(int i=0; i &lt; 10; i = i + 1)
+	 *       _argv[i] = &CIVL_argv[i][0];
+	 *     _main(CIVL_argc, &_argv[0]);
+	 * }
+	 * </pre>
+	 * 
+	 * @return
+	 * @throws SyntaxException
+	 */
+	private FunctionDefinitionNode createNewMainFunction()
+			throws SyntaxException {
+		LoopNode forLoop;
+		ForLoopInitializerNode loopInit;
+		ExpressionNode condition, increment;
+		StatementNode loopBody;
+		ExpressionNode lhs, rhs;
+		ExpressionNode addressOf_argv0;
+		FunctionCallNode callMain;
+		List<BlockItemNode> blockItems = new LinkedList<>();
+		FunctionTypeNode mainFuncType;
+		VariableDeclarationNode _argv = this.create_argv();
+
+		loopInit = nodeFactory.newForLoopInitializerNode(this.newSource(
+				"new main function", CParser.INIT_DECLARATOR), Arrays
+				.asList(this.variableDeclaration("i", this
+						.basicType(BasicTypeKind.INT), nodeFactory
+						.newIntegerConstantNode(this.newSource(
+								"new main function", CParser.INTEGER_CONSTANT),
+								"0"))));
+		condition = nodeFactory.newOperatorNode(this.newSource(
+				"new main function", CParser.OPERATOR), Operator.LT, Arrays
+				.asList(this.identifierExpression("i"), nodeFactory
+						.newIntegerConstantNode(this.newSource(
+								"new main function", CParser.INTEGER_CONSTANT),
+								MAX_ARGC)));
+		increment = nodeFactory.newOperatorNode(
+				this.newSource("new main function", CParser.OPERATOR),
+				Operator.POSTINCREMENT,
+				Arrays.asList(this.identifierExpression("i")));
+		// _argv[i]
+		lhs = nodeFactory.newOperatorNode(this.newSource("new main function",
+				CParser.OPERATOR), Operator.SUBSCRIPT, Arrays.asList(this
+				.identifierExpression(_argvName), this.identifierExpression(
+				this.newSource("new main function", CParser.IDENTIFIER), "i")));
+		// CIVL_argv[i]
+		rhs = nodeFactory.newOperatorNode(this.newSource("new main function",
+				CParser.OPERATOR), Operator.SUBSCRIPT,
+				Arrays.asList(
+						this.identifierExpression(this.newSource(
+								"new main function", CParser.IDENTIFIER),
+								CIVL_argv_name), this.identifierExpression(this
+								.newSource("new main function",
+										CParser.INTEGER_CONSTANT), "i")));
+		// CIVL_argv[i][0]
+		rhs = nodeFactory.newOperatorNode(this.newSource("new main function",
+				CParser.OPERATOR), Operator.SUBSCRIPT, Arrays.asList(rhs,
+				nodeFactory.newIntegerConstantNode(this.newSource(
+						"new main function", CParser.INTEGER_CONSTANT), "0")));
+		// &CIVL_argv[i][0]
+		rhs = nodeFactory.newOperatorNode(
+				this.newSource("new main function", CParser.OPERATOR),
+				Operator.ADDRESSOF, Arrays.asList(rhs));
+		loopBody = nodeFactory.newExpressionStatementNode(nodeFactory
+				.newOperatorNode(
+						this.newSource("new main function", CParser.OPERATOR),
+						Operator.ASSIGN, Arrays.asList(lhs, rhs)));
+		forLoop = nodeFactory.newForLoopNode(
+				this.newSource("new main function", CParser.FOR), loopInit,
+				condition, increment, loopBody, null);
+		// _argv[0];
+		addressOf_argv0 = nodeFactory.newOperatorNode(this.newSource(
+				"new main function", CParser.OPERATOR), Operator.SUBSCRIPT,
+				Arrays.asList(this.identifierExpression(_argvName), nodeFactory
+						.newIntegerConstantNode(this.newSource(
+								"new main function", CParser.INTEGER_CONSTANT),
+								"0")));
+		// &_argv[0];
+		addressOf_argv0 = nodeFactory.newOperatorNode(
+				this.newSource("new main function", CParser.OPERATOR),
+				Operator.ADDRESSOF, Arrays.asList(addressOf_argv0));
+		// argv = &_argv[0];
+		// assignArgv = nodeFactory.newOperatorNode(
+		// this.newSource("new main function", CParser.OPERATOR),
+		// Operator.ASSIGN,
+		// Arrays.asList(this.identifierExpression(argvName), assignArgv));
+		callMain = nodeFactory.newFunctionCallNode(this.newSource(
+				"new main function", CParser.CALL), this
+				.identifierExpression(_MAIN), Arrays.asList(
+				this.identifierExpression(CIVL_argc_name), addressOf_argv0),
+				null);
+		blockItems.add(_argv);
+		blockItems.add(forLoop);
+		blockItems.add(nodeFactory.newExpressionStatementNode(callMain));
+		mainFuncType = nodeFactory.newFunctionTypeNode(mainSource, nodeFactory
+				.newBasicTypeNode(mainSource, BasicTypeKind.INT), nodeFactory
+				.newSequenceNode(this.newSource("new main function",
+						CParser.PARAMETER_TYPE_LIST), "formal parameter types",
+						new LinkedList<VariableDeclarationNode>()), false);
+
+		return nodeFactory.newFunctionDefinitionNode(this.mainSource,
+				this.identifier(MAIN), mainFuncType, null,
+				nodeFactory.newCompoundStatementNode(mainSource, blockItems));
+	}
+
+	private VariableDeclarationNode generalRootScopeNode() {
 		return nodeFactory.newVariableDeclarationNode(mainSource,
 				nodeFactory.newIdentifierNode(mainSource, GENERAL_ROOT),
 				nodeFactory.newScopeTypeNode(mainSource),
 				nodeFactory.newHereNode(mainSource));
 	}
 
-	private void processArgvRefs(ASTNode node) throws SyntaxException {
-		if (node instanceof OperatorNode
-				&& ((OperatorNode) node).getOperator() == Operator.SUBSCRIPT) {
-			ASTNode parent = node.parent();
-
-			if (!(parent instanceof OperatorNode && (((OperatorNode) parent)
-					.getOperator() == Operator.ADDRESSOF))
-					&& !(parent instanceof CastNode)) {
-				OperatorNode subscript = (OperatorNode) node;
-				ExpressionNode arg0 = subscript.getArgument(0);
-
-				if (arg0.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
-					IdentifierExpressionNode idExpr = (IdentifierExpressionNode) arg0;
-
-					if (idExpr.getIdentifier().name().equals(this.argvName)) {
-						OperatorNode newSubscript = subscript.copy();
-						IdentifierExpressionNode newIdExpr = idExpr.copy();
-						Source source = subscript.getSource();
-						ExpressionNode addreessOf;
-
-						newIdExpr.getIdentifier().setName(newArgvName);
-						newSubscript.setChild(0, newIdExpr);
-						newSubscript = nodeFactory.newOperatorNode(source,
-								Operator.SUBSCRIPT, Arrays.asList(newSubscript,
-										nodeFactory.newIntegerConstantNode(
-												source, "0")));
-						addreessOf = nodeFactory.newOperatorNode(source,
-								Operator.ADDRESSOF,
-								Arrays.asList((ExpressionNode) newSubscript));
-						node.parent().setChild(node.childIndex(), addreessOf);
-					}
-				}
-			}
-		} else {
-			for (ASTNode child : node.children())
-				if (child != null)
-					processArgvRefs(child);
-		}
-	}
+	// private void processArgvRefs(ASTNode node) throws SyntaxException {
+	// if (node instanceof OperatorNode
+	// && ((OperatorNode) node).getOperator() == Operator.SUBSCRIPT) {
+	// ASTNode parent = node.parent();
+	//
+	// if (!(parent instanceof OperatorNode && (((OperatorNode) parent)
+	// .getOperator() == Operator.ADDRESSOF))
+	// && !(parent instanceof CastNode)) {
+	// OperatorNode subscript = (OperatorNode) node;
+	// ExpressionNode arg0 = subscript.getArgument(0);
+	//
+	// if (arg0.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+	// IdentifierExpressionNode idExpr = (IdentifierExpressionNode) arg0;
+	//
+	// if (idExpr.getIdentifier().name().equals(this.argvName)) {
+	// OperatorNode newSubscript = subscript.copy();
+	// IdentifierExpressionNode newIdExpr = idExpr.copy();
+	// Source source = subscript.getSource();
+	// ExpressionNode addreessOf;
+	//
+	// newIdExpr.getIdentifier().setName(CIVL_argv_name);
+	// newSubscript.setChild(0, newIdExpr);
+	// newSubscript = nodeFactory.newOperatorNode(source,
+	// Operator.SUBSCRIPT, Arrays.asList(newSubscript,
+	// nodeFactory.newIntegerConstantNode(
+	// source, "0")));
+	// addreessOf = nodeFactory.newOperatorNode(source,
+	// Operator.ADDRESSOF,
+	// Arrays.asList((ExpressionNode) newSubscript));
+	// node.parent().setChild(node.childIndex(), addreessOf);
+	// }
+	// }
+	// }
+	// } else {
+	// for (ASTNode child : node.children())
+	// if (child != null)
+	// processArgvRefs(child);
+	// }
+	// }
 
 	private void processMalloc(ASTNode node) {
 		if (node instanceof FunctionCallNode) {
@@ -255,7 +391,7 @@ public class GeneralWorker extends BaseWorker {
 	 *            function will update this list.
 	 * @throws SyntaxException
 	 */
-	private List<VariableDeclarationNode> processMainFunction(
+	private List<VariableDeclarationNode> getInputVariables(
 			FunctionDefinitionNode mainFunction) throws SyntaxException {
 		List<VariableDeclarationNode> inputVars = new ArrayList<>();
 		FunctionTypeNode functionType = mainFunction.getTypeNode();
@@ -279,103 +415,19 @@ public class GeneralWorker extends BaseWorker {
 			VariableDeclarationNode argc = parameters.getSequenceChild(0);
 			VariableDeclarationNode argv = parameters.getSequenceChild(1);
 			VariableDeclarationNode CIVL_argc = argc.copy();
-			VariableDeclarationNode CIVL_argv, _argv;
+			VariableDeclarationNode CIVL_argv;
 			String argcName = argc.getIdentifier().name();
 			String argvName = argv.getIdentifier().name();
-			String _argvName = "_" + argvName;
-			String newArgcName = INPUT_PREFIX + argcName;
-			Source source = argv.getTypeNode().getSource();
-			TypeNode pointerOfPointerOfChar = nodeFactory.newPointerTypeNode(
-					source,
-					nodeFactory.newPointerTypeNode(source,
-							this.basicType(BasicTypeKind.CHAR)));
-			CompoundStatementNode functionBody = mainFunction.getBody();
-			TypeNode arrayOfCharPointer = nodeFactory.newArrayTypeNode(
-					source,
-					nodeFactory.newPointerTypeNode(source,
-							this.basicType(BasicTypeKind.CHAR)),
-					nodeFactory.newIntegerConstantNode(source, MAX_ARGC));
-			LoopNode forLoop;
-			ForLoopInitializerNode loopInit;
-			ExpressionNode condition, increment;
-			StatementNode loopBody;
-			ExpressionNode lhs, rhs;
-			ExpressionNode assignArgv;
 
-			this.argvName = argvName;
-			this.newArgvName = INPUT_PREFIX + argvName;
-			parameters.removeChild(0);
-			parameters.removeChild(1);
+			this.CIVL_argc_name = INPUT_PREFIX + argcName;
+			this.CIVL_argv_name = INPUT_PREFIX + argvName;
 			CIVL_argc.getTypeNode().setInputQualified(true);
-			CIVL_argc.getIdentifier().setName(newArgcName);
+			CIVL_argc.getIdentifier().setName(this.CIVL_argc_name);
 			inputVars.add(CIVL_argc);
-			CIVL_argv = inputArgvDeclaration(argv, newArgvName);
+			CIVL_argv = inputArgvDeclaration(argv, CIVL_argv_name);
 			inputVars.add(CIVL_argv);
-			functionType.setParameters(nodeFactory.newSequenceNode(
-					parameters.getSource(), "FormalParameterDeclarations",
-					new ArrayList<VariableDeclarationNode>(0)));
 			this.argcAssumption = this.argcAssumption(argc.getSource(),
-					newArgcName);
-			argc.setInitializer(this.identifierExpression(argc.getSource(),
-					newArgcName));
-			argv.setTypeNode(pointerOfPointerOfChar);
-			_argv = argv.copy();
-			_argv.getIdentifier().setName(_argvName);
-			_argv.setTypeNode(arrayOfCharPointer);
-			source = argv.getSource();
-			loopInit = nodeFactory.newForLoopInitializerNode(
-					source,
-					Arrays.asList(this.variableDeclaration("i",
-							this.basicType(BasicTypeKind.INT),
-							nodeFactory.newIntegerConstantNode(source, "0"))));
-			condition = nodeFactory.newOperatorNode(source, Operator.LT, Arrays
-					.asList(this.identifierExpression(source, "i"), nodeFactory
-							.newIntegerConstantNode(source, MAX_ARGC)));
-			increment = nodeFactory.newOperatorNode(source,
-					Operator.POSTINCREMENT,
-					Arrays.asList(this.identifierExpression(source, "i")));
-			// _argv[i]
-			lhs = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
-					Arrays.asList(this.identifierExpression(source, _argvName),
-							this.identifierExpression(source, "i")));
-			// CIVL_argv[i]
-			rhs = nodeFactory.newOperatorNode(source, Operator.SUBSCRIPT,
-					Arrays.asList(
-							this.identifierExpression(source, newArgvName),
-							this.identifierExpression(source, "i")));
-			// CIVL_argv[i][0]
-			rhs = nodeFactory.newOperatorNode(
-					source,
-					Operator.SUBSCRIPT,
-					Arrays.asList(rhs,
-							nodeFactory.newIntegerConstantNode(source, "0")));
-			// &CIVL_argv[i][0]
-			rhs = nodeFactory.newOperatorNode(source, Operator.ADDRESSOF,
-					Arrays.asList(rhs));
-			loopBody = nodeFactory.newExpressionStatementNode(nodeFactory
-					.newOperatorNode(source, Operator.ASSIGN,
-							Arrays.asList(lhs, rhs)));
-			forLoop = nodeFactory.newForLoopNode(source, loopInit, condition,
-					increment, loopBody, null);
-			// _argv[0];
-			assignArgv = nodeFactory.newOperatorNode(source,
-					Operator.SUBSCRIPT, Arrays.asList(
-							this.identifierExpression(source, _argvName),
-							nodeFactory.newIntegerConstantNode(source, "0")));
-			// &_argv[0];
-			assignArgv = nodeFactory.newOperatorNode(source,
-					Operator.ADDRESSOF, Arrays.asList(assignArgv));
-			// argv = &_argv[0];
-			assignArgv = nodeFactory.newOperatorNode(source, Operator.ASSIGN,
-					Arrays.asList(this.identifierExpression(source, argvName),
-							assignArgv));
-			functionBody = this.addNodeToBeginning(functionBody,
-					nodeFactory.newExpressionStatementNode(assignArgv));
-			functionBody = this.addNodeToBeginning(functionBody, forLoop);
-			functionBody = this.addNodeToBeginning(functionBody, argv);
-			functionBody = this.addNodeToBeginning(functionBody, _argv);
-			functionBody = this.addNodeToBeginning(functionBody, argc);
-			mainFunction.setBody(functionBody);
+					this.CIVL_argc_name);
 		}
 		return inputVars;
 	}
@@ -455,22 +507,6 @@ public class GeneralWorker extends BaseWorker {
 	// }
 	// }
 
-	private CompoundStatementNode addNodeToBeginning(
-			CompoundStatementNode compoundNode, BlockItemNode node) {
-		int numChildren = compoundNode.numChildren();
-		List<BlockItemNode> nodeList = new ArrayList<>(numChildren + 1);
-
-		nodeList.add(node);
-		for (int i = 0; i < numChildren; i++) {
-			BlockItemNode child = compoundNode.getSequenceChild(i);
-
-			nodeList.add(child);
-			compoundNode.removeChild(i);
-		}
-		return nodeFactory.newCompoundStatementNode(compoundNode.getSource(),
-				nodeList);
-	}
-
 	private AST renameStaticVariables(AST ast) throws SyntaxException {
 		Map<Entity, String> newNameMap = new HashMap<>();
 		NameTransformer staticVariableNameTransformer;
@@ -537,5 +573,4 @@ public class GeneralWorker extends BaseWorker {
 		return nodeFactory
 				.newTranslationUnitNode(root.getSource(), newChildren);
 	}
-
 }

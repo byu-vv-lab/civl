@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
@@ -15,10 +16,13 @@ import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.NodeFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
@@ -53,8 +57,9 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
  */
 public abstract class BaseWorker {
 
+	protected final static String _MAIN = "_main";
+	protected final static String MAIN = "main";
 	protected final static String ASSUME = "$assume";
-
 	protected final static String ASSERT = "$assert";
 
 	protected String identifierPrefix;
@@ -110,16 +115,113 @@ public abstract class BaseWorker {
 	 *             process of transformation
 	 */
 	protected abstract AST transform(AST ast) throws SyntaxException;
+
+	/**
+	 * Does the root node contains a _main function definition in its children?
+	 * 
+	 * @return
+	 */
+	protected boolean has_mainFunction(SequenceNode<BlockItemNode> root) {
+		for (BlockItemNode child : root) {
+			if (child == null)
+				continue;
+			if (child instanceof FunctionDefinitionNode) {
+				if (((FunctionDefinitionNode) child).getName().equals(_MAIN))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * rename all main function declaration to _main, and all function call to
+	 * main to _main.
+	 * 
+	 * @param root
+	 */
+	protected void transformMainFunction(SequenceNode<BlockItemNode> root) {
+		for (BlockItemNode child : root) {
+			if (child == null)
+				continue;
+			if (child instanceof FunctionDeclarationNode) {
+				FunctionDeclarationNode funcDecl = (FunctionDeclarationNode) child;
+
+				if (funcDecl.getName().equals(MAIN)) {
+					funcDecl.getIdentifier().setName(_MAIN);
+					// FunctionTypeNode funcType = funcDecl.getTypeNode();
+					//
+					// VariableDeclarationNode secondPara = funcType
+					// .getParameters().getSequenceChild(1);
+
+//					secondPara.getTypeNode().setConstQualified(true);
+				}
+			}
+			transformMainCall(child);
+		}
+	}
+
+	protected void createNewMainFunction(SequenceNode<BlockItemNode> root) {
+		FunctionCallNode callMain;
+		List<BlockItemNode> blockItems = new LinkedList<>();
+		FunctionTypeNode mainFuncType;
+		FunctionDefinitionNode newMainFunction;
+
+		callMain = nodeFactory.newFunctionCallNode(
+				this.newSource("new main function", CParser.CALL),
+				this.identifierExpression(_MAIN),
+				new LinkedList<ExpressionNode>(), null);
+		blockItems.add(nodeFactory.newExpressionStatementNode(callMain));
+		mainFuncType = nodeFactory.newFunctionTypeNode(this.newSource(
+				"new main function", CParser.TYPE), nodeFactory
+				.newBasicTypeNode(
+						this.newSource("new main function", CParser.TYPE),
+						BasicTypeKind.INT), nodeFactory.newSequenceNode(this
+				.newSource("new main function", CParser.PARAMETER_TYPE_LIST),
+				"formal parameter types",
+				new LinkedList<VariableDeclarationNode>()), false);
+		newMainFunction = nodeFactory.newFunctionDefinitionNode(this.newSource(
+				"new main function", CParser.FUNCTION_DEFINITION), this
+				.identifier(MAIN), mainFuncType, null, nodeFactory
+				.newCompoundStatementNode(
+						this.newSource("new main function", CParser.BODY),
+						blockItems));
+		root.addSequenceChild(newMainFunction);
+	}
 	
+	/**
+	 * rename all calls to main to _main.
+	 * 
+	 * @param node
+	 */
+	private void transformMainCall(ASTNode node) {
+		if (node instanceof FunctionCallNode) {
+			FunctionCallNode call = (FunctionCallNode) node;
+			ExpressionNode function = call.getFunction();
+
+			if (function instanceof IdentifierExpressionNode) {
+				IdentifierNode functionID = ((IdentifierExpressionNode) function)
+						.getIdentifier();
+
+				if (functionID.name().equals(MAIN))
+					functionID.setName(_MAIN);
+			}
+		}
+		for (ASTNode child : node.children()) {
+			if (child == null)
+				continue;
+			this.transformMainCall(child);
+		}
+	}
+
 	protected FunctionDeclarationNode assumeFunctionDeclaration(Source source) {
 		IdentifierNode name = nodeFactory.newIdentifierNode(source, "$assume");
 		FunctionTypeNode funcType = nodeFactory.newFunctionTypeNode(source,
-				nodeFactory.newVoidTypeNode(source), nodeFactory.newSequenceNode(
-						source, "Formals", Arrays.asList(nodeFactory
-								.newVariableDeclarationNode(source, nodeFactory
-										.newIdentifierNode(source,
-												"expression"), nodeFactory
-										.newBasicTypeNode(source,
+				nodeFactory.newVoidTypeNode(source), nodeFactory
+						.newSequenceNode(source, "Formals", Arrays
+								.asList(nodeFactory.newVariableDeclarationNode(
+										source, nodeFactory.newIdentifierNode(
+												source, "expression"),
+										nodeFactory.newBasicTypeNode(source,
 												BasicTypeKind.BOOL))))
 
 				, false);
@@ -568,6 +670,32 @@ public abstract class BaseWorker {
 		rootNode = this.nodeFactory.newSequenceNode(first.getRootNode()
 				.getSource(), "Translation Unit", allNodes);
 		return this.astFactory.newAST(rootNode, sourceFiles);
+	}
+
+	/**
+	 * insert a block item node to a compound statement node at the given index.
+	 * 
+	 * @param compoundNode
+	 * @param node
+	 * @return
+	 */
+	protected CompoundStatementNode insertToCompoundStatement(
+			CompoundStatementNode compoundNode, BlockItemNode node, int index) {
+		int numChildren = compoundNode.numChildren();
+		List<BlockItemNode> nodeList = new ArrayList<>(numChildren + 1);
+
+		for (int i = 0; i < numChildren; i++) {
+			BlockItemNode child = compoundNode.getSequenceChild(i);
+
+			if (i == index)
+				nodeList.add(node);
+			nodeList.add(child);
+			compoundNode.removeChild(i);
+		}
+		if (index >= numChildren)
+			nodeList.add(node);
+		return nodeFactory.newCompoundStatementNode(compoundNode.getSource(),
+				nodeList);
 	}
 
 	/* *************************** Private Methods ************************* */

@@ -577,6 +577,7 @@ public class CommonExecutor implements Executor {
 		try {
 			statement.reached();
 			return executeWork(state, pid, statement);
+			// return this.stateFactory.simplify(state);
 		} catch (SARLException e) {
 			// e.printStackTrace(System.err);
 			// System.err.flush();
@@ -736,6 +737,7 @@ public class CommonExecutor implements Executor {
 		VariableExpression parProcsVar = parFor.parProcsVar();
 		SymbolicExpression parProcsPointer;
 
+		state = this.stateFactory.simplify(state);
 		eval = evaluator.evaluate(state, pid, domain);
 		domainValue = eval.value;
 		state = eval.state;
