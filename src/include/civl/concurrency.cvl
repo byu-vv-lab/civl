@@ -33,11 +33,7 @@ struct $barrier {
 /******************* Collective Arrive Checking Records *******************/
 /* Record entry */
 struct $collect_record {
-  int routine_tag;
-  int root;
-  int op;
-  int numTypes;
-  int datatypes[];
+  $bundle entries;
   _Bool marks[];  //an array stores marks for processes
   int numMarked;  //number of processes already marked this record
 };

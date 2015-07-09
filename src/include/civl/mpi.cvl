@@ -121,16 +121,20 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
   __MPI_Sys_status__ curr_status;
   int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
-  int types[1] = {datatype};
   int datatypes[1] = {(int)datatype};
+  $bundle checkerEntries;
+  _Bool checkPassed = $false;
 
   curr_status = CMPI_Get_status();
   $assert (curr_status == __INIT,
 	  "MPI_Bcast() cannot be invoked without MPI_Init() "
 	   "being called before.\n");
   CMPI_AssertConsistentType(buf, datatype);
-  $collect_check(comm.collect_checker, place, nprocs, BCAST_TAG, root, -1, 1,
-		 &types);
+  checkerEntries = CMPI_CreateCoroutineEntries(BCAST_TAG, root, -1, 1, datatypes);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Bcast routine with "
+	 "at least one of other processes.\n", place);
   CMPI_Bcast(buf, count, datatype, root, BCAST_TAG, comm, "MPI_Bcast()");
   return 0;
 }
@@ -143,13 +147,19 @@ int MPI_Reduce(const void* sendbuf, void* recvbuf, int count,
   int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
   int datatypes[1] = {(int)datatype};
+  $bundle checkerEntries;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert (curr_status == __INIT,
 	  "MPI_Reduce() cannot be invoked without "
 	   "MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, place, nprocs, REDUCE_TAG, root, (int)op, 1,
-		 &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(REDUCE_TAG, root, (int)op, 1,
+		 datatypes);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Reduce routine with "
+	 "at least one of other processes.\n", place);
   CMPI_AssertConsistentType(sendbuf, datatype);
   CMPI_AssertConsistentType(recvbuf, datatype);
   CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, REDUCE_TAG, comm, "MPI_Reduce()");
@@ -165,16 +175,22 @@ int MPI_Allreduce(const void* sendbuf, void* recvbuf, int count,
   int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
   int datatypes[1] = {(int)datatype};
+  $bundle checkerEntries;
   MPI_Status status;
   __MPI_Sys_status__ curr_status;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Allreduce() cannot be invoked without "
     "MPI_Init() being called before.\n");
   CMPI_AssertConsistentType(sendbuf, datatype);
   CMPI_AssertConsistentType(recvbuf, datatype);
-  $collect_check(comm.collect_checker, place, nprocs, ALLREDUCE_TAG, root, 
-		 (int)op, 1, &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(ALLREDUCE_TAG, root, 
+		 (int)op, 1, datatypes);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Allreduce routine with "
+	 "at least one of other processes.\n", place);
   CMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, ALLREDUCE_TAG, comm,
 	      "MPI_Allreduce()");
   CMPI_Bcast(recvbuf, count, datatype, root, ALLREDUCE_TAG, comm, 
@@ -186,12 +202,18 @@ int MPI_Barrier(MPI_Comm comm){
   __MPI_Sys_status__ curr_status;
   int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
+  $bundle checkerEntries;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Barrier() cannot be invoked "
     "without MPI_Init() being called before.\n");
-  $collect_check(comm.collect_checker, place, nprocs, -1, -1, 
+  checkerEntries = CMPI_CreateCoroutineEntries(-1, -1, 
 		 BARRIER_TAG, 0, NULL);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Barrier routine with "
+	 "at least one of other processes.\n", place);
   $barrier_call(comm.barrier);
   return 0;
 }
@@ -207,6 +229,8 @@ int MPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  $bundle checkerEntries;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Gather() cannot be invoked without "
@@ -214,8 +238,11 @@ int MPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   if(sendbuf != MPI_IN_PLACE)
     CMPI_AssertConsistentType(sendbuf, sendtype);
   CMPI_AssertConsistentType(recvbuf, recvtype);
-  $collect_check(comm.collect_checker, place, nprocs,
-		 GATHER_TAG, root, -1, 2, &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(GATHER_TAG, root, -1, 2, datatypes);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Gather routine with "
+	 "at least one of other processes.\n", place);
   CMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
 	      root, GATHER_TAG, comm, "MPI_Gather()");
   return 0;
@@ -229,6 +256,8 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  $bundle checkerEntries;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Scatter() cannot be invoked without "
@@ -236,8 +265,12 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   CMPI_AssertConsistentType(sendbuf, sendtype);
   if(recvbuf != MPI_IN_PLACE)
     CMPI_AssertConsistentType(recvbuf, recvtype);
-  $collect_check(comm.collect_checker, place, nprocs,
-		 SCATTER_TAG, root, -1, 2, &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(SCATTER_TAG, root, -1, 2, 
+					       datatypes);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Scatter routine with "
+	 "at least one of other processes.\n", place);
   CMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
 	       root, SCATTER_TAG, comm, "MPI_Scatter()");
   return 0;
@@ -252,6 +285,8 @@ int MPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  $bundle checkerEntries;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Gatherv() cannot be invoked without "
@@ -259,8 +294,12 @@ int MPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
   if(sendbuf != MPI_IN_PLACE)
     CMPI_AssertConsistentType(sendbuf, sendtype);
   CMPI_AssertConsistentType(recvbuf, recvtype);
-  $collect_check(comm.collect_checker, place, nprocs, GATHERV_TAG, root, 
-		 -1, 2, &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(GATHERV_TAG, root, 
+		 -1, 2, datatypes);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Gatherv routine with "
+	 "at least one of other processes.\n", place);
   CMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
 	       recvtype, root, GATHERV_TAG, comm, "MPI_Gatherv()");
   return 0;
@@ -274,6 +313,8 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
   int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  $bundle checkerEntries;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Scatterv() cannot be invoked without "
@@ -281,8 +322,14 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
   CMPI_AssertConsistentType(sendbuf, sendtype);
   if(recvbuf != MPI_IN_PLACE)
     CMPI_AssertConsistentType(recvbuf, recvtype);
-  $collect_check(comm.collect_checker, place, nprocs,
-		 SCATTERV_TAG, root, -1, 2, &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(SCATTERV_TAG, 
+					       root, -1, 2, 
+					       datatypes);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs,
+		 checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Scatterv routine with "
+	 "at least one of other processes.\n", place);
   CMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf,
 		recvcount, recvtype, root, SCATTERV_TAG, comm, 
 		"MPI_Scatterv()");
@@ -295,7 +342,9 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   int place = $comm_place(comm.col);
   int nprocs = $comm_size(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  $bundle checkerEntries;
   __MPI_Sys_status__ curr_status;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Allgather() cannot be invoked without "
@@ -303,8 +352,12 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   if(sendbuf != MPI_IN_PLACE)
     CMPI_AssertConsistentType(sendbuf, sendtype);
   CMPI_AssertConsistentType(recvbuf, recvtype);
-  $collect_check(comm.collect_checker, place, nprocs,
-		 ALLGATHER_TAG, 0, -1, 2, &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(ALLGATHER_TAG, 0, -1, 2, 
+					       datatypes);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Allgather routine with "
+	 "at least one of other processes.\n", place);
   CMPI_Gather(sendbuf, sendcount, sendtype,
 	     recvbuf, recvcount, recvtype,
 	      0, ALLGATHER_TAG, comm, "MPI_Allgather()");
@@ -321,7 +374,9 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[]
   int root = 0;
   int displs[nprocs];
   int datatypes[1] = {(int)datatype};
+  $bundle checkerEntries;
   __MPI_Sys_status__ curr_status;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Reduce_scatter() cannot be invoked without "
@@ -329,8 +384,12 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[]
   CMPI_AssertConsistentType(sendbuf, datatype);
   if(recvbuf != MPI_IN_PLACE)
     CMPI_AssertConsistentType(recvbuf, datatype);
-  $collect_check(comm.collect_checker, rank, nprocs,
-		 RED_SCATTER_TAG, root, (int)op, 2, &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(RED_SCATTER_TAG, root, (int)op, 1, 
+					       datatypes);
+  checkPassed = $collect_check(comm.collect_checker, rank, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Reduce_scatter routine with "
+	 "at least one of other processes.\n", rank);
   for(total_count = 0, i = 0; i<nprocs; i++) {
     displs[i] = total_count;
     total_count += recvcount[i];
@@ -357,7 +416,9 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   int displs[nprocs];
   int sendcounts[nprocs];
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  $bundle checkerEntries;
   __MPI_Sys_status__ curr_status;
+  _Bool checkPassed;
 
   for(int i=0; i<nprocs; i++) {
     sendcounts[i] = sendcount;
@@ -368,8 +429,12 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     "MPI_Init() being called before.\n");
   CMPI_AssertConsistentType(sendbuf, sendtype);
   CMPI_AssertConsistentType(recvbuf, recvtype);
-  $collect_check(comm.collect_checker, rank, nprocs,
-		 ALLTOALL_TAG, root, -1, 2, &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(ALLTOALL_TAG, root, -1, 2, 
+					       datatypes);
+  checkPassed = $collect_check(comm.collect_checker, rank, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Alltoall routine with "
+	 "at least one of other processes.\n", rank);
   for(int i = 0; i < nprocs; i++) {
     void * ptr = CMPI_PointerAdd(recvbuf, i*sendcount, recvtype);
 
@@ -387,15 +452,21 @@ int MPI_Alltoallv(const void* sendbuf, const int sendcounts[],
   int nprocs = $comm_size(comm.col);
   int place = $comm_place(comm.col);
   int datatypes[2] = {(int)sendtype, (int)recvtype};
+  $bundle checkerEntries;
   __MPI_Sys_status__ curr_status;
+  _Bool checkPassed;
 
   curr_status = CMPI_Get_status();
   $assert(curr_status == __INIT, "MPI_Alltoallv() cannot be invoked without "
     "MPI_Init() being called before.\n");
   CMPI_AssertConsistentType(sendbuf, sendtype);
   CMPI_AssertConsistentType(recvbuf, recvtype);
-  $collect_check(comm.collect_checker, place, nprocs,
-		 ALLTOALLV_TAG, 0, -1, 2, &datatypes);
+  checkerEntries = CMPI_CreateCoroutineEntries(ALLTOALLV_TAG, 0, -1, 2, 
+					       datatypes);
+  checkPassed = $collect_check(comm.collect_checker, place, nprocs, checkerEntries);
+  $assert(checkPassed, "Process with rank %d is calling an "
+	 "possibly inconsistent MPI_Alltoallv routine with "
+	 "at least one of other processes.\n", place);
   for(int i = 0; i < nprocs; i++) {
     void * ptr = CMPI_PointerAdd(recvbuf, rdispls[i], recvtype);
 

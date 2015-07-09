@@ -10,7 +10,6 @@ import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
-import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
@@ -24,17 +23,16 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
-import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
-import edu.udel.cis.vsl.sarl.IF.number.Number;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.expr.Expressions;
@@ -568,10 +566,13 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 
 	/**
 	 * Execute the collective checking function:
-	 * <code>void $collect_check($collect_checker checker, int place, int nprocs,                                                    
-	 *               int routine_tag, int root, int op, int numTypes, void * datatypes)</code>
-	 * The execution logic is: The first process for a record will create the
-	 * record, and enqueue the record. <br>
+	 * <code>_Bool $collect_check($collect_checker checker, int place, int nprocs,
+	 *                           $bundle bundle)</code> This CIVL-C function
+	 * returns false if and only if a process checks an existed record and get a
+	 * mismatched result.<br>
+	 * The execution logic is:<br>
+	 * The first process for a record will create the record, and enqueue the
+	 * record. <br>
 	 * Rest processes marks themselves in the corresponding record. <br>
 	 * The last marked process dequeue the record. <br>
 	 * Since all records for processes must be checked in the same order, the
@@ -601,12 +602,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression checkhandle = argumentValues[0];
 		SymbolicExpression place = argumentValues[1];
 		SymbolicExpression nprocs = argumentValues[2];
-		SymbolicExpression routine_tag = argumentValues[3];
-		SymbolicExpression root = argumentValues[4];
-		SymbolicExpression op = argumentValues[5];
-		SymbolicExpression numTypes = argumentValues[6];
-		SymbolicExpression typesPtr = argumentValues[7];
-		SymbolicExpression types;
+		SymbolicExpression bundledEntries = argumentValues[3];
 		SymbolicExpression check, gcheckHandle, gcheck;
 		SymbolicExpression records, tail_record;
 		SymbolicExpression marksArray; // marks array of a record
@@ -615,32 +611,16 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		BooleanExpression claim;
 		NumericExpression records_length;
 		NumericExpression numMarked; // number of marked processes in one record
-		Number temp;
-		IntegerNumber int_numTypes;
 		Reasoner reasoner;
 		Evaluation eval;
 		ResultType resultType;
+		boolean isMatched = true;
 		// fields indices
-		IntObject marksArrayIdx = universe.intObject(5);
-		IntObject numMarksIdx = universe.intObject(6);
+		IntObject marksArrayIdx = universe.intObject(1);
+		IntObject numMarksIdx = universe.intObject(2);
 
 		// Decides "numTypes", it must be a concrete number.
 		reasoner = universe.reasoner(state.getPathCondition());
-		temp = reasoner.extractNumber((NumericExpression) numTypes);
-		if (temp == null)
-			throw new CIVLInternalException(
-					"Collective operation checker must know the number of datatypes of a record.\n",
-					source);
-		int_numTypes = (IntegerNumber) temp;
-		assert int_numTypes.intValue() >= 0 && int_numTypes.intValue() < 3 : "CIVL currently only support 1 or 2 "
-				+ "datatypes in one collective record. (e.g. MPI_Alltoallw() is not supported)\n";
-		if (int_numTypes.intValue() > 0) {
-			eval = evaluator.dereference(source, state, process, arguments[7],
-					typesPtr, false);
-			state = eval.state;
-			types = eval.value;
-		} else
-			types = universe.emptyArray(universe.integerType());
 		eval = evaluator.dereference(source, state, process, arguments[0],
 				checkhandle, false);
 		state = eval.state;
@@ -672,7 +652,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		// itself.
 		if (resultType.equals(ResultType.YES)) {
 			SymbolicExpression newRecord = this.createANewRecord(state, place,
-					nprocs, routine_tag, root, op, numTypes, types);
+					nprocs, bundledEntries);
 
 			records = universe.append(records, newRecord);
 			records_length = universe.add(records_length, one);
@@ -682,64 +662,38 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 			SymbolicExpression unmarked_record = null;
 			NumericExpression loopIdf = zero; // symbolic loop identifier
 			boolean isMarked = true;
-			boolean isMatched;
-			String unmatchMessage;
-			List<Object> checkingResults; // return type of the helper function
+			SymbolicExpression marked_record;
 
 			while (isMarked) {
-				try {
-					unmarked_record = universe.arrayRead(records, loopIdf);
-					marksArray = universe.tupleRead(unmarked_record,
-							marksArrayIdx);
-					markedElement = (BooleanExpression) universe.arrayRead(
-							marksArray, (NumericExpression) place);
-					if (reasoner.valid(markedElement).getResultType()
-							.equals(ResultType.NO))
-						isMarked = false;
-					else
-						loopIdf = universe.add(loopIdf, one);
-				} catch (SARLException e) {
-					throw new CIVLInternalException(
-							"Unexpected Collective operation checking exception.\n",
-							source);
-				}
-			}
-			assert unmarked_record != null : "Unexpected Collective operation checking exception.\n";
-			checkingResults = this.isRecordMatch(state, unmarked_record,
-					routine_tag, root, op, numTypes, types);
-			isMatched = (boolean) checkingResults.get(0);
-			unmatchMessage = (String) checkingResults.get(1);
-			resultType = (ResultType) checkingResults.get(2);
-			claim = (BooleanExpression) checkingResults.get(3);
-			if (!isMatched) {
-				assert unmatchMessage != null;
-				// checking un-passed
-				state = errorLogger.logError(source, state, process,
-						symbolicAnalyzer.stateInformation(state), claim,
-						resultType, ErrorKind.MPI_ERROR,
-						"Collective operation mismatched on field: "
-								+ unmatchMessage + ".\n");
-			} else {
-				SymbolicExpression marked_record;
-				// checking passed, mark process itself
-
+				unmarked_record = universe.arrayRead(records, loopIdf);
 				marksArray = universe.tupleRead(unmarked_record, marksArrayIdx);
-				marksArray = universe.arrayWrite(marksArray,
-						(NumericExpression) place, trueValue);
-				numMarked = (NumericExpression) universe.tupleRead(
-						unmarked_record, numMarksIdx);
-				numMarked = universe.add(numMarked, one);
-				marked_record = universe.tupleWrite(unmarked_record,
-						marksArrayIdx, marksArray);
-				marked_record = universe.tupleWrite(marked_record, numMarksIdx,
-						numMarked);
-				records = universe.arrayWrite(records, loopIdf, marked_record);
-				modifiedRecord = marked_record;
+				markedElement = (BooleanExpression) universe.arrayRead(
+						marksArray, (NumericExpression) place);
+				if (reasoner.valid(markedElement).getResultType()
+						.equals(ResultType.NO))
+					isMarked = false;
+				else
+					loopIdf = universe.add(loopIdf, one);
 			}
+			isMatched = this.isRecordMatch(state, unmarked_record,
+					bundledEntries);
+			// No matter whether checking passed or not, the process always mark
+			// itself so that the execution can continue
+			marksArray = universe.tupleRead(unmarked_record, marksArrayIdx);
+			marksArray = universe.arrayWrite(marksArray,
+					(NumericExpression) place, trueValue);
+			numMarked = (NumericExpression) universe.tupleRead(unmarked_record,
+					numMarksIdx);
+			numMarked = universe.add(numMarked, one);
+			marked_record = universe.tupleWrite(unmarked_record, marksArrayIdx,
+					marksArray);
+			marked_record = universe.tupleWrite(marked_record, numMarksIdx,
+					numMarked);
+			records = universe.arrayWrite(records, loopIdf, marked_record);
+			modifiedRecord = marked_record;
 		}
 		// ------Step 3: check if the process is the last one marks the record,
 		// if it is, dequeue the record.
-		assert modifiedRecord != null : "Internal error in collective operation checking";
 		numMarked = (NumericExpression) universe.tupleRead(modifiedRecord,
 				numMarksIdx);
 		claim = universe.equals(numMarked, nprocs);
@@ -753,6 +707,16 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		gcheck = universe.tupleWrite(gcheck, oneObject, records);
 		state = primaryExecutor.assign(source, state, process, gcheckHandle,
 				gcheck);
+		if (lhs != null) {
+			if (!isMatched)// checking doesn't passed
+			{
+				state = primaryExecutor.assign(state, pid, process, lhs,
+						universe.falseExpression());
+			} else {
+				state = primaryExecutor.assign(state, pid, process, lhs,
+						universe.trueExpression());
+			}
+		}
 		return state;
 	}
 
@@ -765,23 +729,14 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 	 *            The place of the process in the collective checking system
 	 * @param nprocs
 	 *            The number of processes in the collective checking system
-	 * @param routine_tag
-	 *            An item of the record
-	 * @param root
-	 *            An item of the record
-	 * @param op
-	 *            An item of the record
-	 * @param numTypes
-	 *            An item of the record
-	 * @param datatypesArray
-	 *            An item of the record
+	 * @param bundle
+	 *            The $bundle type object stores entries which should be stored
+	 *            in a record.
 	 * @return A new record of a collective operation checking system.
 	 */
 	private SymbolicExpression createANewRecord(State state,
 			SymbolicExpression place, SymbolicExpression nprocs,
-			SymbolicExpression routine_tag, SymbolicExpression root,
-			SymbolicExpression op, SymbolicExpression numTypes,
-			SymbolicExpression datatypesArray) {
+			SymbolicExpression bundle) {
 		SymbolicExpression newRecord;
 		SymbolicExpression newMarks;
 		List<SymbolicExpression> newRecordComponents = new LinkedList<>();
@@ -793,11 +748,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 				this.falseValue);
 		newMarks = universe.arrayWrite(newMarks, (NumericExpression) place,
 				this.trueValue);
-		newRecordComponents.add(routine_tag);
-		newRecordComponents.add(root);
-		newRecordComponents.add(op);
-		newRecordComponents.add(numTypes);
-		newRecordComponents.add(datatypesArray);
+		newRecordComponents.add(bundle);
 		newRecordComponents.add(newMarks);
 		newRecordComponents.add(one);
 		newRecord = universe.tuple(
@@ -808,65 +759,32 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 
 	/**
 	 * Check if a record is matched with a given group of values of another
-	 * record. Returns a {@link List} of four objects: {@link Boolean} result,
-	 * {@link String} error information, {@link ResultType} resultType,
-	 * {@link BooleanExpression} claim
+	 * record.
 	 * 
 	 * @param state
 	 *            The current state
 	 * @param unmarked_record
 	 *            The record in queue which is used to compare
-	 * @param routine_tag
-	 *            A item of a record
-	 * @param root
-	 *            A item of a record
-	 * @param op
-	 *            A item of a record
-	 * @param numTypes
-	 *            A item of a record
-	 * @param datatypesArray
-	 *            A item of a record
-	 * @return a {@link List} of four objects: {@link Boolean} result,
-	 *         {@link String} error information, {@link ResultType} resultType,
-	 *         {@link BooleanExpression} claim
+	 * @param bundle
+	 *            The $bundle type object stores entries which should be stored
+	 *            in a record.
+	 * @return true if and only if the two records are matched
+	 * @throws LibraryLoaderException
 	 */
-	private List<Object> isRecordMatch(State state,
-			SymbolicExpression unmarked_record, SymbolicExpression routine_tag,
-			SymbolicExpression root, SymbolicExpression op,
-			SymbolicExpression numTypes, SymbolicExpression datatypesArray) {
+	private boolean isRecordMatch(State state,
+			SymbolicExpression unmarked_record,
+			SymbolicExpression bundledEntries) {
 		ResultType resultType;
 		BooleanExpression claim;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-		IntObject routineTagIdx = this.zeroObject;
-		IntObject rootIdx = oneObject;
-		IntObject opIdx = twoObject;
-		IntObject numTypesIdx = universe.intObject(3);
-		IntObject typesIdx = universe.intObject(4);
+		IntObject bundledIdx = this.zeroObject;
 
-		claim = universe
-				.equals(universe.tupleRead(unmarked_record, routineTagIdx),
-						routine_tag);
+		claim = universe.equals(bundledEntries,
+				universe.tupleRead(unmarked_record, bundledIdx));
 		resultType = reasoner.valid(claim).getResultType();
-		if (!resultType.equals(ResultType.YES))
-			return Arrays.asList(false, "routine_tag", resultType, claim);
-		claim = universe.equals(universe.tupleRead(unmarked_record, rootIdx),
-				root);
-		resultType = reasoner.valid(claim).getResultType();
-		if (!resultType.equals(ResultType.YES))
-			return Arrays.asList(false, "root", resultType, claim);
-		claim = universe.equals(universe.tupleRead(unmarked_record, opIdx), op);
-		resultType = reasoner.valid(claim).getResultType();
-		if (!resultType.equals(ResultType.YES))
-			return Arrays.asList(false, "operation", resultType, claim);
-		claim = universe.equals(
-				universe.tupleRead(unmarked_record, numTypesIdx), numTypes);
-		// TODO change to andTo
-		claim = universe.and(claim, universe.equals(
-				universe.tupleRead(unmarked_record, typesIdx), datatypesArray));
-		resultType = reasoner.valid(claim).getResultType();
-		if (!resultType.equals(ResultType.YES))
-			return Arrays.asList(false, "datatypes", resultType, claim);
-		return Arrays.asList(Boolean.TRUE, (Object) null, (Object) null,
-				(Object) null);
+		if (resultType.equals(ResultType.YES))
+			return true;
+		else
+			return false;
 	}
 }

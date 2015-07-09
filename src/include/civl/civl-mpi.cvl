@@ -9,6 +9,7 @@
 #include <civl-mpi.cvh>
 #include <string.h>
 #include <pointer.cvh>
+#include <seq.cvh>
 
 /**************************** Duplicated Part *************************************/
 /* Duplicated definition with the same struct in mpi.h.
@@ -527,6 +528,29 @@ int CMPI_Comm_free(MPI_Comm * comm) {
     CMPI_Gcomm_destroy(temp);
   }
   return 0;
+}
+
+$bundle CMPI_CreateCoroutineEntries(int routineTag, int root, 
+				    int op, int numDatatypes, int * datatypes) {
+  int zero = 0;
+  $bundle bundledEntries;
+  struct Entries {
+    int routine_tag;
+    int root;
+    int op;
+    int numTypes;
+    int datatypes[];
+  }entries;
+
+  entries.routine_tag = routineTag;
+  entries.root = root;
+  entries.op = op;
+  entries.numTypes = numDatatypes;
+  $seq_init(&entries.datatypes, numDatatypes, &zero);
+  for(int i = 0; i < numDatatypes; i++)
+    entries.datatypes[i] = datatypes[i];
+  bundledEntries = $bundle_pack(&entries, sizeof(struct Entries));
+  return bundledEntries;
 }
 
 #endif
