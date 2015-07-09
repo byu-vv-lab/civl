@@ -49,9 +49,9 @@ public class TransformerFactory {
 		this.astFactory = astFactory;
 	}
 
-	public Transformer getGeneralTransformer() {
+	public Transformer getGeneralTransformer(CIVLConfiguration config) {
 		if (generalTransformer == null)
-			generalTransformer = new GeneralTransformer(astFactory);
+			generalTransformer = new GeneralTransformer(astFactory, config);
 		return generalTransformer;
 	}
 

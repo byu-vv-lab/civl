@@ -40,6 +40,7 @@ import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.NameTransformer;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 
 /**
@@ -63,10 +64,10 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
  */
 public class GeneralWorker extends BaseWorker {
 
+	private final static int DEFAULT_ARGV_SIZE = 10;
 	final static String NAME = "GeneralTransformer";
 	private final static String MALLOC = "malloc";
 	final static String GENERAL_ROOT = "$gen_root";
-	private final static String MAX_ARGC = "10";
 	private final static String separator = "$";
 	private final static String INPUT_PREFIX = "CIVL_";
 	private int static_var_count = 0;
@@ -75,14 +76,16 @@ public class GeneralWorker extends BaseWorker {
 	final static String _argvName = "_argv";
 	private StatementNode argcAssumption = null;
 	private Source mainSource;
+	private CIVLConfiguration config;
 	/**
 	 * static variable declaration nodes of this AST
 	 */
 	private List<VariableDeclarationNode> static_variables = new LinkedList<>();
 
-	public GeneralWorker(ASTFactory astFactory) {
+	public GeneralWorker(ASTFactory astFactory, CIVLConfiguration config) {
 		super(NAME, astFactory);
 		this.identifierPrefix = "$gen_";
+		this.config = config;
 	}
 
 	@Override
@@ -150,7 +153,7 @@ public class GeneralWorker extends BaseWorker {
 				newExternalList);
 		this.completeSources(root);
 		newAst = astFactory.newAST(root, unit.getSourceFiles());
-//		newAst.prettyPrint(System.out, true);
+		// newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
@@ -159,11 +162,23 @@ public class GeneralWorker extends BaseWorker {
 				.newSource("new main function", CParser.TYPE), nodeFactory
 				.newPointerTypeNode(
 						this.newSource("new main function", CParser.POINTER),
-						this.basicType(BasicTypeKind.CHAR)), nodeFactory
-				.newIntegerConstantNode(this.newSource("new main function",
-						CParser.INTEGER_CONSTANT), MAX_ARGC));
+						this.basicType(BasicTypeKind.CHAR)), this
+				.getUpperBoundOfArgvSize());
 
 		return this.variableDeclaration(_argvName, arrayOfCharPointer);
+	}
+
+	private ExpressionNode getUpperBoundOfArgvSize() throws SyntaxException {
+		Map<String, Object> inputVariables = config.inputVariables();
+
+		if (inputVariables != null
+				&& inputVariables.containsKey(CIVL_argc_name)) {
+			Object CIVL_argc_obj = inputVariables.get(CIVL_argc_name);
+
+			assert CIVL_argc_obj instanceof Integer;
+			return this.integerConstant((int) CIVL_argc_obj);
+		}
+		return this.integerConstant(DEFAULT_ARGV_SIZE);
 	}
 
 	/**
@@ -200,12 +215,11 @@ public class GeneralWorker extends BaseWorker {
 						.newIntegerConstantNode(this.newSource(
 								"new main function", CParser.INTEGER_CONSTANT),
 								"0"))));
-		condition = nodeFactory.newOperatorNode(this.newSource(
-				"new main function", CParser.OPERATOR), Operator.LT, Arrays
-				.asList(this.identifierExpression("i"), nodeFactory
-						.newIntegerConstantNode(this.newSource(
-								"new main function", CParser.INTEGER_CONSTANT),
-								MAX_ARGC)));
+		condition = nodeFactory.newOperatorNode(
+				this.newSource("new main function", CParser.OPERATOR),
+				Operator.LT,
+				Arrays.asList(this.identifierExpression("i"),
+						this.getUpperBoundOfArgvSize()));
 		increment = nodeFactory.newOperatorNode(
 				this.newSource("new main function", CParser.OPERATOR),
 				Operator.POSTINCREMENT,
@@ -426,8 +440,10 @@ public class GeneralWorker extends BaseWorker {
 			inputVars.add(CIVL_argc);
 			CIVL_argv = inputArgvDeclaration(argv, CIVL_argv_name);
 			inputVars.add(CIVL_argv);
-			this.argcAssumption = this.argcAssumption(argc.getSource(),
-					this.CIVL_argc_name);
+			if (config.inputVariables() == null
+					|| !config.inputVariables().containsKey(CIVL_argc_name))
+				this.argcAssumption = this.argcAssumption(argc.getSource(),
+						this.CIVL_argc_name);
 		}
 		return inputVars;
 	}
@@ -446,10 +462,11 @@ public class GeneralWorker extends BaseWorker {
 				Operator.LT, Arrays.asList(
 						nodeFactory.newIntegerConstantNode(source, "0"),
 						this.identifierExpression(source, argcName)));
-		ExpressionNode upperBound = nodeFactory.newOperatorNode(source,
-				Operator.LT, Arrays.asList(
-						this.identifierExpression(source, argcName),
-						nodeFactory.newIntegerConstantNode(source, MAX_ARGC)));
+		ExpressionNode upperBound = nodeFactory.newOperatorNode(
+				source,
+				Operator.LT,
+				Arrays.asList(this.identifierExpression(source, argcName),
+						this.integerConstant(DEFAULT_ARGV_SIZE)));
 
 		return nodeFactory.newExpressionStatementNode(this.functionCall(source,
 				ASSUME, Arrays.asList((ExpressionNode) nodeFactory
@@ -473,7 +490,7 @@ public class GeneralWorker extends BaseWorker {
 				source,
 				nodeFactory.newArrayTypeNode(oldArgv.getSource(),
 						this.basicType(BasicTypeKind.CHAR), null),
-				nodeFactory.newIntegerConstantNode(source, MAX_ARGC));
+				this.getUpperBoundOfArgvSize());
 
 		__argv.getIdentifier().setName(argvNewName);
 		arrayOfString.setInputQualified(true);

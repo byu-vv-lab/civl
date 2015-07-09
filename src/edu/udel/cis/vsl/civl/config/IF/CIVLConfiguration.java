@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.config.IF;
 
 import java.io.PrintStream;
+import java.util.Map;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants.DeadlockKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -194,6 +195,8 @@ public class CIVLConfiguration {
 
 	private boolean absAnalysis = false;
 
+	private Map<String, Object> inputVariables;
+
 	/**
 	 * Constructs a new CIVL configuration object from the command line
 	 * configuration.
@@ -269,7 +272,7 @@ public class CIVLConfiguration {
 		this.showTime = config.isTrue(CIVLConstants.showTimeO);
 		this.procBound = (Integer) config
 				.getValueOrDefault(CIVLConstants.procBoundO);
-
+		this.setInputVariables(config.getMapValue(CIVLConstants.inputO));
 	}
 
 	public void setOut(PrintStream out) {
@@ -551,9 +554,24 @@ public class CIVLConfiguration {
 	}
 
 	/**
-	 * @param absAnalysis the absAnalysis to set
+	 * @param absAnalysis
+	 *            the absAnalysis to set
 	 */
 	public void setAbsAnalysis(boolean absAnalysis) {
 		this.absAnalysis = absAnalysis;
+	}
+
+	/**
+	 * @return the inputVariables
+	 */
+	public Map<String, Object> inputVariables() {
+		return inputVariables;
+	}
+
+	/**
+	 * @param inputVariables the inputVariables to set
+	 */
+	public void setInputVariables(Map<String, Object> inputVariables) {
+		this.inputVariables = inputVariables;
 	}
 }
