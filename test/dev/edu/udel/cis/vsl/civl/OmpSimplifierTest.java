@@ -180,7 +180,12 @@ public class OmpSimplifierTest {
 	
 	@Test
 	public void region1() throws ABCException, IOException {
-		//check("region1");
+		check("region1");
+	}
+	
+	@Test
+	public void region2() throws ABCException, IOException {
+		check("region2");
 	}
 
 	@SuppressWarnings("unused")
