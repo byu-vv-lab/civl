@@ -23,6 +23,8 @@
 #include "headers.h"
 #include "float.h"
 
+#define DBL_EPSILON 2.2204460492503131e-16
+
 int hypre_LINPACKcgtql1(int*,double *,double *,int *);
 
 /******************************************************************************

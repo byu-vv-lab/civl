@@ -72,8 +72,8 @@ typedef struct
    int    (*ScaleVector)   ( double alpha, void *x );
    int    (*Axpy)          ( double alpha, void *x, void *y );
 
-   int    (*precond)();
-   int    (*precond_setup)();
+   int    (*precond)(void*, void*, void*, void*);
+   int    (*precond_setup)(void*, void*, void*, void*);
 } hypre_PCGFunctions;
 
 /**

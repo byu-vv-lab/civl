@@ -352,6 +352,7 @@ int hypre_FindProc ( HYPRE_BigInt *list , HYPRE_BigInt value , int list_length )
 /* IJVector.c */
 int hypre_IJVectorDistribute ( HYPRE_IJVector vector , const HYPRE_BigInt *vec_starts );
 int hypre_IJVectorZeroValues ( HYPRE_IJVector vector );
+int hypre_IJVectorDistributePar(hypre_IJVector *vector, const int *vec_starts);
 
 /* IJVector_parcsr.c */
 int hypre_IJVectorCreatePar ( hypre_IJVector *vector , HYPRE_BigInt *IJpartitioning );

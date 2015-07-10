@@ -191,7 +191,7 @@ hypre_PCGSetup( void *pcg_vdata,
    hypre_PCGData *pcg_data = pcg_vdata;
    hypre_PCGFunctions *pcg_functions = pcg_data->functions;
    int            max_iter         = (pcg_data -> max_iter);
-   int          (*precond_setup)() = (pcg_functions -> precond_setup);
+   int          (*precond_setup)(void*, void*, void*, void*) = (pcg_functions -> precond_setup);
    void          *precond_data     = (pcg_data -> precond_data);
    int            ierr = 0;
 
@@ -282,7 +282,7 @@ hypre_PCGSolve( void *pcg_vdata,
    void           *s            = (pcg_data -> s);
    void           *r            = (pcg_data -> r);
    void           *matvec_data  = (pcg_data -> matvec_data);
-   int           (*precond)()   = (pcg_functions -> precond);
+   int           (*precond)(void*, void*, void*, void*)   = (pcg_functions -> precond);
    void           *precond_data = (pcg_data -> precond_data);
    int             print_level  = (pcg_data -> print_level);
    int             logging      = (pcg_data -> logging);
@@ -829,8 +829,8 @@ hypre_PCGGetPrecond( void         *pcg_vdata,
 
 int
 hypre_PCGSetPrecond( void  *pcg_vdata,
-                     int  (*precond)(),
-                     int  (*precond_setup)(),
+                     int  (*precond)(void*, void*, void*, void*),
+                     int  (*precond_setup)(void*, void*, void*, void*),
                      void  *precond_data )
 {
    hypre_PCGData *pcg_data = pcg_vdata;
