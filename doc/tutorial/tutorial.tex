@@ -53,13 +53,13 @@
     \item static analyses (coming)
     \end{itemize}
   \item \ldots a set of translators from common programming
-    language/concurrency API combinations to CIVL-C (in progress)
+    language/concurrency API combinations to CIVL-C
     \begin{itemize}
     \item Pthreads
     \item OpenMP
     \item MPI
     \item CUDA
-    \item OpenCL
+    \item coming: OpenCL, C11, \ldots
     \end{itemize}
   \end{enumerate}
 
@@ -69,11 +69,143 @@
   \end{itemize}
 \end{frame}
 
+
+\begin{frame}{CIVL Framework}
+  \begin{center}
+    \includegraphics[scale=.55]{framework3}
+  \end{center}
+
+  User Interface: command line
+  \begin{itemize}
+  \item \code{civl run ...}
+  \item \code{civl verify ...}
+  \item \code{civl replay ...}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Concurrency and the Organization of the State}
+
+  \begin{tabular}{ccc}
+    \includegraphics[scale=.9]{openmp} & \includegraphics[scale=.9]{mpihybrid}
+    & \includegraphics[scale=.9]{cuda}\\[5mm]
+    OpenMP & MPI/Pthreads & CUDA
+  \end{tabular}
+
+  \only<1>{
+    \vspace{5mm}
+    
+    \begin{tabular}{ll}
+      \includegraphics[scale=.04]{Dijkstra3} &
+      \raisebox{1cm}{
+        \parbox{9cm}{\textcolor{blue}{``An abstraction is one
+            thing that represents several real
+            things equally well.''} --- Edsger Dijkstra quoted by
+          David Parnas}
+      }
+    \end{tabular}
+  }
+
+  \only<2->{
+    \begin{itemize}
+    \item need abstractions to represent all of these
+      systems equally well
+    \item abstraction \#1: nested functions
+      \begin{itemize}
+      \item CIVL-C allows function definitions in any scope
+      \end{itemize}
+    \item abstraction \#2: a function in any scope can be
+      \alert{spawned}
+      \begin{itemize}
+      \item creates new process running that function
+      \end{itemize}
+    \end{itemize}
+  }
+
+\end{frame}
+
+\begin{frame}[containsverbatim]{}
+  \begin{tabular}[t]{@{}l|@{\hspace{4pt}}l|@{\hspace{4pt}}l@{}}
+    \begin{minipage}[t]{1.45in}
+      \vspace{-8pt}
+      \centering
+      \includegraphics{openmp}
+    \end{minipage}
+    &
+    \begin{minipage}[t]{1.5in}
+      \vspace{-8pt}
+      \centering
+      \includegraphics{mpihybrid}
+    \end{minipage}
+    &
+    \begin{minipage}[t]{1.7in}
+      \vspace{-8pt}
+      \centering
+      \includegraphics{cuda}
+    \end{minipage}
+    \\ && \\[0in]
+    \begin{minipage}[t]{1.45in}
+      \scriptsize
+\begin{verbatim}
+// shared vars
+void Thread(int id) {
+  // private vars
+  ...
+}
+$proc threads[n];
+for (i=0; i<n; i++)
+  threads[i] = 
+    $spawn Thread(i);
+for (i=0; i<n; i++)
+  $wait threads[i];
+\end{verbatim}
+    \end{minipage}
+    &
+    \begin{minipage}[t]{1.5in}
+      \scriptsize
+\begin{verbatim}
+$comm comm; // buffers
+void Process(int pid) {
+ // process variables
+ void Thread(int tid) {
+  // private vars
+  ... $send, $recv ...
+ }
+ // spawn threads...
+}
+// spawn processes
+// ...
+\end{verbatim}
+    \end{minipage}
+    &
+    \begin{minipage}[t]{1.7in}
+      \scriptsize
+\begin{verbatim}
+// shared state
+void Host() {
+}
+void Grid() {
+ // global vars
+ void Block(int bid) {
+  // shared vars
+  void Thread (int tid) {
+   // thread-local vars
+}}} ...
+\end{verbatim}
+    \end{minipage}
+    \\
+    \multicolumn{3}{c}{}\\
+    \multicolumn{1}{c}{OpenMP} &
+    \multicolumn{1}{c}{MPI/Pthreads} &
+    \multicolumn{1}{c}{CUDA}
+  \end{tabular}
+\end{frame}
+
 \begin{frame}{Some CIVL-C primitives}
   \begin{tabular}{ll}
     \cproc & the process type \\
     \cself & the evaluating process (constant of type \cproc) \\
     \cscope & the scope type \\
+    \chere & this scope (constant of type \cscope)\\
     \cinput & type qualifier declaring variable to be a program input \\
     \coutput & type qualifier declaring variable to be a program output \\
     \cspawn & create a new process running procedure \\
@@ -84,7 +216,8 @@
     \cassume & assume something holds \\
     \cwhen & guarded statement \\
     \cchoose & nondeterministic choice statement \\
-    \cchooseint & nondeterministic choice of integer
+    \cchooseint & nondeterministic choice of integer\\
+    \cmalloc & malloc in a specified scope
   \end{tabular}
 \end{frame}
 
@@ -202,56 +335,56 @@ The standard properties hold for all executions.
   \end{small}
 \end{frame}
 
-\begin{frame}{Download and Installation}
-  \begin{enumerate}
-  \item Get a Java 7 VM.
-  \item Go to \url{http://vsl.cis.udel.edu/civl}
-  \item Navigate to downloads, \emph{latest stable release}.
-  \item Download version corresponding to your platform.
-    \begin{itemize}
-    \item for now, pre-compiled versions for OS X and linux (32- and 64-bit)
-    \item other platforms must build from source
-    \end{itemize}
-  \item Unpack and move resulting directory \texttt{CIVL-\textit{tag}}
-    under \texttt{/opt}.
-  \item Download the VSL dependencies archive.
-    \begin{itemize}
-    \item contains a number of pre-compiled open source libraries used by CIVL
-    \item \url{http://vsl.cis.udel.edu/tools/vsl\_depend}
-    \end{itemize}
-  \item Unpack and move resulting directory \texttt{vsl} under \texttt{/opt}.
-  \item Put \texttt{/opt/CIVL-\textit{tag}/bin/civl} in your path.
-    \begin{itemize}
-    \item however you want: move it, symlink, \ldots
-    \end{itemize}
-  \end{enumerate}
+% \begin{frame}{Download and Installation}
+%   \begin{enumerate}
+%   \item Get a Java 7 VM.
+%   \item Go to \url{http://vsl.cis.udel.edu/civl}
+%   \item Navigate to downloads, \emph{latest stable release}.
+%   \item Download version corresponding to your platform.
+%     \begin{itemize}
+%     \item for now, pre-compiled versions for OS X and linux (32- and 64-bit)
+%     \item other platforms must build from source
+%     \end{itemize}
+%   \item Unpack and move resulting directory \texttt{CIVL-\textit{tag}}
+%     under \texttt{/opt}.
+%   \item Download the VSL dependencies archive.
+%     \begin{itemize}
+%     \item contains a number of pre-compiled open source libraries used by CIVL
+%     \item \url{http://vsl.cis.udel.edu/tools/vsl\_depend}
+%     \end{itemize}
+%   \item Unpack and move resulting directory \texttt{vsl} under \texttt{/opt}.
+%   \item Put \texttt{/opt/CIVL-\textit{tag}/bin/civl} in your path.
+%     \begin{itemize}
+%     \item however you want: move it, symlink, \ldots
+%     \end{itemize}
+%   \end{enumerate}
 
-  \alert{Note:} You can put \texttt{vsl} and \texttt{CIVL-\textit{tag}}
-  in any directories (not just \texttt{/opt}).  Just edit script \texttt{civl}
-  to use the new paths.
-\end{frame}
+%   \alert{Note:} You can put \texttt{vsl} and \texttt{CIVL-\textit{tag}}
+%   in any directories (not just \texttt{/opt}).  Just edit script \texttt{civl}
+%   to use the new paths.
+% \end{frame}
 
-\begin{frame}[containsverbatim]{Test your installation}
+% \begin{frame}[containsverbatim]{Test your installation}
 
-  From command line \ldots
+%   From command line \ldots
 
-\begin{verbatim}
-concurrency$ civl
-CIVL v0.8 of 2014-03-03 -- http://vsl.cis.udel.edu/civl
-Missing command
-Type "civl help" for command line syntax.
+% \begin{verbatim}
+% concurrency$ civl
+% CIVL v0.8 of 2014-03-03 -- http://vsl.cis.udel.edu/civl
+% Missing command
+% Type "civl help" for command line syntax.
 
-concurrency$ civl help
-...
-\end{verbatim}
+% concurrency$ civl help
+% ...
+% \end{verbatim}
 
-Copy \texttt{/opt/CIVL-\textit{tag}/examples/concurrency/adder.cvl}
-to your working directory and try
+% Copy \texttt{/opt/CIVL-\textit{tag}/examples/concurrency/adder.cvl}
+% to your working directory and try
 
-\begin{verbatim}
-    civl verify -inputB=5 adder.cvl
-\end{verbatim}
-\end{frame}
+% \begin{verbatim}
+%     civl verify -inputB=5 adder.cvl
+% \end{verbatim}
+% \end{frame}
 
 \begin{frame}{Inherited from C}
   \begin{itemize}
@@ -652,7 +785,7 @@ void $bundle_unpack($bundle bundle, void *ptr);
     \end{itemize}
   \item typically the returned value is assigned to a variable, e.g.:
     \begin{itemize}
-    \item \code{\cproc\ p = \cspawn f(i);}
+    \item \code{\cproc\ p = \cspawn{} f(i);}
     \end{itemize}
   \item if \texttt{f} returns a value, that value is ignored
   \end{itemize}
