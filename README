@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v1.1
+                               v1.2
 
 ------------------------------ Overview -------------------------------
 
@@ -41,20 +41,13 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v1.0 -------------------------
-
-New features:
-- new option -analyze_abs for analyzing the invocations of the 
-  absolute value function abs of stdlib.h
-- new option -showUnreached for displaying code that are never 
-  executed/reached during model checking
-(See examples in examples/analysis for more details.)
-
-Bugs fixed: 
-- bad format in the pretty printing of states
-- incorrect modeling of static variables
-- incorrect evaluation of some quantifier expressions
-- exception thrown for $bundle_pack/unpack
+-------------------------- Updates from v1.1 -------------------------
+- printing the values of input variables for assertion violations
+- improving the printing of transitions
+- improving the general transformer to be more robust by fixing the way
+  it transforms the main function
+- fixing a bug for the conversion between int and boolean
+- fixing a bug related to $elaborate and $parfor
 
    
 ------------------------- Binary Installation -------------------------
