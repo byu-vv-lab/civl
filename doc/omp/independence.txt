@@ -49,6 +49,8 @@ critical
   no barrier, but special semantics should be considered to improve
   precision of independence analysis
 
+  region within critical will never be executed in multiple threads
+
 barrier
   end barrier
 

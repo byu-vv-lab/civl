@@ -48,6 +48,10 @@ import edu.udel.cis.vsl.civl.util.IF.Pair;
  * is given by a pair, (s, Set<e>), with an interpretation that it includes all paths
  * beginning at statement s and ending at a statement whose successor is some e.  
  * 
+ * Empty regions for a given parallel statement are not computed explicitly.  These can arise
+ * with initial, final or trivial use of barriers (e.g., barrier as first or last statement in
+ * the parallel statement).
+ * 
  * A region may include multiple execution paths.  
  * 
  * This class computes a set of regions for a given OpenMP parallel statement and makes that relation
@@ -170,7 +174,7 @@ public class OpenMPParallelRegions  {
 				if (!syncNode.nowait()) {
 					ASTNode succ = successor(syncNode);
 					if (succ != null)
-						frontier.add(succ);					
+						frontier.add(succ);
 					return frontier;
 				}
 			}
