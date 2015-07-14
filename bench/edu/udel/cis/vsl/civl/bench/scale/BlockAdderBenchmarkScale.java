@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.bench;
+package edu.udel.cis.vsl.civl.bench.scale;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
@@ -9,18 +9,19 @@ import edu.udel.cis.vsl.civl.run.IF.UserInterface;
  * @author zmanchun
  * 
  */
-public class BlockAdderBenchmark {
+public class BlockAdderBenchmarkScale {
 	private static UserInterface ui = new UserInterface();
 
 	public static void main(String[] args) {
-		// -inputB=10 -inputW=4: 27 seconds
 		String civlDir = ".";
 
 		if (args.length > 0)
 			civlDir = args[0];
-		System.out.println(">>>>>>>> Block adder <<<<<<<<");
-		ui.run("verify -echo -inputB=10 -inputW=4 " + civlDir
-				+ "/examples/concurrency/blockAdder.cvl");
+		for (int i = 2; i <= 8; i++) {
+			System.out.println(">>>>>>>> Block adder <<<<<<<<");
+			ui.run("verify -echo -inputB=" + 2 * i + " -inputW=" + i + " "
+					+ civlDir + "/examples/concurrency/blockAdder.cvl");
+		}
 	}
 
 }

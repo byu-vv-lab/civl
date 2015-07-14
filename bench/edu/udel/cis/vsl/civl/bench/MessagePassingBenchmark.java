@@ -14,7 +14,14 @@ public class MessagePassingBenchmark {
 
 	public static void main(String[] args) {
 		// no longer appears to be a serious benchmark, executes too quickly
-		ui.run("verify -echo -inputNPROCS_BOUND=10 -inputN_BOUND=3 examples/concurrency/ring.cvl");
+		String civlDir = ".";
+
+		if (args.length > 0)
+			civlDir = args[0];
+		System.out.println(">>>>>>>> Adder <<<<<<<<");
+		ui.run("verify  -input_NPROCS=4 -inputnsteps=2 -inputnx=2 -inputny=2 "
+				+ "-inputNPROCSX=2 -inputNPROCSY=2 -enablePrintf=false "
+				+ civlDir + "/examples/mpi/diffusion2d.c");
 	}
 
 }

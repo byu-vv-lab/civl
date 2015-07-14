@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.bench;
+package edu.udel.cis.vsl.civl.bench.scale;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
@@ -9,18 +9,19 @@ import edu.udel.cis.vsl.civl.run.IF.UserInterface;
  * @author zmanchun
  * 
  */
-public class BarrierBenchmark {
+public class BarrierBenchmarkScale {
 	private static UserInterface ui = new UserInterface();
 
 	public static void main(String[] args) {
-		// -inputB=7: 26 seconds
 		String civlDir = ".";
 
 		if (args.length > 0)
 			civlDir = args[0];
-		System.out.println(">>>>>>>> Barrier <<<<<<<<");
-		ui.run("verify -echo -inputB=7 " + civlDir
-				+ "/examples/concurrency/barrier.cvl");
+		for (int i = 2; i <= 8; i++) {
+			System.out.println(">>>>>>>> Barrier <<<<<<<<");
+			ui.run("verify -echo -inputB=" + i + " " + civlDir
+					+ "/examples/concurrency/barrier.cvl");
+		}
 	}
 
 }

@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.bench;
+package edu.udel.cis.vsl.civl.bench.scale;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
@@ -9,19 +9,19 @@ import edu.udel.cis.vsl.civl.run.IF.UserInterface;
  * @author zmanchun
  * 
  */
-public class DiningPhilosopherBenchmark {
+public class DiningPhilosopherBenchmarkScale {
 	private static UserInterface ui = new UserInterface();
 
 	public static void main(String[] args) {
-		// -inputB=9: 19 seconds
-		// -inputB=10: 56 seconds
 		String civlDir = ".";
 
 		if (args.length > 0)
 			civlDir = args[0];
-		System.out.println(">>>>>>>> Dining philosopher <<<<<<<<");
-		ui.run("verify -echo -inputBOUND=9 " + civlDir
-				+ "/examples/concurrency/dining.cvl");
+		for (int i = 2; i <= 10; i++) {
+			System.out.println(">>>>>>>> Dining philosopher <<<<<<<<");
+			ui.run("verify -inputBOUND=" + i + " " + civlDir
+					+ "/examples/concurrency/dining.cvl");
+		}
 	}
 
 }

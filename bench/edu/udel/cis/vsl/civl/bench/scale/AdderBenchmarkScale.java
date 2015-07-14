@@ -1,4 +1,4 @@
-package edu.udel.cis.vsl.civl.bench;
+package edu.udel.cis.vsl.civl.bench.scale;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
@@ -9,19 +9,19 @@ import edu.udel.cis.vsl.civl.run.IF.UserInterface;
  * @author zmanchun
  * 
  */
-public class AdderBenchmark {
+public class AdderBenchmarkScale {
 	private static UserInterface ui = new UserInterface();
 
 	public static void main(String[] args) {
-		// -inputB=7: 12 seconds
-		// -inputB=8: 39 seconds
 		String civlDir = ".";
 
 		if (args.length > 0)
 			civlDir = args[0];
-		System.out.println(">>>>>>>> Adder <<<<<<<<");
-		ui.run("verify -echo -inputB=8 " + civlDir
-				+ "/examples/concurrency/adder.cvl");
+		for (int i = 2; i <= 8; i++) {
+			System.out.println(">>>>>>>> Adder <<<<<<<<");
+			ui.run("verify -inputB=" + i + " " + civlDir
+					+ "/examples/concurrency/adder.cvl");
+		}
 	}
 
 }
