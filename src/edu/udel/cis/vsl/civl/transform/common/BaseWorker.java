@@ -26,10 +26,10 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
-import edu.udel.cis.vsl.abc.ast.type.IF.EnumerationType;
 import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.parse.IF.OmpCParser;
@@ -153,7 +153,7 @@ public abstract class BaseWorker {
 					// VariableDeclarationNode secondPara = funcType
 					// .getParameters().getSequenceChild(1);
 
-//					secondPara.getTypeNode().setConstQualified(true);
+					// secondPara.getTypeNode().setConstQualified(true);
 				}
 			}
 			transformMainCall(child);
@@ -187,7 +187,7 @@ public abstract class BaseWorker {
 						blockItems));
 		root.addSequenceChild(newMainFunction);
 	}
-	
+
 	/**
 	 * rename all calls to main to _main.
 	 * 
@@ -555,27 +555,7 @@ public abstract class BaseWorker {
 	protected TypeNode typeNode(Type type) {
 		Source source = this.newSource("type " + type, CParser.TYPE);
 
-		switch (type.kind()) {
-		case VOID:
-			return nodeFactory.newVoidTypeNode(source);
-		case BASIC:
-			return nodeFactory.newBasicTypeNode(source,
-					((StandardBasicType) type).getBasicTypeKind());
-		case OTHER_INTEGER:
-			return nodeFactory.newBasicTypeNode(source, BasicTypeKind.INT);
-		case ARRAY:
-			return nodeFactory.newArrayTypeNode(source,
-					this.typeNode(((ArrayType) type).getElementType()),
-					((ArrayType) type).getVariableSize().copy());
-		case POINTER:
-			return nodeFactory.newPointerTypeNode(source,
-					this.typeNode(((PointerType) type).referencedType()));
-		case ENUMERATION:
-			return nodeFactory.newEnumerationTypeNode(source,
-					this.identifier(((EnumerationType) type).getTag()), null);
-		default:
-		}
-		return null;
+		return this.typeNode(source, type);
 	}
 
 	/**
@@ -603,6 +583,13 @@ public abstract class BaseWorker {
 		case POINTER:
 			return nodeFactory.newPointerTypeNode(source, this.typeNode(source,
 					((PointerType) type).referencedType()));
+		case STRUCTURE_OR_UNION: {
+			StructureOrUnionType structOrUnionType = (StructureOrUnionType) type;
+
+			return nodeFactory.newStructOrUnionTypeNode(source,
+					structOrUnionType.isStruct(),
+					this.identifier(structOrUnionType.getTag()), null);
+		}
 		default:
 		}
 		return null;
