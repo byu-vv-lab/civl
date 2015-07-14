@@ -347,9 +347,9 @@ public class GeneralWorker extends BaseWorker {
 
 				if (functionName.equals(MALLOC)) {
 					ASTNode parent = funcCall.parent();
-					int callIndex = funcCall.childIndex();
 					ExpressionNode myRootScope = this.identifierExpression(
 							funcCall.getSource(), GENERAL_ROOT);
+					int callIndex = funcCall.childIndex();
 					ExpressionNode argument = funcCall.getArgument(0);
 
 					functionExpression.getIdentifier().setName("$" + MALLOC);
@@ -358,6 +358,7 @@ public class GeneralWorker extends BaseWorker {
 							argument.getSource(), "Actual Parameters",
 							Arrays.asList(myRootScope, argument)));
 					if (!(parent instanceof CastNode)) {
+						funcCall.remove();
 						if (parent instanceof OperatorNode) {
 							ExpressionNode lhs = ((OperatorNode) parent)
 									.getArgument(0);
@@ -370,10 +371,16 @@ public class GeneralWorker extends BaseWorker {
 										"The left hand side of a malloc call must be of pointer"
 												+ " type.", lhs.getSource());
 							typeNode = this.typeNode(lhs.getSource(), type);
-							parent.removeChild(callIndex);
 							castNode = nodeFactory.newCastNode(
 									funcCall.getSource(), typeNode, funcCall);
 							parent.setChild(callIndex, castNode);
+						} else if (parent instanceof VariableDeclarationNode) {
+							VariableDeclarationNode variable = (VariableDeclarationNode) parent;
+							CastNode castNode = nodeFactory.newCastNode(
+									funcCall.getSource(), variable
+											.getTypeNode().copy(), funcCall);
+
+							variable.setInitializer(castNode);
 						}
 					}
 				}
