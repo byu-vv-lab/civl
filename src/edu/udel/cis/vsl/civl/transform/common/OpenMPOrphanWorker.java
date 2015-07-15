@@ -9,8 +9,10 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.entity.IF.Function;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpExecutableNode;
@@ -21,6 +23,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpWorksharingNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
+import edu.udel.cis.vsl.abc.ast.type.IF.FunctionType;
+import edu.udel.cis.vsl.abc.ast.type.IF.PointerType;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
@@ -46,7 +50,8 @@ public class OpenMPOrphanWorker extends BaseWorker {
 		AST newAst;
 		ast.release();
 		FunctionDefinitionNode main = ast.getMain().getDefinition();
-		ompOrphan(main, null, false);
+		ArrayList<String> visitedFuncs = new ArrayList<String>();
+		ompOrphan(main, null, false, visitedFuncs);
 		int i = 0;
 		for(Pair<StatementNode, FunctionDefinitionNode> insert : nodesToInsert){
 			insertChildAt(i, insert.left, insert.right);
@@ -58,71 +63,55 @@ public class OpenMPOrphanWorker extends BaseWorker {
 		return newAst;
 	}
 
-	private void ompOrphan(ASTNode node, Set<Function> callees, boolean isInParallel){
+	private void ompOrphan(ASTNode node, Set<Function> callees, boolean isInParallel, ArrayList<String> visitedFuncs){
 		if(node instanceof OmpParallelNode){
 			isInParallel = true;
 		} else if(node instanceof FunctionDefinitionNode){
 			callees = ((FunctionDefinitionNode) node).getEntity().getCallees();
 		} else if (node instanceof FunctionCallNode) {
-			String funcName = ((IdentifierExpressionNode) ((FunctionCallNode) node).getFunction()).getIdentifier().name();
+			FunctionCallNode fcn = (FunctionCallNode) node;
+			FunctionType funType = null;
+			if (fcn.getFunction() instanceof IdentifierExpressionNode) {
+				IdentifierNode calledFunId = ((IdentifierExpressionNode) fcn
+						.getFunction()).getIdentifier();
+
+				// Call directly to a function
+				if (calledFunId.getEntity() instanceof Function) {
+
+				} else {
+					// Call through an expression (an identifier)
+					PointerType pFunType = (PointerType) fcn.getFunction()
+							.getConvertedType();
+					funType = (FunctionType) pFunType
+							.referencedType();
+				}
+			} else {
+				funType = (FunctionType) fcn.getFunction()
+						.getConvertedType();
+				
+
+			}
+
+			ExpressionNode func = ((FunctionCallNode) node).getFunction();
+			String funcName = null;
+			if(func instanceof IdentifierExpressionNode){
+				funcName = ((IdentifierExpressionNode) ((FunctionCallNode) node).getFunction()).getIdentifier().name();
+			}
 
 			if(callees != null){
+				boolean found = false;
 				for(Function call : callees){
 					if(call.getName().equals(funcName)){
-						FunctionDefinitionNode orphan = call.getDefinition();
-						boolean isOrphan = checkOrphan(orphan);
-
-						if(orphan != null){
-							ASTNode parentFunc = node.parent();
-							while(!(parentFunc instanceof FunctionDefinitionNode)){
-								parentFunc = parentFunc.parent();
-							}	
-							
-							Triple<FunctionDefinitionNode, FunctionCallNode, Boolean> temp;
-							temp = new Triple<>((FunctionDefinitionNode)parentFunc, (FunctionCallNode)node, isInParallel);
-							functionCalls.add(temp);
-						}
-						
-						if(isOrphan){
-							ArrayList<FunctionDefinitionNode> funcs = new ArrayList<FunctionDefinitionNode>();
-							funcs.add(orphan);
-							ASTNode parent = node;
-							boolean direct = false;
-							direct = insertFuncs((FunctionCallNode) node, funcs);
-							
-							if(!direct){
-								parent = node;
-								while(!(parent instanceof FunctionDefinitionNode)){
-									parent = parent.parent();
-								}
-								boolean foundPar = false;
-								int count=0;
-								
-								FunctionDefinitionNode currDef = orphan;
-								FunctionCallNode origCall = null;
-								funcs = new ArrayList<FunctionDefinitionNode>();
-								while(!foundPar && count < functionCalls.size()){
-									for (Triple<FunctionDefinitionNode, FunctionCallNode, Boolean> triple : functionCalls){
-										if(((IdentifierExpressionNode) triple.second.getFunction()).getIdentifier().name().equals(currDef.getIdentifier().name())){
-											funcs.add(currDef);
-											currDef = triple.first; 
-											count = 0;
-											if(triple.third){
-												foundPar = true;
-												origCall = triple.second;
-											}
-											break;
-										}
-										count++;
-									}
-								}	
-								if(foundPar){
-									insertFuncs(origCall, funcs);
-								}
-							}
-						}
-						if(orphan != null){
-							ompOrphan(orphan, callees, false);
+						processFunction(call, (FunctionCallNode) node, isInParallel, funcName, visitedFuncs, callees);
+						found = true;
+					}
+				}
+				
+				if(!found){
+					for(Function call : callees){
+						if(call.getType().equals(funType)){
+							funcName = call.getName();
+							processFunction(call, (FunctionCallNode) node, isInParallel, funcName, visitedFuncs, callees);
 						}
 					}
 				}
@@ -132,10 +121,71 @@ public class OpenMPOrphanWorker extends BaseWorker {
 		if(node != null){
 			Iterable<ASTNode> children = node.children();
 			for (ASTNode child : children) {
-				ompOrphan(child, callees, isInParallel);
+				ompOrphan(child, callees, isInParallel, visitedFuncs);
 			}
 		}
 		
+	}
+	
+	private void processFunction(Function call, FunctionCallNode node, boolean isInParallel, String funcName, ArrayList<String> visitedFuncs, Set<Function> callees){
+		FunctionDefinitionNode orphan = call.getDefinition();
+		boolean isOrphan = checkOrphan(orphan);
+
+		if(orphan != null){
+			ASTNode parentFunc = node.parent();
+			while(!(parentFunc instanceof FunctionDefinitionNode)){
+				parentFunc = parentFunc.parent();
+			}	
+			
+			Triple<FunctionDefinitionNode, FunctionCallNode, Boolean> temp;
+			temp = new Triple<>((FunctionDefinitionNode)parentFunc, (FunctionCallNode)node, isInParallel);
+			functionCalls.add(temp);
+		}
+		
+		if(isOrphan){
+			ArrayList<FunctionDefinitionNode> funcs = new ArrayList<FunctionDefinitionNode>();
+			funcs.add(orphan);
+			ASTNode parent = node;
+			boolean direct = false;
+			direct = insertFuncs((FunctionCallNode) node, funcs);
+			
+			if(!direct){
+				parent = node;
+				while(!(parent instanceof FunctionDefinitionNode)){
+					parent = parent.parent();
+				}
+				boolean foundPar = false;
+				int count=0;
+				
+				FunctionDefinitionNode currDef = orphan;
+				FunctionCallNode origCall = null;
+				funcs = new ArrayList<FunctionDefinitionNode>();
+				while(!foundPar && count < functionCalls.size()){
+					for (Triple<FunctionDefinitionNode, FunctionCallNode, Boolean> triple : functionCalls){
+						if(((IdentifierExpressionNode) triple.second.getFunction()).getIdentifier().name().equals(currDef.getIdentifier().name())){
+							funcs.add(currDef);
+							currDef = triple.first; 
+							count = 0;
+							if(triple.third){
+								foundPar = true;
+								origCall = triple.second;
+							}
+							break;
+						}
+						count++;
+					}
+				}	
+				if(foundPar){
+					insertFuncs(origCall, funcs);
+				}
+			}
+		}
+		if(orphan != null){
+			if(!visitedFuncs.contains(funcName)){
+				visitedFuncs.add(funcName);
+				ompOrphan(orphan, callees, false, visitedFuncs);
+			}
+		}
 	}
 	
 	private boolean insertFuncs(FunctionCallNode node, ArrayList<FunctionDefinitionNode> funcs){

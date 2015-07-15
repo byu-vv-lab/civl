@@ -55,6 +55,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.IfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.LoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
@@ -234,25 +235,28 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				continue;
 			if (child instanceof FunctionCallNode) {
 				FunctionCallNode funcCall = (FunctionCallNode) child;
+				if(funcCall.getFunction() instanceof IdentifierExpressionNode){
+					SequenceNode<ExpressionNode> newArgs;
+					IdentifierNode name = ((IdentifierExpressionNode) funcCall
+							.getFunction()).getIdentifier();
 
-				SequenceNode<ExpressionNode> newArgs;
-				IdentifierNode name = ((IdentifierExpressionNode) funcCall
-						.getFunction()).getIdentifier();
+					if (name.name().equals(OMP_SET_LOCK)
+							|| name.name().equals(OMP_UNSET_LOCK)) {
+						ExpressionNode oldArg = funcCall.getArgument(0);
 
-				if (name.name().equals(OMP_SET_LOCK)
-						|| name.name().equals(OMP_UNSET_LOCK)) {
-					ExpressionNode oldArg = funcCall.getArgument(0);
+						name.setName("$" + name.name());
+						oldArg.parent().removeChild(oldArg.childIndex());
+						newArgs = nodeFactory.newSequenceNode(this.newSource(
+								"actual parameter list of " + name,
+								CParser.ARGUMENT_LIST), "Actual parameters", Arrays
+								.asList(oldArg, this.identifierExpression(
+										this.newSource(TEAM, CParser.IDENTIFIER),
+										TEAM)));
+						funcCall.setArguments(newArgs);
+					}
 
-					name.setName("$" + name.name());
-					oldArg.parent().removeChild(oldArg.childIndex());
-					newArgs = nodeFactory.newSequenceNode(this.newSource(
-							"actual parameter list of " + name,
-							CParser.ARGUMENT_LIST), "Actual parameters", Arrays
-							.asList(oldArg, this.identifierExpression(
-									this.newSource(TEAM, CParser.IDENTIFIER),
-									TEAM)));
-					funcCall.setArguments(newArgs);
 				}
+
 			}
 			processOmpLockCalls(child);
 		}
@@ -3237,34 +3241,36 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		}
 		ASTNode replacementNode = null;
 		String place;
-		switch (functionName) {
-		case "omp_get_num_threads":
-			place = "omp_get_num_threads->_nthreads";
-			replacementNode = this.identifierExpression(
-					newSource(place, CParser.IDENTIFIER), NTHREADS);
-			break;
-		case "omp_get_num_procs":
-			place = "omp_get_num_procs->1";
-			replacementNode = nodeFactory.newIntegerConstantNode(
-					(newSource(place, CParser.IDENTIFIER)), "1");
-			break;
-		case "omp_get_max_threads":
-			place = "omp_get_max_threads->_nthreads";
-			replacementNode = this.identifierExpression(
-					newSource(place, CParser.IDENTIFIER), "THREAD_MAX");
-			break;
-		case "omp_get_thread_num":
-			place = "omp_get_thread_num->_tid";
-			replacementNode = this.identifierExpression(
-					newSource(place, CParser.IDENTIFIER), TID);
-			break;
-		case "omp_set_num_threads":
-			place = "omp_set_num_threads->$omp_numThreads";
-			replacementNode = nodeFactory.newOperatorNode(newSource(place, CParser.EXPR),
-					Operator.ASSIGN, Arrays.asList(this.identifierExpression(
-							newSource(place, CParser.IDENTIFIER), "$omp_numThreads"), node.getArgument(0)
-							.copy()));
-			break;
+		if(functionName != null){
+			switch (functionName) {
+			case "omp_get_num_threads":
+				place = "omp_get_num_threads->_nthreads";
+				replacementNode = this.identifierExpression(
+						newSource(place, CParser.IDENTIFIER), NTHREADS);
+				break;
+			case "omp_get_num_procs":
+				place = "omp_get_num_procs->1";
+				replacementNode = nodeFactory.newIntegerConstantNode(
+						(newSource(place, CParser.IDENTIFIER)), "1");
+				break;
+			case "omp_get_max_threads":
+				place = "omp_get_max_threads->_nthreads";
+				replacementNode = this.identifierExpression(
+						newSource(place, CParser.IDENTIFIER), "THREAD_MAX");
+				break;
+			case "omp_get_thread_num":
+				place = "omp_get_thread_num->_tid";
+				replacementNode = this.identifierExpression(
+						newSource(place, CParser.IDENTIFIER), TID);
+				break;
+			case "omp_set_num_threads":
+				place = "omp_set_num_threads->$omp_numThreads";
+				replacementNode = nodeFactory.newOperatorNode(newSource(place, CParser.EXPR),
+						Operator.ASSIGN, Arrays.asList(this.identifierExpression(
+								newSource(place, CParser.IDENTIFIER), "$omp_numThreads"), node.getArgument(0)
+								.copy()));
+				break;
+			}
 		}
 
 		if (replacementNode != null) {
@@ -3513,7 +3519,11 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			} else {
 				parentOfID = node.parent();
 				while (nodesDeep > 0) {
-					parentOfID = parentOfID.parent();
+					if(!(parentOfID.parent() instanceof IfNode)){
+						parentOfID = parentOfID.parent();
+					} else {
+						System.out.println("HERE");
+					}
 					nodesDeep--;
 				}
 
@@ -3663,29 +3673,50 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					IdentifierNode id = idExp.getIdentifier();
 					String funcName = id.name();
 					
-					removed = findFuncDef(funcName, root, sharedIDs, declaredNodes,
-							currentShared, removed) || removed;
+					if(funcName.equals("hypre_qsort2abs")){
+						System.out.println("HERE");
+					}
+					
+					ASTNode functionParent = child;
+					
+					while(!(functionParent instanceof FunctionDefinitionNode)){
+						functionParent = functionParent.parent();
+					}
+					
+					if(!((DeclarationNode) functionParent).getName().equals(funcName)){
+						removed = findFuncDef(funcName, root, sharedIDs, declaredNodes,
+								currentShared, removed) || removed;
+					}
 					
 				}
 
 				if (child instanceof VariableDeclarationNode) {
-					String temp = ((DeclarationNode) child).getIdentifier()
-							.name();
-					declaredNodes.add(temp);
-					if (currentShared.contains(temp)) {
-						currentShared.remove(temp);
-					}
-					for (IdentifierExpressionNode id : sharedIDs) {
-						if (id != null) {
-							if (id.getIdentifier().name().equals(temp)) {
-								int index = id.childIndex();
-								sharedIDs.removeChild(index);
-								removed = true;
-							}
+					ASTNode parent = child;
+					boolean functionParam = false;
+					while(!(parent instanceof FunctionDefinitionNode)){
+						if(parent instanceof FunctionTypeNode){
+							functionParam = true;
 						}
-
+						parent = parent.parent();
 					}
+					if(!functionParam){
+						String temp = ((DeclarationNode) child).getIdentifier()
+								.name();
+						declaredNodes.add(temp);
+						if (currentShared.contains(temp)) {
+							currentShared.remove(temp);
+						}
+						for (IdentifierExpressionNode id : sharedIDs) {
+							if (id != null) {
+								if (id.getIdentifier().name().equals(temp)) {
+									int index = id.childIndex();
+									sharedIDs.removeChild(index);
+									removed = true;
+								}
+							}
 
+						}
+					}
 				}
 
 				removed = getImplicitShared(sharedIDs, child, declaredNodes,
@@ -3700,21 +3731,23 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			ArrayList<String> declaredNodes, ArrayList<String> currentShared,
 			boolean removed){
 		boolean found = false;
-		for (ASTNode child : node.children()) {
-			if(child != null){
-				if(child instanceof FunctionDefinitionNode){
-					String name = ((DeclarationNode) child).getName();
-					if(name.equals(funcName)){
-						found = true;
-						removed = getImplicitShared(sharedIDs, child, declaredNodes,
+		if(!funcName.startsWith("$")){
+			for (ASTNode child : node.children()) {
+				if(child != null){
+					if(child instanceof FunctionDefinitionNode){
+						String name = ((DeclarationNode) child).getName();
+						if(name.equals(funcName)){
+							found = true;
+							removed = getImplicitShared(sharedIDs, child, declaredNodes,
+									currentShared, removed) || removed;
+						}
+					}
+					if(!found){
+						removed = findFuncDef(funcName, child, sharedIDs, declaredNodes,
 								currentShared, removed) || removed;
 					}
+
 				}
-				if(!found){
-					removed = findFuncDef(funcName, child, sharedIDs, declaredNodes,
-						currentShared, removed) || removed;
-				}
-				
 			}
 		}
 		
