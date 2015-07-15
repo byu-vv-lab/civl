@@ -2,21 +2,16 @@
 use Math::Round;
 use File::Path qw(make_path);
 
-$resultDir="out";
-eval { make_path($resultDir) };
-if ($@) {
-  print "Couldn't create $resultDir: $@";
-}
 
 $output_file = $ARGV[0];
 
 open(OUTPUT, "<", $output_file) || die "Could not open $output_file";
 my $currentName="";
-#open(my $fileHandle, '>', "$outName") or die "Can't write to file: $!";
-my $dataFH;
-open(my $allFH, '>', "scale.dat.tmp") or die "Can't write to file: $!";
 my $last=3;
 my $id=0;
+my $tmpDAT="scale.dat.tmp";
+my $dat="scale.dat";
+open(my $allFH, '>', $tmpDAT) or die "Can't write to file: $!";
 
 print $allFH "Name\t3\t4\t5\t6\t7\t8\t9\t10\t11\t12\t13\t14\t15";
 
@@ -41,7 +36,6 @@ while ($line=<OUTPUT>) {
     }
     #print "name = $name\n";
     print $allFH "\n$name";
-    open($dataFH, '>', "out\/$currentName".".dat") or die "Can't write to file: $!";
     $last=3;
   }
   
@@ -69,8 +63,6 @@ while ($line=<OUTPUT>) {
   $time=round($time);
   $time=1 if $time==0;
   
-  print $dataFH $size . "\t" . $time . "\n";
-
   next unless ($size >= $last);
   
   if($size>$last){
@@ -95,8 +87,8 @@ if(($id != 1) and ($last <= 15)){
   }
 }
 close $allFH;
-open(my $newFH, '>', "scale.dat") or die "Can't write to file: $!";
-open(DATA, '<', "scale.dat.tmp") or die "Can't open file: $!";
+open(my $newFH, '>', $dat) or die "Can't write to file: $!";
+open(DATA, '<', $tmpDAT) or die "Can't open file: $!";
 my $count=0;
 my @lines;
 my $width;
@@ -116,6 +108,9 @@ for(my $k=0; $k<$width;$k++){
   }
   print $newFH "\n";
 }
+close $newFH;
+close DATA;
+unlink $tmpDAT;
 
 
 
