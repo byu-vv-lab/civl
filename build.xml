@@ -199,6 +199,12 @@
 		</javac>
 	</target>
 
+	<target name="bench-scale-compile" depends="jar" description="Compile scale benchmark java source files.">
+		<mkdir dir="${bin.dir}" />
+		<javac debug="true" srcdir="${bench.src.dir}" destdir="${bin.dir}" includes="edu/udel/cis/vsl/civl/**/**/*BenchmarkScale.java" classpathref="src.compile.classpath" encoding="UTF-8" includeantruntime="false">
+		</javac>
+	</target>
+
 	<!-- Javadoc Tasks -->
 
 	<target name="javadoc">
@@ -234,6 +240,6 @@
 
 	<!-- Do everything -->
 
-	<target name="all" depends="jar,test,javadoc,bench-compile" />
+	<target name="all" depends="jar,test,javadoc,bench-compile, bench-scale-compile" />
 
 </project>
