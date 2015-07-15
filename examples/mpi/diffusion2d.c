@@ -186,7 +186,7 @@ void initialization(int argc, char * argv[]) {
   initTemp = 100.0;
   k = 0.13;
 #endif
-  printf("Diffusion2d with k=%f, nx=%ld, ny=%ld, nsteps=%d, wstep=%d\n",
+  printf("\nDiffusion2d with k=%f, nx=%ld, ny=%ld, nsteps=%d, wstep=%d\n",
          k, nx, ny, nsteps, wstep);
   nxl = countColForProc(rank);
   nyl = countRowForProc(rank);
