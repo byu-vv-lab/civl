@@ -224,6 +224,7 @@ public class CommonStateManager implements StateManager {
 				// out if it has been seen before.
 				String message = "";
 				CIVLExecutionException err;
+				state=hex.state();
 
 				switch (hex.heapErrorKind()) {
 				case NONEMPTY:

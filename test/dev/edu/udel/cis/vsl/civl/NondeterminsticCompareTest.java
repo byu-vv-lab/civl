@@ -111,6 +111,11 @@ public class NondeterminsticCompareTest {
 				filename("simple", "impl2.cvl")));
 	}
 
+	@Test
+	public void queue() {
+		ui.run("verify  -showSavedStates", filename("queue", "twoLock.cvl"));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
