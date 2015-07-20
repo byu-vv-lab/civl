@@ -22,9 +22,9 @@ import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.predicate.IF.AndPredicate;
 import edu.udel.cis.vsl.civl.predicate.IF.CIVLStatePredicate;
-import edu.udel.cis.vsl.civl.predicate.IF.Deadlock;
-import edu.udel.cis.vsl.civl.predicate.IF.PotentialDeadlock;
+import edu.udel.cis.vsl.civl.predicate.IF.Predicates;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
@@ -68,7 +68,7 @@ public abstract class Player {
 
 	protected EnablerIF<State, Transition, TransitionSequence> enabler;
 
-	protected CIVLStatePredicate predicate;
+	protected CIVLStatePredicate predicate = null;
 
 	protected LibraryEnablerLoader libraryEnablerLoader;
 
@@ -101,7 +101,8 @@ public abstract class Player {
 	protected CIVLConfiguration civlConfig;
 
 	public Player(GMCConfiguration config, Model model, PrintStream out,
-			PrintStream err) throws CommandLineException {
+			PrintStream err, boolean collectOutputs)
+			throws CommandLineException {
 		SymbolicUniverse universe;
 
 		this.config = config;
@@ -109,6 +110,7 @@ public abstract class Player {
 		civlConfig = new CIVLConfiguration(config.getAnonymousSection());
 		civlConfig.setOut(out);
 		civlConfig.setErr(err);
+		civlConfig.setCollectOutputs(collectOutputs);
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
@@ -141,28 +143,53 @@ public abstract class Player {
 		this.minimize = config.getAnonymousSection().isTrue(minO);
 		this.maxdepth = (int) config.getAnonymousSection().getValueOrDefault(
 				maxdepthO);
-
 		this.libraryEnablerLoader = Kripkes.newLibraryEnablerLoader(
 				this.libraryEvaluatorLoader, this.civlConfig);
 		enabler = Kripkes.newEnabler(stateFactory, evaluator, symbolicAnalyzer,
 				memUnitFactory, this.libraryEnablerLoader, log, civlConfig);
 		if (civlConfig.deadlock() == DeadlockKind.ABSOLUTE) {
-			this.predicate = new Deadlock(universe, (Enabler) this.enabler,
-					symbolicAnalyzer);
+			this.addPredicate(Predicates.newDeadlock(universe,
+					(Enabler) this.enabler, symbolicAnalyzer));
 		} else if (civlConfig.deadlock() == DeadlockKind.POTENTIAL) {
-			this.predicate = new PotentialDeadlock(universe,
+			this.addPredicate(Predicates.newPotentialDeadlock(universe,
 					(Enabler) this.enabler, libraryEnablerLoader, evaluator,
-					modelFactory, symbolicUtil, symbolicAnalyzer);
-		} else {
-			this.predicate = null;
+					modelFactory, symbolicUtil, symbolicAnalyzer));
 		}
+		// else {
+		// this.predicates = null;
+		// }
 		stateManager = Kripkes.newStateManager((Enabler) enabler, executor,
 				symbolicAnalyzer, log, civlConfig);
 	}
+
+	// protected CIVLExecutionException getCurrentViolation() {
+	// CIVLExecutionException violation = null;
+	//
+	// for (CIVLStatePredicate predicate : this.predicates) {
+	// violation = predicate.getUnreportedViolation();
+	// if (violation != null)
+	// break;
+	// }
+	// return violation;
+	// }
 
 	public void printResult() {
 		civlConfig.out().println(statsBar + " Result " + statsBar);
 		civlConfig.out().println(result);
 	}
 
+	public void addPredicate(CIVLStatePredicate newPredicate) {
+		if (this.predicate == null)
+			this.predicate = newPredicate;
+		else {
+			if (!this.predicate.isAndPredicate()) {
+				this.predicate = Predicates.newAndPredicate(this.predicate);
+			}
+			((AndPredicate) this.predicate).addClause(newPredicate);
+		}
+	}
+
+	public StateManager stateManager() {
+		return this.stateManager;
+	}
 }

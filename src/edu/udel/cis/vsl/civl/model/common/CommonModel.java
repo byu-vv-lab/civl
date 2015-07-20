@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
@@ -276,5 +278,17 @@ public class CommonModel extends CommonSourceable implements Model {
 		if (noUnreachedCode)
 			out.println("This program doesn't have any unreachable code.");
 		out.println();
+	}
+
+	@Override
+	public List<Variable> outputVariables() {
+		Scope root = this.system.outerScope();
+		List<Variable> result = new LinkedList<>();
+
+		assert root.id() == 0;
+		for (Variable variable : root.variables())
+			if (variable.isOutput())
+				result.add(variable);
+		return result;
 	}
 }

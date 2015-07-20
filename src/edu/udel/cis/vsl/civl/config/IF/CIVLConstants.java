@@ -279,6 +279,14 @@ public class CIVLConstants {
 			"prevent printf function modifying the file system", true);
 
 	/**
+	 * Print the impact/reachable memory units when the state contains more than
+	 * one processes? false by default.
+	 */
+	public final static Option strictCompareO = Option.newScalarOption(
+			"strict", BOOLEAN, "check strict functional equivalence?",
+			true);
+
+	/**
 	 * Set the system include path.
 	 */
 	public final static Option sysIncludePathO = Option.newScalarOption(
@@ -432,7 +440,7 @@ public class CIVLConstants {
 				showStatesO, showTimeO, showTransitionsO, showUnreachedCodeO,
 				simplifyO, solveO, statelessPrintfO, svcompO, sysIncludePathO,
 				traceO, userIncludePathO, verboseO, webO, CIVLMacroO,
-				analyzeAbsO };
+				analyzeAbsO, strictCompareO };
 	}
 
 	// headers...

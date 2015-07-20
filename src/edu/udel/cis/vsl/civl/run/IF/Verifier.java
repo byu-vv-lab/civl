@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.util.Map;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
@@ -16,6 +18,8 @@ import edu.udel.cis.vsl.civl.log.IF.CIVLLogEntry;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.predicate.IF.Predicates;
+import edu.udel.cis.vsl.civl.run.common.VerificationStatus;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
@@ -25,10 +29,14 @@ import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
 import edu.udel.cis.vsl.gmc.ExcessiveErrorException;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public class Verifier extends Player {
 
 	private String errorBoundExceeds;
+
+	VerificationStatus verificationStatus;
 
 	class SearchUpdater implements Printable {
 		@Override
@@ -213,13 +221,20 @@ public class Verifier extends Player {
 	private double startTime;
 
 	public Verifier(GMCConfiguration config, Model model, PrintStream out,
-			PrintStream err, double startTime) throws CommandLineException {
-		super(config, model, out, err);
+			PrintStream err, double startTime, boolean collectOutputs,
+			String[] outputNames,
+			Map<BooleanExpression, Set<SymbolicExpression[]>> specOutputs)
+			throws CommandLineException {
+		super(config, model, out, err, collectOutputs);
 		if (random) {
 			throw new CommandLineException(
 					"\"-random\" mode is incompatible with civl verify command.");
 		}
 		this.startTime = startTime;
+		if (outputNames != null && specOutputs != null)
+			this.addPredicate(Predicates.newFunctionalEquivalence(
+					modelFactory.universe(), symbolicAnalyzer, outputNames,
+					specOutputs));
 		searcher = new DfsSearcher<State, Transition, TransitionSequence>(
 				enabler, stateManager, predicate);
 		if (civlConfig.debug())
@@ -245,6 +260,25 @@ public class Verifier extends Player {
 		if (log.errorBound() > 1)
 			errorBoundExceeds += "s";
 		errorBoundExceeds += ".";
+	}
+
+	public Verifier(GMCConfiguration config, Model model, PrintStream out,
+			PrintStream err, double startTime, boolean collectOutputs)
+			throws CommandLineException {
+		this(config, model, out, err, startTime, collectOutputs, null, null);
+	}
+
+	public Verifier(GMCConfiguration config, Model model, PrintStream out,
+			PrintStream err, double startTime, String[] outputNames,
+			Map<BooleanExpression, Set<SymbolicExpression[]>> specOutputs)
+			throws CommandLineException {
+		this(config, model, out, err, startTime, false, outputNames,
+				specOutputs);
+	}
+
+	public Verifier(GMCConfiguration config, Model model, PrintStream out,
+			PrintStream err, double startTime) throws CommandLineException {
+		this(config, model, out, err, startTime, false, null, null);
 	}
 
 	/**
@@ -300,7 +334,7 @@ public class Verifier extends Player {
 					violationFound = true;
 
 					CIVLLogEntry entry = new CIVLLogEntry(config,
-							predicate.getViolation());
+							this.predicate.getUnreportedViolation());
 
 					log.report(entry); // may throw ExcessiveErrorException
 				}
@@ -322,6 +356,11 @@ public class Verifier extends Player {
 				result = "The standard properties hold for all executions.";
 				// result = "No violations found.";
 			}
+			this.verificationStatus = new VerificationStatus(
+					stateManager.maxProcs(), stateManager.numStatesExplored(),
+					stateManager.getNumStatesSaved(),
+					searcher.numStatesMatched(), executor.getNumSteps(),
+					searcher.numTransitions());
 			return !violationFound && log.numEntries() == 0;
 		} catch (CIVLStateException stateException) {
 			throw new CIVLExecutionException(stateException.kind(),
@@ -330,6 +369,7 @@ public class Verifier extends Player {
 					symbolicAnalyzer.stateInformation(stateException.state()),
 					stateException.source());
 		}
+
 	}
 
 	/**

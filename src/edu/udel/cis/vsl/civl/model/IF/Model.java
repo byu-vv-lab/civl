@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.model.IF;
 
 import java.io.PrintStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -148,4 +149,11 @@ public interface Model extends Sourceable {
 
 	void printUnreachedCode(PrintStream out);
 
+	/**
+	 * Return the output variables of this model, which all belong to the root
+	 * scope.
+	 * 
+	 * @return
+	 */
+	List<Variable> outputVariables();
 }

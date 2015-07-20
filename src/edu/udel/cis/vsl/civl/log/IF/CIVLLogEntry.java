@@ -23,6 +23,7 @@ public class CIVLLogEntry extends LogEntry {
 			CIVLExecutionException problem) {
 		super(configuration);
 		this.problem = problem;
+		problem.setReported();
 	}
 
 	public CIVLExecutionException problem() {

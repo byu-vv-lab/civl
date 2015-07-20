@@ -149,6 +149,7 @@ OPTION_NAME
     | '-simplify'
     | '-solve'
     | '-statelessPrintf'
+    | '-strict'
     | '-svcomp'
     | '-sysIncludePath'
     | '-trace'

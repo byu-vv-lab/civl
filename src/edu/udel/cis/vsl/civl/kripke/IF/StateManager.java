@@ -1,9 +1,14 @@
 package edu.udel.cis.vsl.civl.kripke.IF;
 
+import java.util.Map;
+import java.util.Set;
+
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * StateManager extends {@link StateManagerIF} for CIVL models.
@@ -48,4 +53,19 @@ public interface StateManager extends StateManagerIF<State, Transition> {
 	void setUpdater(Printable updater);
 
 	int numStatesExplored();
+
+	/**
+	 * Outputs collected for the model during the search.
+	 * 
+	 * @return
+	 */
+	Map<BooleanExpression, Set<SymbolicExpression[]>> collectedOutputs();
+
+	/**
+	 * The names of output variables of the model.
+	 * 
+	 * @return
+	 */
+	String[] outptutNames();
+
 }

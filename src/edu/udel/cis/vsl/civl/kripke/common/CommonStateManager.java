@@ -5,6 +5,8 @@ package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -29,6 +31,7 @@ import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.TraceStepIF;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * @author Timothy K. Zirkel (zirkel)
@@ -96,6 +99,8 @@ public class CommonStateManager implements StateManager {
 
 	private int numStatesExplored = 1;
 
+	private OutputCollector outputCollector;
+
 	// TODO: trying to fix this:
 	// private boolean saveStates;
 
@@ -125,7 +130,9 @@ public class CommonStateManager implements StateManager {
 		this.errorLogger = errorLogger;
 		this.symbolicAnalyzer = symbolicAnalyzer;
 		this.falseExpr = symbolicAnalyzer.getUniverse().falseExpression();
-		// this.saveStates = config.saveStates();
+		if (config.collectOutputs())
+			this.outputCollector = new OutputCollector(
+					this.enabler.modelFactory.model());
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -287,6 +294,8 @@ public class CommonStateManager implements StateManager {
 		numProcs = state.numLiveProcs();
 		if (numProcs > maxProcs)
 			maxProcs = numProcs;
+		if (config.collectOutputs())
+			this.outputCollector.collectOutputs(state);
 		return traceStep;
 	}
 
@@ -603,5 +612,17 @@ public class CommonStateManager implements StateManager {
 	@Override
 	public int numStatesExplored() {
 		return numStatesExplored;
+	}
+
+	@Override
+	public Map<BooleanExpression, Set<SymbolicExpression[]>> collectedOutputs() {
+		return this.outputCollector.collectedOutputs;
+	}
+
+	@Override
+	public String[] outptutNames() {
+		if (outputCollector != null)
+			return this.outputCollector.outptutNames;
+		return null;
 	}
 }

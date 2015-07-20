@@ -41,6 +41,24 @@ public class ExperimentalTest {
 				"-impl", filename("diff1d_par.c")));
 	}
 
+	@Test
+	public void treeFalse() {
+		assertTrue(ui.run("verify", filename("tree_false-unreach-call.c")));
+	}
+
+	@Test
+	public void mergeSort() {
+		assertTrue(ui.run("verify -showProgram",
+				filename("merge_sort_false-unreach-call.c")));
+	}
+
+	@Test
+	public void moPie() {
+		assertTrue(ui
+				.run("show -showProgram -input_NPROCS=2 -ompNoSimplify -inputTHREAD_MAX=2 ",
+						filename("mpi-omp-pie-calculation.c")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

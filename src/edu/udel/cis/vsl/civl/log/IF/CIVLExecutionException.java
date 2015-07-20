@@ -19,6 +19,8 @@ public class CIVLExecutionException extends CIVLException {
 
 	private String process;
 
+	private boolean reported = false;
+
 	/**
 	 * Constructs new CIVLException with given fields.
 	 * 
@@ -67,6 +69,22 @@ public class CIVLExecutionException extends CIVLException {
 		return kind;
 	}
 
+	/**
+	 * Is this error reported?
+	 * 
+	 * @return
+	 */
+	public boolean isReported() {
+		return this.reported;
+	}
+
+	/**
+	 * Set this error to be reported.
+	 */
+	public void setReported() {
+		this.reported = true;
+	}
+
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer();
@@ -81,8 +99,12 @@ public class CIVLExecutionException extends CIVLException {
 		result.append(kind);
 		result.append(", certainty: ");
 		result.append(certainty);
-		result.append(") \nat ");
-		result.append(this.source.getSummary());
+		result.append(")");
+		if (source != null) {
+			result.append("\nat ");
+
+			result.append(this.source.getSummary());
+		}
 		result.append(":\n");
 		result.append(this.getMessage());
 		if (this.stateString != null) {

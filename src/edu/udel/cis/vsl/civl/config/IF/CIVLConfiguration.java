@@ -197,6 +197,8 @@ public class CIVLConfiguration {
 
 	private Map<String, Object> inputVariables;
 
+	private boolean collectOutputs = false;
+
 	/**
 	 * Constructs a new CIVL configuration object from the command line
 	 * configuration.
@@ -569,9 +571,24 @@ public class CIVLConfiguration {
 	}
 
 	/**
-	 * @param inputVariables the inputVariables to set
+	 * @param inputVariables
+	 *            the inputVariables to set
 	 */
 	public void setInputVariables(Map<String, Object> inputVariables) {
 		this.inputVariables = inputVariables;
+	}
+
+	/**
+	 * @return the collectOutputs
+	 */
+	public boolean collectOutputs() {
+		return collectOutputs;
+	}
+
+	/**
+	 * @param collectOutputs the collectOutputs to set
+	 */
+	public void setCollectOutputs(boolean collectOutputs) {
+		this.collectOutputs = collectOutputs;
 	}
 }

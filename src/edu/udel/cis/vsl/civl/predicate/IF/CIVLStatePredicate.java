@@ -8,4 +8,17 @@ public interface CIVLStatePredicate extends StatePredicateIF<State> {
 
 	CIVLExecutionException getViolation();
 
+	/**
+	 * Returns the violation that has not yet been reported.
+	 * 
+	 * @return
+	 */
+	CIVLExecutionException getUnreportedViolation();
+
+	/**
+	 * Is this an And predicate?
+	 * 
+	 * @return
+	 */
+	boolean isAndPredicate();
 }

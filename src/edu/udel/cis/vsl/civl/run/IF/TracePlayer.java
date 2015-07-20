@@ -85,7 +85,7 @@ public class TracePlayer extends Player {
 
 	TracePlayer(GMCConfiguration config, Model model, PrintStream out,
 			PrintStream err) throws CommandLineException {
-		super(config, model, out, err);
+		super(config, model, out, err, false);
 		// turn the following off because they duplicate what
 		// the Replayer prints:
 		// TODO check here

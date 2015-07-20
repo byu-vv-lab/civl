@@ -19,6 +19,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showTransitionsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showUnreachedCodeO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statsBar;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.strictCompareO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.version;
@@ -55,6 +56,7 @@ import edu.udel.cis.vsl.civl.analysis.IF.Analysis;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
+import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -69,6 +71,7 @@ import edu.udel.cis.vsl.civl.run.common.CompareCommandLine;
 import edu.udel.cis.vsl.civl.run.common.HelpCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
+import edu.udel.cis.vsl.civl.run.common.VerificationStatus;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
@@ -334,26 +337,59 @@ public class UserInterface {
 		implSection = gmcConfig.getSection(CompareCommandLine.IMPL);
 		anonymousSection = this.readInputs(
 				this.readInputs(anonymousSection, specSection), implSection);
+		specSection = this.readInputs(specSection,
+				gmcConfig.getAnonymousSection());
+		implSection = this.readInputs(implSection,
+				gmcConfig.getAnonymousSection());
 
 		ModelTranslator specWorker = new ModelTranslator(transformerFactory,
 				frontEnd, gmcConfig, specSection, spec.files(),
 				spec.getCoreFileName(), universe), implWorker = new ModelTranslator(
 				transformerFactory, frontEnd, gmcConfig, implSection,
 				impl.files(), impl.getCoreFileName(), universe);
-		Program specProgram, implProgram, compositeProgram;
-		Combiner combiner = Transform.compareCombiner();
-		Model model;
-		ModelBuilder modelBuilder = Models.newModelBuilder(specWorker.universe);
-		AST combinedAST;
-		CIVLConfiguration civlConfig = new CIVLConfiguration(anonymousSection);
 
 		if (anonymousSection.isTrue(echoO))
 			out.println(compareCommand.getCommandString());
 		universe.setShowQueries(anonymousSection.isTrue(showQueriesO));
 		universe.setShowProverQueries(anonymousSection
 				.isTrue(showProverQueriesO));
-		specProgram = specWorker.buildProgram();
-		implProgram = implWorker.buildProgram();
+		gmcConfig.setAnonymousSection(anonymousSection);
+		if (anonymousSection.isTrue(strictCompareO))
+
+			return this.strictCompareWorker(compareCommand, specWorker,
+					implWorker, gmcConfig, anonymousSection, traceFile);
+		else
+			return this.lessStrictCompareWorker(compareCommand, specWorker,
+					implWorker, gmcConfig, anonymousSection, traceFile);
+	}
+
+	/**
+	 * Checks strict functional equivalence, i.e., the specification and the
+	 * implementation always has the same output, requiring that there are only
+	 * one possible output for both of them.
+	 * 
+	 * @return
+	 * @throws CommandLineException
+	 * @throws MisguidedExecutionException
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 * @throws ABCException
+	 */
+	private boolean strictCompareWorker(CompareCommandLine compareCommand,
+			ModelTranslator specWorker, ModelTranslator implWorker,
+			GMCConfiguration gmcConfig, GMCSection anonymousSection,
+			File traceFile) throws CommandLineException, FileNotFoundException,
+			IOException, MisguidedExecutionException, ABCException {
+		Combiner combiner = Transform.compareCombiner();
+		AST combinedAST;
+		Program specProgram = specWorker.buildProgram(), implProgram = implWorker
+				.buildProgram(), compositeProgram;
+		Model model;
+		ModelBuilder modelBuilder = Models.newModelBuilder(specWorker.universe);
+		NormalCommandLine spec = compareCommand.specification(), impl = compareCommand
+				.implementation();
+		CIVLConfiguration civlConfig = new CIVLConfiguration(anonymousSection);
+
 		if (civlConfig.debugOrVerbose())
 			out.println("Generating composite program...");
 		combinedAST = combiner.combine(specProgram.getAST(),
@@ -377,12 +413,76 @@ public class UserInterface {
 		}
 		if (compareCommand.isReplay())
 			return this.runCompareReplay(compareCommand.getCommandString(),
-					gmcConfig, traceFile, model, universe);
+					gmcConfig, traceFile, model, specWorker.universe);
 		if (civlConfig.web())
 			this.createWebLogs(model.program());
 		return this.runCompareVerify(compareCommand.getCommandString(),
 				compareCommand.gmcConfig(), model, specWorker.preprocessor,
 				specWorker.universe);
+	}
+
+	/**
+	 * Checks non-determinstic functional equivalence, i.e., for every possible
+	 * output of the implementation, there exists at least one same output in
+	 * the specification.
+	 * 
+	 * TODO make sure the symbolic constants for input variables are the same
+	 * for spec and impl. (make sure they are always the first variables in the
+	 * same order of either program.)
+	 * 
+	 * TODO need a way for replay it if there is a counterexample
+	 * 
+	 * @return
+	 * @throws IOException
+	 * @throws CommandLineException
+	 * @throws ParseException
+	 * @throws SyntaxException
+	 * @throws PreprocessorException
+	 */
+	private boolean lessStrictCompareWorker(CompareCommandLine compareCommand,
+			ModelTranslator specWorker, ModelTranslator implWorker,
+			GMCConfiguration gmcConfig, GMCSection anonymousSection,
+			File traceFile) throws ABCException, CommandLineException,
+			IOException {
+		Model model = specWorker.translate();
+		Verifier verifier = new Verifier(gmcConfig, model, out, err, startTime,
+				true);
+		boolean result = verifier.run();
+		VerificationStatus statusSpec = verifier.verificationStatus, statusImpl;
+
+		// out.print("phase spec done.\n");
+		if (result) {
+			StateManager stateManager = verifier.stateManager();
+
+			model = implWorker.translate();
+			verifier = new Verifier(gmcConfig, model, out, err, startTime,
+					stateManager.outptutNames(),
+					stateManager.collectedOutputs());
+			result = verifier.run();
+			statusImpl = verifier.verificationStatus;
+			this.printCommand(out, compareCommand.getCommandString());
+			out.print("   max process count   : ");
+			out.println(Math.max(statusSpec.maxProcessCount,
+					statusImpl.maxProcessCount));
+			out.print("   states              : ");
+			out.println(statusSpec.numStates + statusImpl.numStates);
+			out.print("   states saved        : ");
+			out.println(statusSpec.numSavedStates + statusImpl.numSavedStates);
+			out.print("   state matches       : ");
+			out.println(statusSpec.numMatchedStates
+					+ statusImpl.numMatchedStates);
+			out.print("   transitions         : ");
+			out.println(statusSpec.numTransitions + statusImpl.numTransitions);
+			out.print("   trace steps         : ");
+			out.println(statusSpec.numTraceSteps + statusImpl.numTraceSteps);
+			printUniverseStats(out, specWorker.universe);
+		}
+		if (result)
+			out.println("\nThe standard properties hold for all executions and "
+					+ "the specification and the implementation are functionally equivalent.");
+		else
+			out.println("\nThe specification and the implementation may NOT be functionally equivalent.");
+		return result;
 	}
 
 	/**
@@ -595,7 +695,6 @@ public class UserInterface {
 				Analysis.printResults(model.factory().codeAnalyzers(), out);
 			}
 			this.printCommand(out, command);
-			// printTimeAndMemory(out);
 			verifier.printStats();
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();

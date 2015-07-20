@@ -42,6 +42,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.showUnreachedCodeO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.strictCompareO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.svcompO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.sysIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
@@ -62,11 +63,9 @@ import edu.udel.cis.vsl.gmc.Option;
 
 public class CIVLCommand {
 
-	// public final static SortedMap<String, Option> definedOptions = new
-	// TreeMap<>();
-
 	private static SortedMap<String, Option> showOptions = new TreeMap<>();
-	private static SortedMap<String, Option> verifyOrCompareOptions = new TreeMap<>();
+	private static SortedMap<String, Option> verifyOptions = new TreeMap<>();
+	private static SortedMap<String, Option> compareOptions = new TreeMap<>();
 	private static SortedMap<String, Option> replayOptions = new TreeMap<>();
 	private static SortedMap<String, Option> runOptions = new TreeMap<>();
 
@@ -85,6 +84,17 @@ public class CIVLCommand {
 				ompLoopDecompO, collectProcessesO, collectScopesO,
 				collectHeapsO, macroO, preprocO, astO, showTimeO,
 				showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO, analyzeAbsO);
+		CIVLCommand.addCompareOption(errorBoundO, verboseO, debugO, echoO,
+				userIncludePathO, sysIncludePathO, showTransitionsO,
+				showStatesO, showSavedStatesO, showQueriesO,
+				showProverQueriesO, inputO, minO, maxdepthO, procBoundO,
+				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
+				showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcompO,
+				showProgramO, showPathConditionO, ompNoSimplifyO,
+				ompLoopDecompO, collectProcessesO, collectScopesO,
+				collectHeapsO, macroO, preprocO, astO, showTimeO,
+				showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO, analyzeAbsO,
+				strictCompareO);
 		CIVLCommand.addReplayOption(showModelO, verboseO, debugO, echoO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,
@@ -113,13 +123,21 @@ public class CIVLCommand {
 
 	private static void addVerifyOrCompareOption(Option... options) {
 		for (Option option : options) {
-			if (verifyOrCompareOptions.containsKey(option.name()))
-				throw new CIVLInternalException(
-						"Option "
-								+ option.name()
-								+ " has already been added to verify/compare option map.",
+			if (verifyOptions.containsKey(option.name()))
+				throw new CIVLInternalException("Option " + option.name()
+						+ " has already been added to verify option map.",
 						(CIVLSource) null);
-			verifyOrCompareOptions.put(option.name(), option);
+			verifyOptions.put(option.name(), option);
+		}
+	}
+
+	private static void addCompareOption(Option... options) {
+		for (Option option : options) {
+			if (compareOptions.containsKey(option.name()))
+				throw new CIVLInternalException("Option " + option.name()
+						+ " has already been added to compare option map.",
+						(CIVLSource) null);
+			compareOptions.put(option.name(), option);
 		}
 	}
 
@@ -146,8 +164,10 @@ public class CIVLCommand {
 	public static void printOptionsOfCommand(String command, PrintStream out) {
 		switch (command) {
 		case CommandLine.COMPARE:
+			printOptions(verifyOptions.values(), out);
+			break;
 		case CommandLine.VERIFY:
-			printOptions(verifyOrCompareOptions.values(), out);
+			printOptions(verifyOptions.values(), out);
 			break;
 		case CommandLine.REPLAY:
 			printOptions(replayOptions.values(), out);
@@ -180,7 +200,7 @@ public class CIVLCommand {
 			case SHOW:
 				return showOptions.containsKey(option.name());
 			case VERIFY:
-				return verifyOrCompareOptions.containsKey(option.name());
+				return verifyOptions.containsKey(option.name());
 			case REPLAY:
 			case RUN:
 				return replayOptions.containsKey(option.name());
@@ -190,7 +210,7 @@ public class CIVLCommand {
 				return false;
 			}
 		} else {
-			return verifyOrCompareOptions.containsKey(option.name());
+			return verifyOptions.containsKey(option.name());
 		}
 	}
 
@@ -207,6 +227,6 @@ public class CIVLCommand {
 	}
 
 	public static SortedMap<String, Option> getVerifyOrCompareOptions() {
-		return verifyOrCompareOptions;
+		return verifyOptions;
 	}
 }

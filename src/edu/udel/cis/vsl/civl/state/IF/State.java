@@ -335,4 +335,22 @@ public interface State {
 	 *            The print stream to be used.
 	 */
 	void print(PrintStream out);
+
+	/**
+	 * Returns value of the output variables in the order of the given list of
+	 * output names.
+	 * 
+	 * @param outputNames
+	 * @return
+	 */
+	SymbolicExpression[] getOutputValues(String[] outputNames);
+
+	/**
+	 * Is this the final state upon execution termination? A state is considered
+	 * as a final state if it has only one process and the process has empty
+	 * call stack.
+	 * 
+	 * @return
+	 */
+	boolean isFinalState();
 }

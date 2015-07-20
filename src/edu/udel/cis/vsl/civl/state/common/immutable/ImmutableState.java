@@ -846,4 +846,25 @@ public class ImmutableState implements State {
 		}
 		return result;
 	}
+
+	@Override
+	public SymbolicExpression[] getOutputValues(String[] outputNames) {
+		DynamicScope rootDyscope = this.dyscopes[0];
+		Scope rootScope = rootDyscope.lexicalScope();
+		int numOutputs = outputNames.length;
+		SymbolicExpression[] outputValues = new SymbolicExpression[numOutputs];
+
+		for (int i = 0; i < numOutputs; i++) {
+			Variable outputVariable = rootScope.variable(outputNames[i]);
+
+			outputValues[i] = rootDyscope.getValue(outputVariable.vid());
+		}
+		return outputValues;
+	}
+
+	@Override
+	public boolean isFinalState() {
+		return processStates.length == 1 && processStates[0].hasEmptyStack();
+	}
+
 }
