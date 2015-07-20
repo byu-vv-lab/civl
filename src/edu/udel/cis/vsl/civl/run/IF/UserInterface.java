@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -72,6 +73,7 @@ import edu.udel.cis.vsl.civl.run.common.HelpCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
 import edu.udel.cis.vsl.civl.run.common.VerificationStatus;
+import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
@@ -87,6 +89,8 @@ import edu.udel.cis.vsl.sarl.SARL;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.config.Configurations;
 import edu.udel.cis.vsl.sarl.IF.config.ProverInfo;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * Basic command line and API user interface for CIVL tools.
@@ -687,6 +691,11 @@ public class UserInterface {
 				verifier.terminateUpdater();
 				throw e;
 			}
+			if (modelTranslator.config.collectOutputs()) {
+				printOutput(out, verifier.symbolicAnalyzer,
+						verifier.stateManager.outptutNames(),
+						verifier.stateManager.collectedOutputs());
+			}
 			if (modelTranslator.config.showUnreach()) {
 				out.println("\n=== unreached code ===");
 				model.printUnreachedCode(out);
@@ -703,6 +712,47 @@ public class UserInterface {
 			return result;
 		}
 		return false;
+	}
+
+	private void printOutput(
+			PrintStream out,
+			SymbolicAnalyzer symbolicAnalyzer,
+			String[] outputNames,
+			Map<BooleanExpression, Set<SymbolicExpression[]>> outputValues) {
+		StringBuffer result = new StringBuffer();
+		// int k=0;
+		int numOutputs = outputNames.length;
+
+		result.append("\n=== output ===\n");
+		result.append("Output variables:\n");
+		for (int i = 0; i < numOutputs; i++) {
+			result.append(outputNames[i]);
+			result.append("\n");
+		}
+		result.append("Specification output values:");
+		for (Map.Entry<BooleanExpression, Set<SymbolicExpression[]>> entry : outputValues
+				.entrySet()) {
+			int j = 0;
+
+			result.append("\npc: ");
+			result.append(entry.getKey());
+			result.append(", output: {");
+			for (SymbolicExpression[] outputs : entry.getValue()) {
+				if (j > 0)
+					result.append(", ");
+				result.append("(");
+				for (int k = 0; k < numOutputs; k++) {
+					if (k > 0)
+						result.append(", ");
+					result.append(symbolicAnalyzer.symbolicExpressionToString(
+							null, null, outputs[k]));
+				}
+				result.append(")");
+				j++;
+			}
+			result.append("}");
+		}
+		out.print(result.toString());
 	}
 
 	private void printCommand(PrintStream out, String command) {

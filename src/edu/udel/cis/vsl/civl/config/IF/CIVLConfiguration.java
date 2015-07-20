@@ -275,6 +275,7 @@ public class CIVLConfiguration {
 		this.procBound = (Integer) config
 				.getValueOrDefault(CIVLConstants.procBoundO);
 		this.setInputVariables(config.getMapValue(CIVLConstants.inputO));
+		this.collectOutputs = config.isTrue(CIVLConstants.collectOutputO);
 	}
 
 	public void setOut(PrintStream out) {
@@ -586,7 +587,8 @@ public class CIVLConfiguration {
 	}
 
 	/**
-	 * @param collectOutputs the collectOutputs to set
+	 * @param collectOutputs
+	 *            the collectOutputs to set
 	 */
 	public void setCollectOutputs(boolean collectOutputs) {
 		this.collectOutputs = collectOutputs;

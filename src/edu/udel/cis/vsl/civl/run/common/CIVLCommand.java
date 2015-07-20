@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.run.common;
 
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectOutputO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.CIVLMacroO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.analyzeAbsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.astO;
@@ -83,7 +84,8 @@ public class CIVLCommand {
 				showProgramO, showPathConditionO, ompNoSimplifyO,
 				ompLoopDecompO, collectProcessesO, collectScopesO,
 				collectHeapsO, macroO, preprocO, astO, showTimeO,
-				showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO, analyzeAbsO);
+				showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO, analyzeAbsO,
+				collectOutputO);
 		CIVLCommand.addCompareOption(errorBoundO, verboseO, debugO, echoO,
 				userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
@@ -99,7 +101,8 @@ public class CIVLCommand {
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, showProgramO,
-				showPathConditionO, preprocO, astO, showMemoryUnitsO);
+				showPathConditionO, preprocO, astO, showMemoryUnitsO,
+				collectOutputO);
 		CIVLCommand.addRunOption(errorBoundO, verboseO, randomO, guidedO,
 				seedO, debugO, echoO, userIncludePathO, sysIncludePathO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
@@ -108,7 +111,7 @@ public class CIVLCommand {
 				statelessPrintfO, deadlockO, svcompO, showProgramO,
 				showPathConditionO, ompNoSimplifyO, ompLoopDecompO,
 				collectProcessesO, collectScopesO, collectHeapsO, macroO,
-				preprocO, astO, showMemoryUnitsO, CIVLMacroO);
+				preprocO, astO, showMemoryUnitsO, CIVLMacroO, collectOutputO);
 	}
 
 	private static void addShowOption(Option... options) {

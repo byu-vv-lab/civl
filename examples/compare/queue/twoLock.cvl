@@ -62,7 +62,7 @@ _Bool dequeue(queue_t *Q, int *pvalue) {
   return true;                  // Queue was not empty, dequeue succeeded
 }
 
-#define N 4
+#define N 2
 #define T 2
 $output int RESULT[T][N];
 int A[N];
@@ -70,7 +70,7 @@ queue_t queue;
 
 void thread(int tid){
   for(int i=0; i<N; i++)
-    enqueue(&queue, A[i]);
+    enqueue(&queue, A[i]+tid*N);
   for(int i=0; i<N; i++)
     dequeue(&queue, &(RESULT[tid][i]));
 }
@@ -84,4 +84,5 @@ int main(){
   initialize(&queue);
   $parfor(int i: 0 .. T-1)
     thread(i);
+  free(queue.Head);
 }

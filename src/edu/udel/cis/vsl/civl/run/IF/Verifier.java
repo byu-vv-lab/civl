@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.run.IF;
 
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectOutputO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 
 import java.io.File;
@@ -278,7 +279,8 @@ public class Verifier extends Player {
 
 	public Verifier(GMCConfiguration config, Model model, PrintStream out,
 			PrintStream err, double startTime) throws CommandLineException {
-		this(config, model, out, err, startTime, false, null, null);
+		this(config, model, out, err, startTime, config.getAnonymousSection()
+				.isTrue(collectOutputO), null, null);
 	}
 
 	/**

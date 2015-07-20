@@ -283,8 +283,7 @@ public class CIVLConstants {
 	 * one processes? false by default.
 	 */
 	public final static Option strictCompareO = Option.newScalarOption(
-			"strict", BOOLEAN, "check strict functional equivalence?",
-			true);
+			"strict", BOOLEAN, "check strict functional equivalence?", true);
 
 	/**
 	 * Set the system include path.
@@ -367,6 +366,12 @@ public class CIVLConstants {
 			"ompNoSimplify", BOOLEAN, "don't simplify omp pragmas", false);
 
 	/**
+	 * Collect output? false by default.
+	 */
+	public final static Option collectOutputO = Option.newScalarOption(
+			"collectOutput", BOOLEAN, "collect output?", false);
+
+	/**
 	 * Collect processes? true by default.
 	 */
 	public final static Option collectProcessesO = Option.newScalarOption(
@@ -440,7 +445,7 @@ public class CIVLConstants {
 				showStatesO, showTimeO, showTransitionsO, showUnreachedCodeO,
 				simplifyO, solveO, statelessPrintfO, svcompO, sysIncludePathO,
 				traceO, userIncludePathO, verboseO, webO, CIVLMacroO,
-				analyzeAbsO, strictCompareO };
+				analyzeAbsO, strictCompareO, collectOutputO };
 	}
 
 	// headers...
