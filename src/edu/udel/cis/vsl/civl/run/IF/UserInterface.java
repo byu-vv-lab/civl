@@ -691,17 +691,19 @@ public class UserInterface {
 				verifier.terminateUpdater();
 				throw e;
 			}
-			if (modelTranslator.config.collectOutputs()) {
-				printOutput(out, verifier.symbolicAnalyzer,
-						verifier.stateManager.outptutNames(),
-						verifier.stateManager.collectedOutputs());
-			}
-			if (modelTranslator.config.showUnreach()) {
-				out.println("\n=== unreached code ===");
-				model.printUnreachedCode(out);
-			}
-			if (modelTranslator.config.analyzeAbs()) {
-				Analysis.printResults(model.factory().codeAnalyzers(), out);
+			if (result) {
+				if (modelTranslator.config.collectOutputs()) {
+					printOutput(out, verifier.symbolicAnalyzer,
+							verifier.stateManager.outptutNames(),
+							verifier.stateManager.collectedOutputs());
+				}
+				if (modelTranslator.config.showUnreach()) {
+					out.println("\n=== unreached code ===");
+					model.printUnreachedCode(out);
+				}
+				if (modelTranslator.config.analyzeAbs()) {
+					Analysis.printResults(model.factory().codeAnalyzers(), out);
+				}
 			}
 			this.printCommand(out, command);
 			verifier.printStats();
@@ -714,10 +716,8 @@ public class UserInterface {
 		return false;
 	}
 
-	private void printOutput(
-			PrintStream out,
-			SymbolicAnalyzer symbolicAnalyzer,
-			String[] outputNames,
+	private void printOutput(PrintStream out,
+			SymbolicAnalyzer symbolicAnalyzer, String[] outputNames,
 			Map<BooleanExpression, Set<SymbolicExpression[]>> outputValues) {
 		StringBuffer result = new StringBuffer();
 		// int k=0;
@@ -750,7 +750,7 @@ public class UserInterface {
 				result.append(")");
 				j++;
 			}
-			result.append("}");
+			result.append("}\n");
 		}
 		out.print(result.toString());
 	}
