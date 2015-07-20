@@ -112,6 +112,7 @@ OPTION_NAME
     | '-analyze_abs'
     | '-ast'
     | '-collectHeaps'
+    | '-collectOutput'
     | '-collectProcesses'
     | '-collectScopes'
     | '-deadlock'
