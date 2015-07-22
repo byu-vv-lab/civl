@@ -20,6 +20,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.compound.CompoundInitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.compound.DesignationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.DeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FieldDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
@@ -3521,9 +3522,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				while (nodesDeep > 0) {
 					if(!(parentOfID.parent() instanceof IfNode)){
 						parentOfID = parentOfID.parent();
-					} else {
-						System.out.println("HERE");
-					}
+					} 
 					nodesDeep--;
 				}
 
@@ -3652,8 +3651,23 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						temp = temp.replace("$omp_reduction", "");
 						reductionNode = true;
 					}
+					
+					ASTNode parent = child;
+					boolean functionParam = false;
+					while(!(parent instanceof FunctionDefinitionNode)){
+						parent = parent.parent();
+					}
+					
+					SequenceNode<VariableDeclarationNode> params = ((FunctionDeclarationNode) parent).getTypeNode().getParameters();
+					
+					for(VariableDeclarationNode varName : params){
+						if(varName.getName().equals(temp)){
+							functionParam = true;
+						}
+					}
+					
 					if ((!(declaredNodes.contains(temp) || currentShared
-							.contains(temp))) && !temp.equals("_tid") ) {
+							.contains(temp))) && !temp.equals("_tid") && !functionParam) {
 						Entity entity = ((IdentifierExpressionNode) child)
 								.getIdentifier().getEntity();
 						IdentifierExpressionNode newNode = (IdentifierExpressionNode) child
@@ -3672,10 +3686,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					IdentifierExpressionNode idExp = (IdentifierExpressionNode) ((FunctionCallNode) child).getFunction();
 					IdentifierNode id = idExp.getIdentifier();
 					String funcName = id.name();
-					
-					if(funcName.equals("hypre_qsort2abs")){
-						System.out.println("HERE");
-					}
 					
 					ASTNode functionParent = child;
 					
