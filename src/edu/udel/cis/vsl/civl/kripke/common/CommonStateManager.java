@@ -224,7 +224,7 @@ public class CommonStateManager implements StateManager {
 				// out if it has been seen before.
 				String message = "";
 				CIVLExecutionException err;
-				state=hex.state();
+				state = hex.state();
 
 				switch (hex.heapErrorKind()) {
 				case NONEMPTY:
@@ -245,7 +245,8 @@ public class CommonStateManager implements StateManager {
 				message = message
 						+ "heap"
 						+ symbolicAnalyzer.symbolicExpressionToString(
-								hex.source(), hex.state(), hex.heapValue());
+								hex.source(), hex.state(), null,
+								hex.heapValue());
 				err = new CIVLExecutionException(hex.kind(), hex.certainty(),
 						process, message, symbolicAnalyzer.stateInformation(hex
 								.state()), hex.source());

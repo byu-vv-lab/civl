@@ -561,10 +561,10 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 						process,
 						"One of the operands "
 								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, firOperand)
+										source, state, null, firOperand)
 								+ " of CIVL Operation out of bound when reading at index: "
 								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, i),
+										source, state, null, i),
 						symbolicAnalyzer.stateInformation(state), source);
 				errorLogger.reportError(err);
 				return state;
@@ -590,10 +590,10 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 						process,
 						"One of the operands "
 								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, secOperand)
+										source, state, null, secOperand)
 								+ " of CIVL Operation out of bound when accessing at index: "
 								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, i),
+										source, state, null, i),
 						symbolicAnalyzer.stateInformation(state), source);
 
 				errorLogger.reportError(err);

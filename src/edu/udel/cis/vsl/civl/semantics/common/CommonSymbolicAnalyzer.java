@@ -301,8 +301,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 	@Override
 	public String symbolicExpressionToString(CIVLSource source, State state,
-			SymbolicExpression symbolicExpression) {
-		return this.symbolicExpressionToString(source, state, null,
+			CIVLType type, SymbolicExpression symbolicExpression) {
+		return this.symbolicExpressionToString(source, state, type,
 				symbolicExpression, "", "| ");
 	}
 
@@ -912,7 +912,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				boolean needNewLine = !civlType.areSubtypesScalar();
 				String padding = "\n" + prefix + separator;
 				String newPrefix = needNewLine ? prefix + separator : prefix;
-				
+
 				if (arguments[0] instanceof SymbolicExpression) {
 					result.append("(");
 					result.append(this.symbolicExpressionToString(source,
@@ -1072,13 +1072,13 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case EQUALS:
 				if (arguments[0] instanceof SymbolicExpression)
 					result.append(this.symbolicExpressionToString(source,
-							state, (SymbolicExpression) arguments[0]));
+							state, null, (SymbolicExpression) arguments[0]));
 				else
 					result.append(arguments[0].toStringBuffer(false));
 				result.append("==");
 				if (arguments[1] instanceof SymbolicExpression)
 					result.append(this.symbolicExpressionToString(source,
-							state, (SymbolicExpression) arguments[1]));
+							state, null, (SymbolicExpression) arguments[1]));
 				else
 					result.append(arguments[1].toStringBuffer(false));
 				if (atomize)
@@ -1593,7 +1593,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				if (i != 0)
 					result.append(", ");
 				result.append(this.symbolicExpressionToString(
-						loopVar.getSource(), state, state.valueOf(pid, loopVar)));
+						loopVar.getSource(), state, loopVar.type(),
+						state.valueOf(pid, loopVar)));
 			}
 			result.append(") has next in ");
 			tmp = this.expressionEvaluation(state, pid, civlForEnter.domain());
@@ -1712,6 +1713,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		ExpressionKind kind = expression.expressionKind();
 		StringBuilder result = new StringBuilder();
 		Pair<State, String> temp;
+		CIVLType exprType = expression.getExpressionType();
 
 		if (resultOnly && !isTopLevel) {
 			Evaluation eval;
@@ -1723,7 +1725,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			state = eval.state;
 			result.append(this.symbolicExpressionToString(
-					expression.getSource(), state, eval.value));
+					expression.getSource(), state, exprType, eval.value));
 		} else {
 			switch (kind) {
 			case ABSTRACT_FUNCTION_CALL: {
@@ -1806,6 +1808,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					result.append(this.symbolicExpressionToString(
 							var.getSource(),
 							state,
+							var.type(),
 							state.getVariableValue(
 									state.getDyscope(pid, var.scope()),
 									var.vid())));
@@ -1865,7 +1868,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 				state = eval.state;
 				result.append(this.symbolicExpressionToString(
-						expression.getSource(), state, eval.value));
+						expression.getSource(), state, exprType, eval.value));
 				break;
 			}
 			case BOUND_VARIABLE:
@@ -1912,7 +1915,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			result.append(entry.getKey().name().name());
 			result.append("=");
 			result.append(this.symbolicExpressionToString(entry.getKey()
-					.getSource(), state, entry.getValue()));
+					.getSource(), state, entry.getKey().type(), entry
+					.getValue()));
 		}
 		return result;
 	}

@@ -468,7 +468,8 @@ public class CommonEvaluator implements Evaluator {
 										+ "\nevaluation: "
 										+ this.symbolicAnalyzer
 												.symbolicExpressionToString(
-														source, state, pointer));
+														source, state, null,
+														pointer));
 				throwPCException = true;
 			} else {
 				int vid = symbolicUtil.getVariableId(source, pointer);
@@ -3562,13 +3563,13 @@ public class CommonEvaluator implements Evaluator {
 						+ msg
 						+ ": "
 						+ symbolicAnalyzer.symbolicExpressionToString(source,
-								state, array)
+								state, null, array)
 						+ "\nOriginal pointer: "
 						+ symbolicAnalyzer.symbolicExpressionToString(source,
-								state, pointer)
+								state, null, pointer)
 						+ "\nPointer addtion offset: "
 						+ symbolicAnalyzer.symbolicExpressionToString(source,
-								state, offset));
+								state, null, offset));
 	}
 
 	/**

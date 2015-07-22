@@ -129,14 +129,15 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			StringBuffer inputVariableMap;
 
 			state = messageResult.left;
-			inputVariableMap=symbolicAnalyzer.inputVariablesToStringBuffer(state);
-			if(!inputVariableMap.toString().isEmpty()){
-			message.append("\nInput variables:");
-			message.append(inputVariableMap);
+			inputVariableMap = symbolicAnalyzer
+					.inputVariablesToStringBuffer(state);
+			if (!inputVariableMap.toString().isEmpty()) {
+				message.append("\nInput variables:");
+				message.append(inputVariableMap);
 			}
 			message.append("\n\nContext: ");
 			message.append(this.symbolicAnalyzer.symbolicExpressionToString(
-					source, state, reasoner.getReducedContext()));
+					source, state, null, reasoner.getReducedContext()));
 			message.append("\n\nAssertion: ");
 			message.append(statement.toString());
 			message.append("\n-> ");
@@ -151,7 +152,8 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 				message.append(secondEvaluation);
 			}
 			result = this.symbolicAnalyzer.symbolicExpressionToString(
-					arguments[0].getSource(), state, assertValue).toString();
+					arguments[0].getSource(), state, null, assertValue)
+					.toString();
 			if (!secondEvaluation.equals(result)) {
 				message.append("\n-> ");
 				message.append(result);
@@ -213,7 +215,9 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
 					"The argument of free "
 							+ symbolicAnalyzer.symbolicExpressionToString(
-									source, state, firstElementPointer)
+									source, state,
+									arguments[0].getExpressionType(),
+									firstElementPointer)
 							+ " is not a pointer returned by a memory "
 							+ "management method",
 					symbolicAnalyzer.stateInformation(state), source);

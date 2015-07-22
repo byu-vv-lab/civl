@@ -108,7 +108,7 @@ public interface SymbolicAnalyzer {
 	 * @return The user-friendly string representation of a state.
 	 */
 	String symbolicExpressionToString(CIVLSource source, State state,
-			SymbolicExpression symbolicExpression);
+			CIVLType type, SymbolicExpression symbolicExpression);
 
 	/**
 	 * Computes the CIVL type of the object referring to by the given pointer.

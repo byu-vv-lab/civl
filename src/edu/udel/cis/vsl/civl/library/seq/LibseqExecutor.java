@@ -164,11 +164,11 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "must be non-null pointers.\n"
 							+ "actual value of first argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
-									arrayPtrSource, state, arrayPtr)
+									arrayPtrSource, state, null, arrayPtr)
 							+ "\n"
 							+ "actual value of third argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
-									elePtrSource, state, elePointer),
+									elePtrSource, state, null, elePointer),
 					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
@@ -177,7 +177,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 			if (!arrayType.isIncompleteArrayType()) {
 				String arrayPtrString = symbolicAnalyzer
 						.symbolicExpressionToString(arrayPtrSource, state,
-								arrayPtr);
+								null, arrayPtr);
 				CIVLExecutionException err = new CIVLExecutionException(
 						ErrorKind.SEQUENCE, Certainty.PROVEABLE, process,
 						"The first argument of $seq_init() must be "
@@ -301,7 +301,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 					"The argument of $seq_length() must be a non-null pointer.\n"
 							+ "actual argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
-									seqSource, state, seqPtr),
+									seqSource, state, null, seqPtr),
 					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
@@ -320,7 +320,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 								+ "objects of the same type.\n"
 								+ "actual argument: "
 								+ symbolicAnalyzer.symbolicExpressionToString(
-										seqSource, state, seq),
+										seqSource, state, null, seq),
 						symbolicAnalyzer.stateInformation(state), source);
 
 				this.errorLogger.reportError(err);
@@ -366,7 +366,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ " must be a non-null pointer.\n"
 							+ "actual value of first argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
-									arrayPtrSource, state, arrayPtr),
+									arrayPtrSource, state, null, arrayPtr),
 					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
@@ -383,7 +383,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "argument is greater than zero.\n"
 							+ "actual value of third argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
-									valuesPtrSource, state, valuesPtr),
+									valuesPtrSource, state, null, valuesPtr),
 					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
@@ -445,7 +445,7 @@ public class LibseqExecutor extends BaseLibraryExecutor implements
 							+ "must be a pointer to a concrete array.\n"
 							+ "actual value of the array pointed to by the first argument: "
 							+ symbolicAnalyzer.symbolicExpressionToString(
-									arrayPtrSource, state, arrayValue),
+									arrayPtrSource, state, null, arrayValue),
 					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);

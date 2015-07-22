@@ -745,7 +745,7 @@ public class UserInterface {
 					if (k > 0)
 						result.append(", ");
 					result.append(symbolicAnalyzer.symbolicExpressionToString(
-							null, null, outputs[k]));
+							null, null, null, outputs[k]));
 				}
 				result.append(")");
 				j++;

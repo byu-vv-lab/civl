@@ -251,7 +251,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 						variableName
 								+ " = "
 								+ symbolicAnalyzer.symbolicExpressionToString(
-										var.getSource(), state, s));
+										var.getSource(), state, var.type(), s));
 				if (!(variableName == "__heap" && s.isNull())) {
 					node.add(variableNode);
 				}

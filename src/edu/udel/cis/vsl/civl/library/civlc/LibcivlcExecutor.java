@@ -203,7 +203,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			this.civlConfig.out().println(
 					"path condition: "
 							+ this.symbolicAnalyzer.symbolicExpressionToString(
-									source, state, state.getPathCondition()));
+									source, state, null,
+									state.getPathCondition()));
 		return state;
 	}
 

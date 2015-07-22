@@ -1002,7 +1002,7 @@ public class CommonExecutor implements Executor {
 				} else if (myFormat.type == ConversionType.POINTER) {
 					printedContents.add(new StringBuffer(symbolicAnalyzer
 							.symbolicExpressionToString(
-									arguments[i].getSource(), state,
+									arguments[i].getSource(), state, null,
 									argumentValue)));
 				} else {
 					throw new CIVLSyntaxException("Array pointer unaccepted",
@@ -1016,7 +1016,7 @@ public class CommonExecutor implements Executor {
 			} else
 				printedContents.add(new StringBuffer(this.symbolicAnalyzer
 						.symbolicExpressionToString(arguments[i].getSource(),
-								state, argumentValue)));
+								state, null, argumentValue)));
 		}
 		this.printf(civlConfig.out(), arguments[0].getSource(), formats,
 				printedContents);

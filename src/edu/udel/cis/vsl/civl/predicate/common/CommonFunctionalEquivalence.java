@@ -103,7 +103,7 @@ public class CommonFunctionalEquivalence extends CommonCIVLStatePredicate
 				if (i > 0)
 					msg.append(", ");
 				msg.append(this.symbolicAnalyzer.symbolicExpressionToString(
-						null, state, implOutputs[i]));
+						null, state,null, implOutputs[i]));
 			}
 			violation = new CIVLExecutionException(
 					ErrorKind.FUNCTIONAL_EQUIVALENCE, Certainty.PROVEABLE,
@@ -151,7 +151,7 @@ public class CommonFunctionalEquivalence extends CommonCIVLStatePredicate
 					if (k > 0)
 						result.append(", ");
 					result.append(this.symbolicAnalyzer
-							.symbolicExpressionToString(null, null, outputs[k]));
+							.symbolicExpressionToString(null, null, null,outputs[k]));
 				}
 				result.append(")");
 				j++;

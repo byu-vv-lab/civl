@@ -747,15 +747,15 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		String message = "Out of bound error may happen when access on an array element.\n"
 				+ "Pointer:"
 				+ symbolicAnalyzer.symbolicExpressionToString(source, state,
-						pointer)
+						null, pointer)
 				+ "\n"
 				+ "Offset:"
 				+ symbolicAnalyzer.symbolicExpressionToString(source, state,
-						offset)
+						null, offset)
 				+ "\n"
 				+ "Array length:"
 				+ symbolicAnalyzer.symbolicExpressionToString(source, state,
-						arrayLength);
+						null, arrayLength);
 
 		if (claim == null || resultType == null) {
 			errorLogger.logSimpleError(source, state, process,

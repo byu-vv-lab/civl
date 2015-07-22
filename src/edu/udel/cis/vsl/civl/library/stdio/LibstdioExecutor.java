@@ -1065,7 +1065,7 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 			} else
 				printedContents.add(new StringBuffer(this.symbolicAnalyzer
 						.symbolicExpressionToString(arguments[i].getSource(),
-								state, argumentValue)));
+								state, null, argumentValue)));
 		}
 		if (fileNameString.compareTo(STDOUT) == 0) {
 			if (civlConfig.enablePrintf())

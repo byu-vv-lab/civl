@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
@@ -385,7 +386,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					arguments[0], false).right);
 			msg.append("\n    ");
 			msg.append(symbolicAnalyzer.symbolicExpressionToString(sourceLeft,
-					state, left));
+					state, arguments[0].getExpressionType(), left));
 			msg.append("\nsecond argument:\n");
 			msg.append("    ");
 			msg.append(arguments[1]);
@@ -394,7 +395,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					arguments[1], false).right);
 			msg.append("\n    ");
 			msg.append(symbolicAnalyzer.symbolicExpressionToString(sourceRight,
-					state, right));
+					state, arguments[1].getExpressionType(), right));
 			err = new CIVLExecutionException(ErrorKind.DEREFERENCE,
 					Certainty.PROVEABLE, process, msg.toString(),
 					symbolicAnalyzer.stateInformation(state), source);
@@ -488,7 +489,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 							+ " points to is undefined, which has the value "
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									arguments[invalidArg].getSource(), state,
-									invalidValue),
+									null, invalidValue),
 					symbolicAnalyzer.stateInformation(state),
 					arguments[invalidArg].getSource());
 
@@ -545,11 +546,13 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 
 			if (!firstPtrDefined)
 				msg += symbolicAnalyzer.symbolicExpressionToString(
-						arguments[0].getSource(), state, firstPtr);
+						arguments[0].getSource(), state,
+						arguments[0].getExpressionType(), firstPtr);
 			if (!secPtrDefined) {
 				msg += (!firstPtrDefined) ? ", " : "";
 				msg += symbolicAnalyzer.symbolicExpressionToString(
-						arguments[1].getSource(), state, secondPtr);
+						arguments[1].getSource(), state,
+						arguments[1].getExpressionType(), secondPtr);
 			}
 			errorLogger.logSimpleError(source, state, process,
 					symbolicAnalyzer.stateInformation(state),
@@ -574,9 +577,9 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 
 			if (!firstInit) {
 				ptrMsg += symbolicAnalyzer.symbolicExpressionToString(
-						arguments[0].getSource(), state, firstPtr);
+						arguments[0].getSource(), state, null, firstPtr);
 				objMsg += symbolicAnalyzer.symbolicExpressionToString(
-						arguments[0].getSource(), state, first);
+						arguments[0].getSource(), state, null, first);
 			}
 			if (!secondInit) {
 				String comma = (!firstInit) ? ", " : "";
@@ -584,9 +587,9 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 				ptrMsg += comma;
 				objMsg += comma;
 				ptrMsg += symbolicAnalyzer.symbolicExpressionToString(
-						arguments[1].getSource(), state, secondPtr);
+						arguments[1].getSource(), state, null, secondPtr);
 				objMsg += symbolicAnalyzer.symbolicExpressionToString(
-						arguments[1].getSource(), state, second);
+						arguments[1].getSource(), state, null, second);
 			}
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
@@ -608,22 +611,30 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			message.append(call.toString());
 			message.append("\nEvaluation: \n          ");
 			firstArg = this.symbolicAnalyzer.symbolicExpressionToString(
-					arguments[0].getSource(), state, argumentValues[0]);
+					arguments[0].getSource(), state,
+					arguments[0].getExpressionType(), argumentValues[0]);
 			message.append(arguments[0].toString() + "=" + firstArg);
 			message.append("\n          ");
 			secondArg = this.symbolicAnalyzer.symbolicExpressionToString(
-					arguments[1].getSource(), state, argumentValues[1]);
+					arguments[1].getSource(), state,
+					arguments[1].getExpressionType(), argumentValues[1]);
 			message.append(arguments[1].toString() + "=" + secondArg);
 			message.append("\nResult: \n          ");
 			message.append(firstArg.substring(1)
 					+ "="
 					+ this.symbolicAnalyzer.symbolicExpressionToString(
-							arguments[0].getSource(), state, first));
+							arguments[0].getSource(),
+							state,
+							((CIVLPointerType) arguments[0].getExpressionType())
+									.baseType(), first));
 			message.append("\n          ");
 			message.append(secondArg.substring(1)
 					+ "="
 					+ this.symbolicAnalyzer.symbolicExpressionToString(
-							arguments[1].getSource(), state, second));
+							arguments[1].getSource(),
+							state,
+							((CIVLPointerType) arguments[1].getExpressionType())
+									.baseType(), second));
 			state = this.reportAssertionFailure(state, pid, process,
 					resultType, message.toString(), arguments, argumentValues,
 					source, call, claim, 2);
@@ -677,10 +688,10 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 						process,
 						"The second argument of $translate_ptr() "
 								+ symbolicAnalyzer.symbolicExpressionToString(
-										objSource, state, objPtr)
+										objSource, state, null, objPtr)
 								+ " doesn't have a compatible type hierarchy as the first argument "
 								+ symbolicAnalyzer.symbolicExpressionToString(
-										arguments[0].getSource(), state,
+										arguments[0].getSource(), state, null,
 										pointer),
 						symbolicAnalyzer.stateInformation(state), source);
 
@@ -742,10 +753,10 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					ErrorKind.DEREFERENCE,
 					"$pointer_add() doesn't accept an invalid pointer:"
 							+ symbolicAnalyzer.symbolicExpressionToString(
-									source, state, ptr));
+									source, state, null, ptr));
 		}
-		primitiveTypePointed = symbolicAnalyzer.getArrayBaseType(
-				state, arguments[0].getSource(), ptr).getDynamicType(universe);
+		primitiveTypePointed = symbolicAnalyzer.getArrayBaseType(state,
+				arguments[0].getSource(), ptr).getDynamicType(universe);
 		ptr_primType_size = symbolicUtil.sizeof(arguments[0].getSource(),
 				primitiveTypePointed);
 		claim = universe.equals(ptr_primType_size, type_size);
