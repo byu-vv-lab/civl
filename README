@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v1.2
+                               v1.3
 
 ------------------------------ Overview -------------------------------
 
@@ -41,14 +41,11 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v1.1 -------------------------
-- printing the values of input variables for assertion violations
-- improving the printing of transitions
-- improving the general transformer to be more robust by fixing the way
-  it transforms the main function
-- fixing a bug for the conversion between int and boolean
-- fixing a bug related to $elaborate and $parfor
-
+-------------------------- Updates from v1.2 -------------------------
+- adding new option -collectOutput for printing the output
+- adding prototype for checking nondeterministic functional equivalence
+- adding checking for collective assertions of MPI programs
+- fixing bugs for transforming malloc function calls
    
 ------------------------- Binary Installation -------------------------
 
