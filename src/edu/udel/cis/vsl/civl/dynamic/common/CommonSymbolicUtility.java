@@ -15,6 +15,8 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Singleton;
@@ -100,6 +102,10 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	 * Map from symbolic type to a canonic symbolic expression of that type.
 	 */
 	private Map<SymbolicType, SymbolicExpression> typeExpressionMap = new HashMap<>();
+
+	private Map<SymbolicExpression, SymbolicType> typeExpressionMap2 = new HashMap<>();
+
+	private Map<SymbolicType, CIVLType> staticTypeMap = new HashMap<>();
 
 	/**
 	 * The map of symbolic types and their ID's.
@@ -298,7 +304,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public SymbolicExpression expressionOfType(SymbolicType type) {
+	public SymbolicExpression expressionOfType(CIVLType civlType,
+			SymbolicType type) {
 		SymbolicExpression result;
 
 		type = (SymbolicType) universe.canonic(type);
@@ -309,6 +316,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			result = universe.canonic(universe.tuple(dynamicType,
 					new Singleton<SymbolicExpression>(id)));
 			typeExpressionMap.put(type, result);
+			typeExpressionMap2.put(result, type);
+			this.staticTypeMap.put(type, civlType);
 		}
 		return result;
 	}
@@ -578,7 +587,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public NumericExpression sizeof(CIVLSource source, SymbolicType type) {
+	public NumericExpression sizeof(CIVLSource source, CIVLType civlType,
+			SymbolicType type) {
 		NumericExpression result = sizeofDynamicMap.get(type);
 
 		if (result == null) {
@@ -600,7 +610,9 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			else if (type instanceof SymbolicCompleteArrayType) {
 				SymbolicCompleteArrayType arrayType = (SymbolicCompleteArrayType) type;
 
-				result = sizeof(source, arrayType.elementType());
+				result = sizeof(source,
+						((CIVLArrayType) civlType).elementType(),
+						arrayType.elementType());
 				result = universe.multiply(arrayType.extent(),
 						(NumericExpression) result);
 			} else if (type instanceof SymbolicArrayType) {
@@ -608,7 +620,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 						"sizeof applied to incomplete array type", source);
 			} else {
 				// wrap the type in an expression of type dynamicTYpe
-				SymbolicExpression typeExpr = expressionOfType(type);
+				SymbolicExpression typeExpr = expressionOfType(civlType, type);
 
 				result = (NumericExpression) universe.apply(sizeofFunction,
 						new Singleton<SymbolicExpression>(typeExpr));
@@ -1309,5 +1321,20 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		remainder = universe.subtract(dividend,
 				universe.multiply(quotient, denominator));
 		return new Pair<>(quotient, remainder);
+	}
+
+	@Override
+	public SymbolicTupleType dynamicType() {
+		return this.dynamicType;
+	}
+
+	@Override
+	public CIVLType getStaticTypeOfDynamicType(SymbolicExpression typeId) {
+		SymbolicType dynamicType = this.typeExpressionMap2.get(typeId);
+
+		if (dynamicType != null) {
+			return this.staticTypeMap.get(dynamicType);
+		}
+		return null;
 	}
 }

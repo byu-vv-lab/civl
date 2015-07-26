@@ -274,7 +274,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		result.append("State " + state.identifier());
 		result.append("\n");
 		result.append("| Path condition\n");
-		result.append("| | " + state.getPathCondition());
+		result.append("| | "
+				+ this.symbolicExpressionToString(null, state, null,
+						state.getPathCondition()));
 		result.append("\n");
 		result.append("| Dynamic scopes\n");
 		for (int i = 0; i < numScopes; i++) {
@@ -340,12 +342,9 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	 *            the string representation of the operator, e.g. "+"
 	 * @param operands
 	 *            collection of Symbolic Objects
-	 * @param atomizeArgs
-	 *            should each argument be atomized (surrounded by parens if
 	 */
 	private void accumulate(CIVLSource source, State state,
-			StringBuffer buffer, String opString,
-			SymbolicCollection<?> operands, boolean atomizeArgs) {
+			StringBuffer buffer, String opString, SymbolicCollection<?> operands) {
 		boolean first = true;
 
 		for (SymbolicExpression arg : operands) {
@@ -619,7 +618,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 		if (arguments.length == 1)
 			accumulate(source, state, buffer, opString,
-					(SymbolicCollection<?>) arguments[0], atomizeArgs);
+					(SymbolicCollection<?>) arguments[0]);
 		else
 			processBinary(buffer, opString, arguments[0], arguments[1],
 					atomizeArgs);
@@ -891,10 +890,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 						result, " && ", true, atomize);
 				return result.toString();
 			case APPLY: {
-				result.append(arguments[0].toStringBuffer(true));
+				String function = arguments[0].toStringBuffer(true).toString();
+
+				result.append(function);
 				result.append("(");
 				accumulate(source, state, result, ",",
-						(SymbolicCollection<?>) arguments[1], false);
+						(SymbolicCollection<?>) arguments[1]);
 				result.append(")");
 				return result.toString();
 			}
@@ -949,43 +950,57 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					result.append(arguments[0].toStringBuffer(false));
 					result.append("'");
 				} else {
-					SymbolicObjectKind objectKind = arguments[0]
-							.symbolicObjectKind();
+					if (symbolicExpression.type().equals(
+							symbolicUtil.dynamicType())) {
+						// SymbolicExpression dynamicTypeID =
+						// ((SymbolicExpression) ((SymbolicCollection<?>)
+						// arguments[0])
+						// .getFirst());
 
-					if (objectKind == SymbolicObjectKind.EXPRESSION_COLLECTION) {
-						@SuppressWarnings("unchecked")
-						SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
-						int elementIndex = 0;
-						boolean needNewLine = civlType != null ? !civlType
-								.areSubtypesScalar() : false;
-						String padding = "\n" + prefix + separator;
-						String newPrefix = needNewLine ? prefix + separator
-								: prefix;
-
-						result.append("{");
-						for (SymbolicExpression symbolicElement : symbolicCollection) {
-							Pair<String, CIVLType> elementNameAndType = this
-									.subType(civlType, elementIndex);
-
-							if (elementIndex != 0)
-								result.append(", ");
-							if (needNewLine)
-								result.append(padding);
-							elementIndex++;
-							if (elementNameAndType.left != null)
-								result.append("." + elementNameAndType.left
-										+ "=");
-							result.append(symbolicExpressionToString(source,
-									state, elementNameAndType.right,
-									symbolicElement, false, newPrefix,
-									separator, false));
-						}
-						result.append("}");
+						result.append(this.symbolicUtil
+								.getStaticTypeOfDynamicType(symbolicExpression)
+								.toString());
 					} else {
-						result.append(arguments[0].toStringBuffer(false));
+
+						SymbolicObjectKind objectKind = arguments[0]
+								.symbolicObjectKind();
+
+						if (objectKind == SymbolicObjectKind.EXPRESSION_COLLECTION) {
+							@SuppressWarnings("unchecked")
+							SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
+							int elementIndex = 0;
+							boolean needNewLine = civlType != null ? !civlType
+									.areSubtypesScalar() : false;
+							String padding = "\n" + prefix + separator;
+							String newPrefix = needNewLine ? prefix + separator
+									: prefix;
+
+							result.append("{");
+							for (SymbolicExpression symbolicElement : symbolicCollection) {
+								Pair<String, CIVLType> elementNameAndType = this
+										.subType(civlType, elementIndex);
+
+								if (elementIndex != 0)
+									result.append(", ");
+								if (needNewLine)
+									result.append(padding);
+								elementIndex++;
+								if (elementNameAndType.left != null)
+									result.append("." + elementNameAndType.left
+											+ "=");
+								result.append(symbolicExpressionToString(
+										source, state,
+										elementNameAndType.right,
+										symbolicElement, false, newPrefix,
+										separator, false));
+							}
+							result.append("}");
+						} else {
+							result.append(arguments[0].toStringBuffer(false));
+						}
+						if (type.isHerbrand())
+							result.append('h');
 					}
-					if (type.isHerbrand())
-						result.append('h');
 				}
 				return result.toString();
 			}
@@ -1128,27 +1143,35 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			case LENGTH:
 				result.append("length(");
-				result.append(arguments[0].toStringBuffer(false));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[0], "", ""));
 				result.append(")");
 				return result.toString();
 			case LESS_THAN:
-				result.append(arguments[0].toStringBuffer(false));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[0], "", ""));
 				result.append("<");
-				result.append(arguments[1].toStringBuffer(false));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[1], "", ""));
 				if (atomize)
 					atomize(result);
 				return result.toString();
 			case LESS_THAN_EQUALS:
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[0], "", ""));
 				result.append(arguments[0].toStringBuffer(false));
 				result.append("<=");
-				result.append(arguments[1].toStringBuffer(false));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[1], "", ""));
 				if (atomize)
 					atomize(result);
 				return result.toString();
 			case MODULO:
-				result.append(arguments[0].toStringBuffer(true));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[0], "", ""));
 				result.append("%");
-				result.append(arguments[1].toStringBuffer(true));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[1], "", ""));
 				if (atomize)
 					atomize(result);
 				return result.toString();
@@ -1158,20 +1181,24 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			case NEGATIVE:
 				result.append("-");
-				result.append(arguments[0].toStringBuffer(true));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[0], "", ""));
 				if (atomize)
 					atomize(result);
 				return result.toString();
 			case NEQ:
-				result.append(arguments[0].toStringBuffer(false));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[0], "", ""));
 				result.append("!=");
-				result.append(arguments[1].toStringBuffer(false));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[1], "", ""));
 				if (atomize)
 					atomize(result);
 				return result.toString();
 			case NOT:
 				result.append("!");
-				result.append(arguments[0].toStringBuffer(true));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[0], "", ""));
 				if (atomize)
 					atomize(result);
 				return result.toString();
@@ -1185,9 +1212,10 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				// atomize(result);
 				return result.toString();
 			case POWER:
-				result.append(arguments[0].toStringBuffer(true));
+				result.append(this.symbolicExpressionToString(source, state,
+						null, (SymbolicExpression) arguments[0], "", ""));
 				result.append("^");
-				result.append(arguments[1].toStringBuffer(true));
+				result.append(arguments[1].toStringBuffer(false));
 				if (atomize)
 					atomize(result);
 				return result.toString();
@@ -1197,7 +1225,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					atomize(result);
 				return result.toString();
 			case SYMBOLIC_CONSTANT:
-				result.append(arguments[0].toStringBuffer(false));
+				result.append(arguments[0].toStringBuffer(true));
 				return result.toString();
 			case TUPLE_READ:
 				result.append(arguments[0].toStringBuffer(true));

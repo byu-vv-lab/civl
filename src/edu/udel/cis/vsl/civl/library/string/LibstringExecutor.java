@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
@@ -416,6 +417,7 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		NumericExpression size, length, dataTypeSize;
 		SymbolicExpression zerosArray;
 		SymbolicExpression zeroVar;
+		CIVLType objectElementTypeStatic;
 		SymbolicType objectElementType;
 		BooleanExpression claim;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
@@ -445,10 +447,11 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 							+ " value to the given address");
 		}
 		size = (NumericExpression) argumentValues[2];
-		objectElementType = symbolicAnalyzer.getArrayBaseType(state,
-				arguments[0].getSource(), pointer).getDynamicType(universe);
+		objectElementTypeStatic = symbolicAnalyzer.getArrayBaseType(state,
+				arguments[0].getSource(), pointer);
+		objectElementType = objectElementTypeStatic.getDynamicType(universe);
 		dataTypeSize = symbolicUtil.sizeof(arguments[0].getSource(),
-				objectElementType);
+				objectElementTypeStatic, objectElementType);
 		for (SymbolicObject obj : size.arguments()) {
 			if (obj instanceof IdealSymbolicConstant) {
 				/*
@@ -456,8 +459,9 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 				 * simplify SIZEOF(CHAR)(or SIZEOF(BOOLEAN) to one
 				 */
 				if (obj.equals(symbolicUtil.sizeof(null,
-						universe.characterType()))
+						typeFactory.charType(), universe.characterType()))
 						|| obj.equals(symbolicUtil.sizeof(null,
+								this.typeFactory.booleanType(),
 								universe.booleanType())))
 					byteIsUnit = false;
 			}

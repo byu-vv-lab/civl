@@ -191,4 +191,6 @@ public final class ModelConfiguration {
 	/* Functions */
 
 	public static final String NEXT_TIME_COUNT = "$next_time_count";
+	
+	public static final String DYNAMIC_TYPE_NAME="dynamicType";
 }

@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLBundleType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
@@ -206,13 +207,16 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		SymbolicObject arrayObject;
 		SymbolicExpression array;
 		NumericExpression size;
+		CIVLType baseType = typeFactory.bundleType().getStaticElementType(
+				((IntObject) argumentValues[0].argument(0)).getInt());
 
 		assert arguments.length == 1;
 		assert argumentValues[0].operator() == SymbolicOperator.UNION_INJECT;
 		arrayObject = argumentValues[0].argument(1);
 		assert arrayObject instanceof SymbolicExpression;
 		array = (SymbolicExpression) arrayObject;
-		size = symbolicUtil.sizeof(civlSource, array.type());
+		size = symbolicUtil.sizeof(civlSource,
+				typeFactory.incompleteArrayType(baseType), array.type());
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs, size);
 		return state;
@@ -303,11 +307,12 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		} else {
 			Reasoner reasoner = universe.reasoner(state.getPathCondition());
 			BooleanExpression claim;
+			CIVLType eleType = symbolicAnalyzer.getArrayBaseType(state,
+					arguments[0].getSource(), pointer);
 
-			elementType = symbolicAnalyzer.getArrayBaseType(state,
-					arguments[0].getSource(), pointer).getDynamicType(universe);
-			count = universe.divide(size,
-					symbolicUtil.sizeof(arguments[1].getSource(), elementType));
+			elementType = eleType.getDynamicType(universe);
+			count = universe.divide(size, symbolicUtil.sizeof(
+					arguments[1].getSource(), eleType, elementType));
 			// If count == 1, directly dereferencing the pointer to get the
 			// first non-array element.
 			claim = universe.equals(count, one);

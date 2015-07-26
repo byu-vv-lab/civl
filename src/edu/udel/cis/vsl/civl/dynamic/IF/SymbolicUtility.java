@@ -16,6 +16,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicCompleteArrayType;
+import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
@@ -78,7 +79,7 @@ public interface SymbolicUtility {
 	 *            a symbolic type
 	 * @return a canonic symbolic expression wrapping that type
 	 */
-	SymbolicExpression expressionOfType(SymbolicType type);
+	SymbolicExpression expressionOfType(CIVLType civlType, SymbolicType type);
 
 	/**
 	 * 
@@ -442,7 +443,8 @@ public interface SymbolicUtility {
 	 *            The symbolic type whose size is to evaluated.
 	 * @return The symbolic representation of the size of the symbolic type.
 	 */
-	NumericExpression sizeof(CIVLSource source, SymbolicType type);
+	NumericExpression sizeof(CIVLSource source, CIVLType civlType,
+			SymbolicType type);
 
 	/**
 	 * Returns the abstract function <code>sizeof()</code>.
@@ -685,4 +687,8 @@ public interface SymbolicUtility {
 	 */
 	public Pair<NumericExpression, NumericExpression> arithmeticIntDivide(
 			NumericExpression dividend, NumericExpression denominator);
+
+	SymbolicTupleType dynamicType();
+
+	CIVLType getStaticTypeOfDynamicType(SymbolicExpression typeId);
 }

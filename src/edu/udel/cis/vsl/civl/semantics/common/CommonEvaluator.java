@@ -532,7 +532,8 @@ public class CommonEvaluator implements Evaluator {
 			throws UnsatisfiablePathConditionException {
 		TypeEvaluation typeEval = getDynamicType(state, pid, type, source,
 				isDeclaration);
-		SymbolicExpression expr = symbolicUtil.expressionOfType(typeEval.type);
+		SymbolicExpression expr = symbolicUtil.expressionOfType(type,
+				typeEval.type);
 		Evaluation result = new Evaluation(typeEval.state, expr);
 
 		return result;

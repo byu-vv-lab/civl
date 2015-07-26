@@ -738,6 +738,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		// should be equal to the last argument which is the size of the
 		// expected primitive type
 		NumericExpression ptr_primType_size;
+		CIVLType primitiveTypePointedStatic;
 		SymbolicType primitiveTypePointed;
 		Evaluation eval;
 		BooleanExpression claim;
@@ -755,10 +756,12 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									source, state, null, ptr));
 		}
-		primitiveTypePointed = symbolicAnalyzer.getArrayBaseType(state,
-				arguments[0].getSource(), ptr).getDynamicType(universe);
+		primitiveTypePointedStatic = symbolicAnalyzer.getArrayBaseType(state,
+				arguments[0].getSource(), ptr);
+		primitiveTypePointed = primitiveTypePointedStatic
+				.getDynamicType(universe);
 		ptr_primType_size = symbolicUtil.sizeof(arguments[0].getSource(),
-				primitiveTypePointed);
+				primitiveTypePointedStatic, primitiveTypePointed);
 		claim = universe.equals(ptr_primType_size, type_size);
 		reasoner = universe.reasoner(state.getPathCondition());
 		resultType = reasoner.valid(claim).getResultType();

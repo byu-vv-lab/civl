@@ -124,4 +124,9 @@ public class CommonBundleType extends CommonType implements CIVLBundleType {
 	public boolean areSubtypesScalar() {
 		return false;
 	}
+
+	@Override
+	public CIVLType getStaticElementType(int index) {
+		return types.get(index);
+	}
 }

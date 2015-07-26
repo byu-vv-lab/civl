@@ -15,6 +15,8 @@ public interface CIVLBundleType extends CIVLType {
 
 	SymbolicType getElementType(int index);
 
+	CIVLType getStaticElementType(int index);
+
 	// TODO: What does this do if the type isn't found?
 	Integer getIndexOf(SymbolicType elementType);
 

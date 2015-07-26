@@ -42,6 +42,12 @@ public class BackendTest {
 		assertTrue(ui.run("verify -showProgram -showTransitions",
 				filename("showTrans.cvl")));
 	}
+	
+	@Test
+	public void sizeOfTypes() {
+		assertTrue(ui.run("verify -showProgram -showTransitions",
+				filename("sizeOfTypes.c")));
+	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
