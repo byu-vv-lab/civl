@@ -4,12 +4,14 @@ my $civlDir="."; # directory to civl
 my $numArgs = scalar(@ARGV);
 my $out = "scale.pdf";
 my $benchOut = "bench.scale.out";
+my $hasCivlDir=0;
 
 for(my $i=0; $i < $numArgs; $i++){
   my $arg = $ARGV[$i];
 
   if($arg =~ /^\-d(.*)$/){
     $civlDir=$1;
+    $hasCivlDir=1;
   }elsif ($arg =~ /^\-o(.*)$/){
     $out = $1;
     if(!($out =~ /\.pdf$/)){
@@ -19,6 +21,10 @@ for(my $i=0; $i < $numArgs; $i++){
   }else{
     warn "Arguments should start with -d or -o, invalid argument $arg would be ignored.\n";
   }
+}
+
+if($hasCivlDir == 0){
+  warn "no civl directory is provided, current directory will be used as the civl directory.\n";
 }
 
 my $scriptPrefix="$civlDir/scripts/scale";
