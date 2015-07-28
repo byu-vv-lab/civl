@@ -465,6 +465,7 @@ public class CIVLConstants {
 	public final static String STDIO = "stdio.h";
 	public final static String STDLIB = "stdlib.h";
 	public final static String SYS_TIME = "sys/time.h";
+	public final static String SYS_TIMES = "sys/times.h";
 	public final static String TIME = "time.h";
 	public final static String CUDA = "cuda.h";
 	public final static String CIVL_CUDA = "civl-cuda.cvh";
