@@ -19,7 +19,7 @@ public class BarrierBenchmarkScale {
 			civlDir = args[0];
 		for (int i = 2; i <= 8; i++) {
 			System.out.println(">>>>>>>> Barrier <<<<<<<<");
-			ui.run("verify -echo -inputB=" + i + " " + civlDir
+			ui.run("verify -inputB=" + i + " " + civlDir
 					+ "/examples/concurrency/barrier.cvl");
 		}
 	}

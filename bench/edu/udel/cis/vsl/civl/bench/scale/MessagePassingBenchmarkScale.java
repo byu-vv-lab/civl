@@ -17,14 +17,15 @@ public class MessagePassingBenchmarkScale {
 
 		if (args.length > 0)
 			civlDir = args[0];
-		for (int nx = 2; nx < 4; nx++)
-			for (int ny = 2; ny < 4; ny++) {
+		for (int nx = 1; nx < 4; nx++)
+			for (int ny = 1; ny < 5; ny++) {
+				if (ny < nx || (nx != 3 && ny == 4))
+					continue;
 				System.out.println(">>>>>>>> Diffusion2d <<<<<<<<");
-				ui.run("verify  " + "-input_NPROCS=" + nx * ny
-						+ " -inputnsteps=2 -inputnx=2 -inputny=2 "
-						+ "-inputNPROCSX=" + nx + " " + "-inputNPROCSY=" + ny
-						+ " -enablePrintf=false " + civlDir
-						+ "/examples/mpi/diffusion2d.c");
+				ui.run("verify  " + " -inputNSTEPSB=2 -inputNXB=" + nx
+						+ " -inputNYB=" + ny + " -inputNPROCSX=" + nx + " "
+						+ "-inputNPROCSY=" + ny + " -enablePrintf=false "
+						+ civlDir + "/examples/mpi/diffusion2d.c");
 			}
 
 	}

@@ -17,7 +17,7 @@ public class AdderBenchmarkScale {
 
 		if (args.length > 0)
 			civlDir = args[0];
-		for (int i = 2; i <= 8; i++) {
+		for (int i = 2; i <= 14; i++) {
 			System.out.println(">>>>>>>> Adder <<<<<<<<");
 			ui.run("verify -inputB=" + i + " " + civlDir
 					+ "/examples/concurrency/adder.cvl");
