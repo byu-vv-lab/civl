@@ -29,15 +29,15 @@ $assume(1 <= ny && ny <= NYB);
 $input double u_init[ny+2][nx+2];  // initial value of temperatures, including boundaries
 $input double k;                   // constant coefficient  
 $assume(k > 0.0 && k < 0.5);
-$input int NSTEPSB = 3;            // upper bound for nsteps
+$input int NSTEPSB;            // upper bound for nsteps
 $input int nsteps;                 // number of steps
 $assume(1<=nsteps && nsteps<=NSTEPSB);
 $input int wstep = 1;              // write frame every this many time steps
 double oracle[nsteps][ny+2][nx+2]; // solution computed sequentially, done by proc 0 only
-$input int NPROCSXB = 2;               // upper bound for NPROCSX
+$input int NPROCSXB;               // upper bound for NPROCSX
 $input int NPROCSX;            // number of procs in x direction
 $assume(NPROCSX >= 1 && NPROCSX <= NPROCSXB);
-$input int NPROCSYB = 2;               // upper bound for NPROCSY
+$input int NPROCSYB;               // upper bound for NPROCSY
 $input int NPROCSY;            // number of procs in y direction
 $assume(NPROCSY >= 1 && NPROCSY <= NPROCSYB);
 $input int _NPROCS = NPROCSX * NPROCSY;
