@@ -55,6 +55,6 @@ while(my $datFile = $datDir->next){
   $datFile = basename($datFile,  "");
   ($benchmark) = ($datFile =~ /(.*)\.dat/);
   print "plotting figure for benchmark $benchmark...\n";
-  $cmd = `gnuplot -e "TITLE='$benchmark'" -e "DAT_FILE='$datOut/$datFile'" -e "OUT_FILE='$benchmark.pdf'" $scriptPrefix/plotBench.plg`;
+  $cmd = `gnuplot -e "TITLE='$benchmark'" -e "DAT_FILE='$datOut/$datFile'" -e "OUT_FILE='$datOut/$benchmark.pdf'" $scriptPrefix/plotBench.plg`;
 }
-print "scaling figure is successfully generated in $datOut\n";
+print "scaling figures is successfully generated in $datOut\n";
