@@ -4,6 +4,7 @@ use File::Basename;
 use autodie;
 use strict;
 use warnings;
+use File::Path qw(make_path);
 
 #my $civlDir="/Users/zmanchun/civl";
 my $civlDir=".";
@@ -44,20 +45,23 @@ if(!defined($out)){
 # print "output: $out\n";
 
 my $benchPrefix="edu.udel.cis.vsl.civl.bench.scale.";
-my $benchSuffix="BenchmarkScale";
-my @benchmarks=($benchPrefix."Adder".$benchSuffix,
-		$benchPrefix."Barrier".$benchSuffix,
-		$benchPrefix."BlockAdder".$benchSuffix,
-		$benchPrefix."DiningPhilosopher".$benchSuffix,
-	       $benchPrefix."MessagePassing".$benchSuffix);
 my $cmdStart="java -classpath $civlDir/civl.jar:$civlDir/bin ";
+my $benchDir = dir("$civlDir/bin/edu/udel/cis/vsl/civl/bench/scale");
 
-foreach my $benchmark (@benchmarks){
+#print "bench dir is $benchDir\n";
+
+while(my $class = $benchDir->next){
+  next unless ($class =~ /\.class$/);
+  my $benchmark;
+
+  #print "class file path is $class\n";
+  $class = basename("$class",  "");
+  #print "class is $class\n";
+  ($benchmark) = ($class =~ /(.*)\.class/);
+  print "Runing benchmark $benchmark...\n";
+  $benchmark = $benchPrefix.$benchmark;
   my $result = `$cmdStart $benchmark $civlDir`;
   print $out $result;
 }
-
 print "Scale benchmarks finished.\n"
-
-
 
