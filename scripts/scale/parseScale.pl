@@ -71,7 +71,7 @@ while ($line=<INPUT>) {
   die "no size" unless defined($size);
   die "no time" unless defined($time);
 
-  $time=round($time);
+  # $time=round($time); don't round the time
   $time=1 if $time==0;
   
   next unless ($size >= $last);
