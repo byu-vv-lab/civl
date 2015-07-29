@@ -1159,7 +1159,6 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case LESS_THAN_EQUALS:
 				result.append(this.symbolicExpressionToString(source, state,
 						null, (SymbolicExpression) arguments[0], "", ""));
-				result.append(arguments[0].toStringBuffer(false));
 				result.append("<=");
 				result.append(this.symbolicExpressionToString(source, state,
 						null, (SymbolicExpression) arguments[1], "", ""));
