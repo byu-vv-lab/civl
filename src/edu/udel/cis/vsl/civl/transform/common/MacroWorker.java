@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Formation;
 import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.abc.token.IF.MacroExpansion;
@@ -56,6 +57,7 @@ public class MacroWorker extends BaseWorker {
 		root = nodeFactory.newSequenceNode(root.getSource(), "TranslationUnit",
 				newExternalList);
 		newAst = astFactory.newAST(root, unit.getSourceFiles());
+		// newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
@@ -78,6 +80,8 @@ public class MacroWorker extends BaseWorker {
 			if (node.nodeKind() == NodeKind.EXPRESSION) {
 				Type type = ((ExpressionNode) node).getType();
 
+				if (type.kind() == TypeKind.POINTER)
+					return;
 				if (type instanceof StandardBasicType) {
 					if (((StandardBasicType) type).getBasicTypeKind() == BasicTypeKind.BOOL)
 						return;

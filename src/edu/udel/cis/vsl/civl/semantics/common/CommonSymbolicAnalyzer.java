@@ -1743,6 +1743,28 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		CIVLType exprType = expression.getExpressionType();
 
 		if (resultOnly && !isTopLevel) {
+			// if (expression instanceof AddressOfExpression) {
+			// AddressOfExpression addressof = (AddressOfExpression) expression;
+			// LHSExpression operand = addressof.operand();
+			//
+			// if (operand instanceof SubscriptExpression) {
+			// LHSExpression array = ((SubscriptExpression) operand)
+			// .array();
+			//
+			// if(array instanceof VariableExpression){
+			// Variable variable=((VariableExpression)array).variable();
+			//
+			// if(variable.name().name().startsWith(ModelConfiguration.ANONYMOUS_VARIABLE_PREFIX)){
+			// Triple<StringBuffer,Boolean> evaluator.getString(source, state,
+			// "na", expression, symbolicExpression)
+			// }
+			// }
+			//
+			//
+			// }
+			//
+			// }
+
 			Evaluation eval;
 
 			try {

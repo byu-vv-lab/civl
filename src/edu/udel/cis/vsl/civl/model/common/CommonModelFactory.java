@@ -200,7 +200,6 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private static final String CONDITIONAL_VARIABLE_PREFIX = "_cond_var_";
 
-	private static final String ANONYMOUS_VARIABLE_PREFIX = "_anon_";
 
 	private static final String DOM_SIZE_PREFIX = "_dom_size";
 
@@ -1599,7 +1598,7 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Variable newAnonymousVariableForArrayLiteral(CIVLSource sourceOf,
 			CIVLArrayType type) {
-		String name = ANONYMOUS_VARIABLE_PREFIX + this.anonymousVariableId++;
+		String name = ModelConfiguration.ANONYMOUS_VARIABLE_PREFIX + this.anonymousVariableId++;
 		Variable variable = this.variable(sourceOf, type,
 				this.identifier(sourceOf, name),
 				this.systemScope.numVariables());
@@ -1612,7 +1611,7 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Variable newAnonymousVariable(CIVLSource sourceOf, Scope scope,
 			CIVLType type) {
-		String name = ANONYMOUS_VARIABLE_PREFIX + this.anonymousVariableId++;
+		String name = ModelConfiguration.ANONYMOUS_VARIABLE_PREFIX + this.anonymousVariableId++;
 		Variable variable = this.variable(sourceOf, type,
 				this.identifier(sourceOf, name), scope.numVariables());
 

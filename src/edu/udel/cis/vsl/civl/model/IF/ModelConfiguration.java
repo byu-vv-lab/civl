@@ -193,4 +193,7 @@ public final class ModelConfiguration {
 	public static final String NEXT_TIME_COUNT = "$next_time_count";
 	
 	public static final String DYNAMIC_TYPE_NAME="dynamicType";
+	
+	public static final String ANONYMOUS_VARIABLE_PREFIX = "_anon_";
+
 }
