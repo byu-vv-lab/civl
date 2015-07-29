@@ -60,7 +60,7 @@ int nx = -1;              /* number of discrete points including endpoints */
 double k = -1;            /* D*dt/(dx*dx) */
 int nsteps = -1;          /* number of time steps */
 int wstep = -1;           /* write frame every this many time steps */
-double *u;                /* temperature function */
+double *u = NULL;         /* temperature function */
 
 void quit(FILE * file) {
   printf("Input file must have format:\n\n");
@@ -72,10 +72,11 @@ void quit(FILE * file) {
   printf("where there are nx doubles at the end.\n");
   fflush(stdout);
   // Missing free(u) and fclose(file) probably is a bug
-  free(u);
+  if(u != NULL)
+    free(u);
   fclose(file);
   // Following statements should be added in $exit() or added by CIVL automatically
-  exit(1);
+  exit(0);
 }
 
 void readint(FILE *file, char *keyword, int *ptr) {
