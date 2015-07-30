@@ -216,7 +216,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 
 			if (!this.processStatusVariables.keySet().contains(pid)) {
 				// Set of children scopes of MPI_Process function
-				Set<Scope> mpiProcChildren = model.function("MPI_Process")
+				Set<Scope> mpiProcChildren = model.function("_MPI_Process")
 						.outerScope().children();
 				Scope procStaticScope;
 
@@ -368,7 +368,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		int sid = modelFactory.getScopeId(arguments[0].getSource(),
 				mpiRootScope);
 		Variable gcommsVar = state.getDyscope(sid).lexicalScope()
-				.variable("GCOMMS");
+				.variable("_GCOMMS");
 		SymbolicExpression gcomms;
 		NumericExpression idx;
 
@@ -390,7 +390,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression gcomms, gcomm;
 		int sid = modelFactory.getScopeId(arguments[0].getSource(), scope);
 		Variable gcommsVar = state.getDyscope(sid).lexicalScope()
-				.variable("GCOMMS");
+				.variable("_GCOMMS");
 
 		gcomms = state.getVariableValue(sid, gcommsVar.vid());
 		gcomm = universe.arrayRead(gcomms, index);

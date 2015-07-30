@@ -1009,7 +1009,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 
 		sysStatusType = nodeFactory.newTypedefNameNode(nodeFactory
 				.newIdentifierNode(
-						newSource("MPI_Sys_status in MPI_Process",
+						newSource("MPI_Sys_status in _MPI_Process",
 								CParser.IDENTIFIER), MPI_SYS_STATUS_TYPENAME),
 				null);
 		node = variableDeclaration(MPI_SYS_STATUS, sysStatusType,

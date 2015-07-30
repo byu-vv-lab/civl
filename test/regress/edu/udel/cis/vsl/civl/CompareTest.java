@@ -38,7 +38,7 @@ public class CompareTest {
 
 	@Test
 	public void adder() {
-		assertTrue(ui.run("compare", "-enablePrintf=false", "-inputNPROCSB=2",
+		assertTrue(ui.run("compare", "-showProgram", "-enablePrintf=false", "-inputNPROCSB=2",
 				"-inputNB=4", "-spec", filename("adder", "adder_par.cvl"),
 				"-impl", filename("adder", "adder_spec.cvl")));
 	}
