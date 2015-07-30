@@ -183,8 +183,8 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			procStaticScope = mpiProcChildren.iterator().next();
 			assert procStaticScope != null : "Failure of getting static scope of the body function of MPI process "
 					+ pid + " .\n";
-			myStatusVar = procStaticScope.variable("_my_status");
-			assert myStatusVar != null : "Failure of getting variable '_my_status' in function 'MPI_Process()'";
+			myStatusVar = procStaticScope.variable("_mpi_status");
+			assert myStatusVar != null : "Failure of getting variable '_mpi_status' in function 'MPI_Process()'";
 			dyscopeId = this
 					.getScopeInProcessStack(state, pid, procStaticScope);
 			this.processStatusVariables.put(pid, new Pair<>(procStaticScope,
@@ -225,8 +225,8 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 				procStaticScope = mpiProcChildren.iterator().next();
 				assert procStaticScope != null : "Failure of getting static scope of the body function of MPI process "
 						+ pid + " .\n";
-				myStatusVar = procStaticScope.variable("_my_status");
-				assert myStatusVar != null : "Failure of getting variable '_my_status' in function 'MPI_Process()'";
+				myStatusVar = procStaticScope.variable("_mpi_status");
+				assert myStatusVar != null : "Failure of getting variable '_mpi_status' in function 'MPI_Process()'";
 				dyscopeId = this.getScopeInProcessStack(state, pid,
 						procStaticScope);
 				this.processStatusVariables.put(pid, new Pair<>(

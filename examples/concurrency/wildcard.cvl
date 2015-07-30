@@ -10,9 +10,9 @@ void _MPI_Process(int place){
   MPI_Comm MPI_COMM_WORLD = $mpi_comm_create($here, __MPI_COMM_WORLD, place);
   int nprocs, rank, msg;
   MPI_Status status;
-  $mpi_sys_status _my_status = __UNINIT;
+  $mpi_sys_status _mpi_status = __UNINIT;
 
-  $assert(_my_status == __UNINIT);
+  $assert(_mpi_status == __UNINIT);
   $mpi_init();
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);

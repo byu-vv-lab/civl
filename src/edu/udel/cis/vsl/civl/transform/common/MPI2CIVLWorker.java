@@ -162,7 +162,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the variable representing the status of an MPI process, which
 	 * is modified by MPI_Init() and MPI_Finalized().
 	 */
-	private final static String MPI_SYS_STATUS = "_my_status";
+	private final static String MPI_SYS_STATUS = "_mpi_status";
 
 	/**
 	 * The name of the type of variables representing the status of an MPI
