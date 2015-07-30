@@ -784,14 +784,13 @@ void pthread_exit(void *value_ptr){
   *            The length of the array of threads to be waited upon
   * @return Returns 0 upon successful completion
   */
-//Manchun: check me
-void _pthread_exit(void *value_ptr, $pthread_pool_t $pthread_pool){
+void $pthread_exit(void *value_ptr, $pthread_pool_t $pthread_pool){
   $pthread_pool_terminates($pthread_pool, value_ptr);
   $free($pthread_pool);
   $exit();
 }
 
-void _pthread_exit_main(void *value_ptr){
+void $pthread_exit_main(void *value_ptr){
   int len = $pthread_gpool_size($pthread_gpool);
   
   for(int i = 0; i<len; i++){
@@ -803,7 +802,7 @@ void _pthread_exit_main(void *value_ptr){
   //$exit();
 }
 
-pthread_t _pthread_self($pthread_pool_t pool){
+pthread_t $pthread_self($pthread_pool_t pool){
   return $pthread_pool_thread(pool);
 }
 
@@ -825,7 +824,7 @@ pthread_t _pthread_self($pthread_pool_t pool){
   */
 
 
-int _pthread_mutex_lock(pthread_mutex_t *mutex, $pthread_pool_t $pthread_pool){
+int $pthread_mutex_lock(pthread_mutex_t *mutex, $pthread_pool_t $pthread_pool){
   //int len = $seq_length(&pool);
   _Bool tmp = $pthread_pool_is_terminated($pthread_pool, mutex->ownerid);
   $choose{
@@ -988,7 +987,7 @@ int pthread_mutex_consistent(pthread_mutex_t *mutex){
   * @return Returns 0 upon successful completion, EINVAL upon non-robust mutex input 
   */
 
-int _pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, $pthread_pool_t $pthread_pool){
+int $pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, $pthread_pool_t $pthread_pool){
   if(mutex->ownerid != $self){
     $assert(($false));
     return 0;
@@ -997,7 +996,7 @@ int _pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, $pthread_po
   pthread_mutex_unlock(mutex);
   $when(cond->signal != 0 || cond->broadcast != 0)
     cond->signal = false;
-  $when(mutex->lock == 0){_pthread_mutex_lock(mutex, $pthread_pool);}
+  $when(mutex->lock == 0){$pthread_mutex_lock(mutex, $pthread_pool);}
   return 0;
 }
 

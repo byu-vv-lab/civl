@@ -59,11 +59,11 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	static final String PTHREAD_MUTEX_LOCK = "pthread_mutex_lock";
 
-	static final String PTHREAD_MUTEX_LOCK_NEW = "_pthread_mutex_lock";
+	static final String PTHREAD_MUTEX_LOCK_NEW = "$pthread_mutex_lock";
 
 	static final String PTHREAD_COND_WAIT = "pthread_cond_wait";
 
-	static final String PTHREAD_COND_WAIT_NEW = "_pthread_cond_wait";
+	static final String PTHREAD_COND_WAIT_NEW = "$pthread_cond_wait";
 
 	final static String PTHREAD_POOL_CREATE = "$pthread_pool_create";
 
@@ -76,14 +76,14 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private final static String PTHREAD_EXIT = "pthread_exit";
 
-	final static String PTHREAD_EXIT_NEW = "_pthread_exit";
+	final static String PTHREAD_EXIT_NEW = "$pthread_exit";
 
 	private final static String PTHREAD_SELF = "pthread_self";
 
-	final static String PTHREAD_SELF_NEW = "_pthread_self";
+	final static String PTHREAD_SELF_NEW = "$pthread_self";
 
 	// needs to go to MPI process scope
-	final static String PTHREAD_EXIT_MAIN_NEW = "_pthread_exit_main";
+	final static String PTHREAD_EXIT_MAIN_NEW = "$pthread_exit_main";
 
 	private final static String ERROR = "ERROR";
 
@@ -263,7 +263,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					|| funcName.equals(PTHREAD_SELF)) {
 				hasSyncCall = true;
 				((IdentifierExpressionNode) function).getIdentifier().setName(
-						"_" + funcName);
+						"$" + funcName);
 			}
 			if (hasSyncCall) {
 				node.getArguments().addSequenceChild(
