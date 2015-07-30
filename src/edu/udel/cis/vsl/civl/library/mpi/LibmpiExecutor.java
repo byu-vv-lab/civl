@@ -174,7 +174,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 
 		if (!this.processStatusVariables.keySet().contains(pid)) {
 			// Set of children scopes of MPI_Process function
-			Set<Scope> mpiProcChildren = model.function("MPI_Process")
+			Set<Scope> mpiProcChildren = model.function("_MPI_Process")
 					.outerScope().children();
 			Scope procStaticScope;
 
