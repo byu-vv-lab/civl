@@ -83,13 +83,13 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the identifier of the CMPI_Gcomm variable in the final CIVL
 	 * program.
 	 */
-	private final static String GCOMM_WORLD = "GCOMM_WORLD";
+	private final static String GCOMM_WORLD = "_GCOMM_WORLD";
 
 	/**
 	 * The name of the identifier of the CMPI_Gcomm sequence variable in the
 	 * final CIVL-MPI program
 	 */
-	private final static String GCOMMS = "GCOMMS";
+	private final static String GCOMMS = "_GCOMMS";
 
 	/**
 	 * The name of the function call for initializing a sequence.
@@ -134,7 +134,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name of the parameter of a MPI procedure.
 	 */
-	private final String MPI_RANK = MPI_PREFIX + "rank";
+	private final String MPI_RANK = MPI_PREFIX + "_mpi_rank";
 
 	/**
 	 * The name of the function MPI_Init in the original MPI program.
@@ -173,7 +173,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name of the MPI procedure in the final CIVL-C program.
 	 */
-	private final static String MPI_PROCESS = "MPI_Process";
+	private final static String MPI_PROCESS = "_MPI_Process";
 
 	/**
 	 * The name of the input variable denoting the number of MPI processes in
