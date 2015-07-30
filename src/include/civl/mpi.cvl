@@ -34,7 +34,7 @@ double MPI_Wtime() {
     "without MPI_Init() being called before.\n");
   result = $mpi_time(CMPI_time_count);
   if (CMPI_time_count > 0) {
-    $assume(result > $mpi_time(CMPI_time_count-1));
+    $assume(result > $mpi_time(CMPI_time_count-1)); 
   } else {
     $assume(result > 0);
   }
