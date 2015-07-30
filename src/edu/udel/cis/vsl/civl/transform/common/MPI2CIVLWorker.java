@@ -99,7 +99,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name of CMPI_Gcomm type in the final CIVL-C program.
 	 */
-	private final static String GCOMM_TYPE = "CMPI_Gcomm";
+	private final static String GCOMM_TYPE = "$mpi_gcomm";
 
 	/**
 	 * The name of MPI_Comm type in both the original program and the final
@@ -111,25 +111,25 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the function to create a new CMPI_Gcomm object in the final
 	 * CIVL-C program.
 	 */
-	private final static String GCOMM_CREATE = "CMPI_Gcomm_create";
+	private final static String GCOMM_CREATE = "$mpi_gcomm_create";
 
 	/**
 	 * The name of the function to create a new MPI_Comm object in the final
 	 * CIVL-C program.
 	 */
-	private final static String COMM_CREATE = "CMPI_Comm_create";
+	private final static String COMM_CREATE = "$mpi_comm_create";
 
 	/**
 	 * The name of the function to free a CMPI_Gcomm object in the final CIVL-C
 	 * program.
 	 */
-	private final static String GCOMM_DESTROY = "CMPI_Gcomm_destroy";
+	private final static String GCOMM_DESTROY = "$mpi_gcomm_destroy";
 
 	/**
 	 * The name of the function to free a MPI_Comm object in the final CIVL-C
 	 * program.
 	 */
-	private final static String COMM_DESTROY = "CMPI_Comm_destroy";
+	private final static String COMM_DESTROY = "$mpi_comm_destroy";
 
 	/**
 	 * The name of the parameter of a MPI procedure.
@@ -145,7 +145,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the function translating MPI_Init in the final CIVL-C
 	 * program.
 	 */
-	private final static String MPI_INIT_NEW = "_MPI_Init";
+	private final static String MPI_INIT_NEW = "$mpi_init";
 
 	/**
 	 * The name of the function MPI_Init in the original MPI program.
@@ -156,7 +156,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the function translating MPI_Init in the final CIVL-C
 	 * program.
 	 */
-	private final static String MPI_FINALIZE_NEW = "_MPI_Finalize";
+	private final static String MPI_FINALIZE_NEW = "$mpi_finalize";
 
 	/**
 	 * The name of the variable representing the status of an MPI process, which
@@ -168,7 +168,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the type of variables representing the status of an MPI
 	 * process.
 	 */
-	private final static String MPI_SYS_STATUS_TYPENAME = "__MPI_Sys_status__";
+	private final static String MPI_SYS_STATUS_TYPENAME = "$mpi_sys_status";
 
 	/**
 	 * The name of the MPI procedure in the final CIVL-C program.

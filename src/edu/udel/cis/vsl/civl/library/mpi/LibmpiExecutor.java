@@ -107,32 +107,30 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			state = eval.state;
 		}
 		switch (functionName) {
-		case "MPI_Comm_size":
-		case "MPI_Comm_rank":
-		case "CMPI_Set_status":
+		case "$mpi_set_status":
 			state = executeSetStatus(state, pid, call, arguments,
 					argumentValues);
 			break;
-		case "CMPI_Get_status":
+		case "$mpi_get_status":
 			state = executeGetStatus(state, pid, call);
 			break;
-		case "CMPI_AssertConsistentType":
+		case "$mpi_assertConsistentType":
 			state = executeAssertConsistentType(state, pid, process, arguments,
 					argumentValues, statement.getSource());
 			break;
-		case "CMPI_NewGcomm":
+		case "$mpi_newGcomm":
 			state = executeNewGcomm(state, pid, process, lhs, arguments,
 					argumentValues, statement.getSource());
 			break;
-		case "CMPI_GetGcomm":
+		case "$mpi_getGcomm":
 			state = executeGetGcomm(state, pid, process, lhs, arguments,
 					argumentValues, statement.getSource());
 			break;
-		case "CMPI_Root_scope":
+		case "$mpi_root_scope":
 			state = executeRootScope(state, pid, process, lhs, arguments,
 					argumentValues, statement.getSource());
 			break;
-		case "CMPI_Proc_scope":
+		case "$mpi_proc_scope":
 			state = executeProcScope(state, pid, process, lhs, arguments,
 					argumentValues, statement.getSource());
 			break;
@@ -147,8 +145,8 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 
 	/**
 	 * Executes system function
-	 * <code>CMPI_Set_status(__MPI_Sys_status__ newStatus)</code>. Set the
-	 * variable "_my_status" added by
+	 * <code>CMPI_Set_status($mpi_sys_status newStatus)</code>. Set the variable
+	 * "_my_status" added by
 	 * {@link edu.udel.cis.vsl.civl.transform.IF.MPI2CIVLTransformer} the given
 	 * new value
 	 * 
@@ -329,8 +327,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			return state;
 		}
 		reasoner = universe.reasoner(state.getPathCondition());
-		realType = symbolicAnalyzer.getArrayBaseType(state,
-				ptrSource, pointer);
+		realType = symbolicAnalyzer.getArrayBaseType(state, ptrSource, pointer);
 		realSymType = realType.getDynamicType(universe);
 		assertedTypeEnum = (IntegerNumber) reasoner.extractNumber(assertedType);
 		assertedSymType = this.mpiTypeToCIVLType(assertedTypeEnum.intValue(),

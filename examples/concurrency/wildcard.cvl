@@ -5,15 +5,15 @@
 #include <assert.h>
 
 $input int NPROCS = 5;
-CMPI_Gcomm __MPI_COMM_WORLD;
+$mpi_gcomm __MPI_COMM_WORLD;
 void MPI_Process(int place){
-  MPI_Comm MPI_COMM_WORLD = CMPI_Comm_create($here, __MPI_COMM_WORLD, place);
+  MPI_Comm MPI_COMM_WORLD = $mpi_comm_create($here, __MPI_COMM_WORLD, place);
   int nprocs, rank, msg;
   MPI_Status status;
-  __MPI_Sys_status__ _my_status = __UNINIT;
+  $mpi_sys_status _my_status = __UNINIT;
 
   $assert(_my_status == __UNINIT);
-  _MPI_Init();
+  $mpi_init();
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
@@ -29,8 +29,8 @@ void MPI_Process(int place){
       MPI_Recv(&msg, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
     }
   }
-  _MPI_Finalize();
-  CMPI_Comm_destroy(MPI_COMM_WORLD);
+  $mpi_finalize();
+  $mpi_comm_destroy(MPI_COMM_WORLD);
   printf("process %d terminates\n", rank);
 }
 
@@ -38,11 +38,11 @@ void main(){
 
   $proc procs[NPROCS];
 
-  __MPI_COMM_WORLD = CMPI_Gcomm_create($root, NPROCS);
+  __MPI_COMM_WORLD = $mpi_gcomm_create($root, NPROCS);
   for(int i=0; i<NPROCS; i++)
     procs[i] = $spawn MPI_Process(i);
   for(int i=0; i<NPROCS; i++)
     $wait(procs[i]);
 
-  CMPI_Gcomm_destroy(__MPI_COMM_WORLD);
+  $mpi_gcomm_destroy(__MPI_COMM_WORLD);
 }

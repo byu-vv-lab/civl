@@ -31,7 +31,7 @@ $assume(0 < N && N < NB);
 $assume(0 < NPROCS && NPROCS <= NPROCSB);
 $assume(NPROCS <= N);
 
-CMPI_Gcomm __MPI_COMM_WORLD;
+$mpi_gcomm __MPI_COMM_WORLD;
 
 void MPI_Process(int place){
   double sum;
@@ -39,7 +39,7 @@ void MPI_Process(int place){
   int PID;
   int nprocs; 
   MPI_Comm MPI_COMM_WORLD;
-  __MPI_Sys_status__ _my_status = __UNINIT;
+  $mpi_sys_status _my_status = __UNINIT;
 
   $assert(_my_status == __UNINIT);
   double computeGlobalSum() {
@@ -61,8 +61,8 @@ void MPI_Process(int place){
     int afterLast; 
     int i;
 
-    MPI_COMM_WORLD = CMPI_Comm_create($here, __MPI_COMM_WORLD, place);
-    _MPI_Init();
+    MPI_COMM_WORLD = $mpi_comm_create($here, __MPI_COMM_WORLD, place);
+    $mpi_init();
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &PID);
     first = N * PID / nprocs;
@@ -76,8 +76,8 @@ void MPI_Process(int place){
     } else {
       MPI_Send(&localSum, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
-    _MPI_Finalize();
-    CMPI_Comm_destroy(MPI_COMM_WORLD);
+    $mpi_finalize();
+    $mpi_comm_destroy(MPI_COMM_WORLD);
     return 0;
   }
 
@@ -90,10 +90,10 @@ void main(){
 
   $proc procs[NPROCS];
 
-  __MPI_COMM_WORLD = CMPI_Gcomm_create($root, NPROCS);
+  __MPI_COMM_WORLD = $mpi_gcomm_create($root, NPROCS);
   for(int i = 0; i<NPROCS; i++)
     procs[i] = $spawn MPI_Process(i);
   for(int i = 0; i<NPROCS; i++)
     $wait(procs[i]);
-  CMPI_Gcomm_destroy(__MPI_COMM_WORLD);
+  $mpi_gcomm_destroy(__MPI_COMM_WORLD);
 }
