@@ -33,7 +33,7 @@ public class GenTransformerTest {
 
 	@Test
 	public void gen_argc() {
-		assertTrue(ui.run("verify -showProgram -inputCIVL_argc=5",
+		assertTrue(ui.run("verify -showProgram -input_gen_argc=5",
 				filename("gen.c")));
 	}
 

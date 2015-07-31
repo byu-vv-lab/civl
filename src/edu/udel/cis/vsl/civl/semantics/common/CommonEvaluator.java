@@ -2358,7 +2358,8 @@ public class CommonEvaluator implements Evaluator {
 
 			throw new CIVLInternalException("An error occurred when " + process
 					+ " attempted to load the library evaluator for " + library
-					+ ": " + exception.getMessage(), source);
+					+ " for the function " + function + ": "
+					+ exception.getMessage(), source);
 		}
 	}
 

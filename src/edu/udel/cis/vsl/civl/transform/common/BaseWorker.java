@@ -57,7 +57,7 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
  */
 public abstract class BaseWorker {
 
-	protected final static String _MAIN = "_main";
+	protected final static String GEN_MAIN = "_gen_main";
 	protected final static String MAIN = "main";
 	protected final static String ASSUME = "$assume";
 	protected final static String ASSERT = "$assert";
@@ -121,12 +121,12 @@ public abstract class BaseWorker {
 	 * 
 	 * @return
 	 */
-	protected boolean has_mainFunction(SequenceNode<BlockItemNode> root) {
+	protected boolean has_gen_mainFunction(SequenceNode<BlockItemNode> root) {
 		for (BlockItemNode child : root) {
 			if (child == null)
 				continue;
 			if (child instanceof FunctionDefinitionNode) {
-				if (((FunctionDefinitionNode) child).getName().equals(_MAIN))
+				if (((FunctionDefinitionNode) child).getName().equals(GEN_MAIN))
 					return true;
 			}
 		}
@@ -147,7 +147,7 @@ public abstract class BaseWorker {
 				FunctionDeclarationNode funcDecl = (FunctionDeclarationNode) child;
 
 				if (funcDecl.getName().equals(MAIN)) {
-					funcDecl.getIdentifier().setName(_MAIN);
+					funcDecl.getIdentifier().setName(GEN_MAIN);
 					// FunctionTypeNode funcType = funcDecl.getTypeNode();
 					//
 					// VariableDeclarationNode secondPara = funcType
@@ -168,7 +168,7 @@ public abstract class BaseWorker {
 
 		callMain = nodeFactory.newFunctionCallNode(
 				this.newSource("new main function", CParser.CALL),
-				this.identifierExpression(_MAIN),
+				this.identifierExpression(GEN_MAIN),
 				new LinkedList<ExpressionNode>(), null);
 		blockItems.add(nodeFactory.newExpressionStatementNode(callMain));
 		mainFuncType = nodeFactory.newFunctionTypeNode(this.newSource(
@@ -203,7 +203,7 @@ public abstract class BaseWorker {
 						.getIdentifier();
 
 				if (functionID.name().equals(MAIN))
-					functionID.setName(_MAIN);
+					functionID.setName(GEN_MAIN);
 			}
 		}
 		for (ASTNode child : node.children()) {

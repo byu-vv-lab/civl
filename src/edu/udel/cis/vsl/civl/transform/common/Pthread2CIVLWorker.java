@@ -69,7 +69,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	final static String PTHREAD_GPOOL = "$pthread_gpool";
 
-	private final static String PTHREAD_POOL = "$pthread_pool";
+	private final static String PTHREAD_POOL = "_pthread_pool";
 
 	// needs to go to MPI process scope
 	final static String PTHREAD_CREATE = "pthread_create";

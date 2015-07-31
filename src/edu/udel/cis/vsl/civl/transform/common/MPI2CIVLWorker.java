@@ -71,7 +71,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/* ************************** Private Static Fields ********************** */
 
 	private final static String EXIT = "exit";
-	private final static String MPI_PREFIX = "$mpi_";
+	private final static String MPI_PREFIX = "_mpi_";
 
 	/**
 	 * The name of the identifier of the MPI_Comm variable in the final CIVL
@@ -665,7 +665,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 
 					if (functionNode instanceof IdentifierExpressionNode) {
 						if (((IdentifierExpressionNode) functionNode)
-								.getIdentifier().name().equals(_MAIN))
+								.getIdentifier().name().equals(GEN_MAIN))
 							return (StatementNode) (child.copy());
 					}
 				}
@@ -918,7 +918,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 		assert this.astFactory == ast.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		ast.release();
-		if (!this.has_mainFunction(root)) {
+		if (!this.has_gen_mainFunction(root)) {
 			transformMainFunction(root);
 			createNewMainFunction(root);
 		}

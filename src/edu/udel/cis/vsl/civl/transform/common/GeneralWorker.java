@@ -67,13 +67,13 @@ public class GeneralWorker extends BaseWorker {
 	private final static int DEFAULT_ARGV_SIZE = 10;
 	final static String NAME = "GeneralTransformer";
 	private final static String MALLOC = "malloc";
-	final static String GENERAL_ROOT = "$gen_root";
+	final static String GENERAL_ROOT = "_gen_root";
 	private final static String separator = "$";
-	private final static String INPUT_PREFIX = "CIVL_";
+	// private final static String INPUT_PREFIX = "_gen_";
 	private int static_var_count = 0;
 	private String CIVL_argc_name;
 	private String CIVL_argv_name;
-	final static String _argvName = "_argv";
+	final static String _argvName = "_gen_argv_tmp";
 	private StatementNode argcAssumption = null;
 	private Source mainSource;
 	private CIVLConfiguration config;
@@ -84,7 +84,7 @@ public class GeneralWorker extends BaseWorker {
 
 	public GeneralWorker(ASTFactory astFactory, CIVLConfiguration config) {
 		super(NAME, astFactory);
-		this.identifierPrefix = "$gen_";
+		this.identifierPrefix = "_gen_";
 		this.config = config;
 	}
 
@@ -272,7 +272,7 @@ public class GeneralWorker extends BaseWorker {
 		// Arrays.asList(this.identifierExpression(argvName), assignArgv));
 		callMain = nodeFactory.newFunctionCallNode(this.newSource(
 				"new main function", CParser.CALL), this
-				.identifierExpression(_MAIN), Arrays.asList(
+				.identifierExpression(GEN_MAIN), Arrays.asList(
 				this.identifierExpression(CIVL_argc_name), addressOf_argv0),
 				null);
 		blockItems.add(_argv);
@@ -440,8 +440,8 @@ public class GeneralWorker extends BaseWorker {
 			String argcName = argc.getIdentifier().name();
 			String argvName = argv.getIdentifier().name();
 
-			this.CIVL_argc_name = INPUT_PREFIX + argcName;
-			this.CIVL_argv_name = INPUT_PREFIX + argvName;
+			this.CIVL_argc_name = identifierPrefix + argcName;
+			this.CIVL_argv_name = identifierPrefix + argvName;
 			CIVL_argc.getTypeNode().setInputQualified(true);
 			CIVL_argc.getIdentifier().setName(this.CIVL_argc_name);
 			inputVars.add(CIVL_argc);
