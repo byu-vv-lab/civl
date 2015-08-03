@@ -26,13 +26,13 @@ public class OmpOrphanTest {
 
 	@Test
 	public void dotProductOrphan() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=4",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_omp_thread_max=4",
 				filename("dotProduct_orphan.c")));
 	}
 	
 	@Test
 	public void piOrphan() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=4",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_omp_thread_max=4",
 				filename("pi_orphan.c")));
 	}
 

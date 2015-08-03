@@ -3,7 +3,6 @@
  * Command line execution:
  *     civl verify -inputTHREADS_BOUND=10 -inputN_BOUND=40 fig4.98-threadprivate.cvl -enablePrintf=false
  */
-#include<civlc.h>
 #include<stdio.h>
 $input int THREADS_BOUND; // upper bound of number of threads 
 $input int NTHREADS;// number of threads

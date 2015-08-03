@@ -32,7 +32,7 @@ public class HybridTest {
 	@Test
 	public void inform_blkstp() throws ABCException {
 		assertTrue(ui.run(
-				"verify -input_NPROCS=2 -inputTHREAD_MAX=2 -showTransitions=false "
+				"verify -input_NPROCS=2 -input_omp_thread_max=2 -showTransitions=false "
 						+ "-showAmpleSet -showSavedStates=false",
 				filename(mpiOmp, "mpi-omp-mat-infnorm-blkstp.c")));
 	}

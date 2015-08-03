@@ -27,19 +27,19 @@ public class OpenMPTest {
 
 	@Test
 	public void raceCond1() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_omp_thread_max=2",
 				filename("raceCond1.c")));
 	}
 
 	@Test
 	public void raceCond1Simplify() {
-		assertTrue(ui.run("verify", "-inputTHREAD_MAX=2",
+		assertTrue(ui.run("verify", "-input_omp_thread_max=2",
 				filename("raceCond1.c")));
 	}
 	
 	@Test
 	public void matProduct1() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_omp_thread_max=2",
 				filename("matProduct1.c")));
 	}
 
@@ -51,7 +51,7 @@ public class OpenMPTest {
 
 	@Test
 	public void canonicalForLoops() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_omp_thread_max=2",
 				filename("canonicalForLoops.c")));
 	}
 

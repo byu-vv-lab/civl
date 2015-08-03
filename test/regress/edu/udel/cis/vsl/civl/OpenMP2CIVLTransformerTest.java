@@ -28,43 +28,43 @@ public class OpenMP2CIVLTransformerTest {
 
 	@Test
 	public void dotProduct1() {
-		assertTrue(ui.run("verify ", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+		assertTrue(ui.run("verify ", "-ompNoSimplify", "-input_omp_thread_max=2",
 				filename("dotProduct1.c")));
 	}
 
 	@Test
 	public void dotProduct1Simplify() {
-		assertTrue(ui.run("verify ", "-inputTHREAD_MAX=2",
+		assertTrue(ui.run("verify ", "-input_omp_thread_max=2",
 				filename("dotProduct1.c")));
 	}
 
 	@Test
 	public void dotProductCritical() {
-		assertFalse(ui.run("verify ", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+		assertFalse(ui.run("verify ", "-ompNoSimplify", "-input_omp_thread_max=2",
 				filename("dotProduct_critical.c")));
 	}
 
 	@Test
 	public void dotProductCriticalSimplify() {
-		assertFalse(ui.run("verify ", "-inputTHREAD_MAX=2",
+		assertFalse(ui.run("verify ", "-input_omp_thread_max=2",
 				filename("dotProduct_critical.c")));
 	}
 
 	@Test
 	public void matProduct1Simplify() {
-		assertTrue(ui.run("verify", "-inputTHREAD_MAX=2",
+		assertTrue(ui.run("verify", "-input_omp_thread_max=2",
 				filename("matProduct1.c")));
 	}
 
 	@Test
 	public void parallelfor() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-inputTHREAD_MAX=2",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_omp_thread_max=2",
 				filename("parallelfor.c")));
 	}
 
 	@Test
 	public void parallelforSimplify() {
-		assertTrue(ui.run("verify", "-inputTHREAD_MAX=2",
+		assertTrue(ui.run("verify", "-input_omp_thread_max=2",
 				filename("parallelfor.c")));
 	}
 
