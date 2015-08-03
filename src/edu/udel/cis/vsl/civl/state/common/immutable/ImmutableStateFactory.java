@@ -425,6 +425,8 @@ public class ImmutableStateFactory implements StateFactory {
 			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[newNumScopes];
 			int numProcs = theState.numProcs();
 			ImmutableProcessState[] newProcesses = new ImmutableProcessState[numProcs];
+			BooleanExpression newPathCondition = (BooleanExpression) substituter
+					.apply(theState.getPathCondition());
 
 			for (int i = 0; i < oldNumScopes; i++) {
 				int newId = oldToNew[i];
@@ -443,7 +445,7 @@ public class ImmutableStateFactory implements StateFactory {
 				newProcesses[pid] = theState.getProcessState(pid)
 						.updateDyscopes(oldToNew);
 			theState = ImmutableState.newState(theState, newProcesses,
-					newScopes, null);
+					newScopes, newPathCondition);
 		}
 		if (theState.numDyscopes() == 1
 				&& theState.getProcessState(0).hasEmptyStack()) {

@@ -910,7 +910,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return result.toString();
 			}
 			case ARRAY_WRITE: {
-				boolean needNewLine = !civlType.areSubtypesScalar();
+				boolean needNewLine = !civlType.areSubtypesScalar()
+						&& !separator.isEmpty();
 				String padding = "\n" + prefix + separator;
 				String newPrefix = needNewLine ? prefix + separator : prefix;
 
@@ -943,63 +944,89 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				result.append(arguments[0].toStringBuffer(true));
 				return result.toString();
 			case CONCRETE: {
-				SymbolicTypeKind tk = type.typeKind();
+				// if(type.toString().equals("$domain")){
+				//
+				// }else
+				if (type.toString().equals("$regular_range")) {
+					@SuppressWarnings("unchecked")
+					SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
+					int elementIndex = 0;
 
-				if (tk == SymbolicTypeKind.CHAR) {
-					result.append("'");
-					result.append(arguments[0].toStringBuffer(false));
-					result.append("'");
-				} else {
-					if (symbolicExpression.type().equals(
-							symbolicUtil.dynamicType())) {
-						// SymbolicExpression dynamicTypeID =
-						// ((SymbolicExpression) ((SymbolicCollection<?>)
-						// arguments[0])
-						// .getFirst());
-
-						result.append(this.symbolicUtil
-								.getStaticTypeOfDynamicType(symbolicExpression)
-								.toString());
-					} else {
-
-						SymbolicObjectKind objectKind = arguments[0]
-								.symbolicObjectKind();
-
-						if (objectKind == SymbolicObjectKind.EXPRESSION_COLLECTION) {
-							@SuppressWarnings("unchecked")
-							SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
-							int elementIndex = 0;
-							boolean needNewLine = civlType != null ? !civlType
-									.areSubtypesScalar() : false;
-							String padding = "\n" + prefix + separator;
-							String newPrefix = needNewLine ? prefix + separator
-									: prefix;
-
-							result.append("{");
-							for (SymbolicExpression symbolicElement : symbolicCollection) {
-								Pair<String, CIVLType> elementNameAndType = this
-										.subType(civlType, elementIndex);
-
-								if (elementIndex != 0)
-									result.append(", ");
-								if (needNewLine)
-									result.append(padding);
-								elementIndex++;
-								if (elementNameAndType.left != null)
-									result.append("." + elementNameAndType.left
-											+ "=");
-								result.append(symbolicExpressionToString(
-										source, state,
-										elementNameAndType.right,
-										symbolicElement, false, newPrefix,
-										separator, false));
-							}
-							result.append("}");
-						} else {
-							result.append(arguments[0].toStringBuffer(false));
+					result.append("{");
+					for (SymbolicExpression symbolicElement : symbolicCollection) {
+						if (elementIndex == 1)
+							result.append(", ");
+						else if (elementIndex == 2) {
+							result.append(" # ");
 						}
-						if (type.isHerbrand())
-							result.append('h');
+						result.append(this
+								.symbolicExpressionToString(source, state,
+										null, symbolicElement, prefix,
+										separator));
+						elementIndex++;
+					}
+					result.append("}");
+				} else {
+					SymbolicTypeKind tk = type.typeKind();
+
+					if (tk == SymbolicTypeKind.CHAR) {
+						result.append("'");
+						result.append(arguments[0].toStringBuffer(false));
+						result.append("'");
+					} else {
+						if (symbolicExpression.type().equals(
+								symbolicUtil.dynamicType())) {
+							// SymbolicExpression dynamicTypeID =
+							// ((SymbolicExpression) ((SymbolicCollection<?>)
+							// arguments[0])
+							// .getFirst());
+
+							result.append(this.symbolicUtil
+									.getStaticTypeOfDynamicType(
+											symbolicExpression).toString());
+						} else {
+
+							SymbolicObjectKind objectKind = arguments[0]
+									.symbolicObjectKind();
+
+							if (objectKind == SymbolicObjectKind.EXPRESSION_COLLECTION) {
+								@SuppressWarnings("unchecked")
+								SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
+								int elementIndex = 0;
+								boolean needNewLine = !separator.isEmpty()
+										&& (civlType != null ? !civlType
+												.areSubtypesScalar() : false);
+								String padding = "\n" + prefix + separator;
+								String newPrefix = needNewLine ? prefix
+										+ separator : prefix;
+
+								result.append("{");
+								for (SymbolicExpression symbolicElement : symbolicCollection) {
+									Pair<String, CIVLType> elementNameAndType = this
+											.subType(civlType, elementIndex);
+
+									if (elementIndex != 0)
+										result.append(", ");
+									if (needNewLine)
+										result.append(padding);
+									elementIndex++;
+									if (elementNameAndType.left != null)
+										result.append("."
+												+ elementNameAndType.left + "=");
+									result.append(symbolicExpressionToString(
+											source, state,
+											elementNameAndType.right,
+											symbolicElement, false, newPrefix,
+											separator, false));
+								}
+								result.append("}");
+							} else {
+								result.append(arguments[0]
+										.toStringBuffer(false));
+							}
+							if (type.isHerbrand())
+								result.append('h');
+						}
 					}
 				}
 				return result.toString();
@@ -1016,7 +1043,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case DENSE_ARRAY_WRITE: {
 				int count = 0;
 				boolean first = true;
-				boolean needNewLine = !civlType.areSubtypesScalar();
+				boolean needNewLine = !separator.isEmpty()
+						&& !civlType.areSubtypesScalar();
 				String padding = "\n" + prefix + separator;
 				String newPrefix = needNewLine ? prefix + separator : prefix;
 
@@ -1051,7 +1079,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			case DENSE_TUPLE_WRITE: {
 				boolean first = true;
 				int eleIndex = 0;
-				boolean needNewLine = !civlType.areSubtypesScalar();
+				boolean needNewLine = !separator.isEmpty()
+						&& !civlType.areSubtypesScalar();
 				String padding = "\n" + prefix + separator;
 				String newPrefix = needNewLine ? prefix + separator : prefix;
 
@@ -1234,7 +1263,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					atomize(result);
 				return result.toString();
 			case TUPLE_WRITE: {
-				boolean needNewLine = !civlType.areSubtypesScalar();
+				boolean needNewLine = !separator.isEmpty()
+						&& !civlType.areSubtypesScalar();
 				String padding = "\n" + prefix + separator;
 				String newPrefix = needNewLine ? prefix + separator : prefix;
 				int fieldIndex = ((IntObject) symbolicExpression.argument(1))
@@ -1621,7 +1651,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					result.append(", ");
 				result.append(this.symbolicExpressionToString(
 						loopVar.getSource(), state, loopVar.type(),
-						state.valueOf(pid, loopVar)));
+						state.valueOf(pid, loopVar), "", ""));
 			}
 			result.append(") has next in ");
 			tmp = this.expressionEvaluation(state, pid, civlForEnter.domain());
@@ -1774,7 +1804,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			}
 			state = eval.state;
 			result.append(this.symbolicExpressionToString(
-					expression.getSource(), state, exprType, eval.value));
+					expression.getSource(), state, exprType, eval.value, "", ""));
 		} else {
 			switch (kind) {
 			case ABSTRACT_FUNCTION_CALL: {
@@ -1917,7 +1947,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 
 				state = eval.state;
 				result.append(this.symbolicExpressionToString(
-						expression.getSource(), state, exprType, eval.value));
+						expression.getSource(), state, exprType, eval.value,
+						"", ""));
 				break;
 			}
 			case BOUND_VARIABLE:
@@ -1965,7 +1996,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			result.append("=");
 			result.append(this.symbolicExpressionToString(entry.getKey()
 					.getSource(), state, entry.getKey().type(), entry
-					.getValue()));
+					.getValue(), "", ""));
 		}
 		return result;
 	}

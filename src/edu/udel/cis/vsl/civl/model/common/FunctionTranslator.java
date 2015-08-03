@@ -134,7 +134,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression.UNARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
@@ -3647,19 +3646,20 @@ public class FunctionTranslator {
 					(AbstractFunction) abstractFunction, arguments);
 			return result;
 		} else {
-			Statement functionCall = this.translateFunctionCall(scope, null,
-					callNode, true, source);
-
-			if (functionCall instanceof CallOrSpawnStatement) {
-				CallOrSpawnStatement callStatement = (CallOrSpawnStatement) functionCall;
-				SystemFunctionCallExpression callExpression = modelFactory
-						.systemFunctionCallExpression(callStatement);
-
-				modelBuilder.systemCallExpressions.add(callExpression);
-				return callExpression;
-			} else {
-				throw new CIVLInternalException("Unreachable", source);
-			}
+			// Statement functionCall = this.translateFunctionCall(scope, null,
+			// callNode, true, source);
+			//
+			// if (functionCall instanceof CallOrSpawnStatement) {
+			// CallOrSpawnStatement callStatement = (CallOrSpawnStatement)
+			// functionCall;
+			// SystemFunctionCallExpression callExpression = modelFactory
+			// .systemFunctionCallExpression(callStatement);
+			//
+			// modelBuilder.systemCallExpressions.add(callExpression);
+			// return callExpression;
+			// } else {
+			throw new CIVLInternalException("Unreachable", source);
+			// }
 		}
 	}
 
