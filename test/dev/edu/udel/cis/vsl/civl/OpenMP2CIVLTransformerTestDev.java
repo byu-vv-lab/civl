@@ -130,7 +130,6 @@ public class OpenMP2CIVLTransformerTestDev {
 				"-inputTHREAD_MAX=2", filename("poisson_openmp.c")));
 	}
 
-	@Ignore
 	@Test
 	public void quad() {
 		assertTrue(ui.run("verify", "-ompNoSimplify",
@@ -166,14 +165,14 @@ public class OpenMP2CIVLTransformerTestDev {
 				"-inputTHREAD_MAX=2", filename("heated_plate_openmp.c")));
 	}
 
-	@Ignore
+	
 	@Test
 	public void heatedplateRoundRobinDecomp() {
 		assertTrue(ui.run("verify", "-ompNoSimplify -ompLoopDecomp=ROUND_ROBIN", "-DMATH_NO_ASSUMPTIONS",
 				"-inputTHREAD_MAX=2", filename("heated_plate_openmp.c")));
 	}
 
-	@Ignore
+	
 	@Test
 	public void heatedplateSimplify() {
 		assertTrue(ui.run("verify", "-ompLoopDecomp=ALL", "-DMATH_NO_ASSUMPTIONS",
@@ -366,7 +365,59 @@ public class OpenMP2CIVLTransformerTestDev {
 		assertTrue(ui.run("verify",
 				"-inputTHREAD_MAX=2", filename("c_lu.c")));
 	}
+	
+	@Ignore
+	@Test
+	public void dijkstra() {
+		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2", filename("dijkstra_openmp.c")));
+	}
+	
+	@Ignore
+	@Test
+	public void helmholtz() {
+		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2", filename("helmholtz.c")));
+	}
+	
+	@Test
+	public void mandelbrot() {
+		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2", filename("mandelbrot_openmp.c")));
+	}
+	
+	@Test
+	public void mxm() {
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-showProgram",
+				"-inputTHREAD_MAX=2", filename("mxm.c")));
+	}
 
+	@Ignore
+	@Test
+	public void random() {
+		assertTrue(ui.run("verify", "-ompNoSimplify", 
+				"-inputTHREAD_MAX=2", filename("random_openmp.c")));
+	}
+	
+	@Test
+	public void satisfy() {
+		assertTrue(ui.run("verify", "-ompNoSimplify", 
+				"-inputTHREAD_MAX=2", filename("satisfy_openmp.c")));
+	}
+	
+	@Test
+	public void sgefa() {
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-showProgram",
+				"-inputTHREAD_MAX=2", filename("sgefa_openmp.c")));
+	}
+	
+	@Ignore
+	@Test
+	public void ziggurat() {
+		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-inputTHREAD_MAX=2", filename("ziggurat_openmp.c")));
+	}
+	
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
