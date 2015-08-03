@@ -600,7 +600,8 @@ public class Cuda2CIVLWorker extends BaseWorker {
 
 			if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 				VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
-				if (variableDeclaration.getIdentifier() != null
+				if (variableDeclaration.getIdentifier() != null 
+						&& variableDeclaration.getIdentifier().getSource().getFirstToken().getSourceFile().getName().equals("cuda.h")
 						&& builtinVariables.contains(variableDeclaration
 								.getIdentifier().name())) {
 					root.removeChild(child.childIndex());
