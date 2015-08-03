@@ -581,12 +581,6 @@ public class Cuda2CIVLWorker extends BaseWorker {
 		} else {
 			newFunction = kernelCall.getFunction().copy();
 		}
-		System.out.println("newFunction: " + newFunction);
-		System.out.println("newArgumentList: " + newArgumentList.size());
-		for (int i = 0; i < newArgumentList.size(); i++) {
-			System.out.println("Arg " + i + ": " + newArgumentList.get(i));
-			System.out.println("parent=" + newArgumentList.get(i).parent());
-		}
 		FunctionCallNode newFunctionCall = nodeFactory.newFunctionCallNode(
 				source, newFunction, newArgumentList, null);
 		List<BlockItemNode> blockItems = new ArrayList<>();
