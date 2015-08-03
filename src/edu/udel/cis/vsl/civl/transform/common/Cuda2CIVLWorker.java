@@ -566,7 +566,7 @@ public class Cuda2CIVLWorker extends BaseWorker {
 				e.printStackTrace();
 			}
 		} else {
-			newArgumentList.add(kernelCall.getContextArgument(3));
+			newArgumentList.add(kernelCall.getContextArgument(3).copy());
 		}
 		for (int i = 0; i < kernelCall.getNumberOfArguments(); i++) {
 			newArgumentList.add(kernelCall.getArgument(i).copy());
@@ -580,6 +580,12 @@ public class Cuda2CIVLWorker extends BaseWorker {
 							.getIdentifier().name()));
 		} else {
 			newFunction = kernelCall.getFunction().copy();
+		}
+		System.out.println("newFunction: " + newFunction);
+		System.out.println("newArgumentList: " + newArgumentList.size());
+		for (int i = 0; i < newArgumentList.size(); i++) {
+			System.out.println("Arg " + i + ": " + newArgumentList.get(i));
+			System.out.println("parent=" + newArgumentList.get(i).parent());
 		}
 		FunctionCallNode newFunctionCall = nodeFactory.newFunctionCallNode(
 				source, newFunction, newArgumentList, null);
