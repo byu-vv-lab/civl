@@ -870,84 +870,21 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			SymbolicOperator operator = symbolicExpression.operator();
 			SymbolicObject[] arguments = symbolicExpression.arguments();
 
-			if (showType
-					&& (type instanceof SymbolicArrayType || type instanceof SymbolicTupleType)) {
-				// if (tk == SymbolicTypeKind.TUPLE)
-				// result.append(type.toStringBuffer(false));
-				// else {
-				result.append('(');
-				result.append(type.toStringBuffer(false));
-				result.append(')');
-				// }
-			}
-			switch (operator) {
-			case ADD:
-				processFlexibleBinary(source, state, symbolicExpression,
-						result, "+", false, atomize);
-				return result.toString();
-			case AND:
-				processFlexibleBinary(source, state, symbolicExpression,
-						result, " && ", true, atomize);
-				return result.toString();
-			case APPLY: {
-				String function = arguments[0].toStringBuffer(true).toString();
+			if (operator == SymbolicOperator.CONCRETE) {
+				if (type.toString().equals("$domain")) {
+					@SuppressWarnings("unchecked")
+					SymbolicSequence<? extends SymbolicExpression> symbolicSequence = (SymbolicSequence<? extends SymbolicExpression>) arguments[0];
+					SymbolicExpression dimension = symbolicSequence.get(0);
+					@SuppressWarnings("unused")
+					SymbolicExpression unionKind = symbolicSequence.get(1);
+					SymbolicExpression value = symbolicSequence.get(2);
 
-				result.append(function);
-				result.append("(");
-				accumulate(source, state, result, ",",
-						(SymbolicCollection<?>) arguments[1]);
-				result.append(")");
-				return result.toString();
-			}
-			case ARRAY_LAMBDA:
-				return "(" + arguments[0] + ")";
-				// return symbolicExpression.toStringBufferLong().toString();
-			case ARRAY_READ: {
-				result.append(arguments[0].toStringBuffer(true));
-				result.append("[");
-				result.append(arguments[1].toStringBuffer(false));
-				result.append("]");
-				return result.toString();
-			}
-			case ARRAY_WRITE: {
-				boolean needNewLine = !civlType.areSubtypesScalar()
-						&& !separator.isEmpty();
-				String padding = "\n" + prefix + separator;
-				String newPrefix = needNewLine ? prefix + separator : prefix;
-
-				if (arguments[0] instanceof SymbolicExpression) {
-					result.append("(");
-					result.append(this.symbolicExpressionToString(source,
-							state, civlType, (SymbolicExpression) arguments[0],
-							atomize, prefix, separator, false));
+					result.append("$domain(");
+					result.append(dimension.toStringBuffer(false));
 					result.append(")");
-				} else
-					result.append(arguments[0].toStringBuffer(true));
-				result.append("{");
-				if (needNewLine)
-					result.append(padding);
-				result.append("[");
-				result.append(arguments[1].toStringBuffer(false));
-				result.append("]=");
-				result.append(this
-						.symbolicExpressionToString(source, state,
-								((CIVLArrayType) civlType).elementType(),
-								(SymbolicExpression) arguments[2], newPrefix,
-								separator));
-				result.append("}");
-				return result.toString();
-			}
-			case CAST:
-				result.append('(');
-				result.append(type.toStringBuffer(false));
-				result.append(')');
-				result.append(arguments[0].toStringBuffer(true));
-				return result.toString();
-			case CONCRETE: {
-				// if(type.toString().equals("$domain")){
-				//
-				// }else
-				if (type.toString().equals("$regular_range")) {
+					result.append(this.symbolicExpressionToString(source,
+							state, null, value, false, "", "", false));
+				} else if (type.toString().equals("$regular_range")) {
 					@SuppressWarnings("unchecked")
 					SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
 					int elementIndex = 0;
@@ -969,6 +906,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				} else {
 					SymbolicTypeKind tk = type.typeKind();
 
+					if (showType
+							&& (type instanceof SymbolicArrayType || type instanceof SymbolicTupleType)) {
+						result.append('(');
+						result.append(type.toStringBuffer(false));
+						result.append(')');
+					}
 					if (tk == SymbolicTypeKind.CHAR) {
 						result.append("'");
 						result.append(arguments[0].toStringBuffer(false));
@@ -976,16 +919,10 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					} else {
 						if (symbolicExpression.type().equals(
 								symbolicUtil.dynamicType())) {
-							// SymbolicExpression dynamicTypeID =
-							// ((SymbolicExpression) ((SymbolicCollection<?>)
-							// arguments[0])
-							// .getFirst());
-
 							result.append(this.symbolicUtil
 									.getStaticTypeOfDynamicType(
 											symbolicExpression).toString());
 						} else {
-
 							SymbolicObjectKind objectKind = arguments[0]
 									.symbolicObjectKind();
 
@@ -1030,285 +967,381 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					}
 				}
 				return result.toString();
-			}
-			case COND:
-				result.append(arguments[0].toStringBuffer(true));
-				result.append(" ? ");
-				result.append(arguments[1].toStringBuffer(true));
-				result.append(" : ");
-				result.append(arguments[1].toStringBuffer(true));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case DENSE_ARRAY_WRITE: {
-				int count = 0;
-				boolean first = true;
-				boolean needNewLine = !separator.isEmpty()
-						&& !civlType.areSubtypesScalar();
-				String padding = "\n" + prefix + separator;
-				String newPrefix = needNewLine ? prefix + separator : prefix;
+			} else {
+				if (showType
+						&& (type instanceof SymbolicArrayType || type instanceof SymbolicTupleType)) {
+					// if (tk == SymbolicTypeKind.TUPLE)
+					// result.append(type.toStringBuffer(false));
+					// else {
+					result.append('(');
+					result.append(type.toStringBuffer(false));
+					result.append(')');
+					// }
+				}
+				switch (operator) {
+				case ADD:
+					processFlexibleBinary(source, state, symbolicExpression,
+							result, "+", false, atomize);
+					return result.toString();
+				case AND:
+					processFlexibleBinary(source, state, symbolicExpression,
+							result, " && ", true, atomize);
+					return result.toString();
+				case APPLY: {
+					String function = arguments[0].toStringBuffer(true)
+							.toString();
 
-				if (arguments[0] instanceof SymbolicExpression) {
+					result.append(function);
 					result.append("(");
-					result.append(this.symbolicExpressionToString(source,
-							state, civlType, (SymbolicExpression) arguments[0],
-							atomize, prefix, separator, false));
+					accumulate(source, state, result, ",",
+							(SymbolicCollection<?>) arguments[1]);
 					result.append(")");
-				} else
+					return result.toString();
+				}
+				case ARRAY_LAMBDA:
+					return "(" + arguments[0] + ")";
+					// return
+					// symbolicExpression.toStringBufferLong().toString();
+				case ARRAY_READ: {
 					result.append(arguments[0].toStringBuffer(true));
-				result.append("{");
-				for (SymbolicExpression value : (SymbolicSequence<?>) arguments[1]) {
-					if (!value.isNull()) {
-						if (first)
-							first = false;
-						else
-							result.append(", ");
-						if (needNewLine)
-							result.append(padding);
-						result.append("[" + count + "]" + "=");
-						result.append(symbolicExpressionToString(source, state,
-								this.subType(civlType, count).right, value,
-								false, newPrefix, separator, false));
-						// result.append(value.toStringBuffer(false));
-					}
-					count++;
-				}
-				result.append("}");
-				return result.toString();
-			}
-			case DENSE_TUPLE_WRITE: {
-				boolean first = true;
-				int eleIndex = 0;
-				boolean needNewLine = !separator.isEmpty()
-						&& !civlType.areSubtypesScalar();
-				String padding = "\n" + prefix + separator;
-				String newPrefix = needNewLine ? prefix + separator : prefix;
-
-				result.append(arguments[0].toStringBuffer(true));
-				result.append("{");
-				for (SymbolicExpression value : (SymbolicSequence<?>) arguments[1]) {
-					if (!value.isNull()) {
-						Pair<String, CIVLType> eleNameAndType = this.subType(
-								civlType, eleIndex++);
-
-						if (first)
-							first = false;
-						else
-							result.append(", ");
-						if (needNewLine)
-							result.append(padding);
-						result.append("." + eleNameAndType.left + "=");
-						result.append(symbolicExpressionToString(source, state,
-								eleNameAndType.right, value, false, newPrefix,
-								separator, false));
-					}
-				}
-				result.append("}");
-				return result.toString();
-			}
-			case DIVIDE:
-				result.append(arguments[0].toStringBuffer(true));
-				result.append("/");
-				result.append(arguments[1].toStringBuffer(true));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case EQUALS:
-				if (arguments[0] instanceof SymbolicExpression)
-					result.append(this.symbolicExpressionToString(source,
-							state, null, (SymbolicExpression) arguments[0]));
-				else
-					result.append(arguments[0].toStringBuffer(false));
-				result.append("==");
-				if (arguments[1] instanceof SymbolicExpression)
-					result.append(this.symbolicExpressionToString(source,
-							state, null, (SymbolicExpression) arguments[1]));
-				else
+					result.append("[");
 					result.append(arguments[1].toStringBuffer(false));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case EXISTS:
-				result.append("exists ");
-				result.append(arguments[0].toStringBuffer(false));
-				result.append(" : ");
-				result.append(((SymbolicExpression) arguments[0]).type()
-						.toStringBuffer(false));
-				result.append(" . ");
-				result.append(arguments[1].toStringBuffer(true));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case FORALL:
-				result.append("forall ");
-				result.append(arguments[0].toStringBuffer(false));
-				result.append(" : ");
-				result.append(((SymbolicExpression) arguments[0]).type()
-						.toStringBuffer(false));
-				result.append(" . ");
-				result.append(arguments[1].toStringBuffer(true));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case INT_DIVIDE: {
-				result.append(arguments[0].toStringBuffer(true));
-				// result.append("\u00F7");
-				result.append("/");
-				result.append(arguments[1].toStringBuffer(true));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			}
-			case LAMBDA:
-				result.append("lambda ");
-				result.append(arguments[0].toStringBuffer(false));
-				result.append(" : ");
-				result.append(((SymbolicExpression) arguments[0]).type()
-						.toStringBuffer(false));
-				result.append(" . ");
-				result.append(arguments[1].toStringBuffer(true));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case LENGTH:
-				result.append("length(");
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[0], "", ""));
-				result.append(")");
-				return result.toString();
-			case LESS_THAN:
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[0], "", ""));
-				result.append("<");
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[1], "", ""));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case LESS_THAN_EQUALS:
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[0], "", ""));
-				result.append("<=");
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[1], "", ""));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case MODULO:
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[0], "", ""));
-				result.append("%");
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[1], "", ""));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case MULTIPLY:
-				processFlexibleBinary(source, state, symbolicExpression,
-						result, "*", true, false);
-				return result.toString();
-			case NEGATIVE:
-				result.append("-");
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[0], "", ""));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case NEQ:
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[0], "", ""));
-				result.append("!=");
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[1], "", ""));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case NOT:
-				result.append("!");
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[0], "", ""));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case NULL:
-				result.append("NULL");
-				return result.toString();
-			case OR:
-				processFlexibleBinary(source, state, symbolicExpression,
-						result, "||", false, atomize);
-				// if (atomize)
-				// atomize(result);
-				return result.toString();
-			case POWER:
-				result.append(this.symbolicExpressionToString(source, state,
-						null, (SymbolicExpression) arguments[0], "", ""));
-				result.append("^");
-				result.append(arguments[1].toStringBuffer(false));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case SUBTRACT:
-				processBinary(result, "-", arguments[0], arguments[1], true);
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case SYMBOLIC_CONSTANT:
-				result.append(arguments[0].toStringBuffer(true));
-				return result.toString();
-			case TUPLE_READ:
-				result.append(arguments[0].toStringBuffer(true));
-				result.append(".");
-				result.append(arguments[1].toStringBuffer(false));
-				if (atomize)
-					atomize(result);
-				return result.toString();
-			case TUPLE_WRITE: {
-				boolean needNewLine = !separator.isEmpty()
-						&& !civlType.areSubtypesScalar();
-				String padding = "\n" + prefix + separator;
-				String newPrefix = needNewLine ? prefix + separator : prefix;
-				int fieldIndex = ((IntObject) symbolicExpression.argument(1))
-						.getInt();
-				StructOrUnionField field = ((CIVLStructOrUnionType) civlType)
-						.getField(fieldIndex);
+					result.append("]");
+					return result.toString();
+				}
+				case ARRAY_WRITE: {
+					boolean needNewLine = !civlType.areSubtypesScalar()
+							&& !separator.isEmpty();
+					String padding = "\n" + prefix + separator;
+					String newPrefix = needNewLine ? prefix + separator
+							: prefix;
 
-				result.append(arguments[0].toStringBuffer(true));
-				result.append("{");
-				if (needNewLine)
-					result.append(padding);
-				result.append(".");
-				result.append(field.name().name());
-				// result.append(arguments[1].toStringBuffer(false));
-				result.append(":=");
-				result.append(this.symbolicExpressionToString(source, state,
-						field.type(), symbolicExpression, newPrefix, separator));
-				// result.append(arguments[2].toStringBuffer(false));
-				result.append("}");
-				return result.toString();
+					if (arguments[0] instanceof SymbolicExpression) {
+						result.append("(");
+						result.append(this.symbolicExpressionToString(source,
+								state, civlType,
+								(SymbolicExpression) arguments[0], atomize,
+								prefix, separator, false));
+						result.append(")");
+					} else
+						result.append(arguments[0].toStringBuffer(true));
+					result.append("{");
+					if (needNewLine)
+						result.append(padding);
+					result.append("[");
+					result.append(arguments[1].toStringBuffer(false));
+					result.append("]=");
+					result.append(this.symbolicExpressionToString(source,
+							state, ((CIVLArrayType) civlType).elementType(),
+							(SymbolicExpression) arguments[2], newPrefix,
+							separator));
+					result.append("}");
+					return result.toString();
+				}
+				case CAST:
+					result.append('(');
+					result.append(type.toStringBuffer(false));
+					result.append(')');
+					result.append(arguments[0].toStringBuffer(true));
+					return result.toString();
+				case COND:
+					result.append(arguments[0].toStringBuffer(true));
+					result.append(" ? ");
+					result.append(arguments[1].toStringBuffer(true));
+					result.append(" : ");
+					result.append(arguments[1].toStringBuffer(true));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case DENSE_ARRAY_WRITE: {
+					int count = 0;
+					boolean first = true;
+					boolean needNewLine = !separator.isEmpty()
+							&& !civlType.areSubtypesScalar();
+					String padding = "\n" + prefix + separator;
+					String newPrefix = needNewLine ? prefix + separator
+							: prefix;
+
+					if (arguments[0] instanceof SymbolicExpression) {
+						result.append("(");
+						result.append(this.symbolicExpressionToString(source,
+								state, civlType,
+								(SymbolicExpression) arguments[0], atomize,
+								prefix, separator, false));
+						result.append(")");
+					} else
+						result.append(arguments[0].toStringBuffer(true));
+					result.append("{");
+					for (SymbolicExpression value : (SymbolicSequence<?>) arguments[1]) {
+						if (!value.isNull()) {
+							if (first)
+								first = false;
+							else
+								result.append(", ");
+							if (needNewLine)
+								result.append(padding);
+							result.append("[" + count + "]" + "=");
+							result.append(symbolicExpressionToString(source,
+									state, this.subType(civlType, count).right,
+									value, false, newPrefix, separator, false));
+							// result.append(value.toStringBuffer(false));
+						}
+						count++;
+					}
+					result.append("}");
+					return result.toString();
+				}
+				case DENSE_TUPLE_WRITE: {
+					boolean first = true;
+					int eleIndex = 0;
+					boolean needNewLine = !separator.isEmpty()
+							&& !civlType.areSubtypesScalar();
+					String padding = "\n" + prefix + separator;
+					String newPrefix = needNewLine ? prefix + separator
+							: prefix;
+
+					result.append(arguments[0].toStringBuffer(true));
+					result.append("{");
+					for (SymbolicExpression value : (SymbolicSequence<?>) arguments[1]) {
+						if (!value.isNull()) {
+							Pair<String, CIVLType> eleNameAndType = this
+									.subType(civlType, eleIndex++);
+
+							if (first)
+								first = false;
+							else
+								result.append(", ");
+							if (needNewLine)
+								result.append(padding);
+							result.append("." + eleNameAndType.left + "=");
+							result.append(symbolicExpressionToString(source,
+									state, eleNameAndType.right, value, false,
+									newPrefix, separator, false));
+						}
+					}
+					result.append("}");
+					return result.toString();
+				}
+				case DIVIDE:
+					result.append(arguments[0].toStringBuffer(true));
+					result.append("/");
+					result.append(arguments[1].toStringBuffer(true));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case EQUALS:
+					if (arguments[0] instanceof SymbolicExpression)
+						result.append(this.symbolicExpressionToString(source,
+								state, null, (SymbolicExpression) arguments[0]));
+					else
+						result.append(arguments[0].toStringBuffer(false));
+					result.append("==");
+					if (arguments[1] instanceof SymbolicExpression)
+						result.append(this.symbolicExpressionToString(source,
+								state, null, (SymbolicExpression) arguments[1]));
+					else
+						result.append(arguments[1].toStringBuffer(false));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case EXISTS:
+					result.append("exists ");
+					result.append(arguments[0].toStringBuffer(false));
+					result.append(" : ");
+					result.append(((SymbolicExpression) arguments[0]).type()
+							.toStringBuffer(false));
+					result.append(" . ");
+					result.append(arguments[1].toStringBuffer(true));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case FORALL:
+					result.append("forall ");
+					result.append(arguments[0].toStringBuffer(false));
+					result.append(" : ");
+					result.append(((SymbolicExpression) arguments[0]).type()
+							.toStringBuffer(false));
+					result.append(" . ");
+					result.append(arguments[1].toStringBuffer(true));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case INT_DIVIDE: {
+					result.append(arguments[0].toStringBuffer(true));
+					// result.append("\u00F7");
+					result.append("/");
+					result.append(arguments[1].toStringBuffer(true));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				}
+				case LAMBDA:
+					result.append("lambda ");
+					result.append(arguments[0].toStringBuffer(false));
+					result.append(" : ");
+					result.append(((SymbolicExpression) arguments[0]).type()
+							.toStringBuffer(false));
+					result.append(" . ");
+					result.append(arguments[1].toStringBuffer(true));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case LENGTH:
+					result.append("length(");
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[0], "",
+							""));
+					result.append(")");
+					return result.toString();
+				case LESS_THAN:
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[0], "",
+							""));
+					result.append("<");
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[1], "",
+							""));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case LESS_THAN_EQUALS:
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[0], "",
+							""));
+					result.append("<=");
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[1], "",
+							""));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case MODULO:
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[0], "",
+							""));
+					result.append("%");
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[1], "",
+							""));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case MULTIPLY:
+					processFlexibleBinary(source, state, symbolicExpression,
+							result, "*", true, false);
+					return result.toString();
+				case NEGATIVE:
+					result.append("-");
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[0], "",
+							""));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case NEQ:
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[0], "",
+							""));
+					result.append("!=");
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[1], "",
+							""));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case NOT:
+					result.append("!");
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[0], "",
+							""));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case NULL:
+					result.append("NULL");
+					return result.toString();
+				case OR:
+					processFlexibleBinary(source, state, symbolicExpression,
+							result, "||", false, atomize);
+					// if (atomize)
+					// atomize(result);
+					return result.toString();
+				case POWER:
+					result.append(this.symbolicExpressionToString(source,
+							state, null, (SymbolicExpression) arguments[0], "",
+							""));
+					result.append("^");
+					result.append(arguments[1].toStringBuffer(false));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case SUBTRACT:
+					processBinary(result, "-", arguments[0], arguments[1], true);
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case SYMBOLIC_CONSTANT:
+					result.append(arguments[0].toStringBuffer(true));
+					return result.toString();
+				case TUPLE_READ:
+					result.append(arguments[0].toStringBuffer(true));
+					result.append(".");
+					result.append(arguments[1].toStringBuffer(false));
+					if (atomize)
+						atomize(result);
+					return result.toString();
+				case TUPLE_WRITE: {
+					boolean needNewLine = !separator.isEmpty()
+							&& !civlType.areSubtypesScalar();
+					String padding = "\n" + prefix + separator;
+					String newPrefix = needNewLine ? prefix + separator
+							: prefix;
+					int fieldIndex = ((IntObject) symbolicExpression
+							.argument(1)).getInt();
+					StructOrUnionField field = ((CIVLStructOrUnionType) civlType)
+							.getField(fieldIndex);
+
+					result.append(arguments[0].toStringBuffer(true));
+					result.append("{");
+					if (needNewLine)
+						result.append(padding);
+					result.append(".");
+					result.append(field.name().name());
+					// result.append(arguments[1].toStringBuffer(false));
+					result.append(":=");
+					result.append(this.symbolicExpressionToString(source,
+							state, field.type(), symbolicExpression, newPrefix,
+							separator));
+					// result.append(arguments[2].toStringBuffer(false));
+					result.append("}");
+					return result.toString();
+				}
+				case UNION_EXTRACT:
+					result.append("extract(");
+					result.append(arguments[0].toStringBuffer(false));
+					result.append(",");
+					result.append(arguments[1].toStringBuffer(false));
+					result.append(")");
+					return result.toString();
+				case UNION_INJECT: {
+					result.append(this.symbolicExpressionToString(source,
+							state, civlType, (SymbolicExpression) arguments[1],
+							prefix, separator));
+					return result.toString();
+				}
+				case UNION_TEST:
+					result.append("test(");
+					result.append(arguments[0].toStringBuffer(false));
+					result.append(",");
+					result.append(arguments[1].toStringBuffer(false));
+					result.append(")");
+					return result.toString();
+				default:
+					return symbolicExpression.toStringBufferLong().toString();
+				}
+
 			}
-			case UNION_EXTRACT:
-				result.append("extract(");
-				result.append(arguments[0].toStringBuffer(false));
-				result.append(",");
-				result.append(arguments[1].toStringBuffer(false));
-				result.append(")");
-				return result.toString();
-			case UNION_INJECT: {
-				result.append(this.symbolicExpressionToString(source, state,
-						civlType, (SymbolicExpression) arguments[1], prefix,
-						separator));
-				return result.toString();
-			}
-			case UNION_TEST:
-				result.append("test(");
-				result.append(arguments[0].toStringBuffer(false));
-				result.append(",");
-				result.append(arguments[1].toStringBuffer(false));
-				result.append(")");
-				return result.toString();
-			default:
-				return symbolicExpression.toStringBufferLong().toString();
-			}
+
 		}
 	}
 
