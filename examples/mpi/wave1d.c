@@ -31,8 +31,8 @@ $input int NSTEPSB = 5;
 $input int nsteps;                /* number of time steps */
 $assume(0 < nsteps && nsteps <= NSTEPSB);
 $input int wstep = 1;             /* number of time steps between printing */
-$input int _NPROCS_LOWER_BOUND = 1;
-$input int _NPROCS_UPPER_BOUND = 4;
+$input int _mpi_nprocs_lo = 1;
+$input int _mpi_nprocs_hi = 4;
 double oracle[nsteps + 1][nx + 2];/* result of sequential run at every time step */
 $input double u_init[nx];         /* arbitrary initial position of string */
 

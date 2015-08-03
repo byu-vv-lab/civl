@@ -26,7 +26,7 @@ public class AMGTest {
 
 	@Test
 	public void Utils() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_mpi_nprocs=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
 				filename("test/amg2013.c"),filename("utilities/amg_linklist.c "),filename("utilities/binsearch.c"),
@@ -39,7 +39,7 @@ public class AMGTest {
 	
 	@Test
 	public void IJ_mv() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_mpi_nprocs=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
 				filename("test/amg2013.c"),filename("IJ_mv/aux_par_vector.c "),filename("IJ_mv/aux_parcsr_matrix.c"),
@@ -50,7 +50,7 @@ public class AMGTest {
 
 	@Test
 	public void Krylov() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_mpi_nprocs=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
 				filename("test/amg2013.c"),filename("krylov/gmres.c "),filename("krylov/HYPRE_gmres.c"),
@@ -60,7 +60,7 @@ public class AMGTest {
 	
 	@Test
 	public void Parcsr_mv() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_mpi_nprocs=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
 				filename("test/amg2013.c"),filename("parcsr_mv/HYPRE_parcsr_matrix.c "),filename("parcsr_mv/HYPRE_parcsr_vector.c"),
@@ -72,7 +72,7 @@ public class AMGTest {
 	
 	@Test
 	public void Seq_mv() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_mpi_nprocs=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
 				filename("test/amg2013.c"),filename("seq_mv/big_csr_matrix.c "),filename("seq_mv/csr_matop.c"),
@@ -83,7 +83,7 @@ public class AMGTest {
 	
 	@Test
 	public void Parcsr_ls() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_mpi_nprocs=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
 				filename("test/amg2013.c"),filename("parcsr_ls/aux_interp.c "),filename("parcsr_ls/gen_redcs_mat.c"),
@@ -102,7 +102,7 @@ public class AMGTest {
 
 	@Test
 	public void Sstruct_mv() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_mpi_nprocs=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
 				filename("test/amg2013.c"),filename("sstruct_mv/box_map.c "),filename("sstruct_mv/HYPRE_sstruct_graph.c"),
@@ -116,7 +116,7 @@ public class AMGTest {
 
 	@Test
 	public void Struct_mv() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_mpi_nprocs=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
 				filename("test/amg2013.c"),filename("struct_mv/assumed_part.c "),filename("struct_mv/box_algebra.c"),
@@ -135,7 +135,7 @@ public class AMGTest {
 	
 	@Test
 	public void Krylov_bug() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_NPROCS=1", "-inputTHREAD_MAX=1",
+		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_mpi_nprocs=1", "-inputTHREAD_MAX=1",
 				"-DTIMER_USE_MPI", "-DHYPRE_USING_OPENMP", "-DHYPRE_TIMING",
 				"-userIncludePath=examples/mpi-omp/AMG2013/utilities:examples/mpi-omp/AMG2013:examples/mpi-omp/AMG2013/parcsr_mv:examples/mpi-omp/AMG2013/seq_mv:examples/mpi-omp/AMG2013/sstruct_mv:examples/mpi-omp/AMG2013/struct_mv:examples/mpi-omp/AMG2013/IJ_mv:examples/mpi-omp/AMG2013/parcsr_ls:examples/mpi-omp/AMG2013/krylov",
 				filename("krylov_bug/bug.c")));

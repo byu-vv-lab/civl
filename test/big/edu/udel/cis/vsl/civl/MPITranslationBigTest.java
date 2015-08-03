@@ -39,7 +39,7 @@ public class MPITranslationBigTest {
 
 	@Test
 	public void mpi_diff2d() {
-		assertTrue(ui.run("verify", "-enablePrintf=false", "-input_NPROCS=4",
+		assertTrue(ui.run("verify", "-enablePrintf=false", "-input_mpi_nprocs=4",
 				"-inputNPROCSX=2", "-inputNPROCSY=2", "-inputNSTEPSB=3",
 				filename("diffusion2d.c")));
 	}
@@ -64,7 +64,7 @@ public class MPITranslationBigTest {
 
 	@Test
 	public void mpi_sumArray() {
-		assertTrue(ui.run("verify", "-enablePrintf=false",
+		assertTrue(ui.run("verify", 
 				filename("sum_array.c")));
 	}
 	

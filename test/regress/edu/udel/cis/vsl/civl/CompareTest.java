@@ -59,7 +59,7 @@ public class CompareTest {
 		assertTrue(ui
 				.run("compare -enablePrintf=false -inputVECLEN=5 -spec -inputMAXTHRDS=2",
 						filename("dot", "mpithreads_threads.c"),
-						"-impl -input_NPROCS=2",
+						"-impl -input_mpi_nprocs=2",
 						filename("dot", "mpithreads_mpi.c")));
 	}
 
@@ -67,10 +67,10 @@ public class CompareTest {
 	public void dotMpiSerial() {
 		assertFalse(ui.run("compare -enablePrintf=false -inputVECLEN=5 -spec",
 				filename("dot", "mpithreads_serial.c"),
-				"-impl -input_NPROCS=2", filename("dot", "mpithreads_mpi.c")));
+				"-impl -input_mpi_nprocs=2", filename("dot", "mpithreads_mpi.c")));
 		assertFalse(ui.run("replay -spec",
 				filename("dot", "mpithreads_serial.c"),
-				"-impl -input_NPROCS=2", filename("dot", "mpithreads_mpi.c")));
+				"-impl -input_mpi_nprocs=2", filename("dot", "mpithreads_mpi.c")));
 	}
 
 	@Test
@@ -85,7 +85,7 @@ public class CompareTest {
 	public void dotHybridSerial() {
 		assertFalse(ui.run("compare -enablePrintf=false -inputVECLEN=5 -spec",
 				filename("dot", "mpithreads_serial.c"),
-				"-impl -input_NPROCS=2 -inputMAXTHRDS=2",
+				"-impl -input_mpi_nprocs=2 -inputMAXTHRDS=2",
 				filename("dot", "mpithreads_both.c")));
 	}
 

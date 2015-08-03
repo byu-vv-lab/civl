@@ -33,7 +33,7 @@ $assume(NPROCS <= N);
 
 $mpi_gcomm __MPI_COMM_WORLD;
 
-void _MPI_Process(int place){
+void _mpi_process(int place){
   double sum;
   double localSum = 0.0;
   int PID;
@@ -92,7 +92,7 @@ void main(){
 
   __MPI_COMM_WORLD = $mpi_gcomm_create($root, NPROCS);
   for(int i = 0; i<NPROCS; i++)
-    procs[i] = $spawn _MPI_Process(i);
+    procs[i] = $spawn _mpi_process(i);
   for(int i = 0; i<NPROCS; i++)
     $wait(procs[i]);
   $mpi_gcomm_destroy(__MPI_COMM_WORLD);

@@ -1,18 +1,9 @@
-#ifdef _CIVL
 #include <civlc.cvh>
-#endif
-/* diffusion1d.c: parallel 1d-diffusion solver with constant boundary.
- * To execute: mpicc diffusion1d.c ; mpiexec -n 4 ./a.out
- * Or replace "4" with however many procs you want to use.
- * To verify: civl verify diffusion1d.c
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <mpi.h>
 #define OWNER(index) ((nprocs*(index+1)-1)/nx)
-
-#ifdef _CIVL
 
 $input int NXB = 5;           // upper bound on nx
 $input int nx;               // global number of points excl. boundary
@@ -25,18 +16,7 @@ $input int nsteps;           // number of time steps
 $assume(1<=nsteps && nsteps<=NSTEPS_BOUND);
 $input int wstep;            // write frame every this many time steps
 $assume(1<=wstep && wstep<=nsteps);
-double oracle[nsteps][nx+2]; // solution computed sequentially, proc 0 only
-int _mpi_nprocs_lo = 1;
-int _mpi_nprocs_hi = 3;
-
-#else
-
-int nx;
-double k;
-int nsteps;
-int wstep;
-
-#endif
+$output double output[nsteps][nx+2]; // solution computed sequentially, proc 0 only
 
 /* Global variables */
 
@@ -91,7 +71,6 @@ void init_globals() {
 }
 
 void initialize() {
-#ifdef _CIVL
   //elaborate nx to concrete value...
   for (int i=0; i<nx; i++);
   // initialize globals and u...
@@ -100,36 +79,10 @@ void initialize() {
   rbound = U_INIT[nx+1];
   for (int i=1; i<=nxl; i++)
     u[i] = U_INIT[first+i];
-  if (rank == 0) {
-    // compute the oracle...
-    for (int i=0; i<nx+2; i++)
-      oracle[0][i]=U_INIT[i];
-    for (int t=1; t<nsteps; t++) {
-      oracle[t][0] = lbound;
-      for (int i=1; i<=nx; i++)
-        oracle[t][i] = oracle[t-1][i] + 
-          k*(oracle[t-1][i+1] + oracle[t-1][i-1]
-             - 2*oracle[t-1][i]);
-      oracle[t][nx+1] = rbound;
-    }
-  }
-#else
-  nx = 10;
-  k = 0.2;
-  nsteps = 20;
-  wstep = 2;
-  lbound = rbound = 0.0;
-  init_globals();
-  for (int i=1; i<=nxl; i++)
-    u[i]=100.0;
-#endif
   if (nx>=1 && rank == OWNER(0))
     u[0] = u_new[0] = lbound;
   if (nx>=1 && rank == OWNER(nx-1))
     u[nxl+1] = u_new[nxl+1] = rbound;
-  //if (rank == 0)
-    //printf("nx=%d, k=%lf, nsteps=%d, wstep=%d, nprocs=%d\n",
-    //     nx, k, nsteps, wstep, nprocs);
 }
 
 /* Prints header for time step.  Called by proc 0 only */
@@ -140,10 +93,7 @@ void print_time_header() {
 
 /* Prints one cell.  Called by proc 0 only. */
 void print_cell(double value) {
-  //printf("%7.2f\n", value);
-#pragma CIVL $assert(value == oracle[time][print_pos], \
-  "Error: disagreement at time %d position %d: saw %lf, expected %lf",  \
-  time, print_pos, value, oracle[time][print_pos]);
+  output[time][print_pos] = value;
   print_pos++;
 }
 
@@ -172,7 +122,6 @@ void write_frame() {
         print_cell(buf[i]);
     }
     print_cell(rbound); // right boundary
-    //printf("\n");
   }
 }
 

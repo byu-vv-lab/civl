@@ -83,13 +83,13 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 * The name of the identifier of the CMPI_Gcomm variable in the final CIVL
 	 * program.
 	 */
-	private final static String GCOMM_WORLD = "_GCOMM_WORLD";
+	private final static String GCOMM_WORLD = "_mpi_gcomm";
 
 	/**
 	 * The name of the identifier of the CMPI_Gcomm sequence variable in the
 	 * final CIVL-MPI program
 	 */
-	private final static String GCOMMS = "_GCOMMS";
+	private final static String GCOMMS = "_mpi_gcomms";
 
 	/**
 	 * The name of the function call for initializing a sequence.
@@ -134,7 +134,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name of the parameter of a MPI procedure.
 	 */
-	private final String MPI_RANK = MPI_PREFIX + "_mpi_rank";
+	private final String MPI_RANK = MPI_PREFIX + "rank";
 
 	/**
 	 * The name of the function MPI_Init in the original MPI program.
@@ -173,25 +173,25 @@ public class MPI2CIVLWorker extends BaseWorker {
 	/**
 	 * The name of the MPI procedure in the final CIVL-C program.
 	 */
-	private final static String MPI_PROCESS = "_MPI_Process";
+	private final static String MPI_PROCESS = "_mpi_process";
 
 	/**
 	 * The name of the input variable denoting the number of MPI processes in
 	 * the final CIVL-C program.
 	 */
-	private final static String NPROCS = "_NPROCS";
+	private final static String NPROCS = "_mpi_nprocs";
 
 	/**
 	 * The name of the input variable denoting the upper bound of the number of
 	 * MPI processes in the final CIVL-C program.
 	 */
-	private final static String NPROCS_UPPER_BOUND = "_NPROCS_UPPER_BOUND";
+	private final static String NPROCS_UPPER_BOUND = "_mpi_nprocs_hi";
 
 	/**
 	 * The name of the input variable denoting the lower bound of the number of
 	 * MPI processes in the final CIVL-C program.
 	 */
-	private final static String NPROCS_LOWER_BOUND = "_NPROCS_LOWER_BOUND";
+	private final static String NPROCS_LOWER_BOUND = "_mpi_nprocs_lo";
 
 	/* ****************************** Constructor ************************** */
 	/**
@@ -938,9 +938,16 @@ public class MPI2CIVLWorker extends BaseWorker {
 						nprocsUpperBoundVar.childIndex());
 			}
 			if (nprocsLowerBoundVar == null) {
+				Source lowerBoundSource = this.newSource(
+						"constant integer: one", CParser.INT);
+				Source intTypeSource = this.newSource("int", CParser.TYPE);
+
 				// declaring $input int NPROCS_LOWER_BOUND;
-				nprocsLowerBoundVar = this.basicTypeVariableDeclaration(
-						BasicTypeKind.INT, NPROCS_LOWER_BOUND);
+				nprocsLowerBoundVar = this.variableDeclaration(
+						NPROCS_LOWER_BOUND, nodeFactory.newBasicTypeNode(
+								intTypeSource, BasicTypeKind.INT),
+						this.nodeFactory.newIntegerConstantNode(
+								lowerBoundSource, "1"));
 				nprocsLowerBoundVar.getTypeNode().setInputQualified(true);
 			} else {
 				nprocsLowerBoundVar.parent().removeChild(

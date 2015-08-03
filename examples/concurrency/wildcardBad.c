@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <mpi.h>
 
-$input int _NPROCS = 3;
+$input int _mpi_nprocs = 3;
 
 void main(int argc, char * argv[]){
   int nprocs, rank, msg;

@@ -13,8 +13,8 @@
 #define comm MPI_COMM_WORLD
 #ifdef _CIVL
 #include <civlc.cvh>
-$input int _NPROCS_LOWER_BOUND = 2;
-$input int _NPROCS_UPPER_BOUND = 4;
+$input int _mpi_nprocs_lo = 2;
+$input int _mpi_nprocs_hi = 4;
 /* Dimensions of 2 matrices: a[N][L] * b[L][M] */
 $input int NB = 3;              // upper bound of N
 $input int N;

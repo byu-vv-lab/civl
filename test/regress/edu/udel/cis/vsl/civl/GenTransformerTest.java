@@ -40,14 +40,14 @@ public class GenTransformerTest {
 	@Test
 	public void simpleMPI() {
 		assertTrue(ui.run(
-				"verify -input_NPROCS=2 -showProgram -enablePrintf=false",
+				"verify -input_mpi_nprocs=2 -showProgram -enablePrintf=false",
 				filename("simpleMPI.c")));
 	}
 
 	@Test
 	public void simpleMPI2() {
 		assertTrue(ui.run(
-				"verify -showProgram -input_NPROCS=2 -enablePrintf=false",
+				"verify -showProgram -input_mpi_nprocs=2 -enablePrintf=false",
 				filename("simpleMPI2.c")));
 	}
 

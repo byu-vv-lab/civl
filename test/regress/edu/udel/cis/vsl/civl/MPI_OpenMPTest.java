@@ -28,7 +28,7 @@ public class MPI_OpenMPTest {
 	@Test
 	public void pie() throws ABCException {
 		assertTrue(ui.run(
-				"verify -enablePrintf=false -DMATH_ELABORATE_ASSUMPTIONS -input_NPROCS=2 "
+				"verify -enablePrintf=false -DMATH_ELABORATE_ASSUMPTIONS -input_mpi_nprocs=2 "
 						+ "-inputTHREAD_MAX=3 -ompLoopDecomp=ALL",
 				filename("mpi-omp-pie-calculation.c")));
 	}
@@ -37,7 +37,7 @@ public class MPI_OpenMPTest {
 	public void pie100() throws ABCException {
 		assertTrue(ui
 				.run("verify -enablePrintf=false -DMATH_ELABORATE_ASSUMPTIONS "
-						+ "-input_NPROCS=2 -inputTHREAD_MAX=10 -ompLoopDecomp=ALL",
+						+ "-input_mpi_nprocs=2 -inputTHREAD_MAX=10 -ompLoopDecomp=ALL",
 						filename("mpi-omp-pie-calculation100.c")));
 	}
 

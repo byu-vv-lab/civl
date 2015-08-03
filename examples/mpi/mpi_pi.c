@@ -27,7 +27,7 @@ $assume(0 < DARTS && DARTS <= DARTSB);
 const int ROUNDSB = 2;        // upper bound of ROUNDS
 $input int ROUNDS;            // number of rounds of throwing darts
 $assume(0 < ROUNDS && ROUNDS <= ROUNDSB);
-$input int _NPROCS = 2;
+$input int _mpi_nprocs = 2;
 $input int N;                 // length of random data array
 $input double RANDOM[N];      // random data array
 double oracle[ROUNDS];        // array of results of sequential run
@@ -71,7 +71,7 @@ double dboard(int darts, int taskid) {
     /* generate random numbers for x and y coordinates */
 #ifdef _CIVL
     rx = civlrand(n, taskid, curr_round) / (double)RAND_MAX;
-    ry = civlrand(n, taskid, curr_round+DARTSB * _NPROCS * ROUNDSB) \
+    ry = civlrand(n, taskid, curr_round+DARTSB * _mpi_nprocs * ROUNDSB) \
       / (double)RAND_MAX;
 #else
     rx = (double)rand()/(double)RAND_MAX;
@@ -99,7 +99,7 @@ void initialization() {
 
   $elaborate(DARTS);
   $elaborate(ROUNDS);
-  $assume(N == DARTSB * _NPROCS * ROUNDSB * 2);
+  $assume(N == DARTSB * _mpi_nprocs * ROUNDSB * 2);
   if(taskid == 0) {
     for(curr_round=0; curr_round < ROUNDS; curr_round++) {
       for(int j=0; j < tasks; j++)

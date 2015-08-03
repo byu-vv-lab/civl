@@ -14,10 +14,9 @@
 #define MSG_DATA 100
 #define MSG_RESULT 101
 #ifdef _CIVL
-$input int _NPROCS_LOWER_BOUND = 2;
-$input int _NPROCS_UPPER_BOUND = 5;
 $input long NB = 20;               // upper bound of N
 $input long N;                     // length of the array
+$input int _mpi_nprocs_hi = 8;
 $assume(0 < N && N <= NB);
 double oracle;
 #else
@@ -58,6 +57,8 @@ void master (void) {
   MPI_Comm_size (MPI_COMM_WORLD, &size);
   if (size != 1)
     step = N / (size - 1);
+  else 
+    step = N;
   //The array is divided by the number of slaves
   for (i = 0; i < size - 1; i++)
     MPI_Send (array + i * step, step, MPI_FLOAT, i + 1, MSG_DATA, MPI_COMM_WORLD);

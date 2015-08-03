@@ -25,15 +25,13 @@ public class CompareBigTest {
 
 	/* **************************** Test Methods *************************** */
 
-	// TODO: why specify concrete values for K?
 	@Test
 	public void diffusion1d() {
-		assertTrue(ui.run("compare", "-enablePrintf=false",
-				"-input_NPROCS_LOWER_BOUND=1", "-input_NPROCS_UPPER_BOUND=1",
-				"-inputNX=5", "-inputNSTEPSB=4", "-inputWSTEP=1",
-				"-inputK=0.3", "-spec",
-				filename("diffusion1d/diffusion1d_spec_revision.c"), "-impl",
-				filename("diffusion1d/diffusion1d_par_revision.c")));
+		assertTrue(ui.run("compare",
+				"-input_mpi_nprocs_lo=1", "-input_mpi_nprocs_hi=3",
+				"-inputNXB=8", "-inputNSTEPS_BOUND=4", "-spec",
+				filename("diffusion1d/diffusion1d_spec.c"), "-impl",
+				filename("diffusion1d/diffusion1d_par.c")));
 	}
 	
 	@AfterClass

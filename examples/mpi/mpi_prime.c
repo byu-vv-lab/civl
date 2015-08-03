@@ -19,8 +19,8 @@
 
 #define FIRST 0                             // rank of the first process
 #ifdef _CIVL
-$input int _NPROCS_LOWER_BOUND = 1;
-$input int _NPROCS_UPPER_BOUND = 4;
+$input int _mpi_nprocs_lo = 1;
+$input int _mpi_nprocs_hi = 4;
 $input int LIMITB = 15;                     // upper bound of LIMITS
 $input int LIMIT;                           // upper bound of searching numbers
 $assume(10 < LIMIT && LIMIT <= LIMITB);
