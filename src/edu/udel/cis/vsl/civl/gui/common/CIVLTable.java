@@ -4,7 +4,6 @@ import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.event.EventListenerList;
@@ -328,7 +327,7 @@ public class CIVLTable extends JTable implements MouseListener {
 	public void addSaveTableListener(SaveTableListener listener) {
 		listenerList.add(SaveTableListener.class, listener);
 	}
-	
+
 	/**
 	 * Removes a SaveTableListener.
 	 * 

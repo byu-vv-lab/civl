@@ -19,9 +19,10 @@ import javax.swing.table.TableCellRenderer;
  * 
  */
 public class FormattedTextFieldRenderer implements TableCellRenderer {
-	
+
 	/**
 	 * Verifies whether an input is of the correct format(Number, String etc.)
+	 * 
 	 * @author StevenNoyes
 	 *
 	 */
@@ -47,18 +48,20 @@ public class FormattedTextFieldRenderer implements TableCellRenderer {
 			return verify(input);
 		}
 	}
-	
+
 	/**
 	 * The text field associated with this Editor.
 	 */
 	private JFormattedTextField jftf;
-	
+
 	private String mode;
-	
+
 	/**
 	 * The verifier associated with this Renderer
 	 */
-	//TODO: Make this actually work, there is somekind of bug that causes this not to work very well.
+	// TODO: Make this actually work, there is somekind of bug that causes this
+	// not to work very well.
+	@SuppressWarnings("unused")
 	private FormattedTextFieldVerifier verifier;
 
 	public FormattedTextFieldRenderer() {

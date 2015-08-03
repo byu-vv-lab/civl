@@ -2,9 +2,6 @@ package edu.udel.cis.vsl.civl.gui.common;
 
 import java.io.Serializable;
 
-import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
-
 /**
  * A class that was created in order to store the necessar information that
  * described an input to a CIVL program.
@@ -41,11 +38,11 @@ public class CIVL_Input implements Serializable {
 		setValue(null);
 		setInitializer("");
 	}
-	
+
 	/*
-	 * Getters & Setters 
+	 * Getters & Setters
 	 */
-	
+
 	public String getName() {
 		return name;
 	}

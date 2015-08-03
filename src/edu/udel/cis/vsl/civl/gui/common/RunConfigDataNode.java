@@ -106,19 +106,20 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 
 	public RunConfigDataNode(CommandLine comLine) {
 		this.applyClicked = false;
+		@SuppressWarnings("unused")
 		SortedMap<String, Option> map = null;
 		this.selectedFiles = new ArrayList<File>();
 		this.inputs = new ArrayList<CIVL_Input>();
 		this.markedForDelete = false;
-		GMCConfiguration c = c = new GMCConfiguration(
-				Arrays.asList(CIVLConstants.getAllOptions()));
+		GMCConfiguration c = new GMCConfiguration(Arrays.asList(CIVLConstants
+				.getAllOptions()));
 
 		if (comLine == null) {
 		}
 
 		else if (comLine.commandLineKind() == CommandLineKind.COMPARE) {
 			map = CIVLCommand.getVerifyOrCompareOptions();
-//			c = new GMCConfiguration(map.values());
+			// c = new GMCConfiguration(map.values());
 		}
 
 		else if (comLine.commandLineKind() == CommandLineKind.NORMAL) {
@@ -126,17 +127,17 @@ public class RunConfigDataNode extends DefaultMutableTreeNode implements
 					.normalCommandKind();
 			if (commandKind.equals(NormalCommandKind.RUN)) {
 				map = CIVLCommand.getRunOptions();
-//				c = new GMCConfiguration(map.values());
+				// c = new GMCConfiguration(map.values());
 			}
 
 			else if (commandKind.equals(NormalCommandKind.VERIFY)) {
 				map = CIVLCommand.getVerifyOrCompareOptions();
-//				c = new GMCConfiguration(map.values());
+				// c = new GMCConfiguration(map.values());
 			}
 
 			else if (commandKind.equals(NormalCommandKind.SHOW)) {
 				map = CIVLCommand.getShowOptions();
-//				c = new GMCConfiguration(map.values());
+				// c = new GMCConfiguration(map.values());
 			}
 		}
 		this.setGmcConfig(c);

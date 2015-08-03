@@ -133,6 +133,7 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * The command line object that the GUI will use
 	 */
+	@SuppressWarnings("unused")
 	private NormalCommandLine commandLine;
 
 	public GUI_revamp() {
@@ -510,6 +511,7 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * Sets the options in the table when values are changed.
 	 */
+	@SuppressWarnings("unused")
 	public void setOptions() {
 		CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
 		DefaultTableModel optionModel = (DefaultTableModel) tbl_optionTable
@@ -758,6 +760,7 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * Creates the container {@link JPanel}.
 	 */
+	@SuppressWarnings("deprecation")
 	public void initContainer() {
 		JPanel p_container = new JPanel();
 		JPanel p_view = new JPanel();
@@ -1023,6 +1026,7 @@ public class GUI_revamp extends JFrame {
 
 			else if (curr.comLine.commandLineKind() == CommandLineKind.NORMAL) {
 				CommandNode node;
+				@SuppressWarnings("unchecked")
 				Enumeration<CommandNode> e = top.children();
 				while (e.hasMoreElements()) {
 					Object currNode = e.nextElement();
@@ -1288,6 +1292,7 @@ public class GUI_revamp extends JFrame {
 		 * Runs the GUI
 		 */
 		ActionListener run = new ActionListener() {
+			@SuppressWarnings("unused")
 			public void actionPerformed(ActionEvent e) {
 				if (currConfig.getSelectedFiles().size() == 0) {
 					JOptionPane
@@ -1340,6 +1345,7 @@ public class GUI_revamp extends JFrame {
 		 * The Delete Config ActionListener
 		 */
 		ActionListener delete = new ActionListener() {
+			@SuppressWarnings("unused")
 			public void actionPerformed(ActionEvent e) {
 				DefaultTableModel currOptModel = (DefaultTableModel) tbl_optionTable
 						.getModel();
@@ -1380,6 +1386,7 @@ public class GUI_revamp extends JFrame {
 						.getModel();
 				Object config = savedConfigs.get(tf_name.getText());
 				boolean dontCreate = false;
+				@SuppressWarnings("unused")
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
 
@@ -1466,9 +1473,10 @@ public class GUI_revamp extends JFrame {
 		ActionListener cancel = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 System.exit(0);
-            }};
-		
-        bt_cancel.addActionListener(cancel);
+			}
+		};
+
+		bt_cancel.addActionListener(cancel);
 
 		/**
 		 * Listener that detects when the user is editing the name of the run
