@@ -3518,7 +3518,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					SequenceNode<VariableDeclarationNode> params = ((FunctionDeclarationNode) parent).getTypeNode().getParameters();
 					
 					for(VariableDeclarationNode varName : params){
-						if(varName.getName().equals(temp)){
+						if(varName.getName() != null && varName.getName().equals(temp)){
 							functionParam = true;
 						}
 					}
