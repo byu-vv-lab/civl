@@ -18,16 +18,16 @@ mpi_pi: mpi_pi.c
 	$(VERIFY) mpi_pi.c
 
 mpi_gather: ${routines/Gather_Scatter/mpi_gather.c}
-	$(VERIFY) -input_NPROCS=4 -enablePrintf=false routines/Gather_Scatter/mpi_gather.c
+	$(VERIFY) -input_mpi_nprocs=4 -enablePrintf=false routines/Gather_Scatter/mpi_gather.c
 
 mpi_scatter: ${routines/Gather_Scatter/mpi_scatter.c}
-	$(VERIFY) -input_NPROCS=4 -enablePrintf=false routines/Gather_Scatter/mpi_scatter.c
+	$(VERIFY) -input_mpi_nprocs=4 -enablePrintf=false routines/Gather_Scatter/mpi_scatter.c
 
 mpi_gatherv: ${routines/Gather_Scatter/mpi_gatherv.c}
-	$(VERIFY) -input_NPROCS=4 -enablePrintf=false routines/Gather_Scatter/mpi_gatherv.c
+	$(VERIFY) -input_mpi_nprocs=4 -enablePrintf=false routines/Gather_Scatter/mpi_gatherv.c
 
 mpi_scatterv: ${routines/Gather_Scatter/mpi_scatterv.c}
-	$(VERIFY) -input_NPROCS=4 -enablePrintf=false routines/Gather_Scatter/mpi_scatterv.c
+	$(VERIFY) -input_mpi_nprocs=4 -enablePrintf=false routines/Gather_Scatter/mpi_scatterv.c
 
 mpi_sysStatus: ${routines//mpiSysStatus.c}
 	$(VERIFY) routines/mpiSysStatus.c
