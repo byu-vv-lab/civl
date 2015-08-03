@@ -875,13 +875,26 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					@SuppressWarnings("unchecked")
 					SymbolicSequence<? extends SymbolicExpression> symbolicSequence = (SymbolicSequence<? extends SymbolicExpression>) arguments[0];
 					SymbolicExpression dimension = symbolicSequence.get(0);
-					@SuppressWarnings("unused")
-					SymbolicExpression unionKind = symbolicSequence.get(1);
+					String unionKind = symbolicSequence.get(1)
+							.toStringBuffer(false).toString();
 					SymbolicExpression value = symbolicSequence.get(2);
 
-					result.append("$domain(");
-					result.append(dimension.toStringBuffer(false));
-					result.append(")");
+					if (unionKind.equals("0")) {
+						result.append("($domain(");
+						result.append(dimension.toStringBuffer(false));
+						result.append("))");
+						// // rectangular domain, value is an array of ranges
+						// // result.append("{");
+						// result.append(this.symbolicExpressionToString(source,
+						// state, null,
+						// (SymbolicExpression) value.argument(1), false,
+						// "", "", false));
+					}
+					// else {
+					// // literal domain
+					// result.append(this.symbolicExpressionToString(source,
+					// state, null, value, false, "", "", false));
+					// }
 					result.append(this.symbolicExpressionToString(source,
 							state, null, value, false, "", "", false));
 				} else if (type.toString().equals("$regular_range")) {
@@ -889,12 +902,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					SymbolicCollection<? extends SymbolicExpression> symbolicCollection = (SymbolicCollection<? extends SymbolicExpression>) arguments[0];
 					int elementIndex = 0;
 
-					result.append("{");
+					result.append("(");
 					for (SymbolicExpression symbolicElement : symbolicCollection) {
 						if (elementIndex == 1)
-							result.append(", ");
+							result.append("..");
 						else if (elementIndex == 2) {
-							result.append(" # ");
+							result.append("#");
 						}
 						result.append(this
 								.symbolicExpressionToString(source, state,
@@ -902,7 +915,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 										separator));
 						elementIndex++;
 					}
-					result.append("}");
+					result.append(")");
 				} else {
 					SymbolicTypeKind tk = type.typeKind();
 
@@ -1326,7 +1339,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				case UNION_INJECT: {
 					result.append(this.symbolicExpressionToString(source,
 							state, civlType, (SymbolicExpression) arguments[1],
-							prefix, separator));
+							false, prefix, separator, showType));
 					return result.toString();
 				}
 				case UNION_TEST:
