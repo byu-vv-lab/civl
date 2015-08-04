@@ -824,7 +824,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			if (numThreads == null) {
 				numThreads = this.identifierExpression(
 						newSource(nthreadDeclaration, CParser.IDENTIFIER),
-						OMPPRE + "numThreads");
+						OMPPRE + "num_threads");
 			}
 
 			add = nodeFactory.newOperatorNode(
@@ -1086,7 +1086,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 							newSource(parFor, CParser.DECLARATION),
 							nodeFactory.newIdentifierNode(
 									newSource(parFor, CParser.IDENTIFIER),
-									OMPPRE + "tid"), nodeFactory.newBasicTypeNode(
+									TID), nodeFactory.newBasicTypeNode(
 									newSource(parFor, CParser.INT),
 									BasicTypeKind.INT))));
 
@@ -2347,7 +2347,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				operands.add(this.identifierExpression(
 						newSource(singlePlace, CParser.IDENTIFIER), "owner"));
 				operands.add(this.identifierExpression(
-						newSource(singlePlace, CParser.IDENTIFIER), "_tid"));
+						newSource(singlePlace, CParser.IDENTIFIER), TID));
 
 				CompoundStatementNode ifBody;
 				LinkedList<BlockItemNode> ifItems = new LinkedList<>();
@@ -2454,58 +2454,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		} else if (node instanceof FunctionCallNode) {
 			boolean replaced = replaceOmpFunction((FunctionCallNode) node);
 			if (!replaced) {
-				/*
-				String funcName = ((IdentifierExpressionNode) ((FunctionCallNode) node).getFunction()).getIdentifier().name();
-				if(callees != null){
-					for(Function call : callees){
-						if(call.getName().equals(funcName)){
-							FunctionDefinitionNode orphan = call.getDefinition();
-							replaceOMPPragmas(orphan, privateIDs, sharedIDs,
-									reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
-							
-							//Replace shared names and _tid
-							boolean shared = checkSharedAndTid(orphan, sharedIDs);
-							
-							//Insert the needed functions
-							if(shared){
-								ASTNode parent = node;
-								
-								int insertAt = sharedIDs.numChildren()*3 + 1;
-								while(parent != null){
-									if(parent.getSource().getSummary(false).contains("parallelPragma")){
-										CompoundStatementNode body = (CompoundStatementNode) ((CivlForNode) parent).getBody();
-										FunctionDefinitionNode copy = orphan.copy();
-										orphan.remove();
-										//copy.setEntity(orphan.getEntity());
-										insertChildAt(insertAt, body, copy);
-										
-										replaceOMPPragmas(copy, privateIDs, sharedIDs,
-												reductionIDs, firstPrivateIDs, threadPrivateIDs, callees);
-										
-										System.out.println("HERE");
-										break;
-									}
-									parent = parent.parent();
-								}
-							}
-							
-							/*
-							if(shared){
-								replaceSharedAndTid(orphan, sharedIDs);
-								FunctionCallNode fcn = (FunctionCallNode) node;
-								SequenceNode<ExpressionNode> args = fcn.getArguments();
-								args.addSequenceChild(this.identifierExpression(newSource("newFuncArg", CParser.ARGUMENT_LIST), "_tid"));
-								FunctionTypeNode funcTypeNode = orphan.getTypeNode();
-								SequenceNode<VariableDeclarationNode> params = funcTypeNode.getParameters();
-								VariableDeclarationNode newParam = nodeFactory.newVariableDeclarationNode(newSource("newFuncParam", CParser.PARAMETER_DECLARATION), nodeFactory.newIdentifierNode(newSource("newFuncParam", CParser.IDENTIFIER), "_tid"), nodeFactory.newBasicTypeNode(newSource("newFuncParam", CParser.TYPE), BasicTypeKind.INT));
-								params.addSequenceChild(newParam);
-							}
-							*/							
-				/*			
-						}
-					}
-				}
-				*/
 				for (ASTNode child : node.children()) {
 					replaceOMPPragmas(child, privateIDs, sharedIDs,
 							reductionIDs, firstPrivateIDs, threadPrivateIDs);
@@ -2576,7 +2524,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					if (c.name().equals(((IdentifierNode) node).name())) {
 						ASTNode idExp = node.parent();
 						IdentifierExpressionNode arg0 = (IdentifierExpressionNode) this.identifierExpression(newSource("threadPrivate", CParser.IDENTIFIER), c.name() + "$omp_threadprivate");
-						IdentifierExpressionNode arg1 = (IdentifierExpressionNode) this.identifierExpression(newSource("threadPrivate", CParser.IDENTIFIER), "_tid");
+						IdentifierExpressionNode arg1 = (IdentifierExpressionNode) this.identifierExpression(newSource("threadPrivate", CParser.IDENTIFIER), TID);
 
 						OperatorNode threadPrivateReplace = nodeFactory.newOperatorNode(newSource("threadPrivate", CParser.EXPR), Operator.SUBSCRIPT, arg0, arg1);
 						
@@ -2584,8 +2532,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						ASTNode parent = idExp.parent();
 						parent.setChild(index, threadPrivateReplace);
 						
-						//((IdentifierNode) node).setName(((IdentifierNode) node)
-						//		.name() + "$omp_threadprivate");
 					}
 				}
 			}
@@ -2772,7 +2718,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 				IdentifierNode id = ((IdentifierExpressionNode) child).getIdentifier();
 				TypeNode privateType = ((VariableDeclarationNode) ((Variable) id
 						.getEntity()).getFirstDeclaration()).getTypeNode().copy();
-				IdentifierExpressionNode extent = (IdentifierExpressionNode) this.identifierExpression(newSource("threadPrivate", CParser.IDENTIFIER), OMPPRE + "numThreads");
+				IdentifierExpressionNode extent = (IdentifierExpressionNode) this.identifierExpression(newSource("threadPrivate", CParser.IDENTIFIER), OMPPRE + "num_threads");
 				ArrayTypeNode arrayType = nodeFactory.newArrayTypeNode(newSource("threadPrivate", CParser.TYPE), privateType, extent);
 				VariableDeclarationNode arrayNode = nodeFactory.newVariableDeclarationNode(newSource("threadPrivate", CParser.DECLARATION), name, arrayType);
 				int index = node.childIndex();
@@ -2838,7 +2784,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		}
 		
 		if (node instanceof IdentifierNode) {
-			if(((IdentifierNode) node).name().equals("_tid")){
+			if(((IdentifierNode) node).name().equals(TID)){
 				return true;
 			}
 			
@@ -3101,7 +3047,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		if(functionName != null){
 			switch (functionName) {
 			case "omp_get_num_threads":
-				place = "omp_get_num_threads->_nthreads";
+				place = "omp_get_num_threads->"+OMPPRE+"nthreads";
 				replacementNode = this.identifierExpression(
 						newSource(place, CParser.IDENTIFIER), NTHREADS);
 				break;
@@ -3111,20 +3057,20 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 						(newSource(place, CParser.IDENTIFIER)), "1");
 				break;
 			case "omp_get_max_threads":
-				place = "omp_get_max_threads->_nthreads";
+				place = "omp_get_max_threads->"+OMPPRE+"nthreads";
 				replacementNode = this.identifierExpression(
 						newSource(place, CParser.IDENTIFIER), THREADMAX);
 				break;
 			case "omp_get_thread_num":
-				place = "omp_get_thread_num->_tid";
+				place = "omp_get_thread_num->"+TID;
 				replacementNode = this.identifierExpression(
 						newSource(place, CParser.IDENTIFIER), TID);
 				break;
 			case "omp_set_num_threads":
-				place = "omp_set_num_threads->"+OMPPRE+"numThreads";
+				place = "omp_set_num_threads->"+OMPPRE+"num_threads";
 				replacementNode = nodeFactory.newOperatorNode(newSource(place, CParser.EXPR),
 						Operator.ASSIGN, Arrays.asList(this.identifierExpression(
-								newSource(place, CParser.IDENTIFIER), OMPPRE+"numThreads"), node.getArgument(0)
+								newSource(place, CParser.IDENTIFIER), OMPPRE+"num_threads"), node.getArgument(0)
 								.copy()));
 				break;
 			}
@@ -3524,7 +3470,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 					}
 					
 					if ((!(declaredNodes.contains(temp) || currentShared
-							.contains(temp))) && !temp.equals("_tid") && !functionParam) {
+							.contains(temp))) && !temp.equals(TID) && !functionParam) {
 						Entity entity = ((IdentifierExpressionNode) child)
 								.getIdentifier().getEntity();
 						IdentifierExpressionNode newNode = (IdentifierExpressionNode) child
@@ -3665,7 +3611,7 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		TypeNode nthreadsType = nodeFactory.newBasicTypeNode(
 				newSource(place, CParser.INT), BasicTypeKind.INT);
 		IdentifierNode identifierNode = nodeFactory.newIdentifierNode(
-				newSource(place, CParser.IDENTIFIER), OMPPRE + "numThreads");
+				newSource(place, CParser.IDENTIFIER), OMPPRE + "num_threads");
 
 		items.add(nodeFactory.newVariableDeclarationNode(newSource(place, CParser.DECLARATION),
 				identifierNode, nthreadsType, this.identifierExpression(
