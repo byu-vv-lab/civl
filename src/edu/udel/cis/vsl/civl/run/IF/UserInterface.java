@@ -724,33 +724,36 @@ public class UserInterface {
 		int numOutputs = outputNames.length;
 
 		result.append("\n=== output ===\n");
-		result.append("Output variables:\n");
-		for (int i = 0; i < numOutputs; i++) {
-			result.append(outputNames[i]);
-			result.append("\n");
-		}
-		result.append("Specification output values:");
+		// result.append("Output variables:\n");
+		// for (int i = 0; i < numOutputs; i++) {
+		// result.append(outputNames[i]);
+		// result.append("\n");
+		// }
+		// result.append("Specification output values:");
 		for (Map.Entry<BooleanExpression, Set<SymbolicExpression[]>> entry : outputValues
 				.entrySet()) {
 			int j = 0;
 
 			result.append("\npc: ");
-			result.append(entry.getKey());
-			result.append(", output: {");
+			result.append(symbolicAnalyzer.symbolicExpressionToString(null,
+					null, null, entry.getKey()));
+			result.append("\npossible outputs: \n");
 			for (SymbolicExpression[] outputs : entry.getValue()) {
 				if (j > 0)
-					result.append(", ");
-				result.append("(");
+					result.append("or\n");
+				// result.append("(");
 				for (int k = 0; k < numOutputs; k++) {
 					if (k > 0)
 						result.append(", ");
+					result.append(outputNames[k]);
+					result.append(" = ");
 					result.append(symbolicAnalyzer.symbolicExpressionToString(
 							null, null, null, outputs[k]));
 				}
-				result.append(")");
+				// result.append(")");
 				j++;
 			}
-			result.append("}\n");
+			result.append("\n");
 		}
 		out.print(result.toString());
 	}
