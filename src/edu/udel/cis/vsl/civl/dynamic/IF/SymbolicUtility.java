@@ -484,16 +484,6 @@ public interface SymbolicUtility {
 	/* ****************** Domain Operation section ********************* */
 
 	/**
-	 * Returns true if and only if the domain is more precisely a rectangular
-	 * domain.
-	 * 
-	 * @param domain
-	 *            The symbolic expression of a domain object
-	 * @return
-	 */
-	boolean isRecDomain(SymbolicExpression domain);
-
-	/**
 	 * Returns true if and only if the domain is more precisely a literal
 	 * domain.
 	 * 
@@ -685,10 +675,76 @@ public interface SymbolicUtility {
 	 *            Integer number
 	 * @return A {@link Pair} of quotient (left) and remainder (right)
 	 */
-	public Pair<NumericExpression, NumericExpression> arithmeticIntDivide(
+	Pair<NumericExpression, NumericExpression> arithmeticIntDivide(
 			NumericExpression dividend, NumericExpression denominator);
 
 	SymbolicTupleType dynamicType();
 
 	CIVLType getStaticTypeOfDynamicType(SymbolicExpression typeId);
+
+	/**
+	 * Is the given domain a rectangular domain?
+	 * 
+	 * @param domain
+	 * @return
+	 */
+	boolean isRectangularDomain(SymbolicExpression domain);
+
+	/**
+	 * Is the given range a regular range?
+	 * 
+	 * @param range
+	 * @return
+	 */
+	boolean isRegularRange(SymbolicExpression range);
+
+	/**
+	 * Returns the given index-th range of a rectangular domain.
+	 * 
+	 * Precondition: domain is a rectangular domain.
+	 * 
+	 * @param domain
+	 * @param index
+	 * @return
+	 */
+	SymbolicExpression getRangeOfRectangularDomain(SymbolicExpression domain,
+			int index);
+
+	/**
+	 * Returns the higher bound of the given range.
+	 * 
+	 * Precondition: range is a regular range
+	 * 
+	 * @param range
+	 * @return
+	 */
+	NumericExpression getHighOfRegularRange(SymbolicExpression range);
+
+	/**
+	 * Returns the lower bound of the given range.
+	 * 
+	 * Precondition: range is a regular range
+	 * 
+	 * @param range
+	 * @return
+	 */
+	NumericExpression getLowOfRegularRange(SymbolicExpression range);
+
+	/**
+	 * Returns the step of the given range
+	 * 
+	 * Precondition: range is a regular range
+	 * 
+	 * @param range
+	 * @return
+	 */
+	NumericExpression getStepOfRegularRange(SymbolicExpression range);
+
+	/**
+	 * Returns the dimension of the given domain.
+	 * 
+	 * @param domain
+	 * @return
+	 */
+	NumericExpression getDimensionOf(SymbolicExpression domain);
 }

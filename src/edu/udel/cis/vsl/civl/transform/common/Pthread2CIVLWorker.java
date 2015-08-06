@@ -548,7 +548,80 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					.newExpressionStatementNode(newPthreadExit);
 			function.getBody().addSequenceChild(pthreadExit);
 			process_pthread_exit(function, isMain);
+			fix_duplicated_pthread_exits(function, isMain);
 		}
+	}
+
+	private void fix_duplicated_pthread_exits(FunctionDefinitionNode function,
+			boolean isMain) {
+		CompoundStatementNode bodyNode = function.getBody();
+		BlockItemNode newBody = fix_duplicated_pthread_exits_worker(bodyNode,
+				isMain);
+
+		if (newBody instanceof CompoundStatementNode)
+			function.setBody((CompoundStatementNode) newBody);
+		else
+			function.setBody(nodeFactory.newCompoundStatementNode(
+					bodyNode.getSource(), Arrays.asList(newBody)));
+	}
+
+	private BlockItemNode fix_duplicated_pthread_exits_worker(
+			CompoundStatementNode block, boolean isMain) {
+		String pthread_exit_name = isMain ? PTHREAD_EXIT_MAIN_NEW
+				: PTHREAD_EXIT_NEW;
+		int lastIndex = -1;
+		List<BlockItemNode> newItems = new LinkedList<>();
+
+		for (int i = 0; i < block.numChildren(); i++) {
+			BlockItemNode child = block.getSequenceChild(i);
+
+			if (child == null)
+				continue;
+			if (child instanceof CompoundStatementNode) {
+				BlockItemNode newChild = fix_duplicated_pthread_exits_worker(
+						(CompoundStatementNode) child, isMain);
+
+				block.setChild(i, newChild);
+				child = newChild;
+			}
+			if (isFunctionCallStatementNodeOf(child, pthread_exit_name)) {
+				if (lastIndex >= 0)
+					block.removeChild(i);
+				else
+					lastIndex = i;
+			}
+		}
+		for (BlockItemNode item : block) {
+			if (item == null)
+				continue;
+			item.remove();
+			newItems.add(item);
+		}
+		if (newItems.size() > 1)
+			return nodeFactory.newCompoundStatementNode(block.getSource(),
+					newItems);
+		else if (newItems.size() == 1)
+			return newItems.get(0);
+		else
+			return null;
+	}
+
+	private boolean isFunctionCallStatementNodeOf(ASTNode node, String function) {
+		if (node instanceof ExpressionStatementNode) {
+			ExpressionNode expression = ((ExpressionStatementNode) node)
+					.getExpression();
+
+			if (expression instanceof FunctionCallNode) {
+				ExpressionNode functionNode = ((FunctionCallNode) expression)
+						.getFunction();
+
+				if (functionNode instanceof IdentifierExpressionNode) {
+					return ((IdentifierExpressionNode) functionNode)
+							.getIdentifier().name().equals(function);
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

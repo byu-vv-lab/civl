@@ -364,14 +364,14 @@ public class MPI2CIVLWorker extends BaseWorker {
 		return nodeFactory.newExpressionStatementNode(node);
 	}
 
-	private ExpressionStatementNode elaborateNPROCS() {
-		FunctionCallNode elaborateCall = nodeFactory.newFunctionCallNode(
-				this.newSource("elaborate _NPROCS", CParser.CALL),
-				this.identifierExpression("$elaborate"),
-				Arrays.asList(this.identifierExpression(NPROCS)), null);
-
-		return nodeFactory.newExpressionStatementNode(elaborateCall);
-	}
+	// private ExpressionStatementNode elaborateNPROCS() {
+	// FunctionCallNode elaborateCall = nodeFactory.newFunctionCallNode(
+	// this.newSource("elaborate _NPROCS", CParser.CALL),
+	// this.identifierExpression("$elaborate"),
+	// Arrays.asList(this.identifierExpression(NPROCS)), null);
+	//
+	// return nodeFactory.newExpressionStatementNode(elaborateCall);
+	// }
 
 	/**
 	 * Creates the main function for the final program, which is: <br>
@@ -426,7 +426,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 				this.newSource("$parfor MPI_Process", CParser.PARFOR), true,
 				iterator, domain,
 				nodeFactory.newExpressionStatementNode(callMPIprocess), null);
-		items.add(this.elaborateNPROCS());
+		// items.add(this.elaborateNPROCS());
 		items.add(parforMPIproc);
 		// destroying GCOMM_WROLD;
 		items.add(gcommDestroy);

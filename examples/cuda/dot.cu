@@ -82,7 +82,6 @@ __global__ void dot( float *a, float *b, float *c ) {
 
 int main( void ) {
 #ifdef _CIVL
-    $elaborate(threadsPerBlock);
     $assume((isPowerOfTwo(threadsPerBlock)));
 #endif
 

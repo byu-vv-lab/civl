@@ -4,7 +4,6 @@
 package edu.udel.cis.vsl.civl.model.common;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,7 +39,7 @@ public class CommonModel extends CommonSourceable implements Model {
 	private CIVLType messageType;
 	private CIVLBundleType bundleType;
 	private Program program;
-	private ArrayList<MallocStatement> mallocStatements;
+	private List<MallocStatement> mallocStatements;
 
 	private boolean hasFscanf;
 
@@ -197,7 +196,7 @@ public class CommonModel extends CommonSourceable implements Model {
 	 * @param mallocStatements
 	 *            the list of malloc statements
 	 */
-	public void setMallocStatements(ArrayList<MallocStatement> mallocStatements) {
+	public void setMallocStatements(List<MallocStatement> mallocStatements) {
 		this.mallocStatements = mallocStatements;
 	}
 

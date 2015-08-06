@@ -175,6 +175,227 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				universe.nullReference()));
 	}
 
+	/* *********************** Package-Private Methods ********************* */
+
+	/**
+	 * Returns the list of ancestor references of a given reference expressions,
+	 * in the bottom-up order, i.e., the first element of the list will be the
+	 * parent of the reference.
+	 * 
+	 * @param ref
+	 *            The reference expression whose ancestors are to be computed.
+	 * @return the list ancestor references of the given reference.
+	 */
+	List<ReferenceExpression> ancestorsOfRef(ReferenceExpression ref) {
+		if (ref.isIdentityReference())
+			return new ArrayList<>();
+		else {
+			List<ReferenceExpression> result;
+
+			result = ancestorsOfRef(((NTReferenceExpression) ref).getParent());
+			result.add(ref);
+			return result;
+		}
+	}
+
+	/* ********************** Private Methods ************************** */
+	/**
+	 * Get the element in literal domain pointed by the given index.
+	 * 
+	 * @param domValue
+	 *            The symbolic expression of the domain
+	 * @param index
+	 *            The index points to the position of the returned element
+	 * @return The element in literal domain pointed by the given index
+	 */
+	private SymbolicExpression getEleInLiteralDomain(
+			SymbolicExpression literalDom, int index) {
+		SymbolicExpression element;
+
+		try {
+			element = universe.arrayRead(literalDom, universe.integer(index));
+		} catch (SARLException e) {
+			throw new CIVLInternalException("read literal domain out of bound",
+					(CIVLSource) null);
+		}
+
+		return element;
+	}
+
+	/**
+	 * Returns the size of a given regular range.
+	 * 
+	 * @param range
+	 *            The regular range whose size is to be computed.
+	 * @return the size of the given regular range.
+	 */
+	private NumericExpression getRegRangeSize(SymbolicExpression range) {
+		NumericExpression low = (NumericExpression) universe.tupleRead(range,
+				this.zeroObj);
+		NumericExpression high = (NumericExpression) universe.tupleRead(range,
+				oneObj);
+		NumericExpression step = (NumericExpression) universe.tupleRead(range,
+				this.twoObj);
+		NumericExpression size = universe.subtract(high, low);
+		NumericExpression remainder;
+		BooleanExpression claim = universe.lessThan(step, zero);
+		ResultType resultType = universe.reasoner(this.trueValue).valid(claim)
+				.getResultType();
+
+		if (resultType == ResultType.YES) {
+			step = universe.minus(step);
+			size = universe.minus(size);
+		}
+		remainder = universe.modulo(size, step);
+		size = universe.subtract(size, remainder);
+		size = universe.divide(size, step);
+		size = universe.add(size, this.one);
+		return size;
+	}
+
+	/**
+	 * Are the two given references disjoint?
+	 * 
+	 * @param ref1
+	 *            The first reference expression.
+	 * @param ref2
+	 *            The second reference expression.
+	 * @return True iff the two given references do NOT have any intersection.
+	 */
+	private boolean isDisjoint(ReferenceExpression ref1,
+			ReferenceExpression ref2) {
+		List<ReferenceExpression> ancestors1, ancestors2;
+		int numAncestors1, numAncestors2, minNum;
+
+		ancestors1 = this.ancestorsOfRef(ref1);
+		ancestors2 = this.ancestorsOfRef(ref2);
+		numAncestors1 = ancestors1.size();
+		numAncestors2 = ancestors2.size();
+		minNum = numAncestors1 <= numAncestors2 ? numAncestors1 : numAncestors2;
+		for (int i = 0; i < minNum; i++) {
+			ReferenceExpression ancestor1 = ancestors1.get(i), ancestor2 = ancestors2
+					.get(i);
+
+			if (!ancestor1.equals(ancestor2))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Is the given reference applicable to the specified symbolic expression?
+	 * 
+	 * @param ref
+	 *            The reference expression to be checked.
+	 * @param value
+	 *            The symbolic expression specified.
+	 * @return True iff the given reference is applicable to the specified
+	 *         symbolic expression
+	 */
+	private Pair<SymbolicExpression, Boolean> isValidRefOfValue(
+			ReferenceExpression ref, SymbolicExpression value) {
+		if (ref.isIdentityReference())
+			return new Pair<>(value, true);
+		else {
+			ReferenceExpression parent = ((NTReferenceExpression) ref)
+					.getParent();
+			Pair<SymbolicExpression, Boolean> parentTest = isValidRefOfValue(
+					parent, value);
+			SymbolicExpression targetValue;
+
+			if (!parentTest.right)
+				return new Pair<>(value, false);
+			targetValue = parentTest.left;
+			if (ref.isArrayElementReference()) {
+				ArrayElementReference arrayEleRef = (ArrayElementReference) ref;
+
+				if (!(targetValue.type() instanceof SymbolicArrayType))
+					return new Pair<>(targetValue, false);
+				return new Pair<>(universe.arrayRead(targetValue,
+						arrayEleRef.getIndex()), true);
+			} else if (ref.isTupleComponentReference()) {
+				TupleComponentReference tupleCompRef = (TupleComponentReference) ref;
+
+				if (!(targetValue.type() instanceof SymbolicTupleType))
+					return new Pair<>(targetValue, false);
+				return new Pair<>(universe.tupleRead(targetValue,
+						tupleCompRef.getIndex()), true);
+			} else {
+				UnionMemberReference unionMemRef = (UnionMemberReference) ref;
+
+				if (!(targetValue.type() instanceof SymbolicUnionType))
+					return new Pair<>(targetValue, false);
+				return new Pair<>(universe.unionExtract(unionMemRef.getIndex(),
+						targetValue), true);
+			}
+		}
+	}
+
+	/**
+	 * Combines two references by using one as the parent of the other.
+	 * 
+	 * @param parent
+	 *            The reference to be used as the parent.
+	 * @param ref
+	 *            The reference to be used as the base.
+	 * @return A new reference which is the combination of the given two
+	 *         references.
+	 */
+	private ReferenceExpression makeParentOf(ReferenceExpression parent,
+			ReferenceExpression ref) {
+		if (ref.isIdentityReference())
+			return parent;
+		else {
+			ReferenceExpression myParent = makeParentOf(parent,
+					((NTReferenceExpression) ref).getParent());
+
+			if (ref.isArrayElementReference())
+				return universe.arrayElementReference(myParent,
+						((ArrayElementReference) ref).getIndex());
+			else if (ref.isTupleComponentReference())
+				return universe.tupleComponentReference(myParent,
+						((TupleComponentReference) ref).getIndex());
+			else
+				return universe.unionMemberReference(myParent,
+						((UnionMemberReference) ref).getIndex());
+		}
+	}
+
+	/**
+	 * Computes the components contained by a given reference expression.
+	 * 
+	 * @param ref
+	 *            The reference expression whose components are to be computed.
+	 * @return The components of the reference.
+	 */
+	private List<ReferenceExpression> referenceComponents(
+			ReferenceExpression ref) {
+		List<ReferenceExpression> components = new ArrayList<>();
+
+		if (!ref.isIdentityReference()) {
+			components.add(ref);
+			components.addAll(referenceComponents(((NTReferenceExpression) ref)
+					.getParent()));
+		}
+		return components;
+	}
+
+	/**
+	 * Checks if the given value in a range has a subsequence. e.g. range: from
+	 * 0 to 10 step 2. Given a value 8 and it has a subsequence 10.
+	 * 
+	 * @param range
+	 * @param value
+	 * @return
+	 */
+	private BooleanExpression rangeHasNext(SymbolicExpression range,
+			SymbolicExpression value) {
+		NumericExpression step = this.getStepOfRegularRange(range);
+		SymbolicExpression next = universe.add((NumericExpression) value, step);
+
+		return this.isInRange(next, range);
+	}
+
 	/* ********************* Methods from SymbolicUtility ******************* */
 
 	/**
@@ -735,7 +956,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		final int concreteDim = ((IntegerNumber) universe.extractNumber(dim))
 				.intValue();
 
-		if (isRecDomain(domain)) {
+		if (isRectangularDomain(domain)) {
 			final SymbolicExpression recDomainField = universe.unionExtract(
 					zeroObj, domainUnionField);
 			final List<SymbolicExpression> domStartPos = this
@@ -846,7 +1067,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				.intValue();
 		List<SymbolicExpression> varValues = new ArrayList<>(concreteDim);
 
-		if (this.isRecDomain(domValue)) {
+		if (this.isRectangularDomain(domValue)) {
 			SymbolicExpression recDomainField = universe.unionExtract(zeroObj,
 					domainUnionField);
 			SymbolicExpression range;
@@ -856,7 +1077,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			for (int i = 0; i < concreteDim; i++) {
 				range = universe.arrayRead(recDomainField, universe.integer(i));
 
-				varValues.add(this.getRegRangeMin(range));
+				varValues.add(this.getLowOfRegularRange(range));
 			}
 			return varValues;
 		} else {
@@ -875,25 +1096,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				return varValues;
 			}
 		}
-	}
-
-	@Override
-	public boolean isRecDomain(SymbolicExpression domValue) {
-		// Domain type is a tuple type{dim, field, union{...}}
-		SymbolicType type = domValue.type();
-		NumericExpression unionField; // Indicates weather rectangular or
-										// literal
-		int concreteUnionField;
-
-		assert (type instanceof SymbolicTupleType);
-		// The following 2 casts should be safe as long as domValue has $domian
-		// type.
-		unionField = (NumericExpression) universe.tupleRead(domValue, oneObj);
-		concreteUnionField = ((IntegerNumber) universe
-				.extractNumber(unionField)).intValue();
-		if (concreteUnionField == 0)
-			return true;
-		return false;
 	}
 
 	@Override
@@ -920,7 +1122,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		SymbolicExpression domainUnionField; // union{rec,literal}
 
 		domainUnionField = universe.tupleRead(domain, twoObj);
-		if (this.isRecDomain(domain)) {
+		if (this.isRectangularDomain(domain)) {
 			SymbolicExpression recDomainField; // array of ranges
 			NumericExpression size = universe.oneInt();// Init size
 			NumericExpression dim = (NumericExpression) universe.tupleRead(
@@ -1021,13 +1223,13 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			rangeHasNext = rangeHasNext(range, current);
 			if (rangeHasNext.isTrue()) {
 				newValues[i] = universe.add((NumericExpression) current,
-						this.getRegRangeStep(range));
+						this.getStepOfRegularRange(range));
 				for (int j = i - 1; j >= 0; j--) {
 					newValues[j] = varValues.get(j);
 				}
 				break;
 			} else {
-				newValues[i] = this.getRegRangeMin(range);
+				newValues[i] = this.getLowOfRegularRange(range);
 			}
 		}
 		return Arrays.asList(newValues);
@@ -1049,7 +1251,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				return true;
 			else
 				return false;
-		} else if (this.isRecDomain(domain)) {
+		} else if (this.isRectangularDomain(domain)) {
 			SymbolicExpression recDom = universe
 					.unionExtract(zeroObj, domUnion);
 
@@ -1065,249 +1267,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			throw new CIVLInternalException(
 					"A domain object is neither a rectangular domain nor a literal domain",
 					source);
-	}
-
-	/* *********************** Package-Private Methods ********************* */
-
-	/**
-	 * Returns the list of ancestor references of a given reference expressions,
-	 * in the bottom-up order, i.e., the first element of the list will be the
-	 * parent of the reference.
-	 * 
-	 * @param ref
-	 *            The reference expression whose ancestors are to be computed.
-	 * @return the list ancestor references of the given reference.
-	 */
-	List<ReferenceExpression> ancestorsOfRef(ReferenceExpression ref) {
-		if (ref.isIdentityReference())
-			return new ArrayList<>();
-		else {
-			List<ReferenceExpression> result;
-
-			result = ancestorsOfRef(((NTReferenceExpression) ref).getParent());
-			result.add(ref);
-			return result;
-		}
-	}
-
-	/* ********************** Private Methods ************************** */
-	/**
-	 * Get the element in literal domain pointed by the given index.
-	 * 
-	 * @param domValue
-	 *            The symbolic expression of the domain
-	 * @param index
-	 *            The index points to the position of the returned element
-	 * @return The element in literal domain pointed by the given index
-	 */
-	private SymbolicExpression getEleInLiteralDomain(
-			SymbolicExpression literalDom, int index) {
-		SymbolicExpression element;
-
-		try {
-			element = universe.arrayRead(literalDom, universe.integer(index));
-		} catch (SARLException e) {
-			throw new CIVLInternalException("read literal domain out of bound",
-					(CIVLSource) null);
-		}
-
-		return element;
-	}
-
-	/**
-	 * Returns the minimal value of a given regular range.
-	 * 
-	 * @param range
-	 *            The regular range
-	 * @return the minimal value of the given regular range.
-	 */
-	private NumericExpression getRegRangeMin(SymbolicExpression range) {
-		return (NumericExpression) universe.tupleRead(range, zeroObj);
-	}
-
-	/**
-	 * Returns the size of a given regular range.
-	 * 
-	 * @param range
-	 *            The regular range whose size is to be computed.
-	 * @return the size of the given regular range.
-	 */
-	private NumericExpression getRegRangeSize(SymbolicExpression range) {
-		NumericExpression low = (NumericExpression) universe.tupleRead(range,
-				this.zeroObj);
-		NumericExpression high = (NumericExpression) universe.tupleRead(range,
-				oneObj);
-		NumericExpression step = (NumericExpression) universe.tupleRead(range,
-				this.twoObj);
-		NumericExpression size = universe.subtract(high, low);
-		NumericExpression remainder;
-		BooleanExpression claim = universe.lessThan(step, zero);
-		ResultType resultType = universe.reasoner(this.trueValue).valid(claim)
-				.getResultType();
-
-		if (resultType == ResultType.YES) {
-			step = universe.minus(step);
-			size = universe.minus(size);
-		}
-		remainder = universe.modulo(size, step);
-		size = universe.subtract(size, remainder);
-		size = universe.divide(size, step);
-		size = universe.add(size, this.one);
-		return size;
-	}
-
-	/**
-	 * Returns the step of a given regular range.
-	 * 
-	 * @param range
-	 *            The regular range
-	 * @return the step of the given regular range.
-	 */
-	private NumericExpression getRegRangeStep(SymbolicExpression range) {
-		return (NumericExpression) universe.tupleRead(range, twoObj);
-	}
-
-	/**
-	 * Are the two given references disjoint?
-	 * 
-	 * @param ref1
-	 *            The first reference expression.
-	 * @param ref2
-	 *            The second reference expression.
-	 * @return True iff the two given references do NOT have any intersection.
-	 */
-	private boolean isDisjoint(ReferenceExpression ref1,
-			ReferenceExpression ref2) {
-		List<ReferenceExpression> ancestors1, ancestors2;
-		int numAncestors1, numAncestors2, minNum;
-
-		ancestors1 = this.ancestorsOfRef(ref1);
-		ancestors2 = this.ancestorsOfRef(ref2);
-		numAncestors1 = ancestors1.size();
-		numAncestors2 = ancestors2.size();
-		minNum = numAncestors1 <= numAncestors2 ? numAncestors1 : numAncestors2;
-		for (int i = 0; i < minNum; i++) {
-			ReferenceExpression ancestor1 = ancestors1.get(i), ancestor2 = ancestors2
-					.get(i);
-
-			if (!ancestor1.equals(ancestor2))
-				return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Is the given reference applicable to the specified symbolic expression?
-	 * 
-	 * @param ref
-	 *            The reference expression to be checked.
-	 * @param value
-	 *            The symbolic expression specified.
-	 * @return True iff the given reference is applicable to the specified
-	 *         symbolic expression
-	 */
-	private Pair<SymbolicExpression, Boolean> isValidRefOfValue(
-			ReferenceExpression ref, SymbolicExpression value) {
-		if (ref.isIdentityReference())
-			return new Pair<>(value, true);
-		else {
-			ReferenceExpression parent = ((NTReferenceExpression) ref)
-					.getParent();
-			Pair<SymbolicExpression, Boolean> parentTest = isValidRefOfValue(
-					parent, value);
-			SymbolicExpression targetValue;
-
-			if (!parentTest.right)
-				return new Pair<>(value, false);
-			targetValue = parentTest.left;
-			if (ref.isArrayElementReference()) {
-				ArrayElementReference arrayEleRef = (ArrayElementReference) ref;
-
-				if (!(targetValue.type() instanceof SymbolicArrayType))
-					return new Pair<>(targetValue, false);
-				return new Pair<>(universe.arrayRead(targetValue,
-						arrayEleRef.getIndex()), true);
-			} else if (ref.isTupleComponentReference()) {
-				TupleComponentReference tupleCompRef = (TupleComponentReference) ref;
-
-				if (!(targetValue.type() instanceof SymbolicTupleType))
-					return new Pair<>(targetValue, false);
-				return new Pair<>(universe.tupleRead(targetValue,
-						tupleCompRef.getIndex()), true);
-			} else {
-				UnionMemberReference unionMemRef = (UnionMemberReference) ref;
-
-				if (!(targetValue.type() instanceof SymbolicUnionType))
-					return new Pair<>(targetValue, false);
-				return new Pair<>(universe.unionExtract(unionMemRef.getIndex(),
-						targetValue), true);
-			}
-		}
-	}
-
-	/**
-	 * Combines two references by using one as the parent of the other.
-	 * 
-	 * @param parent
-	 *            The reference to be used as the parent.
-	 * @param ref
-	 *            The reference to be used as the base.
-	 * @return A new reference which is the combination of the given two
-	 *         references.
-	 */
-	private ReferenceExpression makeParentOf(ReferenceExpression parent,
-			ReferenceExpression ref) {
-		if (ref.isIdentityReference())
-			return parent;
-		else {
-			ReferenceExpression myParent = makeParentOf(parent,
-					((NTReferenceExpression) ref).getParent());
-
-			if (ref.isArrayElementReference())
-				return universe.arrayElementReference(myParent,
-						((ArrayElementReference) ref).getIndex());
-			else if (ref.isTupleComponentReference())
-				return universe.tupleComponentReference(myParent,
-						((TupleComponentReference) ref).getIndex());
-			else
-				return universe.unionMemberReference(myParent,
-						((UnionMemberReference) ref).getIndex());
-		}
-	}
-
-	/**
-	 * Computes the components contained by a given reference expression.
-	 * 
-	 * @param ref
-	 *            The reference expression whose components are to be computed.
-	 * @return The components of the reference.
-	 */
-	private List<ReferenceExpression> referenceComponents(
-			ReferenceExpression ref) {
-		List<ReferenceExpression> components = new ArrayList<>();
-
-		if (!ref.isIdentityReference()) {
-			components.add(ref);
-			components.addAll(referenceComponents(((NTReferenceExpression) ref)
-					.getParent()));
-		}
-		return components;
-	}
-
-	/**
-	 * Checks if the given value in a range has a subsequence. e.g. range: from
-	 * 0 to 10 step 2. Given a value 8 and it has a subsequence 10.
-	 * 
-	 * @param range
-	 * @param value
-	 * @return
-	 */
-	private BooleanExpression rangeHasNext(SymbolicExpression range,
-			SymbolicExpression value) {
-		NumericExpression step = this.getRegRangeStep(range);
-		SymbolicExpression next = universe.add((NumericExpression) value, step);
-
-		return this.isInRange(next, range);
 	}
 
 	@Override
@@ -1336,5 +1295,51 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return this.staticTypeMap.get(dynamicType);
 		}
 		return null;
+	}
+
+	@Override
+	public boolean isRectangularDomain(SymbolicExpression domain) {
+		// a domain is the tuple (dimension, type, value)
+		return universe.tupleRead(domain, oneObj).isZero();
+	}
+
+	@Override
+	public boolean isRegularRange(SymbolicExpression range) {
+		if (range.type().toString().equals("$regular_range"))
+			return true;
+		return false;
+	}
+
+	@Override
+	public SymbolicExpression getRangeOfRectangularDomain(
+			SymbolicExpression domain, int index) {
+		if (!isRectangularDomain(domain))
+			return null;
+
+		SymbolicExpression ranges = universe.unionExtract(zeroObj,
+				universe.tupleRead(domain, twoObj));
+
+		return universe.arrayRead(ranges, universe.integer(index));
+	}
+
+	@Override
+	public NumericExpression getHighOfRegularRange(SymbolicExpression range) {
+		return (NumericExpression) universe.tupleRead(range, oneObj);
+	}
+
+	@Override
+	public NumericExpression getLowOfRegularRange(SymbolicExpression range) {
+		return (NumericExpression) universe.tupleRead(range, zeroObj);
+	}
+
+	@Override
+	public NumericExpression getStepOfRegularRange(SymbolicExpression range) {
+		return (NumericExpression) universe.tupleRead(range, twoObj);
+
+	}
+
+	@Override
+	public NumericExpression getDimensionOf(SymbolicExpression domain) {
+		return (NumericExpression) universe.tupleRead(domain, zeroObj);
 	}
 }

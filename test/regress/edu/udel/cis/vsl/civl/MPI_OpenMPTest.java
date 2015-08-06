@@ -41,6 +41,18 @@ public class MPI_OpenMPTest {
 						filename("mpi-omp-pie-calculation100.c")));
 	}
 
+	@Test
+	public void helloworld() throws ABCException {
+		assertTrue(ui.run("verify -enablePrintf=false -input_mpi_nprocs=2",
+				filename("mpi-omp-hello-world.c")));
+	}
+
+	@Test
+	public void matmat_mw() throws ABCException {
+		assertTrue(ui
+				.run("verify -enablePrintf=false", filename("matmat_mw.c")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

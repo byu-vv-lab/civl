@@ -35,6 +35,7 @@ import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 
@@ -155,6 +156,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = this.executeIntIterNext(state, pid, process, lhs,
 					arguments, argumentValues, call.getSource());
 			break;
+		case "$is_concrete_int":
+			state = this.executeIsConcreteInt(state, pid, process, lhs,
+					arguments, argumentValues, call.getSource());
+			break;
 		case "$pathCondition":
 			state = this.executePathCondition(state, pid, process, arguments,
 					argumentValues, call.getSource());
@@ -195,6 +200,22 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
+
+	private State executeIsConcreteInt(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression value = argumentValues[0];
+
+		if (lhs != null) {
+			BooleanExpression result = value.operator() == SymbolicOperator.CONCRETE ? this.trueValue
+					: this.falseValue;
+
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					result);
+		}
+		return state;
+	}
 
 	private State executePathCondition(State state, int pid, String process,
 			Expression[] arguments, SymbolicExpression[] argumentValues,

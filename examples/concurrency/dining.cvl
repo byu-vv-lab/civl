@@ -4,6 +4,7 @@
  *       civl verify -inputBOUND=4 dining.cvl
  */
 #include <civlc.cvh>
+#include <domain.cvh>
 
 $input int BOUND = 4; // upper bound on number of philosophers
 $input int n;         // number of philosophers
@@ -38,7 +39,6 @@ void init() {
 }
 
 void main() { 
-  $elaborate(n);
   init();
   $parfor(int i: 0 .. n-1)
     dine(i);

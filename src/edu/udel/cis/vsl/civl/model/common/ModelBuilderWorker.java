@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.model.common;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -122,6 +123,10 @@ public class ModelBuilderWorker {
 
 	List<SystemFunctionCallExpression> systemCallExpressions = new ArrayList<>();
 
+	Map<Scope, CIVLFunction> elaborateDomainFunction = new HashMap<>();
+
+	boolean needToAddElaborateDomainFunction = false;
+
 	/**
 	 * The unique type for a comm.
 	 */
@@ -238,7 +243,9 @@ public class ModelBuilderWorker {
 	/**
 	 * List of all malloc statements in the program.
 	 */
-	ArrayList<MallocStatement> mallocStatements = new ArrayList<MallocStatement>();
+	List<MallocStatement> mallocStatements = new ArrayList<>();
+
+	List<CallOrSpawnStatement> elaborateDomainCalls = new ArrayList<>();
 
 	/**
 	 * The function definition node of the main function
@@ -472,6 +479,10 @@ public class ModelBuilderWorker {
 		// no return value because the result will be stored in the variable
 		// "result" of CIVLFunction type.
 		functionTranslator.translateFunction();
+		if (result.name().name().equals("$elaborate_rectangular_domain")) {
+			// this.elaborateDomainFunction = result;
+			this.elaborateDomainFunction.put(result.containingScope(), result);
+		}
 	}
 
 	private void translateParProcFunctions() {
@@ -604,6 +615,41 @@ public class ModelBuilderWorker {
 				.entrySet()) {
 			entry.getKey().setParProcFunction(entry.getValue().function());
 		}
+		if (this.elaborateDomainCalls.size() > 0) {
+			if (this.elaborateDomainFunction.size() < 1) {
+				CIVLFunction func = factory.systemFunction(factory
+						.systemSource(),
+						factory.identifier(factory.systemSource(),
+								"$elaborate_rectangular_domain"), Arrays
+								.asList(factory.variable(
+										factory.systemSource(),
+										factory.typeFactory().domainType(
+												factory.typeFactory()
+														.rangeType()), factory
+												.identifier(
+														factory.systemSource(),
+														"domain"), 1)), factory
+								.typeFactory().voidType(), this.systemScope,
+						"domain");
+
+				this.elaborateDomainFunction.put(systemScope, func);
+				needToAddElaborateDomainFunction = true;
+			}
+			for (CallOrSpawnStatement call : this.elaborateDomainCalls) {
+				for (Entry<Scope, CIVLFunction> entry : elaborateDomainFunction
+						.entrySet()) {
+					Scope callScope = call.source().scope(), functionScope = entry
+							.getKey();
+
+					if (callScope.isDescendantOf(functionScope)
+							|| callScope.id() == functionScope.id()) {
+						call.setFunction(factory.functionIdentifierExpression(
+								entry.getValue().getSource(), entry.getValue()));
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -630,6 +676,12 @@ public class ModelBuilderWorker {
 			model.addFunction(f);
 		if (this.parProcFunctions.size() > 0 && !hasWaitall) {
 			model.addFunction(factory.waitallFunctionPointer().function());
+		}
+		if (this.elaborateDomainFunction.size() > 0
+				&& needToAddElaborateDomainFunction) {
+			for (Entry<Scope, CIVLFunction> entry : elaborateDomainFunction
+					.entrySet())
+				model.addFunction(entry.getValue());
 		}
 		((CommonModel) model).setMallocStatements(mallocStatements);
 		model.complete();

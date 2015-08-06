@@ -927,7 +927,7 @@ public class CommonExecutor implements Executor {
 							universe.integer(i)));
 				// This function is guaranteed have a next element, so it doesnt
 				// need to consider the loop end situation
-			} else if (symbolicUtil.isRecDomain(domValue)) {
+			} else if (symbolicUtil.isRectangularDomain(domValue)) {
 				// If it's rectangular domain, just use the value to get the
 				// next element
 				SymbolicExpression recDomUnion = universe.tupleRead(domValue,

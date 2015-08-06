@@ -9,8 +9,7 @@ void proc(int id){
 }
 
 int main(void) {
-  $elaborate(X);
-  //printf("%d\n", X);
+  // (0 .. X-1) is elaborated implicity before $parfor
   $parfor(int i: 0 .. X-1)
     proc(i);
   return 0;

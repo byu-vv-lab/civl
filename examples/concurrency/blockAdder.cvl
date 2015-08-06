@@ -31,7 +31,7 @@ double adder_par() {
     int stop = ((id+1)*N)/P;
     double localSum = 0.0;
 
-	$atomic {
+    $atomic {
       for (int i=start; i<stop; i++)
         localSum += a[i];
     }

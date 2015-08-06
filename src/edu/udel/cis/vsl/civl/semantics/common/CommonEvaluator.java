@@ -1266,7 +1266,7 @@ public class CommonEvaluator implements Evaluator {
 				isAllNull = false;
 		}
 		// If the domain object is a rectangular domain
-		if (symbolicUtil.isRecDomain(domainValue)) {
+		if (symbolicUtil.isRectangularDomain(domainValue)) {
 			SymbolicExpression recDom = universe.unionExtract(zeroObj,
 					domainUnion);
 

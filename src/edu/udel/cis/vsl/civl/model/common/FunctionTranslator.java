@@ -607,6 +607,7 @@ public class FunctionTranslator {
 		}
 		domain = this.translateExpressionNode(civlForNode.getDomain(), scope,
 				true);
+		result = new CommonFragment(this.elaborateDomainCall(scope, domain));
 		// this.civlParForCount++;
 		location = modelFactory.location(parForBeginSource, scope);
 		parForEnter = modelFactory.civlParForEnterStatement(parForBeginSource,
@@ -614,7 +615,7 @@ public class FunctionTranslator {
 				this.arrayToPointer(parProcs), procFunc);
 		if (procFunc == null)
 			modelBuilder.incompleteParForEnters.put(parForEnter, call);
-		result = new CommonFragment(parForEnter);
+		result = result.combineWith(new CommonFragment(parForEnter));
 		location = modelFactory.location(parForEndSource, scope);
 		callWaitAll = modelFactory.callOrSpawnStatement(parForEndSource,
 				location, true, modelFactory.waitallFunctionPointer(),
@@ -637,6 +638,7 @@ public class FunctionTranslator {
 		Location location;
 		CIVLSource source = modelFactory.sourceOf(civlForNode);
 		int dimension;
+		Statement elaborateCall;
 
 		scope = initResults.first;
 		// Create a loop counter variable for the for loop.
@@ -650,6 +652,7 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(civlForNode), scope);
 		domain = this.translateExpressionNode(civlForNode.getDomain(), scope,
 				true);
+		elaborateCall = this.elaborateDomainCall(scope, domain);
 		dimension = ((CIVLCompleteDomainType) domain.getExpressionType())
 				.getDimension();
 		if (dimension != loopVariables.size()) {
@@ -672,7 +675,7 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(domainNode),
 				modelFactory.sourceOfEnd(domainNode), domainGuard,
 				nextInDomain, civlForNode.getBody(), null, false);
-		return result;
+		return new CommonFragment(elaborateCall).combineWith(result);
 	}
 
 	/**
@@ -2180,6 +2183,16 @@ public class FunctionTranslator {
 			if (postcondition != null)
 				result.setPostcondition(postcondition);
 		}
+	}
+
+	private Statement elaborateDomainCall(Scope scope, Expression domain) {
+		CIVLSource source = domain.getSource();
+		Location location = modelFactory.location(source, scope);
+		CallOrSpawnStatement call = this.modelFactory.callOrSpawnStatement(
+				source, location, true, null, Arrays.asList(domain), null);
+
+		this.modelBuilder.elaborateDomainCalls.add(call);
+		return call;
 	}
 
 	/**

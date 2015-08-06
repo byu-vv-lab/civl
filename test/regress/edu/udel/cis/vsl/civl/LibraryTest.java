@@ -264,6 +264,17 @@ public class LibraryTest {
 		assertTrue(ui.run("verify", filename(CIVLC, "pathcondition.cvl")));
 	}
 
+	@Test
+	public void isConcreteInt() throws ABCException {
+		assertTrue(ui.run("verify", filename(CIVLC, "concreteIntTest.cvl")));
+	}
+
+	@Test
+	public void elaborateDomain() throws ABCException {
+		assertTrue(ui.run("verify -enablePrintf=false",
+				filename(CIVLC, "elaborateDomain.cvl")));
+	}
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;

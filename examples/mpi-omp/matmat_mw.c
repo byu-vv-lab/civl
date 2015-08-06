@@ -14,8 +14,8 @@
 #define comm MPI_COMM_WORLD
 #ifdef _CIVL
 #include <civlc.cvh>
-$input int _NPROCS_LOWER_BOUND = 2;
-$input int _NPROCS_UPPER_BOUND = 4;
+$input int _mpi_nprocs_lo = 2;
+$input int _mpi_nprocs_hi = 4;
 /* Dimensions of 2 matrices: a[N][L] * b[L][M] */
 $input int NB = 3;              // upper bound of N
 $input int N;
@@ -87,11 +87,6 @@ int main(int argc, char *argv[]) {
       for (j = 0; j < M; j++)
 	fscanf(fp,"%lf",&b[i][j]);
 #else
-    // elaborating N, L, M....
-    $elaborate(N);
-    $elaborate(L);
-    $elaborate(M);
-    // sequential run
     for(int i=0; i < N; i++) {
       vecmat(a[i], b, &oracle[i][0]);
   }
