@@ -9,8 +9,8 @@
 #include <assert.h>
 #include "queue.h"
 
-#define N 2
-#define T 2
+$input int N=2;
+$input int T=2;
 $output int RESULT[T][N];
 int A[N];
 queue_t queue;
