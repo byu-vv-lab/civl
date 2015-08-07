@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.NodeFactory;
+import edu.udel.cis.vsl.abc.ast.node.IF.NodePredicate;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
@@ -131,6 +132,62 @@ public abstract class BaseWorker {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Identifies adjacent nodes that are redundant and reduce them to exactly
+	 * one node.
+	 * 
+	 * @param root
+	 * @param nodePredicate
+	 *            The predicate that if an AST node holds then it will be
+	 *            considered as the target one.
+	 */
+	protected void reduceDuplicateNode(ASTNode root, NodePredicate nodePredicate) {
+		int lastIndex = -1;
+		int numChildren = root.numChildren();
+		boolean changed = false;
+
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = root.child(i);
+
+			if (child == null)
+				continue;
+			reduceDuplicateNode(child, nodePredicate);
+			child = root.child(i);
+			if (nodePredicate.holds(child)) {
+				if (lastIndex >= 0 && lastIndex == i - 1) {
+					// this node is identical to the previous node, then remove
+					// last node
+					root.removeChild(lastIndex);
+					changed = true;
+				}
+				// update last index
+				lastIndex = i;
+			}
+		}
+		if (changed && root.parent() != null) {
+			if (root instanceof CompoundStatementNode) {
+				CompoundStatementNode compoundNode = (CompoundStatementNode) root;
+				List<BlockItemNode> newChildren = new LinkedList<>();
+				int rootIndex = root.childIndex();
+
+				for (BlockItemNode child : compoundNode) {
+					if (child != null) {
+						child.remove();
+						newChildren.add(child);
+					}
+				}
+				if (newChildren.size() == 1
+						&& root.parent() instanceof CompoundStatementNode)
+					root.parent().setChild(rootIndex, newChildren.get(0));
+				else
+					root.parent().setChild(
+							rootIndex,
+							nodeFactory.newCompoundStatementNode(
+									root.getSource(), newChildren));
+			}
+		}
 	}
 
 	/**

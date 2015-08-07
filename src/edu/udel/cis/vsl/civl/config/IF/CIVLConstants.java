@@ -500,8 +500,9 @@ public class CIVLConstants {
 	 * @return all standard c libraries.
 	 */
 	public final static Set<String> getCinterfaces() {
-		return new HashSet<String>(Arrays.asList(MPI, MATH, OMP, PTHREAD,
-				STRING_LIB, SVCOMP, STDIO, STDLIB, TIME, CUDA, SYS_TIME));
+		return new HashSet<String>(
+				Arrays.asList(MPI, MATH, OMP, PTHREAD, STRING_LIB, SVCOMP,
+						STDIO, STDLIB, TIME, CUDA, SYS_TIME, UNISTD));
 	}
 
 	/**

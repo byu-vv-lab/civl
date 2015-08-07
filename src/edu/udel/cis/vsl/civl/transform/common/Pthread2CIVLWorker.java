@@ -12,6 +12,7 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.NodePredicate;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
@@ -554,17 +555,27 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private void fix_duplicated_pthread_exits(FunctionDefinitionNode function,
 			boolean isMain) {
-		CompoundStatementNode bodyNode = function.getBody();
-		BlockItemNode newBody = fix_duplicated_pthread_exits_worker(bodyNode,
-				isMain);
+		// function.prettyPrint(System.out);
+		this.reduceDuplicateNode(function, new NodePredicate() {
+			@Override
+			public boolean holds(ASTNode node) {
+				return isFunctionCallStatementNodeOf(node, PTHREAD_EXIT_NEW);
+			}
 
-		if (newBody instanceof CompoundStatementNode)
-			function.setBody((CompoundStatementNode) newBody);
-		else
-			function.setBody(nodeFactory.newCompoundStatementNode(
-					bodyNode.getSource(), Arrays.asList(newBody)));
+		});
+
+		// CompoundStatementNode bodyNode = function.getBody();
+		// BlockItemNode newBody = fix_duplicated_pthread_exits_worker(bodyNode,
+		// isMain);
+		//
+		// if (newBody instanceof CompoundStatementNode)
+		// function.setBody((CompoundStatementNode) newBody);
+		// else
+		// function.setBody(nodeFactory.newCompoundStatementNode(
+		// bodyNode.getSource(), Arrays.asList(newBody)));
 	}
 
+	@SuppressWarnings("unused")
 	private BlockItemNode fix_duplicated_pthread_exits_worker(
 			CompoundStatementNode block, boolean isMain) {
 		String pthread_exit_name = isMain ? PTHREAD_EXIT_MAIN_NEW
