@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.ArrayType;
@@ -62,6 +63,7 @@ public abstract class BaseWorker {
 	protected final static String MAIN = "main";
 	protected final static String ASSUME = "$assume";
 	protected final static String ASSERT = "$assert";
+	protected final static String ELABORATE = "$elaborate";
 
 	protected String identifierPrefix;
 
@@ -116,6 +118,15 @@ public abstract class BaseWorker {
 	 *             process of transformation
 	 */
 	protected abstract AST transform(AST ast) throws SyntaxException;
+
+	protected StatementNode elaborateCallNode(ExpressionNode argument) {
+		FunctionCallNode call = nodeFactory.newFunctionCallNode(
+				this.newSource("$elaborate call", CParser.CALL),
+				this.identifierExpression(ELABORATE), Arrays.asList(argument),
+				null);
+
+		return nodeFactory.newExpressionStatementNode(call);
+	}
 
 	/**
 	 * Does the root node contains a _main function definition in its children?
@@ -213,7 +224,7 @@ public abstract class BaseWorker {
 	protected ASTNode nonNullChildBefore(ASTNode node, int index) {
 		int numChildren = node.numChildren();
 
-		for (int i = index-1; i < numChildren && i >0 ; i--) {
+		for (int i = index - 1; i < numChildren && i > 0; i--) {
 			ASTNode child = node.child(i);
 
 			if (child != null)

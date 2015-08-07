@@ -311,6 +311,11 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		}
 		state = this.stateFactory.simplify(state);
 		boundsMap = extractsUpperBoundAndLowBoundOf(clauses, symbolicConstants);
+		if (boundsMap.size() < 1) {
+			return Arrays.asList((Transition) Semantics.newNoopTransition(
+					pathCondition, pid, processIdentifier, call.target(),
+					false, atomicLockAction));
+		}
 		constantBounds = new ConstantBound[boundsMap.size()];
 		for (Entry<SymbolicConstant, Pair<Integer, Integer>> constantAndBounds : boundsMap
 				.entrySet()) {
