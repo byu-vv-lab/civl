@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.abc.ast.entity.IF.Variable;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.NodePredicate;
 import edu.udel.cis.vsl.abc.ast.node.IF.PairNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.compound.CompoundInitializerNode;
@@ -713,6 +714,8 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			}
 		}
 
+		fix_duplicated_barrier_flush(root, false);
+		
 		result = this.program(root);
 		includedNodes = result.second;
 		mainParameters = result.third;	
@@ -3804,4 +3807,42 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 		}
 		return new Triple<>(lo, newHi, step);
 	}
+	
+	private void fix_duplicated_barrier_flush(ASTNode root,
+
+			boolean isMain) {
+
+		this.reduceDuplicateNode(root, new NodePredicate() {
+
+			@Override
+
+			public boolean holds(ASTNode node) {
+
+				return isFunctionCallStatementNodeOf(node, "$omp_barrier_and_flush");
+
+			}
+
+
+		});
+
+	}
+	
+	private boolean isFunctionCallStatementNodeOf(ASTNode node, String function) {
+		if (node instanceof ExpressionStatementNode) {
+			ExpressionNode expression = ((ExpressionStatementNode) node)
+					.getExpression();
+
+			if (expression instanceof FunctionCallNode) {
+				ExpressionNode functionNode = ((FunctionCallNode) expression)
+						.getFunction();
+
+				if (functionNode instanceof IdentifierExpressionNode) {
+					return ((IdentifierExpressionNode) functionNode)
+							.getIdentifier().name().equals(function);
+				}
+			}
+		}
+		return false;
+	}
+	
 }
