@@ -4,6 +4,7 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.semantics.common.CommonEvaluator;
@@ -11,6 +12,7 @@ import edu.udel.cis.vsl.civl.semantics.common.CommonExecutor;
 import edu.udel.cis.vsl.civl.semantics.common.CommonLibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.common.CommonLibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.common.CommonMemoryUnitEvaluator;
+import edu.udel.cis.vsl.civl.semantics.common.CommonNoopTransition;
 import edu.udel.cis.vsl.civl.semantics.common.CommonSymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.common.CommonTransition;
 import edu.udel.cis.vsl.civl.semantics.common.CommonTransitionSequence;
@@ -141,11 +143,35 @@ public class Semantics {
 	 *            be atomic and deterministic.
 	 * @return A new transition with the given path condition and statement.
 	 */
-	public static CommonTransition newTransition(
-			BooleanExpression pathCondition, int pid, int processIdentifier,
-			Statement statement, AtomicLockAction atomicLockAction) {
+	public static Transition newTransition(BooleanExpression pathCondition,
+			int pid, int processIdentifier, Statement statement,
+			AtomicLockAction atomicLockAction) {
 		return new CommonTransition(pathCondition, pid, processIdentifier,
 				statement, atomicLockAction);
+	}
+
+	/**
+	 * Create a new Noop transition.
+	 * 
+	 * @param pathCondition
+	 *            The path condition that should be used when executing the
+	 *            statement of the transition
+	 * @param pid
+	 *            The process id of the process executing this transition.
+	 * @param processIdentifier
+	 *            The process identifier of the process executing this
+	 *            transition.
+	 * @param target
+	 *            The target location of the process after this transition
+	 * @return A new transition with the given path condition and target
+	 *         location.
+	 */
+	public static NoopTransition newNoopTransition(
+			BooleanExpression pathCondition, int pid, int processIdentifier,
+			Location target, boolean symplifyState,
+			AtomicLockAction atomicLockAction) {
+		return new CommonNoopTransition(pathCondition, pid, processIdentifier,
+				target, symplifyState, atomicLockAction);
 	}
 
 	/**

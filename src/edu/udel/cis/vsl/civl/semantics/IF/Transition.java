@@ -13,6 +13,10 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  */
 public interface Transition {
 
+	public enum TransitionKind {
+		NORMAL, NOOP
+	}
+
 	public enum AtomicLockAction {
 		NONE, /** no action to the atomic lock */
 		GRAB, /** attempts to grab the atomic lock */
@@ -57,4 +61,18 @@ public interface Transition {
 	 * @return the atomic lock action associates with this transition.
 	 */
 	AtomicLockAction atomicLockAction();
+
+	/**
+	 * returns the kind of this transition.
+	 * 
+	 * @return
+	 */
+	TransitionKind transitionKind();
+
+	/**
+	 * Shall the state be simplified after the transition is done?
+	 * 
+	 * @return
+	 */
+	boolean simpifyState();
 }

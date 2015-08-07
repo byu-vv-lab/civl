@@ -747,4 +747,6 @@ public interface SymbolicUtility {
 	 * @return
 	 */
 	NumericExpression getDimensionOf(SymbolicExpression domain);
+
+	BooleanExpression[] getConjunctiveClauses(BooleanExpression clause);
 }

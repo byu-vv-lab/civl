@@ -124,6 +124,8 @@ import edu.udel.cis.vsl.sarl.number.Numbers;
  */
 public class CommonEvaluator implements Evaluator {
 
+	private static String ABSTRACT_FUNCTION_PREFIX = "_uf_";
+
 	/* *************************** Instance Fields ************************* */
 
 	/**
@@ -563,6 +565,7 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicExpression functionExpression;
 		SymbolicExpression functionApplication;
 		Evaluation result;
+		String functionName = function.name().name();
 
 		for (Variable param : function.parameters()) {
 			argumentTypes.add(param.type().getDynamicType(universe));
@@ -572,8 +575,10 @@ public class CommonEvaluator implements Evaluator {
 			arguments.add(eval.value);
 		}
 		functionType = universe.functionType(argumentTypes, returnType);
+		if (functionName.startsWith("$"))
+			functionName = ABSTRACT_FUNCTION_PREFIX + functionName;
 		functionExpression = universe.symbolicConstant(
-				universe.stringObject(function.name().name()), functionType);
+				universe.stringObject(functionName), functionType);
 		functionApplication = universe.apply(functionExpression, arguments);
 		result = new Evaluation(state, functionApplication);
 		return result;

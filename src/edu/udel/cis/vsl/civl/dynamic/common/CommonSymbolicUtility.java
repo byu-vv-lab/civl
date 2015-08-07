@@ -32,6 +32,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.NumericSymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicConstant;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.expr.UnionMemberReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
@@ -42,6 +43,7 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType.SymbolicTypeKind;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicUnionType;
+import edu.udel.cis.vsl.sarl.collections.IF.SymbolicCollection;
 import edu.udel.cis.vsl.sarl.collections.IF.SymbolicSequence;
 
 public class CommonSymbolicUtility implements SymbolicUtility {
@@ -1341,5 +1343,27 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	@Override
 	public NumericExpression getDimensionOf(SymbolicExpression domain) {
 		return (NumericExpression) universe.tupleRead(domain, zeroObj);
+	}
+
+	@Override
+	public BooleanExpression[] getConjunctiveClauses(BooleanExpression clause) {
+		SymbolicOperator operator = clause.operator();
+		BooleanExpression[] result;
+
+		if (operator != SymbolicOperator.AND) {
+			result = new BooleanExpression[1];
+			result[0] = clause;
+		} else {
+			@SuppressWarnings("unchecked")
+			SymbolicCollection<? extends SymbolicExpression> collection = (SymbolicCollection<? extends SymbolicExpression>) clause
+					.argument(0);
+			int i = 0;
+
+			result = new BooleanExpression[collection.size()];
+			for (SymbolicExpression element : collection) {
+				result[i++] = (BooleanExpression) element;
+			}
+		}
+		return result;
 	}
 }
