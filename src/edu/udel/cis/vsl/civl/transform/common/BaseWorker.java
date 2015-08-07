@@ -146,7 +146,7 @@ public abstract class BaseWorker {
 	protected void reduceDuplicateNode(ASTNode root, NodePredicate nodePredicate) {
 		int lastIndex = -1;
 		int numChildren = root.numChildren();
-		boolean changed = false;
+		// boolean changed = false;
 
 		for (int i = 0; i < numChildren; i++) {
 			ASTNode child = root.child(i);
@@ -160,34 +160,138 @@ public abstract class BaseWorker {
 					// this node is identical to the previous node, then remove
 					// last node
 					root.removeChild(lastIndex);
-					changed = true;
+					// changed = true;
+				} else {
+					ASTNode previousNonNullChild = this.nonNullChildBefore(
+							root, i);
+
+					if (previousNonNullChild != null
+							&& (previousNonNullChild instanceof CompoundStatementNode)) {
+						CompoundStatementNode previousCompound = (CompoundStatementNode) previousNonNullChild;
+						ASTNode lastChildOfPrevious = this
+								.getVeryLastItemNodeOfCompoundStatement(previousCompound);
+
+						if (lastChildOfPrevious != null
+								&& nodePredicate.holds(lastChildOfPrevious)) {
+							lastChildOfPrevious.remove();
+						}
+					}
 				}
 				// update last index
 				lastIndex = i;
 			}
 		}
-		if (changed && root.parent() != null) {
-			if (root instanceof CompoundStatementNode) {
-				CompoundStatementNode compoundNode = (CompoundStatementNode) root;
-				List<BlockItemNode> newChildren = new LinkedList<>();
-				int rootIndex = root.childIndex();
+		this.normalizeCompoundStatementNodes(root);
+		// if (root.parent() != null) {
+		// root.parent().setChild(root.childIndex(),
+		// this.normalizeCompoundStatementNodes(root));
+		// }
+		// if (changed && root.parent() != null) {
+		// if (root instanceof CompoundStatementNode) {
+		// CompoundStatementNode compoundNode = (CompoundStatementNode) root;
+		// List<BlockItemNode> newChildren = new LinkedList<>();
+		// int rootIndex = root.childIndex();
+		//
+		// for (BlockItemNode child : compoundNode) {
+		// if (child != null) {
+		// child.remove();
+		// newChildren.add(child);
+		// }
+		// }
+		// if (newChildren.size() == 1
+		// && root.parent() instanceof CompoundStatementNode)
+		// root.parent().setChild(rootIndex, newChildren.get(0));
+		// else
+		// root.parent().setChild(
+		// rootIndex,
+		// nodeFactory.newCompoundStatementNode(
+		// root.getSource(), newChildren));
+		// }
+		// }
+	}
 
-				for (BlockItemNode child : compoundNode) {
-					if (child != null) {
-						child.remove();
-						newChildren.add(child);
-					}
-				}
-				if (newChildren.size() == 1
-						&& root.parent() instanceof CompoundStatementNode)
-					root.parent().setChild(rootIndex, newChildren.get(0));
+	protected ASTNode nonNullChildBefore(ASTNode node, int index) {
+		int numChildren = node.numChildren();
+
+		for (int i = index-1; i < numChildren && i >0 ; i--) {
+			ASTNode child = node.child(i);
+
+			if (child != null)
+				return child;
+		}
+		return null;
+	}
+
+	protected ASTNode getVeryLastItemNodeOfCompoundStatement(
+			CompoundStatementNode compound) {
+		int numChildren = compound.numChildren();
+
+		for (int i = numChildren - 1; i >= 0; i--) {
+			BlockItemNode child = compound.getSequenceChild(i);
+
+			if (child != null) {
+				if (child instanceof CompoundStatementNode)
+					return this
+							.getVeryLastItemNodeOfCompoundStatement((CompoundStatementNode) child);
 				else
-					root.parent().setChild(
-							rootIndex,
-							nodeFactory.newCompoundStatementNode(
-									root.getSource(), newChildren));
+					return child;
 			}
 		}
+		return null;
+	}
+
+	/**
+	 * For a compound statement node, removes any child node that is null or an
+	 * empty compound statement node.
+	 * 
+	 * @param node
+	 * @return
+	 */
+	protected ASTNode normalizeCompoundStatementNodes(ASTNode node) {
+		int numChildren = node.numChildren();
+		ASTNode newNode = node;
+
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = node.child(i);
+
+			if (child == null)
+				continue;
+			normalizeCompoundStatementNodes(child);
+		}
+		if (node instanceof CompoundStatementNode) {
+			List<BlockItemNode> items = new LinkedList<>();
+			CompoundStatementNode compound = (CompoundStatementNode) node;
+
+			for (BlockItemNode item : compound) {
+				if (item != null
+						&& (!(item instanceof CompoundStatementNode) || !this
+								.isEmptyCompoundStatementNode((CompoundStatementNode) item))) {
+					item.remove();
+					items.add(item);
+				}
+			}
+			newNode = nodeFactory.newCompoundStatementNode(node.getSource(),
+					items);
+			if (node.parent() != null)
+				node.parent().setChild(node.childIndex(), newNode);
+		}
+		return newNode;
+	}
+
+	protected boolean isEmptyCompoundStatementNode(
+			CompoundStatementNode compound) {
+		if (compound.numChildren() == 0)
+			return true;
+		for (BlockItemNode child : compound) {
+			if (child == null)
+				continue;
+			if (child instanceof CompoundStatementNode) {
+				if (isEmptyCompoundStatementNode((CompoundStatementNode) child))
+					continue;
+			}
+			return false;
+		}
+		return true;
 	}
 
 	/**

@@ -597,7 +597,6 @@ public class Cuda2CIVLWorker extends BaseWorker {
 		for (ASTNode child : root.children()) {
 			if (child == null)
 				continue;
-
 			if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 				VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
 				if (variableDeclaration.getIdentifier() != null 
@@ -608,6 +607,8 @@ public class Cuda2CIVLWorker extends BaseWorker {
 					continue;
 				}
 			}
+			
+			
 
 			removeBuiltinDefinitions(child);
 		}

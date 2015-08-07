@@ -5,6 +5,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.StateManagerIF;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -59,7 +60,7 @@ public interface StateManager extends StateManagerIF<State, Transition> {
 	 * 
 	 * @return
 	 */
-	Map<BooleanExpression, Set<SymbolicExpression[]>> collectedOutputs();
+	Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> collectedOutputs();
 
 	/**
 	 * The names of output variables of the model.

@@ -555,7 +555,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private void fix_duplicated_pthread_exits(FunctionDefinitionNode function,
 			boolean isMain) {
-		// function.prettyPrint(System.out);
+		function.prettyPrint(System.out);
 		this.reduceDuplicateNode(function, new NodePredicate() {
 			@Override
 			public boolean holds(ASTNode node) {

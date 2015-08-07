@@ -13,6 +13,8 @@ import edu.udel.cis.vsl.civl.predicate.common.CommonFunctionalEquivalence;
 import edu.udel.cis.vsl.civl.predicate.common.CommonPotentialDeadlock;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
+import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -34,9 +36,10 @@ public class Predicates {
 	}
 
 	public static FunctionalEquivalence newFunctionalEquivalence(
-			SymbolicUniverse universe, SymbolicAnalyzer symbolicAnalyzer,
+			SymbolicUniverse universe,
+			SymbolicAnalyzer symbolicAnalyzer,
 			String[] outputNames,
-			Map<BooleanExpression, Set<SymbolicExpression[]>> specOutputs) {
+			Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> specOutputs) {
 		return new CommonFunctionalEquivalence(universe, symbolicAnalyzer,
 				outputNames, specOutputs);
 	}

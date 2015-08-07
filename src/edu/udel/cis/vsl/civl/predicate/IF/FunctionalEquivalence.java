@@ -3,6 +3,8 @@ package edu.udel.cis.vsl.civl.predicate.IF;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -27,7 +29,7 @@ public interface FunctionalEquivalence extends CIVLStatePredicate {
 	 * 
 	 * @return
 	 */
-	Map<BooleanExpression, Set<SymbolicExpression[]>> specificationOutputs();
+	Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> specificationOutputs();
 
 	// /**
 	// * Add a new entry to the specification output using the given path

@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.predicate.IF.FunctionalEquivalence;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -20,12 +21,14 @@ public class CommonFunctionalEquivalence extends CommonCIVLStatePredicate
 
 	private boolean debug = false;
 	private String[] outputNames;
-	private Map<BooleanExpression, Set<SymbolicExpression[]>> specificationOutputs = new LinkedHashMap<>();
+	private Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> specificationOutputs = new LinkedHashMap<>();
 	private int numOutputs;
 
-	public CommonFunctionalEquivalence(SymbolicUniverse universe,
-			SymbolicAnalyzer symbolicAnalyzer, String[] outputNames,
-			Map<BooleanExpression, Set<SymbolicExpression[]>> specOutputs) {
+	public CommonFunctionalEquivalence(
+			SymbolicUniverse universe,
+			SymbolicAnalyzer symbolicAnalyzer,
+			String[] outputNames,
+			Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> specOutputs) {
 		this.outputNames = outputNames;
 		this.specificationOutputs = specOutputs;
 		this.numOutputs = this.outputNames.length;
@@ -51,14 +54,16 @@ public class CommonFunctionalEquivalence extends CommonCIVLStatePredicate
 		Reasoner reasoner = universe.reasoner(universe.trueExpression());
 		boolean result;
 
-		for (Map.Entry<BooleanExpression, Set<SymbolicExpression[]>> specPcAndOuts : this.specificationOutputs
+		for (Map.Entry<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> specPcAndOuts : this.specificationOutputs
 				.entrySet()) {
 			BooleanExpression clause = specPcAndOuts.getKey();// pc_spec
-			Set<SymbolicExpression[]> specOutsSet = specPcAndOuts.getValue();
+			Set<Pair<State, SymbolicExpression[]>> specOutsSet = specPcAndOuts
+					.getValue();
 			BooleanExpression containsEqual = null;
 
-			for (SymbolicExpression[] specOuts : specOutsSet) {
+			for (Pair<State, SymbolicExpression[]> specStateAndOuts : specOutsSet) {
 				BooleanExpression outEqual = null;
+				SymbolicExpression[] specOuts = specStateAndOuts.right;
 
 				// outEqual = (o1 = o11 && o2= o22 && ...)
 				for (int i = 0; i < numOutputs; i++) {
@@ -103,7 +108,7 @@ public class CommonFunctionalEquivalence extends CommonCIVLStatePredicate
 				if (i > 0)
 					msg.append(", ");
 				msg.append(this.symbolicAnalyzer.symbolicExpressionToString(
-						null, state,null, implOutputs[i]));
+						null, state, null, implOutputs[i]));
 			}
 			violation = new CIVLExecutionException(
 					ErrorKind.FUNCTIONAL_EQUIVALENCE, Certainty.PROVEABLE,
@@ -121,7 +126,7 @@ public class CommonFunctionalEquivalence extends CommonCIVLStatePredicate
 	}
 
 	@Override
-	public Map<BooleanExpression, Set<SymbolicExpression[]>> specificationOutputs() {
+	public Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> specificationOutputs() {
 		return this.specificationOutputs;
 	}
 
@@ -136,14 +141,16 @@ public class CommonFunctionalEquivalence extends CommonCIVLStatePredicate
 			result.append("\n");
 		}
 		result.append("Specification output values:");
-		for (Map.Entry<BooleanExpression, Set<SymbolicExpression[]>> entry : this.specificationOutputs
+		for (Map.Entry<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> entry : this.specificationOutputs
 				.entrySet()) {
 			int j = 0;
 
 			result.append("\npc: ");
 			result.append(entry.getKey());
 			result.append(", output: {");
-			for (SymbolicExpression[] outputs : entry.getValue()) {
+			for (Pair<State,SymbolicExpression[]> stateAndoutputs : entry.getValue()) {
+				SymbolicExpression[] outputs = stateAndoutputs.right;
+				
 				if (j > 0)
 					result.append(", ");
 				result.append("(");
@@ -151,7 +158,8 @@ public class CommonFunctionalEquivalence extends CommonCIVLStatePredicate
 					if (k > 0)
 						result.append(", ");
 					result.append(this.symbolicAnalyzer
-							.symbolicExpressionToString(null, null, null,outputs[k]));
+							.symbolicExpressionToString(null, null, null,
+									outputs[k]));
 				}
 				result.append(")");
 				j++;

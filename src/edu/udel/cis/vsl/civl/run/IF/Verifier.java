@@ -25,6 +25,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.CIVLStateException;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.DfsSearcher;
@@ -221,10 +222,15 @@ public class Verifier extends Player {
 	 */
 	private double startTime;
 
-	public Verifier(GMCConfiguration config, Model model, PrintStream out,
-			PrintStream err, double startTime, boolean collectOutputs,
+	public Verifier(
+			GMCConfiguration config,
+			Model model,
+			PrintStream out,
+			PrintStream err,
+			double startTime,
+			boolean collectOutputs,
 			String[] outputNames,
-			Map<BooleanExpression, Set<SymbolicExpression[]>> specOutputs)
+			Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> specOutputs)
 			throws CommandLineException {
 		super(config, model, out, err, collectOutputs);
 		if (random) {
@@ -269,9 +275,14 @@ public class Verifier extends Player {
 		this(config, model, out, err, startTime, collectOutputs, null, null);
 	}
 
-	public Verifier(GMCConfiguration config, Model model, PrintStream out,
-			PrintStream err, double startTime, String[] outputNames,
-			Map<BooleanExpression, Set<SymbolicExpression[]>> specOutputs)
+	public Verifier(
+			GMCConfiguration config,
+			Model model,
+			PrintStream out,
+			PrintStream err,
+			double startTime,
+			String[] outputNames,
+			Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> specOutputs)
 			throws CommandLineException {
 		this(config, model, out, err, startTime, false, outputNames,
 				specOutputs);

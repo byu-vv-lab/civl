@@ -10,6 +10,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
@@ -21,7 +22,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  */
 public class OutputCollector {
 
-	Map<BooleanExpression, Set<SymbolicExpression[]>> collectedOutputs = new HashMap<>();
+	Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> collectedOutputs = new HashMap<>();
 	String[] outptutNames;
 	private Set<State> checkedState = new HashSet<>();
 	private int[] outputIds;
@@ -50,19 +51,19 @@ public class OutputCollector {
 		// state.print(System.out);
 		BooleanExpression pc = state.getPathCondition();
 		int rootScope = 0;
-		Set<SymbolicExpression[]> outputSet = this.collectedOutputs.get(pc);
+		Set<Pair<State, SymbolicExpression[]>> outputSet = this.collectedOutputs
+				.get(pc);
 		SymbolicExpression[] outputs = new SymbolicExpression[this.numOutputs];
 
 		this.checkedState.add(state);
-
 		for (int i = 0; i < this.numOutputs; i++) {
 			outputs[i] = state.getVariableValue(rootScope, this.outputIds[i]);
 		}
 		if (outputSet != null) {
-			outputSet.add(outputs);
+			outputSet.add(new Pair<>(state, outputs));
 		} else {
 			outputSet = new LinkedHashSet<>();
-			outputSet.add(outputs);
+			outputSet.add(new Pair<>(state, outputs));
 			this.collectedOutputs.put(pc, outputSet);
 		}
 	}

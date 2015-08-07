@@ -78,6 +78,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
 import edu.udel.cis.vsl.civl.transform.IF.Transforms;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.CommandLineException;
 import edu.udel.cis.vsl.gmc.CommandLineParser;
 import edu.udel.cis.vsl.gmc.GMCConfiguration;
@@ -716,9 +717,11 @@ public class UserInterface {
 		return false;
 	}
 
-	private void printOutput(PrintStream out,
-			SymbolicAnalyzer symbolicAnalyzer, String[] outputNames,
-			Map<BooleanExpression, Set<SymbolicExpression[]>> outputValues) {
+	private void printOutput(
+			PrintStream out,
+			SymbolicAnalyzer symbolicAnalyzer,
+			String[] outputNames,
+			Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> outputValues) {
 		StringBuffer result = new StringBuffer();
 		// int k=0;
 		int numOutputs = outputNames.length;
@@ -730,25 +733,37 @@ public class UserInterface {
 		// result.append("\n");
 		// }
 		// result.append("Specification output values:");
-		for (Map.Entry<BooleanExpression, Set<SymbolicExpression[]>> entry : outputValues
+		for (Map.Entry<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> entry : outputValues
 				.entrySet()) {
 			int j = 0;
 
 			result.append("\npc: ");
 			result.append(symbolicAnalyzer.symbolicExpressionToString(null,
 					null, null, entry.getKey()));
-			result.append("\npossible outputs: \n");
-			for (SymbolicExpression[] outputs : entry.getValue()) {
+			result.append("\ninputs and outputs: \n");
+			for (Pair<State, SymbolicExpression[]> stateAndoutputs : entry
+					.getValue()) {
+				int l = 0;
+				State state = stateAndoutputs.left;
+				SymbolicExpression[] outputs = stateAndoutputs.right;
+
 				if (j > 0)
 					result.append("or\n");
+				result.append("input:");
+				result.append(symbolicAnalyzer
+						.inputVariablesToStringBuffer(state));
+				result.append("\noutput:\n");
 				// result.append("(");
 				for (int k = 0; k < numOutputs; k++) {
-					if (k > 0)
-						result.append(", ");
+					if (l > 0)
+						result.append("\n");
+					if (outputNames[k].equals("CIVL_output_filesystem"))
+						continue;
+					l++;
 					result.append(outputNames[k]);
 					result.append(" = ");
 					result.append(symbolicAnalyzer.symbolicExpressionToString(
-							null, null, null, outputs[k]));
+							null, state, null, outputs[k]));
 				}
 				// result.append(")");
 				j++;

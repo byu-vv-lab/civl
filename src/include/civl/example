@@ -1,0 +1,2 @@
+$cuda_kernel_instance_tNode *node = ($cuda_kernel_instance_tNode*)$malloc($root, sizeof($cuda_kernel_instance_tNode));
+

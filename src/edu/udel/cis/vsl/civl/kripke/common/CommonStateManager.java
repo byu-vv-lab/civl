@@ -28,6 +28,7 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
 import edu.udel.cis.vsl.gmc.TraceStepIF;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -617,7 +618,7 @@ public class CommonStateManager implements StateManager {
 	}
 
 	@Override
-	public Map<BooleanExpression, Set<SymbolicExpression[]>> collectedOutputs() {
+	public Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> collectedOutputs() {
 		return this.outputCollector.collectedOutputs;
 	}
 
