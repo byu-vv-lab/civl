@@ -175,7 +175,6 @@ public class FunctionTranslator {
 
 	/* ************************** Instance Fields ************************** */
 
-	// private int civlParForCount = 0;
 	private int atomicCount = 0;
 
 	private int atomCount = 0;
@@ -1991,10 +1990,10 @@ public class FunctionTranslator {
 			FunctionCallNode functionCallNode, CIVLSource source) {
 		Statement functionCall = translateFunctionCall(scope, null,
 				functionCallNode, true, source);
-
+		
 		return new CommonFragment(functionCall);
 	}
-
+	
 	/**
 	 * Processes a function declaration node (whether or not node is also a
 	 * definition node).

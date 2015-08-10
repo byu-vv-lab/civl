@@ -33,9 +33,9 @@ void $elaborate_rectangular_domain($domain domain){
     int low=$low_of_regular_range(range);
 
     if(!$is_concrete_int(high))
-      for(int t=0; t<high; t++);
+      $elaborate(high);
     if(!$is_concrete_int(low))
-      for(int t=0; t<low; t++);
+      $elaborate(low);
   }
 }
 

@@ -2557,11 +2557,15 @@ public class CommonEvaluator implements Evaluator {
 						.getDyscopeId(source, expressionValue);
 
 				if (scopeID < 0) {
-					errorLogger
-							.logSimpleError(source, state, process,
-									symbolicAnalyzer.stateInformation(state),
-									ErrorKind.MEMORY_LEAK,
-									"Attempt to evaluate a pointer refererring to memory of an invalid scope");
+					StringBuffer message = new StringBuffer();
+
+					message.append("Attempt to evaluate a pointer refererring to memory of an invalid scope:\n");
+					message.append("pointer expression: "
+							+ expression.toString() + "\n");
+					message.append("value: " + expressionValue);
+					errorLogger.logSimpleError(source, state, process,
+							symbolicAnalyzer.stateInformation(state),
+							ErrorKind.MEMORY_LEAK, message.toString());
 					throw new UnsatisfiablePathConditionException();
 				}
 			} catch (Exception e) {
