@@ -64,6 +64,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteArrayType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLDomainType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLEnumType;
+import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLHeapType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
@@ -2341,6 +2342,8 @@ public class CommonEvaluator implements Evaluator {
 		} else if (type instanceof CIVLEnumType) {
 			result = new TypeEvaluation(state, type.getDynamicType(universe));
 		} else if (type instanceof CIVLDomainType) {
+			result = new TypeEvaluation(state, type.getDynamicType(universe));
+		} else if (type instanceof CIVLFunctionType) {
 			result = new TypeEvaluation(state, type.getDynamicType(universe));
 		} else
 			throw new CIVLInternalException("Unreachable", source);
