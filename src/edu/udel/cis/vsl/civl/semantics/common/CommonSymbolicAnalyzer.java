@@ -1070,7 +1070,8 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					int count = 0;
 					boolean first = true;
 					boolean needNewLine = !separator.isEmpty()
-							&& !civlType.areSubtypesScalar();
+							&& civlType != null ? !civlType.areSubtypesScalar()
+							: false;
 					String padding = "\n" + prefix + separator;
 					String newPrefix = needNewLine ? prefix + separator
 							: prefix;
