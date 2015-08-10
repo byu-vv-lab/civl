@@ -97,6 +97,8 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 	private List<Entity> privateIDs;
 	private List<Entity> loopPrivateIDs;
+	
+	private boolean debug = false;
 
 	public OpenMPSimplifierWorker(ASTFactory astFactory) {
 		super("OpenMPSimplifier", astFactory);
@@ -254,8 +256,6 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 					.statementNode());
 
 			if (allIndependent && !isOrphaned) {
-				// System.out.println("Removing OpenMP parallel "+opn);
-
 				/*
 				 * Remove the nested omp constructs, e.g., workshares, calls to
 				 * omp_*, ordered sync nodes, etc.
@@ -470,9 +470,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			 * read/write sets for these statements within the parallel and then post
 			 * process them. 
 			 */
-			
-			//System.out.println("Found operator node "+node+" with Operator "+((OperatorNode)node).getOperator());
-			
+						
 			// Reset visitor globals
 			writeVars = new HashSet<Entity>();
 			readVars = new HashSet<Entity>();
@@ -483,12 +481,12 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			
 			collectAssignRefExprs(node);
 			
-			if (false) {
-			System.out.println("Analyzed non-workshare assignment "+node+" with:");
-			System.out.println("   sharedReads = "+readVars);
-			System.out.println("   sharedWrites = "+writeVars);
-			System.out.println("   sharedArrayReads = "+readArrayRefs);
-			System.out.println("   sharedArrayWrites = "+writeArrayRefs);
+			if (debug) {
+				System.out.println("Analyzed non-workshare assignment "+node+" with:");
+				System.out.println("   sharedReads = "+readVars);
+				System.out.println("   sharedWrites = "+writeVars);
+				System.out.println("   sharedArrayReads = "+readArrayRefs);
+				System.out.println("   sharedArrayWrites = "+writeArrayRefs);
 			}
 			
 			sharedReads.addAll(readVars);
@@ -722,7 +720,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		independent &= noArrayRefDependences(boundingConditions,
 				writeArrayRefs, readArrayRefs);
 
-		if (false) {
+		if (debug) {
 			System.out.println("Found "+(independent?"independent":"dependent")+" OpenMP for "+ompFor);
 			System.out.println("  writeVars : "+writeVars);
 			System.out.println("  readVars : "+readVars);
@@ -780,7 +778,6 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			}
 
 			if (safeReduction) {
-				// System.out.println("Replacing OpenMP for with single");
 				ASTNode parent = ompFor.parent();
 				int ompForIndex = getChildIndex(parent, ompFor);
 				assert ompForIndex != -1;
@@ -945,7 +942,6 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	 * shared variables nested within.
 	 */
 	private void collectAssignRefExprs(ASTNode node) {
-		//System.out.println("CollectAssignRefExprs for "+node);
 		if (node instanceof OmpSyncNode
 				&& ((OmpSyncNode) node).ompSyncNodeKind() == OmpSyncNode.OmpSyncNodeKind.CRITICAL) {
 			// Do not collect read/write references from critical sections
@@ -974,8 +970,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				}
 
 			} else {
-				// System.out.println("DependenceAnnotator found lhs:" +
-				// lhs);
+				
 			}
 
 			// The argument at index 1 is the RHS.   If there is no RHS then this is a unary assignment and
