@@ -10,7 +10,8 @@ import org.junit.Test;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
-public class MPI_OpenMPTest {
+public class MPI_OpenMPDevTest {
+
 	/* *************************** Static Fields *************************** */
 
 	private static File rootDir = new File("examples", "mpi-omp");
@@ -26,25 +27,10 @@ public class MPI_OpenMPTest {
 	/* **************************** Test Methods *************************** */
 
 	@Test
-	public void pie() throws ABCException {
-		assertTrue(ui.run(
-				"verify -enablePrintf=false -DMATH_ELABORATE_ASSUMPTIONS -input_mpi_nprocs=2 "
-						+ "-input_omp_thread_max=3 -ompLoopDecomp=ALL",
-				filename("mpi-omp-pie-calculation.c")));
-	}
-
-	@Test
-	public void pie100() throws ABCException {
+	public void matmat_mw() throws ABCException {
 		assertTrue(ui
-				.run("verify -enablePrintf=false -DMATH_ELABORATE_ASSUMPTIONS "
-						+ "-input_mpi_nprocs=2 -input_omp_thread_max=10 -ompLoopDecomp=ALL",
-						filename("mpi-omp-pie-calculation100.c")));
-	}
-
-	@Test
-	public void helloworld() throws ABCException {
-		assertTrue(ui.run("verify -enablePrintf=false -input_mpi_nprocs=2",
-				filename("mpi-omp-hello-world.c")));
+				.run("verify -input_omp_thread_max=2 -enablePrintf=false -showTransitions=false",
+						filename("matmat_mw.c")));
 	}
 
 	@AfterClass
