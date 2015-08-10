@@ -21,8 +21,10 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
+import edu.udel.cis.vsl.civl.semantics.IF.NoopTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.Transition.TransitionKind;
 import edu.udel.cis.vsl.civl.state.IF.CIVLHeapException;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -436,6 +438,20 @@ public class CommonStateManager implements StateManager {
 		config.out().print(
 				symbolicAnalyzer.statementEvaluation(currentState, newState,
 						transition.pid(), stmt));
+		if (transition.transitionKind() == TransitionKind.NOOP) {
+			NoopTransition noopTransition = (NoopTransition) transition;
+			BooleanExpression assumption = noopTransition.assumption();
+
+			if (assumption != null) {
+				config.out().print(" [$assume(");
+				config.out().print(
+						symbolicAnalyzer.symbolicExpressionToString(stmt
+								.getSource(), currentState,
+								this.enabler.modelFactory.typeFactory()
+										.booleanType(), assumption));
+				config.out().print(")]");
+			}
+		}
 		config.out().print(" at ");
 		config.out().print(stmt.summaryOfSource());
 		// config.out().print(

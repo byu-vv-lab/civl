@@ -4,7 +4,6 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
-import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
 import edu.udel.cis.vsl.civl.semantics.common.CommonEvaluator;
@@ -168,10 +167,10 @@ public class Semantics {
 	 */
 	public static NoopTransition newNoopTransition(
 			BooleanExpression pathCondition, int pid, int processIdentifier,
-			Location target, boolean symplifyState,
-			AtomicLockAction atomicLockAction) {
+			BooleanExpression assumption, Statement statement,
+			boolean symplifyState, AtomicLockAction atomicLockAction) {
 		return new CommonNoopTransition(pathCondition, pid, processIdentifier,
-				target, symplifyState, atomicLockAction);
+				assumption, statement, symplifyState, atomicLockAction);
 	}
 
 	/**

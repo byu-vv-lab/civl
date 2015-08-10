@@ -306,15 +306,15 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 
 		if (symbolicConstants.size() < 1) {
 			return Arrays.asList((Transition) Semantics.newNoopTransition(
-					pathCondition, pid, processIdentifier, call.target(),
-					false, atomicLockAction));
+					pathCondition, pid, processIdentifier, null, call, false,
+					atomicLockAction));
 		}
 		state = this.stateFactory.simplify(state);
 		boundsMap = extractsUpperBoundAndLowBoundOf(clauses, symbolicConstants);
 		if (boundsMap.size() < 1) {
 			return Arrays.asList((Transition) Semantics.newNoopTransition(
-					pathCondition, pid, processIdentifier, call.target(),
-					false, atomicLockAction));
+					pathCondition, pid, processIdentifier, null, call, false,
+					atomicLockAction));
 		}
 		constantBounds = new ConstantBound[boundsMap.size()];
 		for (Entry<SymbolicConstant, Pair<Integer, Integer>> constantAndBounds : boundsMap
@@ -331,7 +331,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 					.canonic(universe.and(pathCondition, clause));
 
 			transitions.add(Semantics.newNoopTransition(newPathCondition, pid,
-					processIdentifier, call.source(), true, atomicLockAction));
+					processIdentifier, clause, call, true, atomicLockAction));
 		}
 		return transitions;
 	}
@@ -347,6 +347,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		int lower = myConstantBound.lower, upper = myConstantBound.upper;
 		NumericExpression symbol = (NumericExpression) myConstantBound.constant;
 		BooleanExpression newClause;
+		boolean upperBoundCluaseNeeded = false;
 
 		if (lower < 0) {
 			lower = 0;
@@ -356,6 +357,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		}
 		if (upper > lower + ELABORATE_UPPER_BOUND) {
 			upper = lower + ELABORATE_UPPER_BOUND;
+			upperBoundCluaseNeeded = true;
 			newClause = universe.lessThan(universe.integer(upper), symbol);
 			if (!reasoner.isValid(universe.not(newClause)))
 				myResult.add(newClause);
@@ -365,7 +367,8 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			if (!reasoner.isValid(universe.not(newClause)))
 				myResult.add(newClause);
 		}
-		myResult.add(universe.lessThan(universe.integer(upper), symbol));
+		if (upperBoundCluaseNeeded)
+			myResult.add(universe.lessThan(universe.integer(upper), symbol));
 		if (start == constantBounds.length - 1)
 			return myResult;
 		subfixResult = this.generateConcreteValueClauses(reasoner,

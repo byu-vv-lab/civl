@@ -1466,7 +1466,7 @@ public class CommonExecutor implements Executor {
 			break;
 		case NOOP:
 			state = this.stateFactory.setLocation(state, pid,
-					((NoopTransition) transition).target());
+					((NoopTransition) transition).statement().target());
 			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(
