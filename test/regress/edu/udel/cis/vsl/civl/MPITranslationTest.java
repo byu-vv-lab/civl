@@ -40,13 +40,14 @@ public class MPITranslationTest {
 
 	@Test
 	public void reduce() {
-		assertTrue(ui.run("verify", "-input_mpi_nprocs=4", "-enablePrintf=true",
-				filename("routines/reduce.c")));
+		assertTrue(ui.run("verify", "-input_mpi_nprocs=4",
+				"-enablePrintf=true", filename("routines/reduce.c")));
 	}
 
 	@Test
 	public void mpithreads_mpi() {
-		assertTrue(ui.run("verify", "-input_mpi_nprocs=2", "-enablePrintf=false",
+		assertTrue(ui.run("verify", "-input_mpi_nprocs=2",
+				"-enablePrintf=false",
 				filename("../mpi-pthread/mpithreads_mpi.c")));
 	}
 
@@ -58,32 +59,36 @@ public class MPITranslationTest {
 
 	@Test
 	public void adder_comp() {
-		assertTrue(ui.run("compare", "-enablePrintf=false", "-input_mpi_nprocs=2",
-				"-inputNB=4", "-spec", filename("seq/adder_spec.c"), "-impl",
-				filename("adder_par.c")));
+		assertTrue(ui.run("compare", "-enablePrintf=false",
+				"-input_mpi_nprocs=2", "-inputNB=4", "-spec",
+				filename("seq/adder_spec.c"), "-impl", filename("adder_par.c")));
 	}
 
 	@Test
 	public void mpi_scatter() throws ABCException {
-		assertTrue(ui.run("verify", "-input_mpi_nprocs=4", "-enablePrintf=false",
+		assertTrue(ui.run("verify", "-input_mpi_nprocs=4",
+				"-enablePrintf=false",
 				filename("routines/Gather_Scatter/mpi_scatter.c")));
 	}
 
 	@Test
 	public void mpi_gather() throws ABCException {
-		assertTrue(ui.run("verify", "-input_mpi_nprocs=4", "-enablePrintf=false",
+		assertTrue(ui.run("verify", "-input_mpi_nprocs=4",
+				"-enablePrintf=false",
 				filename("routines/Gather_Scatter/mpi_gather.c")));
 	}
 
 	@Test
 	public void mpi_gatherv() throws ABCException {
-		assertTrue(ui.run("verify", "-input_mpi_nprocs=4", "-enablePrintf=false",
+		assertTrue(ui.run("verify", "-input_mpi_nprocs=4",
+				"-enablePrintf=false",
 				filename("routines/Gather_Scatter/mpi_gather_inPlace.c")));
 	}
 
 	@Test
 	public void mpi_scatterv() throws ABCException {
-		assertTrue(ui.run("verify", "-input_mpi_nprocs=4", "-enablePrintf=false",
+		assertTrue(ui.run("verify", "-input_mpi_nprocs=4",
+				"-enablePrintf=false",
 				filename("routines/Gather_Scatter/mpi_scatter_inPlace.c")));
 	}
 
@@ -105,15 +110,21 @@ public class MPITranslationTest {
 
 	@Test
 	public void mpi_diff2dBad() throws ABCException {
-		assertFalse(ui.run("verify", "-input_mpi_nprocs=4", "-enablePrintf=false",
-				"-inputNPROCSX=2", "-inputNPROCSY=2",
+		assertFalse(ui.run("verify", "-input_mpi_nprocs=4",
+				"-enablePrintf=false", "-inputNPROCSX=2", "-inputNPROCSY=2",
 				filename("diffusion2dBad.c")));
 	}
 
 	@Test
+	public void mpi_diff1d() throws ABCException {
+		assertTrue(ui.run("verify -enablePrintf=false",
+				filename("diffusion1d.c")));
+	}
+
+	@Test
 	public void mpiSysStatus() {
-		assertTrue(ui.run("verify", "-enablePrintf=false", "-input_mpi_nprocs=3",
-				filename("routines/mpiSysStatus.c")));
+		assertTrue(ui.run("verify", "-enablePrintf=false",
+				"-input_mpi_nprocs=3", filename("routines/mpiSysStatus.c")));
 	}
 
 	@Test
@@ -144,9 +155,9 @@ public class MPITranslationTest {
 
 	@Test
 	public void mpiSumArray() {
-		assertTrue(ui.run("verify", "-enablePrintf=false",
-				"-input_mpi_nprocs_hi=3", "-inputNB=8",
-				filename("sum_array.c")));
+		assertTrue(ui
+				.run("verify", "-enablePrintf=false", "-input_mpi_nprocs_hi=3",
+						"-inputNB=8", filename("sum_array.c")));
 	}
 
 	@Test
@@ -156,8 +167,9 @@ public class MPITranslationTest {
 
 	@Test
 	public void gaussJordan() {
-		assertTrue(ui.run("verify -enablePrintf=false -inputnumRow=2 -inputnumCol=2 -input_mpi_nprocs=2",
-				filename("gaussJordan_elimination.c")));
+		assertTrue(ui
+				.run("verify -enablePrintf=false -inputnumRow=2 -inputnumCol=2 -input_mpi_nprocs=2",
+						filename("gaussJordan_elimination.c")));
 	}
 
 	@AfterClass
