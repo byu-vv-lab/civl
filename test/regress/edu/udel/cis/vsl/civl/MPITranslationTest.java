@@ -116,12 +116,6 @@ public class MPITranslationTest {
 	}
 
 	@Test
-	public void mpi_diff1d() throws ABCException {
-		assertTrue(ui.run("verify -enablePrintf=false",
-				filename("diffusion1d.c")));
-	}
-
-	@Test
 	public void mpiSysStatus() {
 		assertTrue(ui.run("verify", "-enablePrintf=false",
 				"-input_mpi_nprocs=3", filename("routines/mpiSysStatus.c")));
