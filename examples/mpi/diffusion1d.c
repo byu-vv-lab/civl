@@ -93,7 +93,7 @@ void init_globals() {
 void initialize() {
 #ifdef _CIVL
   //elaborate nx to concrete value...
-  for (int i=0; i<nx; i++);
+  //for (int i=0; i<nx; i++);
   // initialize globals and u...
   init_globals();
   lbound = U_INIT[0];
