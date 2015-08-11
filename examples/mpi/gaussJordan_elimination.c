@@ -397,9 +397,9 @@ int main(int argc, char *argv[]) {
     printf("Expecting the arguments: numberOfRows  numberOfColumns\n");
   numRow = atoi(argv[1]);
   numCol = atoi(argv[2]);
-#else
-  $elaborate(numRow);
-  $elaborate(numCol);
+  //#else
+  //$elaborate(numRow);
+  //$elaborate(numCol);
 #endif
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

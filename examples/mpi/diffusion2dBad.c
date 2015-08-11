@@ -342,10 +342,10 @@ int main(int argc, char * argv[]) {
 
 #ifdef _CIVL
   // elaborating nx, ny, NPROCSX and NPROCSY...
-  $elaborate(NPROCSY);
-  $elaborate(nx);
-  $elaborate(ny);
-  $elaborate(NPROCSX);
+  //$elaborate(NPROCSY);
+  //$elaborate(nx);
+  //$elaborate(ny);
+  //$elaborate(NPROCSX);
 #endif
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(comm, &rank);

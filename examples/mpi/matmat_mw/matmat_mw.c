@@ -87,9 +87,9 @@ int main(int argc, char *argv[]) {
 	fscanf(fp,"%lf",&b[i][j]);
 #else
     // elaborating N, L, M....
-    $elaborate(N);
-    $elaborate(L);
-    $elaborate(M);
+    //$elaborate(N);
+    //$elaborate(L);
+    //$elaborate(M);
     // sequential run
     for(int i=0; i < N; i++) {
       vecmat(a[i], b, &oracle[i][0]);
