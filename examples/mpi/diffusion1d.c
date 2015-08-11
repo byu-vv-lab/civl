@@ -150,6 +150,7 @@ void print_cell(double value) {
 /* Prints the current values of u. */
 void write_frame() {
   if (rank != 0) {
+    $elaborate(nxl);
     MPI_Send(u+1, nxl, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
   } else {
     print_time_header();
