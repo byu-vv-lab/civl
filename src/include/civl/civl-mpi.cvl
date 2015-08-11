@@ -141,6 +141,7 @@ int $mpi_recv(void *buf, int count, MPI_Datatype datatype, int source,
 	      int tag, $comm comm, MPI_Status *status) {
   if (source >= 0 || source == MPI_ANY_SOURCE) {
     $elaborate(source);
+    $elaborate(count);
     $message in = $comm_dequeue(comm, source, tag);
     int size = count*sizeofDatatype(datatype);
 
@@ -167,6 +168,7 @@ int $mpi_sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     out = $message_pack(place, dest, sendtag, sendbuf, size);
     $elaborate(source);
+    $elaborate(recvcount);
     $choose {
       $when (1){ 
 	$comm_enqueue(comm, out);
@@ -208,6 +210,7 @@ int $mpi_collective_recv(void *buf, int count, MPI_Datatype datatype,
 			 MPI_Status * status, char * routName) {
   if(source >= 0 || source == MPI_ANY_SOURCE) {
     $elaborate(source);
+    $elaborate(count);
     $message in = $comm_dequeue(comm, source, MPI_ANY_TAG);
     int size = count*sizeofDatatype(datatype);
     int recvTag;
