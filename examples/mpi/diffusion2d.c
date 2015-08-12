@@ -307,6 +307,8 @@ void printData(int time, int firstCol, int nxl, int currRow, double * buf) {
  * should send their local data to process rank 0 which is responsible
  * for printing */
 void write_frame(int time) {
+  $elaborate(nxl);
+  $elaborate(nyl);
   // sends data row by row
   if (rank != 0) {
     for (int i=0; i<nyl; i++)
@@ -340,13 +342,6 @@ void write_frame(int time) {
 int main(int argc, char * argv[]) {
   int i,j;
 
-#ifdef _CIVL
-  // elaborating nx, ny, NPROCSX and NPROCSY...
-  //$elaborate(NPROCSY);
-  //$elaborate(nx);
-  //$elaborate(ny);
-  //$elaborate(NPROCSX);
-#endif
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &nprocs);
