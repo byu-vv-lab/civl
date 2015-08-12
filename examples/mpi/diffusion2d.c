@@ -40,8 +40,8 @@ $assume(NPROCSX >= 1 && NPROCSX <= NPROCSXB);
 $input int NPROCSYB;               // upper bound for NPROCSY
 $input int NPROCSY;            // number of procs in y direction
 $assume(NPROCSY >= 1 && NPROCSY <= NPROCSYB);
-$input int _NPROCS = NPROCSX * NPROCSY;
-$assume(_NPROCS == NPROCSX * NPROCSY);
+$input int _mpi_nprocs = NPROCSX * NPROCSY;
+$assume(_mpi_nprocs == NPROCSX * NPROCSY);
 #else
 long nx, ny;
 int nsteps, wstep;
