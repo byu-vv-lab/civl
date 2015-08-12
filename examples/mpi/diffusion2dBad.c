@@ -40,8 +40,8 @@ $assume(NPROCSX >= 1 && NPROCSX <= NPROCSXB);
 $input int NPROCSYB = 2;           // upper bound for NPROCSY
 $input int NPROCSY = 2;            // number of procs in y direction
 $assume(NPROCSY >= 1 && NPROCSY <= NPROCSYB);
-$input int _NPROCS = NPROCSX * NPROCSY;
-$assume(_NPROCS == NPROCSX * NPROCSY);
+$input int _mpi_nprocs = NPROCSX * NPROCSY;
+$assume(_mpi_nprocs == NPROCSX * NPROCSY);
 #else
 long nx, ny;
 int nsteps, wstep;
@@ -77,7 +77,7 @@ double * recvbuf;
  * ...         
  * This function computes the global index of the first column 
  * owned by the process of the given rank. rank must be in the 
- * range [0, _NPROCS-1]. The result will in the range [0, nx-1].
+ * range [0, _mpi_nprocs-1]. The result will in the range [0, nx-1].
  */
 long firstColForProc(int rank) {
   long tmp = (rank - (rank / NPROCSX)*NPROCSX)*nx;
@@ -87,7 +87,7 @@ long firstColForProc(int rank) {
 
 /* This function computes the global index of the first row owned by
    the process of the given rank. rank must be in the range[0,
-   _NPROCS-1]. The result will in the range [0, ny-1]. */
+   _mpi_nprocs-1]. The result will in the range [0, ny-1]. */
 long firstRowForProc(int rank) {
   long tmp = ((rank / NPROCSX)*ny);
 

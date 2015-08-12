@@ -4,7 +4,7 @@
 
 #define TAG 99
 
-$input int _NPROCS = 2;
+$input int _mpi_nprocs = 2;
 
 void * Thread(void * tid) {
   int rank, x, y;

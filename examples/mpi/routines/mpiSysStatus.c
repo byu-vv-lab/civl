@@ -6,8 +6,8 @@
 #include <assert.h>
 
 #ifdef _CIVL
-$input int _NPROCS_LOWER_BOUND = 1;
-$input int _NPROCS_UPPER_BOUND = 6;
+$input int _mpi_nprocs_lo = 1;
+$input int _mpi_nprocs_hi = 6;
 #endif
 
 int main(int argc, char * argv[]) {

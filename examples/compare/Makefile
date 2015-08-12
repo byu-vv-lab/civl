@@ -14,7 +14,7 @@ adder: $(ADDER_PATH)adder_par.cvl $(ADDER_PATH)adder_spec.cvl
 	-spec $(ADDER_PATH)adder_spec.cvl
 
 diffusion1d: $(DIFFUSION_PATH)diffusion1d_spec_revision.c $(DIFFUSION_PATH)diffusion1d_par_revision.c
-	$(COMPARE) -inputNX=3 -inputK=0.3 -inputNSTEPS=2 -inputWSTEP=1 -input__NPROCS=2 \
+	$(COMPARE) -inputNX=3 -inputK=0.3 -inputNSTEPS=2 -inputWSTEP=1 -input_mpi_nprocs=2 \
 	-spec $(DIFFUSION_PATH)diffusion1d_spec_revision.c \
 	-impl $(DIFFUSION_PATH)diffusion1d_par_revision.c
 

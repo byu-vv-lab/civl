@@ -29,6 +29,12 @@ mpi_gatherv: ${routines/Gather_Scatter/mpi_gatherv.c}
 mpi_scatterv: ${routines/Gather_Scatter/mpi_scatterv.c}
 	$(VERIFY) -input_mpi_nprocs=4 -enablePrintf=false routines/Gather_Scatter/mpi_scatterv.c
 
+mpi_scatter_inplace: ${routines/Gather_Scatter/mpi_scatter_inPlace.c}
+	$(VERIFY) -input_mpi_nprocs=4 -enablePrintf=false routines/Gather_Scatter/mpi_scatter_inPlace.c
+
+mpi_gather_inplace: ${routines/Gather_Scatter/mpi_gather_inPlace.c}
+	$(VERIFY) -input_mpi_nprocs=4 -enablePrintf=false routines/Gather_Scatter/mpi_gather_inPlace.c
+
 mpi_sysStatus: ${routines//mpiSysStatus.c}
 	$(VERIFY) routines/mpiSysStatus.c
 

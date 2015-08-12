@@ -1,7 +1,7 @@
 #include <mpi.h>
 
 #ifdef _CIVL
-$input int _NPROCS = 2;
+$input int _mpi_nprocs = 2;
 #endif
 
 int main(int argc, char * argv[]) {

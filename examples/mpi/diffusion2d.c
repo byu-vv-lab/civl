@@ -77,7 +77,7 @@ double * recvbuf;
  * ...         
  * This function computes the global index of the first column 
  * owned by the process of the given rank. rank must be in the 
- * range [0, _NPROCS-1]. The result will in the range [0, nx-1].
+ * range [0, _mpi_nprocs-1]. The result will in the range [0, nx-1].
  */
 long firstColForProc(int rank) {
   long tmp = (rank - (rank / NPROCSX)*NPROCSX)*nx;
@@ -87,7 +87,7 @@ long firstColForProc(int rank) {
 
 /* This function computes the global index of the first row owned by
    the process of the given rank. rank must be in the range[0,
-   _NPROCS-1]. The result will in the range [0, ny-1]. */
+   _mpi_nprocs-1]. The result will in the range [0, ny-1]. */
 long firstRowForProc(int rank) {
   long tmp = ((rank / NPROCSX)*ny);
 

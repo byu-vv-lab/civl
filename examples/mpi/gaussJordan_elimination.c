@@ -17,12 +17,12 @@
 #define PRINT 0
 /* Global parameters */
 #ifdef _CIVL
-$input int _NPROCS_UPPER_BOUND=3;  
-$input int _NPROCS_LOWER_BOUND=1;   
-$input int ROWB = 4;                      // upper bound of numRow
+$input int _mpi_nprocs_hi=3;  
+$input int _mpi_nprocs_lo=1;   
+$input int ROWB = 3;                      // upper bound of numRow
 $input int numRow;                        // number of rows in the matrix
 $assume(0 < numRow && numRow <= ROWB);
-$input int COLB = 2;                      // upper bound of numCol
+$input int COLB = 3;                      // upper bound of numCol
 $input int numCol;                        // number of columns in the matrix
 $assume(0 < numCol && numCol <= COLB);
 $input long double data[numRow][numCol];  // input matrix

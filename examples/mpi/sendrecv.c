@@ -5,7 +5,7 @@
 #define FROMRIGHT 0
 #define FROMLEFT  1
 
-$input int _NPROCS = 3;
+$input int _mpi_nprocs = 3;
 int main(int argc, char * argv[]) {
   int rank, size;
   int recv;
