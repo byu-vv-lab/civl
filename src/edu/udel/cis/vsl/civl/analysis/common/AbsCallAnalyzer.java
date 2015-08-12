@@ -45,16 +45,26 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  *
  */
 public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer {
+	/**
+	 * result of absolute call analysis.
+	 * 
+	 * @author Manchun Zheng
+	 */
 	public enum AbsType {
-		NONE, YES, // can be
-		NO, // never
-		MAYBE;// I don't know
+		/** no result, default initial state */
+		NONE,
+		/** can be, at least one evidence is found */
+		YES,
+		/** never, no evidence can be found */
+		NEVER,
+		/** maybe, insufficient prove power */
+		MAYBE;
 		@Override
 		public String toString() {
 			switch (this) {
 			case YES:
 				return "Y";
-			case NO:
+			case NEVER:
 				return "N";
 			case MAYBE:
 				return "?";
@@ -77,17 +87,29 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		}
 	}
 
+	/* *************************** Instance Fields ************************* */
+
 	private Set<CallOrSpawnStatement> unpreprocessedStatements = new HashSet<>();
 	private Map<CallOrSpawnStatement, AbsStatus> result = new LinkedHashMap<>();
 	private SymbolicUniverse universe;
 	private NumericExpression zero;
 	private Reasoner reasoner;
 
+	/* **************************** Constructors *************************** */
+
+	/**
+	 * creates a new instance of absolute value function call analyzer.
+	 * 
+	 * @param universe
+	 *            the symbolic universe to be used for analysis.
+	 */
 	public AbsCallAnalyzer(SymbolicUniverse universe) {
 		this.universe = universe;
 		this.zero = universe.zeroInt();
 		this.reasoner = universe.reasoner(universe.trueExpression());
 	}
+
+	/* ********************* Methods from CodeAnalyzer ********************* */
 
 	@Override
 	public void staticAnalysis(Statement statement) {
@@ -105,6 +127,47 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		}
 	}
 
+	@Override
+	public void analyze(State state, int pid, CallOrSpawnStatement statement,
+			SymbolicExpression[] argumentValues) {
+		AbsStatus status = this.result.get(statement);
+
+		if (status != null) {
+			BooleanExpression pathCondition = state.getPathCondition();
+			NumericExpression argValue = (NumericExpression) argumentValues[0];
+
+			this.analyzeZero(status, pathCondition, argValue);
+			this.analyzePositive(status, pathCondition, argValue);
+			this.analyzeNegative(status, pathCondition, argValue);
+		}
+		return;
+	}
+
+	@Override
+	public void printAnalysis(PrintStream out) {
+		out.println("\n=== abs call analysis ===");
+		if (result.size() > 0) {
+			for (Map.Entry<CallOrSpawnStatement, AbsStatus> entry : result
+					.entrySet()) {
+				CallOrSpawnStatement key = entry.getKey();
+				AbsStatus value = entry.getValue();
+
+				out.println(value + " " + key.getSource().getContent());
+			}
+			out.println();
+			out.println("+: argument > 0");
+			out.println("-: argument < 0");
+			out.println("0: argument = 0");
+			out.println("Y: at least one");
+			out.println("N: never");
+			out.println("?: unknown");
+			// out.println("*: argument could be anything");
+		} else
+			out.println("The program doesn't have any reachable abs function call.");
+	}
+
+	/* *************************** Private Methods ************************* */
+
 	private ResultType isSatisfiable(BooleanExpression predicate) {
 		BooleanExpression claim = universe.not(predicate);
 		ResultType result = reasoner.valid(claim).getResultType();
@@ -116,21 +179,21 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		return ResultType.MAYBE;
 	}
 
-	private BooleanExpression canNegative(BooleanExpression pathCondition,
+	private BooleanExpression canBeNegative(BooleanExpression pathCondition,
 			NumericExpression value) {
 		BooleanExpression negative = universe.lessThan(value, zero);
 
 		return universe.and(pathCondition, negative);
 	}
 
-	private BooleanExpression canPositive(BooleanExpression pathCondition,
+	private BooleanExpression canBePositive(BooleanExpression pathCondition,
 			NumericExpression value) {
 		BooleanExpression positive = universe.lessThan(zero, value);
 
 		return universe.and(pathCondition, positive);
 	}
 
-	private BooleanExpression canZero(BooleanExpression pathCondition,
+	private BooleanExpression canBeZero(BooleanExpression pathCondition,
 			NumericExpression value) {
 		BooleanExpression isZero = universe.equals(zero, value);
 
@@ -172,7 +235,7 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		switch (status.zero) {
 		case YES:// no need to check any more
 			break;
-		case NO: {
+		case NEVER: {
 			newResult = this.neverZero(pathCondition, argValue);
 			switch (newResult) {
 			case YES:
@@ -188,14 +251,14 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			break;
 		}
 		case MAYBE: {
-			newResult = this.isSatisfiable(canZero(pathCondition, argValue));
+			newResult = this.isSatisfiable(canBeZero(pathCondition, argValue));
 
 			if (newResult == ResultType.YES)
 				status.zero = AbsType.YES;
 			break;
 		}
 		case NONE: {
-			newResult = this.isSatisfiable(canZero(pathCondition, argValue));
+			newResult = this.isSatisfiable(canBeZero(pathCondition, argValue));
 
 			if (newResult == ResultType.YES)
 				status.zero = AbsType.YES;
@@ -203,7 +266,7 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 				newResult = this.neverZero(pathCondition, argValue);
 
 				if (newResult == ResultType.YES)
-					status.zero = AbsType.NO;
+					status.zero = AbsType.NEVER;
 				else
 					status.zero = AbsType.MAYBE;
 			}
@@ -220,7 +283,7 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		switch (status.positive) {
 		case YES:// no need to check any more
 			break;
-		case NO: {
+		case NEVER: {
 			newResult = this.neverPositive(pathCondition, argValue);
 			switch (newResult) {
 			case YES:
@@ -236,16 +299,16 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			break;
 		}
 		case MAYBE: {
-			newResult = this
-					.isSatisfiable(canPositive(pathCondition, argValue));
+			newResult = this.isSatisfiable(canBePositive(pathCondition,
+					argValue));
 
 			if (newResult == ResultType.YES)
 				status.positive = AbsType.YES;
 			break;
 		}
 		case NONE: {
-			newResult = this
-					.isSatisfiable(canPositive(pathCondition, argValue));
+			newResult = this.isSatisfiable(canBePositive(pathCondition,
+					argValue));
 
 			if (newResult == ResultType.YES)
 				status.positive = AbsType.YES;
@@ -253,7 +316,7 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 				newResult = this.neverPositive(pathCondition, argValue);
 
 				if (newResult == ResultType.YES)
-					status.positive = AbsType.NO;
+					status.positive = AbsType.NEVER;
 				else
 					status.positive = AbsType.MAYBE;
 			}
@@ -270,7 +333,7 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		switch (status.negative) {
 		case YES:// no need to check any more
 			break;
-		case NO: {
+		case NEVER: {
 			newResult = this.neverNegative(pathCondition, argValue);
 			switch (newResult) {
 			case YES:
@@ -286,16 +349,16 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 			break;
 		}
 		case MAYBE: {
-			newResult = this
-					.isSatisfiable(canNegative(pathCondition, argValue));
+			newResult = this.isSatisfiable(canBeNegative(pathCondition,
+					argValue));
 
 			if (newResult == ResultType.YES)
 				status.negative = AbsType.YES;
 			break;
 		}
 		case NONE: {
-			newResult = this
-					.isSatisfiable(canNegative(pathCondition, argValue));
+			newResult = this.isSatisfiable(canBeNegative(pathCondition,
+					argValue));
 
 			if (newResult == ResultType.YES)
 				status.negative = AbsType.YES;
@@ -303,7 +366,7 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 				newResult = this.neverNegative(pathCondition, argValue);
 
 				if (newResult == ResultType.YES)
-					status.negative = AbsType.NO;
+					status.negative = AbsType.NEVER;
 				else
 					status.negative = AbsType.MAYBE;
 			}
@@ -311,45 +374,6 @@ public class AbsCallAnalyzer extends CommonCodeAnalyzer implements CodeAnalyzer 
 		}
 		default:
 		}
-	}
-
-	@Override
-	public void analyze(State state, int pid, CallOrSpawnStatement statement,
-			SymbolicExpression[] argumentValues) {
-		AbsStatus status = this.result.get(statement);
-
-		if (status != null) {
-			BooleanExpression pathCondition = state.getPathCondition();
-			NumericExpression argValue = (NumericExpression) argumentValues[0];
-
-			this.analyzeZero(status, pathCondition, argValue);
-			this.analyzePositive(status, pathCondition, argValue);
-			this.analyzeNegative(status, pathCondition, argValue);
-		}
-		return;
-	}
-
-	@Override
-	public void printAnalysis(PrintStream out) {
-		out.println("\n=== abs call analysis ===");
-		if (result.size() > 0) {
-			for (Map.Entry<CallOrSpawnStatement, AbsStatus> entry : result
-					.entrySet()) {
-				CallOrSpawnStatement key = entry.getKey();
-				AbsStatus value = entry.getValue();
-
-				out.println(value + " " + key.getSource().getContent());
-			}
-			out.println();
-			out.println("+: argument > 0");
-			out.println("-: argument < 0");
-			out.println("0: argument = 0");
-			out.println("Y: at least one");
-			out.println("N: never");
-			out.println("?: unknown");
-			// out.println("*: argument could be anything");
-		} else
-			out.println("The program doesn't have any reachable abs function call.");
 	}
 
 }

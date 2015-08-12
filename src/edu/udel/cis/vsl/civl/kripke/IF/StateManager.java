@@ -53,19 +53,22 @@ public interface StateManager extends StateManagerIF<State, Transition> {
 	 */
 	void setUpdater(Printable updater);
 
+	/**
+	 * @return the number of saved states explored by the state manager
+	 */
 	int numStatesExplored();
 
 	/**
 	 * Outputs collected for the model during the search.
 	 * 
-	 * @return
+	 * @return all possible outputs
 	 */
 	Map<BooleanExpression, Set<Pair<State, SymbolicExpression[]>>> collectedOutputs();
 
 	/**
 	 * The names of output variables of the model.
 	 * 
-	 * @return
+	 * @return the names of output variables
 	 */
 	String[] outptutNames();
 

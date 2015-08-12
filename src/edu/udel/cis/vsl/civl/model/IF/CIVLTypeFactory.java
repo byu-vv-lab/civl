@@ -101,6 +101,8 @@ public interface CIVLTypeFactory {
 	 * This returns the universal domain type (<code>$domain</code>). It
 	 * includes all the complete domain types (<code>$domain(n)</code>).
 	 * 
+	 * @param rangeType
+	 * 
 	 * @return the universal domain type
 	 */
 	CIVLDomainType domainType(CIVLType rangeType);

@@ -7,6 +7,13 @@ import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
+/**
+ * This represents a code analyzer for analyzing source code for a certain
+ * property.
+ * 
+ * @author Manchun Zheng
+ *
+ */
 public interface CodeAnalyzer {
 	/**
 	 * Analyzes a call statement.

@@ -267,7 +267,7 @@ public class CommonExecutor implements Executor {
 
 				function = eval.second;
 				state = eval.first;
-				if (function.isSystem()) {
+				if (function.isRootFunction()) {
 					state = this.executeSystemFunctionCall(state, pid,
 							statement, (SystemFunction) function);
 				} else
@@ -937,7 +937,7 @@ public class CommonExecutor implements Executor {
 						recDomUnion);
 
 				if (!isAllNull)
-					nextEleValues = symbolicUtil.getNextInRecDomain(recDom,
+					nextEleValues = symbolicUtil.getNextInRectangularDomain(recDom,
 							varValues, dim);
 				else
 					nextEleValues = symbolicUtil.getDomainInit(domValue);

@@ -19,8 +19,6 @@ public class Dynamics {
 	 *            The symbolic universe to be used.
 	 * @param modelFactory
 	 *            The model factory to be used.
-	 * @param errLogger
-	 *            The error logger to be used.
 	 * @return The new symbolic utility created.
 	 */
 	public static SymbolicUtility newSymbolicUtility(SymbolicUniverse universe,

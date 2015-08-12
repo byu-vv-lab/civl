@@ -49,6 +49,16 @@ public class CIVLErrorLogger extends ErrorLog {
 	 */
 	private boolean solve = false;
 
+	/**
+	 * creates a new instance of error logger.
+	 * 
+	 * @param directory
+	 * @param sessionName
+	 * @param out
+	 * @param config
+	 * @param universe
+	 * @param solve
+	 */
 	public CIVLErrorLogger(File directory, String sessionName, PrintStream out,
 			GMCConfiguration config, SymbolicUniverse universe, boolean solve) {
 		super(directory, sessionName, out);
@@ -120,7 +130,8 @@ public class CIVLErrorLogger extends ErrorLog {
 	 *             if it turns out the path condition is unsatisfiable; in this
 	 *             case no error will be reported since the current path is
 	 *             infeasible
-	 * @return
+	 * @return the state obtained by adding the claim to the pc of the given
+	 *         state.
 	 * 
 	 */
 	public State logError(CIVLSource source, State state, String process,
@@ -208,6 +219,10 @@ public class CIVLErrorLogger extends ErrorLog {
 	 *            source code element used to report the error
 	 * @param state
 	 *            the current state in which the possible error is detected
+	 * @param process
+	 *            the process name, i.e, "p"+process identifier
+	 * @param stateString
+	 *            the string representation of state where the error occurs
 	 * @param errorKind
 	 *            the kind of error (e.g., DEREFERENCE)
 	 * @param message

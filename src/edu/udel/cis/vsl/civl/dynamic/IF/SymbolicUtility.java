@@ -75,11 +75,28 @@ public interface SymbolicUtility {
 	 * assumed about the symbolic expression. To extract the type from such an
 	 * expression, use method {@link #getType}.
 	 * 
+	 * @param civlType
+	 *            the CIVL type that the symbolic type corresponds to.
 	 * @param type
 	 *            a symbolic type
 	 * @return a canonic symbolic expression wrapping that type
 	 */
 	SymbolicExpression expressionOfType(CIVLType civlType, SymbolicType type);
+
+	/**
+	 * Given a symbolic expression returned by the method
+	 * {@link #expressionOfType}, this extracts the type that was used to create
+	 * that expression. If the given expression is not an expression that was
+	 * created by {@link #expressionOfType}, the behavior is undefined.
+	 * 
+	 * @param source
+	 *            the source information of the expression.
+	 * @param expr
+	 *            a symbolic expression returned by method
+	 *            {@link #expressionOfType}
+	 * @return the symbolic type used to create that expression
+	 */
+	public SymbolicType getType(CIVLSource source, SymbolicExpression expr);
 
 	/**
 	 * 
@@ -249,10 +266,8 @@ public interface SymbolicUtility {
 	 * 
 	 * @param value
 	 *            The value to be tested if it is in range.
-	 * @param domain
-	 *            The rectangular domain that the value wants to test with.
-	 * @param index
-	 *            The index of the range that the test bases on.
+	 * @param range
+	 *            The range.
 	 * @return True iff the given value is within the index-th range of a
 	 *         certain domain.
 	 */
@@ -382,7 +397,8 @@ public interface SymbolicUtility {
 	 *            The length of the array.
 	 * @param eleValue
 	 *            The element value of the array.
-	 * @return
+	 * @return the new array of the given length, with each element initialized
+	 *         with the given symbolic expression.
 	 */
 	SymbolicExpression newArray(BooleanExpression context,
 			SymbolicType elementValueType, NumericExpression length,
@@ -400,11 +416,11 @@ public interface SymbolicUtility {
 	 * object, returns the parent pointer. For example, a pointer to an array
 	 * element returns the pointer to the array.
 	 * 
+	 * @param source
+	 *            the source information of the pointer
 	 * @param pointer
 	 *            non-trivial pointer
 	 * @return pointer to parent
-	 * @throws CIVLInternalException
-	 *             if pointer is trivial
 	 */
 	SymbolicExpression parentPointer(CIVLSource source,
 			SymbolicExpression pointer);
@@ -439,6 +455,8 @@ public interface SymbolicUtility {
 	 * @param source
 	 *            The source code element to be used in the error report (if
 	 *            any).
+	 * @param civlType
+	 *            The CIVL type corresponding to the symbolic type
 	 * @param type
 	 *            The symbolic type whose size is to evaluated.
 	 * @return The symbolic representation of the size of the symbolic type.
@@ -485,20 +503,21 @@ public interface SymbolicUtility {
 
 	/**
 	 * Returns true if and only if the domain is more precisely a literal
-	 * domain.
+	 * domain. A literal domain has the form of an array if integer tuples with
+	 * fixed size (i.e., the domain's dimension).
 	 * 
 	 * @param domain
 	 *            The symbolic expression of a domain object
-	 * @return
+	 * @return true iff the given domain is a literal domain.
 	 */
 	boolean isLiteralDomain(SymbolicExpression domain);
 
 	/**
-	 * Get the first element of a domain. Return null if domain is empty.
+	 * Get the first integer tuple of a domain. Return null if domain is empty.
 	 * 
 	 * @param domValue
 	 *            The domain object which will contribute a first element.
-	 * @return
+	 * @return the first integer tuple of a domain, null if the domain is empty
 	 */
 	List<SymbolicExpression> getDomainInit(SymbolicExpression domValue);
 
@@ -530,7 +549,7 @@ public interface SymbolicUtility {
 	 * 
 	 * @param domain
 	 *            The symbolic expression of the domain object.
-	 * @return
+	 * @return the iterator for iterating over the domain.
 	 */
 	Iterator<List<SymbolicExpression>> getDomainIterator(
 			SymbolicExpression domain);
@@ -540,28 +559,31 @@ public interface SymbolicUtility {
 	 * 
 	 * @param domValue
 	 *            The symbolic expression of the rectangular domain field.
-	 * @param varValues
-	 *            The given current domain element.
+	 * @param currentTuple
+	 *            The current integer tuple which is an element of the domain.
 	 * @param concreteDim
-	 *            The dimension of domain.
-	 * @return
+	 *            The dimension of domain, which should be concrete.
+	 * @return the next integer tuple in the domain
 	 */
-	List<SymbolicExpression> getNextInRecDomain(SymbolicExpression recDomUnion,
-			List<SymbolicExpression> varValues, int concreteDim);
+	List<SymbolicExpression> getNextInRectangularDomain(
+			SymbolicExpression domValue, List<SymbolicExpression> currentTuple,
+			int concreteDim);
 
 	/**
 	 * Check if the given domain element has a subsequence in the given
-	 * rectangular domain.
+	 * rectangular domain. A rectangular domain is the cartesian product of a
+	 * number of ranges.s
 	 * 
-	 * @param recDomainUnion
+	 * @param rectangularDomain
 	 *            The rectangular domain union object.
 	 * @param concreteDim
 	 *            The number of the dimension of the domain
 	 * @param domElement
 	 *            The element of the domain
-	 * @return
+	 * @return true iff there is at least one subsequent element of the given
+	 *         one in the given rectangular domain.
 	 */
-	boolean recDomainHasNext(SymbolicExpression recDomainUnion,
+	boolean recDomainHasNext(SymbolicExpression rectangularDomain,
 			int concreteDim, List<SymbolicExpression> domElement);
 
 	/**
@@ -592,7 +614,7 @@ public interface SymbolicUtility {
 	 * @param source
 	 *            The CIVL source of the statement involves this empty checking
 	 *            operation.
-	 * @return
+	 * @return true iff the given domain is empty
 	 */
 	boolean isEmptyDomain(SymbolicExpression domain, int dim, CIVLSource source);
 
@@ -635,7 +657,8 @@ public interface SymbolicUtility {
 	 *            An array element reference pointer or a pointer to an array
 	 * @param source
 	 *            The CIVL source of the pointer
-	 * @return
+	 * @return the most ancestor pointer of the given array element reference
+	 *         pointer.
 	 */
 	SymbolicExpression arrayRootPtr(SymbolicExpression arrayPtr,
 			CIVLSource source);
@@ -647,7 +670,7 @@ public interface SymbolicUtility {
 	 * 
 	 * @param eleRef
 	 *            A reference of element of an array
-	 * @return
+	 * @return an array of indices with the given reference
 	 */
 	NumericExpression[] stripIndicesFromReference(ArrayElementReference eleRef);
 
@@ -657,8 +680,8 @@ public interface SymbolicUtility {
 	 * declared.<br>
 	 * For example, giving an array "int a[2][3][4]" returns {2, 3, 4}.
 	 * 
-	 * @param array
-	 *            The target array.
+	 * @param arrayType
+	 *            The type of the target array.
 	 * @return The Java Array contains array extents information.
 	 */
 	NumericExpression[] arrayCoordinateSizes(SymbolicCompleteArrayType arrayType);
@@ -678,15 +701,32 @@ public interface SymbolicUtility {
 	Pair<NumericExpression, NumericExpression> arithmeticIntDivide(
 			NumericExpression dividend, NumericExpression denominator);
 
+	/**
+	 * returns the symbolic type of dynamic type which is used to model
+	 * user-defined types. In CIVL, each user-defined type (e.g., a struct) has
+	 * a unique ID and is represented as a symbolic expression of the type
+	 * "dynamic type".
+	 * 
+	 * @return the symbolic type of dynamic type
+	 */
 	SymbolicTupleType dynamicType();
 
+	/**
+	 * returns the corresponding CIVL type of the given dynamic type with the
+	 * specified ID.
+	 * 
+	 * @param typeId
+	 *            The ID of the symbolic type.
+	 * @return the corresponding CIVL type of the given dynamic type with the
+	 *         specified ID
+	 */
 	CIVLType getStaticTypeOfDynamicType(SymbolicExpression typeId);
 
 	/**
 	 * Is the given domain a rectangular domain?
 	 * 
 	 * @param domain
-	 * @return
+	 * @return true iff the given domain is a rectangular domain.
 	 */
 	boolean isRectangularDomain(SymbolicExpression domain);
 
@@ -694,7 +734,7 @@ public interface SymbolicUtility {
 	 * Is the given range a regular range?
 	 * 
 	 * @param range
-	 * @return
+	 * @return true iff the given range is a regular range.
 	 */
 	boolean isRegularRange(SymbolicExpression range);
 
@@ -705,18 +745,18 @@ public interface SymbolicUtility {
 	 * 
 	 * @param domain
 	 * @param index
-	 * @return
+	 * @return the index-th range of the given rectangular domain.
 	 */
 	SymbolicExpression getRangeOfRectangularDomain(SymbolicExpression domain,
 			int index);
 
 	/**
-	 * Returns the higher bound of the given range.
+	 * Returns the upper bound of the given range.
 	 * 
 	 * Precondition: range is a regular range
 	 * 
 	 * @param range
-	 * @return
+	 * @return the upper bound of the given range.
 	 */
 	NumericExpression getHighOfRegularRange(SymbolicExpression range);
 
@@ -726,7 +766,8 @@ public interface SymbolicUtility {
 	 * Precondition: range is a regular range
 	 * 
 	 * @param range
-	 * @return
+	 * @return the lower bound of the given range.
+	 * 
 	 */
 	NumericExpression getLowOfRegularRange(SymbolicExpression range);
 
@@ -736,7 +777,7 @@ public interface SymbolicUtility {
 	 * Precondition: range is a regular range
 	 * 
 	 * @param range
-	 * @return
+	 * @return the step of the given range
 	 */
 	NumericExpression getStepOfRegularRange(SymbolicExpression range);
 
@@ -744,9 +785,17 @@ public interface SymbolicUtility {
 	 * Returns the dimension of the given domain.
 	 * 
 	 * @param domain
-	 * @return
+	 * @return the dimension of the given domain.
 	 */
 	NumericExpression getDimensionOf(SymbolicExpression domain);
 
-	BooleanExpression[] getConjunctiveClauses(BooleanExpression clause);
+	/**
+	 * Returns the sub-clauses of a CNF clause. For example, if the given CNF
+	 * clause is <code> X==3 && Y<5 && (a[k]>2 || k<0) </code>, then the result
+	 * is an array of clauses:<code>{ X==3, Y<5, a[k]>2 || k<0}</code>
+	 * 
+	 * @param cnfClause
+	 * @return the sub-clauses of a CNF clause
+	 */
+	BooleanExpression[] getConjunctiveClauses(BooleanExpression cnfClause);
 }

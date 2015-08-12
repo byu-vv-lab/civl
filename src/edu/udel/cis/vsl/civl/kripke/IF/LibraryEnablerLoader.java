@@ -32,6 +32,7 @@ public interface LibraryEnablerLoader {
 	 * @param symbolicAnalyzer
 	 *            The symbolic analyzer used in the system.
 	 * @return The library enabler of the given name.
+	 * @throws LibraryLoaderException 
 	 */
 	LibraryEnabler getLibraryEnabler(String name, Enabler primaryEnabler,
 			Evaluator evaluator, ModelFactory modelFacotry,

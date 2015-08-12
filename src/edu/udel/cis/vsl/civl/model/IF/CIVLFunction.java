@@ -190,7 +190,7 @@ public interface CIVLFunction extends Sourceable {
 	 * 
 	 * @return Is this the outermost function?
 	 */
-	public boolean isSystem();
+	public boolean isRootFunction();
 
 	/**
 	 * Remove all locations that satisfies the following conditions:
@@ -207,39 +207,85 @@ public interface CIVLFunction extends Sourceable {
 	 */
 	void simplify();
 
+	/**
+	 * performs purely local analysis for each statement/location of this
+	 * function. No-op for system functions.
+	 */
 	void purelyLocalAnalysis();
 
+	/**
+	 * returns the variables that are used as the operand of the address-of
+	 * operator and are visible from the given lexical scope.
+	 * 
+	 * @param scope
+	 *            a lexical scope
+	 * @return returns the variables that are used as the operand of the
+	 *         address-of operator and are visible from the given lexical scope.
+	 */
 	Set<Variable> variableAddressedOf(Scope scope);
 
+	/**
+	 * returns the variables that are used as the operand of the address-of
+	 * operator.
+	 * 
+	 * @return returns the variables that are used as the operand of the
+	 *         address-of operator and are visible from the given lexical scope.
+	 */
 	Set<Variable> variableAddressedOf();
 
+	/**
+	 * returns the type of this function.
+	 * 
+	 * @return the type of this function.
+	 */
 	CIVLFunctionType functionType();
 
 	/**
-	 * Is this function implemented by library?
+	 * Is this a system function? A system function doesn't contain a function
+	 * body and it is implemented by a library component in Java.
 	 * 
-	 * @return
+	 * @return true iff this function is a system function.
 	 */
-	boolean isLibraryFunction();
+	boolean isSystemFunction();
 
 	/**
 	 * Is this an abstract function?
 	 * 
-	 * @return
+	 * @return true iff this function is an abstract function.
 	 */
-	boolean isAbstract();
+	boolean isAbstractFunction();
 
 	/**
 	 * Is this a normal function that contains a function body defined in the
 	 * source code?
 	 * 
-	 * @return
+	 * @return true iff this is a normal function that contains a function body
+	 *         defined in the source code.
 	 */
-	boolean isNormal();
+	boolean isNormalFunction();
 
+	/**
+	 * updates the return type of this function
+	 * 
+	 * @param returnType
+	 *            the type to be used as the return type of this function
+	 */
 	void setReturnType(CIVLType returnType);
 
+	/**
+	 * updates the types of the parameters of this function
+	 * 
+	 * @param types
+	 *            the types to be used as the parameter types
+	 */
 	void setParameterTypes(CIVLType[] types);
 
+	/**
+	 * returns the string representation of all un-reached code (if any) in this
+	 * function.
+	 * 
+	 * @return the string representation of all un-reached code (if any) in this
+	 *         function
+	 */
 	StringBuffer unreachedCode();
 }

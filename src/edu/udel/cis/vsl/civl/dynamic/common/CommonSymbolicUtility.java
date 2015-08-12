@@ -147,6 +147,14 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 
 	/* ***************************** Constructor *************************** */
 
+	/**
+	 * creates a new instance of symbolic utility.
+	 * 
+	 * @param universe
+	 *            the symbolic universe to be used by the symbolic utility.
+	 * @param modelFactory
+	 *            the model factory to be used by the symbolic utility.
+	 */
 	public CommonSymbolicUtility(SymbolicUniverse universe,
 			ModelFactory modelFactory) {
 		SymbolicType dynamicToIntType;
@@ -405,8 +413,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	 * representation. If it is a concrete array of char consisting of concrete
 	 * characters, this will be the obvious string. Otherwise the result is
 	 * something readable but unspecified.
-	 * 
-	 * @throws UnsatisfiablePathConditionException
 	 */
 	@Override
 	public StringBuffer charArrayToString(CIVLSource source,
@@ -998,7 +1004,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 					if (this.currentPos == null)
 						return (this.currentPos = this.startPos);
 					else {
-						this.currentPos = getNextInRecDomain(this.recDom,
+						this.currentPos = getNextInRectangularDomain(this.recDom,
 								this.currentPos, this.dim);
 						return this.currentPos;
 					}
@@ -1210,7 +1216,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public List<SymbolicExpression> getNextInRecDomain(
+	public List<SymbolicExpression> getNextInRectangularDomain(
 			SymbolicExpression recDom, List<SymbolicExpression> varValues,
 			int concreteDim) {
 		SymbolicExpression recDomainField = recDom;
@@ -1365,5 +1371,12 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public SymbolicType getType(CIVLSource source, SymbolicExpression expr) {
+		int id = extractIntField(source, expr, zeroObj);
+
+		return (SymbolicType) universe.objectWithId(id);
 	}
 }

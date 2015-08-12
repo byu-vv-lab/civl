@@ -75,6 +75,9 @@ public class CIVLException extends RuntimeException {
 		return result;
 	}
 
+	/**
+	 * @return the source code element associated with this exception
+	 */
 	public CIVLSource getSource() {
 		return source;
 	}

@@ -4,6 +4,12 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 
+/**
+ * This represents an error during the execution of a program.
+ * 
+ * @author Manchun Zheng
+ *
+ */
 public class CIVLExecutionException extends CIVLException {
 
 	/**
@@ -29,6 +35,8 @@ public class CIVLExecutionException extends CIVLException {
 	 * @param certainty
 	 *            the certainty with which this is known to be an error in the
 	 *            program being verified
+	 * @param process
+	 *            process name, i.e., "p"+process identifier
 	 * @param message
 	 *            a message explaining the error
 	 * @param source
@@ -36,14 +44,25 @@ public class CIVLExecutionException extends CIVLException {
 	 */
 	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
 			String process, String message, CIVLSource source) {
-		super(message, source);
-		assert kind != null;
-		assert certainty != null;
-		this.process = process;
-		this.kind = kind;
-		this.certainty = certainty;
+		this(kind, certainty, process, message, null, source);
 	}
 
+	/**
+	 * @param kind
+	 *            the kind of error
+	 * @param certainty
+	 *            the certainty with which this is known to be an error in the
+	 *            program being verified
+	 * @param process
+	 *            process name, i.e., "p"+process identifier
+	 * @param message
+	 *            a message explaining the error
+	 * @param stateString
+	 *            the string representation of the state where the error occurs;
+	 *            may be null
+	 * @param source
+	 *            the source code element associated to the error; may be null
+	 */
 	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
 			String process, String message, StringBuffer stateString,
 			CIVLSource source) {
@@ -56,15 +75,34 @@ public class CIVLExecutionException extends CIVLException {
 		this.certainty = certainty;
 	}
 
+	/**
+	 * @param kind
+	 *            the kind of error
+	 * @param certainty
+	 *            the certainty with which this is known to be an error in the
+	 *            program being verified
+	 * @param process
+	 *            process name, i.e., "p"+process identifier
+	 * @param message
+	 *            a message explaining the error
+	 * @param sourceable
+	 *            the source code element associated to the error; may be null
+	 */
 	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
 			String process, String message, Sourceable sourceable) {
 		this(kind, certainty, process, message, sourceable.getSource());
 	}
 
+	/**
+	 * @return the certainty of this error.
+	 */
 	public Certainty certainty() {
 		return certainty;
 	}
 
+	/**
+	 * @return the kind of this error.
+	 */
 	public ErrorKind kind() {
 		return kind;
 	}
@@ -72,7 +110,7 @@ public class CIVLExecutionException extends CIVLException {
 	/**
 	 * Is this error reported?
 	 * 
-	 * @return
+	 * @return true iff the error has already been reported
 	 */
 	public boolean isReported() {
 		return this.reported;

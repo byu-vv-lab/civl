@@ -69,12 +69,12 @@ public class CommonSystemFunction extends CommonFunction implements
 	}
 
 	@Override
-	public boolean isLibraryFunction() {
+	public boolean isSystemFunction() {
 		return true;
 	}
 
 	@Override
-	public boolean isNormal() {
+	public boolean isNormalFunction() {
 		return false;
 	}
 }

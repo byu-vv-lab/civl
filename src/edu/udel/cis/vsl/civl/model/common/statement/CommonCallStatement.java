@@ -325,7 +325,7 @@ public class CommonCallStatement extends CommonStatement implements
 	public boolean isSystemCall() {
 		CIVLFunction function = this.function();
 
-		if (this.isCall && function != null && function.isLibraryFunction()) {
+		if (this.isCall && function != null && function.isSystemFunction()) {
 			return true;
 		}
 		return false;
@@ -336,7 +336,7 @@ public class CommonCallStatement extends CommonStatement implements
 		String result = (source() == null ? "??" : source().id()) + "->";
 		CIVLFunction function = this.function();
 
-		if (this.isCall && function != null && function.isNormal()) {
+		if (this.isCall && function != null && function.isNormalFunction()) {
 			result += Integer.toString(function.startLocation().id());
 			return result;
 		} else

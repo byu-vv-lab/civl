@@ -94,9 +94,9 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  * statement and pass the function's start location as a parameter.
  * <p>
  * After constructing the system function, use
- * {@link #model(CIVLSource, CIVLFunction)} to create the model. Additional
- * functions can then be created in the same manner and added to the model with
- * {@link Model#addFunction(CIVLFunction)}.
+ * {@link #model(CIVLSource, CIVLFunction, Program)} to create the model.
+ * Additional functions can then be created in the same manner and added to the
+ * model with {@link Model#addFunction(CIVLFunction)}.
  * 
  * @author Timothy K. Zirkel (zirkel)
  * 
@@ -161,6 +161,8 @@ public interface ModelFactory {
 	 * @param expression
 	 *            The expression to be translated.
 	 * @return The boolean expression
+	 * @throws ModelFactoryException
+	 *             if the given expression doesn't have boolean type
 	 */
 	Expression booleanExpression(Expression expression)
 			throws ModelFactoryException;
@@ -172,7 +174,9 @@ public interface ModelFactory {
 	 * numeric type, an exception will be thrown.
 	 * 
 	 * @param expression
-	 * @return
+	 * @return the numeric representation of the given expression
+	 * @throws ModelFactoryException
+	 *             if the given expression doesn't have boolean or numeric type
 	 */
 	Expression numericExpression(Expression expression)
 			throws ModelFactoryException;
@@ -287,6 +291,13 @@ public interface ModelFactory {
 	DynamicTypeOfExpression dynamicTypeOfExpression(CIVLSource source,
 			CIVLType type);
 
+	/**
+	 * creates a function identifier expression.
+	 * 
+	 * @param source
+	 * @param function
+	 * @return
+	 */
 	FunctionIdentifierExpression functionIdentifierExpression(
 			CIVLSource source, CIVLFunction function);
 

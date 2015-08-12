@@ -73,12 +73,12 @@ public class CommonAbstractFunction extends CommonFunction implements
 	}
 
 	@Override
-	public boolean isAbstract() {
+	public boolean isAbstractFunction() {
 		return true;
 	}
 
 	@Override
-	public boolean isNormal() {
+	public boolean isNormalFunction() {
 		return false;
 	}
 

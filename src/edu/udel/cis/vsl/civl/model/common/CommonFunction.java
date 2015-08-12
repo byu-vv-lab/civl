@@ -149,7 +149,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	}
 
 	@Override
-	public boolean isSystem() {
+	public boolean isRootFunction() {
 		return isSystem;
 	}
 
@@ -226,7 +226,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 			out.println(prefix + "| | " + iter.next().name());
 		}
 		outerScope.print(prefix + "| ", out, isDebug);
-		if (!isSystem()) {
+		if (!isRootFunction()) {
 			out.println(prefix + "| locations (start=" + startLocation.id()
 					+ ")");
 			for (Location location : this.locations) {
@@ -507,17 +507,17 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	}
 
 	@Override
-	public boolean isLibraryFunction() {
+	public boolean isSystemFunction() {
 		return false;
 	}
 
 	@Override
-	public boolean isAbstract() {
+	public boolean isAbstractFunction() {
 		return false;
 	}
 
 	@Override
-	public boolean isNormal() {
+	public boolean isNormalFunction() {
 		return true;
 	}
 

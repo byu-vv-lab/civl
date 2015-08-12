@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.kripke.IF;
 import java.util.BitSet;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition.AtomicLockAction;
@@ -16,8 +17,8 @@ import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
  * system function calls at a certain state for a give process. It also provides
  * a method to compute the ample set of processes at a given state for a given
  * process. A new library is implemented in the package named as
- * "edu.udel.cis.vsl.civl.library." ( {@link CommonLibraryLoader#CLASS_PREFIX})
- * + library name. And the class name of the enabler is: "Lib" + library name +
+ * "edu.udel.cis.vsl.civl.library." ( {@link CIVLConstants#LIBRARY_PREFIX}) +
+ * library name. And the class name of the enabler is: "Lib" + library name +
  * "Enabler". For example, the stdio library enabler is implemented as the class
  * edu.udel.cis.vsl.civl.library.stdio.LibstdioEnabler.
  * 
@@ -28,8 +29,8 @@ public interface LibraryEnabler {
 
 	/**
 	 * <p>
-	 * Computes the ample set process ID's from a system function call at a
-	 * given state for a given process.
+	 * Computes the ample set process IDs from a system function call at a given
+	 * state for a given process.
 	 * </p>
 	 * 
 	 * <p>
@@ -50,9 +51,14 @@ public interface LibraryEnabler {
 	 *            to.
 	 * @param statement
 	 *            The system function call statement.
+	 * @param reachablePtrWritableMap
+	 * @param reachablePtrReadonlyMap
+	 * @param reachableNonPtrWritableMap
+	 * @param reachableNonPtrReadonlyMap
 	 * @param reachableMemUnitsMap
 	 *            The map of reachable memory units of all active processes.
-	 * @return
+	 * @return the ample set of process IDs
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	BitSet ampleSet(State state, int pid, CallOrSpawnStatement statement,
 			MemoryUnitSet[] reachablePtrWritableMap,
@@ -74,11 +80,14 @@ public interface LibraryEnabler {
 	 *            The current path condition.
 	 * @param pid
 	 *            The ID of the process that the function call belongs to.
+	 * @param processIdentifier
+	 * @param atomicLockAction
 	 * @param assignAtomicLock
 	 *            The assignment statement for the atomic lock variable, should
 	 *            be null except that the process is going to re-obtain the
 	 *            atomic lock variable.
 	 * @return The set of enabled transitions.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	List<Transition> enabledTransitions(State state, CallOrSpawnStatement call,
 			BooleanExpression pathCondition, int pid, int processIdentifier,

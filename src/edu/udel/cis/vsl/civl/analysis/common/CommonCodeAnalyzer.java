@@ -5,6 +5,12 @@ import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
+/**
+ * A general and abstract implementation of a code analyzer.
+ * 
+ * @author Manchun Zheng
+ *
+ */
 public abstract class CommonCodeAnalyzer implements CodeAnalyzer {
 
 	@Override

@@ -1461,7 +1461,7 @@ public class CommonEvaluator implements Evaluator {
 					"function body cann't be found");
 			throw new UnsatisfiablePathConditionException();
 		}
-		if (function.isSystem()) {
+		if (function.isRootFunction()) {
 			SystemFunction systemFunction = (SystemFunction) function;
 
 			return getSystemGuard(expression.getSource(), state, pid,
@@ -2297,7 +2297,8 @@ public class CommonEvaluator implements Evaluator {
 			SymbolicExpression value = state.valueOf(pid,
 					type.getStateVariable());
 
-			result = new TypeEvaluation(state, getType(source, value));
+			result = new TypeEvaluation(state, symbolicUtil.getType(source,
+					value));
 		} else if (type instanceof CIVLArrayType) {
 			CIVLArrayType arrayType = (CIVLArrayType) type;
 			TypeEvaluation elementTypeEval = getDynamicType(state, pid,
@@ -2369,23 +2370,6 @@ public class CommonEvaluator implements Evaluator {
 					+ " for the function " + function + ": "
 					+ exception.getMessage(), source);
 		}
-	}
-
-	/**
-	 * Given a symbolic expression returned by the method
-	 * {@link #expressionOfType}, this extracts the type that was used to create
-	 * that expression. If the given expression is not an expression that was
-	 * created by {@link #expressionOfType}, the behavior is undefined.
-	 * 
-	 * @param expr
-	 *            a symbolic expression returned by method
-	 *            {@link #expressionOfType}
-	 * @return the symbolic type used to create that expression
-	 */
-	private SymbolicType getType(CIVLSource source, SymbolicExpression expr) {
-		int id = symbolicUtil.extractIntField(source, expr, zeroObj);
-
-		return (SymbolicType) universe.objectWithId(id);
 	}
 
 	// private Set<SymbolicExpression> heapCells(State state, int dyscopeId) {

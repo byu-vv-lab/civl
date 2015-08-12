@@ -29,6 +29,8 @@ public class Kripkes {
 	 *            The evaluator to be used.
 	 * @param symbolicAnalyzer
 	 *            The symbolic analyzer used in the system.
+	 * @param memUnitFactory
+	 *            The memory unit factory for memory analysis.
 	 * @param libLoader
 	 *            The library enabler loader to be used.
 	 * @param errorLogger
@@ -47,6 +49,11 @@ public class Kripkes {
 
 	/**
 	 * Creates a new instance of library enabler loader.
+	 * 
+	 * @param libEvaluatorLoader
+	 *            the library evaluator loader
+	 * @param civlConfig
+	 *            the CIVL configuration
 	 * 
 	 * @return The new library enabler loader created.
 	 */
