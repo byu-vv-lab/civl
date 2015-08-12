@@ -109,6 +109,14 @@ public class MPITranslationTest {
 	}
 
 	@Test
+	public void mpi_diff2d1() throws ABCException {
+		assertTrue(ui
+				.run("verify -showTransitions=false -inputNSTEPSB=2 -inputNXB=1 -inputNYB=2 "
+						+ "-inputNPROCSX=1 -inputNPROCSY=2 -enablePrintf=false",
+						filename("diffusion2d.c")));
+	}
+
+	@Test
 	public void mpi_diff2dBad() throws ABCException {
 		assertFalse(ui.run("verify", "-input_mpi_nprocs=4",
 				"-enablePrintf=false", "-inputNPROCSX=2", "-inputNPROCSY=2",
