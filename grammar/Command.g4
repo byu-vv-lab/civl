@@ -125,6 +125,7 @@ OPTION_NAME
     | '-id'
     | '-maxdepth'
     | '-min'
+    | '-mpiContract'
     | '-ompNoSimplify'
     | '-ompLoopDecomp'
     | '-preproc'
