@@ -200,6 +200,11 @@ public class CIVLConfiguration {
 	private boolean collectOutputs = false;
 
 	/**
+	 * If CIVL enables "MPI CONTRACT" mode
+	 */
+	private boolean mpiContract = false;
+
+	/**
 	 * Constructs a new CIVL configuration object from the command line
 	 * configuration.
 	 * 
@@ -276,6 +281,7 @@ public class CIVLConfiguration {
 				.getValueOrDefault(CIVLConstants.procBoundO);
 		this.setInputVariables(config.getMapValue(CIVLConstants.inputO));
 		this.collectOutputs = config.isTrue(CIVLConstants.collectOutputO);
+		this.setEnableMpiContract(config.isTrue(CIVLConstants.mpiContractO));
 	}
 
 	public void setOut(PrintStream out) {
@@ -592,5 +598,13 @@ public class CIVLConfiguration {
 	 */
 	public void setCollectOutputs(boolean collectOutputs) {
 		this.collectOutputs = collectOutputs;
+	}
+
+	public boolean isEnableMpiContract() {
+		return mpiContract;
+	}
+
+	public void setEnableMpiContract(boolean enableMpiContract) {
+		mpiContract = enableMpiContract;
 	}
 }

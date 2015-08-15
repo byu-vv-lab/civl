@@ -1,10 +1,10 @@
 package edu.udel.cis.vsl.civl.run.common;
 
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectOutputO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.CIVLMacroO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.analyzeAbsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.astO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectHeapsO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectOutputO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectProcessesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectScopesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.deadlockO;
@@ -19,6 +19,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.inputO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.macroO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.maxdepthO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.minO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.mpiContractO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompLoopDecompO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.ompNoSimplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.preprocO;
@@ -78,14 +79,14 @@ public class CIVLCommand {
 		CIVLCommand.addVerifyOrCompareOption(errorBoundO, verboseO, debugO,
 				echoO, userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
-				showProverQueriesO, inputO, minO, maxdepthO, procBoundO,
-				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
-				showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcompO,
-				showProgramO, showPathConditionO, ompNoSimplifyO,
-				ompLoopDecompO, collectProcessesO, collectScopesO,
-				collectHeapsO, macroO, preprocO, astO, showTimeO,
-				showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO, analyzeAbsO,
-				collectOutputO);
+				showProverQueriesO, inputO, minO, mpiContractO, maxdepthO,
+				procBoundO, saveStatesO, simplifyO, solveO, enablePrintfO,
+				showAmpleSetO, showAmpleSetWtStatesO, statelessPrintfO,
+				deadlockO, svcompO, showProgramO, showPathConditionO,
+				ompNoSimplifyO, ompLoopDecompO, collectProcessesO,
+				collectScopesO, collectHeapsO, macroO, preprocO, astO,
+				showTimeO, showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO,
+				analyzeAbsO, collectOutputO);
 		CIVLCommand.addCompareOption(errorBoundO, verboseO, debugO, echoO,
 				userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,

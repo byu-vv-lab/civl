@@ -139,6 +139,9 @@ public class CIVLConstants {
 	public final static Option minO = Option.newScalarOption("min", BOOLEAN,
 			"search for minimal counterexample", false);
 
+	public final static Option mpiContractO = Option.newScalarOption(
+			"mpiContract", BOOLEAN, "enable contracts for MPI mode", false);
+
 	/**
 	 * The bound on number of live processes (no bound if negative). No bound by
 	 * default.
@@ -437,10 +440,10 @@ public class CIVLConstants {
 		return new Option[] { astO, collectHeapsO, collectProcessesO,
 				collectScopesO, deadlockO, debugO, echoO, enablePrintfO,
 				errorBoundO, guiO, guidedO, idO, inputO, linkO, macroO,
-				maxdepthO, minO, ompLoopDecompO, ompNoSimplifyO, preprocO,
-				procBoundO, randomO, saveStatesO, seedO, showAmpleSetO,
-				showAmpleSetWtStatesO, showInputVarsO, showMemoryUnitsO,
-				showModelO, showPathConditionO, showProgramO,
+				maxdepthO, minO, mpiContractO, ompLoopDecompO, ompNoSimplifyO,
+				preprocO, procBoundO, randomO, saveStatesO, seedO,
+				showAmpleSetO, showAmpleSetWtStatesO, showInputVarsO,
+				showMemoryUnitsO, showModelO, showPathConditionO, showProgramO,
 				showProverQueriesO, showQueriesO, showSavedStatesO,
 				showStatesO, showTimeO, showTransitionsO, showUnreachedCodeO,
 				simplifyO, solveO, statelessPrintfO, svcompO, sysIncludePathO,
