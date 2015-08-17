@@ -167,6 +167,16 @@ public interface Executor {
 
 	List<Format> splitFormat(CIVLSource source, StringBuffer formatBuffer);
 
-	void printf(PrintStream printStream, CIVLSource source,
+	/**
+	 * If there are insufficient arguments for the format, the behavior is
+	 * undefined. If the format is exhausted while arguments remain, the excess
+	 * arguments are evaluated (as always) but are otherwise ignored.
+	 * 
+	 * @param printStream
+	 * @param source
+	 * @param formats
+	 * @param arguments
+	 */
+	void printf(PrintStream printStream, CIVLSource source, String process,
 			List<Format> formats, List<StringBuffer> arguments);
 }

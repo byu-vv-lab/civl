@@ -937,8 +937,8 @@ public class CommonExecutor implements Executor {
 						recDomUnion);
 
 				if (!isAllNull)
-					nextEleValues = symbolicUtil.getNextInRectangularDomain(recDom,
-							varValues, dim);
+					nextEleValues = symbolicUtil.getNextInRectangularDomain(
+							recDom, varValues, dim);
 				else
 					nextEleValues = symbolicUtil.getDomainInit(domValue);
 			} else
@@ -1019,8 +1019,8 @@ public class CommonExecutor implements Executor {
 						.symbolicExpressionToString(arguments[i].getSource(),
 								state, null, argumentValue)));
 		}
-		this.printf(civlConfig.out(), arguments[0].getSource(), formats,
-				printedContents);
+		this.printf(civlConfig.out(), arguments[0].getSource(), process,
+				formats, printedContents);
 		return state;
 	}
 
@@ -1231,21 +1231,26 @@ public class CommonExecutor implements Executor {
 		return result;
 	}
 
-	/**
-	 * Prints to the standard output stream.
-	 * 
-	 * @param source
-	 *            The source code information of the format argument.
-	 * @param formatBuffer
-	 *            The format string buffer.
-	 * @param arguments
-	 *            The list of arguments to be printed according to the format.
-	 */
 	@Override
 	public void printf(PrintStream printStream, CIVLSource source,
-			List<Format> formats, List<StringBuffer> arguments) {
+			String process, List<Format> formats, List<StringBuffer> arguments) {
 		int argIndex = 0;
 
+		if (formats.size() > arguments.size()) {
+			// insufficient arguments
+			StringBuffer message = new StringBuffer();
+			CIVLExecutionException error;
+
+			message.append("insufficient arguments for printf: the format string is requring "
+					+ formats.size()
+					+ " while only "
+					+ arguments.size()
+					+ " arguments are provided.");
+			error = new CIVLExecutionException(ErrorKind.PRINTF,
+					Certainty.PROVEABLE, process, message.toString(), source);
+			this.errorLogger.reportError(error);
+			return;
+		}
 		for (Format format : formats) {
 			String formatString = format.toString();
 

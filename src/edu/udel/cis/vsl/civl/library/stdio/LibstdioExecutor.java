@@ -1070,7 +1070,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		if (fileNameString.compareTo(STDOUT) == 0) {
 			if (civlConfig.enablePrintf())
 				this.primaryExecutor.printf(civlConfig.out(),
-						arguments[1].getSource(), formats, printedContents);
+						arguments[1].getSource(), process, formats,
+						printedContents);
 			if (civlConfig.statelessPrintf())
 				return state;
 		} else if (fileNameString.compareTo(STDIN) == 0) {
@@ -1078,7 +1079,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		} else if (fileNameString.equals(STDERR)) {
 			if (civlConfig.enablePrintf())
 				this.primaryExecutor.printf(civlConfig.err(),
-						arguments[1].getSource(), formats, printedContents);
+						arguments[1].getSource(), process, formats,
+						printedContents);
 		}
 		{ // updates the file
 			SymbolicExpression fileContents = universe.tupleRead(fileObject,
