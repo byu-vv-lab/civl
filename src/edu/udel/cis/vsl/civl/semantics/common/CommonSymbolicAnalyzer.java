@@ -728,13 +728,28 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				} else {
 					StringBuffer result = new StringBuffer();
 
-					result.append('&');
-					result.append("<");
-					result.append(dyscope.name());
-					result.append('>');
-					result.append(variable.name());
-					result.append(referenceToString(source, variable.type(),
-							reference).right);
+					if (variable
+							.name()
+							.name()
+							.startsWith(
+									ModelConfiguration.ANONYMOUS_VARIABLE_PREFIX)) {
+						SymbolicExpression stringExpression = state
+								.getVariableValue(dyscopeId, vid);
+
+						result.append("\"");
+						result.append(this.symbolicUtil.charArrayToString(
+								source, (SymbolicSequence<?>) stringExpression
+										.argument(0), 0, true));
+						result.append("\"");
+					} else {
+						result.append('&');
+						result.append("<");
+						result.append(dyscope.name());
+						result.append('>');
+						result.append(variable.name());
+						result.append(referenceToString(source,
+								variable.type(), reference).right);
+					}
 					return result.toString();
 				}
 			}
@@ -883,18 +898,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 						result.append("($domain(");
 						result.append(dimension.toStringBuffer(false));
 						result.append("))");
-						// // rectangular domain, value is an array of ranges
-						// // result.append("{");
-						// result.append(this.symbolicExpressionToString(source,
-						// state, null,
-						// (SymbolicExpression) value.argument(1), false,
-						// "", "", false));
 					}
-					// else {
-					// // literal domain
-					// result.append(this.symbolicExpressionToString(source,
-					// state, null, value, false, "", "", false));
-					// }
 					result.append(this.symbolicExpressionToString(source,
 							state, null, value, false, "", "", false));
 				} else if (type.toString().equals("$regular_range")) {

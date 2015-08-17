@@ -1235,22 +1235,8 @@ public class CommonExecutor implements Executor {
 	public void printf(PrintStream printStream, CIVLSource source,
 			String process, List<Format> formats, List<StringBuffer> arguments) {
 		int argIndex = 0;
+		int numArguments = arguments.size();
 
-		if (formats.size() > arguments.size()) {
-			// insufficient arguments
-			StringBuffer message = new StringBuffer();
-			CIVLExecutionException error;
-
-			message.append("insufficient arguments for printf: the format string is requring "
-					+ formats.size()
-					+ " while only "
-					+ arguments.size()
-					+ " arguments are provided.");
-			error = new CIVLExecutionException(ErrorKind.PRINTF,
-					Certainty.PROVEABLE, process, message.toString(), source);
-			this.errorLogger.reportError(error);
-			return;
-		}
 		for (Format format : formats) {
 			String formatString = format.toString();
 
@@ -1259,6 +1245,7 @@ public class CommonExecutor implements Executor {
 				printStream.print(formatString);
 				break;
 			default:
+				assert argIndex < numArguments;
 				printStream.printf("%s", arguments.get(argIndex++));
 			}
 		}
