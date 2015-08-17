@@ -100,8 +100,17 @@ public interface Model extends Sourceable {
 	 */
 	public Map<String, Variable> externVariables();
 
+	/**
+	 * @return the number of malloc and malloc-equivalent (e.g., gcomm_create)
+	 *         statements in the model
+	 */
 	int getNumMallocs();
 
+	/**
+	 * @param index
+	 *            the index of the malloc statement
+	 * @return the malloc statement of the given index
+	 */
 	MallocStatement getMalloc(int index);
 
 	/**
@@ -133,6 +142,12 @@ public interface Model extends Sourceable {
 	 */
 	CIVLBundleType bundleType();
 
+	/**
+	 * updates the bundle type of the model
+	 * 
+	 * @param type
+	 *            the bundle type
+	 */
 	void setBundleType(CIVLBundleType type);
 
 	/**
@@ -141,19 +156,39 @@ public interface Model extends Sourceable {
 	 */
 	void complete();
 
+	/**
+	 * updates the flag which denotes either the model contains any fscanf call
+	 * or not.
+	 * 
+	 * @param value
+	 */
 	void setHasFscanf(boolean value);
 
+	/**
+	 * 
+	 * @return true iff the model contains any fscanf call
+	 */
 	boolean hasFscanf();
 
+	/**
+	 * @return the program object associates with this model
+	 */
 	Program program();
 
+	/**
+	 * prints the unreached code of the model
+	 * 
+	 * @param out
+	 *            the output stream
+	 */
 	void printUnreachedCode(PrintStream out);
 
 	/**
 	 * Return the output variables of this model, which all belong to the root
 	 * scope.
 	 * 
-	 * @return
+	 * @return the output variables of this model, which all belong to the root
+	 *         scope
 	 */
 	List<Variable> outputVariables();
 }

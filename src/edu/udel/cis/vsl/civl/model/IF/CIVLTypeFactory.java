@@ -243,6 +243,9 @@ public interface CIVLTypeFactory {
 	 * 
 	 * @param name
 	 *            identifier, usually the "tag" for this struct or union type
+	 * @param isStruct
+	 *            is the new type a struct type? If false, then the new type
+	 *            will be a union type
 	 * @return a new incomplete struct or union type with given name
 	 */
 	CIVLStructOrUnionType structOrUnionType(Identifier name, boolean isStruct);
@@ -340,10 +343,12 @@ public interface CIVLTypeFactory {
 	/**
 	 * Completes the bundle type by specifying the list of all dynamic types
 	 * which can occur as bundle elements. If the collections yields a sequence
-	 * of types t_i, then the bundlesymbolic type is union_i(array(t_i)).
+	 * of types t_i, then the bundle symbolic type is union_i(array(t_i)).
 	 * 
 	 * @param bundleType
 	 *            an incomplete bundle type
+	 * @param eleTypes
+	 *            the list of types that could be the element of the bundle type
 	 * @param types
 	 *            the set of all dynamic types which occur as bundle elements
 	 */
@@ -380,7 +385,8 @@ public interface CIVLTypeFactory {
 	 * __gcomm__[][]).
 	 * 
 	 * @param type
-	 * @param id
+	 *            the type which is a field of the heap type
+	 * @return the ID of the type in the heap
 	 */
 	int getHeapFieldId(CIVLType type);
 

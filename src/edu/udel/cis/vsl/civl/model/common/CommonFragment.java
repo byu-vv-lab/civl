@@ -27,7 +27,7 @@ public class CommonFragment implements Fragment {
 	/**
 	 * The last statement of the fragment
 	 */
-	public Set<Statement> finalStatements;// Set<Statement> lastStatements
+	public Set<Statement> finalStatements;//
 
 	/**
 	 * The start location of the fragment

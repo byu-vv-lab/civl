@@ -31,8 +31,8 @@ public interface ModelBuilder {
 	 *            The ABC program to translate
 	 * @param name
 	 *            The name of the model
-	 * @param out
-	 * @param debug
+	 * @param debugging
+	 * @param debugOut
 	 * @return The model.
 	 * @throws CommandLineException
 	 *             if an input variable initial value specified on the command

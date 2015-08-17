@@ -15,6 +15,9 @@ import java.util.Set;
 public final class ModelConfiguration {
 
 	/* Reserved names of symbolic constants */
+	/**
+	 * Constant for the name of undefined values
+	 */
 	public static final String UNDEFINED = "UNDEFINED";
 
 	/**
@@ -22,9 +25,18 @@ public final class ModelConfiguration {
 	 */
 	public static final String INVALID = "INVALID";
 
+	/**
+	 * the set of reserved names for symbolic constants
+	 */
 	public static Set<String> RESERVE_NAMES = new HashSet<>(Arrays.asList(
 			UNDEFINED, INVALID));
 
+	/**
+	 * add new name to the reserved name set
+	 * 
+	 * @param name
+	 *            name to be added to the reserved name set
+	 */
 	public static void addReservedName(String name) {
 		if (!RESERVE_NAMES.contains(name))
 			RESERVE_NAMES.add(name);
@@ -116,16 +128,34 @@ public final class ModelConfiguration {
 	 */
 	public static final String BARRIER_TYPE = "$barrier";
 
+	/**
+	 * the name of $bundle type
+	 */
 	public static final String BUNDLE_TYPE = "$bundle";
 
+	/**
+	 * the name of $dynamic type
+	 */
 	public static final String DYNAMIC_TYPE = "$dynamic";
 
+	/**
+	 * the name of the heap type
+	 */
 	public static final String HEAP_TYPE = "$heap";
 
+	/**
+	 * the name of message type
+	 */
 	public static final String MESSAGE_TYPE = "$message";
 
+	/**
+	 * the name of process reference type
+	 */
 	public static final String PROC_TYPE = "$proc";
 
+	/**
+	 * the name of queue type
+	 */
 	public static final String QUEUE_TYPE = "$queue";
 
 	/**
@@ -190,10 +220,19 @@ public final class ModelConfiguration {
 
 	/* Functions */
 
+	/**
+	 * the function to get the unique counter of time
+	 */
 	public static final String NEXT_TIME_COUNT = "$next_time_count";
-	
-	public static final String DYNAMIC_TYPE_NAME="dynamicType";
-	
+
+	/**
+	 * name of the symbolic type for mapping user-defined types to integers
+	 */
+	public static final String DYNAMIC_TYPE_NAME = "dynamicType";
+
+	/**
+	 * prefix for anonymous variables
+	 */
 	public static final String ANONYMOUS_VARIABLE_PREFIX = "_anon_";
 
 }

@@ -277,10 +277,10 @@ public interface ModelFactory {
 			int fieldIndex);
 
 	/**
-	 * Returns a "DynamicTypeOf" expression with the given type argument. This
-	 * is an expression of type {@link CIVLDynamicType}. When evaluated in a
-	 * state s, it returns an symbolic expression wrapping a symbolic type which
-	 * is the type determined by the static type in the given state.
+	 * Returns a "DynamicTypeOf" expression with the given type argument. When
+	 * evaluated in a state s, it returns an symbolic expression wrapping a
+	 * symbolic type which is the type determined by the static type in the
+	 * given state.
 	 * 
 	 * @param source
 	 *            source code reference
@@ -296,11 +296,18 @@ public interface ModelFactory {
 	 * 
 	 * @param source
 	 * @param function
-	 * @return
+	 * @return the new function identifier expression of the given function
 	 */
 	FunctionIdentifierExpression functionIdentifierExpression(
 			CIVLSource source, CIVLFunction function);
 
+	/**
+	 * @param source
+	 * @param isRoot
+	 *            true if the expression to be created is <code>$root</code>;
+	 *            otherwise, <code>$here</code>
+	 * @return a new here or root expression
+	 */
 	HereOrRootExpression hereOrRootExpression(CIVLSource source, boolean isRoot);
 
 	/**
@@ -413,39 +420,59 @@ public interface ModelFactory {
 			BigDecimal value);
 
 	/**
-	 * Creates a regular range expression, which has the syntax <code></code>.
+	 * Creates a regular range expression, which has the syntax
+	 * <code>low .. high # step</code>. step should be non-zero, and
+	 * <code>(high-low)/step >= 0 </code>.
 	 * 
 	 * @param source
+	 *            the source code information of the regular range expression.
 	 * @param low
+	 *            the lower bound of the range
 	 * @param high
+	 *            the higher bound of the range
 	 * @param step
-	 * @return
+	 *            the step of the range
+	 * @return the new regular range expression with the given lower/upper
+	 *         bounds and step.
 	 */
 	RegularRangeExpression regularRangeExpression(CIVLSource source,
 			Expression low, Expression high, Expression step);
 
 	/**
-	 * Create a rectangular domain expression
+	 * Create a rectangular domain expression, which has the form
+	 * <code>{r1, r2, ..., rm}</code>, where <code>m</code> is the dimension of
+	 * the domain, and <code>ri (where 1 <= i <= m)</code> is a range expression
+	 * (either regular range or literal range).
 	 * 
 	 * @param source
+	 *            the source code information of the domain expression
 	 * @param ranges
+	 *            the list of range expressions that will be used to compose the
+	 *            domain expression
 	 * @param type
-	 * @return
+	 *            the type of the domain expression
+	 * @return the new rectangular domain expression.
 	 */
 	RecDomainLiteralExpression recDomainLiteralExpression(CIVLSource source,
 			List<Expression> ranges, CIVLType type);
 
 	/**
 	 * Returns a domain guard expression which is boolean expression whose
-	 * arguments consists of loop variables in a civl for loop and the original
-	 * domain associate to the loop. It evaluates it to true if and only if the
-	 * values of those variables are such that at least one more iteration
-	 * exists.
+	 * arguments consists of loop variables in a CIVL <code>$for</code> loop and
+	 * the original domain associate to the loop. It evaluates it to true if and
+	 * only if the values of those variables are such that at least one more
+	 * iteration exists.
 	 * 
 	 * @param source
+	 *            the source code information of the domain guard expression
 	 * @param vars
+	 *            the list of variables the value of which represent the current
+	 *            element of the domain
+	 * @param counter
+	 *            the counter variable for iterating the domain one by one
 	 * @param domain
-	 * @return
+	 *            the domain
+	 * @return the new domain guard expression.
 	 */
 	DomainGuardExpression domainGuard(CIVLSource source, List<Variable> vars,
 			Variable counter, Expression domain);
