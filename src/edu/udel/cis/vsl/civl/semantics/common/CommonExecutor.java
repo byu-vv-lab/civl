@@ -748,13 +748,10 @@ public class CommonExecutor implements Executor {
 		state = this.assign(state, pid, process, domSize, domSizeValue);
 		number_domSize = (IntegerNumber) reasoner.extractNumber(domSizeValue);
 		if (number_domSize == null) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OTHER, Certainty.PROVEABLE, process,
+			this.errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateToString(state), ErrorKind.OTHER,
 					"The arguments of the domain for $parfor "
-							+ "must be concrete.",
-					symbolicAnalyzer.stateInformation(state), source);
-
-			this.errorLogger.reportError(err);
+							+ "must be concrete.");
 		} else if (!number_domSize.isZero()) {
 			// only spawns processes when the domain is not empty.
 			InitialValueExpression initVal = modelFactory
