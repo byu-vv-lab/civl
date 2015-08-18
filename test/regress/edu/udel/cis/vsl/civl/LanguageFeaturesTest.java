@@ -20,8 +20,7 @@ public class LanguageFeaturesTest {
 
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File("examples"),
-			"languageFeatures");
+	private static File rootDir = new File(new File("examples"), "languageFeatures");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -45,8 +44,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void arrayLiteral() throws ABCException {
-		assertTrue(ui.run("verify", "-enablePrintf=false",
-				filename("arrayLiteral.cvl")));
+		assertTrue(ui.run("verify", "-enablePrintf=false", filename("arrayLiteral.cvl")));
 	}
 
 	@Test
@@ -259,8 +257,7 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void nonbooleanCondition() throws IOException,
-			PreprocessorException, ParseException, SyntaxException {
+	public void nonbooleanCondition() throws IOException, PreprocessorException, ParseException, SyntaxException {
 		assertTrue(ui.run("verify", filename("nonbooleanCondition.cvl")));
 	}
 
@@ -316,8 +313,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void pointerAddBad6() throws ABCException {
-		assertFalse(ui
-				.run("verify -errorBound=2", filename("pointerAddBad6.c")));
+		assertFalse(ui.run("verify -errorBound=2", filename("pointerAddBad6.c")));
 	}
 
 	@Test
@@ -342,8 +338,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void scopeOperators() throws ABCException {
-		assertTrue(ui.run("verify", "-enablePrintf=false",
-				filename("scopeOperators.cvl")));
+		assertTrue(ui.run("verify", "-enablePrintf=false", filename("scopeOperators.cvl")));
 	}
 
 	@Test
@@ -408,8 +403,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void functionPointer() throws ABCException {
-		assertTrue(ui.run("verify", "-enablePrintf=false",
-				filename("functionPointer.cvl")));
+		assertTrue(ui.run("verify", "-enablePrintf=false", filename("functionPointer.cvl")));
 	}
 
 	@Test
@@ -489,14 +483,17 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void civlFor() throws ABCException {
-		assertTrue(ui.run("verify", "-enablePrintf=false",
-				filename("civlfor.cvl")));
+		assertTrue(ui.run("verify", "-enablePrintf=false", filename("civlfor.cvl")));
 	}
 
 	@Test
 	public void civlParfor() throws ABCException {
-		assertTrue(ui.run("verify", "-enablePrintf=false",
-				filename("civlParfor.cvl")));
+		assertTrue(ui.run("verify", "-enablePrintf=false", filename("civlParfor.cvl")));
+	}
+
+	@Test
+	public void civlParforNotConcrete() throws ABCException {
+		assertFalse(ui.run("verify", "-errorBound=2 -enablePrintf=false", filename("civlParforNotConcrete.cvl")));
 	}
 
 	@Test
@@ -536,14 +533,13 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void include1() {
-		assertFalse(ui.run("verify", "-userIncludePath=" + rootDir.getPath(),
-				filename("include1.cvl")));
+		assertFalse(ui.run("verify", "-userIncludePath=" + rootDir.getPath(), filename("include1.cvl")));
 	}
 
 	@Test
 	public void procBound() {
-		assertFalse(ui.run("verify", "-procBound=10", "-showTransitions=false",
-				"-showSavedStates=false", filename("procBound.cvl")));
+		assertFalse(ui.run("verify", "-procBound=10", "-showTransitions=false", "-showSavedStates=false",
+				filename("procBound.cvl")));
 	}
 
 	@Test
@@ -561,8 +557,7 @@ public class LanguageFeaturesTest {
 		assertTrue(ui.run("verify", filename("pointerAdd1.cvl")));
 		assertFalse(ui.run("verify -DWRONG", filename("pointerAdd1.cvl")));
 		assertTrue(ui.run("verify -DARRAY", filename("pointerAdd1.cvl")));
-		assertFalse(ui.run("verify -DARRAY -DWRONG",
-				filename("pointerAdd1.cvl")));
+		assertFalse(ui.run("verify -DARRAY -DWRONG", filename("pointerAdd1.cvl")));
 
 	}
 
