@@ -4,8 +4,10 @@
 package edu.udel.cis.vsl.civl.state.common.immutable;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -88,6 +90,11 @@ public class ImmutableState implements State {
 	 */
 	static long instanceCount = 0;
 
+	/**
+	 * Snapshots queue HashMap for MPI communicators, one MPI communicator has
+	 * an corresponding snapshot queue.
+	 */
+	private Map<Integer, ArrayList<ImmutableCollectiveSnapshotsEntry>> snapshotsQueues;
 	/* ************************** Instance Fields ************************** */
 
 	/**
@@ -215,6 +222,7 @@ public class ImmutableState implements State {
 			result.scopeHashed = true;
 			result.scopeHashCode = state.scopeHashCode;
 		}
+		result.snapshotsQueues = state.snapshotsQueues;
 		return result;
 	}
 
@@ -464,6 +472,35 @@ public class ImmutableState implements State {
 	}
 
 	/**
+	 * Get a new copy of the collective snapshot queues in this state. If the
+	 * {@link #snapshotsQueues} field is null, return an empty HashMap.
+	 * 
+	 * @return
+	 */
+	Map<Integer, ArrayList<ImmutableCollectiveSnapshotsEntry>> getSnapshotsQueues() {
+		if (snapshotsQueues == null)
+			return new HashMap<>();
+		else
+			return new HashMap<>(snapshotsQueues);
+	}
+
+	/**
+	 * Update the {@link #snapshotsQueues} field, return a new state with
+	 * updated collective snapshot queues
+	 * 
+	 * @param newQueues
+	 * @return
+	 */
+	ImmutableState setSnapshotsQueues(
+			Map<Integer, ArrayList<ImmutableCollectiveSnapshotsEntry>> newQueues) {
+		ImmutableState newState = newState(this, processStates, dyscopes,
+				pathCondition);
+
+		newState.snapshotsQueues = new HashMap<>(newQueues);
+		return newState;
+	}
+
+	/**
 	 * Finds the dynamic scope containing the given variable. The search begins
 	 * in the current dynamic scope of process pid (i.e., the dyscope at the top
 	 * of that process' call stack). If the variable is not found there, it then
@@ -520,6 +557,7 @@ public class ImmutableState implements State {
 			result.procHashed = true;
 			result.procHashCode = procHashCode;
 		}
+		result.snapshotsQueues = this.snapshotsQueues;
 		return result;
 	}
 
@@ -547,6 +585,7 @@ public class ImmutableState implements State {
 			result.scopeHashed = true;
 			result.scopeHashCode = scopeHashCode;
 		}
+		result.snapshotsQueues = this.snapshotsQueues;
 		return result;
 	}
 
@@ -566,7 +605,48 @@ public class ImmutableState implements State {
 			result.scopeHashed = true;
 			result.scopeHashCode = scopeHashCode;
 		}
+		result.snapshotsQueues = this.snapshotsQueues;
 		return result;
+	}
+
+	/**
+	 * Returns the corresponding snapshot queue by giving the identifier of an
+	 * MPI communicator (The identifier is a component of the CIVL MPI library
+	 * implementation). If there is no such a snapshot queue for the MPI
+	 * communicator, returns null.
+	 * 
+	 * @param id
+	 *            The identifier of a MPI communicator
+	 * @return
+	 */
+	public ArrayList<ImmutableCollectiveSnapshotsEntry> getSnapshots(int id) {
+		if (snapshotsQueues == null)
+			snapshotsQueues = new HashMap<>();
+		if (snapshotsQueues.containsKey(id))
+			return snapshotsQueues.get(id);
+		else
+			return null;
+	}
+
+	/**
+	 * Update one collective snapshot queue. Returns a new state after the
+	 * updating.
+	 * 
+	 * @param id
+	 *            The identifier of an MPI communicator which specifies the
+	 *            updated snapshot queue
+	 * @param queue
+	 *            The updated snapshot queue
+	 * @return
+	 */
+	public ImmutableState updateQueue(int id,
+			ArrayList<ImmutableCollectiveSnapshotsEntry> queue) {
+		ImmutableState newState;
+
+		newState = newState(this, processStates, dyscopes, pathCondition);
+		newState.snapshotsQueues = new HashMap<>(snapshotsQueues);
+		newState.snapshotsQueues.put(id, queue);
+		return newState;
 	}
 
 	/* ************************ Methods from State ************************* */
@@ -763,6 +843,7 @@ public class ImmutableState implements State {
 			result.procHashed = true;
 			result.procHashCode = procHashCode;
 		}
+		result.snapshotsQueues = snapshotsQueues;
 		return result;
 	}
 
