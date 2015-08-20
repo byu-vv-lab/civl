@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -24,6 +25,31 @@ public class ExperimentalTest {
 	}
 
 	/* **************************** Test Methods *************************** */
+
+	@Test
+	public void coassert() {
+		assertTrue(ui.run("show -showModel=3 ", filename("coassert.c")));
+	}
+
+	@Test
+	public void wildcard_coassert() {
+		assertTrue(ui.run("verify -mpiContract -input_mpi_nprocs=3 ",
+				filename("wildcard_coassert.c")));
+		assertFalse(ui.run("verify -mpiContract -input_mpi_nprocs=3 ",
+				filename("wildcard_coassert_bad.c")));
+		// assertTrue(ui.run("replay -showTransitions -input_NPROCS=3 ",
+		// filename("wildcard_coassert.c")));
+	}
+
+	@Test
+	public void contract() {
+		assertTrue(ui.run("show -showModel", filename("contracts.c")));
+	}
+
+	@Test
+	public void remoteAccess() {
+		assertFalse(ui.run("verify", filename("remoteAccess.cvl")));
+	}
 
 	@Test
 	public void arrayWrite() {
