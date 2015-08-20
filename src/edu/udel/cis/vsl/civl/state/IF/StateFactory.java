@@ -7,8 +7,12 @@ import java.util.Map;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableCollectiveSnapshotsEntry;
+import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableMonoState;
+import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableState;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -597,4 +601,71 @@ public interface StateFactory {
 	 * @param state
 	 */
 	Map<Variable, SymbolicExpression> inputVariableValueMap(State state);
+
+	/* ****************** Snapshots related method ****************** */
+	/* Note: Snapshots are objects with type ImmutableMonoState */
+
+	/**
+	 * Merges a set of {@link ImmutableMonoState} to a FAKE global
+	 * {@link ImmutableState} which should only be used to evaluation.
+	 * 
+	 * @precondition: For any two monoStates in the array, they should be owned
+	 *                by different processes.
+	 * @postcondition: true.
+	 * 
+	 * @param monoStates
+	 *            The array of {@link ImmutableMonoState}
+	 * @return
+	 */
+	ImmutableState mergeMonostates(State state,
+			ImmutableCollectiveSnapshotsEntry entry);
+
+	/**
+	 * Take a snapshot on current state then store the snapshot with the
+	 * collective assertion into an collectiveSnapshotsEntry. If the global
+	 * state has a queue, then either create a new entry then enqueue, or modify
+	 * a existing entry, otherwise create both a queue and a entry. Return the
+	 * new or modified entry.
+	 * 
+	 * @param state
+	 * @param involvedProcesses
+	 * @param identifier
+	 * @param assertion
+	 * @param channels
+	 * @return
+	 */
+	ImmutableState addToCollectiveSnapshotsEntry(ImmutableState state, int pid,
+			int place, int queueID, int entryPos, Expression assertion,
+			SymbolicExpression channels);
+
+	/**
+	 * The process with "pid" creates a fresh new
+	 * {@link CollectiveSnapshotsEntry}, then saves its own snapshot in the new
+	 * entry. This function returns the new state with a new entry in one of its
+	 * snapshots queues.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param numProcesses
+	 * @param place
+	 * @param queueID
+	 * @param assertion
+	 * @param channels
+	 * @return
+	 */
+	ImmutableState createCollectiveSnapshotsEnrty(ImmutableState state,
+			int pid, int numProcesses, int place, int queueID,
+			Expression assertion, SymbolicExpression channels);
+
+	/**
+	 * Dequeues an {@link CollectiveSnapshotsEntry} from the specific snapshots
+	 * queue, returns a new state with the a dequeued snapshots queue.
+	 * 
+	 * @param state
+	 * @param queueID
+	 * @return
+	 */
+	Pair<ImmutableState, ImmutableCollectiveSnapshotsEntry> dequeueCollectiveSnapshotsEntry(
+			ImmutableState state, int queueID);
+	/* ****************** End of Snapshots related method ****************** */
 }
