@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
@@ -42,6 +43,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RemoteExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
@@ -1520,4 +1522,31 @@ public interface ModelFactory {
 	List<Variable> inputVariables();
 
 	void addInputVariable(Variable variable);
+
+	/**
+	 * Creates a remote reference expression with a numeric expression
+	 * represents a process and a variable identifier expression.
+	 * 
+	 * @param source
+	 * @param process
+	 * @param variable
+	 * @param scope
+	 * @return
+	 */
+	RemoteExpression remoteExpression(CIVLSource source, Expression process,
+			VariableExpression variable, Scope scope);
+
+	/**
+	 * Creates a contract clause expression
+	 * 
+	 * @param source
+	 * @param hscope
+	 * @param lscope
+	 * @param type
+	 * @param collectiveGroup
+	 * @param body
+	 * @return
+	 */
+	ContractClauseExpression contractClauseExpression(CIVLSource source,
+			CIVLType type, Expression collectiveGroup, Expression body);
 }

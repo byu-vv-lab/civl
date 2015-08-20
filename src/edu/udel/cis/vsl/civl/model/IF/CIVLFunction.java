@@ -7,7 +7,7 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Set;
 
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLFunctionType;
@@ -77,12 +77,12 @@ public interface CIVLFunction extends Sourceable {
 	/**
 	 * @return The precondition for this function. Null if not set.
 	 */
-	public Expression precondition();
+	public List<ContractClauseExpression> preconditions();
 
 	/**
 	 * @return The postcondition for this function. Null if not set.
 	 */
-	public Expression postcondition();
+	public List<ContractClauseExpression> postconditions();
 
 	/**
 	 * @return The model to which this function belongs.
@@ -159,13 +159,13 @@ public interface CIVLFunction extends Sourceable {
 	 * @param precondition
 	 *            The precondition for this function.
 	 */
-	public void setPrecondition(Expression precondition);
+	public void addPrecondition(ContractClauseExpression precondition);
 
 	/**
 	 * @param postcondition
 	 *            The postcondition for this function.
 	 */
-	public void setPostcondition(Expression postcondition);
+	public void addPostcondition(ContractClauseExpression postcondition);
 
 	/**
 	 * @param model
