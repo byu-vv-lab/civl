@@ -49,6 +49,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RemoteExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
@@ -1860,6 +1861,69 @@ public class CommonEvaluator implements Evaluator {
 		return result;
 	}
 
+	/**
+	 * the rule of remote accessing is the remote variable is reachable from the
+	 * current scope where the remote process is now in.
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param expression
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private Evaluation evaluateRemoteExpression(State state, int pid,
+			RemoteExpression expression)
+			throws UnsatisfiablePathConditionException {
+		String process = state.getProcessState(pid).name() + "(id = " + pid
+				+ ")";
+		Evaluation eval;
+		SymbolicExpression symProc, value = null;
+		int remotePid;
+		int dyscopeId;
+		int vid = -1;
+		Expression processExpr = expression.process();
+		VariableExpression variableExpr = expression.variable();
+		Variable variable = null;
+
+		eval = this.evaluate(state, pid, processExpr);
+		state = eval.state;
+		symProc = eval.value;
+		// If the process expression is not a NumericExpression, report the
+		// error.
+		if (!(symProc instanceof NumericExpression))
+			errorLogger.logSimpleError(expression.getSource(), state, process,
+					symbolicAnalyzer.stateToString(state), ErrorKind.OTHER,
+					"The right-hand side expression of a remote access "
+							+ " must be a numeric expression.");
+		remotePid = ((IntegerNumber) universe
+				.extractNumber((NumericExpression) symProc)).intValue();
+		dyscopeId = state.getProcessState(remotePid).getDyscopeId();
+		variable = variableExpr.variable();
+		while (dyscopeId != -1) {
+			Scope scope1 = state.getDyscope(dyscopeId).lexicalScope();
+
+			if (scope1.containsVariable(variable.name().name())) {
+				vid = scope1.variable(variable.name()).vid();
+				break;
+			}
+			dyscopeId = state.getParentId(dyscopeId);
+		}
+		if (dyscopeId != -1 && vid != -1)
+			value = state.getVariableValue(dyscopeId, vid);
+		else
+			this.errorLogger.logSimpleError(expression.getSource(), state,
+					process, symbolicAnalyzer.stateToString(state),
+					ErrorKind.OTHER,
+					"Remote access failure: The remote variable "
+							+ variableExpr.toString()
+							+ "doesn't reachable by the remote process:"
+							+ remotePid);
+		if (value == null)
+			throw new UnsatisfiablePathConditionException();
+		eval = new Evaluation(state, value);
+		return eval;
+	}
+
 	private Evaluation evaluateRegularRange(State state, int pid,
 			RegularRangeExpression range)
 			throws UnsatisfiablePathConditionException {
@@ -2812,6 +2876,10 @@ public class CommonEvaluator implements Evaluator {
 		case REGULAR_RANGE:
 			result = evaluateRegularRange(state, pid,
 					(RegularRangeExpression) expression);
+			break;
+		case REMOTE_REFERENCE:
+			result = evaluateRemoteExpression(state, pid,
+					(RemoteExpression) expression);
 			break;
 		case SCOPEOF:
 			result = evaluateScopeofExpression(state, pid, process,
