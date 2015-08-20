@@ -1,11 +1,11 @@
 package edu.udel.cis.vsl.civl.library.mpi;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import edu.udel.cis.vsl.abc.util.IF.Pair;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
@@ -34,7 +34,12 @@ import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableCollectiveSnapshotsEntry;
+import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableState;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
@@ -60,6 +65,8 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	 * they are. Key for the information is the process id of the process.
 	 */
 	private Map<Integer, Pair<Scope, Variable>> processStatusVariables;
+
+	static private final String mpiCoassert = "$mpi_coassert";
 
 	public LibmpiExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
@@ -97,6 +104,13 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		numArgs = call.arguments().size();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
+		// Do NOT evaluate the second argument of "$mpi_coassert" which is the
+		// assertional expression:
+		if (functionName.equals(mpiCoassert)) {
+			assert numArgs == 2;
+			numArgs = 1;
+			arguments[1] = call.arguments().get(1);
+		}
 		lhs = call.lhs();
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
@@ -133,6 +147,11 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		case "$mpi_proc_scope":
 			state = executeProcScope(state, pid, process, lhs, arguments,
 					argumentValues, statement.getSource());
+			break;
+		case mpiCoassert:
+			if (this.civlConfig.isEnableMpiContract())
+				state = executeCoassertArrive(call, state, pid, process,
+						arguments, argumentValues, statement.getSource());
 			break;
 		default:
 			throw new CIVLInternalException("Unknown civlc function: " + name,
@@ -438,6 +457,115 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
+	/**
+	 * Executing the $mpi_coassert() function.
+	 * 
+	 * @param call
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCoassertArrive(CallOrSpawnStatement call, State state,
+			int pid, String process, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+
+		ImmutableState immutableState = (ImmutableState) state;
+		Expression assertion = arguments[1];
+		Expression MPICommExpr = arguments[0];
+		SymbolicExpression MPIComm = argumentValues[0];
+		SymbolicExpression commHandle = universe.tupleRead(MPIComm, oneObject);
+		NumericExpression symNprocs;
+		NumericExpression symPlace;
+		NumericExpression symQueueID = (NumericExpression) universe.tupleRead(
+				MPIComm, universe.intObject(4));
+		SymbolicExpression gcomm, gcommHandle, comm, channel;
+		ArrayList<ImmutableCollectiveSnapshotsEntry> queue;
+		boolean createNewEntry;
+		boolean entryComplete;
+		IntegerNumber tmpNumber;
+		int place, nprocs;
+		int queueLength;
+		int queueID;
+		Evaluation eval;
+
+		eval = evaluator.dereference(MPICommExpr.getSource(), immutableState,
+				process, MPICommExpr, commHandle, false);
+		immutableState = (ImmutableState) eval.state;
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm, oneObject);
+		eval = evaluator.dereference(MPICommExpr.getSource(), immutableState,
+				process, MPICommExpr, gcommHandle, false);
+		immutableState = (ImmutableState) eval.state;
+		gcomm = eval.value;
+		symPlace = (NumericExpression) universe.tupleRead(comm, zeroObject);
+		symNprocs = (NumericExpression) universe.tupleRead(gcomm, zeroObject);
+		tmpNumber = (IntegerNumber) universe.extractNumber(symPlace);
+		assert tmpNumber != null : "The place of a process in MPI should be concrete.";
+		place = tmpNumber.intValue();
+		tmpNumber = (IntegerNumber) universe.extractNumber(symNprocs);
+		assert tmpNumber != null : "The number of processes in MPI should be concrete.";
+		nprocs = tmpNumber.intValue();
+		tmpNumber = (IntegerNumber) universe.extractNumber(symQueueID);
+		assert tmpNumber != null : "The index of CMPI_Gcomm should be concrete.";
+		queueID = tmpNumber.intValue();
+		// get channel from MPI_Comm
+		channel = universe.tupleRead(gcomm, threeObject);
+		// find out the entry this process should mark, if no such entry, create
+		// one.
+		createNewEntry = true;
+		entryComplete = false;
+		queue = immutableState.getSnapshots(queueID);
+		if (queue != null) {
+			queueLength = queue.size();
+			for (int entryPos = 0; entryPos < queueLength; entryPos++) {
+				ImmutableCollectiveSnapshotsEntry entry = queue.get(entryPos);
+
+				if (!entry.isRecorded(place)) {
+					createNewEntry = false;
+					immutableState = stateFactory
+							.addToCollectiveSnapshotsEntry(immutableState, pid,
+									place, queueID, entryPos, assertion,
+									channel);
+					entryComplete = immutableState.getSnapshots(queueID).get(0)
+							.isComplete();
+					break;
+				}
+			}
+		}
+		// if it needs a new entry, then create it
+		if (createNewEntry) {
+			// change the corresponding CollectiveSnapshotsEntry
+			immutableState = stateFactory.createCollectiveSnapshotsEnrty(
+					immutableState, pid, nprocs, place, queueID, assertion,
+					channel);
+			entryComplete = (1 == nprocs);
+		}
+		// if the entry is completed ?
+		if (entryComplete) {
+			ImmutableCollectiveSnapshotsEntry entry;
+			Expression[] assertions;
+			State fakeState;
+			Pair<ImmutableState, ImmutableCollectiveSnapshotsEntry> pair;
+
+			pair = stateFactory.dequeueCollectiveSnapshotsEntry(immutableState,
+					queueID);
+			immutableState = pair.left;
+			entry = pair.right;
+			assertions = entry.getAllAssertions();
+			fakeState = stateFactory.mergeMonostates(immutableState, entry);
+			// evaluate
+			fakeState = coassertsEvaluation(fakeState, assertions, place,
+					source, call);
+		}
+		return immutableState;
+	}
+
 	private CIVLPrimitiveType mpiTypeToCIVLType(int MPI_TYPE, CIVLSource source) {
 		switch (MPI_TYPE) {
 		case 0: // char
@@ -478,5 +606,54 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		 * MPI_COMPLEX, MPI_COMPLEX16, MPI_COMPLEX32, MPI_COMPLEX4,
 		 * MPI_COMPLEX8, MPI_REAL, MPI_REAL16, MPI_REAL2, MPI_REAL4, MPI_REAL8
 		 */
+	}
+
+	/**
+	 * Evaluating assertions for all processes participating a $mpi_coaseert()
+	 * function.
+	 * 
+	 * @param fakeState
+	 * @param assertions
+	 * @param pid
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @param call
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State coassertsEvaluation(State fakeState, Expression[] assertions,
+			int pid, CIVLSource source, CallOrSpawnStatement call)
+			throws UnsatisfiablePathConditionException {
+		String process;
+		Evaluation eval;
+		Reasoner reasoner;
+
+		stateFactory.simplify(fakeState);
+		for (int place = 0; place < assertions.length; place++) {
+			Expression snapShotAssertion = assertions[place];
+			BooleanExpression assertionVal;
+			ResultType resultType;
+			String message;
+
+			eval = evaluator.evaluate(fakeState, place, snapShotAssertion);
+			fakeState = eval.state;
+			assertionVal = (BooleanExpression) eval.value;
+			reasoner = universe.reasoner(fakeState.getPathCondition());
+			resultType = reasoner.valid(assertionVal).getResultType();
+			if (!resultType.equals(ResultType.YES)) {
+				Expression[] args = { snapShotAssertion };
+				SymbolicExpression[] argVals = { assertionVal };
+
+				message = " assertion:" + assertions[place];
+				process = "process with rank: " + place + " participating the "
+						+ mpiCoassert + "().";
+				fakeState = this.reportAssertionFailure(fakeState, place,
+						process, resultType, "$mpi_coassert fail" + message,
+						args, argVals, snapShotAssertion.getSource(), call,
+						assertionVal, 1);
+			}
+		}
+		return fakeState;
 	}
 }
