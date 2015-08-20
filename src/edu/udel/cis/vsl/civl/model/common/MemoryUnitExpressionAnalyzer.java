@@ -498,6 +498,9 @@ public class MemoryUnitExpressionAnalyzer {
 			break;
 		case SYSTEM_FUNC_CALL:// TODO check
 			break;
+		case REMOTE_REFERENCE:// TODO: currently remote reference only allows
+								// reading
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException(
 					"computing the impact memory units" + " of expressions of "

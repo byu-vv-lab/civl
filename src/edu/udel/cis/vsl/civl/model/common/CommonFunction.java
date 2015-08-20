@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -18,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.BooleanLiteralExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
@@ -52,9 +54,9 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 	private List<Variable> parameters;
 
-	private Expression postcondition = null;
+	private List<ContractClauseExpression> postconditions = null;
 
-	private Expression precondition = null;
+	private List<ContractClauseExpression> preconditions = null;
 
 	private CIVLFunctionType functionType;
 
@@ -197,16 +199,16 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 * @return The postcondition for this function. Null if not set.
 	 */
 	@Override
-	public Expression postcondition() {
-		return postcondition;
+	public List<ContractClauseExpression> postconditions() {
+		return postconditions;
 	}
 
 	/**
 	 * @return The precondition for this function. Null if not set.
 	 */
 	@Override
-	public Expression precondition() {
-		return precondition;
+	public List<ContractClauseExpression> preconditions() {
+		return preconditions;
 	}
 
 	@Override
@@ -214,12 +216,14 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		Iterator<Variable> iter;
 
 		out.println(prefix + "function " + name);
-		if (precondition != null) {
-			out.println(prefix + "| requires " + precondition);
-		}
-		if (postcondition != null) {
-			out.println(prefix + "| ensures " + postcondition);
-		}
+		if (preconditions != null)
+			for (Expression clause : preconditions) {
+				out.println(clause.toString());
+			}
+		if (postconditions != null)
+			for (Expression clause : postconditions) {
+				out.println(clause.toString());
+			}
 		out.println(prefix + "| formal parameters");
 		iter = parameters.iterator();
 		while (iter.hasNext()) {
@@ -316,16 +320,20 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 	 * @param postcondition
 	 *            The postcondition for this function.
 	 */
-	public void setPostcondition(Expression postcondition) {
-		this.postcondition = postcondition;
+	public void addPostcondition(ContractClauseExpression postcondition) {
+		if (this.postconditions == null)
+			this.postconditions = new LinkedList<>();
+		this.postconditions.add(postcondition);
 	}
 
 	/**
 	 * @param precondition
 	 *            The precondition for this function.
 	 */
-	public void setPrecondition(Expression precondition) {
-		this.precondition = precondition;
+	public void addPrecondition(ContractClauseExpression precondition) {
+		if (this.preconditions == null)
+			this.preconditions = new LinkedList<>();
+		this.preconditions.add(precondition);
 	}
 
 	/**

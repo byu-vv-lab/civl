@@ -43,6 +43,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BoundVariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
@@ -62,6 +63,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression.Quantifier
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.RemoteExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
@@ -102,6 +104,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonBoundVariableExpressi
 import edu.udel.cis.vsl.civl.model.common.expression.CommonCastExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonCharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonConditionalExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDereferenceExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonDomainGuardExpression;
@@ -118,6 +121,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.CommonQuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonRegularRangeExpression;
+import edu.udel.cis.vsl.civl.model.common.expression.CommonRemoteExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonScopeofExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSelfExpression;
 import edu.udel.cis.vsl.civl.model.common.expression.CommonSizeofExpression;
@@ -199,7 +203,6 @@ public class CommonModelFactory implements ModelFactory {
 	 * expressions
 	 */
 	private static final String CONDITIONAL_VARIABLE_PREFIX = "_cond_var_";
-
 
 	private static final String DOM_SIZE_PREFIX = "_dom_size";
 
@@ -716,6 +719,14 @@ public class CommonModelFactory implements ModelFactory {
 			Expression argument) {
 		return new CommonSizeofExpression(source, typeFactory.integerType,
 				argument);
+	}
+
+	@Override
+	public RemoteExpression remoteExpression(CIVLSource source,
+			Expression process, VariableExpression variable, Scope scope) {
+		// TODO: what's lowest scope ?
+		return new CommonRemoteExpression(source, scope, process.lowestScope(),
+				variable.getExpressionType(), process, variable);
 	}
 
 	@Override
@@ -1598,7 +1609,8 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Variable newAnonymousVariableForArrayLiteral(CIVLSource sourceOf,
 			CIVLArrayType type) {
-		String name = ModelConfiguration.ANONYMOUS_VARIABLE_PREFIX + this.anonymousVariableId++;
+		String name = ModelConfiguration.ANONYMOUS_VARIABLE_PREFIX
+				+ this.anonymousVariableId++;
 		Variable variable = this.variable(sourceOf, type,
 				this.identifier(sourceOf, name),
 				this.systemScope.numVariables());
@@ -1611,7 +1623,8 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public Variable newAnonymousVariable(CIVLSource sourceOf, Scope scope,
 			CIVLType type) {
-		String name = ModelConfiguration.ANONYMOUS_VARIABLE_PREFIX + this.anonymousVariableId++;
+		String name = ModelConfiguration.ANONYMOUS_VARIABLE_PREFIX
+				+ this.anonymousVariableId++;
 		Variable variable = this.variable(sourceOf, type,
 				this.identifier(sourceOf, name), scope.numVariables());
 
@@ -2086,5 +2099,22 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public void addInputVariable(Variable variable) {
 		this.inputVariables.add(variable);
+	}
+
+	@Override
+	public ContractClauseExpression contractClauseExpression(CIVLSource source,
+			CIVLType type, Expression collectiveGroup, Expression body) {
+		Scope lscope, hscope;
+
+		if (collectiveGroup != null) {
+			lscope = this.getLower(Arrays.asList(collectiveGroup, body));
+			hscope = this.joinScope(Arrays.asList(collectiveGroup, body));
+		} else {
+			lscope = body.lowestScope();
+			hscope = body.expressionScope();
+		}
+
+		return new CommonContractClauseExpression(source, hscope, lscope, type,
+				collectiveGroup, body);
 	}
 }

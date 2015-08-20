@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -57,11 +58,13 @@ public class CommonAbstractFunction extends CommonFunction implements
 
 		out.println(prefix + "abstract function " + this.name());
 		out.println(prefix + "| continuous " + continuity);
-		if (this.precondition() != null) {
-			out.println(prefix + "| requires " + this.precondition());
+		if (this.preconditions() != null) {
+			for (Expression precondition : this.preconditions())
+				out.println(precondition.toString());
 		}
-		if (this.postcondition() != null) {
-			out.println(prefix + "| ensures " + this.postcondition());
+		if (this.postconditions() != null) {
+			for (Expression postcondition : this.postconditions())
+				out.println(postcondition.toString());
 		}
 		out.println(prefix + "| formal parameters");
 		iter = this.parameters().iterator();

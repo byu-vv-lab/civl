@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +39,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.CollectiveExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CompoundLiteralNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode.ConstantKind;
@@ -54,6 +56,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.QuantifiedExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.RegularRangeNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.RemoteExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ResultNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ScopeOfNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeableNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeofNode;
@@ -127,6 +131,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -172,6 +177,8 @@ import edu.udel.cis.vsl.gmc.CommandLineException;
 public class FunctionTranslator {
 
 	private static final String PAR_FUNC_NAME = "_par_proc";
+
+	private static final String contractResult = "$result";
 
 	/* ************************** Instance Fields ************************** */
 
@@ -220,6 +227,11 @@ public class FunctionTranslator {
 	 */
 	@SuppressWarnings("unused")
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
+
+	/**
+	 * The CIVLType of the $result expression of current function
+	 */
+	private CIVLType currentResultType = null;
 
 	/* **************************** Constructors *************************** */
 
@@ -405,9 +417,96 @@ public class FunctionTranslator {
 	protected Fragment translateFunctionBody() {
 		Fragment body;
 		Scope scope = this.function.outerScope();
+		List<ContractClauseExpression> preconditions, postconditions;
+		boolean hasPost, hasPre;
+		List<Statement> returnStmts = new LinkedList<>();
 
+		preconditions = function.preconditions();
+		postconditions = function.postconditions();
 		body = translateStatementNode(scope, this.functionBodyNode);
-		if (!containsReturn(body)) {
+		hasPre = (preconditions == null) ? false : true;
+		hasPost = (postconditions == null) ? false : true;
+		// Processing contracts: Pre-conditions
+		if (hasPre) {
+			Location bodyStartLocation;
+			Statement preAssertionCall;
+
+			for (ContractClauseExpression precondition : preconditions) {
+				preAssertionCall = this.makeContractsAssertion(
+						precondition.getSource(), precondition);
+				// insert precondition assertion in front of the body
+				bodyStartLocation = body.startLocation();
+				body.setStartLocation(preAssertionCall.source());
+				preAssertionCall.setTarget(bodyStartLocation);
+				body.addFinalStatement(preAssertionCall);
+			}
+		}
+		if (hasPost) {
+			Statement postAssertCall;
+			Statement tmpLastStmt;
+
+			returnStmts = containsReturns(body);
+			if (!returnStmts.isEmpty()) {
+				for (Statement returnStmt : returnStmts) {
+					Iterator<Statement> incomeIter = returnStmt.source()
+							.incoming().iterator();
+					Expression retExpr = ((ReturnStatement) returnStmt)
+							.expression();
+
+					while (incomeIter.hasNext()) {
+						Statement income = incomeIter.next();
+						Statement resultAssign = assignResultExpression(
+								function.outerScope(), retExpr);
+
+						if (resultAssign != null) {
+							income.setTarget(resultAssign.source());
+							tmpLastStmt = resultAssign;
+						} else
+							// no $result used in contracts of this function
+							tmpLastStmt = income;
+						for (ContractClauseExpression postcondition : postconditions) {
+							postAssertCall = this.makeContractsAssertion(
+									postcondition.getSource(), postcondition);
+							tmpLastStmt.setTarget(postAssertCall.source());
+							tmpLastStmt = postAssertCall;
+							body.addFinalStatement(postAssertCall);
+						}
+						tmpLastStmt.setTarget(returnStmt.source());
+					}
+				}
+			}
+			// In case a function with defined postconditions has terminations
+			// without return statement, postconditions will be checked at the
+			// end if there is at least one such termination:
+			if (postconditions.size() > 0) {
+				List<Statement> terminations = new LinkedList<>();
+
+				for (Statement stmt : this.terminationLocations(body
+						.startLocation()))
+					if (!(stmt instanceof ReturnStatement))
+						terminations.add(stmt);
+				if (!terminations.isEmpty()) {
+					ContractClauseExpression firstPostcond = postconditions
+							.remove(0);
+					Statement lastStmt;
+
+					postAssertCall = this.makeContractsAssertion(
+							firstPostcond.getSource(), firstPostcond);
+					lastStmt = postAssertCall;
+					for (Statement term : terminations)
+						term.setTarget(lastStmt.source());
+					body.addNewStatement(postAssertCall);
+					for (ContractClauseExpression postcondition : postconditions) {
+						postAssertCall = this.makeContractsAssertion(
+								postcondition.getSource(), postcondition);
+						lastStmt.setTarget(postAssertCall.source());
+						lastStmt = postAssertCall;
+						body.addNewStatement(postAssertCall);
+					}
+				}
+			}
+		}
+		if (returnStmts.isEmpty() && !containsReturn(body)) {
 			CIVLSource endSource = modelFactory
 					.sourceOfEnd(this.functionBodyNode);
 			Location returnLocation = modelFactory.location(endSource,
@@ -421,6 +520,81 @@ public class FunctionTranslator {
 				body = returnFragment;
 		}
 		return body;
+	}
+
+	/**
+	 * Returns an assignment statement for "$result":
+	 * <code>$result = return expression</code>.
+	 * 
+	 * @param postcondition
+	 * @param returnExpr
+	 * @return
+	 */
+	private Statement assignResultExpression(Scope scope, Expression returnExpr) {
+		Location newLocation = modelFactory.location((CIVLSource) null,
+				function.outerScope());
+		Expression resultExpression;
+		Variable resultVar = scope.variable(modelFactory.identifier(null,
+				contractResult));
+
+		if (resultVar != null) {
+			resultExpression = modelFactory.variableExpression(
+					resultVar.getSource(), resultVar);
+			return modelFactory.assignStatement(resultVar.getSource(),
+					newLocation, (LHSExpression) resultExpression, returnExpr,
+					false);
+		} else
+			// no $result used in contracts of this function
+			return null;
+	}
+
+	/**
+	 * Create an assertion statement for a contract clause with a new location
+	 * 
+	 * @param contractSource
+	 * @param clause
+	 * @return
+	 */
+	private Statement makeContractsAssertion(CIVLSource contractSource,
+			ContractClauseExpression clause) {
+		Location newLocation;
+		CIVLFunction assertFunc;
+		Variable argument, procsGroup;
+		List<Variable> arguments = new LinkedList<>();
+		List<Expression> argExprs = new LinkedList<>();
+		Expression funcExpr;
+		Statement result;
+		String message;
+		int argCounter = 1;
+
+		newLocation = modelFactory.location(contractSource,
+				function.outerScope());
+		if (clause.isCollectiveClause()) {
+			Identifier procGroupIdentifier = modelFactory.identifier(
+					contractSource, "comm");
+
+			procsGroup = modelFactory.variable(contractSource, clause
+					.getCollectiveGroup().getExpressionType(),
+					procGroupIdentifier, argCounter++);
+			arguments.add(procsGroup);
+			argExprs.add(clause.getCollectiveGroup());
+			message = "$mpi_coassert";
+		} else
+			message = "assert";
+		argument = modelFactory.variable(contractSource,
+				typeFactory.booleanType(),
+				modelFactory.identifier(contractSource, "postcondition"),
+				argCounter);
+		arguments.add(argument);
+		argExprs.add(clause.getBody());
+		assertFunc = modelFactory.systemFunction(contractSource,
+				modelFactory.identifier(contractSource, message), arguments,
+				typeFactory.booleanType(), function.outerScope(), message);
+		funcExpr = modelFactory.functionIdentifierExpression(contractSource,
+				assertFunc);
+		result = modelFactory.callOrSpawnStatement(contractSource, newLocation,
+				true, funcExpr, argExprs, modelFactory.trueExpression(null));
+		return result;
 	}
 
 	/* *********************************************************************
@@ -1098,17 +1272,57 @@ public class FunctionTranslator {
 	 *         statement.
 	 */
 	private boolean containsReturn(Fragment functionBody) {
+		return !containsReturns(functionBody).isEmpty();
+		// Set<Statement> lastStatements = functionBody.finalStatements();
+		// Statement uniqueLastStatement;
+		//
+		// if (functionBody == null || functionBody.isEmpty())
+		// return false;
+		// if (lastStatements.size() > 1) {
+		// for (Statement statement : lastStatements) { // TODO: suspicious!
+		// if (!(statement instanceof ReturnStatement))
+		// return false;
+		// }
+		// return true;
+		// }
+		// uniqueLastStatement = functionBody.uniqueFinalStatement();
+		// if (uniqueLastStatement.source().getNumOutgoing() == 1) {
+		// Location lastLocation = uniqueLastStatement.source();
+		// Set<Integer> locationIds = new HashSet<Integer>();
+		//
+		// while (lastLocation.atomicKind() == AtomicKind.ATOMIC_EXIT
+		// || lastLocation.atomicKind() == AtomicKind.ATOM_EXIT) {
+		// locationIds.add(lastLocation.id());
+		// if (lastLocation.getNumIncoming() == 1) {
+		// lastLocation = lastLocation.getIncoming(0).source();
+		// if (locationIds.contains(lastLocation.id()))
+		// return false;
+		// } else {
+		// return false;
+		// }
+		// }
+		// if (lastLocation.getNumOutgoing() == 1
+		// && lastLocation.getOutgoing(0) instanceof ReturnStatement) {
+		// return true;
+		// }
+		// }
+		// return false;
+	}
+
+	// TODO: make "containsReturn" a caller of this one.
+	private List<Statement> containsReturns(Fragment functionBody) {
 		Set<Statement> lastStatements = functionBody.finalStatements();
+		List<Statement> returnStmts = new LinkedList<>();
 		Statement uniqueLastStatement;
 
 		if (functionBody == null || functionBody.isEmpty())
-			return false;
+			return returnStmts;
 		if (lastStatements.size() > 1) {
-			for (Statement statement : lastStatements) {
-				if (!(statement instanceof ReturnStatement))
-					return false;
+			for (Statement statement : lastStatements) { // TODO: suspicious!
+				if ((statement instanceof ReturnStatement))
+					returnStmts.add(statement);
 			}
-			return true;
+			return returnStmts;
 		}
 		uniqueLastStatement = functionBody.uniqueFinalStatement();
 		if (uniqueLastStatement.source().getNumOutgoing() == 1) {
@@ -1121,17 +1335,34 @@ public class FunctionTranslator {
 				if (lastLocation.getNumIncoming() == 1) {
 					lastLocation = lastLocation.getIncoming(0).source();
 					if (locationIds.contains(lastLocation.id()))
-						return false;
+						return returnStmts;
 				} else {
-					return false;
+					return returnStmts;
 				}
 			}
 			if (lastLocation.getNumOutgoing() == 1
 					&& lastLocation.getOutgoing(0) instanceof ReturnStatement) {
-				return true;
+				returnStmts.add(lastLocation.getOutgoing(0));
+				return returnStmts;
 			}
 		}
-		return false;
+		return returnStmts;
+	}
+
+	private List<Statement> terminationLocations(Location startLocation) {
+		Iterator<Statement> outgoingsIter;
+		List<Statement> results = new LinkedList<>();
+
+		outgoingsIter = startLocation.outgoing().iterator();
+		while (outgoingsIter.hasNext()) {
+			Statement outgoing = outgoingsIter.next();
+
+			if (outgoing.target() == null)
+				results.add(outgoing);
+			else
+				results.addAll(terminationLocations(outgoing.target()));
+		}
+		return results;
 	}
 
 	/**
@@ -1990,10 +2221,10 @@ public class FunctionTranslator {
 			FunctionCallNode functionCallNode, CIVLSource source) {
 		Statement functionCall = translateFunctionCall(scope, null,
 				functionCallNode, true, source);
-		
+
 		return new CommonFragment(functionCall);
 	}
-	
+
 	/**
 	 * Processes a function declaration node (whether or not node is also a
 	 * definition node).
@@ -2139,48 +2370,26 @@ public class FunctionTranslator {
 			modelBuilder.functionMap.put(entity, result);
 		}
 		// result is now defined and in the model
+		// translating contract primitive: $result needs the information of
+		// current function "result":
+		this.currentResultType = result.returnType();
 		if (contract != null) {
-			Expression precondition = result.precondition();
-			Expression postcondition = result.postcondition();
-
 			for (int i = 0; i < contract.numChildren(); i++) {
-				ContractNode contractComponent = contract.getSequenceChild(i);
-				Expression componentExpression;
+				ContractNode contractNode = contract.getSequenceChild(i);
 
-				if (contractComponent instanceof EnsuresNode) {
-					componentExpression = translateExpressionNode(
-							((EnsuresNode) contractComponent).getExpression(),
-							result.outerScope(), true);
-					if (postcondition == null) {
-						postcondition = componentExpression;
-					} else {
-						postcondition = modelFactory.binaryExpression(
-								modelFactory.sourceOfSpan(
-										postcondition.getSource(),
-										componentExpression.getSource()),
-								BINARY_OPERATOR.AND, postcondition,
-								componentExpression);
-					}
-				} else {
-					componentExpression = translateExpressionNode(
-							((RequiresNode) contractComponent).getExpression(),
-							result.outerScope(), true);
-					if (precondition == null) {
-						precondition = componentExpression;
-					} else {
-						precondition = modelFactory.binaryExpression(
-								modelFactory.sourceOfSpan(
-										precondition.getSource(),
-										componentExpression.getSource()),
-								BINARY_OPERATOR.AND, precondition,
-								componentExpression);
-					}
+				if (contractNode instanceof EnsuresNode) {
+					ContractClauseExpression clause = translateContractExpressionNode(
+							((EnsuresNode) contractNode).getExpression(),
+							result.outerScope());
+
+					result.addPostcondition(clause);
+				} else if (contractNode instanceof RequiresNode) {
+					ContractClauseExpression clause = translateContractExpressionNode(
+							((RequiresNode) contractNode).getExpression(),
+							result.outerScope());
+					result.addPrecondition(clause);
 				}
 			}
-			if (precondition != null)
-				result.setPrecondition(precondition);
-			if (postcondition != null)
-				result.setPostcondition(postcondition);
 		}
 	}
 
@@ -3331,6 +3540,13 @@ public class FunctionTranslator {
 		case SIZEOF:
 			result = translateSizeofNode((SizeofNode) expressionNode, scope);
 			break;
+		case REMOTE_REFERENCE:
+			result = translateRemoteReferenceNode(
+					(RemoteExpressionNode) expressionNode, scope);
+			break;
+		case RESULT:
+			result = translateResultNode((ResultNode) expressionNode, scope);
+			break;
 		default:
 			throw new CIVLUnimplementedFeatureException("expressions of type "
 					+ expressionNode.getClass().getSimpleName(),
@@ -4193,6 +4409,52 @@ public class FunctionTranslator {
 		return result;
 	}
 
+	private Expression translateRemoteReferenceNode(
+			RemoteExpressionNode expressionNode, Scope scope) {
+		ExpressionNode processNode = expressionNode.getProcessExpression();
+		IdentifierExpressionNode identifierNode = expressionNode
+				.getIdentifierNode();
+		VariableExpression variable;
+		Expression process;
+
+		variable = (VariableExpression) this.translateIdentifierNode(
+				identifierNode, scope);
+		// TODO: what's translate conversion ?
+		process = this.translateExpressionNode(processNode, scope, false);
+		return modelFactory
+				.remoteExpression(modelFactory.sourceOf(expressionNode),
+						process, variable, scope);
+	}
+
+	/**
+	 * Translates an ExpressionNode to a ContractClauseExpression
+	 * 
+	 * @param expressionNode
+	 * @param scope
+	 * @return
+	 */
+	private ContractClauseExpression translateContractExpressionNode(
+			ExpressionNode expressionNode, Scope scope) {
+		ExpressionNode bodyNode, procsGroupNode;
+		Expression processesGroup = null, body;
+
+		if (expressionNode.expressionKind().equals(ExpressionKind.COLLECTIVE)) {
+			bodyNode = ((CollectiveExpressionNode) expressionNode).getBody();
+			procsGroupNode = ((CollectiveExpressionNode) expressionNode)
+					.getProcessesGroupExpression();
+		} else {
+			bodyNode = expressionNode;
+			procsGroupNode = null;
+		}
+		body = translateExpressionNode(bodyNode, scope, true);
+		if (procsGroupNode != null)
+			processesGroup = translateExpressionNode(procsGroupNode, scope,
+					true);
+		return modelFactory.contractClauseExpression(
+				modelFactory.sourceOf(expressionNode),
+				this.typeFactory.booleanType(), processesGroup, body);
+	}
+
 	/**
 	 * Translates an AST subscript node e1[e2] to a CIVL expression. The result
 	 * will either be a CIVL subscript expression (if e1 has array type) or a
@@ -4703,6 +4965,26 @@ public class FunctionTranslator {
 							lhs, rhs, true));
 		}
 		return result;
+	}
+
+	/**
+	 * Translates a ResultNode as an new variable, and adds it into a
+	 * corresponding scope.
+	 * 
+	 * @param resultNode
+	 * @param scope
+	 * @return
+	 */
+	private Expression translateResultNode(ResultNode resultNode, Scope scope) {
+		CIVLSource resultSource = modelFactory.sourceOf(resultNode);
+		Variable newResultVariable;
+		Identifier resultIdentifier = modelFactory.identifier(resultSource,
+				contractResult);
+		newResultVariable = modelFactory.variable(resultSource,
+				this.currentResultType, resultIdentifier, scope.numVariables());
+		scope.addVariable(newResultVariable);
+		newResultVariable.setScope(scope);
+		return modelFactory.variableExpression(resultSource, newResultVariable);
 	}
 
 	// Getters and Setters
