@@ -2380,13 +2380,15 @@ public class FunctionTranslator {
 				if (contractNode instanceof EnsuresNode) {
 					ContractClauseExpression clause = translateContractExpressionNode(
 							((EnsuresNode) contractNode).getExpression(),
-							result.outerScope());
+							result.outerScope(),
+							modelFactory.sourceOf(contractNode));
 
 					result.addPostcondition(clause);
 				} else if (contractNode instanceof RequiresNode) {
 					ContractClauseExpression clause = translateContractExpressionNode(
 							((RequiresNode) contractNode).getExpression(),
-							result.outerScope());
+							result.outerScope(),
+							modelFactory.sourceOf(contractNode));
 					result.addPrecondition(clause);
 				}
 			}
@@ -4434,7 +4436,7 @@ public class FunctionTranslator {
 	 * @return
 	 */
 	private ContractClauseExpression translateContractExpressionNode(
-			ExpressionNode expressionNode, Scope scope) {
+			ExpressionNode expressionNode, Scope scope, CIVLSource source) {
 		ExpressionNode bodyNode, procsGroupNode;
 		Expression processesGroup = null, body;
 
@@ -4450,8 +4452,7 @@ public class FunctionTranslator {
 		if (procsGroupNode != null)
 			processesGroup = translateExpressionNode(procsGroupNode, scope,
 					true);
-		return modelFactory.contractClauseExpression(
-				modelFactory.sourceOf(expressionNode),
+		return modelFactory.contractClauseExpression(source,
 				this.typeFactory.booleanType(), processesGroup, body);
 	}
 
