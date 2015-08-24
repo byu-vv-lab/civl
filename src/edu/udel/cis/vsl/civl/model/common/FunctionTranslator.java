@@ -1274,41 +1274,42 @@ public class FunctionTranslator {
 	 *         statement.
 	 */
 	private boolean containsReturn(Fragment functionBody) {
-		return !containsReturns(functionBody).isEmpty();
-		// Set<Statement> lastStatements = functionBody.finalStatements();
-		// Statement uniqueLastStatement;
-		//
-		// if (functionBody == null || functionBody.isEmpty())
-		// return false;
-		// if (lastStatements.size() > 1) {
-		// for (Statement statement : lastStatements) { // TODO: suspicious!
-		// if (!(statement instanceof ReturnStatement))
-		// return false;
-		// }
-		// return true;
-		// }
-		// uniqueLastStatement = functionBody.uniqueFinalStatement();
-		// if (uniqueLastStatement.source().getNumOutgoing() == 1) {
-		// Location lastLocation = uniqueLastStatement.source();
-		// Set<Integer> locationIds = new HashSet<Integer>();
-		//
-		// while (lastLocation.atomicKind() == AtomicKind.ATOMIC_EXIT
-		// || lastLocation.atomicKind() == AtomicKind.ATOM_EXIT) {
-		// locationIds.add(lastLocation.id());
-		// if (lastLocation.getNumIncoming() == 1) {
-		// lastLocation = lastLocation.getIncoming(0).source();
-		// if (locationIds.contains(lastLocation.id()))
-		// return false;
-		// } else {
-		// return false;
-		// }
-		// }
-		// if (lastLocation.getNumOutgoing() == 1
-		// && lastLocation.getOutgoing(0) instanceof ReturnStatement) {
-		// return true;
-		// }
-		// }
-		// return false;
+		Set<Statement> lastStatements = functionBody.finalStatements();
+		Statement uniqueLastStatement;
+
+		if (functionBody == null || functionBody.isEmpty())
+			return false;
+		// TODO: it seems the function returns true only when only possible
+		// executions have return statements.
+		if (lastStatements.size() > 1) {
+			for (Statement statement : lastStatements) {
+				if (!(statement instanceof ReturnStatement))
+					return false;
+			}
+			return true;
+		}
+		uniqueLastStatement = functionBody.uniqueFinalStatement();
+		if (uniqueLastStatement.source().getNumOutgoing() == 1) {
+			Location lastLocation = uniqueLastStatement.source();
+			Set<Integer> locationIds = new HashSet<Integer>();
+
+			while (lastLocation.atomicKind() == AtomicKind.ATOMIC_EXIT
+					|| lastLocation.atomicKind() == AtomicKind.ATOM_EXIT) {
+				locationIds.add(lastLocation.id());
+				if (lastLocation.getNumIncoming() == 1) {
+					lastLocation = lastLocation.getIncoming(0).source();
+					if (locationIds.contains(lastLocation.id()))
+						return false;
+				} else {
+					return false;
+				}
+			}
+			if (lastLocation.getNumOutgoing() == 1
+					&& lastLocation.getOutgoing(0) instanceof ReturnStatement) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// TODO: make "containsReturn" a caller of this one.
