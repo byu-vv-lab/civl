@@ -474,34 +474,36 @@ public class FunctionTranslator {
 						tmpLastStmt.setTarget(returnStmt.source());
 					}
 				}
-			}
-			// In case a function with defined postconditions has terminations
-			// without return statement, postconditions will be checked at the
-			// end if there is at least one such termination:
-			if (postconditions.size() > 0) {
-				List<Statement> terminations = new LinkedList<>();
+				// In case a function with defined postconditions has
+				// terminations
+				// without return statement, postconditions will be checked at
+				// the
+				// end if there is at least one such termination:
+				if (postconditions.size() > 0) {
+					List<Statement> terminations = new LinkedList<>();
 
-				for (Statement stmt : this.terminationLocations(body
-						.startLocation()))
-					if (!(stmt instanceof ReturnStatement))
-						terminations.add(stmt);
-				if (!terminations.isEmpty()) {
-					ContractClauseExpression firstPostcond = postconditions
-							.remove(0);
-					Statement lastStmt;
+					for (Statement stmt : this.terminationLocations(body
+							.startLocation()))
+						if (!(stmt instanceof ReturnStatement))
+							terminations.add(stmt);
+					if (!terminations.isEmpty()) {
+						ContractClauseExpression firstPostcond = postconditions
+								.remove(0);
+						Statement lastStmt;
 
-					postAssertCall = this.makeContractsAssertion(
-							firstPostcond.getSource(), firstPostcond);
-					lastStmt = postAssertCall;
-					for (Statement term : terminations)
-						term.setTarget(lastStmt.source());
-					body.addNewStatement(postAssertCall);
-					for (ContractClauseExpression postcondition : postconditions) {
 						postAssertCall = this.makeContractsAssertion(
-								postcondition.getSource(), postcondition);
-						lastStmt.setTarget(postAssertCall.source());
+								firstPostcond.getSource(), firstPostcond);
 						lastStmt = postAssertCall;
+						for (Statement term : terminations)
+							term.setTarget(lastStmt.source());
 						body.addNewStatement(postAssertCall);
+						for (ContractClauseExpression postcondition : postconditions) {
+							postAssertCall = this.makeContractsAssertion(
+									postcondition.getSource(), postcondition);
+							lastStmt.setTarget(postAssertCall.source());
+							lastStmt = postAssertCall;
+							body.addNewStatement(postAssertCall);
+						}
 					}
 				}
 			}
