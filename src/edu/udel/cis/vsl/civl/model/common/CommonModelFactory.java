@@ -44,12 +44,15 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ClauseKind;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
@@ -137,6 +140,7 @@ import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonArraySliceR
 import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonSelfReference;
 import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonStructOrUnionFieldReference;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
+import edu.udel.cis.vsl.civl.model.common.statement.CollectiveContractStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
@@ -2103,8 +2107,11 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public ContractClauseExpression contractClauseExpression(CIVLSource source,
-			CIVLType type, Expression collectiveGroup, Expression body) {
+			CIVLType type, Expression collectiveGroup, Expression body,
+			ContractKind contractKind) {
 		Scope lscope, hscope;
+		ExpressionKind exprKind;
+		ClauseKind clauseKind;
 
 		if (collectiveGroup != null) {
 			lscope = this.getLower(Arrays.asList(collectiveGroup, body));
@@ -2113,8 +2120,27 @@ public class CommonModelFactory implements ModelFactory {
 			lscope = body.lowestScope();
 			hscope = body.expressionScope();
 		}
-
+		exprKind = body.expressionKind();
+		switch (exprKind) {
+		case SYSTEM_FUNC_CALL:
+			clauseKind = ClauseKind.MESSAGE_BUFFER;
+			break;
+		default:
+			clauseKind = ClauseKind.EXPRESSION;
+		}
 		return new CommonContractClauseExpression(source, hscope, lscope, type,
-				collectiveGroup, body);
+				collectiveGroup, body, contractKind, clauseKind);
+	}
+
+	@Override
+	public CollectiveContractStatement collectiveContractStatement(
+			CIVLSource source, ContractClauseExpression contractExpression,
+			Location location, String library) {
+		Expression guard = this.trueExpression(null);
+
+		return new CollectiveContractStatement(source,
+				contractExpression.expressionScope(),
+				contractExpression.lowestScope(), location, guard,
+				contractExpression, library);
 	}
 }

@@ -14,6 +14,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
@@ -270,7 +271,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	protected State reportAssertionFailure(State state, int pid,
 			String process, ResultType resultType, String message,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source, CallOrSpawnStatement statement,
+			CIVLSource source, Statement statement,
 			BooleanExpression assertValue, int msgOffset)
 			throws UnsatisfiablePathConditionException {
 		StringBuffer stateInfo;

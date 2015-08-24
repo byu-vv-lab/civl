@@ -132,6 +132,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -179,6 +180,8 @@ public class FunctionTranslator {
 	private static final String PAR_FUNC_NAME = "_par_proc";
 
 	private static final String contractResult = "$result";
+
+	private static final String contractMessageBufferFunction = "isRecvBufEmpty";
 
 	/* ************************** Instance Fields ************************** */
 
@@ -419,7 +422,6 @@ public class FunctionTranslator {
 		Scope scope = this.function.outerScope();
 		List<ContractClauseExpression> preconditions, postconditions;
 		boolean hasPost, hasPre;
-		List<Statement> returnStmts = new LinkedList<>();
 
 		preconditions = function.preconditions();
 		postconditions = function.postconditions();
@@ -428,87 +430,92 @@ public class FunctionTranslator {
 		hasPost = (postconditions == null) ? false : true;
 		// Processing contracts: Pre-conditions
 		if (hasPre) {
-			Location bodyStartLocation;
 			Statement preAssertionCall;
+			Fragment precondFragment;
+			ContractClauseExpression firstPrecond = preconditions.remove(0);
 
+			preAssertionCall = this.makeContractsStatement(
+					firstPrecond.getSource(), firstPrecond);
+			precondFragment = new CommonFragment(preAssertionCall.source(),
+					preAssertionCall);
 			for (ContractClauseExpression precondition : preconditions) {
-				preAssertionCall = this.makeContractsAssertion(
+				preAssertionCall = this.makeContractsStatement(
 						precondition.getSource(), precondition);
-				// insert precondition assertion in front of the body
-				bodyStartLocation = body.startLocation();
-				body.setStartLocation(preAssertionCall.source());
-				preAssertionCall.setTarget(bodyStartLocation);
-				body.addFinalStatement(preAssertionCall);
+				precondFragment.addNewStatement(preAssertionCall);
 			}
+			body = precondFragment.combineWith(body);
 		}
 		if (hasPost) {
 			Statement postAssertCall;
 			Statement tmpLastStmt;
+			Set<Statement> terminations = new HashSet<>();
+			List<Statement> nonRetTerms = new LinkedList<>();
+			int postConditionLength = postconditions.size();
 
-			returnStmts = containsReturns(body);
-			if (!returnStmts.isEmpty()) {
-				for (Statement returnStmt : returnStmts) {
-					Iterator<Statement> incomeIter = returnStmt.source()
-							.incoming().iterator();
-					Expression retExpr = ((ReturnStatement) returnStmt)
-							.expression();
-
-					while (incomeIter.hasNext()) {
-						Statement income = incomeIter.next();
+			terminations = body.finalStatements();
+			if (!terminations.isEmpty()) {
+				for (Statement term : terminations) {
+					if (!(term instanceof ReturnStatement)) {
+						nonRetTerms.add(term);
+						continue;
+					} else {
+						List<Statement> incomes = new LinkedList<>();
+						Expression retExpr = ((ReturnStatement) term)
+								.expression();
 						Statement resultAssign = assignResultExpression(
 								function.outerScope(), retExpr);
 
-						if (resultAssign != null) {
-							income.setTarget(resultAssign.source());
+						for (Statement income : term.source().incoming())
+							incomes.add(income);
+						if (resultAssign != null)
 							tmpLastStmt = resultAssign;
-						} else
+						else {
+							ContractClauseExpression firstPostcond = postconditions
+									.get(0);
 							// no $result used in contracts of this function
-							tmpLastStmt = income;
-						for (ContractClauseExpression postcondition : postconditions) {
-							postAssertCall = this.makeContractsAssertion(
+							tmpLastStmt = makeContractsStatement(
+									firstPostcond.getSource(), firstPostcond);
+						}
+						for (Statement income : incomes)
+							income.setTarget(tmpLastStmt.source());
+						for (int i = 1; i < postConditionLength; i++) {
+							ContractClauseExpression postcondition = postconditions
+									.get(i);
+
+							postAssertCall = this.makeContractsStatement(
 									postcondition.getSource(), postcondition);
 							tmpLastStmt.setTarget(postAssertCall.source());
 							tmpLastStmt = postAssertCall;
-							body.addFinalStatement(postAssertCall);
 						}
-						tmpLastStmt.setTarget(returnStmt.source());
-					}
-				}
-				// In case a function with defined postconditions has
-				// terminations
-				// without return statement, postconditions will be checked at
-				// the
-				// end if there is at least one such termination:
-				if (postconditions.size() > 0) {
-					List<Statement> terminations = new LinkedList<>();
-
-					for (Statement stmt : this.terminationLocations(body
-							.startLocation()))
-						if (!(stmt instanceof ReturnStatement))
-							terminations.add(stmt);
-					if (!terminations.isEmpty()) {
-						ContractClauseExpression firstPostcond = postconditions
-								.remove(0);
-						Statement lastStmt;
-
-						postAssertCall = this.makeContractsAssertion(
-								firstPostcond.getSource(), firstPostcond);
-						lastStmt = postAssertCall;
-						for (Statement term : terminations)
-							term.setTarget(lastStmt.source());
-						body.addNewStatement(postAssertCall);
-						for (ContractClauseExpression postcondition : postconditions) {
-							postAssertCall = this.makeContractsAssertion(
-									postcondition.getSource(), postcondition);
-							lastStmt.setTarget(postAssertCall.source());
-							lastStmt = postAssertCall;
-							body.addNewStatement(postAssertCall);
-						}
+						tmpLastStmt.setTarget(term.source());
 					}
 				}
 			}
+			// In case a function with defined postconditions has
+			// terminations
+			// without return statement, postconditions will be checked at
+			// the
+			// end if there is at least one such termination:
+			if (nonRetTerms.size() > 0) {
+				ContractClauseExpression firstPostcond = postconditions.get(0);
+				Fragment postcondFragment;
+
+				postAssertCall = this.makeContractsStatement(
+						firstPostcond.getSource(), firstPostcond);
+				postcondFragment = new CommonFragment(postAssertCall.source(),
+						postAssertCall);
+				for (int i = 1; i < postConditionLength; i++) {
+					ContractClauseExpression postcondition = postconditions
+							.get(i);
+
+					postAssertCall = this.makeContractsStatement(
+							postcondition.getSource(), postcondition);
+					postcondFragment.addNewStatement(postAssertCall);
+				}
+				body = body.combineWith(postcondFragment);
+			}
 		}
-		if (returnStmts.isEmpty() && !containsReturn(body)) {
+		if (!containsReturn(body)) {
 			CIVLSource endSource = modelFactory
 					.sourceOfEnd(this.functionBodyNode);
 			Location returnLocation = modelFactory.location(endSource,
@@ -557,18 +564,19 @@ public class FunctionTranslator {
 	 * @param clause
 	 * @return
 	 */
-	private Statement makeContractsAssertion(CIVLSource contractSource,
+	private Statement makeContractsStatement(CIVLSource contractSource,
 			ContractClauseExpression clause) {
 		Location newLocation;
 		CIVLFunction assertFunc;
-		Variable argument, procsGroup;
-		List<Variable> arguments = new LinkedList<>();
+		Variable argPredicate, procsGroup;
+		List<Variable> argVars = new LinkedList<>();
 		List<Expression> argExprs = new LinkedList<>();
 		Expression funcExpr;
 		Statement result;
-		String message;
+		String functionName, library;
 		int argCounter = 1;
 
+		// TODO: make library general
 		newLocation = modelFactory.location(contractSource,
 				function.outerScope());
 		if (clause.isCollectiveClause()) {
@@ -578,24 +586,31 @@ public class FunctionTranslator {
 			procsGroup = modelFactory.variable(contractSource, clause
 					.getCollectiveGroup().getExpressionType(),
 					procGroupIdentifier, argCounter++);
-			arguments.add(procsGroup);
+			argVars.add(procsGroup);
 			argExprs.add(clause.getCollectiveGroup());
-			message = "$mpi_coassert";
-		} else
-			message = "assert";
-		argument = modelFactory.variable(contractSource,
-				typeFactory.booleanType(),
-				modelFactory.identifier(contractSource, "postcondition"),
-				argCounter);
-		arguments.add(argument);
-		argExprs.add(clause.getBody());
-		assertFunc = modelFactory.systemFunction(contractSource,
-				modelFactory.identifier(contractSource, message), arguments,
-				typeFactory.booleanType(), function.outerScope(), message);
-		funcExpr = modelFactory.functionIdentifierExpression(contractSource,
-				assertFunc);
-		result = modelFactory.callOrSpawnStatement(contractSource, newLocation,
-				true, funcExpr, argExprs, modelFactory.trueExpression(null));
+			functionName = "$mpi_coassert";
+			library = "civl-mpi";
+			result = modelFactory.collectiveContractStatement(contractSource,
+					clause, newLocation, library);
+		} else {
+			functionName = "assert";
+			library = "assert";
+			argPredicate = modelFactory.variable(contractSource,
+					typeFactory.booleanType(),
+					modelFactory.identifier(contractSource, "postcondition"),
+					argCounter);
+			argVars.add(argPredicate);
+			argExprs.add(clause.getBody());
+			assertFunc = modelFactory.systemFunction(contractSource,
+					modelFactory.identifier(contractSource, functionName),
+					argVars, typeFactory.booleanType(), function.outerScope(),
+					library);
+			funcExpr = modelFactory.functionIdentifierExpression(
+					contractSource, assertFunc);
+			result = modelFactory.callOrSpawnStatement(contractSource,
+					newLocation, true, funcExpr, argExprs,
+					modelFactory.trueExpression(null));
+		}
 		return result;
 	}
 
@@ -1266,7 +1281,8 @@ public class FunctionTranslator {
 
 	/**
 	 * Checks if a given fragment (which is to be used as the function body of
-	 * some function) contains a return statement.
+	 * some function) contains a return statement. It returns true iff all
+	 * possible executions have return statements.
 	 * 
 	 * @param functionBody
 	 *            The fragment to be checked.
@@ -1279,8 +1295,6 @@ public class FunctionTranslator {
 
 		if (functionBody == null || functionBody.isEmpty())
 			return false;
-		// TODO: it seems the function returns true only when only possible
-		// executions have return statements.
 		if (lastStatements.size() > 1) {
 			for (Statement statement : lastStatements) {
 				if (!(statement instanceof ReturnStatement))
@@ -1310,62 +1324,6 @@ public class FunctionTranslator {
 			}
 		}
 		return false;
-	}
-
-	// TODO: make "containsReturn" a caller of this one.
-	private List<Statement> containsReturns(Fragment functionBody) {
-		Set<Statement> lastStatements = functionBody.finalStatements();
-		List<Statement> returnStmts = new LinkedList<>();
-		Statement uniqueLastStatement;
-
-		if (functionBody == null || functionBody.isEmpty())
-			return returnStmts;
-		if (lastStatements.size() > 1) {
-			for (Statement statement : lastStatements) { // TODO: suspicious!
-				if ((statement instanceof ReturnStatement))
-					returnStmts.add(statement);
-			}
-			return returnStmts;
-		}
-		uniqueLastStatement = functionBody.uniqueFinalStatement();
-		if (uniqueLastStatement.source().getNumOutgoing() == 1) {
-			Location lastLocation = uniqueLastStatement.source();
-			Set<Integer> locationIds = new HashSet<Integer>();
-
-			while (lastLocation.atomicKind() == AtomicKind.ATOMIC_EXIT
-					|| lastLocation.atomicKind() == AtomicKind.ATOM_EXIT) {
-				locationIds.add(lastLocation.id());
-				if (lastLocation.getNumIncoming() == 1) {
-					lastLocation = lastLocation.getIncoming(0).source();
-					if (locationIds.contains(lastLocation.id()))
-						return returnStmts;
-				} else {
-					return returnStmts;
-				}
-			}
-			if (lastLocation.getNumOutgoing() == 1
-					&& lastLocation.getOutgoing(0) instanceof ReturnStatement) {
-				returnStmts.add(lastLocation.getOutgoing(0));
-				return returnStmts;
-			}
-		}
-		return returnStmts;
-	}
-
-	private List<Statement> terminationLocations(Location startLocation) {
-		Iterator<Statement> outgoingsIter;
-		List<Statement> results = new LinkedList<>();
-
-		outgoingsIter = startLocation.outgoing().iterator();
-		while (outgoingsIter.hasNext()) {
-			Statement outgoing = outgoingsIter.next();
-
-			if (outgoing.target() == null)
-				results.add(outgoing);
-			else
-				results.addAll(terminationLocations(outgoing.target()));
-		}
-		return results;
 	}
 
 	/**
@@ -2384,14 +2342,17 @@ public class FunctionTranslator {
 					ContractClauseExpression clause = translateContractExpressionNode(
 							((EnsuresNode) contractNode).getExpression(),
 							result.outerScope(),
-							modelFactory.sourceOf(contractNode));
+							modelFactory.sourceOf(contractNode),
+							ContractKind.ENSURES);
 
 					result.addPostcondition(clause);
 				} else if (contractNode instanceof RequiresNode) {
 					ContractClauseExpression clause = translateContractExpressionNode(
 							((RequiresNode) contractNode).getExpression(),
 							result.outerScope(),
-							modelFactory.sourceOf(contractNode));
+							modelFactory.sourceOf(contractNode),
+							ContractKind.REQUIRES);
+
 					result.addPrecondition(clause);
 				}
 			}
@@ -3854,7 +3815,6 @@ public class FunctionTranslator {
 		ExpressionNode functionExpression = callNode.getFunction();
 		Function callee;
 		CIVLFunction abstractFunction;
-		List<Expression> arguments = new ArrayList<Expression>();
 		CIVLSource source = modelFactory.sourceOf(callNode);
 
 		if (functionExpression instanceof IdentifierExpressionNode) {
@@ -3867,6 +3827,8 @@ public class FunctionTranslator {
 		abstractFunction = modelBuilder.functionMap.get(callee);
 		assert abstractFunction != null;
 		if (abstractFunction instanceof AbstractFunction) {
+			List<Expression> arguments = new ArrayList<Expression>();
+
 			for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
 				Expression actual = translateExpressionNode(
 						callNode.getArgument(i), scope, true);
@@ -3878,22 +3840,24 @@ public class FunctionTranslator {
 					modelFactory.sourceOf(callNode),
 					(AbstractFunction) abstractFunction, arguments);
 			return result;
-		} else {
-			// Statement functionCall = this.translateFunctionCall(scope, null,
-			// callNode, true, source);
-			//
-			// if (functionCall instanceof CallOrSpawnStatement) {
-			// CallOrSpawnStatement callStatement = (CallOrSpawnStatement)
-			// functionCall;
-			// SystemFunctionCallExpression callExpression = modelFactory
-			// .systemFunctionCallExpression(callStatement);
-			//
-			// modelBuilder.systemCallExpressions.add(callExpression);
-			// return callExpression;
-			// } else {
+		} else if (abstractFunction.name().name()
+				.equals(contractMessageBufferFunction)) {
+			CallOrSpawnStatement callStatement;
+			List<Expression> arguments = new ArrayList<Expression>();
+
+			for (ExpressionNode var : callNode.getArguments())
+				arguments.add(translateExpressionNode(var, scope, true));
+			callStatement = modelFactory
+					.callOrSpawnStatement(
+							source,
+							abstractFunction.startLocation(),
+							true,
+							translateExpressionNode(callNode.getFunction(),
+									scope, true), arguments, modelFactory
+									.trueExpression(null));
+			return modelFactory.systemFunctionCallExpression(callStatement);
+		} else
 			throw new CIVLInternalException("Unreachable", source);
-			// }
-		}
 	}
 
 	/**
@@ -4439,7 +4403,8 @@ public class FunctionTranslator {
 	 * @return
 	 */
 	private ContractClauseExpression translateContractExpressionNode(
-			ExpressionNode expressionNode, Scope scope, CIVLSource source) {
+			ExpressionNode expressionNode, Scope scope, CIVLSource source,
+			ContractKind kind) {
 		ExpressionNode bodyNode, procsGroupNode;
 		Expression processesGroup = null, body;
 
@@ -4456,7 +4421,7 @@ public class FunctionTranslator {
 			processesGroup = translateExpressionNode(procsGroupNode, scope,
 					true);
 		return modelFactory.contractClauseExpression(source,
-				this.typeFactory.booleanType(), processesGroup, body);
+				this.typeFactory.booleanType(), processesGroup, body, kind);
 	}
 
 	/**

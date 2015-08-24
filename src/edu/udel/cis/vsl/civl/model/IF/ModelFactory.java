@@ -25,6 +25,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
@@ -71,6 +72,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.ModelFactoryException;
+import edu.udel.cis.vsl.civl.model.common.statement.CollectiveContractStatement;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -1548,5 +1550,10 @@ public interface ModelFactory {
 	 * @return
 	 */
 	ContractClauseExpression contractClauseExpression(CIVLSource source,
-			CIVLType type, Expression collectiveGroup, Expression body);
+			CIVLType type, Expression collectiveGroup, Expression body,
+			ContractKind contractKind);
+
+	CollectiveContractStatement collectiveContractStatement(CIVLSource source,
+			ContractClauseExpression contractExpression, Location location,
+			String library);
 }

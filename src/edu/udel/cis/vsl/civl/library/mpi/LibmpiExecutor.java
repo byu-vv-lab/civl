@@ -17,9 +17,11 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.ContractStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -66,8 +68,6 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	 */
 	private Map<Integer, Pair<Scope, Variable>> processStatusVariables;
 
-	static private final String mpiCoassert = "$mpi_coassert";
-
 	public LibmpiExecutor(String name, Executor primaryExecutor,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
 			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
@@ -85,10 +85,20 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		return this.executeWork(state, pid, statement, functionName);
 	}
 
-	/* ************************* private methods **************************** */
+	public State executeContract(State state, int pid,
+			ContractStatement statement, String functionName)
+			throws UnsatisfiablePathConditionException {
+		if (this.civlConfig.isEnableMpiContract())
+			return this
+					.executeContractWork(state, pid, statement, functionName);
+		else
+			return state;
+	}
 
-	private State executeWork(State state, int pid, Statement statement,
-			String functionName) throws UnsatisfiablePathConditionException {
+	/* ************************* private methods **************************** */
+	private State executeWork(State state, int pid,
+			CallOrSpawnStatement statement, String functionName)
+			throws UnsatisfiablePathConditionException {
 		Expression[] arguments;
 		LHSExpression lhs;
 		SymbolicExpression[] argumentValues;
@@ -96,22 +106,14 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		int numArgs;
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 
-		if (!(statement instanceof CallOrSpawnStatement)) {
-			throw new CIVLInternalException("Unsupported statement for mpi",
-					statement);
-		}
-		call = (CallOrSpawnStatement) statement;
+		call = statement;
 		numArgs = call.arguments().size();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
-		// Do NOT evaluate the second argument of "$mpi_coassert" which is the
-		// assertional expression:
-		if (functionName.equals(mpiCoassert)) {
-			assert numArgs == 2;
-			numArgs = 1;
-			arguments[1] = call.arguments().get(1);
-		}
 		lhs = call.lhs();
+		// TODO: find a way to merge the co-assert execution branch
+		if (functionName.equals("$mpi_coassert"))
+			numArgs = 1;
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
 
@@ -148,17 +150,46 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			state = executeProcScope(state, pid, process, lhs, arguments,
 					argumentValues, statement.getSource());
 			break;
-		case mpiCoassert:
+		case "$mpi_coassert":
 			if (this.civlConfig.isEnableMpiContract())
 				state = executeCoassertArrive(call, state, pid, process,
 						arguments, argumentValues, statement.getSource());
 			break;
 		default:
-			throw new CIVLInternalException("Unknown civlc function: " + name,
-					statement);
+			throw new CIVLInternalException("Unknown civl-mpi function: "
+					+ name, statement);
 		}
 		state = stateFactory.setLocation(state, pid, call.target(),
 				call.lhs() != null);
+		return state;
+	}
+
+	private State executeContractWork(State state, int pid,
+			ContractStatement statement, String functionName)
+			throws UnsatisfiablePathConditionException {
+		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+		ContractClauseExpression contractExpr = statement.getExpression();
+		SymbolicExpression[] collectiveGroup = new SymbolicExpression[1];
+		Expression[] expressions = { contractExpr.getCollectiveGroup(),
+				contractExpr.getBody() };
+		Evaluation eval;
+
+		eval = evaluator
+				.evaluate(state, pid, contractExpr.getCollectiveGroup());
+		state = eval.state;
+		collectiveGroup[0] = eval.value;
+		switch (functionName) {
+		case "$mpi_coasert":
+			this.executeCoassertArrive(statement, state, pid, process,
+					expressions, collectiveGroup, statement.getSource());
+			break;
+		case "$mpi_isRecvBufEmpty":
+			// TODO: implement me
+			break;
+		default:
+			throw new CIVLInternalException("Unknown civl-mpi contract: "
+					+ name, statement);
+		}
 		return state;
 	}
 
@@ -470,11 +501,10 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCoassertArrive(CallOrSpawnStatement call, State state,
-			int pid, String process, Expression[] arguments,
+	private State executeCoassertArrive(Statement call, State state, int pid,
+			String process, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-
 		ImmutableState immutableState = (ImmutableState) state;
 		Expression assertion = arguments[1];
 		Expression MPICommExpr = arguments[0];
@@ -623,7 +653,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State coassertsEvaluation(State fakeState, Expression[] assertions,
-			int pid, CIVLSource source, CallOrSpawnStatement call)
+			int pid, CIVLSource source, Statement call)
 			throws UnsatisfiablePathConditionException {
 		String process;
 		Evaluation eval;
@@ -647,7 +677,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 
 				message = " assertion:" + assertions[place];
 				process = "process with rank: " + place + " participating the "
-						+ mpiCoassert + "().";
+						+ "$mpi_coassert().";
 				fakeState = this.reportAssertionFailure(fakeState, place,
 						process, resultType, "$mpi_coassert fail" + message,
 						args, argVals, snapShotAssertion.getSource(), call,

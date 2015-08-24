@@ -291,6 +291,9 @@ public class MemoryUnitExpressionAnalyzer {
 		}
 		case NOOP:
 			break;
+		case CONTRACT:
+			break;// TODO: if in the future, there are contracts for shared
+					// storage, this cannot be no operation
 		case RETURN: {
 			ReturnStatement returnStatement = (ReturnStatement) statement;
 

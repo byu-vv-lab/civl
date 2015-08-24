@@ -5,6 +5,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -18,9 +19,13 @@ public class CommonContractClauseExpression extends CommonExpression implements
 
 	private boolean isCollective;
 
+	private ContractKind contractKind;
+
+	private ClauseKind clauseKind;
+
 	public CommonContractClauseExpression(CIVLSource source, Scope hscope,
 			Scope lscope, CIVLType type, Expression collectiveGroup,
-			Expression body) {
+			Expression body, ContractKind contractKind, ClauseKind clauseKind) {
 		super(source, hscope, lscope, type);
 		if (collectiveGroup == null)
 			this.isCollective = false;
@@ -28,6 +33,8 @@ public class CommonContractClauseExpression extends CommonExpression implements
 			this.isCollective = true;
 		this.collectiveGroup = collectiveGroup;
 		this.body = body;
+		this.contractKind = contractKind;
+		this.clauseKind = clauseKind;
 	}
 
 	@Override
@@ -90,6 +97,19 @@ public class CommonContractClauseExpression extends CommonExpression implements
 	}
 
 	@Override
+	public ContractClauseExpression replaceWith(
+			ConditionalExpression oldExpression, Expression newExpression) {
+		Expression newGroup = this.collectiveGroup.replaceWith(oldExpression,
+				newExpression);
+		Expression newBody = this.body
+				.replaceWith(oldExpression, newExpression);
+
+		return new CommonContractClauseExpression(this.getSource(),
+				this.expressionScope(), this.lowestScope(), expressionType,
+				newGroup, newBody, contractKind, clauseKind);
+	}
+
+	@Override
 	public String toString() {
 		StringBuffer message = new StringBuffer();
 
@@ -97,5 +117,15 @@ public class CommonContractClauseExpression extends CommonExpression implements
 			message.append("collective(" + collectiveGroup.toString() + ") ");
 		message.append(this.body);
 		return message.toString();
+	}
+
+	@Override
+	public ContractKind contractKind() {
+		return this.contractKind;
+	}
+
+	@Override
+	public ClauseKind clauseKind() {
+		return this.clauseKind;
 	}
 }
