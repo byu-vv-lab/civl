@@ -491,6 +491,7 @@ public class CommonExecutor implements Executor {
 							symbolicAnalyzer.stateInformation(state),
 							call.getSource());
 
+					returnValue = universe.nullExpression();
 					this.errorLogger.reportError(err);
 				}
 				state = assign(state, pid, process, call.lhs(), returnValue);
