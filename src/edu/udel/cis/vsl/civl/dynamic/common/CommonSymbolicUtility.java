@@ -145,6 +145,10 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	 */
 	private SymbolicTupleType pointerType;
 
+	private final static String abstractGuard = "_guard_";
+
+	private SymbolicType stringType;
+
 	/* ***************************** Constructor *************************** */
 
 	/**
@@ -183,6 +187,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 				universe.nullReference()));
 		this.undefinedPointer = universe.canonic(this.makePointer(-2, -2,
 				universe.nullReference()));
+		this.stringType = universe.arrayType(universe.characterType());
 	}
 
 	/* *********************** Package-Private Methods ********************* */
@@ -1004,8 +1009,8 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 					if (this.currentPos == null)
 						return (this.currentPos = this.startPos);
 					else {
-						this.currentPos = getNextInRectangularDomain(this.recDom,
-								this.currentPos, this.dim);
+						this.currentPos = getNextInRectangularDomain(
+								this.recDom, this.currentPos, this.dim);
 						return this.currentPos;
 					}
 				}
@@ -1378,5 +1383,30 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		int id = extractIntField(source, expr, zeroObj);
 
 		return (SymbolicType) universe.objectWithId(id);
+	}
+
+	@Override
+	public SymbolicExpression getAbstractGuardOfFunctionCall(String library,
+			String function, SymbolicExpression[] argumentValues) {
+		String functionName = abstractGuard + library + "_" + function;
+		List<SymbolicType> argumentTypes = new ArrayList<>();
+		SymbolicConstant abstractFunction;
+		SymbolicType functionType;
+		List<SymbolicExpression> argValues = new ArrayList<>(
+				argumentValues.length + 1);
+
+		argumentTypes.add(this.stringType);
+		for (int i = 0; i < argumentValues.length; i++) {
+			argumentTypes.add(argumentValues[i].type());
+		}
+		functionType = universe.functionType(argumentTypes,
+				universe.booleanType());
+		abstractFunction = universe.symbolicConstant(
+				universe.stringObject(functionName), functionType);
+		argValues.add(universe.stringExpression(functionName));
+		for (int i = 0; i < argumentValues.length; i++) {
+			argValues.add(argumentValues[i]);
+		}
+		return universe.apply(abstractFunction, argValues);
 	}
 }

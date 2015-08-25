@@ -798,4 +798,14 @@ public interface SymbolicUtility {
 	 * @return the sub-clauses of a CNF clause
 	 */
 	BooleanExpression[] getConjunctiveClauses(BooleanExpression cnfClause);
+
+	/**
+	 * returns the abstract guard of a function call
+	 * 
+	 * @param function
+	 * @param arguments
+	 * @return
+	 */
+	SymbolicExpression getAbstractGuardOfFunctionCall(String library,
+			String function, SymbolicExpression[] argumentValues);
 }

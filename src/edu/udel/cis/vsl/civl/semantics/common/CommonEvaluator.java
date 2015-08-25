@@ -2428,11 +2428,27 @@ public class CommonEvaluator implements Evaluator {
 		} catch (LibraryLoaderException exception) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
 					+ ")";
+			StringBuffer message = new StringBuffer();
+			int numArgs = arguments.size();
+			SymbolicExpression[] argumentValues = new SymbolicExpression[numArgs];
 
-			throw new CIVLInternalException("An error occurred when " + process
-					+ " attempted to load the library evaluator for " + library
-					+ " for the function " + function + ": "
-					+ exception.getMessage(), source);
+			for (int i = 0; i < numArgs; i++) {
+				Evaluation eval = this.evaluate(state, pid, arguments.get(i));
+
+				state = eval.state;
+				argumentValues[i] = eval.value;
+			}
+			message.append("unable to load the library evaluator for "
+					+ library + " for the function ");
+			message.append(library);
+			message.append(" for the function ");
+			message.append(function);
+			this.errorLogger.logSimpleError(source, state, process,
+					this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.LIBRARY, message.toString());
+			return new Evaluation(state,
+					this.symbolicUtil.getAbstractGuardOfFunctionCall(library,
+							function, argumentValues));
 		}
 	}
 

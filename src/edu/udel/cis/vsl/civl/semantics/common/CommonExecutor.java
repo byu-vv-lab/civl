@@ -299,12 +299,16 @@ public class CommonExecutor implements Executor {
 					+ ")";
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
-					"An error is encountered when loading the library executor for "
-							+ libraryName + ": " + exception.getMessage(),
+					"unable to load the library executor for " + libraryName
+							+ " to execute the function " + funcName,
 					this.symbolicAnalyzer.stateInformation(state),
 					call.getSource());
 
 			this.errorLogger.reportError(err);
+			if (call.lhs() != null)
+				state = this.assign(state, pid, process, call.lhs(),
+						universe.nullExpression());
+			state = this.stateFactory.setLocation(state, pid, call.target());
 		}
 		return state;
 	}

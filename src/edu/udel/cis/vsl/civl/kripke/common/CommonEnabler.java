@@ -420,13 +420,17 @@ public abstract class CommonEnabler implements Enabler {
 					+ ")";
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
-					"An error is encountered when loading the library enabler for "
-							+ libraryName + ": " + exception.getMessage(),
+					"unable to load the library enabler for library "
+							+ libraryName + " for function "
+							+ call.function().name().name(),
 					symbolicAnalyzer.stateInformation(state), source);
+			List<Transition> transitions = new LinkedList<>();
 
+			transitions.add(Semantics.newTransition(pathCondition, pid,
+					processIdentifier, call, atomicLockAction));
 			this.errorLogger.reportError(err);
+			return transitions;
 		}
-		return new LinkedList<Transition>();
 	}
 
 	/**
