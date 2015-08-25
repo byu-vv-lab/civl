@@ -420,8 +420,8 @@ public abstract class CommonEnabler implements Enabler {
 					+ ")";
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
-					"unable to load the library enabler for library "
-							+ libraryName + " for function "
+					"unable to load the library enabler for the library "
+							+ libraryName + " for the function "
 							+ call.function().name().name(),
 					symbolicAnalyzer.stateInformation(state), source);
 			List<Transition> transitions = new LinkedList<>();

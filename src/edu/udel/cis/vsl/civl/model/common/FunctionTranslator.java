@@ -197,7 +197,7 @@ public class FunctionTranslator {
 	/**
 	 * Store temporary information of the function being processed
 	 */
-	protected FunctionInfo functionInfo;
+	private FunctionInfo functionInfo;
 
 	/**
 	 * The unique model factory to be used in the system.
@@ -217,12 +217,12 @@ public class FunctionTranslator {
 	/**
 	 * The AST node of the function body, which is to be used for translation.
 	 */
-	protected StatementNode functionBodyNode;
+	private StatementNode functionBodyNode;
 
 	/**
 	 * The CIVL function that is the result of this function translator.
 	 */
-	protected CIVLFunction function;
+	private CIVLFunction function;
 
 	/**
 	 * The accuracy assumption builder, which performs Taylor expansions after
@@ -417,7 +417,7 @@ public class FunctionTranslator {
 	 * @return The fragment of CIVL locations and statements that represents the
 	 *         function body node.
 	 */
-	protected Fragment translateFunctionBody() {
+	private Fragment translateFunctionBody() {
 		Fragment body;
 		Scope scope = this.function.outerScope();
 		List<ContractClauseExpression> preconditions, postconditions;
@@ -882,7 +882,7 @@ public class FunctionTranslator {
 	 *            any CIVL expression e
 	 * @return either the original expression or &e[0]
 	 */
-	protected Expression arrayToPointer(Expression array) {
+	private Expression arrayToPointer(Expression array) {
 		CIVLType type = array.getExpressionType();
 
 		if (array instanceof ArrayLiteralExpression)
@@ -1583,7 +1583,7 @@ public class FunctionTranslator {
 	 *            The location
 	 * @return The fragment of statements translated from the AST node
 	 */
-	protected Fragment translateASTNode(ASTNode node, Scope scope,
+	private Fragment translateASTNode(ASTNode node, Scope scope,
 			Location location) {
 		Fragment result = null;
 
@@ -2110,7 +2110,7 @@ public class FunctionTranslator {
 	 *            The function call node
 	 * @return the fragment containing the function call statement
 	 */
-	protected Statement translateFunctionCall(Scope scope, LHSExpression lhs,
+	private Statement translateFunctionCall(Scope scope, LHSExpression lhs,
 			FunctionCallNode functionCallNode, boolean isCall, CIVLSource source) {
 		// CIVLSource source =
 		// modelFactory.sourceOfBeginning(functionCallNode);TODO:Changed
@@ -3043,9 +3043,13 @@ public class FunctionTranslator {
 			if (myType == 0)
 				return modelFactory.arrayLiteralExpression(source,
 						(CIVLArrayType) finalType, expressions);
-			else
+			else if (myType == 1)
 				return modelFactory.structOrUnionLiteralExpression(source,
-						finalType, expressions);
+						(CIVLStructOrUnionType)finalType, expressions);
+			else
+				throw new CIVLUnimplementedFeatureException(
+						"translating literal object which is of neither array or struct/union type",
+						source);
 		}
 
 	}
@@ -3450,7 +3454,7 @@ public class FunctionTranslator {
 	 *            The translation conversions
 	 * @return the CIVL Expression object
 	 */
-	protected Expression translateExpressionNode(ExpressionNode expressionNode,
+	private Expression translateExpressionNode(ExpressionNode expressionNode,
 			Scope scope, boolean translateConversions) {
 		Expression result;
 
@@ -4737,7 +4741,7 @@ public class FunctionTranslator {
 	 *            The ABC type
 	 * @return The CIVL type
 	 */
-	protected CIVLType translateABCType(CIVLSource source, Scope scope,
+	private CIVLType translateABCType(CIVLSource source, Scope scope,
 			Type abcType) {
 		CIVLType result = modelBuilder.typeMap.get(abcType);
 
@@ -4956,24 +4960,7 @@ public class FunctionTranslator {
 		return modelFactory.variableExpression(resultSource, newResultVariable);
 	}
 
-	// Getters and Setters
-	protected FunctionInfo functionInfo() {
-		return this.functionInfo;
-	}
-
-	protected CIVLFunction function() {
-		return function;
-	}
-
-	protected void setFunction(CIVLFunction function) {
+	private void setFunction(CIVLFunction function) {
 		this.function = function;
-	}
-
-	protected ModelBuilderWorker modelBuilder() {
-		return this.modelBuilder;
-	}
-
-	protected ModelFactory modelFactory() {
-		return this.modelFactory;
 	}
 }

@@ -526,21 +526,33 @@ public interface ModelFactory {
 			Expression argument);
 
 	/**
-	 * Create a new instance of struct or union literal expression
+	 * Creates a new instance of struct or union literal expression
 	 * 
 	 * @param source
+	 *            the source of the literal expression
+	 * @param type
+	 *            the type of the literal expression
 	 * @param fields
-	 * @return
+	 *            the fields of the struct/union expression
+	 * @return the new struct or union literal expression
 	 */
 	StructOrUnionLiteralExpression structOrUnionLiteralExpression(
 			CIVLSource source, CIVLType type, List<Expression> fields);
 
 	/**
-	 * Create a new instance of struct or union literal expression
+	 * Creates a new instance of struct or union literal expression, which has a
+	 * constant value.
 	 * 
 	 * @param source
-	 * @param fields
-	 * @return
+	 *            the source of the literal expression
+	 * @param exprScope
+	 *            the scope of the literal expression
+	 * @param type
+	 *            the type of the literal expression
+	 * @param constantValue
+	 *            the constant value of the literal
+	 * @return the new struct or union literal expression which has the given
+	 *         constant value
 	 */
 	StructOrUnionLiteralExpression structOrUnionLiteralExpression(
 			CIVLSource source, Scope exprScope, CIVLType type,
@@ -561,14 +573,21 @@ public interface ModelFactory {
 			LHSExpression array, Expression index);
 
 	/**
-	 * A system function call expression
+	 * creates a system function call expression
 	 * 
 	 * @param callStatement
-	 * @return
+	 * @return the new expression which contains a call to a system function.
 	 */
 	SystemFunctionCallExpression systemFunctionCallExpression(
 			CallOrSpawnStatement callStatement);
 
+	/**
+	 * creates a new boolean expression which has the value $true
+	 * 
+	 * @param source
+	 *            the source of the expression
+	 * @return the new boolean expression which has the value $true
+	 */
 	Expression trueExpression(CIVLSource source);
 
 	/**
@@ -1126,20 +1145,6 @@ public interface ModelFactory {
 	 */
 	VariableExpression atomicLockVariableExpression();
 
-	/**
-	 * Create a new statement to assign the atomic lock variable to a specified
-	 * process id. The scope of the source location of the resulting statement
-	 * 
-	 * @param pid
-	 *            The id of the process that wants to grab the atomic lock
-	 * @param target
-	 *            The target location of the resulting statement. The scope of
-	 *            the source location will be the same as the target location.
-	 * @return The new assign statement that updates the atomic lock variable to
-	 *         the specified process id
-	 */
-	AssignStatement assignAtomicLockVariable(Integer pid, Location target);
-
 	/* *********************************************************************
 	 * Identifier, Function, Location, Model, Scope, Variable
 	 * *********************************************************************
@@ -1340,8 +1345,6 @@ public interface ModelFactory {
 	int getScopeId(CIVLSource source, SymbolicExpression scopeValue);
 
 	boolean isScopeIdDefined(int scopeId);
-
-	SymbolicExpression nullScopeValue();
 
 	/**
 	 * Translate an integer scope id into a symbolic expression

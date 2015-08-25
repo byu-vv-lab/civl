@@ -299,7 +299,7 @@ public class CommonExecutor implements Executor {
 					+ ")";
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
-					"unable to load the library executor for " + libraryName
+					"unable to load the library executor for the library " + libraryName
 							+ " to execute the function " + funcName,
 					this.symbolicAnalyzer.stateInformation(state),
 					call.getSource());

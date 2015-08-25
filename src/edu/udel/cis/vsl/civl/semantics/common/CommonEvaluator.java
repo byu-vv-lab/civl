@@ -2438,8 +2438,7 @@ public class CommonEvaluator implements Evaluator {
 				state = eval.state;
 				argumentValues[i] = eval.value;
 			}
-			message.append("unable to load the library evaluator for "
-					+ library + " for the function ");
+			message.append("unable to load the library evaluator for the library ");
 			message.append(library);
 			message.append(" for the function ");
 			message.append(function);

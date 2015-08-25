@@ -397,7 +397,7 @@ public class CommonModelFactory implements ModelFactory {
 		// outermost scope, since it has no value or state, it doesn't
 		// contribute anything non-local to the expression scope.
 		Scope expressionScope = joinScope(arguments);
-		Scope lowestScope = getLower(arguments);
+		Scope lowestScope = getLowerScope(arguments);
 
 		return new CommonAbstractFunctionCallExpression(source,
 				expressionScope, lowestScope, function, arguments);
@@ -565,9 +565,10 @@ public class CommonModelFactory implements ModelFactory {
 		assert trueBranch.getExpressionType().equals(
 				falseBranch.getExpressionType());
 
-		return new CommonConditionalExpression(source, joinScope(Arrays.asList(
-				condition, trueBranch, falseBranch)), getLower(Arrays.asList(
-				condition, trueBranch, falseBranch)),
+		return new CommonConditionalExpression(
+				source,
+				joinScope(Arrays.asList(condition, trueBranch, falseBranch)),
+				getLowerScope(Arrays.asList(condition, trueBranch, falseBranch)),
 				trueBranch.getExpressionType(), condition, trueBranch,
 				falseBranch);
 	}
@@ -596,7 +597,7 @@ public class CommonModelFactory implements ModelFactory {
 			List<Pair<Variable, IntegerLiteralExpression>> partials,
 			List<Expression> arguments) {
 		return new CommonDerivativeCallExpression(source, joinScope(arguments),
-				getLower(arguments), function, partials, arguments);
+				getLowerScope(arguments), function, partials, arguments);
 	}
 
 	@Override
@@ -931,7 +932,7 @@ public class CommonModelFactory implements ModelFactory {
 			statementScope = join(statementScope, arg.expressionScope());
 		}
 		return new CommonCallStatement(civlSource, statementScope,
-				getLower(arguments), source, guard != null ? guard
+				getLowerScope(arguments), source, guard != null ? guard
 						: this.trueExpression(civlSource), isCall, null,
 				function, arguments);
 	}
@@ -969,12 +970,11 @@ public class CommonModelFactory implements ModelFactory {
 		SymbolicExpression undefinedObject = undefinedValue(dynamicObjectType);
 
 		return new CommonMallocStatement(civlSource, null,
-				getLower(Arrays.asList(lhs, scopeExpression, sizeExpression)),
-				source,
-				guard != null ? guard : this.trueExpression(civlSource),
-				mallocId, scopeExpression, staticElementType,
-				dynamicElementType, dynamicObjectType, sizeExpression,
-				undefinedObject, lhs);
+				getLowerScope(Arrays.asList(lhs, scopeExpression,
+						sizeExpression)), source, guard != null ? guard
+						: this.trueExpression(civlSource), mallocId,
+				scopeExpression, staticElementType, dynamicElementType,
+				dynamicObjectType, sizeExpression, undefinedObject, lhs);
 	}
 
 	@Override
@@ -1271,21 +1271,6 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 
 	@Override
-	public AssignStatement assignAtomicLockVariable(Integer pid, Location target) {
-		// create a new location to avoid breaking the original program graph
-		// and this assign statement is unreachable from the original program
-		// graph
-		AssignStatement assignStatement = this.assignStatement(
-				this.systemSource,
-				this.location(this.systemSource, target.scope()),
-				this.atomicLockVariableExpression,
-				this.selfExpression(this.systemSource), false);
-
-		assignStatement.setTargetTemp(target);
-		return assignStatement;
-	}
-
-	@Override
 	public VariableExpression atomicLockVariableExpression() {
 		return this.atomicLockVariableExpression;
 	}
@@ -1550,11 +1535,6 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public SymbolicExpression nullScopeValue() {
-		return this.nullScopeValue;
-	}
-
-	@Override
 	public void setSystemScope(Scope scope) {
 		this.systemScope = scope;
 	}
@@ -1585,14 +1565,14 @@ public class CommonModelFactory implements ModelFactory {
 	public ArrayLiteralExpression arrayLiteralExpression(CIVLSource source,
 			CIVLArrayType arrayType, List<Expression> elements) {
 		return new CommonArrayLiteralExpression(source, joinScope(elements),
-				getLower(elements), arrayType, elements);
+				getLowerScope(elements), arrayType, elements);
 	}
 
 	@Override
 	public StructOrUnionLiteralExpression structOrUnionLiteralExpression(
 			CIVLSource source, CIVLType structType, List<Expression> fields) {
 		return new CommonStructOrUnionLiteralExpression(source,
-				joinScope(fields), getLower(fields), structType, fields);
+				joinScope(fields), getLowerScope(fields), structType, fields);
 	}
 
 	@Override
@@ -1725,15 +1705,15 @@ public class CommonModelFactory implements ModelFactory {
 			Expression low, Expression high, Expression step) {
 		return new CommonRegularRangeExpression(source,
 				joinScope(Arrays.asList(low, high, step)),
-				getLower(Arrays.asList(low, high, step)),
+				getLowerScope(Arrays.asList(low, high, step)),
 				typeFactory.rangeType, low, high, step);
 	}
 
 	@Override
 	public RecDomainLiteralExpression recDomainLiteralExpression(
 			CIVLSource source, List<Expression> ranges, CIVLType type) {
-		return new CommonRecDomainLiteralExpression(source, getLower(ranges),
-				ranges, type);
+		return new CommonRecDomainLiteralExpression(source,
+				getLowerScope(ranges), ranges, type);
 	}
 
 	@Override
@@ -1996,14 +1976,7 @@ public class CommonModelFactory implements ModelFactory {
 		return s0;
 	}
 
-	@SuppressWarnings("unused")
-	private Scope getLower(Expression[] expressions) {
-		if (expressions == null)
-			return null;
-		return getLower(Arrays.asList(expressions));
-	}
-
-	private Scope getLower(List<Expression> expressions) {
+	private Scope getLowerScope(List<Expression> expressions) {
 		Scope scope = null;
 
 		for (Expression expression : expressions) {
@@ -2114,7 +2087,7 @@ public class CommonModelFactory implements ModelFactory {
 		ClauseKind clauseKind;
 
 		if (collectiveGroup != null) {
-			lscope = this.getLower(Arrays.asList(collectiveGroup, body));
+			lscope = this.getLowerScope(Arrays.asList(collectiveGroup, body));
 			hscope = this.joinScope(Arrays.asList(collectiveGroup, body));
 		} else {
 			lscope = body.lowestScope();
