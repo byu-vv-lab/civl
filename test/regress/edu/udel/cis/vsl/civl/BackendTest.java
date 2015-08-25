@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -7,6 +8,7 @@ import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Test;
 
+import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
 public class BackendTest {
@@ -49,6 +51,12 @@ public class BackendTest {
 				filename("sizeOfTypes.c")));
 	}
 
+	@Test
+	public void returnNull() throws ABCException {
+		assertFalse(ui.run("verify","-errorBound=2 -enablePrintf=false", filename("returnNull.cvl")));
+	}
+
+	
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
