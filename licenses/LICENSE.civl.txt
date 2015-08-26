@@ -1,4 +1,4 @@
-Copyright (c) 2013 Stephen F. Siegel, University of Delaware.
+Copyright (c) 2013, 2014, 2015 Stephen F. Siegel, University of Delaware.
 
 This file is part of CIVL.
 
