@@ -753,6 +753,8 @@ public class CommonEvaluator implements Evaluator {
 		switch (operator) {
 		case AND:
 			return evaluateAnd(state, pid, expression);
+		case AT:
+			return this.evaluateRemoteExpression(state, pid, expression);
 		case OR:
 			return evaluateOr(state, pid, expression);
 			// TODO code review
@@ -1872,7 +1874,7 @@ public class CommonEvaluator implements Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateRemoteExpression(State state, int pid,
-			RemoteExpression expression)
+			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
 		String process = state.getProcessState(pid).name() + "(id = " + pid
 				+ ")";
@@ -1881,8 +1883,9 @@ public class CommonEvaluator implements Evaluator {
 		int remotePid;
 		int dyscopeId;
 		int vid = -1;
-		Expression processExpr = expression.process();
-		VariableExpression variableExpr = (VariableExpression) expression.expression();
+		Expression processExpr = expression.right();
+		VariableExpression variableExpr = (VariableExpression) expression
+				.left();
 		Variable variable = null;
 
 		eval = this.evaluate(state, pid, processExpr);
@@ -2891,10 +2894,6 @@ public class CommonEvaluator implements Evaluator {
 		case REGULAR_RANGE:
 			result = evaluateRegularRange(state, pid,
 					(RegularRangeExpression) expression);
-			break;
-		case REMOTE_REFERENCE:
-			result = evaluateRemoteExpression(state, pid,
-					(RemoteExpression) expression);
 			break;
 		case SCOPEOF:
 			result = evaluateScopeofExpression(state, pid, process,

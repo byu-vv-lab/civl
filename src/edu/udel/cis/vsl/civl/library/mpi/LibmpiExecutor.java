@@ -111,13 +111,13 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
 		lhs = call.lhs();
-		// TODO: find a way to merge the co-assert execution branch
-		if (functionName.equals("$mpi_coassert"))
-			numArgs = 1;
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
 
 			arguments[i] = call.arguments().get(i);
+			// TODO: find a way to merge the co-assert execution branch
+			if (functionName.equals("$mpi_coassert") && i >= 1)
+				continue;
 			eval = evaluator.evaluate(state, pid, arguments[i]);
 			argumentValues[i] = eval.value;
 			state = eval.state;
