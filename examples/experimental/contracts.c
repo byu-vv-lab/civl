@@ -1,12 +1,14 @@
 #include <civlc.cvh>
 #include <assert.h>
+#include <mpi.h>
+#include <civl-mpi.cvh>
 
 $input int in;
 $assume(in > 0);
 
 int f1(int a, int b) 
-  $requires $collective(in) {a > 0}
-$requires {b > 1}
+$requires {$collective(MPI_COMM_WORLD) isRecvBufEmpty(0)} 
+$requires {b@a > 1}
 $ensures {$result > 0}
 $ensures {b >= 2} {
   
