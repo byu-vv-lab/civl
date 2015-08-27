@@ -6,7 +6,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RemoteExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -15,14 +14,14 @@ public class CommonRemoteExpression extends CommonExpression implements
 
 	private Expression process;
 
-	private VariableExpression variable;
+	private Expression expression;
 
 	public CommonRemoteExpression(CIVLSource source, Scope hscope,
-			Scope lscope, CIVLType type, Expression process,
-			VariableExpression variable) {
+			Scope lscope, CIVLType type, Expression expression,
+			Expression process) {
 		super(source, hscope, lscope, type);
 		this.process = process;
-		this.variable = variable;
+		this.expression = expression;
 	}
 
 	@Override
@@ -46,8 +45,8 @@ public class CommonRemoteExpression extends CommonExpression implements
 	}
 
 	@Override
-	public VariableExpression variable() {
-		return variable;
+	public Expression expression() {
+		return expression;
 	}
 
 	@Override
@@ -57,7 +56,7 @@ public class CommonRemoteExpression extends CommonExpression implements
 
 			if (!process.equals(remoteExpr.process()))
 				return false;
-			if (!variable.equals(remoteExpr.variable()))
+			if (!expression.equals(remoteExpr.expression()))
 				return false;
 			else
 				return true;
@@ -67,6 +66,6 @@ public class CommonRemoteExpression extends CommonExpression implements
 
 	@Override
 	public String toString() {
-		return process.toString() + "@" + variable.toString();
+		return expression.toString() + "@" + process.toString();
 	}
 }

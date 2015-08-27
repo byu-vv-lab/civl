@@ -11,8 +11,6 @@ import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -418,18 +416,14 @@ public abstract class CommonEnabler implements Enabler {
 		} catch (LibraryLoaderException exception) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
 					+ ")";
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
+
+			this.errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.LIBRARY,
 					"unable to load the library enabler for the library "
 							+ libraryName + " for the function "
-							+ call.function().name().name(),
-					symbolicAnalyzer.stateInformation(state), source);
-			List<Transition> transitions = new LinkedList<>();
-
-			transitions.add(Semantics.newTransition(pathCondition, pid,
-					processIdentifier, call, atomicLockAction));
-			this.errorLogger.reportError(err);
-			return transitions;
+							+ call.function().name().name());
+			throw new UnsatisfiablePathConditionException();
 		}
 	}
 

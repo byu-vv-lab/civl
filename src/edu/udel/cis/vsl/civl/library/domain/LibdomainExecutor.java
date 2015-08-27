@@ -232,7 +232,7 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
-			return state;
+			throw new UnsatisfiablePathConditionException();
 		}
 		if (numParts_num == null) {
 			CIVLExecutionException err = new CIVLExecutionException(
@@ -243,7 +243,7 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 					symbolicAnalyzer.stateInformation(state), source);
 
 			this.errorLogger.reportError(err);
-			return state;
+			throw new UnsatisfiablePathConditionException();
 		}
 		strategy_int = strategy_num.intValue();
 		numParts_int = numParts_num.intValue();

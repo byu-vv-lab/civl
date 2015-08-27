@@ -728,10 +728,10 @@ public class CommonModelFactory implements ModelFactory {
 
 	@Override
 	public RemoteExpression remoteExpression(CIVLSource source,
-			Expression process, VariableExpression variable, Scope scope) {
+			Expression expression, Expression process, Scope scope) {
 		// TODO: what's lowest scope ?
 		return new CommonRemoteExpression(source, scope, process.lowestScope(),
-				variable.getExpressionType(), process, variable);
+				expression.getExpressionType(), expression, process);
 	}
 
 	@Override

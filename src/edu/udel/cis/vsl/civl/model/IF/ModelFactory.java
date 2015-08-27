@@ -1565,12 +1565,11 @@ public interface ModelFactory {
 	 * 
 	 * @param source
 	 * @param process
-	 * @param variable
 	 * @param scope
 	 * @return
 	 */
-	RemoteExpression remoteExpression(CIVLSource source, Expression process,
-			VariableExpression variable, Scope scope);
+	RemoteExpression remoteExpression(CIVLSource source, Expression expression,
+			Expression process, Scope scope);
 
 	/**
 	 * Creates a contract clause expression

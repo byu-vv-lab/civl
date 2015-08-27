@@ -251,6 +251,7 @@ public class CIVLErrorLogger extends ErrorLog {
 		else { // pc is definitely satisfiable
 			certainty = Certainty.PROVEABLE;
 		}
+		//TODO if pc has no symbolic constant
 		error = new CIVLExecutionException(errorKind, certainty, process,
 				message, stateString, source);
 		reportError(error);

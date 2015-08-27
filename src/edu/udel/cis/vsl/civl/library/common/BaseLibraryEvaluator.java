@@ -77,7 +77,8 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 			SymbolicAnalyzer symbolicAnalyzer, CIVLConfiguration civlConfig,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer,
-				civlConfig, libEvaluatorLoader, modelFactory);
+				civlConfig, libEvaluatorLoader, modelFactory, evaluator
+						.errorLogger());
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();
 		this.errorLogger = evaluator.errorLogger();

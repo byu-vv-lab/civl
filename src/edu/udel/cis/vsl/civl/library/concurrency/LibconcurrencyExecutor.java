@@ -7,8 +7,6 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
@@ -32,7 +30,6 @@ import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.object.IntObject;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicTupleType;
 import edu.udel.cis.vsl.sarl.expr.Expressions;
@@ -197,7 +194,7 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression scope = argumentValues[0];
 		Expression scopeExpression = arguments[0];
 		SymbolicExpression gbarrier = argumentValues[1];
-		SymbolicExpression place = argumentValues[2];
+		NumericExpression place = (NumericExpression) argumentValues[2];
 		SymbolicExpression gbarrierObj;
 		SymbolicExpression barrierObj;
 		SymbolicExpression procMapArray;
@@ -206,62 +203,52 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		CIVLType barrierType = typeFactory
 				.systemType(ModelConfiguration.BARRIER_TYPE);
 		Evaluation eval;
-		int place_num = ((IntegerNumber) universe
-				.extractNumber((NumericExpression) place)).intValue();
+		// int place_num = ((IntegerNumber) universe
+		// .extractNumber((NumericExpression) place)).intValue();
 		NumericExpression totalPlaces;
 		BooleanExpression claim;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		ResultType resultType;
 
-		if (place_num < 0) {
-			throw new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.PROVEABLE, process, "Invalid place " + place_num
-							+ " used in $barrier_create().", source);
-		}
+		// if (place_num < 0) {
+		// CIVLExecutionException error = new CIVLExecutionException(
+		// ErrorKind.OTHER, Certainty.PROVEABLE, process,
+		// "$barrier_create() requires a non-negative place", source);
+		//
+		// this.errorLogger.reportError(error);
+		// throw new UnsatisfiablePathConditionException();
+		// }
 		eval = this.evaluator.dereference(civlsource, state, process,
 				arguments[1], gbarrier, false);
 		state = eval.state;
 		gbarrierObj = eval.value;
 		totalPlaces = (NumericExpression) universe.tupleRead(gbarrierObj,
 				zeroObject);
-		claim = universe.lessThanEquals(universe.integer(place_num),
-				totalPlaces);
+		claim = universe.lessThanEquals(place, totalPlaces);
 		resultType = reasoner.valid(claim).getResultType();
 		if (!resultType.equals(ResultType.YES)) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OTHER,
-					Certainty.PROVEABLE,
-					process,
-					"Place "
-							+ place_num
-							+ " used in $barrier_create() exceeds the size of the $gbarrier.",
-					source);
-
-			this.errorLogger.reportError(err);
-			state = this.errorLogger
-					.logError(
+			this.errorLogger
+					.logSimpleError(
 							source,
 							state,
 							process,
-							symbolicAnalyzer.stateInformation(state),
-							claim,
-							resultType,
+							this.symbolicAnalyzer.stateInformation(state),
 							ErrorKind.OTHER,
-							"Place "
-									+ place_num
-									+ " used in $barrier_create() exceeds the size of the $gbarrier.");
+							"place "
+									+ place
+									+ " used in $barrier_create() exceeds the size of the $gbarrier object which is "
+									+ totalPlaces);
+			throw new UnsatisfiablePathConditionException();
 		}
 		procMapArray = universe.tupleRead(gbarrierObj, oneObject);
 		if (!universe.arrayRead(procMapArray, (NumericExpression) place)
 				.equals(modelFactory.nullProcessValue())) {
-			throw new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE, process,
-					"Attempt to create a barrier using an invalid place.",
-					source);
+			errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state), ErrorKind.OTHER,
+					"attempt to create a barrier using a place "
+							+ "that has already been used by other processes");
+			throw new UnsatisfiablePathConditionException();
 		}
-
-		// TODO report an error if the place exceeds the size of the
-		// communicator
 		procMapArray = universe.arrayWrite(procMapArray,
 				(NumericExpression) place, modelFactory.processValue(pid));
 		gbarrierObj = universe.tupleWrite(gbarrierObj, oneObject, procMapArray);

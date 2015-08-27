@@ -4,12 +4,14 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
 import java.util.Map;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.state.IF.CIVLHeapException.HeapErrorKind;
 import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableCollectiveSnapshotsEntry;
 import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableMonoState;
 import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableState;
@@ -76,7 +78,8 @@ public interface StateFactory {
 	 * @return the canonical version of the given state
 	 */
 	State canonic(State state, boolean collectProcesses, boolean collectScopes,
-			boolean collectHeaps) throws CIVLHeapException;
+			boolean collectHeaps, Set<HeapErrorKind> toBeIgnored)
+			throws CIVLHeapException;
 
 	/**
 	 * Returns the canonic, initial state for a CIVL Model.
@@ -374,7 +377,8 @@ public interface StateFactory {
 	 * @return the state after canonicalizing heaps, which may be this state or
 	 *         a new one
 	 */
-	State collectHeaps(State state) throws CIVLStateException;
+	State collectHeaps(State state, Set<HeapErrorKind> toBeIgnored)
+			throws CIVLStateException;
 
 	/**
 	 * Performs a garbage collection and canonicalization of dynamic scopes.
@@ -389,7 +393,8 @@ public interface StateFactory {
 	 * @return the state after canonicalizing scopes, which may be this state or
 	 *         a new one
 	 */
-	State collectScopes(State state) throws CIVLStateException;
+	State collectScopes(State state, Set<HeapErrorKind> toBeIgnored)
+			throws CIVLStateException;
 
 	/**
 	 * Performs a garbage collection and canonicalization of the process states.

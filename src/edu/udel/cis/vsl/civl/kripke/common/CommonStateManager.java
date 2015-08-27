@@ -4,6 +4,7 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.io.PrintStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,8 +15,6 @@ import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
 import edu.udel.cis.vsl.civl.kripke.common.StateStatus.EnabledStatus;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
@@ -26,6 +25,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition.TransitionKind;
 import edu.udel.cis.vsl.civl.state.IF.CIVLHeapException;
+import edu.udel.cis.vsl.civl.state.IF.CIVLHeapException.HeapErrorKind;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
@@ -218,43 +218,51 @@ public class CommonStateManager implements StateManager {
 			config.out().print("--> ");
 		if (config.saveStates()) {
 			int newCanonicId;
+			Set<HeapErrorKind> ignoredErrorSet = new HashSet<>();
+			boolean finished = false;
 
-			try {
-				state = stateFactory.canonic(state, config.collectProcesses(),
-						config.collectScopes(), config.collectHeaps());
-			} catch (CIVLHeapException hex) {
-				// TODO state never gets canonicalized and then gmc can't figure
-				// out if it has been seen before.
-				String message = "";
-				CIVLExecutionException err;
-				state = hex.state();
+			do {
+				try {
+					if (ignoredErrorSet.size() == 2)
+						finished = true;
+					state = stateFactory.canonic(state,
+							config.collectProcesses(), config.collectScopes(),
+							config.collectHeaps(), ignoredErrorSet);
+					finished = true;
+				} catch (CIVLHeapException hex) {
+					// TODO state never gets canonicalized and then gmc can't
+					// figure
+					// out if it has been seen before.
+					String message = "";
 
-				switch (hex.heapErrorKind()) {
-				case NONEMPTY:
-					message = "The dyscope " + hex.dyscopeName() + "(id="
-							+ hex.dyscopeID()
-							+ ") has a non-empty heap upon termination.\n";
-					break;
-				case UNREACHABLE:
-					message = "An unreachable object (mallocID="
-							+ hex.heapFieldID() + ", objectID="
-							+ hex.heapObjectID()
-							+ ") is detectd in the heap of dyscope "
-							+ hex.dyscopeName() + "(id=" + hex.dyscopeID()
-							+ ").\n";
-					break;
-				default:
+					state = hex.state();
+					switch (hex.heapErrorKind()) {
+					case NONEMPTY:
+						message = "The dyscope " + hex.dyscopeName() + "(id="
+								+ hex.dyscopeID()
+								+ ") has a non-empty heap upon termination.\n";
+						break;
+					case UNREACHABLE:
+						message = "An unreachable object (mallocID="
+								+ hex.heapFieldID() + ", objectID="
+								+ hex.heapObjectID()
+								+ ") is detectd in the heap of dyscope "
+								+ hex.dyscopeName() + "(id=" + hex.dyscopeID()
+								+ ").\n";
+						break;
+					default:
+					}
+					message = message
+							+ "heap"
+							+ symbolicAnalyzer.symbolicExpressionToString(
+									hex.source(), hex.state(), null,
+									hex.heapValue());
+					errorLogger.logSimpleError(hex.source(), state, process,
+							symbolicAnalyzer.stateInformation(hex.state()),
+							hex.kind(), message);
+					ignoredErrorSet.add(hex.heapErrorKind());
 				}
-				message = message
-						+ "heap"
-						+ symbolicAnalyzer.symbolicExpressionToString(
-								hex.source(), hex.state(), null,
-								hex.heapValue());
-				err = new CIVLExecutionException(hex.kind(), hex.certainty(),
-						process, message, symbolicAnalyzer.stateInformation(hex
-								.state()), hex.source());
-				errorLogger.reportError(err);
-			}
+			} while (!finished);
 			traceStep.complete(state);
 			newCanonicId = state.getCanonicId();
 			if (newCanonicId > this.maxCanonicId) {
@@ -338,9 +346,10 @@ public class CommonStateManager implements StateManager {
 	 * @param atomCount
 	 *            The number of incomplete atom blocks.
 	 * @return
+	 * @throws UnsatisfiablePathConditionException 
 	 */
 	private StateStatus singleEnabled(State state, int pid, int atomCount,
-			String process) {
+			String process) throws UnsatisfiablePathConditionException {
 		List<Transition> enabled;
 		ProcessState procState = state.getProcessState(pid);
 		Location pLocation;
@@ -368,12 +377,12 @@ public class CommonStateManager implements StateManager {
 				return new StateStatus(true, enabled.get(0), atomCount,
 						EnabledStatus.DETERMINISTIC);
 			else if (enabled.size() > 1) {// non deterministic
-				reportError(EnabledStatus.NONDETERMINISTIC, state, pLocation,
+				reportErrorForAtom(EnabledStatus.NONDETERMINISTIC, state, pLocation,
 						process);
 				return new StateStatus(false, null, atomCount,
 						EnabledStatus.NONDETERMINISTIC);
 			} else {// blocked
-				reportError(EnabledStatus.BLOCKED, state, pLocation, process);
+				reportErrorForAtom(EnabledStatus.BLOCKED, state, pLocation, process);
 				return new StateStatus(false, null, atomCount,
 						EnabledStatus.BLOCKED);
 			}
@@ -497,24 +506,22 @@ public class CommonStateManager implements StateManager {
 	 *            The state that the error occurs.
 	 * @param location
 	 *            The location that the error occurs.
+	 * @throws UnsatisfiablePathConditionException
 	 */
-	private void reportError(EnabledStatus enabled, State state,
-			Location location, String process) {
+	private void reportErrorForAtom(EnabledStatus enabled, State state,
+			Location location, String process)
+			throws UnsatisfiablePathConditionException {
 		switch (enabled) {
 		case NONDETERMINISTIC:
-			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE, process,
-					"Non-determinism is encountered in $atom block.",
-					symbolicAnalyzer.stateInformation(state), location
-							.getSource()));
-			break;
+			errorLogger.logSimpleError(location.getSource(), state, process,
+					symbolicAnalyzer.stateInformation(state), ErrorKind.OTHER,
+					"nondeterminism is encountered in $atom block.");
+			throw new UnsatisfiablePathConditionException();
 		case BLOCKED:
-			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE, process,
-					"Blocked location is encountered in $atom block.",
-					symbolicAnalyzer.stateInformation(state), location
-							.getSource()));
-			break;
+			errorLogger.logSimpleError(location.getSource(), state, process,
+					symbolicAnalyzer.stateInformation(state), ErrorKind.OTHER,
+					"blocked location is encountered in $atom block.");
+			throw new UnsatisfiablePathConditionException();
 		default:
 		}
 	}

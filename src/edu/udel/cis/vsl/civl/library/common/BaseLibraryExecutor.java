@@ -6,9 +6,6 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -62,8 +59,6 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	 */
 	protected StateFactory stateFactory;
 
-	protected CIVLErrorLogger errorLogger;
-
 	/**
 	 * The set of characters that are used to construct a number in a format
 	 * string.
@@ -96,7 +91,8 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			LibraryExecutorLoader libExecutorLoader,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, primaryExecutor.evaluator().universe(), symbolicUtil,
-				symbolicAnalyzer, civlConfig, libEvaluatorLoader, modelFactory);
+				symbolicAnalyzer, civlConfig, libEvaluatorLoader, modelFactory,
+				primaryExecutor.errorLogger());
 		this.primaryExecutor = primaryExecutor;
 		this.evaluator = primaryExecutor.evaluator();
 		this.stateFactory = evaluator.stateFactory();
@@ -191,40 +187,35 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 		SymbolicExpression firstElementPointer = argumentValues[0];
 
 		if (firstElementPointer.operator() != SymbolicOperator.CONCRETE) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
-					"Attempt to free an unitialized pointer",
-					symbolicAnalyzer.stateInformation(state), source);
-
-			this.errorLogger.reportError(err);
-			throw new UnsatisfiablePathConditionException();
+			this.errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.UNDEFINED_VALUE,
+					"attempt to free an unitialized pointer");
+			// dont report unsatisfiable path condition exception
 		} else if (symbolicUtil.isUndefinedPointer(firstElementPointer)) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
-					"Attempt to free a memory space that is already freed",
-					symbolicAnalyzer.stateInformation(state), source);
-
-			this.errorLogger.reportError(err);
-			throw new UnsatisfiablePathConditionException();
-		} else if (this.symbolicUtil.isNullPointer(firstElementPointer))
+			this.errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.MEMORY_LEAK,
+					"attempt to free a memory space that is already freed");
+			// dont report unsatisfiable path condition exception
+		} else if (this.symbolicUtil.isNullPointer(firstElementPointer)) {
 			// does nothing for null pointer.
-			return state;
-		else if (!this.symbolicUtil.isHeapPointer(firstElementPointer)
+		} else if (!this.symbolicUtil.isHeapPointer(firstElementPointer)
 				|| !this.symbolicUtil.isMallocPointer(source,
 						firstElementPointer)) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE, process,
-					"The argument of free "
+			this.errorLogger.logSimpleError(
+					source,
+					state,
+					process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.MEMORY_LEAK,
+					"the argument of free "
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									source, state,
 									arguments[0].getExpressionType(),
 									firstElementPointer)
 							+ " is not a pointer returned by a memory "
-							+ "management method",
-					symbolicAnalyzer.stateInformation(state), source);
-
-			this.errorLogger.reportError(err);
-			throw new UnsatisfiablePathConditionException();
+							+ "management method");
 		} else {
 			Pair<Integer, Integer> indexes;
 
@@ -234,8 +225,8 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 							.getScopeId(source, universe.tupleRead(
 									firstElementPointer, zeroObject)),
 							indexes.left, indexes.right);
-			return state;
 		}
+		return state;
 	}
 
 	/**

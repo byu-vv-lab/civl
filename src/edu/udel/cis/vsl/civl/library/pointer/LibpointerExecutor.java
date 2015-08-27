@@ -597,7 +597,9 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 							+ " points to is undefined, which has the value "
 							+ objMsg, symbolicAnalyzer.stateToString(state),
 					source);
+
 			this.errorLogger.reportError(err);
+			return state;
 		}
 		claim = universe.equals(first, second);
 		resultType = reasoner.valid(claim).getResultType();

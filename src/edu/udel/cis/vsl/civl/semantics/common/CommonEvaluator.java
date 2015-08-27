@@ -1882,7 +1882,7 @@ public class CommonEvaluator implements Evaluator {
 		int dyscopeId;
 		int vid = -1;
 		Expression processExpr = expression.process();
-		VariableExpression variableExpr = expression.variable();
+		VariableExpression variableExpr = (VariableExpression) expression.expression();
 		Variable variable = null;
 
 		eval = this.evaluate(state, pid, processExpr);

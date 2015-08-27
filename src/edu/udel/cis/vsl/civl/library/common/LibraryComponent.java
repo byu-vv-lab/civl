@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.library.common;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -165,6 +166,8 @@ public abstract class LibraryComponent {
 	 */
 	protected CIVLConfiguration civlConfig;
 
+	protected CIVLErrorLogger errorLogger;
+
 	/**
 	 * Creates a new instance of a library.
 	 * 
@@ -178,7 +181,8 @@ public abstract class LibraryComponent {
 	protected LibraryComponent(String name, SymbolicUniverse universe,
 			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
 			CIVLConfiguration civlConfig,
-			LibraryEvaluatorLoader libEvaluatorLoader, ModelFactory modelFactory) {
+			LibraryEvaluatorLoader libEvaluatorLoader,
+			ModelFactory modelFactory, CIVLErrorLogger errLogger) {
 		this.name = name;
 		this.universe = universe;
 		this.zero = universe.zeroInt();
@@ -198,6 +202,7 @@ public abstract class LibraryComponent {
 		this.model = modelFactory.model();
 		this.typeFactory = modelFactory.typeFactory();
 		this.civlConfig = civlConfig;
+		this.errorLogger = errLogger;
 	}
 
 	/**
@@ -263,7 +268,7 @@ public abstract class LibraryComponent {
 				BooleanExpression notPrevData = universe
 						.not((BooleanExpression) arg1);
 
-				//TODO change to andTo
+				// TODO change to andTo
 				return universe.or(
 						universe.and(notNewData, (BooleanExpression) arg1),
 						universe.and((BooleanExpression) arg0, notPrevData));

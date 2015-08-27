@@ -17,8 +17,6 @@ import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnabler;
 import edu.udel.cis.vsl.civl.kripke.IF.LibraryEnablerLoader;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEnabler;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -123,14 +121,13 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 					(NumericExpression) argumentValues[0]);
 			int upper;
 
-			// TODO: is it can be solved by symbolic execution ?
+			// TODO: can it be solved by symbolic execution?
 			if (upperNumber == null) {
-				throw new CIVLExecutionException(ErrorKind.INTERNAL,
-						Certainty.NONE, process,
-						"Argument to $choose_int not concrete: "
-								+ argumentValues[0],
-						symbolicAnalyzer.stateInformation(state), arguments
-								.get(0).getSource());
+				this.errorLogger.logSimpleError(arguments
+								.get(0).getSource(), state, process, 
+								symbolicAnalyzer.stateInformation(state), ErrorKind.INTERNAL, "argument to $choose_int not concrete: "
+										+ argumentValues[0]);				
+				throw new UnsatisfiablePathConditionException();
 			}
 			upper = upperNumber.intValue();
 			for (int i = 0; i < upper; i++) {
@@ -235,15 +232,15 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		BitSet ampleSet = new BitSet();
 
 		if (number_nprocs == null) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OTHER, Certainty.PROVEABLE, process,
-					"The number of processes for $waitall "
-							+ "needs a concrete value.",
+			this.evaluator.errorLogger().logSimpleError(
+					arguments[1].getSource(),
+					state,
+					process,
 					symbolicAnalyzer.stateInformation(state),
-					arguments[1].getSource());
-
-			this.evaluator.errorLogger().reportError(err);
-			return ampleSet;
+					ErrorKind.OTHER,
+					"the number of processes for $waitall "
+							+ "needs a concrete value");
+			throw new UnsatisfiablePathConditionException();
 		} else {
 			int numOfProcs_int = number_nprocs.intValue();
 			BinaryExpression pointerAdd;

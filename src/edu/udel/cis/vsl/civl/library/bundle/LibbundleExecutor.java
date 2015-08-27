@@ -7,8 +7,6 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -277,11 +275,11 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 		int elementTypeIndex;
 
 		if (pointer.operator() != SymbolicOperator.CONCRETE) {
-			errorLogger.reportError(new CIVLExecutionException(
-					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Attempt to read/write a invalid pointer type variable",
-					arguments[1].getSource()));
-			return state;
+			errorLogger.logSimpleError(arguments[1].getSource(), state,
+					process, this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.POINTER,
+					"attempt to read/write a invalid pointer type variable");
+			throw new UnsatisfiablePathConditionException();
 		}
 		if (pointer.type().typeKind() != SymbolicTypeKind.TUPLE) {
 			throw new CIVLUnimplementedFeatureException(
@@ -392,11 +390,12 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 
 		// checking if pointer is valid
 		if (pointer.operator() != SymbolicOperator.CONCRETE) {
-			errorLogger.reportError(new CIVLExecutionException(
-					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Attempt to read/write an uninitialized variable by the pointer "
-							+ pointer, arguments[1].getSource()));
-			return state;
+			errorLogger.logSimpleError(arguments[1].getSource(), state,
+					process, symbolicAnalyzer.stateInformation(state),
+					ErrorKind.POINTER,
+					"attempt to read/write an uninitialized variable by the pointer "
+							+ pointer);
+			throw new UnsatisfiablePathConditionException();
 		}
 		eval_and_pointer = libevaluator.bundleUnpack(state, process,
 				(SymbolicExpression) bundle.argument(1), arguments[0], pointer,
@@ -475,11 +474,11 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 
 		// Checking if pointer is valid.
 		if (pointer.operator() != SymbolicOperator.CONCRETE) {
-			errorLogger.reportError(new CIVLExecutionException(
-					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Attempt to read/write a invalid pointer type variable",
-					arguments[1].getSource()));
-			return state;
+			errorLogger.logSimpleError(source, state, process,
+					this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.POINTER,
+					"attempt to read/write an invalid pointer type variable");
+			throw new UnsatisfiablePathConditionException();
 		}
 		// In executor, operation must be concrete.
 		// Translate operation
@@ -560,19 +559,23 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					operand1 = universe.arrayRead(secOperand, i);
 				}
 			} catch (SARLException e) {
-				CIVLExecutionException err = new CIVLExecutionException(
-						ErrorKind.OUT_OF_BOUNDS,
-						Certainty.CONCRETE,
-						process,
-						"One of the operands "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, null, firOperand)
-								+ " of CIVL Operation out of bound when reading at index: "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, null, i),
-						symbolicAnalyzer.stateInformation(state), source);
-				errorLogger.reportError(err);
-				return state;
+				errorLogger
+						.logSimpleError(
+								source,
+								state,
+								process,
+								symbolicAnalyzer.stateInformation(state),
+								ErrorKind.OUT_OF_BOUNDS,
+								"one of the operands "
+										+ symbolicAnalyzer
+												.symbolicExpressionToString(
+														source, state, null,
+														firOperand)
+										+ " of CIVL Operation is out of bound when reading at index: "
+										+ symbolicAnalyzer
+												.symbolicExpressionToString(
+														source, state, null, i));
+				throw new UnsatisfiablePathConditionException();
 			}
 			try {
 				opRet = this.applyCIVLOperator(state, process, operand0,
@@ -589,20 +592,23 @@ public class LibbundleExecutor extends BaseLibraryExecutor implements
 					secOperand = universe.arrayWrite(secOperand, i, opRet);
 
 			} catch (SARLException e) {
-				CIVLExecutionException err = new CIVLExecutionException(
-						ErrorKind.OUT_OF_BOUNDS,
-						Certainty.CONCRETE,
-						process,
-						"One of the operands "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, null, secOperand)
-								+ " of CIVL Operation out of bound when accessing at index: "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										source, state, null, i),
-						symbolicAnalyzer.stateInformation(state), source);
-
-				errorLogger.reportError(err);
-				return state;
+				errorLogger
+						.logSimpleError(
+								source,
+								state,
+								process,
+								symbolicAnalyzer.stateInformation(state),
+								ErrorKind.OUT_OF_BOUNDS,
+								"one of the operands "
+										+ symbolicAnalyzer
+												.symbolicExpressionToString(
+														source, state, null,
+														secOperand)
+										+ " of CIVL Operation is out of bound when accessing at index: "
+										+ symbolicAnalyzer
+												.symbolicExpressionToString(
+														source, state, null, i));
+				throw new UnsatisfiablePathConditionException();
 			}
 			i = universe.add(i, one);
 			claim = universe.lessThan(i, count);

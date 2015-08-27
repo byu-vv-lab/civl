@@ -6,8 +6,6 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
@@ -83,9 +81,11 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * @param arguments
 	 * @param argumentValues
 	 * @return
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression guardOfWait(State state, int pid,
-			List<Expression> arguments, SymbolicExpression[] argumentValues) {
+			List<Expression> arguments, SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
 		SymbolicExpression joinProcess = argumentValues[0];
 		BooleanExpression guard;
 		int pidValue;
@@ -94,14 +94,13 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		if (joinProcess.operator() != SymbolicOperator.CONCRETE) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
 					+ ")";
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OTHER, Certainty.PROVEABLE, process,
-					"The argument of $wait should be concrete, but the actual value is "
-							+ joinProcess + ".",
-					symbolicAnalyzer.stateInformation(state),
-					joinProcessExpr.getSource());
 
-			this.errorLogger.reportError(err);
+			this.errorLogger.logSimpleError(joinProcessExpr.getSource(), state,
+					process, symbolicAnalyzer.stateInformation(state),
+					ErrorKind.OTHER,
+					"the argument of $wait should be concrete, but the actual value is "
+							+ joinProcess);
+			throw new UnsatisfiablePathConditionException();
 		}
 		pidValue = modelFactory.getProcessId(joinProcessExpr.getSource(),
 				joinProcess);
@@ -135,15 +134,11 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 
 		if (number_nprocs == null) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OTHER, Certainty.PROVEABLE, process,
-					"The number of processes for $waitall "
-							+ "needs a concrete value.",
-					symbolicAnalyzer.stateInformation(state), arguments.get(1)
-							.getSource());
-
-			this.errorLogger.reportError(err);
-			return this.falseValue;
+			this.errorLogger.logSimpleError(arguments.get(1).getSource(),
+					state, process, symbolicAnalyzer.stateInformation(state),
+					ErrorKind.OTHER, "the number of processes for $waitall "
+							+ "needs a concrete value");
+			throw new UnsatisfiablePathConditionException();
 		} else {
 			int numOfProcs_int = number_nprocs.intValue();
 			BinaryExpression pointerAdd;

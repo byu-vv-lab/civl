@@ -177,6 +177,8 @@ public class ImmutableStateFactory implements StateFactory {
 
 	private List<Variable> inputVariables;
 
+	private Set<HeapErrorKind> emptyHeapErrorSet = new HashSet<>(0);
+
 	/* **************************** Constructors *************************** */
 
 	/**
@@ -232,8 +234,8 @@ public class ImmutableStateFactory implements StateFactory {
 	 */
 	@Override
 	public ImmutableState canonic(State state, boolean collectProcesses,
-			boolean collectScopes, boolean collectHeaps)
-			throws CIVLHeapException {
+			boolean collectScopes, boolean collectHeaps,
+			Set<HeapErrorKind> toBeIgnored) throws CIVLHeapException {
 		ImmutableState theState = (ImmutableState) state;
 
 		// performance experiment: seems to make no difference
@@ -241,9 +243,9 @@ public class ImmutableStateFactory implements StateFactory {
 		if (collectProcesses)
 			theState = collectProcesses(theState);
 		if (collectScopes)
-			theState = collectScopes(theState);
+			theState = collectScopes(theState, toBeIgnored);
 		if (collectHeaps)
-			theState = collectHeaps(theState);
+			theState = collectHeaps(theState, toBeIgnored);
 		// theState = collectSymbolicConstants(theState, collectHeaps);
 		theState = flyweight(theState);
 		if (simplify) {
@@ -264,7 +266,8 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public ImmutableState collectHeaps(State state) throws CIVLHeapException {
+	public ImmutableState collectHeaps(State state,
+			Set<HeapErrorKind> toBeIgnored) throws CIVLHeapException {
 		ImmutableState theState = (ImmutableState) state;
 
 		// only collect heaps when necessary.
@@ -276,11 +279,6 @@ public class ImmutableStateFactory implements StateFactory {
 			int numDyscopes = theState.numDyscopes();
 			int numHeapFields = typeFactory.heapType().getNumMallocs();
 			Map<SymbolicExpression, SymbolicExpression> oldToNewHeapMemUnits = new HashMap<>();
-			// Map<SymbolicExpression, SymbolicExpression> oldToNewExpressions =
-			// new HashMap<>();
-			// Map<SymbolicExpression, SymbolicExpression>
-			// oldToNewHeapObjectNames = new HashMap<>();
-			// int nameId = 0;
 			ImmutableDynamicScope[] newScopes = new ImmutableDynamicScope[numDyscopes];
 			ReferenceExpression[] fieldRefs = new ReferenceExpression[numHeapFields];
 
@@ -306,10 +304,6 @@ public class ImmutableStateFactory implements StateFactory {
 								universe.intObject(mallocId));
 						int length = this.symbolicUtil.extractInt(null,
 								(NumericExpression) universe.length(heapField));
-						// ReferenceExpression fieldRef = universe
-						// .tupleComponentReference(
-						// universe.identityReference(),
-						// universe.intObject(mallocId));
 						Map<Integer, Integer> oldID2NewID = new HashMap<>();
 						int numRemoved = 0;
 						SymbolicExpression newHeapField = heapField;
@@ -327,7 +321,9 @@ public class ImmutableStateFactory implements StateFactory {
 										.arrayRead(heapField,
 												universe.integer(objectId));
 
-								if (!symbolicUtil.isInvalidHeapObject(heapObj)) {
+								if (!symbolicUtil.isInvalidHeapObject(heapObj)
+										&& !toBeIgnored
+												.contains(HeapErrorKind.UNREACHABLE)) {
 									throw new CIVLHeapException(
 											ErrorKind.MEMORY_LEAK,
 											Certainty.CONCRETE, theState,
@@ -336,7 +332,7 @@ public class ImmutableStateFactory implements StateFactory {
 											HeapErrorKind.UNREACHABLE, dyscope
 													.lexicalScope().getSource());
 								}
-								// unreachable heap object
+								// remove unreachable heap object
 								// updates references
 								for (int nextId = objectId + 1; nextId < length; nextId++) {
 									if (oldID2NewID.containsKey(nextId))
@@ -351,15 +347,6 @@ public class ImmutableStateFactory implements StateFactory {
 										newHeapField, objectId - numRemoved);
 								numRemoved++;
 							}
-
-							// else {// rename remaining heap objects
-							// SymbolicExpression heapObject = universe
-							// .arrayRead(heapField,
-							// universe.integer(objectId));
-							//
-							// nameId = addOldToNewName(heapObject, nameId,
-							// oldToNewExpressions);
-							// }
 						}
 						if (oldID2NewID.size() > 0)
 							addOldToNewHeapMemUnits(oldID2NewID, heapPointer,
@@ -385,7 +372,8 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	public ImmutableState collectScopes(State state) throws CIVLHeapException {
+	public ImmutableState collectScopes(State state,
+			Set<HeapErrorKind> toBeIgnored) throws CIVLHeapException {
 		ImmutableState theState = (ImmutableState) state;
 		int oldNumScopes = theState.numDyscopes();
 		int[] oldToNew = numberScopes(theState);
@@ -399,7 +387,7 @@ public class ImmutableStateFactory implements StateFactory {
 				newNumScopes++;
 			if (!change && id != i)
 				change = true;
-			if (id < 0) {
+			if (id < 0 && !toBeIgnored.contains(HeapErrorKind.NONEMPTY)) {
 				ImmutableDynamicScope scopeToBeRemoved = theState.getDyscope(i);
 				Variable heapVariable = scopeToBeRemoved.lexicalScope()
 						.variable(ModelConfiguration.HEAP_VAR);
@@ -450,6 +438,7 @@ public class ImmutableStateFactory implements StateFactory {
 					newScopes, newPathCondition);
 		}
 		if (theState.numDyscopes() == 1
+				&& !toBeIgnored.contains(HeapErrorKind.NONEMPTY)
 				&& theState.getProcessState(0).hasEmptyStack()) {
 			// checks the memory leak for the final state
 			DynamicScope dyscope = state.getDyscope(0);
@@ -511,7 +500,7 @@ public class ImmutableStateFactory implements StateFactory {
 			state = this.setVariable(state, timeCountVar.vid(), 0,
 					universe.zeroInt());
 		// state = this.computeReachableMemUnits(state, 0);
-		return canonic(state, false, false, false);
+		return canonic(state, false, false, false, emptyHeapErrorSet);
 	}
 
 	@Override
@@ -541,7 +530,7 @@ public class ImmutableStateFactory implements StateFactory {
 	}
 
 	@Override
-	// TOOD: improve the performance: keep track of depth of dyscopes
+	// TODO: improve the performance: keep track of depth of dyscopes
 	public int lowestCommonAncestor(State state, int one, int another) {
 		if (one == another) {
 			return one;

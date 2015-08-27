@@ -78,7 +78,8 @@ public abstract class BaseLibraryEnabler extends LibraryComponent implements
 			LibraryEnablerLoader libEnablerLoader,
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator.universe(), symbolicUtil, symbolicAnalyzer,
-				civlConfig, libEvaluatorLoader, modelFactory);
+				civlConfig, libEvaluatorLoader, modelFactory, evaluator
+						.errorLogger());
 		this.primaryEnabler = primaryEnabler;
 		this.evaluator = evaluator;
 		this.stateFactory = evaluator.stateFactory();

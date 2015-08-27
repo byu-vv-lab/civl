@@ -374,7 +374,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 					ErrorKind.POINTER, Certainty.CONCRETE, process,
 					"Attempt to read/write a invalid pointer type variable",
 					arguments[0].getSource()));
-			return state;
+			throw new UnsatisfiablePathConditionException();
 		}
 		reasoner = universe.reasoner(state.getPathCondition());
 		realType = symbolicAnalyzer.getArrayBaseType(state, ptrSource, pointer);

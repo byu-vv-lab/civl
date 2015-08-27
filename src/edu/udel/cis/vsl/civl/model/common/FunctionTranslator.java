@@ -3044,7 +3044,7 @@ public class FunctionTranslator {
 						(CIVLArrayType) finalType, expressions);
 			else if (myType == 1)
 				return modelFactory.structOrUnionLiteralExpression(source,
-						(CIVLStructOrUnionType)finalType, expressions);
+						(CIVLStructOrUnionType) finalType, expressions);
 			else
 				throw new CIVLUnimplementedFeatureException(
 						"translating literal object which is of neither array or struct/union type",
@@ -3936,6 +3936,9 @@ public class FunctionTranslator {
 				result = modelFactory.addressOfExpression(source,
 						(LHSExpression) arguments.get(0));
 			break;
+		case AT:
+			return modelFactory.remoteExpression(source, arguments.get(0),
+					arguments.get(1), scope);
 		case BIG_O:
 			result = modelFactory.unaryExpression(source, UNARY_OPERATOR.BIG_O,
 					arguments.get(0));
