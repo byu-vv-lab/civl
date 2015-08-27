@@ -146,7 +146,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -757,7 +757,7 @@ public class FunctionTranslator {
 		StatementNode bodyNode = civlForNode.getBody();
 		FunctionCallNode bodyFuncCall = this.isFunctionCall(bodyNode);
 		CIVLFunction procFunc;
-		CivlParForEnterStatement parForEnter;
+		CivlParForSpawnStatement parForEnter;
 		Fragment result;
 		CallOrSpawnStatement callWaitAll;
 		Location location;
@@ -801,8 +801,7 @@ public class FunctionTranslator {
 		// this.civlParForCount++;
 		location = modelFactory.location(parForBeginSource, scope);
 		parForEnter = modelFactory.civlParForEnterStatement(parForBeginSource,
-				location, domain, domSizeVar, parProcs,
-				this.arrayToPointer(parProcs), procFunc);
+				location, domain, domSizeVar, parProcs, procFunc);
 		if (procFunc == null)
 			modelBuilder.incompleteParForEnters.put(parForEnter, call);
 		result = result.combineWith(new CommonFragment(parForEnter));

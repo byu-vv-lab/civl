@@ -87,7 +87,7 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -146,7 +146,7 @@ import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCallStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonCivlForEnterStatement;
-import edu.udel.cis.vsl.civl.model.common.statement.CommonCivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.common.statement.CommonCivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonGotoBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonIfElseBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonLoopBranchStatement;
@@ -1755,13 +1755,12 @@ public class CommonModelFactory implements ModelFactory {
 	}
 
 	@Override
-	public CivlParForEnterStatement civlParForEnterStatement(CIVLSource source,
+	public CivlParForSpawnStatement civlParForEnterStatement(CIVLSource source,
 			Location location, Expression domain, VariableExpression domSize,
-			VariableExpression procsVar, Expression parProcs,
-			CIVLFunction parProcFunc) {
-		return new CommonCivlParForEnterStatement(source, location,
+			VariableExpression procsVar, CIVLFunction parProcFunc) {
+		return new CommonCivlParForSpawnStatement(source, location,
 				this.trueExpression(source), domain, domSize, procsVar,
-				parProcs, parProcFunc);
+				parProcFunc);
 	}
 
 	@Override

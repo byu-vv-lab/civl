@@ -32,14 +32,13 @@ import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.InitialValueExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ContractStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
@@ -169,8 +168,8 @@ public class CommonExecutor implements Executor {
 	 *            The CIVL evaluator for evaluating expressions.
 	 * @param symbolicAnalyzer
 	 *            The symbolic analyzer used in the system.
-	 * @param errLogger
-	 *            The error logger for reporting execution errors.
+	 * @param errorLogger
+	 *            The error logger to log errors
 	 * @param civlConfig
 	 *            The CIVL configuration.
 	 */
@@ -299,8 +298,9 @@ public class CommonExecutor implements Executor {
 					+ ")";
 			CIVLExecutionException err = new CIVLExecutionException(
 					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
-					"unable to load the library executor for the library " + libraryName
-							+ " to execute the function " + funcName,
+					"unable to load the library executor for the library "
+							+ libraryName + " to execute the function "
+							+ funcName,
 					this.symbolicAnalyzer.stateInformation(state),
 					call.getSource());
 
@@ -691,7 +691,7 @@ public class CommonExecutor implements Executor {
 					(CivlForEnterStatement) statement);
 		case CIVL_PAR_FOR_ENTER:
 			return executeCivlParFor(state, pid,
-					(CivlParForEnterStatement) statement);
+					(CivlParForSpawnStatement) statement);
 		case CONTRACT:
 			return executeContractStatement(state, pid,
 					(ContractStatement) statement);
@@ -769,7 +769,7 @@ public class CommonExecutor implements Executor {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCivlParFor(State state, int pid,
-			CivlParForEnterStatement parFor)
+			CivlParForSpawnStatement parFor)
 			throws UnsatisfiablePathConditionException {
 		CIVLSource source = parFor.getSource();
 		Expression domain = parFor.domain();
@@ -777,21 +777,17 @@ public class CommonExecutor implements Executor {
 		Evaluation eval;
 		SymbolicExpression domainValue;
 		// TODO why initializes domSizeValue with 1?
-		NumericExpression domSizeValue = universe.integer(1);
+		NumericExpression domSizeValue;
 		// TODO: why is dim -1 sometimes?
 		int dim = parFor.dimension();
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		IntegerNumber number_domSize;
-		Expression parProcs = parFor.parProcsPointer();
 		VariableExpression parProcsVar = parFor.parProcsVar();
-		SymbolicExpression parProcsPointer;
 
 		state = this.stateFactory.simplify(state);
 		eval = evaluator.evaluate(state, pid, domain);
 		domainValue = eval.value;
-		state = eval.state;
-		eval = evaluator.evaluate(state, pid, parProcs);
 		state = eval.state;
 		domSizeValue = symbolicUtil.getDomainSize(domainValue);
 		state = this.assign(state, pid, process, domSize, domSizeValue);
@@ -801,19 +797,17 @@ public class CommonExecutor implements Executor {
 					symbolicAnalyzer.stateToString(state), ErrorKind.OTHER,
 					"The arguments of the domain for $parfor "
 							+ "must be concrete.");
+//			throw new UnsatisfiablePathConditionException();
 		} else if (!number_domSize.isZero()) {
 			// only spawns processes when the domain is not empty.
-			InitialValueExpression initVal = modelFactory
-					.initialValueExpression(parProcs.getSource(),
-							parProcsVar.variable());
-
-			eval = evaluator.evaluate(state, pid, parProcs);
-			parProcsPointer = eval.value;
-			state = eval.state;
-			eval = evaluator.evaluate(state, pid, initVal);
-			state = eval.state;
-			state = this.assign(state, pid, process, parProcsVar, eval.value);
-			state = this.executeSpawns(state, pid, parProcs, parProcsPointer,
+			// InitialValueExpression initVal = modelFactory
+			// .initialValueExpression(parProcs.getSource(),
+			// parProcsVar.variable());
+			// eval = evaluator.evaluate(state, pid, initVal);
+			// state = eval.state;
+			// state = this.assign(state, pid, process, parProcsVar,
+			// eval.value);
+			state = this.executeSpawns(state, pid, parProcsVar,
 					parFor.parProcFunction(), dim, domainValue);
 		}
 		state = stateFactory.setLocation(state, pid, parFor.target(), true);
@@ -843,15 +837,16 @@ public class CommonExecutor implements Executor {
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeSpawns(State state, int pid, Expression parProcs,
-			SymbolicExpression parProcsPointer, CIVLFunction function, int dim,
+	private State executeSpawns(State state, int pid,
+			VariableExpression parProcsVar, CIVLFunction function, int dim,
 			SymbolicExpression domainValue)
 			throws UnsatisfiablePathConditionException {
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 		List<SymbolicExpression> myValues = null;
-		int procPtrOffset = 0;
-		CIVLSource source = parProcs.getSource();
+		// int procPtrOffset = 0;
+		// CIVLSource source = parProcs.getSource();
 		Iterator<List<SymbolicExpression>> domainIter;
+		List<SymbolicExpression> processes = new ArrayList<>();
 
 		// Here we assume this operation contains all iterations in the domain.
 		// All iterations means that it iterates from the least element to the
@@ -859,8 +854,8 @@ public class CommonExecutor implements Executor {
 		domainIter = symbolicUtil.getDomainIterator(domainValue);
 		while (domainIter.hasNext()) {
 			SymbolicExpression[] arguments = new SymbolicExpression[dim];
-			SymbolicExpression procPointer;
-			Evaluation eval;
+			// SymbolicExpression procPointer;
+			// Evaluation eval;
 			int newPid;
 
 			myValues = domainIter.next();
@@ -868,14 +863,18 @@ public class CommonExecutor implements Executor {
 			newPid = state.numProcs();
 			state = stateFactory.addProcess(state, function, arguments, pid);
 			// state = stateFactory.computeReachableMemUnits(state, newPid);
-			eval = evaluator.evaluatePointerAdd(state, process,
-					parProcsPointer, universe.integer(procPtrOffset++), false,
-					source).left; // no need for checking output
-			procPointer = eval.value;
-			state = eval.state;
-			state = this.assign(source, state, process, procPointer,
-					modelFactory.processValue(newPid));
+			// eval = evaluator.evaluatePointerAdd(state, process,
+			// parProcsPointer, universe.integer(procPtrOffset++), false,
+			// source).left; // no need for checking output
+			// procPointer = eval.value;
+			// state = eval.state;
+			processes.add(modelFactory.processValue(newPid));
+			// state = this.assign(source, state, process, procPointer,
+			// modelFactory.processValue(newPid));
 		}
+		state = this.assign(state, pid, process, parProcsVar, universe.array(
+				this.modelFactory.typeFactory().processSymbolicType(),
+				processes));
 		return state;
 	}
 

@@ -47,7 +47,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.LoopBranchStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -96,7 +96,7 @@ public class ModelBuilderWorker {
 
 	Map<CIVLFunction, StatementNode> parProcFunctions = new HashMap<>();
 
-	Map<CivlParForEnterStatement, CallOrSpawnStatement> incompleteParForEnters = new HashMap<>();
+	Map<CivlParForSpawnStatement, CallOrSpawnStatement> incompleteParForEnters = new HashMap<>();
 
 	/** Used to shortcut checking whether circular types are bundleable. */
 	private List<CIVLType> bundleableEncountered = new LinkedList<>();
@@ -611,7 +611,7 @@ public class ModelBuilderWorker {
 			callExpression.setExpressionType(callExpression.callStatement()
 					.function().returnType());
 		}
-		for (Entry<CivlParForEnterStatement, CallOrSpawnStatement> entry : this.incompleteParForEnters
+		for (Entry<CivlParForSpawnStatement, CallOrSpawnStatement> entry : this.incompleteParForEnters
 				.entrySet()) {
 			entry.getKey().setParProcFunction(entry.getValue().function());
 		}

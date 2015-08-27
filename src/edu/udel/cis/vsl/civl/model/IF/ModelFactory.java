@@ -63,7 +63,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.reference.StructOrUnionFieldRef
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -598,7 +598,8 @@ public interface ModelFactory {
 	 * 
 	 * @param sysCall
 	 *            The system call statement.
-	 * @return
+	 * @return the expression that represents the guard of a system function
+	 *         call
 	 */
 	Expression systemGuardExpression(CallOrSpawnStatement sysCall);
 
@@ -667,13 +668,51 @@ public interface ModelFactory {
 	 * Memory Unit Expressions
 	 * ************************************************************************
 	 */
+
+	/**
+	 * creates a new array slice reference.
+	 * 
+	 * @param sliceKind
+	 *            the kind of the array slice
+	 * @param index
+	 *            the index expression for the slice, which could be of integer
+	 *            or domain type
+	 * @return the new array slice reference
+	 */
 	ArraySliceReference arraySliceReference(ArraySliceKind sliceKind,
 			Expression index);
 
+	/**
+	 * @return a self reference
+	 */
 	SelfReference selfReference();
 
+	/**
+	 * creates a reference to a certain field of a struct
+	 * 
+	 * @param fieldIndex
+	 *            the index of the field referred to
+	 * @return the new reference to the field at the specified index of a struct
+	 */
 	StructOrUnionFieldReference structFieldReference(int fieldIndex);
 
+	/**
+	 * creates a memory unit expression.
+	 * 
+	 * @param source
+	 *            the source of the expression
+	 * @param variable
+	 *            the variable that the memory unit corresponds to
+	 * @param objetType
+	 *            the type of the object that the memory unit references
+	 * @param reference
+	 *            the reference corresponds to the variable
+	 * @param writable
+	 *            the access status of the memory unit
+	 * @param hasPinterRef
+	 *            does the memory unit contains any pointer reference?
+	 * @return the new memory unit expression
+	 */
 	MemoryUnitExpression memoryUnitExpression(CIVLSource source,
 			Variable variable, CIVLType objetType,
 			MemoryUnitReference reference, boolean writable,
@@ -702,34 +741,6 @@ public interface ModelFactory {
 	 */
 	AssignStatement assignStatement(CIVLSource civlSource, Location source,
 			LHSExpression lhs, Expression rhs, boolean isInitialization);
-
-	// /**
-	// * Create a one-statement fragment that contains the assume statement.
-	// *
-	// * @param civlSource
-	// * The CIVL source of the assume statement
-	// * @param source
-	// * The source location for this statement.
-	// * @param expression
-	// * The expression being added to the path condition.
-	// * @return A new fragment containing the assume statement.
-	// */
-	// Fragment assumeFragment(CIVLSource civlSource, Location source,
-	// Expression expression);
-	//
-	// /**
-	// * Create a one-statement fragment that contains the assert statement.
-	// *
-	// * @param civlSource
-	// * The CIVL source of the assume statement
-	// * @param source
-	// * The source location for this statement.
-	// * @param condition
-	// * The expression being added to the path condition.
-	// * @return A new fragment containing the assert statement.
-	// */
-	// Fragment assertFragment(CIVLSource civlSource, Location source,
-	// Expression condition, Expression[] explanation);
 
 	/**
 	 * Generate an atomic fragment based on a certain fragment, by adding one
@@ -773,10 +784,30 @@ public interface ModelFactory {
 			Location location, boolean isCall, Expression function,
 			List<Expression> arguments, Expression guard);
 
-	CivlParForEnterStatement civlParForEnterStatement(CIVLSource source,
+	/**
+	 * creates a <code>$parfor</code> enter statement to start the execution of
+	 * the <code>$parfor</code>.
+	 * 
+	 * @param source
+	 *            the source of the <code>$parfor</code> enter statement
+	 * @param location
+	 *            the source location of the <code>$parfor</code> enter
+	 *            statement
+	 * @param domain
+	 *            the domain of the <code>$parfor</code> statement
+	 * @param domSize
+	 * 
+	 * @param procsVar
+	 *            the variable expression representing the array for the
+	 *            references of processes that are to be spawned by the $parfor
+	 * @param parProcFunc
+	 *            the function that represents the body of the
+	 *            <code>$parfor</code>
+	 * @return the new <code>$parfor</code> enter statement
+	 */
+	CivlParForSpawnStatement civlParForEnterStatement(CIVLSource source,
 			Location location, Expression domain, VariableExpression domSize,
-			VariableExpression procsVar, Expression parProcs,
-			CIVLFunction parProcFunc);
+			VariableExpression procsVar, CIVLFunction parProcFunc);
 
 	/**
 	 * A goto branch statement is of the form <code> goto label; </code>. When a

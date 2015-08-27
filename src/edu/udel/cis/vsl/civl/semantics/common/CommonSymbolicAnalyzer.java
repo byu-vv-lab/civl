@@ -35,7 +35,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.AtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -1711,7 +1711,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 		}
 		case CIVL_PAR_FOR_ENTER: {
 			// $parfor(i0, i1, i2: dom) $spawn function(i0, i1, i2);
-			CivlParForEnterStatement parForEnter = (CivlParForEnterStatement) statement;
+			CivlParForSpawnStatement parForEnter = (CivlParForSpawnStatement) statement;
 			StringBuffer arguments = new StringBuffer();
 
 			for (int i = 0; i < parForEnter.dimension(); i++) {

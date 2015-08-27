@@ -9,35 +9,31 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForEnterStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLCompleteDomainType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 
-public class CommonCivlParForEnterStatement extends CommonStatement implements
-		CivlParForEnterStatement {
+public class CommonCivlParForSpawnStatement extends CommonStatement implements
+		CivlParForSpawnStatement {
 
 	private Expression domain;
 
 	private VariableExpression domSizeVar;
 
-	private Expression parProcsPointer;
-
 	private VariableExpression parProcsVar;
 
 	private CIVLFunction parProcFunction;
 
-	public CommonCivlParForEnterStatement(CIVLSource source, Location start,
+	public CommonCivlParForSpawnStatement(CIVLSource source, Location start,
 			Expression guard, Expression domain, VariableExpression domSize,
-			VariableExpression parProcsVar, Expression parProcs,
-			CIVLFunction parProcFunc) {
+			VariableExpression parProcsVar, CIVLFunction parProcFunc) {
 		super(source, domain.expressionScope(), domain.lowestScope(), start,
 				guard);
 		this.domain = domain;
 		this.domSizeVar = domSize;
 		this.parProcsVar = parProcsVar;
-		this.parProcsPointer = parProcs;
 		this.parProcFunction = parProcFunc;
 	}
 
@@ -75,11 +71,6 @@ public class CommonCivlParForEnterStatement extends CommonStatement implements
 	@Override
 	public VariableExpression domSizeVar() {
 		return this.domSizeVar;
-	}
-
-	@Override
-	public Expression parProcsPointer() {
-		return this.parProcsPointer;
 	}
 
 	@Override
