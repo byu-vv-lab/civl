@@ -45,7 +45,7 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 
 /**
- * Implementation of system functions declared mpi.h.
+ * Implementation of system functions declared mpi.h and civl-mpi.cvh
  * <ul>
  * <li>
  * 
@@ -95,19 +95,21 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		call = statement;
 		numArgs = call.arguments().size();
 		arguments = new Expression[numArgs];
+		for (int i = 0; i < numArgs; i++)
+			arguments[i] = call.arguments().get(i);
+		// Not evaluate the second argument of collective assert (which is the
+		// predicate) here.
+		if (functionName.equals("$mpi_coassert"))
+			numArgs = 1;
 		argumentValues = new SymbolicExpression[numArgs];
-		lhs = call.lhs();
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
 
-			arguments[i] = call.arguments().get(i);
-			// TODO: find a way to merge the co-assert execution branch
-			if (functionName.equals("$mpi_coassert") && i >= 1)
-				continue;
 			eval = evaluator.evaluate(state, pid, arguments[i]);
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
+		lhs = call.lhs();
 		switch (functionName) {
 		case "$mpi_set_status":
 			state = executeSetStatus(state, pid, call, arguments,
@@ -637,7 +639,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 				process = "process with rank: " + place + " participating the "
 						+ "$mpi_coassert().";
 				fakeState = this.reportAssertionFailure(fakeState, place,
-						process, resultType, "$mpi_coassert fail" + message,
+						process, resultType, "$mpi_coassert fail: " + message,
 						args, argVals, snapShotAssertion.getSource(), call,
 						assertionVal, 1);
 			}
