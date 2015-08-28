@@ -296,15 +296,13 @@ public class CommonExecutor implements Executor {
 		} catch (LibraryLoaderException exception) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
 					+ ")";
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
+
+			errorLogger.logSimpleError(call.getSource(), state, process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.LIBRARY,
 					"unable to load the library executor for the library "
 							+ libraryName + " to execute the function "
-							+ funcName,
-					this.symbolicAnalyzer.stateInformation(state),
-					call.getSource());
-
-			this.errorLogger.reportError(err);
+							+ funcName);
 			if (call.lhs() != null)
 				state = this.assign(state, pid, process, call.lhs(),
 						universe.nullExpression());
@@ -340,14 +338,12 @@ public class CommonExecutor implements Executor {
 		} catch (LibraryLoaderException exception) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
 					+ ")";
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.LIBRARY, Certainty.PROVEABLE, process,
-					"An error is encountered when loading the library executor for "
-							+ library + ": " + exception.getMessage(),
-					this.symbolicAnalyzer.stateInformation(state),
-					contractStmt.getSource());
 
-			this.errorLogger.reportError(err);
+			errorLogger.logSimpleError(contractStmt.getSource(), state,
+					process, this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.LIBRARY,
+					"An error is encountered when loading the library executor for "
+							+ library + ": " + exception.getMessage());
 		}
 		return state;
 	}
@@ -393,8 +389,6 @@ public class CommonExecutor implements Executor {
 		validity = universe.reasoner(pathCondition).valid(claim)
 				.getResultType();
 		if (validity != ResultType.YES) {
-			Certainty certainty = validity == ResultType.NO ? Certainty.PROVEABLE
-					: Certainty.MAYBE;
 			String elementType = statement.getStaticElementType().toString();
 			String message = "For a $malloc returning " + elementType
 					+ "*, the size argument must be a multiple of sizeof("
@@ -402,11 +396,10 @@ public class CommonExecutor implements Executor {
 					+ mallocSize.toString() + "\n"
 					+ "      expected size argument: a multile of "
 					+ elementSize.toString();
-			CIVLExecutionException e = new CIVLExecutionException(
-					ErrorKind.MALLOC, certainty, process, message,
-					symbolicAnalyzer.stateInformation(state), source);
 
-			errorLogger.reportError(e);
+			errorLogger.logError(source, state, process,
+					symbolicAnalyzer.stateInformation(state), claim, validity,
+					ErrorKind.MALLOC, message);
 			state = state.setPathCondition(universe.and(pathCondition, claim));
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
@@ -480,17 +473,15 @@ public class CommonExecutor implements Executor {
 					if (proc.getPid() == pid)
 						continue;
 					if (!proc.hasEmptyStack()) {
-						CIVLExecutionException err = new CIVLExecutionException(
-								ErrorKind.PROCESS_LEAK,
-								Certainty.CONCRETE,
-								process,
-								"Attempt to terminate the main process while process "
-										+ proc.identifier() + "(process<"
-										+ proc.getPid() + ">) is still running",
-								symbolicAnalyzer.stateInformation(state),
-								statement.getSource());
-
-						this.errorLogger.reportError(err);
+						errorLogger
+								.logSimpleError(statement.getSource(), state,
+										process, symbolicAnalyzer
+												.stateInformation(state),
+										ErrorKind.PROCESS_LEAK,
+										"attempt to terminate the main process while process "
+												+ proc.identifier()
+												+ "(process<" + proc.getPid()
+												+ ">) is still running");
 					}
 				}
 			}
@@ -505,12 +496,11 @@ public class CommonExecutor implements Executor {
 			state = eval.state;
 			if (functionName.equals("_CIVL_system")) {
 				if (universe.equals(returnValue, universe.integer(0)).isFalse()) {
-					CIVLExecutionException err = new CIVLExecutionException(
-							ErrorKind.OTHER, Certainty.CONCRETE, process,
-							"Program exits with error code: " + returnValue,
-							statement.getSource());
-
-					this.errorLogger.reportError(err);
+					this.errorLogger.logSimpleError(statement.getSource(),
+							state, process,
+							symbolicAnalyzer.stateInformation(state),
+							ErrorKind.OTHER, "program exits with error code: "
+									+ returnValue);
 				}
 			}
 		}
@@ -524,19 +514,12 @@ public class CommonExecutor implements Executor {
 
 			if (call.lhs() != null) {
 				if (returnValue == null) {
-					CIVLExecutionException err = new CIVLExecutionException(
+					errorLogger.logSimpleError(call.getSource(), state,
+							process, symbolicAnalyzer.stateInformation(state),
 							ErrorKind.OTHER,
-							Certainty.PROVEABLE,
-							process,
-							call.getSource()
-									+ " : "
-									+ " Attempt to use the return value of function "
+							"attempt to use the return value of function "
 									+ functionName + " when " + functionName
-									+ " has returned without a return value.",
-							symbolicAnalyzer.stateInformation(state),
-							call.getSource());
-
-					this.errorLogger.reportError(err);
+									+ " has returned without a return value.");
 					returnValue = universe.nullExpression();
 				}
 				state = assign(state, pid, process, call.lhs(), returnValue);
@@ -629,10 +612,10 @@ public class CommonExecutor implements Executor {
 			// e.printStackTrace(System.err);
 			// System.err.flush();
 			throw new CIVLInternalException("SARL exception: " + e, statement);
-		} catch (CIVLExecutionException e) {
-			errorLogger.reportError(e);
-			throw new UnsatisfiablePathConditionException();
-		}
+		} // catch (CIVLExecutionException e) {
+		// errorLogger.reportError(e);
+		// throw new UnsatisfiablePathConditionException();
+		// }
 	}
 
 	/**
@@ -797,7 +780,7 @@ public class CommonExecutor implements Executor {
 					symbolicAnalyzer.stateToString(state), ErrorKind.OTHER,
 					"The arguments of the domain for $parfor "
 							+ "must be concrete.");
-//			throw new UnsatisfiablePathConditionException();
+			// throw new UnsatisfiablePathConditionException();
 		} else if (!number_domSize.isZero()) {
 			// only spawns processes when the domain is not empty.
 			// InitialValueExpression initVal = modelFactory

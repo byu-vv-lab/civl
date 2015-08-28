@@ -8,10 +8,8 @@ import java.util.List;
 
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -49,7 +47,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.QuantifiedExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RealLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RecDomainLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.RegularRangeExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.RemoteExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ScopeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SelfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
@@ -431,29 +428,23 @@ public class CommonEvaluator implements Evaluator {
 		SymbolicExpression deref = null;
 
 		if (!pointer.type().equals(this.pointerType)) {
-			CIVLExecutionException se = new CIVLExecutionException(
-					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
-					"Attempt to deference an invalid pointer",
-					this.symbolicAnalyzer.stateInformation(state), source);
-
-			errorLogger.reportError(se);
+			errorLogger.logSimpleError(source, state, process,
+					this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.UNDEFINED_VALUE,
+					"attempt to deference an invalid pointer");
 			throwPCException = true;
 		} else if (pointer.operator() != SymbolicOperator.CONCRETE) {
-			CIVLExecutionException se = new CIVLExecutionException(
-					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
-					"Attempt to deference a pointer that is never initialized",
-					this.symbolicAnalyzer.stateInformation(state), source);
-
-			errorLogger.reportError(se);
+			errorLogger.logSimpleError(source, state, process,
+					this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.UNDEFINED_VALUE,
+					"attempt to deference a pointer that is never initialized");
 			throwPCException = true;
 		} else if (symbolicUtil.isNullPointer(pointer)) {
 			// null pointer dereference
-			CIVLExecutionException se = new CIVLExecutionException(
-					ErrorKind.DEREFERENCE, Certainty.PROVEABLE, process,
-					"Attempt to deference a null pointer",
-					this.symbolicAnalyzer.stateInformation(state), source);
-
-			errorLogger.reportError(se);
+			errorLogger.logSimpleError(source, state, process,
+					this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.DEREFERENCE,
+					"attempt to deference a null pointer");
 			throwPCException = true;
 		} else {
 			int sid = symbolicUtil.getDyscopeId(source, pointer);
@@ -1092,36 +1083,37 @@ public class CommonEvaluator implements Evaluator {
 							Arrays.asList(integerValue));
 					eval.value = newCharValue;
 				} else {
-					Certainty certain;
-
-					if (retType == ResultType.MAYBE)
-						certain = Certainty.MAYBE;
-					else
-						certain = Certainty.PROVEABLE;
-					CIVLExecutionException error = new CIVLExecutionException(
-							ErrorKind.INVALID_CAST,
-							certain,
-							process,
-							"Cast operation may involves casting a integer, whose value is larger than UCHAR_MAX or less than UCHAR_MIN, to char type object which is considered as unimplemented feature of CIVL",
-							this.symbolicAnalyzer.stateInformation(state), arg
-									.getSource());
-
-					errorLogger.reportError(error);
+					// Certainty certain;
+					//
+					// if (retType == ResultType.MAYBE)
+					// certain = Certainty.MAYBE;
+					// else
+					// certain = Certainty.PROVEABLE;
+					errorLogger
+							.logError(
+									source,
+									state,
+									process,
+									this.symbolicAnalyzer
+											.stateInformation(state),
+									insideRangeClaim,
+									retType,
+									ErrorKind.INVALID_CAST,
+									"Cast operation may involve casting a integer, "
+											+ "whose value is larger than UCHAR_MAX or less than UCHAR_MIN, "
+											+ "to char type object which is considered as unimplemented feature of CIVL");
 					throw new UnsatisfiablePathConditionException();
 				}
+
 			}
 			return eval;
 		}
 		try {
 			eval.value = universe.cast(endType, eval.value);
 		} catch (SARLException e) {
-			CIVLExecutionException error = new CIVLExecutionException(
-					ErrorKind.INVALID_CAST, Certainty.NONE, process,
-					"SARL could not cast: " + e,
+			errorLogger.logSimpleError(arg.getSource(), state, process,
 					this.symbolicAnalyzer.stateInformation(state),
-					arg.getSource());
-
-			errorLogger.reportError(error);
+					ErrorKind.INVALID_CAST, "SARL could not cast: " + e);
 			throw new UnsatisfiablePathConditionException();
 		}
 		return eval;
@@ -1165,13 +1157,10 @@ public class CommonEvaluator implements Evaluator {
 		Evaluation eval = evaluate(state, pid, expression.pointer());
 
 		if (eval.value.isNull()) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
-					"Attempt to dereference an uninitialized pointer.",
-					symbolicAnalyzer.stateInformation(state), expression
-							.pointer().getSource());
-
-			this.errorLogger.reportError(err);
+			this.errorLogger.logSimpleError(expression.pointer().getSource(),
+					state, process, symbolicAnalyzer.stateInformation(state),
+					ErrorKind.UNDEFINED_VALUE,
+					"attempt to dereference an uninitialized pointer");
 			throw new UnsatisfiablePathConditionException();
 		}
 		return dereference(expression.pointer().getSource(), eval.state,
@@ -1952,12 +1941,10 @@ public class CommonEvaluator implements Evaluator {
 		validity = universe.reasoner(state.getPathCondition()).valid(claim)
 				.getResultType();
 		if (validity == ResultType.YES) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OTHER, Certainty.PROVEABLE, process,
-					"A regular range expression requires a non-zero step.",
-					symbolicAnalyzer.stateInformation(state), range.getSource());
-
-			errorLogger.reportError(err);
+			errorLogger.logSimpleError(range.getSource(), state, process,
+					symbolicAnalyzer.stateInformation(state), ErrorKind.OTHER,
+					"a regular range expression requires a non-zero step");
+			throw new UnsatisfiablePathConditionException();
 		}
 		claim = universe.lessThan(this.zero, (NumericExpression) step);
 		validity = universe.reasoner(state.getPathCondition()).valid(claim)
@@ -2282,28 +2269,21 @@ public class CommonEvaluator implements Evaluator {
 			VariableExpression expression)
 			throws UnsatisfiablePathConditionException {
 		if (expression.variable().isOutput()) {
-			CIVLExecutionException e = new CIVLExecutionException(
-					ErrorKind.OUTPUT_READ, Certainty.CONCRETE, process,
-					"Attempt to read the output variable "
-							+ expression.variable().name(),
+			errorLogger.logSimpleError(expression.getSource(), state, process,
 					this.symbolicAnalyzer.stateInformation(state),
-					expression.getSource());
-
-			errorLogger.reportError(e);
+					ErrorKind.OUTPUT_READ,
+					"attempt to read the output variable "
+							+ expression.variable().name());
 			throw new UnsatisfiablePathConditionException();
 		} else {
 			SymbolicExpression value = state
 					.valueOf(pid, expression.variable());
 
 			if (value == null || value.isNull()) {
-				CIVLExecutionException e = new CIVLExecutionException(
-						ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
-						process, "Attempt to read uninitialized variable "
-								+ expression,
-						this.symbolicAnalyzer.stateInformation(state),
-						expression.getSource());
-
-				errorLogger.reportError(e);
+				errorLogger.logSimpleError(expression.getSource(), state,
+						process, this.symbolicAnalyzer.stateInformation(state),
+						ErrorKind.UNDEFINED_VALUE,
+						"attempt to read uninitialized variable " + expression);
 				throw new UnsatisfiablePathConditionException();
 			}
 			return new Evaluation(state, value);
@@ -3007,13 +2987,12 @@ public class CommonEvaluator implements Evaluator {
 
 		if (scopeId < 0) {
 			ProcessState procState = state.getProcessState(pid);
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.MEMORY_LEAK, Certainty.PROVEABLE,
-					procState.name() + "(id=" + pid + ")",
-					"Invalid function pointer: " + functionIdentifier,
-					symbolicAnalyzer.stateInformation(state), source);
 
-			errorLogger.reportError(err);
+			errorLogger.logSimpleError(source, state, procState.name() + "(id="
+					+ pid + ")", symbolicAnalyzer.stateInformation(state),
+					ErrorKind.MEMORY_LEAK, "invalid function pointer: "
+							+ functionIdentifier);
+			throw new UnsatisfiablePathConditionException();
 		}
 		state = eval.state;
 		containingScope = state.getDyscope(scopeId).lexicalScope();
@@ -3089,15 +3068,11 @@ public class CommonEvaluator implements Evaluator {
 						return new Triple<>(state,
 								charArray.toStringBuffer(true), false);
 					} catch (ArrayIndexOutOfBoundsException e) {
-						CIVLExecutionException err = new CIVLExecutionException(
-								ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE,
-								process,
-								"Reading undefined or uninitialized value from some pointer to heap: "
-										+ charArray.argument(0),
+						errorLogger.logSimpleError(source, state, process,
 								symbolicAnalyzer.stateInformation(state),
-								source);
-
-						errorLogger.reportError(err);
+								ErrorKind.UNDEFINED_VALUE,
+								"reading undefined or uninitialized value from some pointer to heap: "
+										+ charArray.argument(0));
 					}
 					int_arrayIndex = symbolicUtil.extractInt(source,
 							((ArrayElementReference) ref).getIndex());
@@ -3107,12 +3082,14 @@ public class CommonEvaluator implements Evaluator {
 							charPointer, false);
 					state = eval.state;
 					// A single character is not acceptable.
-					if (eval.value.arguments().length <= 1)
-						throw new CIVLExecutionException(ErrorKind.OTHER,
-								Certainty.PROVEABLE, process,
+					if (eval.value.arguments().length <= 1) {
+						this.errorLogger.logSimpleError(source, state, process,
+								this.symbolicAnalyzer.stateInformation(state),
+								ErrorKind.OTHER,
 								"Try to obtain a string from a sequence of char has length"
-										+ " less than or equal to one", source);
-					else {
+										+ " less than or equal to one");
+						throw new UnsatisfiablePathConditionException();
+					} else {
 						originalArray = (SymbolicSequence<?>) eval.value
 								.argument(0);
 						int_arrayIndex = 0;

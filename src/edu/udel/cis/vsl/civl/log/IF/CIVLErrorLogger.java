@@ -201,7 +201,7 @@ public class CIVLErrorLogger extends ErrorLog {
 	 *             if the number of errors reported has exceeded the specified
 	 *             bound
 	 */
-	public void reportError(CIVLExecutionException err) {
+	private void reportError(CIVLExecutionException err) {
 		try {
 			report(new CIVLLogEntry(config, err));
 		} catch (FileNotFoundException e) {
@@ -251,7 +251,7 @@ public class CIVLErrorLogger extends ErrorLog {
 		else { // pc is definitely satisfiable
 			certainty = Certainty.PROVEABLE;
 		}
-		//TODO if pc has no symbolic constant
+		// TODO if pc has no symbolic constant
 		error = new CIVLExecutionException(errorKind, certainty, process,
 				message, stateString, source);
 		reportError(error);

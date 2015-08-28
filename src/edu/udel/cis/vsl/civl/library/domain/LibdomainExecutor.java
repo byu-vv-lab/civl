@@ -10,8 +10,6 @@ import java.util.Map;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
@@ -226,23 +224,17 @@ public class LibdomainExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression result;
 
 		if (strategy_num == null) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OTHER, Certainty.PROVEABLE, process,
-					"$domain_partition requires a concrete strategy argument",
-					symbolicAnalyzer.stateInformation(state), source);
-
-			this.errorLogger.reportError(err);
+			this.errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state), ErrorKind.OTHER,
+					"$domain_partition requires a concrete strategy argument");
 			throw new UnsatisfiablePathConditionException();
 		}
 		if (numParts_num == null) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.OTHER,
-					Certainty.PROVEABLE,
-					process,
-					"$domain_partition requires a concrete number of partitions argument",
-					symbolicAnalyzer.stateInformation(state), source);
-
-			this.errorLogger.reportError(err);
+			this.errorLogger
+					.logSimpleError(source, state, process,
+							symbolicAnalyzer.stateInformation(state),
+							ErrorKind.OTHER,
+							"$domain_partition requires a concrete number of partitions argument");
 			throw new UnsatisfiablePathConditionException();
 		}
 		strategy_int = strategy_num.intValue();

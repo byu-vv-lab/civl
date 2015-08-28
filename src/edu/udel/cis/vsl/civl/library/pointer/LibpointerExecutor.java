@@ -6,8 +6,6 @@ import java.util.List;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
@@ -375,9 +373,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		if (symbolicUtil.isNullPointer(left)
 				|| symbolicUtil.isNullPointer(right)) {
 			StringBuffer msg = new StringBuffer();
-			CIVLExecutionException err;
 
-			msg.append("The arguments of $copy() must both be non-null pointers.\n");
+			msg.append("the arguments of $copy() must both be non-null pointers.\n");
 			msg.append("first argument:\n");
 			msg.append("    ");
 			msg.append(arguments[0]);
@@ -396,10 +393,9 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			msg.append("\n    ");
 			msg.append(symbolicAnalyzer.symbolicExpressionToString(sourceRight,
 					state, arguments[1].getExpressionType(), right));
-			err = new CIVLExecutionException(ErrorKind.DEREFERENCE,
-					Certainty.PROVEABLE, process, msg.toString(),
-					symbolicAnalyzer.stateInformation(state), source);
-			this.errorLogger.reportError(err);
+			this.errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.DEREFERENCE, msg.toString());
 			return state;
 		} else {
 			SymbolicExpression rightValue;
@@ -410,9 +406,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 
 			if (!objTypeLeft.equals(objTypeRight)) {
 				StringBuffer msg = new StringBuffer();
-				CIVLExecutionException err;
 
-				msg.append("The objects pointed to by the two given pointers of $copy() "
+				msg.append("the objects pointed to by the two given pointers of $copy() "
 						+ "must have the same type.\n");
 				msg.append("first argument:\n");
 				msg.append("    ");
@@ -430,10 +425,9 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 						arguments[1], false).right);
 				msg.append("\n    type of the object: ");
 				msg.append(objTypeRight);
-				err = new CIVLExecutionException(ErrorKind.DEREFERENCE,
-						Certainty.PROVEABLE, process, msg.toString(),
-						symbolicAnalyzer.stateInformation(state), source);
-				this.errorLogger.reportError(err);
+				this.errorLogger.logSimpleError(source, state, process,
+						symbolicAnalyzer.stateInformation(state),
+						ErrorKind.DEREFERENCE, msg.toString());
 				return state;
 			}
 			eval = evaluator.dereference(sourceRight, state, process,
@@ -482,18 +476,20 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			invalidArg = 1;
 		if (invalidArg != -1) {
 			SymbolicExpression invalidValue = invalidArg == 0 ? first : second;
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
-					"The object that "
+
+			this.errorLogger.logSimpleError(
+					source,
+					state,
+					process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.UNDEFINED_VALUE,
+					"the object that "
 							+ arguments[invalidArg]
 							+ " points to is undefined, which has the value "
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									arguments[invalidArg].getSource(), state,
-									null, invalidValue),
-					symbolicAnalyzer.stateInformation(state),
-					arguments[invalidArg].getSource());
-
-			this.errorLogger.reportError(err);
+									null, invalidValue));
+			return state;
 		}
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs,
@@ -591,14 +587,11 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 				objMsg += symbolicAnalyzer.symbolicExpressionToString(
 						arguments[1].getSource(), state, null, second);
 			}
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.UNDEFINED_VALUE, Certainty.PROVEABLE, process,
-					"The object that " + ptrMsg
+			this.errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.UNDEFINED_VALUE, "the object that " + ptrMsg
 							+ " points to is undefined, which has the value "
-							+ objMsg, symbolicAnalyzer.stateToString(state),
-					source);
-
-			this.errorLogger.reportError(err);
+							+ objMsg);
 			return state;
 		}
 		claim = universe.equals(first, second);
@@ -684,20 +677,24 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			reference = (ReferenceExpression) symbolicUtil
 					.getSymRef(newPointer);
 			if (!symbolicUtil.isValidRefOf(reference, objValue)) {
-				CIVLExecutionException err = new CIVLExecutionException(
-						ErrorKind.OTHER,
-						Certainty.PROVEABLE,
-						process,
-						"The second argument of $translate_ptr() "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										objSource, state, null, objPtr)
-								+ " doesn't have a compatible type hierarchy as the first argument "
-								+ symbolicAnalyzer.symbolicExpressionToString(
-										arguments[0].getSource(), state, null,
-										pointer),
-						symbolicAnalyzer.stateInformation(state), source);
-
-				this.errorLogger.reportError(err);
+				this.errorLogger
+						.logSimpleError(
+								source,
+								state,
+								process,
+								symbolicAnalyzer.stateInformation(state),
+								ErrorKind.OTHER,
+								"the second argument of $translate_ptr() "
+										+ symbolicAnalyzer
+												.symbolicExpressionToString(
+														objSource, state, null,
+														objPtr)
+										+ " doesn't have a compatible type hierarchy as the first argument "
+										+ symbolicAnalyzer
+												.symbolicExpressionToString(
+														arguments[0]
+																.getSource(),
+														state, null, pointer));
 				return state;
 			}
 			if (lhs != null)
@@ -757,6 +754,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 					"$pointer_add() doesn't accept an invalid pointer:"
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									source, state, null, ptr));
+			return state;
 		}
 		primitiveTypePointedStatic = symbolicAnalyzer.getArrayBaseType(state,
 				arguments[0].getSource(), ptr);
@@ -768,19 +766,25 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		reasoner = universe.reasoner(state.getPathCondition());
 		resultType = reasoner.valid(claim).getResultType();
 		if (!resultType.equals(ResultType.YES)) {
-			Certainty certainty = resultType.equals(ResultType.NO) ? Certainty.CONCRETE
-					: Certainty.MAYBE;
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.POINTER,
-					certainty,
-					process,
-					"The primitive type of the object pointed by input pointer:"
-							+ primitiveTypePointed
-							+ " must be"
-							+ " consistent with the size of the"
-							+ " primitive type specified at the forth argument: "
-							+ type_size + ".", source);
-			this.errorLogger.reportError(err);
+			// Certainty certainty = resultType.equals(ResultType.NO) ?
+			// Certainty.CONCRETE
+			// : Certainty.MAYBE;
+			this.errorLogger
+					.logError(
+							source,
+							state,
+							process,
+							this.symbolicAnalyzer.stateInformation(state),
+							claim,
+							resultType,
+							ErrorKind.POINTER,
+							"the primitive type of the object pointed by input pointer:"
+									+ primitiveTypePointed
+									+ " must be"
+									+ " consistent with the size of the"
+									+ " primitive type specified at the forth argument: "
+									+ type_size);
+			return state;
 		}
 		eval = evaluator.evaluatePointerAdd(state, process, ptr, offset, true,
 				source).left;

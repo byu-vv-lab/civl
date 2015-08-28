@@ -9,8 +9,6 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -370,10 +368,10 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			return state;
 		if (!pointer.operator().equals(SymbolicOperator.CONCRETE)
 				|| !symbolicUtil.isValidPointer(pointer)) {
-			errorLogger.reportError(new CIVLExecutionException(
-					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Attempt to read/write a invalid pointer type variable",
-					arguments[0].getSource()));
+			this.errorLogger.logSimpleError(arguments[0].getSource(), state,
+					process, this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.POINTER,
+					"attempt to read/write a invalid pointer type variable");
 			throw new UnsatisfiablePathConditionException();
 		}
 		reasoner = universe.reasoner(state.getPathCondition());
@@ -383,16 +381,17 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		assertedSymType = this.mpiTypeToCIVLType(assertedTypeEnum.intValue(),
 				source).getDynamicType(universe);
 		if (!assertedSymType.equals(realSymType)) {
-			CIVLExecutionException err = new CIVLExecutionException(
-					ErrorKind.MPI_ERROR,
-					Certainty.CONCRETE,
-					process,
-					"The primitive type:"
-							+ realType.toString()
-							+ " of the object pointed by the input pointer argument of"
-							+ " MPI routines is not consistent with the given MPI_Datatype",
-					source);
-			errorLogger.reportError(err);
+			errorLogger
+					.logSimpleError(
+							source,
+							state,
+							process,
+							this.symbolicAnalyzer.stateInformation(state),
+							ErrorKind.MPI_ERROR,
+							"the primitive type "
+									+ realType.toString()
+									+ " of the object pointed by the input pointer argument of"
+									+ " MPI routines is not consistent with the given MPI_Datatype");
 		}
 		return state;
 	}

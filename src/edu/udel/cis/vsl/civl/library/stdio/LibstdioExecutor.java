@@ -1150,10 +1150,12 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 	 *            The CIVL source of the statement.
 	 * @return The number of characters should be in the matching string or char
 	 *         array.
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	// "%s" will include an extra termination sign while "%c" excludes it.
 	private Integer getCharsLengthFromFormat(State state, String process,
-			String formatValue, ConversionType conversion, CIVLSource source) {
+			String formatValue, ConversionType conversion, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
 		assert (conversion != ConversionType.STRING || conversion != ConversionType.CHAR) : "Cannot return characters when the format isn't expecting a string or char";
 		// TODO: what about "%[" ?
 		Pattern charOrStrPattern; // regex used to matching "%c" and "%s"
@@ -1182,8 +1184,9 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 		if (conversion == ConversionType.STRING)
 			length++;
 		if (length <= 0) {
-			errorLogger.reportError(new CIVLExecutionException(ErrorKind.OTHER,
-					Certainty.CONCRETE, process, "Invalid format", source));
+			errorLogger.logSimpleError(source, state, process,
+					this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.OTHER, "Invalid format");
 			return 0;
 		} else if (length == 1)
 			return 1;

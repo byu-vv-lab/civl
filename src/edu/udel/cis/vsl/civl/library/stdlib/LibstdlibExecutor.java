@@ -8,8 +8,6 @@ import java.util.Arrays;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -169,13 +167,12 @@ public class LibstdlibExecutor extends BaseLibraryExecutor implements
 
 					intValue = universe.integer(integer);
 				} catch (Exception ex) {
-					CIVLExecutionException e = new CIVLExecutionException(
-							ErrorKind.OTHER, Certainty.PROVEABLE, process,
+					errorLogger.logSimpleError(source, state, process,
+							symbolicAnalyzer.stateInformation(state),
+							ErrorKind.OTHER,
 							"The argument to atoi() should be a valid integer representation.\n"
-									+ "actual argument: " + argString,
-							symbolicAnalyzer.stateInformation(state), source);
-
-					errorLogger.reportError(e);
+									+ "actual argument: " + argString);
+					return state;
 				}
 			}
 		}

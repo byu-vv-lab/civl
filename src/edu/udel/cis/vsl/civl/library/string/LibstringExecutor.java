@@ -11,8 +11,6 @@ import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.bundle.LibbundleEvaluator;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
-import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
-import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -254,36 +252,28 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		Triple<State, StringBuffer, Boolean> strEval2 = null;
 		StringBuffer str1, str2;
 
-		if ((charPointer1.operator() != SymbolicOperator.CONCRETE))
-			errorLogger.reportError(new CIVLExecutionException(
-					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Attempt to read/write from an invalid pointer\n",
-					arguments[0].getSource()));
+		if ((charPointer1.operator() != SymbolicOperator.CONCRETE)) {
+			errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.POINTER,
+					"attempt to read/write from an invalid pointer");
+		}
 		if ((charPointer2.operator() != SymbolicOperator.CONCRETE))
-			errorLogger.reportError(new CIVLExecutionException(
-					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Attempt to read/write from an invalid pointer\n",
-					arguments[1].getSource()));
+			errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.POINTER,
+					"attempt to read/write from an invalid pointer");
 		// If two pointers are same, return 0.
 		if (charPointer1.equals(charPointer2))
 			result = zero;
 		else {
-			try {
-				strEval1 = evaluator.getString(source, state, process,
-						arguments[0], charPointer1);
-				state = strEval1.first;
-				strEval2 = evaluator.getString(source, state, process,
-						arguments[1], charPointer2);
-				state = strEval2.first;
-			} catch (CIVLExecutionException e) {
-				errorLogger.reportError(new CIVLExecutionException(e.kind(), e
-						.certainty(), process, e.getMessage(), source));
-			} catch (Exception e) {
-				throw new CIVLInternalException("Unknown error", source);
-			}
-
+			strEval1 = evaluator.getString(source, state, process,
+					arguments[0], charPointer1);
+			state = strEval1.first;
+			strEval2 = evaluator.getString(source, state, process,
+					arguments[1], charPointer2);
+			state = strEval2.first;
 			if (!strEval1.third || !strEval2.third) {
-
 				// catch (CIVLUnimplementedFeatureException e) {
 				// If the string pointed by either pointer1 or pointer2 is
 				// non-concrete, try to compare two string objects, if
@@ -434,10 +424,10 @@ public class LibstringExecutor extends BaseLibraryExecutor implements
 		c = argumentValues[1];
 		// check if pointer is valid first
 		if (pointer.operator() != SymbolicOperator.CONCRETE)
-			errorLogger.reportError(new CIVLExecutionException(
-					ErrorKind.POINTER, Certainty.CONCRETE, process,
-					"Attempt to read/write from an invalid pointer\n",
-					arguments[0].getSource()));
+			errorLogger.logSimpleError(source, state, process,
+					symbolicAnalyzer.stateInformation(state),
+					ErrorKind.POINTER,
+					"attempt to read/write from an invalid pointer");
 		// check if c == 0, because that's the only case we support
 		claim = universe.equals(c, zero);
 		resultType = reasoner.valid(claim).getResultType();
