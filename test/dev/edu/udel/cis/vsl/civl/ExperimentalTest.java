@@ -27,23 +27,19 @@ public class ExperimentalTest {
 	/* **************************** Test Methods *************************** */
 
 	@Test
-	public void coassert() {
-		assertTrue(ui.run("show -showModel=3 ", filename("coassert.c")));
-	}
-
-	@Test
-	public void wildcard_coassert() {
-		assertTrue(ui.run("verify -mpiContract -input_mpi_nprocs=3 ",
-				filename("wildcard_coassert.c")));
-		assertFalse(ui.run("verify -mpiContract -input_mpi_nprocs=3 ",
-				filename("wildcard_coassert_bad.c")));
-		// assertTrue(ui.run("replay -showTransitions -input_NPROCS=3 ",
-		// filename("wildcard_coassert.c")));
-	}
-
-	@Test
-	public void contract() {
-		assertTrue(ui.run("show -showModel", filename("contracts.c")));
+	public void collective_assert() {
+		assertFalse(ui.run(
+				"verify -enablePrintf=false -input_mpi_nprocs=3 -mpiContract",
+				filename("contracts/wildcard_coassert_bad.c")));
+		assertFalse(ui
+				.run("verify -enablePrintf=false -input_mpi_nprocs=4 -deadlock=potential -mpiContract",
+						filename("contracts/wildcard_coassert_bad.c")));
+		assertTrue(ui
+				.run("verify -enablePrintf=false -input_mpi_nprocs=4 -deadlock=potential -mpiContract",
+						filename("contracts/wildcard_coassert_barrier.c")));
+		assertTrue(ui
+				.run("verify -enablePrintf=false -input_mpi_nprocs=4 -deadlock=potential -mpiContract",
+						filename("contracts/reduce_coassert.c")));
 	}
 
 	@Test
