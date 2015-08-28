@@ -140,7 +140,6 @@ import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonArraySliceR
 import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonSelfReference;
 import edu.udel.cis.vsl.civl.model.common.expression.reference.CommonStructOrUnionFieldReference;
 import edu.udel.cis.vsl.civl.model.common.location.CommonLocation;
-import edu.udel.cis.vsl.civl.model.common.statement.CollectiveContractStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAssignStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomBranchStatement;
 import edu.udel.cis.vsl.civl.model.common.statement.CommonAtomicLockAssignStatement;
@@ -2102,17 +2101,5 @@ public class CommonModelFactory implements ModelFactory {
 		}
 		return new CommonContractClauseExpression(source, hscope, lscope, type,
 				collectiveGroup, body, contractKind, clauseKind);
-	}
-
-	@Override
-	public CollectiveContractStatement collectiveContractStatement(
-			CIVLSource source, ContractClauseExpression contractExpression,
-			Location location, String library) {
-		Expression guard = this.trueExpression(null);
-
-		return new CollectiveContractStatement(source,
-				contractExpression.expressionScope(),
-				contractExpression.lowestScope(), location, guard,
-				contractExpression, library);
 	}
 }

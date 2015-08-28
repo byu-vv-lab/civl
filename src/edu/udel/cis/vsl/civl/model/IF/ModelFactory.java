@@ -72,7 +72,6 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.ModelFactoryException;
-import edu.udel.cis.vsl.civl.model.common.statement.CollectiveContractStatement;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -1585,8 +1584,4 @@ public interface ModelFactory {
 	ContractClauseExpression contractClauseExpression(CIVLSource source,
 			CIVLType type, Expression collectiveGroup, Expression body,
 			ContractKind contractKind);
-
-	CollectiveContractStatement collectiveContractStatement(CIVLSource source,
-			ContractClauseExpression contractExpression, Location location,
-			String library);
 }

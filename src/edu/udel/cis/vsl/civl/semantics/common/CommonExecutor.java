@@ -17,7 +17,6 @@ import edu.udel.cis.vsl.civl.analysis.IF.CodeAnalyzer;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
-import edu.udel.cis.vsl.civl.library.mpi.LibmpiExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
@@ -39,7 +38,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ContractStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
@@ -307,43 +305,6 @@ public class CommonExecutor implements Executor {
 				state = this.assign(state, pid, process, call.lhs(),
 						universe.nullExpression());
 			state = this.stateFactory.setLocation(state, pid, call.target());
-		}
-		return state;
-	}
-
-	private State executeContractStatement(State state, int pid,
-			ContractStatement contractStmt)
-			throws UnsatisfiablePathConditionException {
-		String library = contractStmt.libraryName();
-
-		try {
-			LibraryExecutor executor = loader.getLibraryExecutor(library, this,
-					this.modelFactory, this.symbolicUtil, symbolicAnalyzer);
-			String clause;
-
-			switch (contractStmt.getCluaseKind()) {
-			case MESSAGE_BUFFER:
-				clause = "$mpi_isRecvBufEmpty";
-				break;
-			case EXPRESSION:
-			default:
-				clause = "$mpi_coassert";
-			}
-			if (library.equals("civl-mpi"))
-				state = ((LibmpiExecutor) executor).executeContract(state, pid,
-						contractStmt, clause);
-			else
-				throw new CIVLUnimplementedFeatureException("Library: "
-						+ library + " doesn't support contracts.");
-		} catch (LibraryLoaderException exception) {
-			String process = state.getProcessState(pid).name() + "(id=" + pid
-					+ ")";
-
-			errorLogger.logSimpleError(contractStmt.getSource(), state,
-					process, this.symbolicAnalyzer.stateInformation(state),
-					ErrorKind.LIBRARY,
-					"An error is encountered when loading the library executor for "
-							+ library + ": " + exception.getMessage());
 		}
 		return state;
 	}
@@ -676,9 +637,6 @@ public class CommonExecutor implements Executor {
 		case CIVL_PAR_FOR_ENTER:
 			return executeCivlParFor(state, pid,
 					(CivlParForSpawnStatement) statement);
-		case CONTRACT:
-			return executeContractStatement(state, pid,
-					(ContractStatement) statement);
 		default:
 			throw new CIVLInternalException("Unknown statement kind: " + kind,
 					statement);

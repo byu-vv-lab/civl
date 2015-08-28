@@ -15,11 +15,9 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
-import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.ContractStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
@@ -81,16 +79,6 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	public State execute(State state, int pid, CallOrSpawnStatement statement,
 			String functionName) throws UnsatisfiablePathConditionException {
 		return this.executeWork(state, pid, statement, functionName);
-	}
-
-	public State executeContract(State state, int pid,
-			ContractStatement statement, String functionName)
-			throws UnsatisfiablePathConditionException {
-		if (this.civlConfig.isEnableMpiContract())
-			return this
-					.executeContractWork(state, pid, statement, functionName);
-		else
-			return state;
 	}
 
 	/* ************************* private methods **************************** */
@@ -159,35 +147,6 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		}
 		state = stateFactory.setLocation(state, pid, call.target(),
 				call.lhs() != null);
-		return state;
-	}
-
-	private State executeContractWork(State state, int pid,
-			ContractStatement statement, String functionName)
-			throws UnsatisfiablePathConditionException {
-		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
-		ContractClauseExpression contractExpr = statement.getExpression();
-		SymbolicExpression[] collectiveGroup = new SymbolicExpression[1];
-		Expression[] expressions = { contractExpr.getCollectiveGroup(),
-				contractExpr.getBody() };
-		Evaluation eval;
-
-		eval = evaluator
-				.evaluate(state, pid, contractExpr.getCollectiveGroup());
-		state = eval.state;
-		collectiveGroup[0] = eval.value;
-		switch (functionName) {
-		case "$mpi_coasert":
-			this.executeCoassertArrive(statement, state, pid, process,
-					expressions, collectiveGroup, statement.getSource());
-			break;
-		case "$mpi_isRecvBufEmpty":
-			// TODO: implement me
-			break;
-		default:
-			throw new CIVLInternalException("Unknown civl-mpi contract: "
-					+ name, statement);
-		}
 		return state;
 	}
 
