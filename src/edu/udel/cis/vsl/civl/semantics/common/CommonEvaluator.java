@@ -1089,7 +1089,7 @@ public class CommonEvaluator implements Evaluator {
 					// certain = Certainty.MAYBE;
 					// else
 					// certain = Certainty.PROVEABLE;
-					errorLogger
+					eval.state = errorLogger
 							.logError(
 									source,
 									state,
@@ -1102,7 +1102,7 @@ public class CommonEvaluator implements Evaluator {
 									"Cast operation may involve casting a integer, "
 											+ "whose value is larger than UCHAR_MAX or less than UCHAR_MIN, "
 											+ "to char type object which is considered as unimplemented feature of CIVL");
-					throw new UnsatisfiablePathConditionException();
+					// throw new UnsatisfiablePathConditionException();
 				}
 
 			}
@@ -1639,11 +1639,24 @@ public class CommonEvaluator implements Evaluator {
 					.getResultType();
 
 			if (resultType != ResultType.YES) {
-				eval.state = errorLogger.logError(expression.getSource(),
-						eval.state, process,
+				Expression divisor = expression.right();
+
+				eval.state = errorLogger.logError(
+						expression.getSource(),
+						eval.state,
+						process,
 						this.symbolicAnalyzer.stateInformation(eval.state),
-						claim, resultType, ErrorKind.DIVISION_BY_ZERO,
-						"Division by zero");
+						claim,
+						resultType,
+						ErrorKind.DIVISION_BY_ZERO,
+						"division by zero where divisor: "
+								+ expression.right()
+								+ "="
+								+ this.symbolicAnalyzer
+										.symbolicExpressionToString(
+												divisor.getSource(), state,
+												divisor.getExpressionType(),
+												right));
 			}
 			eval.value = universe.divide((NumericExpression) left, denominator);
 		}

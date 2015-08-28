@@ -397,10 +397,11 @@ public class CommonExecutor implements Executor {
 					+ "      expected size argument: a multile of "
 					+ elementSize.toString();
 
-			errorLogger.logError(source, state, process,
+			state = errorLogger.logError(source, state, process,
 					symbolicAnalyzer.stateInformation(state), claim, validity,
 					ErrorKind.MALLOC, message);
-			state = state.setPathCondition(universe.and(pathCondition, claim));
+			// state = state.setPathCondition(universe.and(pathCondition,
+			// claim));
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
 		// If the type of the allocated element object is an struct or union
@@ -613,9 +614,9 @@ public class CommonExecutor implements Executor {
 			// System.err.flush();
 			throw new CIVLInternalException("SARL exception: " + e, statement);
 		} // catch (CIVLExecutionException e) {
-		// errorLogger.reportError(e);
-		// throw new UnsatisfiablePathConditionException();
-		// }
+			// errorLogger.reportError(e);
+			// throw new UnsatisfiablePathConditionException();
+			// }
 	}
 
 	/**

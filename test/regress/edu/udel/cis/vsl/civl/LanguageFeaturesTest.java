@@ -205,6 +205,12 @@ public class LanguageFeaturesTest {
 	public void dynamicStruct() throws ABCException {
 		assertTrue(ui.run("verify", filename("dynamicStruct.cvl")));
 	}
+	
+
+	@Test
+	public void divisionByZero() throws ABCException {
+		assertFalse(ui.run("verify -errorBound=2", filename("divisionByZero.cvl")));
+	}
 
 	@Test
 	public void emptyWhen() throws ABCException {

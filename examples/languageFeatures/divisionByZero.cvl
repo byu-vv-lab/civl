@@ -1,0 +1,9 @@
+#include<civlc.cvh>
+
+$input int X;
+
+int main(void){
+  int a=10/X;
+
+  $assert(a != 0);
+}
