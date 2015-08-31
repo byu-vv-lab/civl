@@ -154,6 +154,8 @@ void test1() {            // Test enqueue & dequeue
     assert(result);
     assert(d == i);
   }
+  
+  deallocate(list);
   free(sq.Head.ptr);
 }
 
