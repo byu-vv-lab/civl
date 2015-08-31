@@ -54,6 +54,9 @@ while(my $datFile = $datDir->next){
 
   $datFile = basename($datFile,  "");
   ($benchmark) = ($datFile =~ /(.*)\.dat/);
+  if($benchmark eq "Diningphilosopher"){
+    $benchmark="Dining philosopher";
+  }
   print "plotting figure for benchmark $benchmark...\n";
   $cmd = `gnuplot -e "TITLE='$benchmark'" -e "DAT_FILE='$datOut/$datFile'" -e "OUT_FILE='$datOut/$benchmark.pdf'" $scriptPrefix/plotBench.plg`;
 }
