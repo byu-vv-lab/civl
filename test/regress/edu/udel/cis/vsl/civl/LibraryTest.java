@@ -28,6 +28,8 @@ public class LibraryTest {
 	private final static String STRING = "string";
 	private final static String TIME = "time";
 	private final static String POINTER = "pointer";
+	private final static String EXTERNAL = "external";
+	private final static String MATH = "math";
 
 	/* *************************** Helper Methods *************************** */
 
@@ -200,7 +202,8 @@ public class LibraryTest {
 
 	@Test
 	public void domainDecomp() throws ABCException {
-		assertTrue(ui.run("verify", "-inputn=4", "-enablePrintf=false",
+		assertTrue(ui.run("verify", "-inputn=4",
+				"-enablePrintf=false -showTransitions",
 				filename(CIVLC, "domainDecomposition.cvl")));
 	}
 
@@ -273,6 +276,18 @@ public class LibraryTest {
 	public void elaborateDomain() throws ABCException {
 		assertTrue(ui.run("verify -enablePrintf=false",
 				filename(CIVLC, "elaborateDomain.cvl")));
+	}
+
+	@Test
+	public void testMyLib() throws ABCException {
+		assertFalse(ui
+				.run("verify -showTransitions=false -showStates=false -errorBound=100",
+						filename(EXTERNAL, "testMyLib.cvl")));
+	}
+
+	@Test
+	public void sqrt() throws ABCException {
+		assertTrue(ui.run("verify ", filename(MATH, "sqrt.c")));
 	}
 
 	@AfterClass
