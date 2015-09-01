@@ -1,10 +1,6 @@
 #include<assert.h>
 #include<math.h>
 #include<stdio.h>
-#ifdef _CIVL
-#include<civlc.cvh>
-$assume(sqrt(1)==1);
-#endif
 
 int main(int argc, char** argv) {
   double a = 1.0/4.0;
