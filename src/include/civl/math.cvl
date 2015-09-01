@@ -911,12 +911,14 @@ double sqrt(double x) {
     return 0;
   else {
     $assume(result > 0);
+    $assume(x>0 => result*result==x);
     return result;
   }
 #elif defined(MATH_NO_ASSUMPTIONS)
   return result;
 #else
   $assume((x == 0 => result == 0) && (x > 0 => result > 0));
+  $assume(x>0 => result*result==x);
   return result;
 #endif
 }
