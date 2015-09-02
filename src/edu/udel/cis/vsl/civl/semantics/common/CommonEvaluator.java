@@ -2501,6 +2501,7 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		}
 		case BUNDLE:
+			eval = new Evaluation(state, universe.nullExpression());
 			break;
 		case DOMAIN: {
 			CIVLDomainType domainType = (CIVLDomainType) type;
