@@ -640,8 +640,7 @@ public interface StateFactory {
 	 * @return
 	 */
 	ImmutableState addToCollectiveSnapshotsEntry(ImmutableState state, int pid,
-			int place, int queueID, int entryPos, Expression assertion,
-			SymbolicExpression channels);
+			int place, int queueID, int entryPos, Expression assertion);
 
 	/**
 	 * The process with "pid" creates a fresh new
@@ -660,7 +659,7 @@ public interface StateFactory {
 	 */
 	ImmutableState createCollectiveSnapshotsEnrty(ImmutableState state,
 			int pid, int numProcesses, int place, int queueID,
-			Expression assertion, SymbolicExpression channels);
+			Expression assertion);
 
 	/**
 	 * Dequeues an {@link CollectiveSnapshotsEntry} from the specific snapshots

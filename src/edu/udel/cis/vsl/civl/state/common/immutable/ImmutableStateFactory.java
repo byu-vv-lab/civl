@@ -1902,8 +1902,7 @@ public class ImmutableStateFactory implements StateFactory {
 	// pre-condition: entry exists.
 	@Override
 	public ImmutableState addToCollectiveSnapshotsEntry(ImmutableState state,
-			int pid, int place, int queueID, int entryPos,
-			Expression assertion, SymbolicExpression channels) {
+			int pid, int place, int queueID, int entryPos, Expression assertion) {
 		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = state
 				.getSnapshots(queueID);
 		ImmutableCollectiveSnapshotsEntry entry;
@@ -1921,11 +1920,11 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public ImmutableState createCollectiveSnapshotsEnrty(ImmutableState state,
 			int pid, int numProcesses, int place, int queueID,
-			Expression assertion, SymbolicExpression channels) {
+			Expression assertion) {
 		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = state
 				.getSnapshots(queueID);
 		ImmutableCollectiveSnapshotsEntry entry = new ImmutableCollectiveSnapshotsEntry(
-				numProcesses, channels, universe);
+				numProcesses, universe);
 		ImmutableMonoState snapshot;
 
 		if (queue == null)

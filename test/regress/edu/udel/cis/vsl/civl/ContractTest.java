@@ -29,14 +29,19 @@ public class ContractTest {
 				.run("verify -enablePrintf=false -input_mpi_nprocs=4 -deadlock=potential -mpiContract",
 						filename("wildcard_coassert_barrier.c")));
 		assertTrue(ui
-				.run("verify -enablePrintf=false -input_mpi_nprocs=4 -deadlock=potential -mpiContract",
+				.run("verify -enablePrintf=false -input_mpi_nprocs=5 -deadlock=potential -mpiContract",
 						filename("reduce_coassert.c")));
-	}
-
-	@Test
-	public void highErrorBoundCollective_assert() {
 		assertFalse(ui
 				.run("verify -enablePrintf=false -input_mpi_nprocs=4 -deadlock=potential -errorBound=10 -mpiContract",
 						filename("wildcard_coassert_bad.c")));
+	}
+
+	@Test
+	// coverage test: only for covering parts of code, the example may not
+	// understandable for human beings.
+	public void collective_assert_coverage() {
+		assertFalse(ui
+				.run("verify -enablePrintf=false -errorBound=10 -input_mpi_nprocs=3 -mpiContract",
+						filename("coassert_cover.c")));
 	}
 }

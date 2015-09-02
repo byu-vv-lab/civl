@@ -78,7 +78,7 @@ public class ImmutableCollectiveSnapshotsEntry implements
 	 *            The messages channels in communicator
 	 */
 	ImmutableCollectiveSnapshotsEntry(int numProcesses,
-			SymbolicExpression channels, SymbolicUniverse universe) {
+			SymbolicUniverse universe) {
 		this.numProcesses = numProcesses;
 		this.isComplete = false;
 		this.numMonoStates = 0;
@@ -90,14 +90,13 @@ public class ImmutableCollectiveSnapshotsEntry implements
 			this.isSimplified[i] = false;
 			this.isRecorded[i] = false;
 		}
-		this.channels = channels;
 		this.universe = universe;
 		this.maxPid = 0;
 	}
 
 	public ImmutableCollectiveSnapshotsEntry copy() {
 		ImmutableCollectiveSnapshotsEntry clone = new ImmutableCollectiveSnapshotsEntry(
-				this.numProcesses, this.channels, universe);
+				this.numProcesses, universe);
 		clone.isComplete = isComplete;
 		clone.numMonoStates = numMonoStates;
 		clone.monoStates = monoStates.clone();

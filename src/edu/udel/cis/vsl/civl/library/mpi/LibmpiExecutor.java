@@ -449,14 +449,24 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	}
 
 	/**
-	 * Executing the $mpi_coassert() function.
+	 * Executing $mpi_coassert(MPI_Comm, _Bool) function with a regular snapshot
+	 * semantics. The first process will create a collective entry and takes a
+	 * snapshot on itself; others just save their snapshots; the last one who
+	 * completes the entry will dequeue the entry an evaluates the snapshots all
+	 * together.
 	 * 
 	 * @param call
+	 *            the function call statement
 	 * @param state
+	 *            the current state
 	 * @param pid
+	 *            the Process ID
 	 * @param process
+	 *            the String Identifier of the process
 	 * @param arguments
+	 *            The expression array of the arguments of the function
 	 * @param argumentValues
+	 *            The symbolic expression array of the argument of the function
 	 * @param source
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
@@ -465,16 +475,17 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			String process, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		ImmutableState immutableState = (ImmutableState) state;
-		Expression assertion = arguments[1];
+		ImmutableState tmpState = (ImmutableState) state;
 		Expression MPICommExpr = arguments[0];
+		Expression assertion = arguments[1];
+		// Symbolic Expressions
 		SymbolicExpression MPIComm = argumentValues[0];
 		SymbolicExpression commHandle = universe.tupleRead(MPIComm, oneObject);
 		NumericExpression symNprocs;
 		NumericExpression symPlace;
 		NumericExpression symQueueID = (NumericExpression) universe.tupleRead(
 				MPIComm, universe.intObject(4));
-		SymbolicExpression gcomm, gcommHandle, comm, channel;
+		SymbolicExpression gcomm, gcommHandle, comm;
 		ArrayList<ImmutableCollectiveSnapshotsEntry> queue;
 		boolean createNewEntry;
 		boolean entryComplete;
@@ -484,15 +495,18 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		int queueID;
 		Evaluation eval;
 
-		eval = evaluator.dereference(MPICommExpr.getSource(), immutableState,
+		eval = evaluator.dereference(MPICommExpr.getSource(), tmpState,
 				process, MPICommExpr, commHandle, false);
-		immutableState = (ImmutableState) eval.state;
+		tmpState = (ImmutableState) eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);
-		eval = evaluator.dereference(MPICommExpr.getSource(), immutableState,
+		eval = evaluator.dereference(MPICommExpr.getSource(), tmpState,
 				process, MPICommExpr, gcommHandle, false);
-		immutableState = (ImmutableState) eval.state;
+		tmpState = (ImmutableState) eval.state;
 		gcomm = eval.value;
+		// reads and makes following variables concrete:
+		// place: another name for ranks of process in MPI communicator
+		// nprocs: number of processes
 		symPlace = (NumericExpression) universe.tupleRead(comm, zeroObject);
 		symNprocs = (NumericExpression) universe.tupleRead(gcomm, zeroObject);
 		tmpNumber = (IntegerNumber) universe.extractNumber(symPlace);
@@ -504,13 +518,12 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		tmpNumber = (IntegerNumber) universe.extractNumber(symQueueID);
 		assert tmpNumber != null : "The index of CMPI_Gcomm should be concrete.";
 		queueID = tmpNumber.intValue();
-		// get channel from MPI_Comm
-		channel = universe.tupleRead(gcomm, threeObject);
-		// find out the entry this process should mark, if no such entry, create
-		// one.
-		createNewEntry = true;
-		entryComplete = false;
-		queue = immutableState.getSnapshots(queueID);
+		// CASE ONE: find out the entry this process should mark, if no such
+		// entry,
+		// create one.
+		createNewEntry = true; // if no corresponding entry there
+		entryComplete = false; // if the entry is completed
+		queue = tmpState.getSnapshots(queueID);
 		if (queue != null) {
 			queueLength = queue.size();
 			for (int entryPos = 0; entryPos < queueLength; entryPos++) {
@@ -518,42 +531,39 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 
 				if (!entry.isRecorded(place)) {
 					createNewEntry = false;
-					immutableState = stateFactory
-							.addToCollectiveSnapshotsEntry(immutableState, pid,
-									place, queueID, entryPos, assertion,
-									channel);
-					entryComplete = immutableState.getSnapshots(queueID).get(0)
+					tmpState = stateFactory.addToCollectiveSnapshotsEntry(
+							tmpState, pid, place, queueID, entryPos, assertion);
+					entryComplete = tmpState.getSnapshots(queueID).get(0)
 							.isComplete();
 					break;
 				}
 			}
 		}
-		// if it needs a new entry, then create it
+		// CASE TWO: if it needs a new entry, then create it
 		if (createNewEntry) {
 			// change the corresponding CollectiveSnapshotsEntry
-			immutableState = stateFactory.createCollectiveSnapshotsEnrty(
-					immutableState, pid, nprocs, place, queueID, assertion,
-					channel);
+			tmpState = stateFactory.createCollectiveSnapshotsEnrty(tmpState,
+					pid, nprocs, place, queueID, assertion);
 			entryComplete = (1 == nprocs);
 		}
-		// if the entry is completed ?
+		// CASE THREE: if the entry is completed ?
 		if (entryComplete) {
 			ImmutableCollectiveSnapshotsEntry entry;
 			Expression[] assertions;
 			State fakeState;
 			Pair<ImmutableState, ImmutableCollectiveSnapshotsEntry> pair;
 
-			pair = stateFactory.dequeueCollectiveSnapshotsEntry(immutableState,
+			pair = stateFactory.dequeueCollectiveSnapshotsEntry(tmpState,
 					queueID);
-			immutableState = pair.left;
+			tmpState = pair.left;
 			entry = pair.right;
 			assertions = entry.getAllAssertions();
-			fakeState = stateFactory.mergeMonostates(immutableState, entry);
+			fakeState = stateFactory.mergeMonostates(tmpState, entry);
 			// evaluate
 			fakeState = coassertsEvaluation(fakeState, assertions, place,
 					source, call);
 		}
-		return immutableState;
+		return tmpState;
 	}
 
 	private CIVLPrimitiveType mpiTypeToCIVLType(int MPI_TYPE, CIVLSource source) {
