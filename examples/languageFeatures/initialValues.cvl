@@ -2,14 +2,21 @@
 #include<civlc.cvh>
 #include<bundle.cvh>
 
+typedef enum INIT {zero, one} Init;
+
 $domain    dom0;
 $domain(2) dom2;
 $bundle    bun;
+Init       enumVar;
+int *      ptr;
 int main() {
   int a;
 
   $elaborate_rectangular_domain(dom0);
   $elaborate_rectangular_domain(dom2);
+  a = enumVar;
+  ptr = &a;
+  (&comm)++;
   $bundle_unpack(bun, &a);
   return 0;
 }
