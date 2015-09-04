@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -7,6 +8,7 @@ import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Test;
 
+import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 
 public class IOTransformerTest {
@@ -35,10 +37,23 @@ public class IOTransformerTest {
 	}
 
 	@Test
+	public void stringTestBad() {
+		try {
+			assertFalse(ui.run("verify -DNEGINDEX", filename("fileOpen.cvl")));
+		} catch (CIVLInternalException e) {
+			System.out.println(e.getMessage());
+		}
+		assertFalse(ui.run("verify", filename("fileOpen.cvl")));
+		assertFalse(ui.run("verify -DNCINDEX", filename("fileOpen.cvl")));
+		assertFalse(ui.run("verify -DNCARRAY", filename("fileOpen.cvl")));
+		assertFalse(ui.run("verify -DSCHAR", filename("fileOpen.cvl")));
+	}
+
+	@Test
 	public void defaultLength() {
 		assertTrue(ui.run("verify", filename("defaultLength.cvl")));
 	}
-	
+
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ui = null;
