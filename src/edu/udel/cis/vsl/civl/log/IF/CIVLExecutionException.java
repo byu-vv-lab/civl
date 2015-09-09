@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.log.IF;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
-import edu.udel.cis.vsl.civl.model.IF.Sourceable;
 
 /**
  * This represents an error during the execution of a program.
@@ -26,26 +25,6 @@ public class CIVLExecutionException extends CIVLException {
 	private String process;
 
 	private boolean reported = false;
-
-	/**
-	 * Constructs new CIVLException with given fields.
-	 * 
-	 * @param kind
-	 *            the kind of error
-	 * @param certainty
-	 *            the certainty with which this is known to be an error in the
-	 *            program being verified
-	 * @param process
-	 *            process name, i.e., "p"+process identifier
-	 * @param message
-	 *            a message explaining the error
-	 * @param source
-	 *            the source code element associated to the error; may be null
-	 */
-	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
-			String process, String message, CIVLSource source) {
-		this(kind, certainty, process, message, null, source);
-	}
 
 	/**
 	 * @param kind
@@ -73,24 +52,6 @@ public class CIVLExecutionException extends CIVLException {
 		this.stateString = stateString;
 		this.kind = kind;
 		this.certainty = certainty;
-	}
-
-	/**
-	 * @param kind
-	 *            the kind of error
-	 * @param certainty
-	 *            the certainty with which this is known to be an error in the
-	 *            program being verified
-	 * @param process
-	 *            process name, i.e., "p"+process identifier
-	 * @param message
-	 *            a message explaining the error
-	 * @param sourceable
-	 *            the source code element associated to the error; may be null
-	 */
-	public CIVLExecutionException(ErrorKind kind, Certainty certainty,
-			String process, String message, Sourceable sourceable) {
-		this(kind, certainty, process, message, sourceable.getSource());
 	}
 
 	/**

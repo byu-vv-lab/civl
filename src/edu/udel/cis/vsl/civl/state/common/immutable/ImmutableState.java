@@ -921,7 +921,7 @@ public class ImmutableState implements State {
 		for (int i = 0; i < numProcs; i++) {
 			ProcessState process = processStates[i];
 
-			result.append("\n");
+			// result.append("\n");
 			if (process != null)
 				result.append(process.toSBrieftringBuffer());
 		}

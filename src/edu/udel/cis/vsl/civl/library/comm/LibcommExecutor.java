@@ -330,7 +330,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		if (msgIdx == -1)
 			throw new CIVLExecutionException(ErrorKind.INTERNAL,
 					Certainty.CONCRETE, state.getProcessState(pid).name(),
-					"Message dequeue fails", civlsource);
+					"Message dequeue fails",
+					this.symbolicAnalyzer.stateInformation(state), civlsource);
 		message = universe.arrayRead(messages, universe.integer(msgIdx));
 		messages = universe.removeElementAt(messages, msgIdx);
 		queueLength = universe.subtract(queueLength, one);
@@ -914,7 +915,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		else {
 			throw new CIVLExecutionException(ErrorKind.INTERNAL,
 					Certainty.CONCRETE, state.getProcessState(pid).name(),
-					"Unexpected arguments", civlsource);
+					"Unexpected arguments",
+					this.symbolicAnalyzer.stateInformation(state), civlsource);
 		}
 		return msgIndex;
 	}

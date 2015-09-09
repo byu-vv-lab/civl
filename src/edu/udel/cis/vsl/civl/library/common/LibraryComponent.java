@@ -322,7 +322,7 @@ public abstract class LibraryComponent {
 			throw new CIVLExecutionException(ErrorKind.OTHER,
 					Certainty.PROVEABLE, process,
 					"Invalid operands type for CIVL Operation: " + op.name(),
-					civlsource);
+					this.symbolicAnalyzer.stateInformation(state), civlsource);
 		} catch (SARLException e) {
 			throw new CIVLInternalException("CIVL Operation " + op
 					+ " exception", civlsource);

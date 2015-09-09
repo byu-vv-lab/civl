@@ -132,10 +132,10 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 				message.append("\nInput variables:");
 				message.append(inputVariableMap);
 			}
-			message.append("\n\nContext: ");
-			message.append(this.symbolicAnalyzer.symbolicExpressionToString(
-					source, state, null, reasoner.getReducedContext()));
-			message.append("\n\nAssertion: ");
+			// message.append("\n\nContext: ");
+			// message.append(this.symbolicAnalyzer.symbolicExpressionToString(
+			// source, state, null, reasoner.getReducedContext()));
+			message.append("\nAssertion: ");
 			message.append(statement.toString());
 			message.append("\n-> ");
 			message.append(messageResult.right);
@@ -265,8 +265,6 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			CIVLSource source, Statement statement,
 			BooleanExpression assertValue, int msgOffset)
 			throws UnsatisfiablePathConditionException {
-		StringBuffer stateInfo;
-
 		assert resultType != ResultType.YES;
 		if (arguments.length > msgOffset) {
 			// if (civlConfig.enablePrintf()) {
@@ -280,13 +278,9 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			civlConfig.out().println();
 			// }
 		}
-		if (this.civlConfig.isReplay())
-			stateInfo = this.symbolicAnalyzer.stateInformation(state);
-		else
-			stateInfo = state.callStackToString();
-		state = errorLogger
-				.logError(source, state, process, stateInfo, assertValue,
-						resultType, ErrorKind.ASSERTION_VIOLATION, message);
+		state = errorLogger.logError(source, state, process,
+				this.symbolicAnalyzer.stateInformation(state), assertValue,
+				resultType, ErrorKind.ASSERTION_VIOLATION, message);
 		return state;
 	}
 

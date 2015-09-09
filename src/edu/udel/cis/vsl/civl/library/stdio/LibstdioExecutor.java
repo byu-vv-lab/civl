@@ -714,7 +714,8 @@ public class LibstdioExecutor extends BaseLibraryExecutor implements
 				throw new CIVLExecutionException(ErrorKind.OTHER,
 						Certainty.CONCRETE, process, "The file "
 								+ arguments[0].toString()
-								+ " is not a text file.", source);
+								+ " is not a text file.",
+						this.symbolicAnalyzer.stateInformation(state), source);
 			}
 			length = universe.tupleRead(theFile, universe.intObject(6));
 		}

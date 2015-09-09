@@ -2032,7 +2032,17 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	public StringBuffer stateInformation(State state) {
 		if (this.config.isReplay())
 			return this.stateToString(state);
-		return state.callStackToString();
+		else {
+			StringBuffer result = new StringBuffer();
+
+			result.append("\nContext:\n");
+			result.append(this.symbolicExpressionToString(null, state,
+					this.modelFactory.typeFactory().booleanType(),
+					state.getPathCondition()));
+			result.append("\n");
+			result.append(state.callStackToString());
+			return result;
+		}
 	}
 
 	@Override
