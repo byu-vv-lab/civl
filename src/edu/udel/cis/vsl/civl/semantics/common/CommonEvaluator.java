@@ -1754,23 +1754,17 @@ public class CommonEvaluator implements Evaluator {
 		if (reasoner.isValid(universe.not(p))) {
 			return evaluate(eval.state, pid, expression.right());
 		} else {
-			state = eval.state;
-			eval = this.evaluate(state, pid, expression.right());
-			eval.value = universe.or(p, (BooleanExpression) eval.value);
+			State s1 = eval.state.setPathCondition(universe.and(assumption,
+					universe.not(p)));
+			Evaluation eval1 = evaluate(s1, pid, expression.right());
+			BooleanExpression pc = universe.or(eval1.state.getPathCondition(),
+					universe.and(assumption, p));
+
+			eval.state = eval.state.setPathCondition(pc);
+			// TODO change to orTo
+			eval.value = universe.or(p, (BooleanExpression) eval1.value);
 			return eval;
 		}
-		// else {
-		// State s1 = eval.state.setPathCondition(universe.and(assumption,
-		// universe.not(p)));
-		// Evaluation eval1 = evaluate(s1, pid, expression.right());
-		// BooleanExpression pc = universe.or(eval1.state.getPathCondition(),
-		// universe.and(assumption, p));
-		//
-		// eval.state = eval.state.setPathCondition(pc);
-		// // TODO change to orTo
-		// eval.value = universe.or(p, (BooleanExpression) eval1.value);
-		// return eval;
-		// }
 	}
 
 	private Evaluation evaluateQuantifiedExpression(State state, int pid,

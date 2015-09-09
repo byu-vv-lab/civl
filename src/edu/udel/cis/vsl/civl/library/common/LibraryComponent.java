@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.library.common;
 
+import java.util.List;
+
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
@@ -12,9 +14,13 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -350,6 +356,24 @@ public abstract class LibraryComponent {
 		default:
 			return CIVLOperator.CIVL_REPLACE;
 		}
+	}
+
+	protected Pair<State, SymbolicExpression[]> evaluateArguments(State state,
+			int pid, List<Expression> arguments)
+			throws UnsatisfiablePathConditionException {
+		int numArgs = arguments.size();
+		SymbolicExpression[] argumentValues = new SymbolicExpression[numArgs];
+
+		for (int i = 0; i < numArgs; i++) {
+			Evaluation eval = null;
+
+			eval = symbolicAnalyzer.evaluator().evaluate(state, pid,
+					arguments.get(i));
+			argumentValues[i] = eval.value;
+			state = eval.state;
+		}
+		return new Pair<>(state, argumentValues);
+
 	}
 
 }

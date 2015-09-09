@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
@@ -41,31 +42,17 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
 			String function, List<Expression> arguments)
 			throws UnsatisfiablePathConditionException {
-		SymbolicExpression[] argumentValues;
-		int numArgs;
+		Pair<State, SymbolicExpression[]> argumentsEval;
 		BooleanExpression guard;
 
-		numArgs = arguments.size();
-		argumentValues = new SymbolicExpression[numArgs];
-		for (int i = 0; i < numArgs; i++) {
-			Evaluation eval = null;
-
-			try {
-				eval = evaluator.evaluate(state, pid, arguments.get(i));
-			} catch (UnsatisfiablePathConditionException e) {
-				// the error that caused the unsatifiable path condition should
-				// already have been reported.
-				return new Evaluation(state, universe.falseExpression());
-			}
-			argumentValues[i] = eval.value;
-			state = eval.state;
-		}
 		switch (function) {
 		case "$wait":
-			guard = guardOfWait(state, pid, arguments, argumentValues);
+			argumentsEval = this.evaluateArguments(state, pid, arguments);
+			guard = guardOfWait(state, pid, arguments, argumentsEval.right);
 			break;
 		case "$waitall":
-			guard = guardOfWaitall(state, pid, arguments, argumentValues);
+			argumentsEval = this.evaluateArguments(state, pid, arguments);
+			guard = guardOfWaitall(state, pid, arguments, argumentsEval.right);
 			break;
 		default:
 			guard = universe.trueExpression();

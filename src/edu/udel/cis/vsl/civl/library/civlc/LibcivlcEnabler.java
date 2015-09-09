@@ -103,30 +103,27 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 		AssignStatement assignmentCall;
 		List<Expression> arguments = call.arguments();
 		List<Transition> localTransitions = new LinkedList<>();
-		Evaluation eval;
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
-		SymbolicExpression[] argumentValues = new SymbolicExpression[arguments
-				.size()];
+		Pair<State, SymbolicExpression[]> argumentsEval;
 
-		for (int i = 0; i < arguments.size(); i++) {
-			eval = evaluator.evaluate(state.setPathCondition(pathCondition),
-					pid, arguments.get(i));
-			state = eval.state;
-			argumentValues[i] = eval.value;
-		}
 		switch (functionName) {
 		case "$choose_int":
+			argumentsEval = this.evaluateArguments(state, pid, arguments);
+			state = argumentsEval.left;
+
 			IntegerNumber upperNumber = (IntegerNumber) universe.reasoner(
 					state.getPathCondition()).extractNumber(
-					(NumericExpression) argumentValues[0]);
+					(NumericExpression) argumentsEval.right[0]);
 			int upper;
 
 			// TODO: can it be solved by symbolic execution?
 			if (upperNumber == null) {
-				this.errorLogger.logSimpleError(arguments
-								.get(0).getSource(), state, process, 
-								symbolicAnalyzer.stateInformation(state), ErrorKind.INTERNAL, "argument to $choose_int not concrete: "
-										+ argumentValues[0]);				
+				this.errorLogger.logSimpleError(arguments.get(0).getSource(),
+						state, process,
+						symbolicAnalyzer.stateInformation(state),
+						ErrorKind.INTERNAL,
+						"argument to $choose_int not concrete: "
+								+ argumentsEval.right[0]);
 				throw new UnsatisfiablePathConditionException();
 			}
 			upper = upperNumber.intValue();
@@ -146,9 +143,10 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			}
 			break;
 		case "$elaborate":
-			return this.elaborateIntWorker(state, pid, processIdentifier, call,
-					call.getSource(), arguments, argumentValues,
-					atomicLockAction);
+			argumentsEval = this.evaluateArguments(state, pid, arguments);
+			return this.elaborateIntWorker(argumentsEval.left, pid,
+					processIdentifier, call, call.getSource(), arguments,
+					argumentsEval.right, atomicLockAction);
 		default:
 			return super.enabledTransitions(state, call, pathCondition, pid,
 					processIdentifier, atomicLockAction);

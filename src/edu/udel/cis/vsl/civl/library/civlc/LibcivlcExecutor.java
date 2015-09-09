@@ -180,6 +180,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = executeSetDefault(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$variable_reference":
+			state=executeVariableReference(state, pid, process, lhs,
+					arguments, argumentValues);
+			break;
 		case "$apply":
 			state = executeApply(state, pid, process, arguments,
 					argumentValues, call.getSource());
@@ -198,6 +202,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/* ************************** Private Methods ************************** */
+
+	private State executeVariableReference(State state, int pid,
+			String process, LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues) {
+		// TODO Auto-generated method stub
+		//dd
+		return null;
+	}
 
 	private State executeIsConcreteInt(State state, int pid, String process,
 			LHSExpression lhs, Expression[] arguments,
@@ -253,7 +265,8 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		BooleanExpression oldPathCondition, newPathCondition;
 
 		oldPathCondition = state.getPathCondition();
-		newPathCondition = universe.and(oldPathCondition, assumeValue);
+		newPathCondition = (BooleanExpression) universe.canonic(universe.and(
+				oldPathCondition, assumeValue));
 		state = state.setPathCondition(newPathCondition);
 		return state;
 	}
@@ -730,5 +743,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		}
 		return state;
 	}
+	
+	
 
 }

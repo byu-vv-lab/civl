@@ -353,7 +353,7 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			else
 				buffer.append(opString);
 			buffer.append(symbolicExpressionToString(source, state, null, arg,
-					first, "", "", false));
+					true, "", "", false));
 		}
 	}
 
@@ -2051,5 +2051,10 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 					.getValue(), "", ""));
 		}
 		return result;
+	}
+
+	@Override
+	public Evaluator evaluator() {
+		return this.evaluator;
 	}
 }
