@@ -5,6 +5,9 @@
 #include<stdlib.h>
 $scope scope;
 double * ptr;
+
+int dummy(int x);
+
 void getInvalidScope() {
   scope = $here;
   ptr = (double*)malloc(sizeof(double));
@@ -21,10 +24,12 @@ int main() {
   proc1 = proc0;
   //so far, scope, proc0 and proc1 are all undefined; ptr is to a
   //memory space which belongs to an undefined scope.
+  //And, the function dummy() is "undefined" too: it only has a declaration.
   $choose{
     $when($true) {a = scope == root;}
     $when($true) {a = proc0 == proc1;}
     $when($true) {a = ptr == (void*)0;}
+    $when($true) {a = dummy(a);};
   }
   return 0;
 }
