@@ -100,8 +100,7 @@ hypre_ParCSRMatrixMatvec( double           alpha,
    num_sends = hypre_ParCSRCommPkgNumSends(comm_pkg);
    x_buf_data = hypre_CTAlloc( double*, num_vectors );
    for ( jv=0; jv<num_vectors; ++jv )
-      x_buf_data[jv] = hypre_CTAlloc(double, hypre_ParCSRCommPkgSendMapStart
-                                    (comm_pkg, num_sends));
+      x_buf_data[jv] = hypre_CTAlloc(double, hypre_ParCSRCommPkgSendMapStart(comm_pkg, num_sends));
 
    /*if ( num_vectors==1 )*/
    {
@@ -250,8 +249,7 @@ hypre_ParCSRMatrixMatvecT( double           alpha,
    num_sends = hypre_ParCSRCommPkgNumSends(comm_pkg);
    y_buf_data = hypre_CTAlloc( double*, num_vectors );
    for ( jv=0; jv<num_vectors; ++jv )
-      y_buf_data[jv] = hypre_CTAlloc(double, hypre_ParCSRCommPkgSendMapStart
-                                     (comm_pkg, num_sends));
+      y_buf_data[jv] = hypre_CTAlloc(double, hypre_ParCSRCommPkgSendMapStart(comm_pkg, num_sends));
    y_tmp_data = hypre_VectorData(y_tmp);
    y_local_data = hypre_VectorData(y_local);
 
@@ -390,8 +388,7 @@ hypre_ParCSRMatrixMatvec_FF( double           alpha,
                                                                                                               
       num_sends = hypre_ParCSRCommPkgNumSends(comm_pkg);
       if (num_sends)
-         x_buf_data = hypre_CTAlloc(double, hypre_ParCSRCommPkgSendMapStart
-                                    (comm_pkg, num_sends));
+         x_buf_data = hypre_CTAlloc(double, hypre_ParCSRCommPkgSendMapStart(comm_pkg, num_sends));
                                                                                                               
       index = 0;
       for (i = 0; i < num_sends; i++)
@@ -411,8 +408,7 @@ hypre_ParCSRMatrixMatvec_FF( double           alpha,
       comm_handle = NULL;
                                                                                                               
       if (num_sends)
-         int_buf_data = hypre_CTAlloc(int, hypre_ParCSRCommPkgSendMapStart
-                                    (comm_pkg, num_sends));
+         int_buf_data = hypre_CTAlloc(int, hypre_ParCSRCommPkgSendMapStart(comm_pkg, num_sends));
       if (num_cols_offd) CF_marker_offd = hypre_CTAlloc(int, num_cols_offd);
       index = 0;
       for (i = 0; i < num_sends; i++)

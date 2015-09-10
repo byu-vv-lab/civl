@@ -176,7 +176,7 @@ hypre_GMRESSetup( void *gmres_vdata,
 
    int            k_dim            = (gmres_data -> k_dim);
    int            max_iter         = (gmres_data -> max_iter);
-   int          (*precond_setup)(void*, void*, void*, void*) = (gmres_functions->precond_setup);
+   int          (*precond_setup)(void *vdata, void *A, void *b, void *x) = (gmres_functions->precond_setup);
    void          *precond_data     = (gmres_data -> precond_data);
    int            ierr = 0;
  
@@ -852,8 +852,8 @@ hypre_GMRESGetStopCrit( void   *gmres_vdata,
  
 int
 hypre_GMRESSetPrecond( void  *gmres_vdata,
-                       int  (*precond)(void*, void*, void*, void*),
-                       int  (*precond_setup)(void*, void*, void*, void*),
+                       int  (*precond)(void *vdata, void *A, void *b, void *x ),
+                       int  (*precond_setup)(void *vdata, void *A, void *b, void *x ),
                        void  *precond_data )
 {
    hypre_GMRESData *gmres_data = gmres_vdata;

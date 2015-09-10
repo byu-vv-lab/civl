@@ -201,7 +201,7 @@ HYPRE_GMRESSetPrecond( HYPRE_Solver          solver,
                              HYPRE_Solver          precond_solver )
 {
    return( hypre_GMRESSetPrecond( (void *) solver,
-                                  precond, precond_setup,
+                                  (int  (*)(void *, void *, void *, void *))precond, (int  (*)(void *, void *, void *, void *))precond_setup,
                                   (void *) precond_solver ) );
 }
 

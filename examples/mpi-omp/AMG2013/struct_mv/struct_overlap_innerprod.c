@@ -29,7 +29,7 @@
 double          *local_result_ref[hypre_MAX_THREADS];
 #endif
 
-double           final_innerprod_result;
+double           final_innerprod_result_overlap;
 
 
 double
@@ -275,7 +275,7 @@ hypre_StructOverlapInnerProd( hypre_StructVector *x,
 #endif
 
 
-   MPI_Allreduce(&process_result, &final_innerprod_result, 1,
+   MPI_Allreduce(&process_result, &final_innerprod_result_overlap, 1,
                  MPI_DOUBLE, MPI_SUM, hypre_StructVectorComm(x));
 
 
@@ -284,5 +284,5 @@ hypre_StructOverlapInnerProd( hypre_StructVector *x,
 #endif
    hypre_IncFLOPCount(2*hypre_StructVectorGlobalSize(x));
 
-   return final_innerprod_result;
+   return final_innerprod_result_overlap;
 }

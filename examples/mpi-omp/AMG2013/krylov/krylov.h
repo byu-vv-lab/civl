@@ -131,8 +131,8 @@ typedef struct
    int    (*ScaleVector)   ( double alpha, void *x );
    int    (*Axpy)          ( double alpha, void *x, void *y );
 
-   int    (*precond)();
-   int    (*precond_setup)();
+   int    (*precond)(void *vdata, void *A, void *b, void *x );
+   int    (*precond_setup)(void *vdata, void *A, void *b, void *x );
 
 } hypre_GMRESFunctions;
 
@@ -290,8 +290,9 @@ typedef struct
    int    (*ScaleVector)   ( double alpha, void *x );
    int    (*Axpy)          ( double alpha, void *x, void *y );
 
-   int    (*precond)();
-   int    (*precond_setup)();
+   int    (*precond)(void *vdata, void *A, void *b, void *x );
+   int    (*precond_setup)(void *vdata, void *A, void *b, void *x );
+   
 } hypre_PCGFunctions;
 
 /**
@@ -431,7 +432,7 @@ int hypre_GMRESSetRelChange ( void *gmres_vdata , int rel_change );
 int hypre_GMRESGetRelChange ( void *gmres_vdata , int *rel_change );
 int hypre_GMRESSetStopCrit ( void *gmres_vdata , int stop_crit );
 int hypre_GMRESGetStopCrit ( void *gmres_vdata , int *stop_crit );
-int hypre_GMRESSetPrecond ( void *gmres_vdata , int (*precond )(), int (*precond_setup )(), void *precond_data );
+int hypre_GMRESSetPrecond ( void *gmres_vdata , int (*precond )(void *vdata, void *A, void *b, void *x), int (*precond_setup )(void *vdata, void *A, void *b, void *x), void *precond_data );
 int hypre_GMRESGetPrecond ( void *gmres_vdata , HYPRE_Solver *precond_data_ptr );
 int hypre_GMRESSetPrintLevel ( void *gmres_vdata , int level );
 int hypre_GMRESGetPrintLevel ( void *gmres_vdata , int *level );
@@ -519,7 +520,7 @@ int hypre_PCGGetRelChange ( void *pcg_vdata , int *rel_change );
 int hypre_PCGSetStopCrit ( void *pcg_vdata , int stop_crit );
 int hypre_PCGGetStopCrit ( void *pcg_vdata , int *stop_crit );
 int hypre_PCGGetPrecond ( void *pcg_vdata , HYPRE_Solver *precond_data_ptr );
-int hypre_PCGSetPrecond ( void *pcg_vdata , int (*precond )(), int (*precond_setup )(), void *precond_data );
+int hypre_PCGSetPrecond ( void *pcg_vdata , int (*precond )(void *vdata, void *A, void *b, void *x), int (*precond_setup )(void *vdata, void *A, void *b, void *x), void *precond_data );
 int hypre_PCGSetPrintLevel ( void *pcg_vdata , int level );
 int hypre_PCGGetPrintLevel ( void *pcg_vdata , int *level );
 int hypre_PCGSetLogging ( void *pcg_vdata , int level );
