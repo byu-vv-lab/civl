@@ -534,7 +534,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void valueUndefinedTest() {
-		assertFalse(ui.run("verify -errorBound=5", filename("civlValueUndefined.cvl")));
+		assertFalse(ui.run("verify -errorBound=10", filename("civlValueUndefined.cvl")));
 	}
 
 	@Test
