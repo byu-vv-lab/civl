@@ -1766,7 +1766,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 			break;
 		}
 		case NOOP: {
+			Expression guard = statement.guard();
+
 			result.append(statement.toString());
+			result.append("(");
+			result.append(this.expressionEvaluation(state, pid, guard, false).right);
+			result.append(")");
 			break;
 		}
 		case RETURN: {
