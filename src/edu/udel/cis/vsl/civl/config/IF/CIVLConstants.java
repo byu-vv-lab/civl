@@ -88,6 +88,12 @@ public class CIVLConstants {
 			BOOLEAN, "debug mode: print very detailed information", false);
 
 	/**
+	 * Debug option, false by default.
+	 */
+	public final static Option checkDivisionByZeroO = Option.newScalarOption(
+			"checkDivisionByZero", BOOLEAN, "check division-by-zero?", true);
+
+	/**
 	 * Prints the command line? false by default.
 	 */
 	public final static Option echoO = Option.newScalarOption("echo", BOOLEAN,
@@ -448,7 +454,8 @@ public class CIVLConstants {
 				showStatesO, showTimeO, showTransitionsO, showUnreachedCodeO,
 				simplifyO, solveO, statelessPrintfO, svcompO, sysIncludePathO,
 				traceO, userIncludePathO, verboseO, webO, CIVLMacroO,
-				analyzeAbsO, strictCompareO, collectOutputO };
+				analyzeAbsO, strictCompareO, collectOutputO,
+				checkDivisionByZeroO };
 	}
 
 	// headers...

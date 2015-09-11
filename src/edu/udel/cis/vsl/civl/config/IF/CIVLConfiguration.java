@@ -25,6 +25,8 @@ public class CIVLConfiguration {
 	 */
 	private DeadlockKind deadlock = DeadlockKind.ABSOLUTE;
 
+	private boolean checkDivisionByZero = true;
+
 	/**
 	 * Should CIVL run in "debug" mode, printing lots and lots of output?
 	 */
@@ -282,6 +284,8 @@ public class CIVLConfiguration {
 		this.setInputVariables(config.getMapValue(CIVLConstants.inputO));
 		this.collectOutputs = config.isTrue(CIVLConstants.collectOutputO);
 		this.setEnableMpiContract(config.isTrue(CIVLConstants.mpiContractO));
+		this.setCheckDivisionByZero(config
+				.isTrue(CIVLConstants.checkDivisionByZeroO));
 	}
 
 	public void setOut(PrintStream out) {
@@ -606,5 +610,13 @@ public class CIVLConfiguration {
 
 	public void setEnableMpiContract(boolean enableMpiContract) {
 		mpiContract = enableMpiContract;
+	}
+
+	public boolean checkDivisionByZero() {
+		return checkDivisionByZero;
+	}
+
+	public void setCheckDivisionByZero(boolean checkDivisionByZero) {
+		this.checkDivisionByZero = checkDivisionByZero;
 	}
 }

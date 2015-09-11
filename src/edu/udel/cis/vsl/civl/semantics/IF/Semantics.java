@@ -103,9 +103,11 @@ public class Semantics {
 	public static Evaluator newEvaluator(ModelFactory modelFactory,
 			StateFactory stateFactory, LibraryEvaluatorLoader loader,
 			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
-			MemoryUnitFactory memUnitFactory, CIVLErrorLogger errLogger) {
+			MemoryUnitFactory memUnitFactory, CIVLErrorLogger errLogger,
+			CIVLConfiguration config) {
 		return new CommonEvaluator(modelFactory, stateFactory, loader,
-				symbolicUtil, symbolicAnalyzer, memUnitFactory, errLogger);
+				symbolicUtil, symbolicAnalyzer, memUnitFactory, errLogger,
+				config);
 	}
 
 	/**

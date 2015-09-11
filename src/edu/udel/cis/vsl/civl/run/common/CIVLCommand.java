@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.run.common;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.CIVLMacroO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.analyzeAbsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.astO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.checkDivisionByZeroO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectHeapsO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectOutputO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectProcessesO;
@@ -86,7 +87,7 @@ public class CIVLCommand {
 				ompNoSimplifyO, ompLoopDecompO, collectProcessesO,
 				collectScopesO, collectHeapsO, macroO, preprocO, astO,
 				showTimeO, showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO,
-				analyzeAbsO, collectOutputO);
+				analyzeAbsO, collectOutputO, checkDivisionByZeroO);
 		CIVLCommand.addCompareOption(errorBoundO, verboseO, debugO, echoO,
 				userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
@@ -97,13 +98,13 @@ public class CIVLCommand {
 				ompLoopDecompO, collectProcessesO, collectScopesO,
 				collectHeapsO, macroO, preprocO, astO, showTimeO,
 				showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO, analyzeAbsO,
-				strictCompareO);
+				strictCompareO, checkDivisionByZeroO);
 		CIVLCommand.addReplayOption(showModelO, verboseO, debugO, echoO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,
 				showAmpleSetWtStatesO, statelessPrintfO, guiO, showProgramO,
 				showPathConditionO, preprocO, astO, showMemoryUnitsO,
-				collectOutputO);
+				collectOutputO, checkDivisionByZeroO);
 		CIVLCommand.addRunOption(errorBoundO, verboseO, randomO, guidedO,
 				seedO, debugO, echoO, userIncludePathO, sysIncludePathO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
@@ -112,7 +113,8 @@ public class CIVLCommand {
 				statelessPrintfO, deadlockO, svcompO, showProgramO,
 				showPathConditionO, ompNoSimplifyO, ompLoopDecompO,
 				collectProcessesO, collectScopesO, collectHeapsO, macroO,
-				preprocO, astO, showMemoryUnitsO, CIVLMacroO, collectOutputO);
+				preprocO, astO, showMemoryUnitsO, CIVLMacroO, collectOutputO,
+				checkDivisionByZeroO);
 	}
 
 	private static void addShowOption(Option... options) {

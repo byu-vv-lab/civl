@@ -215,6 +215,12 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
+	public void divisionByZero_Ignore() throws ABCException {
+		assertTrue(ui.run("verify -checkDivisionByZero=false",
+				filename("divisionByZero.cvl")));
+	}
+
+	@Test
 	public void emptyWhen() throws ABCException {
 		assertTrue(ui.run("verify", filename("emptyWhen.cvl")));
 	}
@@ -534,7 +540,8 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void valueUndefinedTest() {
-		assertFalse(ui.run("verify -errorBound=10", filename("civlValueUndefined.cvl")));
+		assertFalse(ui.run("verify -errorBound=10",
+				filename("civlValueUndefined.cvl")));
 	}
 
 	@Test

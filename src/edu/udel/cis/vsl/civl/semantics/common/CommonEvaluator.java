@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.model.IF.AbstractFunction;
@@ -126,6 +127,8 @@ public class CommonEvaluator implements Evaluator {
 	private static String ABSTRACT_FUNCTION_PREFIX = "_uf_";
 
 	/* *************************** Instance Fields ************************* */
+
+	private CIVLConfiguration civlConfig;
 
 	/**
 	 * The library evaluator loader. This is used to location and obtain the
@@ -338,7 +341,8 @@ public class CommonEvaluator implements Evaluator {
 	public CommonEvaluator(ModelFactory modelFactory,
 			StateFactory stateFactory, LibraryEvaluatorLoader loader,
 			SymbolicUtility symbolicUtil, SymbolicAnalyzer symbolicAnalyzer,
-			MemoryUnitFactory memUnitFactory, CIVLErrorLogger errorLogger) {
+			MemoryUnitFactory memUnitFactory, CIVLErrorLogger errorLogger,
+			CIVLConfiguration config) {
 		this.libLoader = loader;
 		this.errorLogger = errorLogger;
 		this.symbolicUtil = symbolicUtil;
@@ -394,6 +398,7 @@ public class CommonEvaluator implements Evaluator {
 				.stringObject("shiftright"), universe.functionType(
 				Arrays.asList(universe.integerType(), universe.integerType()),
 				universe.integerType()));
+		this.civlConfig = config;
 		// this.zeroOrOne = (NumericExpression) universe.symbolicConstant(
 		// universe.stringObject("ZeroOrOne"), universe.integerType());
 	}
@@ -1632,31 +1637,37 @@ public class CommonEvaluator implements Evaluator {
 		case DIVIDE: {
 			BooleanExpression assumption = eval.state.getPathCondition();
 			NumericExpression denominator = (NumericExpression) right;
-			BooleanExpression claim = universe.neq(
-					zeroOf(expression.getSource(),
-							expression.getExpressionType()), denominator);
-			ResultType resultType = universe.reasoner(assumption).valid(claim)
-					.getResultType();
 
-			if (resultType != ResultType.YES) {
-				Expression divisor = expression.right();
+			if (this.civlConfig.checkDivisionByZero()) {
+				BooleanExpression claim = universe.neq(
+						zeroOf(expression.getSource(),
+								expression.getExpressionType()), denominator);
+				ResultType resultType = universe.reasoner(assumption)
+						.valid(claim).getResultType();
 
-				eval.state = errorLogger.logError(
-						expression.getSource(),
-						eval.state,
-						process,
-						this.symbolicAnalyzer.stateInformation(eval.state),
-						claim,
-						resultType,
-						ErrorKind.DIVISION_BY_ZERO,
-						"division by zero where divisor: "
-								+ expression.right()
-								+ "="
-								+ this.symbolicAnalyzer
-										.symbolicExpressionToString(
-												divisor.getSource(), state,
-												divisor.getExpressionType(),
-												right));
+				if (resultType != ResultType.YES) {
+					Expression divisor = expression.right();
+
+					eval.state = errorLogger
+							.logError(
+									expression.getSource(),
+									eval.state,
+									process,
+									this.symbolicAnalyzer
+											.stateInformation(eval.state),
+									claim,
+									resultType,
+									ErrorKind.DIVISION_BY_ZERO,
+									"division by zero where divisor: "
+											+ expression.right()
+											+ "="
+											+ this.symbolicAnalyzer
+													.symbolicExpressionToString(
+															divisor.getSource(),
+															state,
+															divisor.getExpressionType(),
+															right));
+				}
 			}
 			eval.value = universe.divide((NumericExpression) left, denominator);
 		}

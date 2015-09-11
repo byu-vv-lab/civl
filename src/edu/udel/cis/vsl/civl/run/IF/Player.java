@@ -131,7 +131,7 @@ public abstract class Player {
 				universe, modelFactory, symbolicUtil);
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
 				libraryEvaluatorLoader, symbolicUtil, symbolicAnalyzer,
-				memUnitFactory, log);
+				memUnitFactory, log, this.civlConfig);
 		this.gui = (Boolean) config.getAnonymousSection().getValueOrDefault(
 				guiO);
 		this.libraryExecutorLoader = Semantics.newLibraryExecutorLoader(
