@@ -196,7 +196,7 @@ public class GUI_revamp extends JFrame {
 		for (final File fileEntry : folder.listFiles()) {
 			if (fileEntry.isDirectory()) {
 				listFilesForFolder(fileEntry);
-			} else {
+			} else if (!fileEntry.getName().startsWith(".")) {
 				RunConfigDataNode temp = new RunConfigDataNode(null);
 				temp.setName(fileEntry.getName());
 				temp.setSerializeDestination(serializePath);
@@ -207,7 +207,6 @@ public class GUI_revamp extends JFrame {
 						savedConfigs.put(name, config);
 						newConfigsNum++;
 					}
-
 					// if the config is marked for delete, delete it.
 					else {
 						fileEntry.delete();
@@ -378,7 +377,7 @@ public class GUI_revamp extends JFrame {
 	 */
 	public NormalCommandLine createNormalCommandLine() {
 		Collection<String> files = new ArrayList<String>();
-		
+
 		NormalCommandLine line = new NormalCommandLine();
 		if (currConfig != null) {
 			if (!currConfig.getSelectedFiles().isEmpty()) {
@@ -447,20 +446,18 @@ public class GUI_revamp extends JFrame {
 		for (int i = 0; i < vals.size(); i++) {
 			Option currOpt = (Option) opts[i];
 			/*
-			if (currOpt.name().equals("sysIncludePath")) {
-				optionModel.addRow(new Object[] { currOpt, "sysIncludePath",
-						"Default" });
-			}
-
-			else if (currOpt.name().equals("userIncludePath")) {
-				optionModel.addRow(new Object[] { currOpt, "userIncludePath",
-						"Default" });
-			}
-			*/
-			//else {
-				optionModel.addRow(new Object[] { currOpt, vals.get(i),
-						"Default" });
-			//}
+			 * if (currOpt.name().equals("sysIncludePath")) {
+			 * optionModel.addRow(new Object[] { currOpt, "sysIncludePath",
+			 * "Default" }); }
+			 * 
+			 * else if (currOpt.name().equals("userIncludePath")) {
+			 * optionModel.addRow(new Object[] { currOpt, "userIncludePath",
+			 * "Default" }); }
+			 */
+			// else {
+			optionModel
+					.addRow(new Object[] { currOpt, vals.get(i), "Default" });
+			// }
 		}
 	}
 
@@ -519,7 +516,7 @@ public class GUI_revamp extends JFrame {
 
 		Object[] opts = currConfig.getGmcConfig().getOptions().toArray();
 		GMCSection section = currConfig.getGmcConfig().getAnonymousSection();
-				
+
 		Collection<Option> options = currConfig.getGmcConfig().getOptions();
 		Iterator<Option> iter_opt = options.iterator();
 		List<Object> vals = new ArrayList<Object>();
@@ -539,15 +536,12 @@ public class GUI_revamp extends JFrame {
 					section.setScalarValue(currOpt, value);
 				}
 				/*
-				else if(val == null) {
-					section.setScalarValue(currOpt, "");
+				 * else if(val == null) { section.setScalarValue(currOpt, ""); }
+				 */
+				else if (true) {
+					System.out.println("val: " + val);
 				}
-				*/
-				else
-					if(true) {
-						System.out.println("val: " + val);
-					}
-					section.setScalarValue(currOpt, val);
+				section.setScalarValue(currOpt, val);
 			}
 		}
 	}
@@ -778,7 +772,7 @@ public class GUI_revamp extends JFrame {
 		JButton bt_revert = new JButton("Revert");
 		JButton bt_apply = new JButton("Apply");
 		JButton bt_browseFile = new JButton("Browse...");
-		
+
 		bt_revert.hide();
 
 		JLabel lb_name = new JLabel("Name: ");
@@ -849,7 +843,7 @@ public class GUI_revamp extends JFrame {
 		tbl_optionTable.setCellSelectionEnabled(true);
 		tbl_inputTable.setCellSelectionEnabled(true);
 		tbl_fileTable.setCellSelectionEnabled(true);
-		
+
 		tbl_optionTable.setShowGrid(true);
 		tbl_optionTable.setGridColor(Color.BLUE);
 
@@ -1002,8 +996,7 @@ public class GUI_revamp extends JFrame {
 			if (!nodeName.equals("HELP") && !nodeName.equals("CONFIG")
 					&& !nodeName.equals("GUI") && !nodeName.equals("COMPARE")
 					&& !nodeName.equals("COMPARE_REPLAY")
-					&& !nodeName.equals("REPLAY")
-					&& !nodeName.equals("SHOW")) {
+					&& !nodeName.equals("REPLAY") && !nodeName.equals("SHOW")) {
 				CommandNode node = new CommandNode(nodeName,
 						(CommandName) vals[i]);
 				top.add(node);
@@ -1074,38 +1067,29 @@ public class GUI_revamp extends JFrame {
 				TreePath selected = jt_commands.getSelectionPath();
 				DefaultMutableTreeNode node = (DefaultMutableTreeNode) jt_commands
 						.getLastSelectedPathComponent();
-				
-				//To be implemented when we want a dialogue box that asks if you want to
-				//Save a run Configuration
+
+				// To be implemented when we want a dialogue box that asks if
+				// you want to
+				// Save a run Configuration
 				/*
-				if (currConfig != null) {
-					if (!currConfig.applyClicked && !currConfig.isBrandNew()) {
-						String message = "Do you want to save your run Configuration?";
-						int answer = JOptionPane
-								.showConfirmDialog(gui, message);
-
-						if (answer == JOptionPane.CANCEL_OPTION) {
-
-						}
-
-						else if (answer == JOptionPane.NO_OPTION) {
-
-						}
-
-						else if (answer == JOptionPane.YES_OPTION) {
-							if (currConfig != null) {
-								currConfig.applyClicked = true;
-								setOptions();
-								setInputs();
-								currConfig.setUserObject(currConfig.getName());
-								revalidate();
-								repaint();
-								currConfig.serialize();
-							}
-						}
-					}
-				}
-				*/
+				 * if (currConfig != null) { if (!currConfig.applyClicked &&
+				 * !currConfig.isBrandNew()) { String message =
+				 * "Do you want to save your run Configuration?"; int answer =
+				 * JOptionPane .showConfirmDialog(gui, message);
+				 * 
+				 * if (answer == JOptionPane.CANCEL_OPTION) {
+				 * 
+				 * }
+				 * 
+				 * else if (answer == JOptionPane.NO_OPTION) {
+				 * 
+				 * }
+				 * 
+				 * else if (answer == JOptionPane.YES_OPTION) { if (currConfig
+				 * != null) { currConfig.applyClicked = true; setOptions();
+				 * setInputs(); currConfig.setUserObject(currConfig.getName());
+				 * revalidate(); repaint(); currConfig.serialize(); } } } }
+				 */
 
 				if (selected == null) {
 					System.out.println("Node no longer exists");
@@ -1261,7 +1245,7 @@ public class GUI_revamp extends JFrame {
 					// MAIN DEFAULT ACTION:
 					tbl_optionTable.setValueAt(defValue, modelRow, 1);
 				}
- 
+
 				else
 					currOptModel.setValueAt(optToDefault.defaultValue(),
 							modelRow, 1);
@@ -1302,7 +1286,7 @@ public class GUI_revamp extends JFrame {
 
 				else {
 					UserInterface ui = new UserInterface();
-					
+
 					setOptions();
 					if (currCommand.equals(CommandName.COMPARE)
 							|| currCommand.equals(CommandName.COMPARE_REPLAY)) {
@@ -1310,24 +1294,25 @@ public class GUI_revamp extends JFrame {
 					} else {
 						currConfig.comLine = createNormalCommandLine();
 					}
-					
+
 					Collection<String> files = new ArrayList<String>();
 					files.add(currConfig.getSelectedFiles().get(0).getName());
 
 					currConfig.comLine.setGMCConfig(currConfig.getGmcConfig());
-					
+
 					GMCSection section = currConfig.getGmcConfig().getSection(
 							GMCConfiguration.ANONYMOUS_SECTION);
-					
-					Option option = currConfig.getGmcConfig().getOption("showProgram");				
-					
-					//System.out.println(currConfig.comLine.gmcConfig().getAnonymousSection().getValue(option));
+
+					Option option = currConfig.getGmcConfig().getOption(
+							"showProgram");
+
+					// System.out.println(currConfig.comLine.gmcConfig().getAnonymousSection().getValue(option));
 					currConfig.comLine.setGMCConfig(currConfig.getGmcConfig());
-					
+
 					String com = currCommand.name().toLowerCase();
 					com += " ";
 					com += currConfig.getSelectedFiles().get(0).getName();
-					currConfig.comLine.setCommandString(com);				
+					currConfig.comLine.setCommandString(com);
 
 					try {
 						ui.runNormalCommand((NormalCommandLine) currConfig.comLine);
@@ -1469,10 +1454,10 @@ public class GUI_revamp extends JFrame {
 		};
 
 		bt_duplicate.addActionListener(duplicate);
-		
+
 		ActionListener cancel = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
+			public void actionPerformed(ActionEvent e) {
+				System.exit(0);
 			}
 		};
 
