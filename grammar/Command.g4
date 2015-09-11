@@ -109,6 +109,7 @@ REPLAY
 OPTION_NAME
     :
      '-_CIVL'
+    | '-checkDivisionByZero'
     | '-analyze_abs'
     | '-ast'
     | '-collectHeaps'
