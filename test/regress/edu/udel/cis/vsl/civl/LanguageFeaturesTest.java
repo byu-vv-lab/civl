@@ -290,6 +290,9 @@ public class LanguageFeaturesTest {
 	public void pointersBad() throws ABCException {
 		assertFalse(ui
 				.run("verify -errorBound=10", filename("pointersBad.cvl")));
+		assertFalse(ui.run("verify -DICLeafNode", filename("pointersBad.cvl")));
+		assertFalse(ui.run("verify -DNCLeafNode", filename("pointersBad.cvl")));
+		assertFalse(ui.run("verify -DUNION", filename("pointersBad.cvl")));
 	}
 
 	@Test
@@ -539,12 +542,6 @@ public class LanguageFeaturesTest {
 	}
 
 	@Test
-	public void valueUndefinedTest() {
-		assertFalse(ui.run("verify -errorBound=10",
-				filename("civlValueUndefined.cvl")));
-	}
-
-	@Test
 	public void int2char() {
 		assertTrue(ui.run("verify", filename("int2char.cvl")));
 	}
@@ -599,6 +596,12 @@ public class LanguageFeaturesTest {
 	@Test
 	public void initVal() throws ABCException {
 		assertFalse(ui.run("verify ", filename("initialValues.cvl")));
+	}
+
+	@Test
+	public void valueUndefinedTest() {
+		assertFalse(ui.run("verify -errorBound=10",
+				filename("civlValueUndefined.cvl")));
 	}
 
 	@Test

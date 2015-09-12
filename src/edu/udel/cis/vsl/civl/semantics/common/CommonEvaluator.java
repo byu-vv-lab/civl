@@ -3527,9 +3527,6 @@ public class CommonEvaluator implements Evaluator {
 		case POINTER:
 		case BUNDLE:
 		case PRIMITIVE:
-			if (type.isVoidType())
-				throw new CIVLUnimplementedFeatureException(
-						"sub-references of void type", source);
 			result.add(parent);
 			break;
 		case STRUCT_OR_UNION: {
