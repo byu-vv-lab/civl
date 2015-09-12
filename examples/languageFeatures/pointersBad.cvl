@@ -1,5 +1,6 @@
 /* Commandline execution:
  *		civl verify pointersBad.cvl
+ * This is an example for covering some erroneous cases.
  * */
 #include<civlc.cvh>
 #include<pointer.cvh>
