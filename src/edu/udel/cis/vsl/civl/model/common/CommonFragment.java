@@ -97,6 +97,28 @@ public class CommonFragment implements Fragment {
 		this.finalStatements.add(statement);
 	}
 
+	/* ************************** Private Methods ************************** */
+
+	/**
+	 * Gets the string representation of the set of final statements of this
+	 * fragment.
+	 * 
+	 * @return
+	 */
+	private StringBuffer lastStatementsToStringBuffer() {
+		StringBuffer result = new StringBuffer();
+
+		for (Statement stmt : finalStatements) {
+			result.append("\r\n");
+			result.append(stmt);
+			result.append(" at location ");
+			result.append(stmt.source().id());
+			result.append(" ");
+			result.append(stmt.getSource());
+		}
+		return result;
+	}
+
 	/* *********************** Methods from Fragment *********************** */
 
 	@Override
@@ -290,26 +312,9 @@ public class CommonFragment implements Fragment {
 		return null;
 	}
 
-	/* ************************** Private Methods ************************** */
-
-	/**
-	 * Gets the string representation of the set of final statements of this
-	 * fragment.
-	 * 
-	 * @return
-	 */
-	private StringBuffer lastStatementsToStringBuffer() {
-		StringBuffer result = new StringBuffer();
-
-		for (Statement stmt : finalStatements) {
-			result.append("\r\n");
-			result.append(stmt);
-			result.append(" at location ");
-			result.append(stmt.source().id());
-			result.append(" ");
-			result.append(stmt.getSource());
-		}
-		return result;
+	@Override
+	public void addFinalStatementSet(Set<Statement> stmtSet) {
+		this.finalStatements.addAll(stmtSet);
 	}
 
 }

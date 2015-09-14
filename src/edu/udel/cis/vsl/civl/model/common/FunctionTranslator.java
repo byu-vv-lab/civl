@@ -147,6 +147,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
@@ -1561,52 +1562,84 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(chooseStatementNode), scope);
 		int defaultOffset = 0;
 		Fragment result = new CommonFragment();
-		Iterator<Statement> iter;
+
 		Expression defaultGuard = null;
 
 		if (chooseStatementNode.getDefaultCase() != null) {
 			defaultOffset = 1;
 		}
+		result.setStartLocation(startLocation);
 		for (int i = 0; i < chooseStatementNode.numChildren() - defaultOffset; i++) {
 			StatementNode childNode = chooseStatementNode.getSequenceChild(i);
 			Fragment caseFragment = translateStatementNode(scope, childNode);
+			Location caseLocation = caseFragment.startLocation();
+			NoopStatement noop = modelFactory.noopStatement(
+					caseLocation.getSource(), startLocation, null);
+			Iterator<Statement> iter = caseLocation.outgoing().iterator();
 
-			// make all case fragment to start at the same location
-			caseFragment.updateStartLocation(startLocation);
-			// combine all case fragments as branches of the start location
-			result = result.parallelCombineWith(caseFragment);
-		}
-		iter = startLocation.outgoing().iterator();
-		// Compute the guard for the default statement
-		while (iter.hasNext()) {
-			Expression statementGuard = iter.next().guard();
+			// add a noop from the startLocation to this case
+			noop.setTarget(caseLocation);
+			// add the final statement set of this case to the result fragment
+			result.addFinalStatementSet(caseFragment.finalStatements());
+			// Compute the guard for the default statement
+			while (iter.hasNext()) {
+				Expression statementGuard = iter.next().guard();
 
-			if (defaultGuard == null)
-				defaultGuard = statementGuard;
-			else if (modelFactory.isTrue(defaultGuard)) {
-				defaultGuard = statementGuard;
-			} else if (modelFactory.isTrue(statementGuard)) {
-				// Keep current guard
-			} else {
-				defaultGuard = modelFactory.binaryExpression(modelFactory
-						.sourceOfSpan(defaultGuard.getSource(),
-								statementGuard.getSource()),
-						BINARY_OPERATOR.OR, defaultGuard, statementGuard);
+				if (defaultGuard == null)
+					defaultGuard = statementGuard;
+				else if (modelFactory.isTrue(defaultGuard)) {
+					defaultGuard = statementGuard;
+				} else if (modelFactory.isTrue(statementGuard)) {
+					// Keep current guard
+				} else {
+					defaultGuard = modelFactory.binaryExpression(modelFactory
+							.sourceOfSpan(defaultGuard.getSource(),
+									statementGuard.getSource()),
+							BINARY_OPERATOR.OR, defaultGuard, statementGuard);
+				}
 			}
+			// // make all case fragment to start at the same location
+			// caseFragment.updateStartLocation(startLocation);
+			// // combine all case fragments as branches of the start location
+			// result = result.parallelCombineWith(caseFragment);
 		}
+		// iter = startLocation.outgoing().iterator();
+		// // Compute the guard for the default statement
+		// while (iter.hasNext()) {
+		// Expression statementGuard = iter.next().guard();
+		//
+		// if (defaultGuard == null)
+		// defaultGuard = statementGuard;
+		// else if (modelFactory.isTrue(defaultGuard)) {
+		// defaultGuard = statementGuard;
+		// } else if (modelFactory.isTrue(statementGuard)) {
+		// // Keep current guard
+		// } else {
+		// defaultGuard = modelFactory.binaryExpression(modelFactory
+		// .sourceOfSpan(defaultGuard.getSource(),
+		// statementGuard.getSource()),
+		// BINARY_OPERATOR.OR, defaultGuard, statementGuard);
+		// }
+		// }
 		defaultGuard = modelFactory.unaryExpression(defaultGuard.getSource(),
 				UNARY_OPERATOR.NOT, defaultGuard);
 		if (chooseStatementNode.getDefaultCase() != null) {
 			Fragment defaultFragment = translateStatementNode(scope,
 					chooseStatementNode.getDefaultCase());
+			Location defaultLocation = defaultFragment.startLocation();
+			NoopStatement noop = modelFactory.noopStatementWtGuard(
+					defaultLocation.getSource(), startLocation, defaultGuard);
 
-			// update the guard of the first statements in defaultFragment to be
-			// the conjunction of the defaultGuard and the statement's guard
-			defaultFragment.addGuardToStartLocation(defaultGuard, modelFactory);
-			// update the start location of default fragment
-			defaultFragment.updateStartLocation(startLocation);
-			// combine the default fragment as a branch of the start location
-			result = result.parallelCombineWith(defaultFragment);
+			noop.setTarget(defaultLocation);
+			// // update the guard of the first statements in defaultFragment to
+			// be
+			// // the conjunction of the defaultGuard and the statement's guard
+			// defaultFragment.addGuardToStartLocation(defaultGuard,
+			// modelFactory);
+			// // update the start location of default fragment
+			// defaultFragment.updateStartLocation(startLocation);
+			// // combine the default fragment as a branch of the start location
+			// result = result.parallelCombineWith(defaultFragment);
 		}
 		return result;
 	}

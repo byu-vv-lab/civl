@@ -397,7 +397,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 			if (loc.atomicKind() != AtomicKind.NONE)
 				continue;
-			// loc has exactly one statement
+			// loc has exactly one outgoing statement
 			if (loc.getNumOutgoing() == 1) {
 				Statement s = loc.getOutgoing(0);
 
@@ -414,6 +414,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 							// Record the index of loc so that it can be
 							// removed later
 							toRemove.add(i);
+							//TODO simplify me: using incoming statements
 							for (int j = 0; j < count; j++) {
 								Location curLoc;
 
@@ -422,7 +423,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 								if (toRemove.contains(j))
 									continue;
 								curLoc = oldLocations.get(j);
-								// For each statement of curLoc \in
+								// For each outgoing statement of curLoc \in
 								// (this.locations - toRemove)
 								for (Statement curS : curLoc.outgoing()) {
 									Location curTarget = curS.target();

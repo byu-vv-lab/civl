@@ -41,6 +41,15 @@ public interface Fragment {
 	void addFinalStatement(Statement statement);
 
 	/**
+	 * Add a set of statements to the final statement set
+	 * 
+	 * @param stmtSet
+	 *            the set of new statements to be added to the final statement
+	 *            set
+	 */
+	void addFinalStatementSet(Set<Statement> stmtSet);
+
+	/**
 	 * Add a new statement to the fragment, which will be considered the
 	 * subsequent statement of the current final statements.s
 	 * 
