@@ -1572,76 +1572,108 @@ public class FunctionTranslator {
 		for (int i = 0; i < chooseStatementNode.numChildren() - defaultOffset; i++) {
 			StatementNode childNode = chooseStatementNode.getSequenceChild(i);
 			Fragment caseFragment = translateStatementNode(scope, childNode);
-			Location caseLocation = caseFragment.startLocation();
-			NoopStatement noop = modelFactory.noopStatement(
-					caseLocation.getSource(), startLocation, null);
-			Iterator<Statement> iter = caseLocation.outgoing().iterator();
+			Expression caseGuard = this.addFragment2Location(startLocation,
+					caseFragment);
 
-			// add a noop from the startLocation to this case
-			noop.setTarget(caseLocation);
-			// add the final statement set of this case to the result fragment
 			result.addFinalStatementSet(caseFragment.finalStatements());
-			// Compute the guard for the default statement
+			defaultGuard = this.disjunction(defaultGuard, caseGuard);
+		}
+		if (!modelFactory.isTrue(defaultGuard)) {
+			defaultGuard = modelFactory.unaryExpression(
+					defaultGuard.getSource(), UNARY_OPERATOR.NOT, defaultGuard);
+			if (chooseStatementNode.getDefaultCase() != null) {
+				Fragment defaultFragment = translateStatementNode(scope,
+						chooseStatementNode.getDefaultCase());
+				Location defaultLocation = defaultFragment.startLocation();
+				NoopStatement noop = modelFactory.noopStatementWtGuard(
+						defaultLocation.getSource(), startLocation,
+						defaultGuard);
+
+				noop.setTarget(defaultLocation);
+				result.addFinalStatementSet(defaultFragment.finalStatements());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * adds a fragment to a location, connected by a noop statement and also
+	 * factors out the guards of all outgoing statements of the start location
+	 * of the fragment and assign it with the noop statement
+	 * 
+	 * @param startLocation
+	 * @param subFragment
+	 * @return the disjunction of the guards of all outgoing statements of the
+	 *         start location of the fragment
+	 */
+	private Expression addFragment2Location(Location location, Fragment fragment) {
+		Location fragmentStart = fragment.startLocation();
+		NoopStatement noop = modelFactory.noopStatement(
+				fragmentStart.getSource(), location, null);
+		Expression guards = null;
+
+		// add a noop from the location to the start location of this fragment
+		noop.setTarget(fragmentStart);
+		guards = this.factorOutGuards(fragmentStart);
+		noop.setGuard(guards);
+		return guards;
+	}
+
+	/**
+	 * factors out the guards of the outgoing statements of a location in
+	 * disjunction. If the location contains only one outgoing statement, the
+	 * guard is removed from the outgoing statement.
+	 * 
+	 * For example, if the location has two outgoing statements: [x>2] s1; [x<6]
+	 * s2; then the result is (x>2 || x<6).
+	 * 
+	 * If the location has exactly one outgoing statement: [x<10] s; then the
+	 * result is (x<10) and the outgoing statement becomes: [true] s.
+	 * 
+	 * This method serves as a helper function for $choose.
+	 * 
+	 * @param location
+	 * @return
+	 */
+	private Expression factorOutGuards(Location location) {
+		int numOutgoing = location.getNumOutgoing();
+		Expression guard = null;
+
+		if (numOutgoing == 1) {
+			Statement outgoing = location.getOutgoing(0);
+
+			guard = outgoing.guard();
+			outgoing.setGuard(modelFactory.trueExpression(guard.getSource()));
+		} else {
+			Iterator<Statement> iter = location.outgoing().iterator();
+
 			while (iter.hasNext()) {
 				Expression statementGuard = iter.next().guard();
 
-				if (defaultGuard == null)
-					defaultGuard = statementGuard;
-				else if (modelFactory.isTrue(defaultGuard)) {
-					defaultGuard = statementGuard;
-				} else if (modelFactory.isTrue(statementGuard)) {
-					// Keep current guard
-				} else {
-					defaultGuard = modelFactory.binaryExpression(modelFactory
-							.sourceOfSpan(defaultGuard.getSource(),
-									statementGuard.getSource()),
-							BINARY_OPERATOR.OR, defaultGuard, statementGuard);
-				}
+				guard = this.disjunction(guard, statementGuard);
 			}
-			// // make all case fragment to start at the same location
-			// caseFragment.updateStartLocation(startLocation);
-			// // combine all case fragments as branches of the start location
-			// result = result.parallelCombineWith(caseFragment);
 		}
-		// iter = startLocation.outgoing().iterator();
-		// // Compute the guard for the default statement
-		// while (iter.hasNext()) {
-		// Expression statementGuard = iter.next().guard();
-		//
-		// if (defaultGuard == null)
-		// defaultGuard = statementGuard;
-		// else if (modelFactory.isTrue(defaultGuard)) {
-		// defaultGuard = statementGuard;
-		// } else if (modelFactory.isTrue(statementGuard)) {
-		// // Keep current guard
-		// } else {
-		// defaultGuard = modelFactory.binaryExpression(modelFactory
-		// .sourceOfSpan(defaultGuard.getSource(),
-		// statementGuard.getSource()),
-		// BINARY_OPERATOR.OR, defaultGuard, statementGuard);
-		// }
-		// }
-		defaultGuard = modelFactory.unaryExpression(defaultGuard.getSource(),
-				UNARY_OPERATOR.NOT, defaultGuard);
-		if (chooseStatementNode.getDefaultCase() != null) {
-			Fragment defaultFragment = translateStatementNode(scope,
-					chooseStatementNode.getDefaultCase());
-			Location defaultLocation = defaultFragment.startLocation();
-			NoopStatement noop = modelFactory.noopStatementWtGuard(
-					defaultLocation.getSource(), startLocation, defaultGuard);
+		return guard;
+	}
 
-			noop.setTarget(defaultLocation);
-			// // update the guard of the first statements in defaultFragment to
-			// be
-			// // the conjunction of the defaultGuard and the statement's guard
-			// defaultFragment.addGuardToStartLocation(defaultGuard,
-			// modelFactory);
-			// // update the start location of default fragment
-			// defaultFragment.updateStartLocation(startLocation);
-			// // combine the default fragment as a branch of the start location
-			// result = result.parallelCombineWith(defaultFragment);
-		}
-		return result;
+	/**
+	 * Computes the disjunction of two boolean expressions. The left could be
+	 * NULL but the right couldn't.
+	 * 
+	 * @param left
+	 * @param right
+	 * @return
+	 */
+	private Expression disjunction(Expression left, Expression right) {
+		if (left == null)
+			return right;
+		if (modelFactory.isTrue(left))
+			return left;
+		if (modelFactory.isTrue(right))
+			return right;
+		return modelFactory.binaryExpression(
+				modelFactory.sourceOfSpan(left.getSource(), right.getSource()),
+				BINARY_OPERATOR.OR, left, right);
 	}
 
 	/**
