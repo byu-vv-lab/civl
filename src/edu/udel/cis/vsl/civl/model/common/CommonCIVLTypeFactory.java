@@ -428,6 +428,13 @@ public class CommonCIVLTypeFactory implements CIVLTypeFactory {
 		return this.domainType;
 	}
 
+	CIVLDomainType domainType() {
+		if (this.domainType == null) {
+			return new CommonDomainType();
+		}
+		return this.domainType;
+	}
+
 	@Override
 	public SymbolicTupleType pointerSymbolicType() {
 		return pointerSymbolicType;

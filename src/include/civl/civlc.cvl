@@ -6,7 +6,7 @@
 #define __CIVLC_CIVL__
 
 #include <civlc.cvh>
-#include <domain.cvh>
+//#include <domain.cvh>
 
 /* Completes the declaration of this type in civlc.cvh */
 struct $int_iter {
@@ -20,6 +20,7 @@ struct $int_iter {
     for(int i=0; i<x; i++);
 }*/
 
+/*
 void $elaborate_rectangular_domain($domain domain){
   if(!$is_rectangular_domain(domain))
    return;
@@ -37,6 +38,6 @@ void $elaborate_rectangular_domain($domain domain){
     if(!$is_concrete_int(low))
       $elaborate(low);
   }
-}
+}*/
 
 #endif

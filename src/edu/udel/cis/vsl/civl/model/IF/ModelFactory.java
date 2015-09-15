@@ -1527,6 +1527,8 @@ public interface ModelFactory {
 
 	FunctionIdentifierExpression waitallFunctionPointer();
 
+	FunctionIdentifierExpression elaborateDomainPointer();
+
 	/**
 	 * Get the name of the counter variable for the for loop on a literal domain
 	 * 

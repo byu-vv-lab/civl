@@ -346,7 +346,9 @@ public class CommonModelFactory implements ModelFactory {
 	 */
 	private Scope systemScope;
 
-	private FunctionIdentifierExpression waitallFuncPointer;
+	private FunctionIdentifierExpression waitallFuncPointer = null;
+
+	private FunctionIdentifierExpression elaborateDomainFuncPointer = null;
 
 	/* **************************** Constructors *************************** */
 
@@ -2101,5 +2103,23 @@ public class CommonModelFactory implements ModelFactory {
 		}
 		return new CommonContractClauseExpression(source, hscope, lscope, type,
 				collectiveGroup, body, contractKind, clauseKind);
+	}
+
+	@Override
+	public FunctionIdentifierExpression elaborateDomainPointer() {
+		if (this.elaborateDomainFuncPointer == null) {
+			List<Variable> parameters = new ArrayList<>(2);
+			CIVLFunction function;
+
+			parameters.add(this.variable(systemSource,
+					typeFactory.domainType(),
+					this.identifier(systemSource, "domain"), 1));
+			function = this.systemFunction(systemSource,
+					this.identifier(systemSource, "$elaborate_domain"),
+					parameters, typeFactory.voidType, systemScope, "civlc");
+			this.elaborateDomainFuncPointer = this
+					.functionIdentifierExpression(systemSource, function);
+		}
+		return this.elaborateDomainFuncPointer;
 	}
 }

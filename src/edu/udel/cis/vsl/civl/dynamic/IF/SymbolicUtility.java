@@ -106,15 +106,13 @@ public interface SymbolicUtility {
 
 	/**
 	 * 
-	 * Gets a Java concrete int from a symbolic expression or throws exception.
+	 * Gets a Java concrete int from a symbolic expression
 	 * 
 	 * @param source
 	 *            source code information for error report
 	 * @param expression
 	 *            a numeric expression expected to hold concrete int value
 	 * @return the concrete int
-	 * @throws CIVLInternalException
-	 *             if a concrete integer value cannot be extracted
 	 */
 	int extractInt(CIVLSource source, NumericExpression expression);
 

@@ -2246,13 +2246,19 @@ public class FunctionTranslator {
 		}
 	}
 
+	/**
+	 * 	callWaitAll = modelFactory.callOrSpawnStatement(parForEndSource,
+				location, true, modelFactory.waitallFunctionPointer(),
+				Arrays.asList(this.arrayToPointer(parProcs), domSizeVar), null);
+	 * */
 	private Statement elaborateDomainCall(Scope scope, Expression domain) {
 		CIVLSource source = domain.getSource();
 		Location location = modelFactory.location(source, scope);
 		CallOrSpawnStatement call = this.modelFactory.callOrSpawnStatement(
-				source, location, true, null, Arrays.asList(domain), null);
+				source, location, true, modelFactory.elaborateDomainPointer(),
+				Arrays.asList(domain), null);
 
-		this.modelBuilder.elaborateDomainCalls.add(call);
+		// this.modelBuilder.elaborateDomainCalls.add(call);
 		return call;
 	}
 
