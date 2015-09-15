@@ -257,8 +257,11 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		boolean isValid = symbolicUtil.isValidPointer(argumentValues[0]);
-		SymbolicExpression result = isValid ? this.trueValue : this.falseValue;
+		boolean isDerefable = symbolicUtil
+				.isDerefablePointer(
+				argumentValues[0]);
+		SymbolicExpression result = isDerefable ? this.trueValue
+				: this.falseValue;
 
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs, result);
@@ -703,8 +706,11 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 			LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		boolean isValid = symbolicUtil.isValidPointer(argumentValues[0]);
-		SymbolicExpression result = isValid ? this.trueValue : this.falseValue;
+		boolean isDerefable = symbolicUtil
+				.isDerefablePointer(
+				argumentValues[0]);
+		SymbolicExpression result = isDerefable ? this.trueValue
+				: this.falseValue;
 
 		if (lhs != null)
 			state = primaryExecutor.assign(state, pid, process, lhs, result);

@@ -1623,7 +1623,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 			// if (!reachable.contains(heapObjPtr))
 			reachable.add(heapObjPtr);
-		} else if (this.symbolicUtil.isValidPointer(value)) {
+		} else if (this.symbolicUtil.isDerefablePointer(value)) {
 			// other pointers
 			int dyscopeId = this.symbolicUtil.getDyscopeId(null, value);
 			int vid = this.symbolicUtil.getVariableId(null, value);
@@ -1729,7 +1729,7 @@ public class ImmutableStateFactory implements StateFactory {
 
 			if (newHeapObjPtr != null
 					&& !oldToNewHeapPointers.containsKey(value)) {
-				if (symbolicUtil.isUndefinedPointer(newHeapObjPtr))
+				if (!symbolicUtil.isDefinedPointer(newHeapObjPtr))
 					oldToNewHeapPointers.put(value, newHeapObjPtr);
 				else {
 					ReferenceExpression ref = symbolicUtil

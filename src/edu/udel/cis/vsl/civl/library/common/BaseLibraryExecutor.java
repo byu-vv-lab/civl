@@ -29,7 +29,6 @@ import edu.udel.cis.vsl.sarl.IF.expr.ArrayElementReference;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.NTReferenceExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
 import edu.udel.cis.vsl.sarl.IF.expr.TupleComponentReference;
 import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
@@ -186,17 +185,12 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			CIVLSource source) throws UnsatisfiablePathConditionException {
 		SymbolicExpression firstElementPointer = argumentValues[0];
 
-		if (firstElementPointer.operator() != SymbolicOperator.CONCRETE) {
-			this.errorLogger.logSimpleError(source, state, process,
-					symbolicAnalyzer.stateInformation(state),
-					ErrorKind.UNDEFINED_VALUE,
-					"attempt to free an unitialized pointer");
-			// dont report unsatisfiable path condition exception
-		} else if (symbolicUtil.isUndefinedPointer(firstElementPointer)) {
-			this.errorLogger.logSimpleError(source, state, process,
-					symbolicAnalyzer.stateInformation(state),
-					ErrorKind.MEMORY_LEAK,
-					"attempt to free a memory space that is already freed");
+		if (!symbolicUtil.isDefinedPointer(firstElementPointer)) {
+			this.errorLogger
+					.logSimpleError(source, state, process,
+							symbolicAnalyzer.stateInformation(state),
+							ErrorKind.MEMORY_LEAK,
+							"attempt to deallocate memory space through an undefined pointer");
 			// dont report unsatisfiable path condition exception
 		} else if (this.symbolicUtil.isNullPointer(firstElementPointer)) {
 			// does nothing for null pointer.

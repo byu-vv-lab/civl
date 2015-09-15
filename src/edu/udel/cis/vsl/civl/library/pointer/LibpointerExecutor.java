@@ -72,16 +72,20 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 		LHSExpression lhs;
 		int numArgs;
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+		boolean checkUndefinedValue = true;
 
 		numArgs = call.arguments().size();
 		lhs = call.lhs();
 		arguments = new Expression[numArgs];
 		argumentValues = new SymbolicExpression[numArgs];
+		if (functionName.equals("$is_derefable_pointer"))
+			checkUndefinedValue = false;
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
 
 			arguments[i] = call.arguments().get(i);
-			eval = evaluator.evaluate(state, pid, arguments[i]);
+			eval = evaluator.evaluate(state, pid, arguments[i],
+					checkUndefinedValue);
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}
@@ -126,7 +130,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			state = execute_set_leaf_nodes(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
-		case "$is_valid_pointer":
+		case "$is_derefable_pointer":
 			state = execute_is_valid_pointer(state, pid, process, lhs,
 					arguments, argumentValues, call.getSource());
 			break;
@@ -147,10 +151,9 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues, CIVLSource source)
 			throws UnsatisfiablePathConditionException {
-		// TODO Auto-generated method stub
 		SymbolicExpression result = this.falseValue;
 
-		if (symbolicUtil.isValidPointer(argumentValues[0]))
+		if (symbolicUtil.isDerefablePointer( argumentValues[0]))
 			result = this.trueValue;
 		if (lhs != null)
 			state = this.primaryExecutor.assign(state, pid, process, lhs,
@@ -351,8 +354,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression first = argumentValues[0], second = argumentValues[1], result;
 
-		if (!symbolicUtil.isValidPointer(first)
-				|| !symbolicUtil.isValidPointer(second))
+		if (!symbolicUtil.isDerefablePointer( first)
+				|| !symbolicUtil.isDerefablePointer( second))
 			result = falseValue;
 		else
 			result = symbolicUtil.contains(first, second);

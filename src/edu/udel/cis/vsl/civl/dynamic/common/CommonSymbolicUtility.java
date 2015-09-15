@@ -185,8 +185,7 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		this.pointerType = this.typeFactory.pointerSymbolicType();
 		this.nullPointer = universe.canonic(this.makePointer(-1, -1,
 				universe.nullReference()));
-		this.undefinedPointer = universe.canonic(this.makePointer(-2, -2,
-				universe.nullReference()));
+		this.undefinedPointer = universe.canonic(universe.nullExpression());
 		this.stringType = universe.arrayType(universe.characterType());
 	}
 
@@ -489,8 +488,6 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 		int numRefs1, numRefs2, offset;
 		BooleanExpression result = this.trueValue;
 
-		if (!this.isValidPointer(pointer1) || !this.isValidPointer(pointer2))
-			return universe.falseExpression();
 		if (ref1.isIdentityReference() && ref2.isIdentityReference()) {
 			return (BooleanExpression) universe.canonic(universe.equals(ref1,
 					ref2));
@@ -698,26 +695,14 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 	}
 
 	@Override
-	public boolean isUndefinedPointer(SymbolicExpression pointer) {
-		if (!pointer.isNull()) {
-			int dyscopeId = this.getDyscopeId(null, pointer);
-
-			return dyscopeId == -2;
-		}
-		return false;
+	public boolean isDefinedPointer(SymbolicExpression pointer) {
+		return !pointer.isNull();
 	}
 
 	@Override
 	public boolean isValidRefOf(ReferenceExpression ref,
 			SymbolicExpression value) {
 		return isValidRefOfValue(ref, value).right;
-	}
-
-	@Override
-	public boolean isValidPointer(SymbolicExpression pointer) {
-		int scopeId = this.getDyscopeId(null, pointer);
-
-		return scopeId >= 0;
 	}
 
 	@Override
@@ -1408,5 +1393,12 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			argValues.add(argumentValues[i]);
 		}
 		return universe.apply(abstractFunction, argValues);
+	}
+
+	@Override
+	public boolean isDerefablePointer(SymbolicExpression pointer) {
+		if (this.isDefinedPointer(pointer))
+			return getDyscopeId(null, pointer) >= 0;
+		return false;
 	}
 }

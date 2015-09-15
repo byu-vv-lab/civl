@@ -88,6 +88,10 @@ public interface Evaluator {
 	 *             if a side effect that results from evaluating the expression
 	 *             causes the path condition to become unsatisfiable
 	 */
+	Evaluation evaluate(State state, int pid, Expression expression,
+			boolean checkUndefinedValue)
+			throws UnsatisfiablePathConditionException;
+
 	Evaluation evaluate(State state, int pid, Expression expression)
 			throws UnsatisfiablePathConditionException;
 
@@ -290,6 +294,13 @@ public interface Evaluator {
 	 * @return The symbolic utility object of this evaluator.
 	 */
 	SymbolicUtility symbolicUtility();
+
+	/**
+	 * Returns the symbolic analyzer object of this evaluator.
+	 * 
+	 * @return The symbolic analyzer object of this evaluator.
+	 */
+	SymbolicAnalyzer symbolicAnalyzer();
 
 	/**
 	 * The symbolic universe should be the unique one used in the system.

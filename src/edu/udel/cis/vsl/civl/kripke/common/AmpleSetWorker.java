@@ -259,6 +259,8 @@ public class AmpleSetWorker {
 	 */
 	private MemoryUnitSet[] reachablePtrWritable;
 
+	// private SymbolicAnalyzer symbolicAnalyzer;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -293,6 +295,7 @@ public class AmpleSetWorker {
 		impactMemUnits = new MemoryUnitSet[state.numProcs()];
 		this.memUnitFactory = muFactory;
 		this.procBound = procBound;
+		// this.symbolicAnalyzer = evaluator.symbolicAnalyzer();
 	}
 
 	/* *********************** Package-private Methods ********************* */
@@ -998,7 +1001,8 @@ public class AmpleSetWorker {
 							dyscopeID, varID);
 					CIVLSource source = variable.getSource();
 
-					if (!value.isNull() && symbolicUtil.isValidPointer(value))
+					if (!value.isNull()
+							&& symbolicUtil.isDerefablePointer(value))
 						memUnitFactory.add(nonPtrReadonly, memUnitFactory
 								.newMemoryUnit(symbolicUtil.getDyscopeId(
 										source, value), symbolicUtil
@@ -1067,7 +1071,7 @@ public class AmpleSetWorker {
 				Variable variable;
 
 				if (expr.operator() != SymbolicOperator.CONCRETE
-						|| !symbolicUtil.isValidPointer(expr))
+						|| !symbolicUtil.isDerefablePointer(expr))
 					return;
 				variable = state
 						.getDyscope(symbolicUtil.getDyscopeId(null, expr))

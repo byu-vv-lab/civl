@@ -328,7 +328,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		if (symbolicUtil.isNullPointer(pointer))
 			return state;
 		if (!pointer.operator().equals(SymbolicOperator.CONCRETE)
-				|| !symbolicUtil.isValidPointer(pointer)) {
+				|| !symbolicUtil.isDerefablePointer( pointer)) {
 			this.errorLogger.logSimpleError(arguments[0].getSource(), state,
 					process, this.symbolicAnalyzer.stateInformation(state),
 					ErrorKind.POINTER,

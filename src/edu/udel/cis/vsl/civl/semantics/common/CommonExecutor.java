@@ -1255,12 +1255,12 @@ public class CommonExecutor implements Executor {
 			SymbolicExpression pointer, SymbolicExpression value,
 			boolean isInitialization)
 			throws UnsatisfiablePathConditionException {
-		if (symbolicUtil.isUndefinedPointer(pointer)) {
+		if (!symbolicUtil.isDerefablePointer( pointer)) {
 			errorLogger.logSimpleError(source, state, process,
 					symbolicAnalyzer.stateInformation(state),
 					ErrorKind.DEREFERENCE,
-					"Attempt to dereference a pointer that refers to a "
-							+ "memory space that is already deallocated");
+					"attempt to write to a memory location through a pointer "
+							+ "that can't be dereferenced");
 			throw new UnsatisfiablePathConditionException();
 		} else {
 			int vid = symbolicUtil.getVariableId(source, pointer);

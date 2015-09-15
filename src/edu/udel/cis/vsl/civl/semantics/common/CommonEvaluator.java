@@ -2290,7 +2290,7 @@ public class CommonEvaluator implements Evaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private Evaluation evaluateVariable(State state, int pid, String process,
-			VariableExpression expression)
+			VariableExpression expression, boolean checkUndefinedValue)
 			throws UnsatisfiablePathConditionException {
 		if (expression.variable().isOutput()) {
 			errorLogger.logSimpleError(expression.getSource(), state, process,
@@ -2303,7 +2303,7 @@ public class CommonEvaluator implements Evaluator {
 			SymbolicExpression value = state
 					.valueOf(pid, expression.variable());
 
-			if (value == null || value.isNull()) {
+			if (checkUndefinedValue && value.isNull()) {
 				errorLogger.logSimpleError(expression.getSource(), state,
 						process, this.symbolicAnalyzer.stateInformation(state),
 						ErrorKind.UNDEFINED_VALUE,
@@ -2802,7 +2802,8 @@ public class CommonEvaluator implements Evaluator {
 	/* ********************** Methods from Evaluator *********************** */
 
 	@Override
-	public Evaluation evaluate(State state, int pid, Expression expression)
+	public Evaluation evaluate(State state, int pid, Expression expression,
+			boolean checkUndefinedValue)
 			throws UnsatisfiablePathConditionException {
 		ExpressionKind kind = expression.expressionKind();
 		Evaluation result;
@@ -2941,7 +2942,7 @@ public class CommonEvaluator implements Evaluator {
 			break;
 		case VARIABLE:
 			result = evaluateVariable(state, pid, process,
-					(VariableExpression) expression);
+					(VariableExpression) expression, checkUndefinedValue);
 			break;
 		case QUANTIFIER:
 			result = evaluateQuantifiedExpression(state, pid,
@@ -3210,12 +3211,12 @@ public class CommonEvaluator implements Evaluator {
 			BinaryExpression expression, SymbolicExpression pointer,
 			NumericExpression offset)
 			throws UnsatisfiablePathConditionException {
-		if (symbolicUtil.isUndefinedPointer(pointer)) {
-			errorLogger.logSimpleError(expression.getSource(), state, process,
-					symbolicAnalyzer.stateInformation(state),
-					ErrorKind.DEREFERENCE,
-					"Attempt to dereference a pointer that refers to a "
-							+ "memory space that is already deallocated");
+		if (!symbolicUtil.isDefinedPointer(pointer)) {
+			errorLogger
+					.logSimpleError(expression.getSource(), state, process,
+							symbolicAnalyzer.stateInformation(state),
+							ErrorKind.DEREFERENCE,
+							"Attempt to performs pointer addition upon an undefined pointer");
 			throw new UnsatisfiablePathConditionException();
 		} else {
 			ReferenceExpression symRef = symbolicUtil.getSymRef(pointer);
@@ -3773,5 +3774,16 @@ public class CommonEvaluator implements Evaluator {
 		eval = new Evaluation(state, symbolicUtil.makePointer(pointedSid,
 				pointedVid, newRef));
 		return new Pair<>(eval, sliceSizes);
+	}
+
+	@Override
+	public SymbolicAnalyzer symbolicAnalyzer() {
+		return this.symbolicAnalyzer;
+	}
+
+	@Override
+	public Evaluation evaluate(State state, int pid, Expression expression)
+			throws UnsatisfiablePathConditionException {
+		return this.evaluate(state, pid, expression, true);
 	}
 }

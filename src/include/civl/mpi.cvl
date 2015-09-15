@@ -517,7 +517,7 @@ int MPI_Comm_free(MPI_Comm * comm) {
   curr_status = $mpi_get_status();
   $assert(curr_status == __INIT, "MPI_Comm_free() cannot be invoked without "
     "MPI_Init() being called before.\n");
-  $assert($is_valid_pointer(comm), "The argument of MPI_Comm_free is NULL.");
+  $assert($is_derefable_pointer(comm), "The argument of MPI_Comm_free is NULL.");
   $mpi_comm_free(comm);
   return 0;
 }

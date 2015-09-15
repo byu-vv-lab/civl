@@ -39,6 +39,10 @@ public interface SymbolicUtility {
 	 * string will be "b\tcd\n"; if it is for print, then the result string is
 	 * "b\\tcd\\n".
 	 *
+	 * Notions for pointer Value: <br>
+	 * undefined: default initialized value/freed/ defined:<br>
+	 * derefable: can be dereferenced, e.g., a, a+4 (a is int[5]) underefable:
+	 * e.g., NULL, a+5 (a is int[5])<br>
 	 * 
 	 * @param source
 	 *            The source code information for error report.
@@ -57,6 +61,8 @@ public interface SymbolicUtility {
 	/**
 	 * Checks if the object that the container pointer points to contains that
 	 * of the element pointer.
+	 * 
+	 * Precondition: both pointers can be safely dereferenced.
 	 * 
 	 * @param container
 	 *            The pointer that is expected to contain the object of the
@@ -309,18 +315,7 @@ public interface SymbolicUtility {
 	 *            The pointer.
 	 * @return True iff the given pointer is undefined.
 	 */
-	boolean isUndefinedPointer(SymbolicExpression pointer);
-
-	/**
-	 * Checks if a pointer is valid for dereference, i.e., it isn't NULL, nor is
-	 * it pointing to a deallocated memory space, nor does it point to a memory
-	 * unit of an invalid scope.
-	 * 
-	 * @param pointer
-	 *            The pointer to be checked.
-	 * @return True iff the pointer is valid, i.e., can be dereferenced.
-	 */
-	boolean isValidPointer(SymbolicExpression pointer);
+	boolean isDefinedPointer(SymbolicExpression pointer);
 
 	/**
 	 * Checks if the given reference is valid for a certain object or a
@@ -491,9 +486,9 @@ public interface SymbolicUtility {
 			ReferenceExpression arrayReference, NumericExpression[] newIndices);
 
 	/**
-	 * Returns the undefined pointer of CIVL, which is a tuple <-2, -2, NULL>.
-	 * In CIVL, a pointer becomes undefined when the memory space it points to
-	 * get deallocated.
+	 * Returns the undefined pointer of CIVL, which is an uninitialized pointer
+	 * value. In CIVL, a pointer becomes undefined when the memory space it
+	 * points to get deallocated.
 	 * 
 	 * @return The undefined pointer.
 	 */
@@ -808,4 +803,15 @@ public interface SymbolicUtility {
 	 */
 	SymbolicExpression getAbstractGuardOfFunctionCall(String library,
 			String function, SymbolicExpression[] argumentValues);
+
+	/**
+	 * Checks if a pointer is derefable, i.e., it could be safely dereferenced.
+	 * A derefable pointer is defined and not NULL. (Array index within bound is
+	 * not guaranteed, however.)
+	 * 
+	 * @param pointer
+	 *            The pointer to be checked.
+	 * @return True iff the pointer is valid, i.e., can be dereferenced.
+	 */
+	boolean isDerefablePointer(SymbolicExpression pointer);
 }
