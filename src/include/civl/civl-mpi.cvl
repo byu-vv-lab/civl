@@ -164,15 +164,17 @@ int $mpi_sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     $message out, in;
     int size = sendcount*sizeofDatatype(sendtype);
     int place = $comm_place(comm);
+    _Bool probe;
 
     out = $message_pack(place, dest, sendtag, sendbuf, size);
     $elaborate(source);
+    probe = $comm_probe(comm, source, recvtag);
     $choose {
       $when (1){ 
 	$comm_enqueue(comm, out);
 	in = $comm_dequeue(comm, source, recvtag);
       }
-      $when (1){
+      $when (probe){
 	in = $comm_dequeue(comm, source, recvtag);
 	$comm_enqueue(comm, out);
       }

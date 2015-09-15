@@ -12,13 +12,14 @@
 	      void *recvbuf, int recvcount, int source, int recvtag, $comm comm) {
     $message out = $message_pack(rank, dest, sendtag, sendbuf, sendcount*sizeof(double));
     $message in;
+    _Bool probe = $comm_probe(comm, source, recvtag);
 
     $choose {
       $when (1){ 
 	$comm_enqueue(comm, out);
 	in = $comm_dequeue(comm, source, recvtag);
       }
-      $when (1){
+      $when (probe){
 	in = $comm_dequeue(comm, source, recvtag);
 	$comm_enqueue(comm, out);
       }

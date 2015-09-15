@@ -62,16 +62,18 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
              int source, int recvtag, MPI_Comm comm, MPI_Status *status){
   int sendsize, recvsize;
   $message out , in;
+  _Bool probe;
 
   sendsize = sendcount * sizeofDatatype(sendtype);  
   recvsize = recvcount * sizeofDatatype(recvtype);
   out = $message_pack(__rank, dest, sendtag, sendbuf, sendsize);
+  probe = $comm_probe(comm, source, recvtag);
   $choose {
     $when (1){ 
       $comm_enqueue(comm, out);
       in = $comm_dequeue(comm, source, recvtag);
     }
-    $when (1){
+    $when (probe){
       in = $comm_dequeue(comm, source, recvtag);
       $comm_enqueue(comm, out);
     }
