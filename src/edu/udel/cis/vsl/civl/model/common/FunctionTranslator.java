@@ -179,10 +179,6 @@ public class FunctionTranslator {
 
 	private static final String PAR_FUNC_NAME = "_par_proc";
 
-	private static final String contractResult = "$result";
-
-	private static final String contractMessageBufferFunction = "isRecvBufEmpty";
-
 	/* ************************** Instance Fields ************************** */
 
 	private int atomicCount = 0;
@@ -232,9 +228,11 @@ public class FunctionTranslator {
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
 
 	/**
-	 * The CIVLType of the $result expression of current function
+	 * The string type name of the Result Expression:<br>
+	 * An special expression used to represent the result of a function in
+	 * function contracts.
 	 */
-	private CIVLType currentResultType = null;
+	private final String contractResultName = "$result";
 
 	/* **************************** Constructors *************************** */
 
@@ -2217,10 +2215,6 @@ public class FunctionTranslator {
 			}
 			modelBuilder.functionMap.put(entity, result);
 		}
-		// result is now defined and in the model
-		// translating contract primitive: $result needs the information of
-		// current function "result":
-		this.currentResultType = result.returnType();
 		if (contract != null) {
 			for (int i = 0; i < contract.numChildren(); i++) {
 				ContractNode contractNode = contract.getSequenceChild(i);
@@ -2519,6 +2513,32 @@ public class FunctionTranslator {
 				modelFactory.sourceOf(returnNode), location, expression,
 				function);
 		return atomicReleaseFragment.combineWith(returnFragment);
+	}
+
+	/**
+	 * Translates a ResultNode as an new variable, and adds it into a
+	 * corresponding scope.
+	 * 
+	 * @param resultNode
+	 *            The {@link ResultNode} appears in a contract clause
+	 * @param scope
+	 *            The scope of the contract clause, same as the scope of
+	 *            function arguments
+	 * @return
+	 */
+	private Expression translateResultNode(ResultNode resultNode, Scope scope) {
+		CIVLSource resultSource = modelFactory.sourceOf(resultNode);
+		Variable newResultVariable;
+		Identifier resultIdentifier = modelFactory.identifier(resultSource,
+				contractResultName);
+		CIVLType resultType = this.translateABCType(resultSource, scope,
+				resultNode.getType());
+
+		newResultVariable = modelFactory.variable(resultSource, resultType,
+				resultIdentifier, scope.numVariables());
+		scope.addVariable(newResultVariable);
+		newResultVariable.setScope(scope);
+		return modelFactory.variableExpression(resultSource, newResultVariable);
 	}
 
 	/**
@@ -3738,22 +3758,6 @@ public class FunctionTranslator {
 					modelFactory.sourceOf(callNode),
 					(AbstractFunction) abstractFunction, arguments);
 			return result;
-		} else if (abstractFunction.name().name()
-				.equals(contractMessageBufferFunction)) {
-			CallOrSpawnStatement callStatement;
-			List<Expression> arguments = new ArrayList<Expression>();
-
-			for (ExpressionNode var : callNode.getArguments())
-				arguments.add(translateExpressionNode(var, scope, true));
-			callStatement = modelFactory
-					.callOrSpawnStatement(
-							source,
-							abstractFunction.startLocation(),
-							true,
-							translateExpressionNode(callNode.getFunction(),
-									scope, true), arguments, modelFactory
-									.trueExpression(null));
-			return modelFactory.systemFunctionCallExpression(callStatement);
 		} else
 			throw new CIVLInternalException("Unreachable", source);
 	}
@@ -4835,26 +4839,6 @@ public class FunctionTranslator {
 							lhs, rhs, true));
 		}
 		return result;
-	}
-
-	/**
-	 * Translates a ResultNode as an new variable, and adds it into a
-	 * corresponding scope.
-	 * 
-	 * @param resultNode
-	 * @param scope
-	 * @return
-	 */
-	private Expression translateResultNode(ResultNode resultNode, Scope scope) {
-		CIVLSource resultSource = modelFactory.sourceOf(resultNode);
-		Variable newResultVariable;
-		Identifier resultIdentifier = modelFactory.identifier(resultSource,
-				contractResult);
-		newResultVariable = modelFactory.variable(resultSource,
-				this.currentResultType, resultIdentifier, scope.numVariables());
-		scope.addVariable(newResultVariable);
-		newResultVariable.setScope(scope);
-		return modelFactory.variableExpression(resultSource, newResultVariable);
 	}
 
 	private void setFunction(CIVLFunction function) {
