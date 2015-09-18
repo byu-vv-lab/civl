@@ -46,4 +46,19 @@ public class SpecialStatementsTest {
 	public void choose_bad3() throws ABCException {
 		assertFalse(ui.run("show", filename("choose_bad3.cvl")));
 	}
+
+	@Test
+	public void when1() throws ABCException {
+		assertTrue(ui.run("verify", filename("when1.cvl")));
+	}
+
+	@Test
+	public void when2() throws ABCException {
+		assertTrue(ui.run("verify", filename("when2.cvl")));
+	}
+
+	@Test
+	public void when3() throws ABCException {
+		assertTrue(ui.run("verify", filename("when3.cvl")));
+	}
 }
