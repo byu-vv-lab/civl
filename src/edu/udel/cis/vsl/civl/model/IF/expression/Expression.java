@@ -159,4 +159,13 @@ public interface Expression extends Sourceable {
 	 *            The symbolic universe to be used.
 	 */
 	void calculateConstantValue(SymbolicUniverse universe);
+
+	/**
+	 * checks if this expression contains the constant $here.
+	 * 
+	 * e.g.: s<$here would return true.
+	 * 
+	 * @return
+	 */
+	boolean containsHere();
 }

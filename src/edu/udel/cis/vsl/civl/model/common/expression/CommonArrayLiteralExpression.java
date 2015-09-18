@@ -184,4 +184,13 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 		}
 		return false;
 	}
+
+	@Override
+	public boolean containsHere() {
+		for (Expression ele : elements) {
+			if (ele.containsHere())
+				return true;
+		}
+		return false;
+	}
 }

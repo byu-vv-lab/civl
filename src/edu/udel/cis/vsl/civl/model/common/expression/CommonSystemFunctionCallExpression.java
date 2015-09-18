@@ -57,4 +57,9 @@ public class CommonSystemFunctionCallExpression extends CommonExpression
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public boolean containsHere() {
+		return callStatement.containsHere();
+	}
 }

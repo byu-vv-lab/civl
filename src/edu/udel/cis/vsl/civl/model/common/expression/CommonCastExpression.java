@@ -133,4 +133,9 @@ public class CommonCastExpression extends CommonExpression implements
 				&& this.expression.equals(that.getExpression());
 	}
 
+	@Override
+	public boolean containsHere() {
+		return expression.containsHere();
+	}
+
 }

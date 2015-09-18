@@ -164,4 +164,9 @@ public class CommonDereferenceExpression extends CommonExpression implements
 
 		return this.pointer.equals(that.pointer());
 	}
+
+	@Override
+	public boolean containsHere() {
+		return this.pointer.containsHere();
+	}
 }

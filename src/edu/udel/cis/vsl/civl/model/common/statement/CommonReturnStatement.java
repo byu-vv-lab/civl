@@ -161,4 +161,11 @@ public class CommonReturnStatement extends CommonStatement implements
 		this.expression.calculateConstantValue(universe);
 	}
 
+	@Override
+	protected boolean containsHereWork() {
+		if (expression != null)
+			return expression.containsHere();
+		return false;
+	}
+
 }

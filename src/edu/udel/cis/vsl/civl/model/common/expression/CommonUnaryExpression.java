@@ -203,4 +203,9 @@ public class CommonUnaryExpression extends CommonExpression implements
 		}
 		return op;
 	}
+
+	@Override
+	public boolean containsHere() {
+		return operand.containsHere();
+	}
 }

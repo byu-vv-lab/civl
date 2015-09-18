@@ -246,4 +246,14 @@ public interface Statement extends Sourceable {
 	boolean reachable();
 
 	void setCIVLSource(CIVLSource source);
+
+	/**
+	 * checks if the statement (including its guard) contains the constant
+	 * $here.
+	 * 
+	 * e.g. (a>0: s=$here) would return true;
+	 * 
+	 * @return
+	 */
+	boolean containsHere();
 }

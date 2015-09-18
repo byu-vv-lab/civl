@@ -59,4 +59,9 @@ public class CommonScopeofExpression extends CommonExpression implements
 				.equals(((ScopeofExpression) expression).argument());
 	}
 
+	@Override
+	public boolean containsHere() {
+		return argument.containsHere();
+	}
+
 }

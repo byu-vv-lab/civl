@@ -186,4 +186,9 @@ public class CommonDotExpression extends CommonExpression implements
 				&& this.structOrUnion.equals(that.structOrUnion());
 	}
 
+	@Override
+	public boolean containsHere() {
+		return this.structOrUnion.containsHere();
+	}
+
 }

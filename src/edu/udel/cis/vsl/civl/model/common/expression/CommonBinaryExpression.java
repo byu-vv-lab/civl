@@ -261,7 +261,7 @@ public class CommonBinaryExpression extends CommonExpression implements
 					(NumericExpression) rightValue));
 			break;
 		case AND:
-			//TODO change to andTo
+			// TODO change to andTo
 			constantValue = universe.and((BooleanExpression) leftValue,
 					(BooleanExpression) rightValue);
 			break;
@@ -412,5 +412,10 @@ public class CommonBinaryExpression extends CommonExpression implements
 		default:
 			return false;
 		}
+	}
+
+	@Override
+	public boolean containsHere() {
+		return left.containsHere() || right.containsHere();
 	}
 }

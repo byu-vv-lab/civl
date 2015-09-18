@@ -111,4 +111,13 @@ public class CommonSystemGuardExpression extends CommonExpression implements
 		return false;
 	}
 
+	@Override
+	public boolean containsHere() {
+		for (Expression arg : arguments) {
+			if (arg.containsHere())
+				return true;
+		}
+		return false;
+	}
+
 }

@@ -414,7 +414,11 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 							// Record the index of loc so that it can be
 							// removed later
 							toRemove.add(i);
-							//TODO simplify me: using incoming statements
+							if (this.startLocation == loc) {
+								this.startLocation = loc.getSoleOutgoing()
+										.target();
+							}
+							// TODO simplify me: using incoming statements
 							for (int j = 0; j < count; j++) {
 								Location curLoc;
 

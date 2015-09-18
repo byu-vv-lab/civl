@@ -61,4 +61,9 @@ public class CommonHereOrRootExpression extends CommonExpression implements
 		return this.isRoot == that.isRoot();
 	}
 
+	@Override
+	public boolean containsHere() {
+		return this.isHere();
+	}
+
 }

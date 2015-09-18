@@ -329,4 +329,16 @@ public abstract class CommonStatement extends CommonSourceable implements
 	public boolean reachable() {
 		return this.reached;
 	}
+
+	@Override
+	public boolean containsHere() {
+		if (guard.containsHere())
+			return true;
+		return containsHereWork();
+	}
+
+	protected boolean containsHereWork() {
+		return false;
+	}
+
 }

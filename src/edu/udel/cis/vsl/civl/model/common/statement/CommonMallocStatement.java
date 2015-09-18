@@ -236,4 +236,9 @@ public class CommonMallocStatement extends CommonStatement implements
 
 	}
 
+	@Override
+	protected boolean containsHereWork() {
+		return this.scopeExpression.containsHere();
+	}
+
 }

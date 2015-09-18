@@ -118,4 +118,13 @@ public class CommonAbstractFunctionCallExpression extends CommonExpression
 		return false;
 	}
 
+	@Override
+	public boolean containsHere() {
+		for (Expression arg : arguments) {
+			if (arg.containsHere())
+				return true;
+		}
+		return false;
+	}
+
 }

@@ -1,7 +1,9 @@
 package edu.udel.cis.vsl.civl.model.common;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
@@ -227,9 +229,14 @@ public class CommonFragment implements Fragment {
 			Location location = workings.pop();
 
 			if (location.getNumOutgoing() > 0) {
+				List<Statement> outgoings = new ArrayList<>();
+
+				for (Statement stmt : location.outgoing()) {
+					outgoings.add(stmt);
+				}
 				number = location.getNumOutgoing();
 				for (int i = 0; i < number; i++) {
-					Statement s = location.getOutgoing(i);
+					Statement s = outgoings.get(i);
 
 					if (s.source().id() == oldLocationId) {
 						s.setSource(newLocation);

@@ -134,4 +134,9 @@ public class CommonAddressOfExpression extends CommonExpression implements
 
 		return this.operand.equals(that.operand());
 	}
+
+	@Override
+	public boolean containsHere() {
+		return this.operand.containsHere();
+	}
 }

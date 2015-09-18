@@ -288,4 +288,13 @@ public class CommonQuantifiedExpression extends CommonExpression implements
 						&& this.upper.equals(that.upper()) : this.restriction
 						.equals(that.boundRestriction()));
 	}
+
+	@Override
+	public boolean containsHere() {
+		if (isRange) {
+			return upper.containsHere() || lower.containsHere()
+					|| expression.containsHere();
+		} else
+			return restriction.containsHere() || expression.containsHere();
+	}
 }

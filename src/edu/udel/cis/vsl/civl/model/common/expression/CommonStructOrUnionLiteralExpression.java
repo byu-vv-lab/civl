@@ -151,4 +151,13 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 		}
 		return false;
 	}
+
+	@Override
+	public boolean containsHere() {
+		for (Expression field : fields) {
+			if (field.containsHere())
+				return true;
+		}
+		return false;
+	}
 }

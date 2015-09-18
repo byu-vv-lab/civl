@@ -217,4 +217,10 @@ public class CommonConditionalExpression extends CommonExpression implements
 				&& this.falseBranch.equals(that.getFalseBranch());
 	}
 
+	@Override
+	public boolean containsHere() {
+		return condition.containsHere() || trueBranch.containsHere()
+				|| falseBranch.containsHere();
+	}
+
 }

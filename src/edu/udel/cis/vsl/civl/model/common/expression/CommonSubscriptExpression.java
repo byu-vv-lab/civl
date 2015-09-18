@@ -200,4 +200,9 @@ public class CommonSubscriptExpression extends CommonExpression implements
 		return this.array.equals(that.array())
 				&& this.index.equals(that.index());
 	}
+
+	@Override
+	public boolean containsHere() {
+		return array.containsHere() || index.containsHere();
+	}
 }

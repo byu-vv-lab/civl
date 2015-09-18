@@ -145,9 +145,14 @@ public abstract class CommonExpression extends CommonSourceable implements
 		}
 		return false;
 	}
-	
+
 	@Override
 	public Scope lowestScope() {
 		return this.lowestScope;
+	}
+
+	@Override
+	public boolean containsHere() {
+		return false;
 	}
 }

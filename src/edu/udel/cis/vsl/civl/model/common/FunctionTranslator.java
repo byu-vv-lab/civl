@@ -147,7 +147,6 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
@@ -932,9 +931,8 @@ public class FunctionTranslator {
 		loopEntranceLocation = modelFactory.location(condition.getSource(),
 				loopScope);
 		// incrementer comes after the loop body
-		loopEntrance = new CommonFragment(loopEntranceLocation,
-				modelFactory.loopBranchStatement(condition.getSource(),
-						loopEntranceLocation, condition, true));
+		loopEntrance = new CommonFragment(modelFactory.loopBranchStatement(
+				condition.getSource(), loopEntranceLocation, condition, true));
 		// the loop entrance location is the same as the loop exit location
 		loopExit = new CommonFragment(modelFactory.loopBranchStatement(
 				condition.getSource(), loopEntranceLocation, modelFactory
@@ -1560,7 +1558,6 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(chooseStatementNode), scope);
 		int defaultOffset = 0;
 		Fragment result = new CommonFragment();
-
 		Expression defaultGuard = null;
 
 		if (chooseStatementNode.getDefaultCase() != null) {
@@ -1570,9 +1567,16 @@ public class FunctionTranslator {
 		for (int i = 0; i < chooseStatementNode.numChildren() - defaultOffset; i++) {
 			StatementNode childNode = chooseStatementNode.getSequenceChild(i);
 			Fragment caseFragment = translateStatementNode(scope, childNode);
-			Expression caseGuard = this.addFragment2Location(startLocation,
-					caseFragment);
+			Expression caseGuard;
 
+			if (this.containsHereConstant(caseFragment.startLocation())) {
+				throw new CIVLSyntaxException(
+						"the first (recursively) primitive statement "
+								+ "of a clause of $choose should not use $here",
+						caseFragment.startLocation().getSource());
+			}
+			caseGuard = this.factorOutGuards(caseFragment.startLocation());
+			caseFragment.updateStartLocation(startLocation);
 			result.addFinalStatementSet(caseFragment.finalStatements());
 			defaultGuard = this.disjunction(defaultGuard, caseGuard);
 		}
@@ -1582,12 +1586,15 @@ public class FunctionTranslator {
 			if (chooseStatementNode.getDefaultCase() != null) {
 				Fragment defaultFragment = translateStatementNode(scope,
 						chooseStatementNode.getDefaultCase());
-				Location defaultLocation = defaultFragment.startLocation();
-				NoopStatement noop = modelFactory.noopStatementWtGuard(
-						defaultLocation.getSource(), startLocation,
-						defaultGuard);
 
-				noop.setTarget(defaultLocation);
+				if (this.containsHereConstant(defaultFragment.startLocation())) {
+					throw new CIVLSyntaxException(
+							"the first (recursively) primitive statement "
+									+ "of a clause of $choose should not use $here",
+							defaultFragment.startLocation().getSource());
+				}
+				defaultFragment.addGuardToStartLocation(defaultGuard, modelFactory);
+				defaultFragment.updateStartLocation(startLocation);
 				result.addFinalStatementSet(defaultFragment.finalStatements());
 			}
 		}
@@ -1595,38 +1602,29 @@ public class FunctionTranslator {
 	}
 
 	/**
-	 * adds a fragment to a location, connected by a noop statement and also
-	 * factors out the guards of all outgoing statements of the start location
-	 * of the fragment and assign it with the noop statement
+	 * checks if any outgoing statement of the given location uses the $here
+	 * constant.
 	 * 
-	 * @param startLocation
-	 * @param subFragment
-	 * @return the disjunction of the guards of all outgoing statements of the
-	 *         start location of the fragment
+	 * @param location
+	 * @return
 	 */
-	private Expression addFragment2Location(Location location, Fragment fragment) {
-		Location fragmentStart = fragment.startLocation();
-		NoopStatement noop = modelFactory.noopStatement(
-				fragmentStart.getSource(), location, null);
-		Expression guards = null;
-
-		// add a noop from the location to the start location of this fragment
-		noop.setTarget(fragmentStart);
-		guards = this.factorOutGuards(fragmentStart);
-		noop.setGuard(guards);
-		return guards;
+	private boolean containsHereConstant(Location location) {
+		for (Statement stmt : location.outgoing()) {
+			if (stmt.containsHere())
+				return true;
+		}
+		return false;
 	}
 
 	/**
 	 * factors out the guards of the outgoing statements of a location in
-	 * disjunction. If the location contains only one outgoing statement, the
-	 * guard is removed from the outgoing statement.
+	 * disjunction.
 	 * 
 	 * For example, if the location has two outgoing statements: [x>2] s1; [x<6]
 	 * s2; then the result is (x>2 || x<6).
 	 * 
 	 * If the location has exactly one outgoing statement: [x<10] s; then the
-	 * result is (x<10) and the outgoing statement becomes: [true] s.
+	 * result is (x<10).
 	 * 
 	 * This method serves as a helper function for $choose.
 	 * 
@@ -1634,22 +1632,13 @@ public class FunctionTranslator {
 	 * @return
 	 */
 	private Expression factorOutGuards(Location location) {
-		int numOutgoing = location.getNumOutgoing();
 		Expression guard = null;
+		Iterator<Statement> iter = location.outgoing().iterator();
 
-		if (numOutgoing == 1) {
-			Statement outgoing = location.getOutgoing(0);
+		while (iter.hasNext()) {
+			Expression statementGuard = iter.next().guard();
 
-			guard = outgoing.guard();
-			outgoing.setGuard(modelFactory.trueExpression(guard.getSource()));
-		} else {
-			Iterator<Statement> iter = location.outgoing().iterator();
-
-			while (iter.hasNext()) {
-				Expression statementGuard = iter.next().guard();
-
-				guard = this.disjunction(guard, statementGuard);
-			}
+			guard = this.disjunction(guard, statementGuard);
 		}
 		return guard;
 	}
@@ -1702,32 +1691,32 @@ public class FunctionTranslator {
 		// indicates whether the location field has been used:
 		boolean usedLocation = false;
 		Fragment result = new CommonFragment();
-		boolean newScopeNeeded = false;
+		boolean newScopeNeeded = this.needsNewScope(statementNode);
 
-		// In order to eliminate unnecessary scopes, do this loop twice.
-		// The first time, just check if there are any declarations. If there
-		// are, create newScope as usual. Otherwise, let newScope = scope.
-		for (int i = 0; i < statementNode.numChildren(); i++) {
-			BlockItemNode node = statementNode.getSequenceChild(i);
-
-			if (node instanceof VariableDeclarationNode
-					|| node instanceof FunctionDeclarationNode) {
-				newScopeNeeded = true;
-				break;
-			}
-			if (node instanceof LabeledStatementNode) {
-				StatementNode labeledStatementNode = ((LabeledStatementNode) node)
-						.getStatement();
-				if (labeledStatementNode instanceof VariableDeclarationNode) {
-					newScopeNeeded = true;
-					break;
-				}
-			}
-		}
-		if (!newScopeNeeded) {
-			newScopeNeeded = hasHereNode(statementNode.getScope(),
-					statementNode);
-		}
+		// // In order to eliminate unnecessary scopes, do this loop twice.
+		// // The first time, just check if there are any declarations. If there
+		// // are, create newScope as usual. Otherwise, let newScope = scope.
+		// for (int i = 0; i < statementNode.numChildren(); i++) {
+		// BlockItemNode node = statementNode.getSequenceChild(i);
+		//
+		// if (node instanceof VariableDeclarationNode
+		// || node instanceof FunctionDeclarationNode) {
+		// newScopeNeeded = true;
+		// break;
+		// }
+		// if (node instanceof LabeledStatementNode) {
+		// StatementNode labeledStatementNode = ((LabeledStatementNode) node)
+		// .getStatement();
+		// if (labeledStatementNode instanceof VariableDeclarationNode) {
+		// newScopeNeeded = true;
+		// break;
+		// }
+		// }
+		// }
+		// if (!newScopeNeeded) {
+		// newScopeNeeded = needsNewScope(statementNode.parent().getScope(),
+		// statementNode);
+		// }
 		if (newScopeNeeded)
 			newScope = modelFactory.scope(modelFactory.sourceOf(statementNode),
 					scope, new LinkedHashSet<Variable>(),
@@ -1752,37 +1741,89 @@ public class FunctionTranslator {
 	/**
 	 * Checks if an AST node contains any $here node in a certain scope.
 	 * 
+	 * In order to eliminate unnecessary scopes, do this loop twice. The first
+	 * time, just check if there are any declarations. If there are, create
+	 * newScope as usual. Otherwise, let newScope = scope.
+	 * 
 	 * @param scope
 	 *            The scope to be checked.
-	 * @param astNode
+	 * @param compound
 	 *            The AST node to be checked.
 	 * @return True iff a $here node exists in the AST node and is in the given
 	 *         scope.
 	 */
-	private boolean hasHereNode(edu.udel.cis.vsl.abc.ast.entity.IF.Scope scope,
-			ASTNode astNode) {
-		int number = astNode.numChildren();
+	private boolean needsNewScope(CompoundStatementNode compound) {
+		int numChildren = compound.numChildren();
 
-		if (number < 1)
-			return false;
-		for (int i = 0; i < number; i++) {
-			ASTNode child = astNode.child(i);
+		for (int i = 0; i < numChildren; i++) {
+			BlockItemNode blockItem = compound.getSequenceChild(i);
+
+			if (blockItem instanceof VariableDeclarationNode
+					|| blockItem instanceof FunctionDeclarationNode) {
+				return true;
+			}
+			if (blockItem instanceof CompoundStatementNode)
+				continue;
+			if (blockItem instanceof LabeledStatementNode) {
+				StatementNode labeledStatementNode = ((LabeledStatementNode) blockItem)
+						.getStatement();
+				if (labeledStatementNode instanceof VariableDeclarationNode) {
+					return true;
+				}
+			}
+			if (hasHereNodeWork(blockItem))
+				return true;
+		}
+		return false;
+	}
+
+	// private boolean containsHereNodeInFirstPrimitiveStatement(
+	// StatementNode statementNode) {
+	// if (statementNode instanceof CompoundStatementNode) {
+	// CompoundStatementNode compound = (CompoundStatementNode) statementNode;
+	// int numChildren = compound.numChildren();
+	// StatementNode first = null;
+	//
+	// for (int i = 0; i < numChildren; i++) {
+	// BlockItemNode child = compound.getSequenceChild(i);
+	//
+	// if (child == null)
+	// continue;
+	// if (child instanceof VariableDeclarationNode)
+	// return false;
+	// if (!(child instanceof StatementNode))
+	// continue;
+	// return containsHereNodeInFirstPrimitiveStatement((StatementNode) child);
+	// }
+	// return false;
+	// } else if(statementNode instanceof IfNode) {
+	// IfNode if
+	// }
+	// }
+
+	private boolean hasHereNodeWork(ASTNode node) {
+		if (isHereNode(node)) {
+			return true;
+		}
+
+		int numChildren = node.numChildren();
+
+		for (int i = 0; i < numChildren; i++) {
+			ASTNode child = node.child(i);
 
 			if (child == null)
 				continue;
-			if (!child.getScope().equals(scope))
+			if (child instanceof CompoundStatementNode)
 				continue;
-			else {
-				if (child instanceof HereOrRootNode) {
-					if (((HereOrRootNode) child).isHereNode())
-						return true;
-				} else {
-					boolean result = hasHereNode(scope, child);
+			if (hasHereNodeWork(child))
+				return true;
+		}
+		return false;
+	}
 
-					if (result)
-						return result;
-				}
-			}
+	private boolean isHereNode(ASTNode node) {
+		if (node instanceof HereOrRootNode) {
+			return ((HereOrRootNode) node).isHereNode();
 		}
 		return false;
 	}
@@ -2241,9 +2282,9 @@ public class FunctionTranslator {
 	}
 
 	/**
-	 * 	callWaitAll = modelFactory.callOrSpawnStatement(parForEndSource,
-				location, true, modelFactory.waitallFunctionPointer(),
-				Arrays.asList(this.arrayToPointer(parProcs), domSizeVar), null);
+	 * callWaitAll = modelFactory.callOrSpawnStatement(parForEndSource,
+	 * location, true, modelFactory.waitallFunctionPointer(),
+	 * Arrays.asList(this.arrayToPointer(parProcs), domSizeVar), null);
 	 * */
 	private Statement elaborateDomainCall(Scope scope, Expression domain) {
 		CIVLSource source = domain.getSource();
@@ -2690,7 +2731,13 @@ public class FunctionTranslator {
 		Fragment result = null, initialization = null;
 		IdentifierNode identifier = node.getIdentifier();
 		CIVLSource source = modelFactory.sourceOf(node);
+		boolean initializerTranslated = false;
 
+		if (sourceLocation == null)
+			sourceLocation = modelFactory.location(
+					modelFactory.sourceOfBeginning(node), scope);
+		result = new CommonFragment(modelFactory.noopStatement(source,
+				sourceLocation, null));
 		if (variable.isInput() || variable.isStatic()
 				|| type instanceof CIVLArrayType
 				|| type instanceof CIVLStructOrUnionType || type.isHeapType()) {
@@ -2711,23 +2758,23 @@ public class FunctionTranslator {
 				sourceLocation = modelFactory.location(
 						modelFactory.sourceOfBeginning(node), scope);
 			if (rhs != null) {
-				result = new CommonFragment(sourceLocation,
-						modelFactory.assignStatement(source, sourceLocation,
-								modelFactory.variableExpression(
+				Location location = modelFactory.location(
+						modelFactory.sourceOfEnd(node), scope);
+
+				initializerTranslated = true;
+				result = result.combineWith(new CommonFragment(modelFactory
+						.assignStatement(source, location, modelFactory
+								.variableExpression(
 										modelFactory.sourceOf(identifier),
-										variable), rhs, true));
-				sourceLocation = null;
+										variable), rhs, true)));
 			}
 		}
 		// for input variables, only use the initialization if there
 		// was no command line specification of the input value:
-		if (result == null || !variable.isInput()) {
+		if (!initializerTranslated || !variable.isInput()) {
 			initialization = translateVariableInitializationNode(node,
-					variable, sourceLocation, scope);
-			if (result == null)
-				result = initialization;
-			else
-				result = result.combineWith(initialization);
+					variable, null, scope);
+			result = result.combineWith(initialization);
 		}
 		return result;
 	}
@@ -2746,6 +2793,8 @@ public class FunctionTranslator {
 			VariableDeclarationNode node, Scope scope) {
 		edu.udel.cis.vsl.abc.ast.entity.IF.Variable varEntity = node
 				.getEntity();
+		// node.prettyPrint(System.out);
+		// System.out.println();
 		if (!varEntity.getDefinition().equals(node))
 			return null;
 
@@ -3001,6 +3050,8 @@ public class FunctionTranslator {
 						modelFactory.sourceOfBeginning(whenGuardNode),
 						modelFactory.sourceOfEnd(whenGuardNode));
 		Fragment beforeGuardFragment = refineConditional.left, result;
+		Location whenLocation = modelFactory.location(
+				modelFactory.sourceOfBeginning(whenNode), scope);
 
 		whenGuard = refineConditional.right;
 		try {
@@ -3019,6 +3070,7 @@ public class FunctionTranslator {
 			// and that statement's guard.
 			result.addGuardToStartLocation(whenGuard, modelFactory);
 		}
+		result.updateStartLocation(whenLocation);
 		if (beforeGuardFragment != null) {
 			result = beforeGuardFragment.combineWith(result);
 		}
@@ -4834,9 +4886,8 @@ public class FunctionTranslator {
 			if (sourceLocation == null)
 				sourceLocation = modelFactory.location(
 						modelFactory.sourceOfBeginning(typeNode), scope);
-			result = new CommonFragment(sourceLocation,
-					modelFactory.assignStatement(civlSource, sourceLocation,
-							lhs, rhs, true));
+			result = new CommonFragment(modelFactory.assignStatement(
+					civlSource, sourceLocation, lhs, rhs, true));
 		}
 		return result;
 	}

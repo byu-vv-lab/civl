@@ -354,4 +354,13 @@ public class CommonCallStatement extends CommonStatement implements
 			arg.calculateConstantValue(universe);
 	}
 
+	@Override
+	protected boolean containsHereWork() {
+		for (Expression arg : arguments) {
+			if (arg.containsHere())
+				return true;
+		}
+		return false;
+	}
+
 }

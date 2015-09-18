@@ -192,4 +192,9 @@ public class CommonAssignStatement extends CommonStatement implements
 	protected void calculateConstantValueWork(SymbolicUniverse universe) {
 		this.rhs.calculateConstantValue(universe);
 	}
+
+	@Override
+	public boolean containsHereWork() {
+		return lhs.containsHere() || rhs.containsHere();
+	}
 }
