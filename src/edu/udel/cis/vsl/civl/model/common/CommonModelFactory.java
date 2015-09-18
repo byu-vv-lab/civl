@@ -907,12 +907,22 @@ public class CommonModelFactory implements ModelFactory {
 		startFragment = new CommonFragment(enterAtomic);
 		endFragment = new CommonFragment(leaveAtomic);
 		start.setEnterAtomic(deterministic);
-		for (Statement statement : fragment.startLocation().outgoing()) {
-			if (startGuard == null)
-				startGuard = statement.guard();
-			else {
-				startGuard = this.binaryExpression(startGuard.getSource(),
-						BINARY_OPERATOR.OR, startGuard, statement.guard());
+
+		if (fragment.startLocation().getNumOutgoing() == 1) {
+			Statement firstStmtOfBody = fragment.startLocation()
+					.getSoleOutgoing();
+
+			startGuard = firstStmtOfBody.guard();
+			firstStmtOfBody
+					.setGuard(this.trueExpression(startGuard.getSource()));
+		} else {
+			for (Statement statement : fragment.startLocation().outgoing()) {
+				if (startGuard == null)
+					startGuard = statement.guard();
+				else {
+					startGuard = this.binaryExpression(startGuard.getSource(),
+							BINARY_OPERATOR.OR, startGuard, statement.guard());
+				}
 			}
 		}
 		if (startGuard != null)
@@ -1223,12 +1233,23 @@ public class CommonModelFactory implements ModelFactory {
 		}
 		if (!beforeConditionFragment.isEmpty()) {
 			// make the if-else statements atomic ($atomic)
+			beforeConditionFragment = this.insertNoopAtBeginning(startSource,
+					scope, beforeConditionFragment);
 			beforeConditionFragment = this.atomicFragment(false,
 					beforeConditionFragment, this.location(startSource, scope),
 					this.location(endSource, scope));
 		}
 		return new Pair<Fragment, Expression>(beforeConditionFragment,
 				expression);
+	}
+
+	private Fragment insertNoopAtBeginning(CIVLSource source, Scope scope,
+			Fragment old) {
+		Location start = location(source, scope);
+		NoopStatement noop = noopStatement(source, start, null);
+		Fragment noopFragment = new CommonFragment(noop);
+
+		return noopFragment.combineWith(old);
 	}
 
 	@Override
@@ -1253,6 +1274,7 @@ public class CommonModelFactory implements ModelFactory {
 			statement.replaceWith(conditionalExpression, variable);
 			result = result.combineWith(ifElse);
 		}
+		result = this.insertNoopAtBeginning(statementSource, scope, result);
 		// make the if-else statements atomic
 		result = this.atomicFragment(false, result,
 				this.location(statementSource, scope),

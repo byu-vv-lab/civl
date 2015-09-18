@@ -147,6 +147,7 @@ import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.ReturnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLArrayType;
@@ -1554,8 +1555,9 @@ public class FunctionTranslator {
 	 */
 	private Fragment translateChooseNode(Scope scope,
 			ChooseStatementNode chooseStatementNode) {
-		Location startLocation = modelFactory.location(
-				modelFactory.sourceOfBeginning(chooseStatementNode), scope);
+		CIVLSource startSource = modelFactory
+				.sourceOfBeginning(chooseStatementNode);
+		Location startLocation = modelFactory.location(startSource, scope);
 		int defaultOffset = 0;
 		Fragment result = new CommonFragment();
 		Expression defaultGuard = null;
@@ -1593,12 +1595,24 @@ public class FunctionTranslator {
 									+ "of a clause of $choose should not use $here",
 							defaultFragment.startLocation().getSource());
 				}
-				defaultFragment.addGuardToStartLocation(defaultGuard, modelFactory);
+				defaultFragment.addGuardToStartLocation(defaultGuard,
+						modelFactory);
 				defaultFragment.updateStartLocation(startLocation);
 				result.addFinalStatementSet(defaultFragment.finalStatements());
 			}
 		}
-		return result;
+		// insert noop at the beginning the fragment so that the guard of the
+		// start location will be true;
+		return this.insertNoopAtBeginning(startSource, scope, result);
+	}
+
+	private Fragment insertNoopAtBeginning(CIVLSource source, Scope scope,
+			Fragment old) {
+		Location start = modelFactory.location(source, scope);
+		NoopStatement noop = modelFactory.noopStatement(source, start, null);
+		Fragment noopFragment = new CommonFragment(noop);
+
+		return noopFragment.combineWith(old);
 	}
 
 	/**
@@ -2371,8 +2385,11 @@ public class FunctionTranslator {
 			falseBranch = falseBranch.combineWith(falseBranchBody);
 		}
 		result = trueBranch.parallelCombineWith(falseBranch);
-		if (beforeCondition != null) {
+		if (!beforeCondition.isEmpty()) {
 			result = beforeCondition.combineWith(result);
+		} else {
+			result = this.insertNoopAtBeginning(
+					modelFactory.sourceOfBeginning(ifNode), scope, result);
 		}
 		return result;
 	}
