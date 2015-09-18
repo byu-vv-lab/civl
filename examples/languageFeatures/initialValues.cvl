@@ -17,8 +17,8 @@ MyUnion    myunion;
 int main() {
   int a;
 
-  $elaborate_rectangular_domain(dom0);
-  $elaborate_rectangular_domain(dom2);
+  $elaborate_domain(dom0);
+  $elaborate_domain(dom2);
   a = enumVar;
   a = myunion.a;
   ptr = &a;
