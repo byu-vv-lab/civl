@@ -18,7 +18,6 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -81,6 +80,39 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		return this.executeWork(state, pid, statement, functionName);
 	}
 
+	/**
+	 * Execute MPI collective contract. MPI collective contract can be checked
+	 * as collective assertions, but error will be reported as MPI Collective
+	 * Contract violation.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param process
+	 *            The String identifier of the process
+	 * @param args
+	 *            The expression array of arguments
+	 * @param source
+	 *            The source of the contract expression
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	public State mpiCollectiveContract(State state, int pid, String process,
+			Expression[] args, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		Expression groupExpr = args[0];
+		SymbolicExpression[] group = new SymbolicExpression[1];
+		Evaluation eval;
+
+		eval = evaluator.evaluate(state, pid, groupExpr);
+		state = eval.state;
+		group[0] = eval.value;
+		state = this.executeCoassertWorker(state, pid, process, args, group,
+				source, true);
+		return state;
+	}
+
 	/* ************************* private methods **************************** */
 	private State executeWork(State state, int pid,
 			CallOrSpawnStatement statement, String functionName)
@@ -97,10 +129,16 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		arguments = new Expression[numArgs];
 		for (int i = 0; i < numArgs; i++)
 			arguments[i] = call.arguments().get(i);
-		// Not evaluate the second argument of collective assert (which is the
-		// predicate) here.
-		if (functionName.equals("$mpi_coassert"))
-			numArgs = 1;
+		// If the function is $mpi_coassert, call function
+		// "mpiCollectiveAssert()" which is a public re-usable function. It
+		// deals with arguments of $mpi_coassert differently with other normal
+		// system functions:
+		if (functionName.equals("$mpi_coassert")) {
+			state = this.executeCoassertArrive(state, pid, process, arguments,
+					statement.getSource());
+			return stateFactory.setLocation(state, pid, call.target(),
+					call.lhs() != null);
+		}
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval;
@@ -137,11 +175,6 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		case "$mpi_proc_scope":
 			state = executeProcScope(state, pid, process, lhs, arguments,
 					argumentValues, statement.getSource());
-			break;
-		case "$mpi_coassert":
-			if (this.civlConfig.isEnableMpiContract())
-				state = executeCoassertArrive(call, state, pid, process,
-						arguments, argumentValues, statement.getSource());
 			break;
 		default:
 			throw new CIVLInternalException("Unknown civl-mpi function: "
@@ -328,7 +361,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		if (symbolicUtil.isNullPointer(pointer))
 			return state;
 		if (!pointer.operator().equals(SymbolicOperator.CONCRETE)
-				|| !symbolicUtil.isDerefablePointer( pointer)) {
+				|| !symbolicUtil.isDerefablePointer(pointer)) {
 			this.errorLogger.logSimpleError(arguments[0].getSource(), state,
 					process, this.symbolicAnalyzer.stateInformation(state),
 					ErrorKind.POINTER,
@@ -449,6 +482,38 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	}
 
 	/**
+	 * Execute $mpi_coassert(MPI_Comm, _Bool). The second argument shall not be
+	 * evaluated at calling phase. It will be evaluated at some point following
+	 * collective assertion semantics. See
+	 * {@link #executeCoassertWorker(State, int, String, Expression[], SymbolicExpression[], CIVLSource, boolean)}
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param process
+	 *            The String identifier of the process
+	 * @param arguments
+	 *            The Expression array of the arguments
+	 * @param source
+	 *            The CIVLSource of the function call statement
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State executeCoassertArrive(State state, int pid, String process,
+			Expression[] arguments, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression[] argumentValues = new SymbolicExpression[1];
+		Evaluation eval;
+
+		eval = evaluator.evaluate(state, pid, arguments[0]);
+		state = eval.state;
+		argumentValues[0] = eval.value;
+		return this.executeCoassertWorker(state, pid, process, arguments,
+				argumentValues, source, false);
+	}
+
+	/**
 	 * Executing $mpi_coassert(MPI_Comm, _Bool) function with a regular snapshot
 	 * semantics. The first process will create a collective entry and takes a
 	 * snapshot on itself; others just save their snapshots; the last one who
@@ -468,12 +533,15 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	 * @param argumentValues
 	 *            The symbolic expression array of the argument of the function
 	 * @param source
+	 * @param isContract
+	 *            flag controls whether an error will be reported as a contract
+	 *            violation or assertion violation
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State executeCoassertArrive(Statement call, State state, int pid,
-			String process, Expression[] arguments,
-			SymbolicExpression[] argumentValues, CIVLSource source)
+	private State executeCoassertWorker(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source, boolean isContract)
 			throws UnsatisfiablePathConditionException {
 		ImmutableState tmpState = (ImmutableState) state;
 		Expression MPICommExpr = arguments[0];
@@ -560,8 +628,8 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			assertions = entry.getAllAssertions();
 			fakeState = stateFactory.mergeMonostates(tmpState, entry);
 			// evaluate
-			fakeState = coassertsEvaluation(fakeState, assertions, place,
-					source, call);
+			fakeState = coassertsEvaluation(fakeState, assertions, MPICommExpr,
+					isContract);
 		}
 		return tmpState;
 	}
@@ -623,7 +691,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State coassertsEvaluation(State fakeState, Expression[] assertions,
-			int pid, CIVLSource source, Statement call)
+			Expression group, boolean isContract)
 			throws UnsatisfiablePathConditionException {
 		String process;
 		Evaluation eval;
@@ -648,10 +716,18 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 				message = " assertion:" + assertions[place];
 				process = "process with rank: " + place + " participating the "
 						+ "$mpi_coassert().";
-				fakeState = this.reportAssertionFailure(fakeState, place,
-						process, resultType, "$mpi_coassert fail: " + message,
-						args, argVals, snapShotAssertion.getSource(), call,
-						assertionVal, 1);
+				if (isContract) {
+					fakeState = this.primaryExecutor.reportContractViolation(
+							fakeState, snapShotAssertion.getSource(), place,
+							process, resultType, assertionVal,
+							snapShotAssertion, ErrorKind.MPI_ERROR,
+							group.toString());
+				} else
+					// TODO improve infomation
+					fakeState = this.reportAssertionFailure(fakeState, place,
+							process, resultType, "$mpi_coassert violation: "
+									+ message, args, argVals,
+							snapShotAssertion.getSource(), assertionVal, 1);
 			}
 		}
 		return fakeState;

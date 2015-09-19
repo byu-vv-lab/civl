@@ -44,7 +44,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.CastExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.CharLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ClauseKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.DereferenceExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DerivativeCallExpression;
@@ -52,7 +51,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.DomainGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DynamicTypeOfExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.Expression.ExpressionKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.HereOrRootExpression;
@@ -2103,10 +2101,9 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public ContractClauseExpression contractClauseExpression(CIVLSource source,
 			CIVLType type, Expression collectiveGroup, Expression body,
-			ContractKind contractKind) {
+			ContractKind contractKind,
+			Iterable<SystemFunctionCallExpression> contractCalls) {
 		Scope lscope, hscope;
-		ExpressionKind exprKind;
-		ClauseKind clauseKind;
 
 		if (collectiveGroup != null) {
 			lscope = this.getLowerScope(Arrays.asList(collectiveGroup, body));
@@ -2115,16 +2112,8 @@ public class CommonModelFactory implements ModelFactory {
 			lscope = body.lowestScope();
 			hscope = body.expressionScope();
 		}
-		exprKind = body.expressionKind();
-		switch (exprKind) {
-		case SYSTEM_FUNC_CALL:
-			clauseKind = ClauseKind.MESSAGE_BUFFER;
-			break;
-		default:
-			clauseKind = ClauseKind.EXPRESSION;
-		}
 		return new CommonContractClauseExpression(source, hscope, lscope, type,
-				collectiveGroup, body, contractKind, clauseKind);
+				collectiveGroup, body, contractKind, contractCalls);
 	}
 
 	@Override

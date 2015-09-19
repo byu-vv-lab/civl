@@ -1573,17 +1573,27 @@ public interface ModelFactory {
 			Expression process, Scope scope);
 
 	/**
-	 * Creates a contract clause expression
+	 * Creates a contract clause expression: {@link ContractClauseExpression}.
 	 * 
 	 * @param source
-	 * @param hscope
-	 * @param lscope
+	 *            CIVLSource of the contract clause
 	 * @param type
+	 *            Expression type, should can only be Boolean Type
 	 * @param collectiveGroup
+	 *            Expression of the group of processes, only significant when
+	 *            this contract is a collective contract.
 	 * @param body
+	 *            Expression of the body of this contract clause which should be
+	 *            a boolean expression.
+	 * @param contractKind
+	 *            The kind of the contract, e.g. Requires or Ensures
+	 * @param contractCalls
+	 *            System function calls supported by contract semantics, can be
+	 *            null if there is no such call.
 	 * @return
 	 */
 	ContractClauseExpression contractClauseExpression(CIVLSource source,
 			CIVLType type, Expression collectiveGroup, Expression body,
-			ContractKind contractKind);
+			ContractKind contractKind,
+			Iterable<SystemFunctionCallExpression> contractCalls);
 }

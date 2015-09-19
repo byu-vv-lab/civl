@@ -11,7 +11,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
@@ -156,7 +155,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			}
 			state = this.reportAssertionFailure(state, pid, process,
 					resultType, message.toString(), arguments, argumentValues,
-					source, statement, assertValue, 1);
+					source, assertValue, 1);
 		}
 		return state;
 	}
@@ -243,8 +242,6 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	 *            The symbolic expressions of the arguments
 	 * @param source
 	 *            The CIVL source of the assertion statement
-	 * @param statement
-	 *            The model of the statement expression
 	 * @param assertValue
 	 *            The boolean expression of the value of the assertion claim
 	 * @param msgOffset
@@ -256,8 +253,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 	protected State reportAssertionFailure(State state, int pid,
 			String process, ResultType resultType, String message,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source, Statement statement,
-			BooleanExpression assertValue, int msgOffset)
+			CIVLSource source, BooleanExpression assertValue, int msgOffset)
 			throws UnsatisfiablePathConditionException {
 		assert resultType != ResultType.YES;
 		if (arguments.length > msgOffset) {

@@ -8,6 +8,7 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -21,11 +22,11 @@ public class CommonContractClauseExpression extends CommonExpression implements
 
 	private ContractKind contractKind;
 
-	private ClauseKind clauseKind;
+	private Iterable<SystemFunctionCallExpression> contractCalls;
 
 	public CommonContractClauseExpression(CIVLSource source, Scope hscope,
 			Scope lscope, CIVLType type, Expression collectiveGroup,
-			Expression body, ContractKind contractKind, ClauseKind clauseKind) {
+			Expression body, ContractKind contractKind) {
 		super(source, hscope, lscope, type);
 		if (collectiveGroup == null)
 			this.isCollective = false;
@@ -34,7 +35,21 @@ public class CommonContractClauseExpression extends CommonExpression implements
 		this.collectiveGroup = collectiveGroup;
 		this.body = body;
 		this.contractKind = contractKind;
-		this.clauseKind = clauseKind;
+	}
+
+	public CommonContractClauseExpression(CIVLSource source, Scope hscope,
+			Scope lscope, CIVLType type, Expression collectiveGroup,
+			Expression body, ContractKind contractKind,
+			Iterable<SystemFunctionCallExpression> contractCalls) {
+		super(source, hscope, lscope, type);
+		if (collectiveGroup == null)
+			this.isCollective = false;
+		else
+			this.isCollective = true;
+		this.collectiveGroup = collectiveGroup;
+		this.body = body;
+		this.contractKind = contractKind;
+		this.contractCalls = contractCalls;
 	}
 
 	@Override
@@ -106,7 +121,7 @@ public class CommonContractClauseExpression extends CommonExpression implements
 
 		return new CommonContractClauseExpression(this.getSource(),
 				this.expressionScope(), this.lowestScope(), expressionType,
-				newGroup, newBody, contractKind, clauseKind);
+				newGroup, newBody, contractKind);
 	}
 
 	@Override
@@ -125,7 +140,7 @@ public class CommonContractClauseExpression extends CommonExpression implements
 	}
 
 	@Override
-	public ClauseKind clauseKind() {
-		return this.clauseKind;
+	public Iterable<SystemFunctionCallExpression> getContractCalls() {
+		return this.contractCalls;
 	}
 }

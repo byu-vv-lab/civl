@@ -29,16 +29,13 @@ import edu.udel.cis.vsl.abc.ast.node.IF.compound.LiteralObject;
 import edu.udel.cis.vsl.abc.ast.node.IF.compound.ScalarLiteralObject;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.AbstractFunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.ContractNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.EnsuresNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.RequiresNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ArrowNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.CollectiveExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CompoundLiteralNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode.ConstantKind;
@@ -130,8 +127,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -176,6 +171,12 @@ import edu.udel.cis.vsl.gmc.CommandLineException;
  * 
  */
 public class FunctionTranslator {
+	/**
+	 * The string type name of the Result Expression:<br>
+	 * An special expression used to represent the result of a function in
+	 * function contracts.
+	 */
+	public static final String contractResultName = "$result";
 
 	private static final String PAR_FUNC_NAME = "_par_proc";
 
@@ -226,13 +227,6 @@ public class FunctionTranslator {
 	 */
 	@SuppressWarnings("unused")
 	private AccuracyAssumptionBuilder accuracyAssumptionBuilder;
-
-	/**
-	 * The string type name of the Result Expression:<br>
-	 * An special expression used to represent the result of a function in
-	 * function contracts.
-	 */
-	private final String contractResultName = "$result";
 
 	/* **************************** Constructors *************************** */
 
@@ -703,7 +697,7 @@ public class FunctionTranslator {
 	 *            any CIVL expression e
 	 * @return either the original expression or &e[0]
 	 */
-	private Expression arrayToPointer(Expression array) {
+	protected Expression arrayToPointer(Expression array) {
 		CIVLType type = array.getExpressionType();
 
 		if (array instanceof ArrayLiteralExpression)
@@ -2271,26 +2265,13 @@ public class FunctionTranslator {
 			modelBuilder.functionMap.put(entity, result);
 		}
 		if (contract != null) {
+			ContractTranslator contractTranslator = new ContractTranslator(
+					modelBuilder, modelFactory, typeFactory, result);
+
 			for (int i = 0; i < contract.numChildren(); i++) {
 				ContractNode contractNode = contract.getSequenceChild(i);
 
-				if (contractNode instanceof EnsuresNode) {
-					ContractClauseExpression clause = translateContractExpressionNode(
-							((EnsuresNode) contractNode).getExpression(),
-							result.outerScope(),
-							modelFactory.sourceOf(contractNode),
-							ContractKind.ENSURES);
-
-					result.addPostcondition(clause);
-				} else if (contractNode instanceof RequiresNode) {
-					ContractClauseExpression clause = translateContractExpressionNode(
-							((RequiresNode) contractNode).getExpression(),
-							result.outerScope(),
-							modelFactory.sourceOf(contractNode),
-							ContractKind.REQUIRES);
-
-					result.addPrecondition(clause);
-				}
+				result = contractTranslator.translateContractNode(contractNode);
 			}
 		}
 	}
@@ -3437,7 +3418,7 @@ public class FunctionTranslator {
 	 *            The translation conversions
 	 * @return the CIVL Expression object
 	 */
-	private Expression translateExpressionNode(ExpressionNode expressionNode,
+	protected Expression translateExpressionNode(ExpressionNode expressionNode,
 			Scope scope, boolean translateConversions) {
 		Expression result;
 
@@ -3796,13 +3777,13 @@ public class FunctionTranslator {
 	 *            The scope containing this expression.
 	 * @return The model representation of the function call expression.
 	 */
-	private Expression translateFunctionCallExpression(
+	protected Expression translateFunctionCallExpression(
 			FunctionCallNode callNode, Scope scope) {
 		Expression result;
 		ExpressionNode functionExpression = callNode.getFunction();
 		Function callee;
-		CIVLFunction abstractFunction;
-		CIVLSource source = modelFactory.sourceOf(callNode);
+		CIVLFunction civlFunction;
+		String functionName;
 
 		if (functionExpression instanceof IdentifierExpressionNode) {
 			callee = (Function) ((IdentifierExpressionNode) functionExpression)
@@ -3811,9 +3792,10 @@ public class FunctionTranslator {
 			throw new CIVLUnimplementedFeatureException(
 					"Function call must use identifier for now: "
 							+ functionExpression.getSource());
-		abstractFunction = modelBuilder.functionMap.get(callee);
-		assert abstractFunction != null;
-		if (abstractFunction instanceof AbstractFunction) {
+		civlFunction = modelBuilder.functionMap.get(callee);
+		functionName = civlFunction.name().name();
+		assert civlFunction != null;
+		if (civlFunction instanceof AbstractFunction) {
 			List<Expression> arguments = new ArrayList<Expression>();
 
 			for (int i = 0; i < callNode.getNumberOfArguments(); i++) {
@@ -3825,10 +3807,11 @@ public class FunctionTranslator {
 			}
 			result = modelFactory.abstractFunctionCallExpression(
 					modelFactory.sourceOf(callNode),
-					(AbstractFunction) abstractFunction, arguments);
+					(AbstractFunction) civlFunction, arguments);
 			return result;
 		} else
-			throw new CIVLInternalException("Unreachable", source);
+			throw new CIVLUnimplementedFeatureException("Using function call: "
+					+ functionName + "as expression.");
 	}
 
 	/**
@@ -4362,40 +4345,10 @@ public class FunctionTranslator {
 
 		variable = (VariableExpression) this.translateIdentifierNode(
 				identifierNode, scope);
-		// TODO: what's translate conversion ?
 		process = this.translateExpressionNode(processNode, scope, false);
 		return modelFactory
 				.remoteExpression(modelFactory.sourceOf(expressionNode),
 						process, variable, scope);
-	}
-
-	/**
-	 * Translates an ExpressionNode to a ContractClauseExpression
-	 * 
-	 * @param expressionNode
-	 * @param scope
-	 * @return
-	 */
-	private ContractClauseExpression translateContractExpressionNode(
-			ExpressionNode expressionNode, Scope scope, CIVLSource source,
-			ContractKind kind) {
-		ExpressionNode bodyNode, procsGroupNode;
-		Expression processesGroup = null, body;
-
-		if (expressionNode.expressionKind().equals(ExpressionKind.COLLECTIVE)) {
-			bodyNode = ((CollectiveExpressionNode) expressionNode).getBody();
-			procsGroupNode = ((CollectiveExpressionNode) expressionNode)
-					.getProcessesGroupExpression();
-		} else {
-			bodyNode = expressionNode;
-			procsGroupNode = null;
-		}
-		body = translateExpressionNode(bodyNode, scope, true);
-		if (procsGroupNode != null)
-			processesGroup = translateExpressionNode(procsGroupNode, scope,
-					true);
-		return modelFactory.contractClauseExpression(source,
-				this.typeFactory.booleanType(), processesGroup, body, kind);
 	}
 
 	/**

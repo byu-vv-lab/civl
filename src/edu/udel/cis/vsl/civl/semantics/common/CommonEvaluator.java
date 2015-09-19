@@ -54,6 +54,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -1985,6 +1986,12 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, rangeValue);
 	}
 
+	// TODO: doc, imple me!
+	private Evaluation evaluateSystemFunctionCallExpression(State state,
+			int pid, SystemFunctionCallExpression funcExpr) {
+		return null;
+	}
+
 	private Evaluation evaluateScopeOperations(State state, int pid,
 			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -2948,10 +2955,14 @@ public class CommonEvaluator implements Evaluator {
 			result = evaluateQuantifiedExpression(state, pid,
 					(QuantifiedExpression) expression);
 			break;
+		case SYSTEM_FUNC_CALL:
+			result = evaluateSystemFunctionCallExpression(state, pid,
+					(SystemFunctionCallExpression) expression);
+			// TODO: for supported function call, load library evaluator
+			break;
 		case MEMORY_UNIT:
 		case NULL_LITERAL:
 		case STRING_LITERAL:
-		case SYSTEM_FUNC_CALL:
 			throw new CIVLSyntaxException("Illegal use of " + kind
 					+ " expression: ", expression.getSource());
 		default:

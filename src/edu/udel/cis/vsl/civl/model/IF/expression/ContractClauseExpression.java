@@ -5,10 +5,6 @@ public interface ContractClauseExpression extends Expression {
 		REQUIRES, ENSURES
 	};
 
-	public enum ClauseKind {
-		MESSAGE_BUFFER, EXPRESSION;
-	};
-
 	boolean isCollectiveClause();
 
 	Expression getCollectiveGroup();
@@ -17,7 +13,7 @@ public interface ContractClauseExpression extends Expression {
 
 	ContractKind contractKind();
 
-	ClauseKind clauseKind();
+	Iterable<SystemFunctionCallExpression> getContractCalls();
 
 	@Override
 	ContractClauseExpression replaceWith(ConditionalExpression oldExpr,

@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.List;
 
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
+import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -12,6 +13,8 @@ import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
+import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
+import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public interface Executor {
@@ -179,4 +182,38 @@ public interface Executor {
 	 */
 	void printf(PrintStream printStream, CIVLSource source, String process,
 			List<Format> formats, List<StringBuffer> arguments);
+
+	/**
+	 * A lowest level contract violation error reporting function: provides
+	 * basic contract violation error reporting format.
+	 * 
+	 * @param state
+	 *            The state where the evaluation is on
+	 * @param source
+	 *            The CIVLSource of the contract
+	 * @param place
+	 *            The place of the process in the group (Or PID for regular
+	 *            non-collective contract)
+	 * @param process
+	 *            The String identifier of the process
+	 * @param resultType
+	 *            The result type of the reasoning result
+	 * @param assertValue
+	 *            The value of the evaluated condition
+	 * @param violatedCondition
+	 *            The expression of the condition
+	 * @param errorKind
+	 *            The corresponding error kind: CONTRACT for regular contract
+	 *            violation or MPI_ERROR for collective contract violation
+	 * @param groupString
+	 *            The String of the group of processes, only significant when
+	 *            errorKind == MPI_ERROR
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	State reportContractViolation(State state, CIVLSource source, int place,
+			String process, ResultType resultType,
+			BooleanExpression assertValue, Expression violatedCondition,
+			ErrorKind errorKind, String groupString)
+			throws UnsatisfiablePathConditionException;
 }

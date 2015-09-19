@@ -17,6 +17,7 @@ import edu.udel.cis.vsl.civl.analysis.IF.CodeAnalyzer;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.library.mpi.LibmpiExecutor;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
@@ -28,7 +29,10 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
+import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
+import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
@@ -48,6 +52,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.FunctionTranslator;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
@@ -421,11 +426,12 @@ public class CommonExecutor implements Executor {
 		Expression expr = statement.expression();
 		ProcessState processState;
 		SymbolicExpression returnValue;
+		CIVLFunction function;
 		String functionName;
 
 		processState = state.getProcessState(pid);
-		functionName = processState.peekStack().location().function().name()
-				.name();
+		function = processState.peekStack().location().function();
+		functionName = function.name().name();
 		if (functionName.equals(CIVLConstants.civlSystemFunction)) {
 			assert pid == 0;
 			if (state.numProcs() > 1) {
@@ -466,6 +472,47 @@ public class CommonExecutor implements Executor {
 				}
 			}
 		}
+		// Before popping call stack, check post-conditions if -mpiContract
+		// option is selected.
+		if (civlConfig.isEnableMpiContract()) {
+			List<ContractClauseExpression> postconditions = function
+					.postconditions();
+
+			if (postconditions != null && postconditions.size() > 0) {
+				Scope outerScope = function.outerScope();
+				Variable resultVar = outerScope
+						.variable(FunctionTranslator.contractResultName);
+
+				// replacing $result if it exists:
+				if (resultVar == null)
+					state = assertMPIContractClauses(state, pid, postconditions);
+				else {
+					int sid = state.getDyscope(pid, outerScope);
+
+					if (returnValue != null) {
+						state = stateFactory.setVariable(state,
+								resultVar.vid(), sid, returnValue);
+						state = assertMPIContractClauses(state, pid,
+								postconditions);
+					} else {
+						CIVLSource ensuresSource = postconditions.get(0)
+								.getSource();
+						errorLogger
+								.logSimpleError(
+										ensuresSource,
+										state,
+										process,
+										symbolicAnalyzer.stateToString(state),
+										ErrorKind.OTHER,
+										"Function: "
+												+ functionName
+												+ "has no return value but the contracts of it uses $result");
+						// If there is no return value but $result is used in
+						// contract, ignore all contracts.
+					}
+				}
+			}
+		}
 		state = stateFactory.popCallStack(state, pid);
 		processState = state.getProcessState(pid);
 		if (!processState.hasEmptyStack()) {
@@ -488,6 +535,85 @@ public class CommonExecutor implements Executor {
 			}
 			state = stateFactory.setLocation(state, pid, call.target(),
 					call.lhs() != null);
+		}
+		return state;
+	}
+
+	/**
+	 * Evaluates a list of contract clauses, once a contract clause being
+	 * evaluated as unsatisfiable, an error will be reported.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param conditions
+	 *            The List of contract clauses
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State assertMPIContractClauses(State state, int pid,
+			List<ContractClauseExpression> conditions)
+			throws UnsatisfiablePathConditionException {
+		LibmpiExecutor libexec = null;
+		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
+		// conjuncts all non-collective conditions so that assert( conditions )
+		// just needs to execute once:
+		Expression nonCollectConds = null;
+		CIVLSource nonCollectSource = null;
+
+		for (ContractClauseExpression condition : conditions) {
+			Expression clauseExpr = condition.getBody();
+
+			if (condition.isCollectiveClause()) {
+				// if the contract is a collective contract, loads library
+				// evaluator
+				Expression group = condition.getCollectiveGroup();
+				Expression[] args = { group, clauseExpr };
+
+				if (libexec == null)
+					try {
+						libexec = (LibmpiExecutor) loader.getLibraryExecutor(
+								"mpi", this, modelFactory, symbolicUtil,
+								symbolicAnalyzer);
+					} catch (LibraryLoaderException e) {
+						errorLogger.logSimpleError(condition.getSource(),
+								state, process,
+								symbolicAnalyzer.stateInformation(state),
+								ErrorKind.LIBRARY,
+								"unable to load the library executor for the library "
+										+ "mpi" + " to check mpi contracts");
+						break;
+					}
+				state = libexec.mpiCollectiveContract(state, pid, process,
+						args, condition.getSource());
+			} else {
+				if (nonCollectConds == null) {
+					nonCollectConds = clauseExpr;
+					nonCollectSource = clauseExpr.getSource();
+				} else {
+					nonCollectConds = modelFactory.binaryExpression(
+							modelFactory.sourceOfSpan(
+									nonCollectConds.getSource(),
+									clauseExpr.getSource()),
+							BINARY_OPERATOR.AND, nonCollectConds, clauseExpr);
+					nonCollectSource = modelFactory.sourceOfSpan(
+							nonCollectSource, clauseExpr.getSource());
+				}
+			}
+		}
+		if (nonCollectConds != null) {
+			Reasoner reasoner = universe.reasoner(state.getPathCondition());
+			Evaluation eval = evaluator.evaluate(state, pid, nonCollectConds);
+			ResultType resultType = reasoner.valid(
+					(BooleanExpression) eval.value).getResultType();
+
+			assert (nonCollectSource != null);
+			state = eval.state;
+			// Check non-collective conditions once
+			state = reportContractViolation(state, nonCollectSource, pid,
+					process, resultType, (BooleanExpression) eval.value,
+					nonCollectConds, ErrorKind.CONTRACT, null);
 		}
 		return state;
 	}
@@ -1255,7 +1381,7 @@ public class CommonExecutor implements Executor {
 			SymbolicExpression pointer, SymbolicExpression value,
 			boolean isInitialization)
 			throws UnsatisfiablePathConditionException {
-		if (!symbolicUtil.isDerefablePointer( pointer)) {
+		if (!symbolicUtil.isDerefablePointer(pointer)) {
 			errorLogger.logSimpleError(source, state, process,
 					symbolicAnalyzer.stateInformation(state),
 					ErrorKind.DEREFERENCE,
@@ -1463,5 +1589,30 @@ public class CommonExecutor implements Executor {
 	@Override
 	public CIVLErrorLogger errorLogger() {
 		return this.errorLogger;
+	}
+
+	@Override
+	public State reportContractViolation(State state, CIVLSource source,
+			int place, String process, ResultType resultType,
+			BooleanExpression assertValue, Expression violatedCondition,
+			ErrorKind errorKind, String groupString)
+			throws UnsatisfiablePathConditionException {
+		String format = "Contract violation: \n";
+		String mergedStateExplanation = "";
+
+		// ErrorKind can be CONTRACT (for regular contract) or MPI (mpi
+		// collective contract)
+		if (errorKind.equals(ErrorKind.MPI_ERROR)) {
+			process = "place: " + place + " in " + groupString;
+			mergedStateExplanation = "Note: The state where the violated condition be evaluated is merged from "
+					+ "a set of snapshots. PID in this state is indeed the place of the process in the group";
+		} else
+			process = "pid: " + place;
+		format += "[" + process + "]:" + violatedCondition + "\n"
+				+ violatedCondition + " = " + assertValue + "\n"
+				+ mergedStateExplanation;
+		return errorLogger.logError(source, state, process,
+				symbolicAnalyzer.stateToString(state), assertValue, resultType,
+				errorKind, format);
 	}
 }

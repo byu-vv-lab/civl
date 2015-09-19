@@ -153,7 +153,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression result = this.falseValue;
 
-		if (symbolicUtil.isDerefablePointer( argumentValues[0]))
+		if (symbolicUtil.isDerefablePointer(argumentValues[0]))
 			result = this.trueValue;
 		if (lhs != null)
 			state = this.primaryExecutor.assign(state, pid, process, lhs,
@@ -354,8 +354,8 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression first = argumentValues[0], second = argumentValues[1], result;
 
-		if (!symbolicUtil.isDerefablePointer( first)
-				|| !symbolicUtil.isDerefablePointer( second))
+		if (!symbolicUtil.isDerefablePointer(first)
+				|| !symbolicUtil.isDerefablePointer(second))
 			result = falseValue;
 		else
 			result = symbolicUtil.contains(first, second);
@@ -635,7 +635,7 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 									.baseType(), second));
 			state = this.reportAssertionFailure(state, pid, process,
 					resultType, message.toString(), arguments, argumentValues,
-					source, call, claim, 2);
+					source, claim, 2);
 		}
 		return state;
 	}
