@@ -2102,7 +2102,7 @@ public class CommonModelFactory implements ModelFactory {
 	public ContractClauseExpression contractClauseExpression(CIVLSource source,
 			CIVLType type, Expression collectiveGroup, Expression body,
 			ContractKind contractKind,
-			Iterable<SystemFunctionCallExpression> contractCalls) {
+			List<SystemFunctionCallExpression> contractCalls) {
 		Scope lscope, hscope;
 
 		if (collectiveGroup != null) {

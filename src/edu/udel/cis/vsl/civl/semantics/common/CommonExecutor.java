@@ -28,14 +28,15 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLTypeFactory;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.model.IF.Identifier;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
-import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.DotExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
@@ -52,6 +53,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPointerType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLStructOrUnionType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
+import edu.udel.cis.vsl.civl.model.common.ContractTranslator;
 import edu.udel.cis.vsl.civl.model.common.FunctionTranslator;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
@@ -484,19 +486,16 @@ public class CommonExecutor implements Executor {
 						.variable(FunctionTranslator.contractResultName);
 
 				// replacing $result if it exists:
-				if (resultVar == null)
-					state = assertMPIContractClauses(state, pid, postconditions);
-				else {
+				if (resultVar != null) {
 					int sid = state.getDyscope(pid, outerScope);
 
-					if (returnValue != null) {
+					if (returnValue != null)
 						state = stateFactory.setVariable(state,
 								resultVar.vid(), sid, returnValue);
-						state = assertMPIContractClauses(state, pid,
-								postconditions);
-					} else {
+					else {
 						CIVLSource ensuresSource = postconditions.get(0)
 								.getSource();
+
 						errorLogger
 								.logSimpleError(
 										ensuresSource,
@@ -511,6 +510,7 @@ public class CommonExecutor implements Executor {
 						// contract, ignore all contracts.
 					}
 				}
+				state = assertMPIContractClauses(state, pid, postconditions);
 			}
 		}
 		state = stateFactory.popCallStack(state, pid);
@@ -557,14 +557,49 @@ public class CommonExecutor implements Executor {
 			throws UnsatisfiablePathConditionException {
 		LibmpiExecutor libexec = null;
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
-		// conjuncts all non-collective conditions so that assert( conditions )
-		// just needs to execute once:
-		Expression nonCollectConds = null;
-		CIVLSource nonCollectSource = null;
 
 		for (ContractClauseExpression condition : conditions) {
 			Expression clauseExpr = condition.getBody();
+			Scope scope = condition.expressionScope();
 
+			// Processes contract call expression first, replacing contract
+			// call expressions with extra variables so that during the
+			// execution of contracts those call expressions can be evaluated as
+			// variables:
+			if (condition.getContractCalls() != null) {
+				for (SystemFunctionCallExpression callExpr : condition
+						.getContractCalls()) {
+					CIVLFunction function = callExpr.callStatement().function();
+					String variableId = function.name().name();
+					List<Expression> arguments = callExpr.callStatement()
+							.arguments();
+					SymbolicExpression[] argVals;
+					Identifier varId;
+					Variable contractCallVar;
+					int numArgs = arguments.size();
+
+					argVals = new SymbolicExpression[numArgs];
+					for (int i = 0; i < numArgs; i++) {
+						Expression arg = arguments.get(i);
+						Evaluation eval = evaluator.evaluate(state, pid, arg);
+
+						state = eval.state;
+						argVals[i] = eval.value;
+					}
+					// create variables:
+					varId = ContractTranslator.contractCall2VarId(callExpr,
+							argVals, modelFactory);
+					if (!scope.containsVariable(variableId)) {
+						int vid = scope.numVariables();
+						contractCallVar = modelFactory.variable(
+								callExpr.getSource(), function.returnType(),
+								varId, vid);
+
+						scope.addVariable(contractCallVar);
+					} else
+						contractCallVar = scope.variable(varId);
+				}
+			}
 			if (condition.isCollectiveClause()) {
 				// if the contract is a collective contract, loads library
 				// evaluator
@@ -588,32 +623,20 @@ public class CommonExecutor implements Executor {
 				state = libexec.mpiCollectiveContract(state, pid, process,
 						args, condition.getSource());
 			} else {
-				if (nonCollectConds == null) {
-					nonCollectConds = clauseExpr;
-					nonCollectSource = clauseExpr.getSource();
-				} else {
-					nonCollectConds = modelFactory.binaryExpression(
-							modelFactory.sourceOfSpan(
-									nonCollectConds.getSource(),
-									clauseExpr.getSource()),
-							BINARY_OPERATOR.AND, nonCollectConds, clauseExpr);
-					nonCollectSource = modelFactory.sourceOfSpan(
-							nonCollectSource, clauseExpr.getSource());
-				}
-			}
-		}
-		if (nonCollectConds != null) {
-			Reasoner reasoner = universe.reasoner(state.getPathCondition());
-			Evaluation eval = evaluator.evaluate(state, pid, nonCollectConds);
-			ResultType resultType = reasoner.valid(
-					(BooleanExpression) eval.value).getResultType();
+				Expression conditionExpr = condition.getBody();
+				Reasoner reasoner = universe.reasoner(state.getPathCondition());
+				Evaluation eval = evaluator.evaluate(state, pid, conditionExpr);
+				ResultType resultType = reasoner.valid(
+						(BooleanExpression) eval.value).getResultType();
 
-			assert (nonCollectSource != null);
-			state = eval.state;
-			// Check non-collective conditions once
-			state = reportContractViolation(state, nonCollectSource, pid,
-					process, resultType, (BooleanExpression) eval.value,
-					nonCollectConds, ErrorKind.CONTRACT, null);
+				state = eval.state;
+				// Check non-collective conditions once
+				if (resultType.equals(ResultType.YES))
+					state = reportContractViolation(state,
+							conditionExpr.getSource(), pid, process,
+							resultType, (BooleanExpression) eval.value,
+							conditionExpr, ErrorKind.CONTRACT, null);
+			}
 		}
 		return state;
 	}

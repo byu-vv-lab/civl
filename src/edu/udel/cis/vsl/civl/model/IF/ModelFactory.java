@@ -1595,5 +1595,5 @@ public interface ModelFactory {
 	ContractClauseExpression contractClauseExpression(CIVLSource source,
 			CIVLType type, Expression collectiveGroup, Expression body,
 			ContractKind contractKind,
-			Iterable<SystemFunctionCallExpression> contractCalls);
+			List<SystemFunctionCallExpression> contractCalls);
 }

@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -127,6 +128,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.ArrayLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.FunctionIdentifierExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.IntegerLiteralExpression;
@@ -2267,12 +2269,16 @@ public class FunctionTranslator {
 		if (contract != null) {
 			ContractTranslator contractTranslator = new ContractTranslator(
 					modelBuilder, modelFactory, typeFactory, result);
+			List<ContractClauseExpression> contracts = new LinkedList<>();
 
 			for (int i = 0; i < contract.numChildren(); i++) {
 				ContractNode contractNode = contract.getSequenceChild(i);
 
-				result = contractTranslator.translateContractNode(contractNode);
+				contracts.add(contractTranslator
+						.translateContractNode(contractNode));
 			}
+			result = ContractTranslator.mergeContracts(contracts, typeFactory,
+					modelFactory, result);
 		}
 	}
 
@@ -2556,7 +2562,8 @@ public class FunctionTranslator {
 
 	/**
 	 * Translates a ResultNode as an new variable, and adds it into a
-	 * corresponding scope.
+	 * corresponding scope. The $result expression can only be translated by
+	 * {@link ContractTranslator}.
 	 * 
 	 * @param resultNode
 	 *            The {@link ResultNode} appears in a contract clause
@@ -2565,19 +2572,9 @@ public class FunctionTranslator {
 	 *            function arguments
 	 * @return
 	 */
-	private Expression translateResultNode(ResultNode resultNode, Scope scope) {
-		CIVLSource resultSource = modelFactory.sourceOf(resultNode);
-		Variable newResultVariable;
-		Identifier resultIdentifier = modelFactory.identifier(resultSource,
-				contractResultName);
-		CIVLType resultType = this.translateABCType(resultSource, scope,
-				resultNode.getType());
-
-		newResultVariable = modelFactory.variable(resultSource, resultType,
-				resultIdentifier, scope.numVariables());
-		scope.addVariable(newResultVariable);
-		newResultVariable.setScope(scope);
-		return modelFactory.variableExpression(resultSource, newResultVariable);
+	protected Expression translateResultNode(ResultNode resultNode, Scope scope) {
+		throw new CIVLSyntaxException(
+				"$result expression used in a non-contract environment.");
 	}
 
 	/**
@@ -4664,7 +4661,7 @@ public class FunctionTranslator {
 	 *            The ABC type
 	 * @return The CIVL type
 	 */
-	private CIVLType translateABCType(CIVLSource source, Scope scope,
+	protected CIVLType translateABCType(CIVLSource source, Scope scope,
 			Type abcType) {
 		CIVLType result = modelBuilder.typeMap.get(abcType);
 

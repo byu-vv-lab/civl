@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -22,7 +23,7 @@ public class CommonContractClauseExpression extends CommonExpression implements
 
 	private ContractKind contractKind;
 
-	private Iterable<SystemFunctionCallExpression> contractCalls;
+	private List<SystemFunctionCallExpression> contractCalls;
 
 	public CommonContractClauseExpression(CIVLSource source, Scope hscope,
 			Scope lscope, CIVLType type, Expression collectiveGroup,
@@ -40,7 +41,7 @@ public class CommonContractClauseExpression extends CommonExpression implements
 	public CommonContractClauseExpression(CIVLSource source, Scope hscope,
 			Scope lscope, CIVLType type, Expression collectiveGroup,
 			Expression body, ContractKind contractKind,
-			Iterable<SystemFunctionCallExpression> contractCalls) {
+			List<SystemFunctionCallExpression> contractCalls) {
 		super(source, hscope, lscope, type);
 		if (collectiveGroup == null)
 			this.isCollective = false;
@@ -140,7 +141,7 @@ public class CommonContractClauseExpression extends CommonExpression implements
 	}
 
 	@Override
-	public Iterable<SystemFunctionCallExpression> getContractCalls() {
+	public List<SystemFunctionCallExpression> getContractCalls() {
 		return this.contractCalls;
 	}
 }

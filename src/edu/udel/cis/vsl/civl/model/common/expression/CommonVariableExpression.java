@@ -119,5 +119,4 @@ public class CommonVariableExpression extends CommonExpression implements
 
 		return this.variable.equals(that.variable());
 	}
-
 }

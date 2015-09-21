@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF.expression;
 
+import java.util.List;
+
 public interface ContractClauseExpression extends Expression {
 	public enum ContractKind {
 		REQUIRES, ENSURES
@@ -13,7 +15,7 @@ public interface ContractClauseExpression extends Expression {
 
 	ContractKind contractKind();
 
-	Iterable<SystemFunctionCallExpression> getContractCalls();
+	List<SystemFunctionCallExpression> getContractCalls();
 
 	@Override
 	ContractClauseExpression replaceWith(ConditionalExpression oldExpr,
