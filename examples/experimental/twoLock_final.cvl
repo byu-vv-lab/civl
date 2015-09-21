@@ -151,7 +151,6 @@ void test3(int t, int n) {  //t is the number of threads,
   initialize(&sq);  
   $parfor(int i: 0 .. t-1)
     thread(i);
-//print dequeued result
   for(int i=0; i<t*n; i++)  
     dequeue(&sq, &RESULT[i]); 
   for(int i=0; i<t*n; i++){ //print dequeued result
