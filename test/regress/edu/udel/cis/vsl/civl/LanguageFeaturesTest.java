@@ -250,6 +250,11 @@ public class LanguageFeaturesTest {
 	public void malloc() throws ABCException {
 		assertTrue(ui.run("verify", filename("malloc.cvl")));
 	}
+	
+	@Test
+	public void notValidResultType() throws ABCException {
+		assertFalse(ui.run("verify", "-errorBound=2",filename("notValidResultType.cvl")));
+	}
 
 	@Test
 	public void mallocBad() throws ABCException {
