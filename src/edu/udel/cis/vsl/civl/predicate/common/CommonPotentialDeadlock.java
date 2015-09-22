@@ -186,7 +186,7 @@ public class CommonPotentialDeadlock extends CommonCIVLStatePredicate implements
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 		CIVLSource source = null; // location of first non-term proc
 
-		for (ProcessState p : state.getProcessStates()) {
+		for (ProcessState p : state.getProcessStates()) { 
 			if (p == null || p.hasEmptyStack()) // p has terminated
 				continue;
 
