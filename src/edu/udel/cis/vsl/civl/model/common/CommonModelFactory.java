@@ -1244,7 +1244,7 @@ public class CommonModelFactory implements ModelFactory {
 	private Fragment insertNoopAtBeginning(CIVLSource source, Scope scope,
 			Fragment old) {
 		Location start = location(source, scope);
-		NoopStatement noop = noopStatement(source, start, null);
+		NoopStatement noop = noopStatementTemporary(source, start);
 		Fragment noopFragment = new CommonFragment(noop);
 
 		return noopFragment.combineWith(old);
@@ -2132,5 +2132,19 @@ public class CommonModelFactory implements ModelFactory {
 					.functionIdentifierExpression(systemSource, function);
 		}
 		return this.elaborateDomainFuncPointer;
+	}
+
+	@Override
+	public NoopStatement noopStatementTemporary(CIVLSource civlSource,
+			Location source) {
+		return new CommonNoopStatement(civlSource, source,
+				this.trueExpression(civlSource), true);
+	}
+
+	@Override
+	public NoopStatement noopStatementForVariableDeclaration(
+			CIVLSource civlSource, Location source) {
+		return new CommonNoopStatement(civlSource, source,
+				this.trueExpression(civlSource), false, true);
 	}
 }

@@ -1605,7 +1605,7 @@ public class FunctionTranslator {
 	private Fragment insertNoopAtBeginning(CIVLSource source, Scope scope,
 			Fragment old) {
 		Location start = modelFactory.location(source, scope);
-		NoopStatement noop = modelFactory.noopStatement(source, start, null);
+		NoopStatement noop = modelFactory.noopStatementTemporary(source, start);
 		Fragment noopFragment = new CommonFragment(noop);
 
 		return noopFragment.combineWith(old);
@@ -2452,16 +2452,23 @@ public class FunctionTranslator {
 	 * @return the fragment of the while loop
 	 */
 	private Fragment translateLoopNode(Scope scope, LoopNode loopNode) {
+		Fragment result;
+		
 		switch (loopNode.getKind()) {
 		case DO_WHILE:
-			return composeLoopFragment(scope, loopNode.getCondition(),
+			result= composeLoopFragment(scope, loopNode.getCondition(),
 					loopNode.getBody(), null, true);
+			break;
 		case FOR:
-			return translateForLoopNode(scope, (ForLoopNode) loopNode);
+			result= translateForLoopNode(scope, (ForLoopNode) loopNode);
+			break;
 		default:// case WHILE:
-			return composeLoopFragment(scope, loopNode.getCondition(),
+			result= composeLoopFragment(scope, loopNode.getCondition(),
 					loopNode.getBody(), null, false);
 		}
+		if(result.startLocation().getNumOutgoing()>1)
+			result=this.insertNoopAtBeginning(modelFactory.sourceOfBeginning(loopNode), scope, result);
+		return result;
 	}
 
 	/**
@@ -2689,7 +2696,8 @@ public class FunctionTranslator {
 		}
 		if (defaultExit != null)
 			result.addFinalStatement(defaultExit);
-		return result;
+		return this.insertNoopAtBeginning(
+				modelFactory.sourceOfBeginning(switchNode), scope, result);
 	}
 
 	/**
@@ -2731,8 +2739,9 @@ public class FunctionTranslator {
 		if (sourceLocation == null)
 			sourceLocation = modelFactory.location(
 					modelFactory.sourceOfBeginning(node), scope);
-		result = new CommonFragment(modelFactory.noopStatement(source,
-				sourceLocation, null));
+		result = new CommonFragment(
+				modelFactory.noopStatementForVariableDeclaration(source,
+						sourceLocation));
 		if (variable.isInput() || variable.isStatic()
 				|| type instanceof CIVLArrayType
 				|| type instanceof CIVLStructOrUnionType || type.isHeapType()) {

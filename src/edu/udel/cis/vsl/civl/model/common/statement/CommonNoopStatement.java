@@ -29,6 +29,16 @@ public class CommonNoopStatement extends CommonStatement implements
 	protected Expression expression;
 
 	/**
+	 * true iff this is a temporary noop inserted by the model translator
+	 */
+	private boolean isTemporary = false;
+
+	/**
+	 * true iff this associates to a variable declaration
+	 */
+	private boolean isVariableDeclaration = false;
+
+	/**
 	 * A noop statement.
 	 * 
 	 * @param source
@@ -39,6 +49,33 @@ public class CommonNoopStatement extends CommonStatement implements
 		super(civlSource, null, null, source, guard);
 		noopKind = NoopKind.NONE;
 		this.expression = expression;
+	}
+
+	/**
+	 * A noop statement.
+	 * 
+	 * @param source
+	 *            The source location for this noop.
+	 */
+	public CommonNoopStatement(CIVLSource civlSource, Location source,
+			Expression guard, boolean isTemporary) {
+		super(civlSource, null, null, source, guard);
+		noopKind = NoopKind.NONE;
+		this.isTemporary = isTemporary;
+	}
+
+	/**
+	 * A noop statement.
+	 * 
+	 * @param source
+	 *            The source location for this noop.
+	 */
+	public CommonNoopStatement(CIVLSource civlSource, Location source,
+			Expression guard, boolean isTemporary, boolean isVariableDeclaration) {
+		super(civlSource, null, null, source, guard);
+		noopKind = NoopKind.NONE;
+		this.isTemporary = isTemporary;
+		this.isVariableDeclaration = isVariableDeclaration;
 	}
 
 	public CommonNoopStatement() {
@@ -97,6 +134,16 @@ public class CommonNoopStatement extends CommonStatement implements
 	@Override
 	public Expression expression() {
 		return this.expression;
+	}
+
+	@Override
+	public boolean isTemporary() {
+		return this.isTemporary;
+	}
+
+	@Override
+	public boolean isVariableDeclaration() {
+		return this.isVariableDeclaration;
 	}
 
 }

@@ -402,43 +402,49 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 				Statement s = loc.getOutgoing(0);
 
 				// The only statement of loc is a no-op statement
-				if (s instanceof NoopStatement
-						&& ((NoopStatement) s).expression() == null) {
-					Expression guard = s.guard();
+				if (s instanceof NoopStatement) {
+					NoopStatement noop = (NoopStatement) s;
 
-					// The guard of the no-op is true
-					if (guard instanceof BooleanLiteralExpression) {
-						if (((BooleanLiteralExpression) guard).value()) {
-							Location target = s.target();
+					// The noop is temporary or associates to a variable
+					// declaration
+					if (noop.isTemporary() || noop.isVariableDeclaration()) {
+						Expression guard = s.guard();
 
-							// Record the index of loc so that it can be
-							// removed later
-							toRemove.add(i);
-							if (this.startLocation == loc) {
-								this.startLocation = loc.getSoleOutgoing()
-										.target();
-							}
-							// TODO simplify me: using incoming statements
-							for (int j = 0; j < count; j++) {
-								Location curLoc;
+						// The guard of the no-op is true
+						if (guard instanceof BooleanLiteralExpression) {
+							if (((BooleanLiteralExpression) guard).value()) {
+								Location target = s.target();
 
-								// Do nothing to the locations that are to be
-								// removed
-								if (toRemove.contains(j))
-									continue;
-								curLoc = oldLocations.get(j);
-								// For each outgoing statement of curLoc \in
-								// (this.locations - toRemove)
-								for (Statement curS : curLoc.outgoing()) {
-									Location curTarget = curS.target();
+								// Record the index of loc so that it can be
+								// removed later
+								toRemove.add(i);
+								if (this.startLocation == loc) {
+									this.startLocation = loc.getSoleOutgoing()
+											.target();
+								}
+								// TODO simplify me: using incoming statements
+								for (int j = 0; j < count; j++) {
+									Location curLoc;
 
-									// Redirect the target location so that
-									// no-op location is skipped
-									if (curTarget != null
-											&& curTarget.id() == loc.id()) {
-										// the incoming field is implicitly
-										// modified by setTarget()
-										curS.setTarget(target);
+									// Do nothing to the locations that are to
+									// be
+									// removed
+									if (toRemove.contains(j))
+										continue;
+									curLoc = oldLocations.get(j);
+									// For each outgoing statement of curLoc \in
+									// (this.locations - toRemove)
+									for (Statement curS : curLoc.outgoing()) {
+										Location curTarget = curS.target();
+
+										// Redirect the target location so that
+										// no-op location is skipped
+										if (curTarget != null
+												&& curTarget.id() == loc.id()) {
+											// the incoming field is implicitly
+											// modified by setTarget()
+											curS.setTarget(target);
+										}
 									}
 								}
 							}

@@ -908,6 +908,29 @@ public interface ModelFactory {
 			Expression expression);
 
 	/**
+	 * A temporary noop statement with the true guard
+	 * 
+	 * @param civlSource
+	 *            The CIVL source of the no-op statement
+	 * @param source
+	 *            The source location for this noop statement.
+	 * @return A new temporary noop statement with the true guard
+	 */
+	NoopStatement noopStatementTemporary(CIVLSource civlSource, Location source);
+
+	/**
+	 * A temporary noop statement with the true guard
+	 * 
+	 * @param civlSource
+	 *            The CIVL source of the no-op statement
+	 * @param source
+	 *            The source location for this noop statement.
+	 * @return A new temporary noop statement with the true guard
+	 */
+	NoopStatement noopStatementForVariableDeclaration(CIVLSource civlSource,
+			Location source);
+
+	/**
 	 * A noop statement with an explicit guard expression.
 	 * 
 	 * @param civlSource

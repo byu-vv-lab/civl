@@ -26,4 +26,19 @@ public interface NoopStatement extends Statement {
 	NoopKind noopKind();
 
 	Expression expression();
+
+	/**
+	 * is this a temporary noop that is inserted by the model builder and should
+	 * be removed from the model?
+	 * 
+	 * @return
+	 */
+	boolean isTemporary();
+
+	/**
+	 * is this noop associating to a variable declaration?
+	 * 
+	 * @return
+	 */
+	boolean isVariableDeclaration();
 }
