@@ -370,6 +370,7 @@ public class CommonExecutor implements Executor {
 					ErrorKind.MALLOC, message);
 			// state = state.setPathCondition(universe.and(pathCondition,
 			// claim));
+			throw new UnsatisfiablePathConditionException();
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
 		// If the type of the allocated element object is an struct or union
