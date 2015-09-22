@@ -481,7 +481,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void processLeak() throws ABCException {
-		assertFalse(ui.run("verify", filename("processLeak.cvl")));
+		assertFalse(ui.run("verify","-errorBound=2", filename("processLeak.cvl")));
 	}
 
 	@Test
