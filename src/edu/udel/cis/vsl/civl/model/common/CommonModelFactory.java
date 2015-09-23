@@ -2101,8 +2101,7 @@ public class CommonModelFactory implements ModelFactory {
 	@Override
 	public ContractClauseExpression contractClauseExpression(CIVLSource source,
 			CIVLType type, Expression collectiveGroup, Expression body,
-			ContractKind contractKind,
-			List<SystemFunctionCallExpression> contractCalls) {
+			ContractKind contractKind) {
 		Scope lscope, hscope;
 
 		if (collectiveGroup != null) {
@@ -2113,7 +2112,7 @@ public class CommonModelFactory implements ModelFactory {
 			hscope = body.expressionScope();
 		}
 		return new CommonContractClauseExpression(source, hscope, lscope, type,
-				collectiveGroup, body, contractKind, contractCalls);
+				collectiveGroup, body, contractKind);
 	}
 
 	@Override

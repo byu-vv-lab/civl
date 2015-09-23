@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.civl.model.IF.Model;
 import edu.udel.cis.vsl.civl.model.IF.ModelConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -1896,6 +1897,8 @@ public class ImmutableStateFactory implements StateFactory {
 					.updateDyscopes(dyscopeOldToNews[place]);
 		}
 		newState = new ImmutableState(processes, dyscopes, pathCondition);
+		newState = newState.setSnapshotsQueues(((ImmutableState) state)
+				.getSnapshotsQueues());
 		return newState;
 	}
 
@@ -1920,11 +1923,11 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public ImmutableState createCollectiveSnapshotsEnrty(ImmutableState state,
 			int pid, int numProcesses, int place, int queueID,
-			Expression assertion) {
+			Expression assertion, SymbolicExpression channels, ContractKind kind) {
 		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = state
 				.getSnapshots(queueID);
 		ImmutableCollectiveSnapshotsEntry entry = new ImmutableCollectiveSnapshotsEntry(
-				numProcesses, universe);
+				numProcesses, universe, kind);
 		ImmutableMonoState snapshot;
 
 		if (queue == null)
@@ -1932,23 +1935,35 @@ public class ImmutableStateFactory implements StateFactory {
 		// take a snapshot
 		snapshot = this.takeSnapshot((ImmutableState) state, pid);
 		entry = entry.insertMonoState(place, snapshot, assertion);
+		entry = entry.setChannels(channels);
 		queue.add(entry);
 		return state.updateQueue(queueID, queue);
 	}
 
 	@Override
-	public Pair<ImmutableState, ImmutableCollectiveSnapshotsEntry> dequeueCollectiveSnapshotsEntry(
-			ImmutableState state, int queueID) {
-		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = state
+	public State dequeueCollectiveSnapshotsEntry(State state, int queueID) {
+		ImmutableState immuState = (ImmutableState) state;
+		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = immuState
+				.getSnapshots(queueID);
+
+		assert queue != null;
+		queue.remove(0);
+		if (queue.isEmpty())
+			queue = null;
+		return immuState.updateQueue(queueID, queue);
+	}
+
+	@Override
+	public ImmutableCollectiveSnapshotsEntry peekCollectiveSnapshotsEntry(
+			State state, int queueID) {
+		ImmutableState immuState = (ImmutableState) state;
+		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = immuState
 				.getSnapshots(queueID);
 		ImmutableCollectiveSnapshotsEntry entry = queue.get(0);
 
 		assert queue != null;
 		assert entry.isComplete();
-		queue.remove(0);
-		if (queue.isEmpty())
-			queue = null;
-		return new Pair<>(state.updateQueue(queueID, queue), entry);
+		return entry;
 	}
 
 	/**

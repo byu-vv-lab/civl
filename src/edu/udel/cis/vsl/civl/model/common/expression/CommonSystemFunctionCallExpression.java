@@ -53,6 +53,11 @@ public class CommonSystemFunctionCallExpression extends CommonExpression
 	}
 
 	@Override
+	public CIVLType getExpressionType() {
+		return this.callStatement.function().returnType();
+	}
+
+	@Override
 	protected boolean expressionEquals(Expression expression) {
 		// TODO Auto-generated method stub
 		return false;

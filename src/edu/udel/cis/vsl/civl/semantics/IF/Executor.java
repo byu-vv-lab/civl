@@ -212,8 +212,7 @@ public interface Executor {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	State reportContractViolation(State state, CIVLSource source, int place,
-			String process, ResultType resultType,
-			BooleanExpression assertValue, Expression violatedCondition,
-			ErrorKind errorKind, String groupString)
-			throws UnsatisfiablePathConditionException;
+			ResultType resultType, BooleanExpression assertValue,
+			Expression violatedCondition, ErrorKind errorKind,
+			String groupString) throws UnsatisfiablePathConditionException;
 }

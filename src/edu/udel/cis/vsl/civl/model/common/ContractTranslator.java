@@ -34,7 +34,6 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
-import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public class ContractTranslator extends FunctionTranslator {
 	/**
@@ -53,8 +52,6 @@ public class ContractTranslator extends FunctionTranslator {
 	private ModelBuilderWorker modelBuilder;
 
 	private Expression processesGroup;
-
-	private List<SystemFunctionCallExpression> contractCalls = null;
 
 	/******************** Constructor ********************/
 	ContractTranslator(ModelBuilderWorker modelBuilder,
@@ -83,7 +80,6 @@ public class ContractTranslator extends FunctionTranslator {
 		// processing a new contractNode, reset the global field of
 		// processesGroup, ditto for contractCalls:
 		processesGroup = null;
-		contractCalls = null;
 		switch (contractNode.contractKind()) {
 		case ENSURES:
 			contractExpressionNode = ((EnsuresNode) contractNode)
@@ -104,29 +100,6 @@ public class ContractTranslator extends FunctionTranslator {
 				function.outerScope(), modelFactory.sourceOf(contractNode),
 				kind);
 		return clause;
-	}
-
-	/**
-	 * Translate {@link SystemFunctionCallExpression} to a variable
-	 * {@link Identifier} with a pre-defined rule
-	 * 
-	 * @param call
-	 *            the instance of the {@link SystemFunctionCallExpression}
-	 * @param args
-	 *            An array of SymbolicExpression of function arguments
-	 * @param modelFactory
-	 *            A reference to {@link ModelFactory}
-	 * @return
-	 */
-	static public Identifier contractCall2VarId(
-			SystemFunctionCallExpression call, SymbolicExpression[] args,
-			ModelFactory modelFactory) {
-		CIVLFunction function = call.callStatement().function();
-		String variableId = function.name().name();
-
-		for (SymbolicExpression arg : args)
-			variableId += "_" + arg;
-		return modelFactory.identifier(call.getSource(), variableId);
 	}
 
 	/**
@@ -213,13 +186,10 @@ public class ContractTranslator extends FunctionTranslator {
 					collectiveGroup.put(group.variable(), collectContractIdx);
 					canocContract = modelFactory.contractClauseExpression(
 							contract.getSource(), contractType, group,
-							contract.getBody(), kind,
-							contract.getContractCalls());
+							contract.getBody(), kind);
 					collectiveContracts.add(canocContract);
 				} else {
 					Expression mergedBody;
-					List<SystemFunctionCallExpression> contractCalls = contract
-							.getContractCalls();
 
 					collectContractIdx = collectiveGroup.get(group.variable());
 					canocContract = collectiveContracts.get(collectContractIdx);
@@ -229,13 +199,10 @@ public class ContractTranslator extends FunctionTranslator {
 									mergedBody.getSource(), contract.getBody()
 											.getSource()), BINARY_OPERATOR.AND,
 									mergedBody, contract.getBody());
-					if (contractCalls != null)
-						canocContract.getContractCalls().addAll(contractCalls);
 					canocContract = modelFactory.contractClauseExpression(
 							modelFactory.sourceOfSpan(
 									canocContract.getSource(), contractSource),
-							contractType, group, mergedBody, kind,
-							canocContract.getContractCalls());
+							contractType, group, mergedBody, kind);
 					collectiveContracts.set(collectContractIdx, canocContract);
 				}
 			}
@@ -253,7 +220,7 @@ public class ContractTranslator extends FunctionTranslator {
 							modelFactory.sourceOfSpan(
 									regularContracts.getSource(),
 									contractSource), contractType, null,
-							oldBody, kind, null);
+							oldBody, kind);
 				} else
 					regularContracts = contract;
 			}
@@ -355,13 +322,11 @@ public class ContractTranslator extends FunctionTranslator {
 		// Add Collective Group as the second argument
 		assert processesGroup != null : "Building model for " + functionName
 				+ "() but there is no collective group information";
+		arguments.add(processesGroup);
 		civlSysFunctionCall = modelFactory.callOrSpawnStatement(source,
 				floatingLocation, true, functionExpr, arguments,
 				modelFactory.trueExpression(null));
 		result = modelFactory.systemFunctionCallExpression(civlSysFunctionCall);
-		if (contractCalls == null)
-			contractCalls = new LinkedList<>();
-		contractCalls.add(result);
 		return result;
 	}
 
@@ -398,8 +363,7 @@ public class ContractTranslator extends FunctionTranslator {
 					true);
 		body = translateExpressionNode(bodyNode, scope, true);
 		return modelFactory.contractClauseExpression(source,
-				this.typeFactory.booleanType(), processesGroup, body, kind,
-				contractCalls);
+				this.typeFactory.booleanType(), processesGroup, body, kind);
 	}
 
 	@Override

@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.model.common.expression;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
@@ -9,7 +8,6 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.ConditionalExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 
@@ -23,8 +21,6 @@ public class CommonContractClauseExpression extends CommonExpression implements
 
 	private ContractKind contractKind;
 
-	private List<SystemFunctionCallExpression> contractCalls;
-
 	public CommonContractClauseExpression(CIVLSource source, Scope hscope,
 			Scope lscope, CIVLType type, Expression collectiveGroup,
 			Expression body, ContractKind contractKind) {
@@ -36,21 +32,6 @@ public class CommonContractClauseExpression extends CommonExpression implements
 		this.collectiveGroup = collectiveGroup;
 		this.body = body;
 		this.contractKind = contractKind;
-	}
-
-	public CommonContractClauseExpression(CIVLSource source, Scope hscope,
-			Scope lscope, CIVLType type, Expression collectiveGroup,
-			Expression body, ContractKind contractKind,
-			List<SystemFunctionCallExpression> contractCalls) {
-		super(source, hscope, lscope, type);
-		if (collectiveGroup == null)
-			this.isCollective = false;
-		else
-			this.isCollective = true;
-		this.collectiveGroup = collectiveGroup;
-		this.body = body;
-		this.contractKind = contractKind;
-		this.contractCalls = contractCalls;
 	}
 
 	@Override
@@ -129,6 +110,8 @@ public class CommonContractClauseExpression extends CommonExpression implements
 	public String toString() {
 		StringBuffer message = new StringBuffer();
 
+		if (this.contractKind != null)
+			message.append(contractKind.name() + ": ");
 		if (isCollective)
 			message.append("collective(" + collectiveGroup.toString() + ") ");
 		message.append(this.body);
@@ -138,10 +121,5 @@ public class CommonContractClauseExpression extends CommonExpression implements
 	@Override
 	public ContractKind contractKind() {
 		return this.contractKind;
-	}
-
-	@Override
-	public List<SystemFunctionCallExpression> getContractCalls() {
-		return this.contractCalls;
 	}
 }

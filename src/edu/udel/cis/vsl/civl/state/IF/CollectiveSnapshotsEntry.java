@@ -1,9 +1,9 @@
 package edu.udel.cis.vsl.civl.state.IF;
 
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableCollectiveSnapshotsEntry;
 import edu.udel.cis.vsl.civl.state.common.immutable.ImmutableMonoState;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
@@ -20,6 +20,14 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  *
  */
 public interface CollectiveSnapshotsEntry {
+
+	/**
+	 * The {@link ContractKind} associates to this entry
+	 * 
+	 * @return
+	 */
+	ContractKind contractKind();
+
 	/**
 	 * If the entry is complete and can be dequeue for evaluation
 	 * 
@@ -65,7 +73,7 @@ public interface CollectiveSnapshotsEntry {
 	 *            The destination of the messages in the channel
 	 * @return
 	 */
-	SymbolicExpression getChannel(NumericExpression src, NumericExpression dest);
+	SymbolicExpression getMsgBuffers();
 
 	/**
 	 * Returns all stored assertion predicates (one for each process) in this
@@ -86,7 +94,6 @@ public interface CollectiveSnapshotsEntry {
 	 *               {@link #involvedProcesses()} and never be recorded i.e.
 	 *               {@link #isRecorded(PID)} returns false and
 	 *               {@link #isComplete()} returns false.
-	 * @postconditio true
 	 * @param monoState
 	 * @return
 	 */

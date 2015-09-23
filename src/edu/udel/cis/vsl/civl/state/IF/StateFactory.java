@@ -8,6 +8,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLFunction;
 import edu.udel.cis.vsl.civl.model.IF.Model;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
@@ -633,10 +634,17 @@ public interface StateFactory {
 	 * new or modified entry.
 	 * 
 	 * @param state
-	 * @param involvedProcesses
-	 * @param identifier
+	 *            The current state
+	 * @param pid
+	 *            The PID of the process
+	 * @param place
+	 *            The place of the process in the collective entry
+	 * @param queueID
+	 *            The ID identifies a collective entry
+	 * @param entryPos
+	 *            The position of the entry in the collective queue
 	 * @param assertion
-	 * @param channels
+	 *            The expression of a assertion asserted by the process
 	 * @return
 	 */
 	ImmutableState addToCollectiveSnapshotsEntry(ImmutableState state, int pid,
@@ -649,27 +657,48 @@ public interface StateFactory {
 	 * snapshots queues.
 	 * 
 	 * @param state
+	 *            The current state
 	 * @param pid
+	 *            The PID of the process
 	 * @param numProcesses
+	 *            The number of processes participating this collective entry
 	 * @param place
+	 *            The place of the process in the collective entry
 	 * @param queueID
+	 *            The ID identifies a collective queue
 	 * @param assertion
+	 *            The expression of the assertion asserted by the processes
 	 * @param channels
+	 *            Message buffer snapshot
 	 * @return
 	 */
 	ImmutableState createCollectiveSnapshotsEnrty(ImmutableState state,
 			int pid, int numProcesses, int place, int queueID,
-			Expression assertion);
+			Expression assertion, SymbolicExpression channels, ContractKind kind);
 
 	/**
 	 * Dequeues an {@link CollectiveSnapshotsEntry} from the specific snapshots
-	 * queue, returns a new state with the a dequeued snapshots queue.
+	 * queue, returns a new state.
 	 * 
 	 * @param state
+	 *            The current state
 	 * @param queueID
+	 *            The ID identifies a collective queue
 	 * @return
 	 */
-	Pair<ImmutableState, ImmutableCollectiveSnapshotsEntry> dequeueCollectiveSnapshotsEntry(
-			ImmutableState state, int queueID);
+	State dequeueCollectiveSnapshotsEntry(State state, int queueID);
+
+	/**
+	 * Copy the top {@link CollectiveSnapshotsEntry} from the specific snapshots
+	 * queue, returns the copied snapshots entry.
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param queueID
+	 *            The ID identifies a collective queue
+	 * @return
+	 */
+	ImmutableCollectiveSnapshotsEntry peekCollectiveSnapshotsEntry(State state,
+			int queueID);
 	/* ****************** End of Snapshots related method ****************** */
 }

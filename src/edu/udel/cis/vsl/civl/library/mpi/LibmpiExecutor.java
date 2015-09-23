@@ -15,6 +15,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.Scope;
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
@@ -22,11 +23,13 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLPrimitiveType;
 import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
+import edu.udel.cis.vsl.civl.semantics.common.ContractEvaluator;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -46,9 +49,14 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
 /**
  * Implementation of system functions declared mpi.h and civl-mpi.cvh
  * <ul>
- * <li>
- * 
- * </li>
+ * <li>$mpi_set_status</li>
+ * <li>$mpi_get_status</li>
+ * <li>$mpi_assertConsistentType</li>
+ * <li>$mpi_newGcomm</li>
+ * <li>$mpi_getGcomm</li>
+ * <li>$mpi_root_scope</li>
+ * <li>$mpi_proc_scope</li>
+ * <li>$mpi_isRecvBufEmpty</li>
  * </ul>
  * 
  * @author ziqingluo
@@ -56,7 +64,6 @@ import edu.udel.cis.vsl.sarl.IF.type.SymbolicType;
  */
 public class LibmpiExecutor extends BaseLibraryExecutor implements
 		LibraryExecutor {
-
 	/**
 	 * A map stores MPI process-status variables and the dynamic scopes in where
 	 * they are. Key for the information is the process id of the process.
@@ -98,18 +105,17 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	public State mpiCollectiveContract(State state, int pid, String process,
-			Expression[] args, CIVLSource source)
-			throws UnsatisfiablePathConditionException {
-		Expression groupExpr = args[0];
-		SymbolicExpression[] group = new SymbolicExpression[1];
+	public State executeCollectiveContract(State state, int pid,
+			String process, Expression[] args, ContractKind kind,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		SymbolicExpression[] argumentValues = new SymbolicExpression[1];
 		Evaluation eval;
 
-		eval = evaluator.evaluate(state, pid, groupExpr);
+		eval = evaluator.evaluate(state, pid, args[0]);
 		state = eval.state;
-		group[0] = eval.value;
-		state = this.executeCoassertWorker(state, pid, process, args, group,
-				source, true);
+		argumentValues[0] = eval.value;
+		state = executeCoassertWorker(state, pid, process, args,
+				argumentValues, source, true, kind);
 		return state;
 	}
 
@@ -134,7 +140,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		// deals with arguments of $mpi_coassert differently with other normal
 		// system functions:
 		if (functionName.equals("$mpi_coassert")) {
-			state = this.executeCoassertArrive(state, pid, process, arguments,
+			state = executeCoassertArrive(state, pid, process, arguments,
 					statement.getSource());
 			return stateFactory.setLocation(state, pid, call.target(),
 					call.lhs() != null);
@@ -509,8 +515,9 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		eval = evaluator.evaluate(state, pid, arguments[0]);
 		state = eval.state;
 		argumentValues[0] = eval.value;
-		return this.executeCoassertWorker(state, pid, process, arguments,
-				argumentValues, source, false);
+		state = executeCoassertWorker(state, pid, process, arguments,
+				argumentValues, source, false, null);
+		return state;
 	}
 
 	/**
@@ -536,12 +543,16 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	 * @param isContract
 	 *            flag controls whether an error will be reported as a contract
 	 *            violation or assertion violation
+	 * @param kind
+	 *            {@link ContractKind} if the the collective entry is associated
+	 *            to a contract, if it is associated to a collective assert,
+	 *            kind is null.
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private State executeCoassertWorker(State state, int pid, String process,
 			Expression[] arguments, SymbolicExpression[] argumentValues,
-			CIVLSource source, boolean isContract)
+			CIVLSource source, boolean isContract, ContractKind kind)
 			throws UnsatisfiablePathConditionException {
 		ImmutableState tmpState = (ImmutableState) state;
 		Expression MPICommExpr = arguments[0];
@@ -609,28 +620,18 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		}
 		// CASE TWO: if it needs a new entry, then create it
 		if (createNewEntry) {
+			SymbolicExpression channels = universe
+					.tupleRead(gcomm, threeObject);
+
 			// change the corresponding CollectiveSnapshotsEntry
 			tmpState = stateFactory.createCollectiveSnapshotsEnrty(tmpState,
-					pid, nprocs, place, queueID, assertion);
+					pid, nprocs, place, queueID, assertion, channels, kind);
 			entryComplete = (1 == nprocs);
 		}
 		// CASE THREE: if the entry is completed ?
-		if (entryComplete) {
-			ImmutableCollectiveSnapshotsEntry entry;
-			Expression[] assertions;
-			State fakeState;
-			Pair<ImmutableState, ImmutableCollectiveSnapshotsEntry> pair;
-
-			pair = stateFactory.dequeueCollectiveSnapshotsEntry(tmpState,
-					queueID);
-			tmpState = pair.left;
-			entry = pair.right;
-			assertions = entry.getAllAssertions();
-			fakeState = stateFactory.mergeMonostates(tmpState, entry);
-			// evaluate
-			fakeState = coassertsEvaluation(fakeState, assertions, MPICommExpr,
-					isContract);
-		}
+		if (entryComplete)
+			return dequeueCollectiveEntryAndEvaluation(tmpState, queueID,
+					MPICommExpr, isContract);
 		return tmpState;
 	}
 
@@ -677,59 +678,98 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	}
 
 	/**
-	 * Evaluating assertions for all processes participating a $mpi_coaseert()
-	 * function.
+	 * Dequeues a complete collective entry and evaluates assertions of it.
 	 * 
-	 * @param fakeState
-	 * @param assertions
-	 * @param pid
-	 * @param arguments
-	 * @param argumentValues
-	 * @param source
-	 * @param call
+	 * @param state
+	 *            The state that the collective entry just completes
+	 * @param queueID
+	 *            The ID associates to an MPI communicator, which is also used
+	 *            to identify a collective queue.
+	 * @param MPICommExpr
+	 *            The expression of an MPI communicator
+	 * @param isContrac
+	 *            Flag indicates whether the evaluation is for a collective
+	 *            contract or assert.
 	 * @return
 	 * @throws UnsatisfiablePathConditionException
 	 */
-	private State coassertsEvaluation(State fakeState, Expression[] assertions,
-			Expression group, boolean isContract)
+	private State dequeueCollectiveEntryAndEvaluation(State state, int queueID,
+			Expression MPICommExpr, boolean isContract)
+			throws UnsatisfiablePathConditionException {
+		ImmutableCollectiveSnapshotsEntry entry;
+		ImmutableState mergedState;
+
+		entry = stateFactory.peekCollectiveSnapshotsEntry(state, queueID);
+		mergedState = stateFactory.mergeMonostates(state, entry);
+		collectiveEvaluation(mergedState, entry.getAllAssertions(),
+				MPICommExpr, isContract);
+		state = stateFactory.dequeueCollectiveSnapshotsEntry(state, queueID);
+		return state;
+	}
+
+	/**
+	 * Evaluating assertions for all processes participating a $mpi_coassert()
+	 * (or a collective contract) function.
+	 * 
+	 * @param mergedState
+	 *            The state on where the evaluation happens
+	 * @param assertions
+	 *            The list of assertions, one for each process
+	 * @param pid
+	 *            The PID of the process
+	 * @param group
+	 *            The expression of the group contains all participated
+	 *            processes
+	 * @param isContract
+	 *            Flag indicate whether those assertions are coming from a
+	 *            collective assert or a collective contract
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State collectiveEvaluation(State mergedState,
+			Expression[] assertions, Expression group, boolean isContract)
 			throws UnsatisfiablePathConditionException {
 		String process;
 		Evaluation eval;
 		Reasoner reasoner;
+		Evaluator coEvaluator;
 
-		stateFactory.simplify(fakeState);
+		coEvaluator = (isContract) ? new ContractEvaluator(modelFactory,
+				stateFactory, libEvaluatorLoader, symbolicUtil,
+				symbolicAnalyzer, null, errorLogger, civlConfig) : evaluator;
+		stateFactory.simplify(mergedState);
 		for (int place = 0; place < assertions.length; place++) {
 			Expression snapShotAssertion = assertions[place];
 			BooleanExpression assertionVal;
 			ResultType resultType;
 			String message;
 
-			eval = evaluator.evaluate(fakeState, place, snapShotAssertion);
-			fakeState = eval.state;
+			eval = coEvaluator.evaluate(mergedState, place, snapShotAssertion);
+			mergedState = eval.state;
 			assertionVal = (BooleanExpression) eval.value;
-			reasoner = universe.reasoner(fakeState.getPathCondition());
+			reasoner = universe.reasoner(mergedState.getPathCondition());
 			resultType = reasoner.valid(assertionVal).getResultType();
 			if (!resultType.equals(ResultType.YES)) {
 				Expression[] args = { snapShotAssertion };
 				SymbolicExpression[] argVals = { assertionVal };
 
-				message = " assertion:" + assertions[place];
-				process = "process with rank: " + place + " participating the "
-						+ "$mpi_coassert().";
 				if (isContract) {
-					fakeState = this.primaryExecutor.reportContractViolation(
-							fakeState, snapShotAssertion.getSource(), place,
-							process, resultType, assertionVal,
-							snapShotAssertion, ErrorKind.MPI_ERROR,
-							group.toString());
-				} else
-					// TODO improve infomation
-					fakeState = this.reportAssertionFailure(fakeState, place,
-							process, resultType, "$mpi_coassert violation: "
-									+ message, args, argVals,
-							snapShotAssertion.getSource(), assertionVal, 1);
+					mergedState = this.primaryExecutor.reportContractViolation(
+							mergedState, snapShotAssertion.getSource(), place,
+							resultType, assertionVal, snapShotAssertion,
+							ErrorKind.MPI_ERROR, group.toString());
+				} else {
+					message = " assertion:" + assertions[place];
+					process = "process with rank: " + place
+							+ " participating the " + "$mpi_coassert().";
+					mergedState = this.reportAssertionFailure(mergedState,
+							place, process, resultType,
+							"$mpi_coassert violation: " + message, args,
+							argVals, snapShotAssertion.getSource(),
+							assertionVal, 1);
+				}
 			}
 		}
-		return fakeState;
+		return mergedState;
 	}
 }

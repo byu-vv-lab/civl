@@ -54,7 +54,6 @@ import edu.udel.cis.vsl.civl.model.IF.expression.SizeofExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SizeofTypeExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.StructOrUnionLiteralExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SubscriptExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.SystemGuardExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.UnaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
@@ -136,7 +135,7 @@ public class CommonEvaluator implements Evaluator {
 	 * appropriate library evaluators when library-defined expressions need to
 	 * be evaluated. These are primarily guards of system functions.
 	 */
-	private LibraryEvaluatorLoader libLoader;
+	protected LibraryEvaluatorLoader libLoader;
 
 	/**
 	 * An uninterpreted function used to evaluate "BigO" of an expression. It
@@ -179,7 +178,7 @@ public class CommonEvaluator implements Evaluator {
 	 * The unique model factory used to construct the CIVL model elements that
 	 * this evaluator will encounter.
 	 */
-	private ModelFactory modelFactory;
+	protected ModelFactory modelFactory;
 
 	/**
 	 * The symbolic expression representing "NULL" expression, which is non-null
@@ -236,7 +235,7 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * The unique symbolic universe used in the system.
 	 */
-	private SymbolicUniverse universe;
+	protected SymbolicUniverse universe;
 
 	/**
 	 * The symbolic int object of 0.
@@ -270,12 +269,12 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * The symbolic utility for manipulations of symbolic expressions.
 	 */
-	private SymbolicUtility symbolicUtil;
+	protected SymbolicUtility symbolicUtil;
 
 	/**
 	 * The error logger to report errors.
 	 */
-	private CIVLErrorLogger errorLogger;
+	protected CIVLErrorLogger errorLogger;
 
 	/**
 	 * The abstract function for bitwise and.
@@ -315,7 +314,7 @@ public class CommonEvaluator implements Evaluator {
 	/**
 	 * The symbolic analyzer to be used.
 	 */
-	private SymbolicAnalyzer symbolicAnalyzer;
+	protected SymbolicAnalyzer symbolicAnalyzer;
 
 	private MemoryUnitExpressionEvaluator memUnitEvaluator;
 
@@ -1986,12 +1985,6 @@ public class CommonEvaluator implements Evaluator {
 		return new Evaluation(state, rangeValue);
 	}
 
-	// TODO: doc, imple me!
-	private Evaluation evaluateSystemFunctionCallExpression(State state,
-			int pid, SystemFunctionCallExpression funcExpr) {
-		return null;
-	}
-
 	private Evaluation evaluateScopeOperations(State state, int pid,
 			BinaryExpression expression)
 			throws UnsatisfiablePathConditionException {
@@ -2956,10 +2949,6 @@ public class CommonEvaluator implements Evaluator {
 					(QuantifiedExpression) expression);
 			break;
 		case SYSTEM_FUNC_CALL:
-			result = evaluateSystemFunctionCallExpression(state, pid,
-					(SystemFunctionCallExpression) expression);
-			// TODO: for supported function call, load library evaluator
-			break;
 		case MEMORY_UNIT:
 		case NULL_LITERAL:
 		case STRING_LITERAL:

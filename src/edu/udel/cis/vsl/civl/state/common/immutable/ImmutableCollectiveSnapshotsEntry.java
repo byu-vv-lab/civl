@@ -1,11 +1,11 @@
 package edu.udel.cis.vsl.civl.state.common.immutable;
 
+import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.state.IF.CollectiveSnapshotsEntry;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
-import edu.udel.cis.vsl.sarl.IF.expr.NumericExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 public class ImmutableCollectiveSnapshotsEntry implements
@@ -54,6 +54,11 @@ public class ImmutableCollectiveSnapshotsEntry implements
 	private int maxPid;
 
 	/**
+	 * The {@link ContractKind} of this entry
+	 */
+	private ContractKind kind;
+
+	/**
 	 * Communicator channels, coordinated by source then destination.
 	 */
 	private SymbolicExpression channels;
@@ -92,6 +97,25 @@ public class ImmutableCollectiveSnapshotsEntry implements
 		}
 		this.universe = universe;
 		this.maxPid = 0;
+		this.kind = null;
+	}
+
+	ImmutableCollectiveSnapshotsEntry(int numProcesses,
+			SymbolicUniverse universe, ContractKind kind) {
+		this.numProcesses = numProcesses;
+		this.isComplete = false;
+		this.numMonoStates = 0;
+		this.monoStates = new ImmutableMonoState[numProcesses];
+		this.predicates = new Expression[numProcesses];
+		this.isSimplified = new boolean[numProcesses];
+		this.isRecorded = new boolean[numProcesses];
+		for (int i = 0; i < numProcesses; i++) {
+			this.isSimplified[i] = false;
+			this.isRecorded[i] = false;
+		}
+		this.universe = universe;
+		this.maxPid = 0;
+		this.kind = kind;
 	}
 
 	public ImmutableCollectiveSnapshotsEntry copy() {
@@ -104,6 +128,8 @@ public class ImmutableCollectiveSnapshotsEntry implements
 		clone.isSimplified = isSimplified.clone();
 		clone.isRecorded = this.isRecorded.clone();
 		clone.maxPid = this.maxPid;
+		clone.channels = this.channels;
+		clone.kind = this.kind;
 		return clone;
 	}
 
@@ -134,11 +160,8 @@ public class ImmutableCollectiveSnapshotsEntry implements
 	}
 
 	@Override
-	public SymbolicExpression getChannel(NumericExpression src,
-			NumericExpression dest) {
-		SymbolicExpression tmp = universe.arrayRead(channels, src);
-
-		return universe.arrayRead(tmp, dest);
+	public SymbolicExpression getMsgBuffers() {
+		return channels;
 	}
 
 	@Override
@@ -158,6 +181,7 @@ public class ImmutableCollectiveSnapshotsEntry implements
 		newEntry.predicates[place] = assertion;
 		newEntry.numMonoStates++;
 		newEntry.isRecorded[place] = true;
+		newEntry.kind = kind;
 		if (pid >= newEntry.maxPid)
 			newEntry.maxPid = pid;
 		// If all snapshots are taken, check if they are coming from the correct
@@ -220,5 +244,24 @@ public class ImmutableCollectiveSnapshotsEntry implements
 
 	ImmutableMonoState[] getMonoStates() {
 		return this.monoStates;
+	}
+
+	@Override
+	public ContractKind contractKind() {
+		return kind;
+	}
+
+	ImmutableCollectiveSnapshotsEntry setChannels(SymbolicExpression channels) {
+		ImmutableCollectiveSnapshotsEntry newEntry = this.copy();
+
+		newEntry.channels = channels;
+		return newEntry;
+	}
+
+	ImmutableCollectiveSnapshotsEntry setKind(ContractKind kind) {
+		ImmutableCollectiveSnapshotsEntry newEntry = this.copy();
+
+		newEntry.kind = kind;
+		return newEntry;
 	}
 }

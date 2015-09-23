@@ -1617,6 +1617,5 @@ public interface ModelFactory {
 	 */
 	ContractClauseExpression contractClauseExpression(CIVLSource source,
 			CIVLType type, Expression collectiveGroup, Expression body,
-			ContractKind contractKind,
-			List<SystemFunctionCallExpression> contractCalls);
+			ContractKind contractKind);
 }
