@@ -25,7 +25,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CompoundLiteralNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
@@ -33,7 +32,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.SizeofNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.SwitchLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpDeclarativeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpExecutableNode;
@@ -71,6 +69,7 @@ import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.parse.IF.OmpCParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
+import edu.udel.cis.vsl.abc.token.IF.SourceFile;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
@@ -763,17 +762,25 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 											CParser.FALSE), false)));
 		}
 
-		// addParallelDataStruct(externalList);
-
 		externalList.addAll(result.first);
 		newRootNode = nodeFactory.newSequenceNode(null, "TranslationUnit",
 				externalList);
 		completeSources(newRootNode);
 		this.processOmpLockCalls(newRootNode);
 		newAst = astFactory.newAST(newRootNode, ast.getSourceFiles());
-		newAst = this.combineASTs(civlcOmpAST, newAst);
-		newAst = this.combineASTs(civlcAST, newAst);
-		newAst.prettyPrint(System.out, true);
+		boolean ompHeader = false;
+		for (SourceFile sourceFile : ast.getSourceFiles()) {
+			String filename = sourceFile.getName();
+
+			if (filename.equals("omp.h")) {
+				ompHeader = true;
+			}
+		}
+		if(!ompHeader){
+			newAst = this.combineASTs(civlcOmpAST, newAst);
+			newAst = this.combineASTs(civlcAST, newAst);
+		}
+		//newAst.prettyPrint(System.out, true);
 		return newAst;
 	}
 
@@ -2838,29 +2845,6 @@ public class OpenMP2CIVLWorker extends BaseWorker {
 			}
 		}
 
-	}
-
-	@SuppressWarnings("unused")
-	private CastNode createMalloc(PointerTypeNode castType, TypeNode sizeType,
-			ExpressionNode size) {
-		String place = "malloc";
-		IdentifierExpressionNode mallocName = (IdentifierExpressionNode) this
-				.identifierExpression(newSource(place, CParser.IDENTIFIER),
-						"$malloc");
-		IdentifierExpressionNode genRoot = (IdentifierExpressionNode) this
-				.identifierExpression(newSource(place, CParser.IDENTIFIER),
-						"$gen_root");
-		SizeofNode sizeOf = nodeFactory.newSizeofNode(
-				newSource(place, CParser.SIZEOF), sizeType);
-		OperatorNode ops = nodeFactory.newOperatorNode(
-				newSource(place, CParser.OPERATOR), Operator.TIMES,
-				Arrays.asList(size, sizeOf));
-		FunctionCallNode mallFunc = nodeFactory.newFunctionCallNode(
-				newSource(place, CParser.CALL), mallocName,
-				Arrays.asList(genRoot, ops), null);
-
-		return nodeFactory.newCastNode(newSource(place, CParser.CAST),
-				castType, mallFunc);
 	}
 
 	private boolean containsSharedVar(ASTNode node,
