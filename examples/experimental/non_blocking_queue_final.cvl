@@ -21,9 +21,7 @@
 typedef struct pointer_t pointer_t;
 typedef struct queue_t queue_t;
 typedef struct node_t node_t;
-typedef struct freeList freeList;
-
-struct node_t;
+typedef struct free_t free_t;
 
 struct pointer_t {
   node_t* ptr;
@@ -40,52 +38,66 @@ struct queue_t {
   pointer_t Tail;
 };
 
-struct freeList{ //sepcial-use free list for putting node 
+/* Structure for linked list consisting of nodes
+ * that we want to free eventually */
+struct free_t {
   node_t *node;
-  freeList *next;
+  free_t *next;
 };
 
-freeList* list; //declare global list
+/* Global list of nodes to be freed */
+free_t* free_list;
 
 void initialize(queue_t *Q) {
   node_t *node = (node_t*)malloc(sizeof(node_t));
+
+  // why isn't this NULL?  (isn't the free_list empty???)
+  free_list=(free_t*)malloc(sizeof(free_t));
   
-  list=(freeList*)malloc(sizeof(freeList));
-  list->node = NULL;
-  list->next = NULL;
+  free_list->node = NULL;
+  free_list->next = NULL;
+
   node->next.ptr = NULL;         
   node->next.count = 0;	 
   Q->Head.ptr = Q->Tail.ptr = node; 
 }
 
-void setFree(node_t* freeNode){
-  $atomic{
-    freeList *temp = (freeList*)malloc(sizeof(freeList));
+/* WHAT DOES THIS DO????  Adds the node to the free_list */
+/* free_later ? */
+void setFree(node_t* freeNode) {
+  $atomic {
+    free_t *temp = (free_t*)malloc(sizeof(free_t));
    
     temp->node = freeNode;
-    temp->next = list->next;
-    list->next = temp;
+    temp->next = free_list->next;
+    free_list->next = temp;
   }
 }
 
-void deallocate(freeList *list){
-  freeList *q;
+/* what does this do ? 
+   free_all(); // deallocates all nodes in free_list   
+*/
+void deallocate() {
+  free_t *list = free_list;
   
-  while(list != NULL){
-    q = list->next;
+  while (list != NULL) {
+    free_t *tmp = list->next;
+    
     free(list->node);
     free(list);
-    list = q;
+    list = tmp;
   }
 }
 
-_Bool equal(pointer_t p1, pointer_t p2){
+/* ??? */
+_Bool ptr_equal(pointer_t p1, pointer_t p2) {
   return (p1.ptr == p2.ptr) && (p1.count == p2.count);
 }
 
+/* ??? */
 _Bool CAS(pointer_t *dest, pointer_t oldval, pointer_t newval){
   $atomic {
-    if (equal(*dest, oldval)) {
+    if (ptr_equal(*dest, oldval)) {
       *dest = newval;
       return true;
     }
@@ -99,57 +111,59 @@ void enqueue(queue_t *Q, int value) {
   node->value = value;		
   node->next.ptr = NULL;
   
-  while (true){					
-    tail = Q->Tail;	  // Read Tail.ptr and Tail.count together
-    next = tail.ptr->next; // Read next ptr and count fields together
-    if (equal(tail, Q->Tail))  // Are tail and next consistent?
-      // Was Tail pointing to the last node?
+  while (true) {
+    tail = Q->Tail;
+    next = tail.ptr->next;
+    if (ptr_equal(tail, Q->Tail)) {
       if (next.ptr == NULL){
-	// Try to link node at the end of the linked list
-	if (CAS(&tail.ptr->next, next, (pointer_t){ node, next.count + 1 }))
-	  break;		// **Enqueue is done.  Exit loop
+	if (CAS(&tail.ptr->next,
+		next,
+		(pointer_t){node, next.count+1}))
+	  break;
       }
-      else{   // Tail was not pointing to the last node
-	// Try to swing Tail to the next node
-	CAS(&Q->Tail, tail, (pointer_t){ next.ptr, tail.count + 1 });
+      else {
+	CAS(&Q->Tail,
+	    tail,
+	    (pointer_t){next.ptr, tail.count+1});
       }
+    }
   }
-  // Enqueue is done.  Try to swing Tail to the inserted node
-  CAS(&Q->Tail, tail, (pointer_t){ node, tail.count + 1 });
+  CAS(&Q->Tail, tail, (pointer_t){node, tail.count+1});
 }
 
 _Bool dequeue(queue_t *Q, int *pvalue) {
   pointer_t head, tail, next;
 
-  while (true){					
-    head = Q->Head;		// Read Head
-    tail = Q->Tail;	        // Read Tail
-    next = head.ptr->next;     // Read Head.ptr->next
-    if (equal(head, Q->Head)) // Are head, tail, and next consistent?
-      if (head.ptr == tail.ptr){	        
-	if (next.ptr == NULL)	// Is queue empty?
-	  return false;		// Queue is empty, couldn't dequeue
-	// Tail is falling behind.  Try to advance it
-	CAS(&Q->Tail, tail, (pointer_t){ next.ptr, tail.count + 1 });
+  while (true) {					
+    head = Q->Head;
+    tail = Q->Tail;
+    next = head.ptr->next;
+    if (ptr_equal(head, Q->Head)) {
+      if (head.ptr == tail.ptr) {	        
+	if (next.ptr == NULL)
+	  return false;
+	// Tail is falling behind.  Try to advance it:
+	CAS(&Q->Tail,
+	    tail,
+	    (pointer_t){next.ptr, tail.count+1});
       }
-      else{
-	// Read value before CAS
-	// Otherwise, another dequeue might free the next node
+      else {
 	*pvalue = next.ptr->value;
-	if (CAS(&Q->Head, head, (pointer_t){ next.ptr, head.count + 1 }))
-	  break;// **Dequeue is done.  Exit loop
+	if (CAS(&Q->Head,
+		head,
+		(pointer_t){next.ptr, head.count+1}))
+	  break;
       }
+    }
   }
-  setFree(head.ptr); // It is safe now to "free" the old node
-  return true;      // Queue was not empty, dequeue succeeded
+  setFree(head.ptr);
+  return true;
 }
 
-/*****************************************************/
 /******************** Tests **************************/
-/*****************************************************/
 
-/* Determines whether an array of n integers is 
- * a permutation of the numbers 0..n-1. */
+/* Auxiliary function to determine whether an array of
+ * n integers is a permutation of the numbers 0..n-1. */
 _Bool is_permutation(int n, int *data) {
   _Bool seen[n];
 
@@ -167,6 +181,10 @@ _Bool is_permutation(int n, int *data) {
   return 1;
 }
 
+/* A single thread enqueues 10 items and then dequeues
+ * 10 times.  Checks that the dequeued sequence is the
+ * same as the enqueued sequence.
+ */
 void test1() {
   int d;
   queue_t sq;
@@ -181,80 +199,80 @@ void test1() {
     assert(result);
     assert(d == i);
   }
-  deallocate(list);
+  deallocate();
   free(sq.Head.ptr);
 }
 
-void test2(int n) {   //Test whether dequeued array is a permutation
+/* n threads executing concurrently; each does one enqueue
+ * and one dequeue.   Check that the result is a permutation
+ * of the numbers 0..n-1.
+ */
+void test2(int n) {
   queue_t sq;
   int array[n];
   
   initialize(&sq);
-  $parfor(int i: 0 .. (n-1)) {
+  $parfor (int i: 0 .. (n-1)) {
     enqueue(&sq, i);
     dequeue(&sq, &array[i]);
   }
   assert(is_permutation(n, array));  
-  deallocate(list);
+  deallocate();
   free(sq.Head.ptr);
 }
 
-void test3(int t, int n) {  //t is the number of threads,
-  int RESULT[t*n];          //n is the number of enqueued values 
-  int R[t][n];      //global array to store scaned result
-  int counter[t];   //global array, each thread has a counter;
+
+/* Checks that a sequence of integers is obtained
+ * by interleaving blocks of integers.
+ * It is assumed that there are nthreads threads,
+ * each of which generates the integers 
+ * nvals*tid, ..., nvals*(tid+1)-1.
+ */
+void assertFIFO(int nthreads, int nvals, int *data) {
+  // for each thread, the next value you expect to see
+  // from that thread:
+  int expect[nthreads];
+
+  for (int tid=0; tid<nthreads; tid++)
+    expect[tid] = tid*nvals;
+  for (int i=0; i< nthreads*nvals; i++) {
+    int x = data[i];
+    int tid = x/nvals;
+
+    assert(expect[tid]==x);
+    expect[tid]++;
+  }
+}
+
+/* Tests the FIFO property where multiple threads enqueue
+ * concurrently and a single thread dequeues everything.
+ * t: number of threads, n: number of values each thread
+ * will enqueue.
+ */
+void test3(int nthreads, int nvals) {
+  // the values dequeued by the single thread:
+  int result[nthreads*nvals];
   queue_t sq;
-  
-  void thread(int tid){
-    for(int i=0; i<n; i++) {
-      enqueue(&sq, i+1+tid*n);
+
+  initialize(&sq);  
+  $parfor (int tid: 0 .. nthreads-1) {
+    for (int i=0; i<nvals; i++) {
+      enqueue(&sq, i+tid*nvals);
     }
   }
-  void scan(int x){   // helper method for assertFIFO()
-    int tid = 0;     // thread id
-  
-    tid = (x-1)/n;   //calculate the id of thread;
-    R[tid][counter[tid]++] = x;  //store scaned elements
+  printf("Dequeued: ");
+  for (int i=0; i<nthreads*nvals; i++) {
+    dequeue(&sq, &result[i]);
+    printf("%d\t", result[i]);
   }
-  void assertFIFO(int *data) {  // assert method for testing FIFO
-    for(int i=0; i<t*n; i++)
-      scan(data[i]);  //scan dequeued RESULT[t*n];
-    for(int i=0; i<t; i++)     //assert FIFO for each thread
-      for(int j=0; j<n-1; j++)
-	assert(R[i][j] < R[i][j+1]);
-  }
-  for(int i=0; i<t; i++)   //initialize global R[t][n]
-    for(int j=0; j<n; j++)
-      R[i][j] = 0;   
-  for(int i=0; i<t;i++) ///initialize global counter[t]
-    counter[i] = 0;
-  for(int i=0; i<t*n; i++)
-    RESULT[i] = 0;
-  
-  initialize(&sq);  
-  $parfor(int i: 0 .. t-1)
-    thread(i);
-  for(int i=0; i<t*n; i++)  
-    dequeue(&sq, &RESULT[i]); 
-  for(int i=0; i<t*n; i++){ //print dequeued result
-    if(i%(t*n)==0)
-      printf("dequeue: ");
-    printf("%d\t", RESULT[i]);
-  } 
   printf("\n");
-  assertFIFO(RESULT);
-  deallocate(list);
+  assertFIFO(nthreads, nvals, result);
+  deallocate();
   free(sq.Head.ptr);
 }
 
 void main() {
   test1();
   test2(2);
-  test3(2, 3);
+  test3(3, 2);
 }
-
-
-
-
-
-
