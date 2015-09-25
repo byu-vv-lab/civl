@@ -1,18 +1,12 @@
 VERIFY=civl verify -input_mpi_nprocs=3 -deadlock=potential -mpiContract 
 
-all: cycle wildcard_bad wildcard_barrier reduce
+all: $(patsubst  %.c, C_%, $(wildcard *.c)) $(patsubst  %.cvl, CVL_%, $(wildcard *.cvl))
 
-cycle: cycle.c
-	$(VERIFY) cycle.c
+C_%: %.c
+	$(VERIFY) $<
 
-wildcard_bad: wildcard_coassert_bad.c
-	$(VERIFY) wildcard_coassert_bad.c
-
-wildcard_barrier: wildcard_coassert_barrier.c
-	$(VERIFY) wildcard_coassert_barrier.c
-
-reduce: reduce_coassert.c
-	$(VERIFY) reduce_coassert.c
+CVL_%: %.cvl
+	$(VERIFY) $<
 
 clean: 
 	rm -r -f CIVLREP *~
