@@ -5,6 +5,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -43,5 +45,44 @@ public class ContractTest {
 		assertFalse(ui
 				.run("verify -enablePrintf=false -errorBound=10 -input_mpi_nprocs=3 -mpiContract",
 						filename("coassert_cover.c")));
+	}
+
+	@Test
+	public void result() {
+		assertTrue(ui
+				.run("show -showModel -mpiContract ", filename("result.c")));
+	}
+
+	@Ignore
+	public void isRecvBufEmpty() {
+		assertTrue(ui.run("verify -showModel -mpiContract -input_mpi_nprocs=2",
+				filename("isRecvBufEmpty.c")));
+	}
+
+	@Test
+	public void mergeContracts() {
+		assertTrue(ui.run(
+				"verify -mpiContract  -deadlock=potential -input_mpi_nprocs=2",
+				filename("mergeContracts.c")));
+	}
+
+	@Ignore
+	public void notEmptyRecvBuf() {
+		assertFalse(ui.run("verify -mpiContract -deadlock=potential",
+				filename("notEmptyRecvBuf.c")));
+	}
+
+	@Test
+	public void wildcard_contract_bad() {
+		assertFalse(ui
+				.run("verify -min -deadlock=potential -mpiContract -input_mpi_nprocs=3",
+						filename("wildcard_contract_bad.c")));
+		ui.run("replay", filename("wildcard_contract_bad.c"));
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		ui = null;
+		rootDir = null;
 	}
 }
