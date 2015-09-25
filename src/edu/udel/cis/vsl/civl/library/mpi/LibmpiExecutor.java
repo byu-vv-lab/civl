@@ -1,6 +1,7 @@
 package edu.udel.cis.vsl.civl.library.mpi;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Set;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
+import edu.udel.cis.vsl.civl.library.comm.LibcommEvaluator;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -559,12 +561,13 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		Expression assertion = arguments[1];
 		// Symbolic Expressions
 		SymbolicExpression MPIComm = argumentValues[0];
-		SymbolicExpression commHandle = universe.tupleRead(MPIComm, oneObject);
+		SymbolicExpression colCommHandle = universe.tupleRead(MPIComm,
+				universe.intObject(LibmpiEvaluator.colCommField));
 		NumericExpression symNprocs;
 		NumericExpression symPlace;
 		NumericExpression symQueueID = (NumericExpression) universe.tupleRead(
 				MPIComm, universe.intObject(4));
-		SymbolicExpression gcomm, gcommHandle, comm;
+		SymbolicExpression colGcomm, colGcommHandle, colComm;
 		ArrayList<ImmutableCollectiveSnapshotsEntry> queue;
 		boolean createNewEntry;
 		boolean entryComplete;
@@ -575,19 +578,20 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		Evaluation eval;
 
 		eval = evaluator.dereference(MPICommExpr.getSource(), tmpState,
-				process, MPICommExpr, commHandle, false);
+				process, MPICommExpr, colCommHandle, false);
 		tmpState = (ImmutableState) eval.state;
-		comm = eval.value;
-		gcommHandle = universe.tupleRead(comm, oneObject);
+		colComm = eval.value;
+		colGcommHandle = universe.tupleRead(colComm, oneObject);
 		eval = evaluator.dereference(MPICommExpr.getSource(), tmpState,
-				process, MPICommExpr, gcommHandle, false);
+				process, MPICommExpr, colGcommHandle, false);
 		tmpState = (ImmutableState) eval.state;
-		gcomm = eval.value;
+		colGcomm = eval.value;
 		// reads and makes following variables concrete:
 		// place: another name for ranks of process in MPI communicator
 		// nprocs: number of processes
-		symPlace = (NumericExpression) universe.tupleRead(comm, zeroObject);
-		symNprocs = (NumericExpression) universe.tupleRead(gcomm, zeroObject);
+		symPlace = (NumericExpression) universe.tupleRead(colComm, zeroObject);
+		symNprocs = (NumericExpression) universe
+				.tupleRead(colGcomm, zeroObject);
 		tmpNumber = (IntegerNumber) universe.extractNumber(symPlace);
 		assert tmpNumber != null : "The place of a process in MPI should be concrete.";
 		place = tmpNumber.intValue();
@@ -620,9 +624,20 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		}
 		// CASE TWO: if it needs a new entry, then create it
 		if (createNewEntry) {
-			SymbolicExpression channels = universe
-					.tupleRead(gcomm, threeObject);
+			SymbolicExpression channels = null;
 
+			if (civlConfig.isEnableMpiContract()) {
+				SymbolicExpression colChannel = universe
+						.tupleRead(colGcomm, universe
+								.intObject(LibcommEvaluator.messageBufferField));
+				SymbolicExpression p2pChannel = this.getchannelsFromCommHandle(
+						tmpState, pid, process, MPICommExpr,
+						universe.tupleRead(MPIComm, universe
+								.intObject(LibmpiEvaluator.p2pCommField)));
+
+				channels = universe.array(colChannel.type(),
+						Arrays.asList(p2pChannel, colChannel));
+			}
 			// change the corresponding CollectiveSnapshotsEntry
 			tmpState = stateFactory.createCollectiveSnapshotsEnrty(tmpState,
 					pid, nprocs, place, queueID, assertion, channels, kind);
@@ -771,5 +786,22 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			}
 		}
 		return mergedState;
+	}
+
+	private SymbolicExpression getchannelsFromCommHandle(State state, int pid,
+			String process, Expression expr, SymbolicExpression commHandle)
+			throws UnsatisfiablePathConditionException {
+		Evaluation eval = evaluator.dereference(expr.getSource(), state,
+				process, expr, commHandle, false);
+		SymbolicExpression comm, gcomm, gcommHandle;
+
+		comm = eval.value;
+		gcommHandle = universe.tupleRead(comm,
+				universe.intObject(LibcommEvaluator.gcommHandleInCommField));
+		eval = evaluator.dereference(expr.getSource(), eval.state, process,
+				expr, gcommHandle, false);
+		gcomm = eval.value;
+		return universe.tupleRead(gcomm,
+				universe.intObject(LibcommEvaluator.messageBufferField));
 	}
 }

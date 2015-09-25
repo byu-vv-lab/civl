@@ -26,6 +26,9 @@ import edu.udel.cis.vsl.sarl.IF.number.IntegerNumber;
 
 public class LibmpiEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
+	public static final int p2pCommField = 0;
+	public static final int colCommField = 1;
+	public static final int IDField = 4;
 
 	public LibmpiEvaluator(String name, Evaluator evaluator,
 			ModelFactory modelFactory, SymbolicUtility symbolicUtil,
@@ -33,6 +36,7 @@ public class LibmpiEvaluator extends BaseLibraryEvaluator implements
 			LibraryEvaluatorLoader libEvaluatorLoader) {
 		super(name, evaluator, modelFactory, symbolicUtil, symbolicAnalyzer,
 				civlConfig, libEvaluatorLoader);
+
 	}
 
 	/**
@@ -91,8 +95,8 @@ public class LibmpiEvaluator extends BaseLibraryEvaluator implements
 		Evaluation eval = evaluator.evaluate(state, pid, MPIComm);
 		SymbolicExpression MPICommVal;
 		NumericExpression src;
-		SymbolicExpression msgBuffers, theMsgBuffer;
-		BooleanExpression claim;
+		SymbolicExpression msgBuffers, p2pBuf, colBuf, p2p, col;
+		BooleanExpression p2pClaim, colClaim;
 		Pair<NumericExpression, NumericExpression> place_queueId;
 		int queueID;
 
@@ -109,11 +113,17 @@ public class LibmpiEvaluator extends BaseLibraryEvaluator implements
 				.intValue();
 		msgBuffers = stateFactory.peekCollectiveSnapshotsEntry(state, queueID)
 				.getMsgBuffers();
-		theMsgBuffer = universe.arrayRead(universe.arrayRead(msgBuffers, src),
+		p2p = universe.arrayRead(msgBuffers, zero);
+		p2pBuf = universe.arrayRead(universe.arrayRead(p2p, src),
 				place_queueId.left);
-		claim = universe.equals(universe.tupleRead(theMsgBuffer, zeroObject),
-				zero);
-		return new Evaluation(state, claim);
+		col = universe.arrayRead(msgBuffers, one);
+		colBuf = universe.arrayRead(universe.arrayRead(col, src),
+				place_queueId.left);
+		p2pClaim = universe
+				.equals(universe.tupleRead(p2pBuf, zeroObject), zero);
+		colClaim = universe
+				.equals(universe.tupleRead(colBuf, zeroObject), zero);
+		return new Evaluation(state, universe.and(p2pClaim, colClaim));
 	}
 
 	/**

@@ -28,6 +28,8 @@ import edu.udel.cis.vsl.sarl.IF.number.Number;
 public class LibcommEvaluator extends BaseLibraryEvaluator implements
 		LibraryEvaluator {
 
+	public static final int messageBufferField = 3;
+	public static final int gcommHandleInCommField = 1;
 	private NumericExpression minusOne = universe.integer(-1);
 	private NumericExpression minusTwo = universe.integer(-2);
 	private BooleanExpression trueExpr = universe.trueExpression();

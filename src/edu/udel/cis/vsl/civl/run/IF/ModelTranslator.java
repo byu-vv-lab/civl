@@ -77,6 +77,12 @@ public class ModelTranslator {
 	private static final String CIVL_MACRO = "_CIVL";
 
 	/**
+	 * A macro for MPI contract features. Once the option "-mpiContrac" is set
+	 * in command line, such a macro should be enabled.
+	 */
+	private static final String MPI_CONTRACT_MACRO = "_MPI_CONTRACT";
+
+	/**
 	 * An empty file array
 	 */
 	private final static File[] emptyFileArray = new File[0];
@@ -768,6 +774,8 @@ public class ModelTranslator {
 
 		if (this.cmdSection.isTrue(CIVLConstants.CIVLMacroO))
 			macroDefs.put(CIVL_MACRO, "");
+		if (this.cmdSection.isTrue(CIVLConstants.mpiContractO))
+			macroDefs.put(MPI_CONTRACT_MACRO, "");
 		if (macroDefMap != null) {
 			for (String name : macroDefMap.keySet()) {
 				macroDefs.put(name, (String) macroDefMap.get(name));

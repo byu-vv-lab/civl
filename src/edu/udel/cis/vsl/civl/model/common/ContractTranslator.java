@@ -369,16 +369,20 @@ public class ContractTranslator extends FunctionTranslator {
 	@Override
 	protected Expression translateResultNode(ResultNode resultNode, Scope scope) {
 		CIVLSource resultSource = modelFactory.sourceOf(resultNode);
-		Variable newResultVariable;
+		Variable resultVariable;
 		Identifier resultIdentifier = modelFactory.identifier(resultSource,
 				contractResultName);
-		CIVLType resultType = this.translateABCType(resultSource, scope,
-				resultNode.getType());
 
-		newResultVariable = modelFactory.variable(resultSource, resultType,
-				resultIdentifier, scope.numVariables());
-		scope.addVariable(newResultVariable);
-		newResultVariable.setScope(scope);
-		return modelFactory.variableExpression(resultSource, newResultVariable);
+		if (!scope.containsVariable(contractResultName)) {
+			CIVLType resultType = this.translateABCType(resultSource, scope,
+					resultNode.getType());
+
+			resultVariable = modelFactory.variable(resultSource, resultType,
+					resultIdentifier, scope.numVariables());
+			scope.addVariable(resultVariable);
+			resultVariable.setScope(scope);
+		} else
+			resultVariable = scope.variable(resultIdentifier);
+		return modelFactory.variableExpression(resultSource, resultVariable);
 	}
 }
