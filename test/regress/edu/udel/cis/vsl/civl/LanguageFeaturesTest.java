@@ -233,7 +233,7 @@ public class LanguageFeaturesTest {
 
 	@Test
 	public void functionPrototypeBad() throws ABCException {
-		assertFalse(ui.run("verify", filename("functionPrototypeBad.cvl")));
+		assertTrue(ui.run("verify", filename("functionPrototypeBad.cvl")));
 	}
 
 	@Test

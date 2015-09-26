@@ -25,7 +25,9 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.config.IF.Configuration;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
+import edu.udel.cis.vsl.abc.config.IF.Configurations;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.parse.IF.ParseTree;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
@@ -102,6 +104,8 @@ public class ModelTranslator {
 	 * The command line section for this model translator.
 	 */
 	GMCSection cmdSection;
+
+	Configuration abc_config = Configurations.newMinimalConfiguration();
 
 	/**
 	 * The CIVL configuration for this model translator, which is dependent on
@@ -234,10 +238,18 @@ public class ModelTranslator {
 		if (cmdSection.isTrue(showQueriesO))
 			universe.setShowQueries(true);
 		config = new CIVLConfiguration(cmdSection);
+		// if (config.svcomp()) {
+		// this.filenames = new String[filenames.length + 1];
+		// this.filenames[0] = new File(Preprocessor.ABC_INCLUDE_PATH,
+		// "svcomp.h").getPath();
+		// for (int i = 0; i < filenames.length; i++)
+		// this.filenames[i + 1] = filenames[i];
+		// } else
 		this.filenames = filenames;
 		userFileName = filenames[0];
 		this.frontEnd = frontEnd;
-		this.preprocessor = frontEnd.getPreprocessor();
+		abc_config.setSvcomp(config.svcomp());
+		this.preprocessor = frontEnd.getPreprocessor(abc_config);
 		systemIncludes = this.getSysIncludes(cmdSection);
 		userIncludes = this.getUserIncludes(cmdSection);
 		macroMaps = getMacroMaps(preprocessor);
@@ -695,7 +707,7 @@ public class ModelTranslator {
 					+ tokenSource);
 		}
 		startTime = System.currentTimeMillis();
-		ast = frontEnd.getASTBuilder().getTranslationUnit(tree);
+		ast = frontEnd.getASTBuilder().getTranslationUnit(abc_config, tree);
 		endTime = System.currentTimeMillis();
 		if (config.showTime()) {
 			totalTime = (endTime - startTime);// / 1000;

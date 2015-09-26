@@ -440,7 +440,7 @@ public abstract class BaseWorker {
 	 */
 	protected AST parseSystemLibrary(String filename) throws SyntaxException {
 		FrontEnd frontEnd = new FrontEnd();
-		Preprocessor preprocessor = frontEnd.getPreprocessor();
+		Preprocessor preprocessor = frontEnd.getPreprocessor(null);
 		CTokenSource tokenSource;
 		ParseTree tree;
 
@@ -452,7 +452,7 @@ public abstract class BaseWorker {
 		} catch (PreprocessorException | IOException | ParseException e) {
 			return null;
 		}
-		return frontEnd.getASTBuilder().getTranslationUnit(tree);
+		return frontEnd.getASTBuilder().getTranslationUnit(null, tree);
 	}
 
 	/**
