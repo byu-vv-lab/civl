@@ -43,7 +43,6 @@ import java.util.TreeMap;
 import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
-import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.abc.err.IF.ABCRuntimeException;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
@@ -400,8 +399,7 @@ public class UserInterface {
 		combinedAST = combiner.combine(specProgram.getAST(),
 				implProgram.getAST());
 		compositeProgram = frontEnd.getProgramFactory(
-				frontEnd.getStandardAnalyzer(Language.CIVL_C)).newProgram(
-				combinedAST);
+				frontEnd.getStandardAnalyzer()).newProgram(combinedAST);
 		if (civlConfig.debugOrVerbose() || civlConfig.showProgram()) {
 			compositeProgram.prettyPrint(out);
 		}

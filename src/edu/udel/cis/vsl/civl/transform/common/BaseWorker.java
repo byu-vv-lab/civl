@@ -33,6 +33,9 @@ import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.StructureOrUnionType;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type;
+import edu.udel.cis.vsl.abc.config.IF.Configuration;
+import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
+import edu.udel.cis.vsl.abc.config.IF.Configurations;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.parse.IF.OmpCParser;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
@@ -440,10 +443,12 @@ public abstract class BaseWorker {
 	 */
 	protected AST parseSystemLibrary(String filename) throws SyntaxException {
 		FrontEnd frontEnd = new FrontEnd();
-		Preprocessor preprocessor = frontEnd.getPreprocessor(null);
+		Preprocessor preprocessor = frontEnd.getPreprocessor();
 		CTokenSource tokenSource;
 		ParseTree tree;
+		Configuration configuration = Configurations.newMinimalConfiguration();
 
+		configuration.setLanguage(Language.CIVL_C);
 		try {
 			tokenSource = preprocessor.outputTokenSource(
 					new File[] { CIVLConstants.CIVL_INCLUDE_PATH },
@@ -452,7 +457,7 @@ public abstract class BaseWorker {
 		} catch (PreprocessorException | IOException | ParseException e) {
 			return null;
 		}
-		return frontEnd.getASTBuilder().getTranslationUnit(null, tree);
+		return frontEnd.getASTBuilder().getTranslationUnit(configuration, tree);
 	}
 
 	/**

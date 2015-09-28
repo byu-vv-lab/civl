@@ -25,9 +25,7 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
-import edu.udel.cis.vsl.abc.config.IF.Configuration;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
-import edu.udel.cis.vsl.abc.config.IF.Configurations;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.parse.IF.ParseTree;
 import edu.udel.cis.vsl.abc.preproc.IF.Preprocessor;
@@ -105,7 +103,7 @@ public class ModelTranslator {
 	 */
 	GMCSection cmdSection;
 
-	Configuration abc_config = Configurations.newMinimalConfiguration();
+	// Configuration abc_config = Configurations.newMinimalConfiguration();
 
 	/**
 	 * The CIVL configuration for this model translator, which is dependent on
@@ -248,8 +246,9 @@ public class ModelTranslator {
 		this.filenames = filenames;
 		userFileName = filenames[0];
 		this.frontEnd = frontEnd;
-		abc_config.setSvcomp(config.svcomp());
-		this.preprocessor = frontEnd.getPreprocessor(abc_config);
+		frontEnd.getConfiguration().setSvcomp(config.svcomp());
+		frontEnd.getConfiguration().setLanguage(Language.CIVL_C);
+		this.preprocessor = frontEnd.getPreprocessor();
 		systemIncludes = this.getSysIncludes(cmdSection);
 		userIncludes = this.getUserIncludes(cmdSection);
 		macroMaps = getMacroMaps(preprocessor);
@@ -707,7 +706,8 @@ public class ModelTranslator {
 					+ tokenSource);
 		}
 		startTime = System.currentTimeMillis();
-		ast = frontEnd.getASTBuilder().getTranslationUnit(abc_config, tree);
+		ast = frontEnd.getASTBuilder().getTranslationUnit(
+				frontEnd.getConfiguration(), tree);
 		endTime = System.currentTimeMillis();
 		if (config.showTime()) {
 			totalTime = (endTime - startTime);// / 1000;
