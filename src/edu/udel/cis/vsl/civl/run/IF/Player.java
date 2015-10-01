@@ -100,31 +100,31 @@ public abstract class Player {
 
 	protected CIVLConfiguration civlConfig;
 
-	public Player(GMCConfiguration config, Model model, PrintStream out,
+	public Player(GMCConfiguration gmcConfig, Model model, PrintStream out,
 			PrintStream err, boolean collectOutputs)
 			throws CommandLineException {
 		SymbolicUniverse universe;
 
-		this.config = config;
+		this.config = gmcConfig;
 		this.model = model;
-		civlConfig = new CIVLConfiguration(config.getAnonymousSection());
+		civlConfig = new CIVLConfiguration(gmcConfig.getAnonymousSection());
 		civlConfig.setOut(out);
 		civlConfig.setErr(err);
 		civlConfig.setCollectOutputs(collectOutputs);
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
-		this.solve = (Boolean) config.getAnonymousSection().getValueOrDefault(
+		this.solve = (Boolean) gmcConfig.getAnonymousSection().getValueOrDefault(
 				solveO);
 		this.log = new CIVLErrorLogger(new File("CIVLREP"), sessionName, out,
-				config, universe, solve);
-		this.log.setErrorBound((int) config.getAnonymousSection()
+				gmcConfig, universe, solve);
+		this.log.setErrorBound((int) gmcConfig.getAnonymousSection()
 				.getValueOrDefault(errorBoundO));
 		this.symbolicUtil = Dynamics.newSymbolicUtility(universe, modelFactory);
 		this.memUnitFactory = States.newImmutableMemoryUnitFactory(universe,
 				modelFactory);
 		this.stateFactory = States.newImmutableStateFactory(modelFactory,
-				symbolicUtil, memUnitFactory, config);
+				symbolicUtil, memUnitFactory, gmcConfig, civlConfig);
 		this.libraryEvaluatorLoader = Semantics
 				.newLibraryEvaluatorLoader(this.civlConfig);
 		this.symbolicAnalyzer = Semantics.newSymbolicAnalyzer(this.civlConfig,
@@ -132,16 +132,16 @@ public abstract class Player {
 		this.evaluator = Semantics.newEvaluator(modelFactory, stateFactory,
 				libraryEvaluatorLoader, symbolicUtil, symbolicAnalyzer,
 				memUnitFactory, log, this.civlConfig);
-		this.gui = (Boolean) config.getAnonymousSection().getValueOrDefault(
+		this.gui = (Boolean) gmcConfig.getAnonymousSection().getValueOrDefault(
 				guiO);
 		this.libraryExecutorLoader = Semantics.newLibraryExecutorLoader(
 				this.libraryEvaluatorLoader, this.civlConfig);
 		this.executor = Semantics.newExecutor(modelFactory, stateFactory, log,
 				libraryExecutorLoader, evaluator, symbolicAnalyzer, log,
 				civlConfig);
-		this.random = config.getAnonymousSection().isTrue(randomO);
-		this.minimize = config.getAnonymousSection().isTrue(minO);
-		this.maxdepth = (int) config.getAnonymousSection().getValueOrDefault(
+		this.random = gmcConfig.getAnonymousSection().isTrue(randomO);
+		this.minimize = gmcConfig.getAnonymousSection().isTrue(minO);
+		this.maxdepth = (int) gmcConfig.getAnonymousSection().getValueOrDefault(
 				maxdepthO);
 		this.libraryEnablerLoader = Kripkes.newLibraryEnablerLoader(
 				this.libraryEvaluatorLoader, this.civlConfig);

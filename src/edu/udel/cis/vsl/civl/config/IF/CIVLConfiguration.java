@@ -206,6 +206,8 @@ public class CIVLConfiguration {
 	 */
 	private boolean mpiContract = false;
 
+	private boolean checkMemoryLeak = true;
+
 	/**
 	 * Constructs a new CIVL configuration object from the command line
 	 * configuration.
@@ -286,6 +288,7 @@ public class CIVLConfiguration {
 		this.setEnableMpiContract(config.isTrue(CIVLConstants.mpiContractO));
 		this.setCheckDivisionByZero(config
 				.isTrue(CIVLConstants.checkDivisionByZeroO));
+		this.checkMemoryLeak = config.isTrue(CIVLConstants.checkMemoryLeakO);
 	}
 
 	public void setOut(PrintStream out) {
@@ -618,5 +621,9 @@ public class CIVLConfiguration {
 
 	public void setCheckDivisionByZero(boolean checkDivisionByZero) {
 		this.checkDivisionByZero = checkDivisionByZero;
+	}
+
+	public boolean checkMemoryLeak() {
+		return this.checkMemoryLeak;
 	}
 }

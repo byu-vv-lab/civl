@@ -2610,7 +2610,7 @@ public class CommonEvaluator implements Evaluator {
 					.scopeSymbolicType()))) {
 				errorLogger.logSimpleError(source, state, process,
 						symbolicAnalyzer.stateInformation(state),
-						ErrorKind.MEMORY_LEAK,
+						ErrorKind.UNDEFINED_VALUE,
 						"Attempt to evaluate an invalid scope reference");
 				throw new UnsatisfiablePathConditionException();
 			}
@@ -2619,7 +2619,7 @@ public class CommonEvaluator implements Evaluator {
 					.processSymbolicType()))) {
 				errorLogger.logSimpleError(source, state, process,
 						symbolicAnalyzer.stateInformation(state),
-						ErrorKind.MEMORY_LEAK,
+						ErrorKind.UNDEFINED_VALUE,
 						"Attempt to evaluate an invalid process reference");
 				throw new UnsatisfiablePathConditionException();
 			}

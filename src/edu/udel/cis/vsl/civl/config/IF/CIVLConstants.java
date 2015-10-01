@@ -94,6 +94,12 @@ public class CIVLConstants {
 			"checkDivisionByZero", BOOLEAN, "check division-by-zero?", true);
 
 	/**
+	 * Debug option, false by default.
+	 */
+	public final static Option checkMemoryLeakO = Option.newScalarOption(
+			"checkMemoryLeak", BOOLEAN, "check memory-leak errors?", true);
+
+	/**
 	 * Prints the command line? false by default.
 	 */
 	public final static Option echoO = Option.newScalarOption("echo", BOOLEAN,
@@ -455,7 +461,7 @@ public class CIVLConstants {
 				simplifyO, solveO, statelessPrintfO, svcompO, sysIncludePathO,
 				traceO, userIncludePathO, verboseO, webO, CIVLMacroO,
 				analyzeAbsO, strictCompareO, collectOutputO,
-				checkDivisionByZeroO };
+				checkDivisionByZeroO, checkMemoryLeakO };
 	}
 
 	// headers...

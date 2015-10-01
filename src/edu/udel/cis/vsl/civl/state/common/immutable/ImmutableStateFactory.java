@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.Certainty;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
@@ -128,6 +129,11 @@ public class ImmutableStateFactory implements StateFactory {
 	private SymbolicExpression undefinedProcessValue;
 
 	/**
+	 * the CIVL configuration specified by the comamnd line
+	 */
+	private CIVLConfiguration config;
+
+	/**
 	 * Class used to wrap integer arrays so they can be used as keys in hash
 	 * maps. This is used to map dyscope ID substitution maps to SARL
 	 * substituters, in order to reuse substituters when the same substitution
@@ -187,18 +193,19 @@ public class ImmutableStateFactory implements StateFactory {
 	 */
 	public ImmutableStateFactory(ModelFactory modelFactory,
 			SymbolicUtility symbolicUtil, MemoryUnitFactory memFactory,
-			GMCConfiguration config) {
+			GMCConfiguration gmcConfig, CIVLConfiguration config) {
 		this.modelFactory = modelFactory;
 		this.inputVariables = modelFactory.inputVariables();
 		this.typeFactory = modelFactory.typeFactory();
 		this.symbolicUtil = symbolicUtil;
 		this.universe = modelFactory.universe();
 		this.trueReasoner = universe.reasoner(universe.trueExpression());
-		this.simplify = config.getAnonymousSection().isTrue(simplifyO);
+		this.simplify = gmcConfig.getAnonymousSection().isTrue(simplifyO);
 		this.memUnitFactory = (ImmutableMemoryUnitFactory) memFactory;
 		this.undefinedProcessValue = modelFactory.undefinedValue(typeFactory
 				.processSymbolicType());
 		isReservedSymbolicConstant = new ReservedConstant();
+		this.config = config;
 	}
 
 	/* ********************** Methods from StateFactory ******************** */
@@ -322,7 +329,9 @@ public class ImmutableStateFactory implements StateFactory {
 										.arrayRead(heapField,
 												universe.integer(objectId));
 
-								if (!symbolicUtil.isInvalidHeapObject(heapObj)
+								if (config.checkMemoryLeak()
+										&& !symbolicUtil
+												.isInvalidHeapObject(heapObj)
 										&& !toBeIgnored
 												.contains(HeapErrorKind.UNREACHABLE)) {
 									throw new CIVLHeapException(
@@ -388,7 +397,8 @@ public class ImmutableStateFactory implements StateFactory {
 				newNumScopes++;
 			if (!change && id != i)
 				change = true;
-			if (id < 0 && !toBeIgnored.contains(HeapErrorKind.NONEMPTY)) {
+			if (id < 0 && config.checkMemoryLeak()
+					&& !toBeIgnored.contains(HeapErrorKind.NONEMPTY)) {
 				ImmutableDynamicScope scopeToBeRemoved = theState.getDyscope(i);
 				Variable heapVariable = scopeToBeRemoved.lexicalScope()
 						.variable(ModelConfiguration.HEAP_VAR);
@@ -445,7 +455,7 @@ public class ImmutableStateFactory implements StateFactory {
 			DynamicScope dyscope = state.getDyscope(0);
 			SymbolicExpression heap = dyscope.getValue(0);
 
-			if (!symbolicUtil.isEmptyHeap(heap))
+			if (config.checkMemoryLeak() && !symbolicUtil.isEmptyHeap(heap))
 				throw new CIVLHeapException(ErrorKind.MEMORY_LEAK,
 						Certainty.CONCRETE, state, "d0", 0, heap,
 						HeapErrorKind.NONEMPTY, dyscope.lexicalScope()
