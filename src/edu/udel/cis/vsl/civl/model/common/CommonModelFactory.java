@@ -1487,18 +1487,22 @@ public class CommonModelFactory implements ModelFactory {
 			libraryName = libraryName.substring(0, libraryName.length() - 7);
 		} else if (libraryName.startsWith("civlc-")) {
 			libraryName = "civlc";
-		}
-		switch (name.name()) {
-		case "printf":
-			libraryName = "stdio";
-			break;
-		case "strcpy":
-			libraryName = "string";
-			break;
-		case "exit":
-			libraryName = "stdlib";
-			break;
-		default:
+		} else {
+			switch (name.name()) {
+			case "printf":
+				libraryName = "stdio";
+				break;
+			case "strcpy":
+				libraryName = "string";
+				break;
+			case "exit":
+				libraryName = "stdlib";
+				break;
+			case "assert":
+				libraryName="asserts";
+				break;
+			default:
+			}
 		}
 		return new CommonSystemFunction(source, name, parameters, returnType,
 				containingScope, containingScope.numFunctions(),

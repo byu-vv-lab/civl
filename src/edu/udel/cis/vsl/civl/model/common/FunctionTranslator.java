@@ -3602,6 +3602,14 @@ public class FunctionTranslator {
 								expression.getExpressionType(), 1));
 				break;
 			}
+			case POINTER_INTEGER:{
+				expression = modelFactory.castExpression(source, this.typeFactory.integerType()
+						, expression);
+				break;
+			}
+			// case INTEGER_POINTER:{
+			//
+			// }
 			case VOID_POINTER:
 				// void*->T* or T*->void*
 				// ignore, pointer types are all the same

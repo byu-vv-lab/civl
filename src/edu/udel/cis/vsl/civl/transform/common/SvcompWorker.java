@@ -48,6 +48,7 @@ public class SvcompWorker extends BaseWorker {
 		this.removeIoNodes(rootNode);
 		this.removePthreadTypedefs(rootNode);
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
+		// ast.prettyPrint(System.out, false);
 		ast = this.addHeaders(ast);
 		return ast;
 	}
@@ -138,6 +139,13 @@ public class SvcompWorker extends BaseWorker {
 
 				if (typedef.getName().startsWith(PTHREAD_PREFIX)) {
 					typedef.remove();
+					needsPthreadHeader = true;
+				}
+			} else if (item instanceof StructureOrUnionTypeNode) {
+				StructureOrUnionTypeNode structOrUnion = (StructureOrUnionTypeNode) item;
+
+				if (structOrUnion.getName().startsWith(PTHREAD_PREFIX)) {
+					structOrUnion.remove();
 					needsPthreadHeader = true;
 				}
 			}

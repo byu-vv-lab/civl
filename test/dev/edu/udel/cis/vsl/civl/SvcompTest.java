@@ -37,7 +37,7 @@ public class SvcompTest {
 	// reorder_2_false-unreach-call.i
 	@Test
 	public void reorder_2_false() throws ABCException {
-		assertFalse(ui.run("verify", "-svcomp -showProgram",
+		assertFalse(ui.run("verify", "-svcomp -showProgram=false",
 				filename("reorder_2_false-unreach-call.i")));
 	}
 
@@ -46,6 +46,32 @@ public class SvcompTest {
 	public void sigma_false() throws ABCException {
 		assertFalse(ui.run("verify", "-svcomp",
 				filename("sigma_false-unreach-call.i")));
+	}
+
+	// singleton_false-unreach-call.i
+	@Test
+	public void singleton_false() throws ABCException {
+		assertFalse(ui.run("verify", "-svcomp -checkMemoryLeak=false",
+				filename("singleton_false-unreach-call.i")));
+	}
+
+	// scull_true-unreach-call.i
+	@Test
+	public void scull_true() throws ABCException {
+		assertTrue(ui.run("verify", "-svcomp",
+				filename("scull_true-unreach-call.i")));
+	}
+
+	// sssc12_variant_true-unreach-call.i
+	@Test
+	public void sssc12_variant_true() throws ABCException {
+		assertTrue(ui.run("verify", "-svcomp",
+				filename("sssc12_variant_true-unreach-call.i")));
+	}
+
+	@Test
+	public void intPointer() throws ABCException {
+		assertTrue(ui.run("verify", "-svcomp", filename("intPointer.c")));
 	}
 
 }

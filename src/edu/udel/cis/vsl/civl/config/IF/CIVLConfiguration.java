@@ -288,7 +288,12 @@ public class CIVLConfiguration {
 		this.setEnableMpiContract(config.isTrue(CIVLConstants.mpiContractO));
 		this.setCheckDivisionByZero(config
 				.isTrue(CIVLConstants.checkDivisionByZeroO));
-		this.checkMemoryLeak = config.isTrue(CIVLConstants.checkMemoryLeakO);
+		if (this.svcomp) {
+			this.checkMemoryLeak = false;
+		} else {
+			this.checkMemoryLeak = config
+					.isTrue(CIVLConstants.checkMemoryLeakO);
+		}
 	}
 
 	public void setOut(PrintStream out) {

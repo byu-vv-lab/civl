@@ -12,7 +12,8 @@ public class ShtnsTest {
 
 	/* *************************** Static Fields *************************** */
 
-	private static File rootDir = new File(new File(new File("examples"), "omp"), "shtns");
+	private static File rootDir = new File(
+			new File(new File("examples"), "omp"), "shtns");
 
 	private static UserInterface ui = new UserInterface();
 
@@ -26,12 +27,12 @@ public class ShtnsTest {
 
 	@Test
 	public void time_SHT() {
-		assertTrue(ui.run("show", "-ompNoSimplify", "-input_omp_thread_max=1",
+		assertTrue(ui.run("show", "-ompNoSimplify -debug",
+				"-input_omp_thread_max=1",
 				"-userIncludePath=examples/omp/shtns/SHT:examples/omp/shtns",
 				"-sysIncludePath=examples/omp/shtns/SHT:examples/omp/shtns",
 				filename("time_SHT.c")));
-		
+
 	}
-	
-	
+
 }

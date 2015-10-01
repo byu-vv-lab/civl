@@ -11,21 +11,17 @@ import java.util.Set;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.NodePredicate;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.CastNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode.ExpressionKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
@@ -36,7 +32,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
-import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
@@ -89,17 +84,19 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private final static String ERROR = "ERROR";
 
-	private final static String VERIFIER_NONDET_UINT = "__VERIFIER_nondet_uint";
+	// private final static String VERIFIER_NONDET_UINT =
+	// "__VERIFIER_nondet_uint";
+	//
+	// private final static String VERIFIER_NONDET_INT =
+	// "__VERIFIER_nondet_int";
+	//
+	// private final static String VERIFIER_ASSUME = "__VERIFIER_assume";
+	//
+	// private final static String VERIFIER_ASSERT = "__VERIFIER_assert";
+	//
+	// private final static String VERIFIER_ATOMIC = "__VERIFIER_atomic";
 
-	private final static String VERIFIER_NONDET_INT = "__VERIFIER_nondet_int";
-
-	private final static String VERIFIER_ASSUME = "__VERIFIER_assume";
-
-	private final static String VERIFIER_ASSERT = "__VERIFIER_assert";
-
-	private final static String VERIFIER_ATOMIC = "__VERIFIER_atomic";
-
-	private int numberOfNondetCall = 0;
+	// private int numberOfNondetCall = 0;
 
 	private boolean exitMainDone = false;
 
@@ -166,15 +163,17 @@ public class Pthread2CIVLWorker extends BaseWorker {
 			if (node instanceof FunctionDefinitionNode) {
 				// if (config.svcomp()) {
 				process_thread_functions((FunctionDefinitionNode) node);
-				process_VERIFIER_function_calls((FunctionDefinitionNode) node);
+				// process_VERIFIER_function_calls((FunctionDefinitionNode)
+				// node);
 				// }
 				process_pthread_exits((FunctionDefinitionNode) node, funcList);
 				process_pthread_sync_calls((FunctionDefinitionNode) node);
-			} else if (/*
-						 * config.svcomp() &&
-						 */node instanceof FunctionDeclarationNode) {
-				process_VERIFIER_functions((FunctionDeclarationNode) node);
 			}
+			// else if (/*
+			// * config.svcomp() &&
+			// */node instanceof FunctionDeclarationNode) {
+			// process_VERIFIER_functions((FunctionDeclarationNode) node);
+			// }
 		}
 		process_nonThread_functions_wt_syncCalls();
 		if (this.syncCallFunctionNames.size() > 0)
@@ -307,10 +306,10 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 *            __VERIFIER_ calls for transformation.
 	 * @throws SyntaxException
 	 */
-	private void process_VERIFIER_function_calls(FunctionDefinitionNode node)
-			throws SyntaxException {
-		process_VERIFIER_function_call_worker(node);
-	}
+	// private void process_VERIFIER_function_calls(FunctionDefinitionNode node)
+	// throws SyntaxException {
+	// process_VERIFIER_function_call_worker(node);
+	// }
 
 	/**
 	 * TODO documentation about VERIFIER_nondet_int and VERIFIER_atomic
@@ -325,53 +324,53 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 *            ASTNode to be be checked for a VERIFIER
 	 * 
 	 */
-	private void process_VERIFIER_function_call_worker(ASTNode node)
-			throws SyntaxException {
-		if (node instanceof FunctionCallNode) {
-			FunctionCallNode funcCall = (FunctionCallNode) node;
-			ExpressionNode function = funcCall.getFunction();
-
-			if (function.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
-				IdentifierExpressionNode funcName = (IdentifierExpressionNode) function;
-				String name = funcName.getIdentifier().name();
-
-				if (name.equals(VERIFIER_NONDET_INT)
-						|| name.equals(VERIFIER_NONDET_UINT)) {
-					ExpressionNode newArg = nodeFactory.newIntegerConstantNode(
-							funcName.getSource(),
-							String.valueOf(numberOfNondetCall));
-
-					this.numberOfNondetCall++;
-					funcCall.setArguments(nodeFactory.newSequenceNode(
-							funcName.getSource(), "Actual Arguments",
-							Arrays.asList(newArg)));
-				}
-			}
-		} else if (node instanceof FunctionDefinitionNode) {
-			IdentifierNode functionName = ((FunctionDefinitionNode) node)
-					.getIdentifier();
-			if (functionName.name().startsWith(VERIFIER_ATOMIC)) {
-				CompoundStatementNode tmp = ((FunctionDefinitionNode) node)
-						.getBody().copy();
-				Source source = tmp.getSource();
-				AtomicNode newAtomicBlock = nodeFactory.newAtomicStatementNode(
-						source, false, tmp);
-				CompoundStatementNode block = nodeFactory
-						.newCompoundStatementNode(source,
-								Arrays.asList((BlockItemNode) newAtomicBlock));
-				((FunctionDefinitionNode) node).setBody(block);
-			}
-			for (ASTNode child : node.children()) {
-				if (child != null)
-					process_VERIFIER_function_call_worker(child);
-			}
-		} else {
-			for (ASTNode child : node.children()) {
-				if (child != null)
-					process_VERIFIER_function_call_worker(child);
-			}
-		}
-	}
+	// private void process_VERIFIER_function_call_worker(ASTNode node)
+	// throws SyntaxException {
+	// if (node instanceof FunctionCallNode) {
+	// FunctionCallNode funcCall = (FunctionCallNode) node;
+	// ExpressionNode function = funcCall.getFunction();
+	//
+	// if (function.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
+	// IdentifierExpressionNode funcName = (IdentifierExpressionNode) function;
+	// String name = funcName.getIdentifier().name();
+	//
+	// if (name.equals(VERIFIER_NONDET_INT)
+	// || name.equals(VERIFIER_NONDET_UINT)) {
+	// ExpressionNode newArg = nodeFactory.newIntegerConstantNode(
+	// funcName.getSource(),
+	// String.valueOf(numberOfNondetCall));
+	//
+	// this.numberOfNondetCall++;
+	// funcCall.setArguments(nodeFactory.newSequenceNode(
+	// funcName.getSource(), "Actual Arguments",
+	// Arrays.asList(newArg)));
+	// }
+	// }
+	// } else if (node instanceof FunctionDefinitionNode) {
+	// IdentifierNode functionName = ((FunctionDefinitionNode) node)
+	// .getIdentifier();
+	// if (functionName.name().startsWith(VERIFIER_ATOMIC)) {
+	// CompoundStatementNode tmp = ((FunctionDefinitionNode) node)
+	// .getBody().copy();
+	// Source source = tmp.getSource();
+	// AtomicNode newAtomicBlock = nodeFactory.newAtomicStatementNode(
+	// source, false, tmp);
+	// CompoundStatementNode block = nodeFactory
+	// .newCompoundStatementNode(source,
+	// Arrays.asList((BlockItemNode) newAtomicBlock));
+	// ((FunctionDefinitionNode) node).setBody(block);
+	// }
+	// for (ASTNode child : node.children()) {
+	// if (child != null)
+	// process_VERIFIER_function_call_worker(child);
+	// }
+	// } else {
+	// for (ASTNode child : node.children()) {
+	// if (child != null)
+	// process_VERIFIER_function_call_worker(child);
+	// }
+	// }
+	// }
 
 	/**
 	 * Inserts an abstract function node in place of VERIFIER_nondet_int
@@ -380,33 +379,34 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 *            Node to be checked and converted for VERIFIER function
 	 * 
 	 */
-	private void process_VERIFIER_functions(FunctionDeclarationNode function) {
-		IdentifierNode functionName = function.getIdentifier();
-
-		if (functionName.name().equals(VERIFIER_NONDET_UINT)
-				|| functionName.name().equals(VERIFIER_NONDET_INT)) {
-			FunctionTypeNode funcTypeNode = function.getTypeNode();
-			FunctionDeclarationNode abstractNode;
-
-			funcTypeNode = nodeFactory
-					.newFunctionTypeNode(
-							funcTypeNode.getSource(),
-							funcTypeNode.getReturnType().copy(),
-							nodeFactory.newSequenceNode(this.newSource(
-									"formal parameter declarations of "
-											+ functionName.name(),
-									CParser.DECLARATION_LIST),
-									"Formal Parameters",
-									Arrays.asList(this.variableDeclaration(
-											"seed",
-											this.basicType(BasicTypeKind.INT)))),
-							false);
-			abstractNode = nodeFactory.newAbstractFunctionDefinitionNode(
-					function.getSource(), function.getIdentifier().copy(),
-					funcTypeNode, null, 0);
-			function.parent().setChild(function.childIndex(), abstractNode);
-		}
-	}
+	// private void process_VERIFIER_functions(FunctionDeclarationNode function)
+	// {
+	// IdentifierNode functionName = function.getIdentifier();
+	//
+	// if (functionName.name().equals(VERIFIER_NONDET_UINT)
+	// || functionName.name().equals(VERIFIER_NONDET_INT)) {
+	// FunctionTypeNode funcTypeNode = function.getTypeNode();
+	// FunctionDeclarationNode abstractNode;
+	//
+	// funcTypeNode = nodeFactory
+	// .newFunctionTypeNode(
+	// funcTypeNode.getSource(),
+	// funcTypeNode.getReturnType().copy(),
+	// nodeFactory.newSequenceNode(this.newSource(
+	// "formal parameter declarations of "
+	// + functionName.name(),
+	// CParser.DECLARATION_LIST),
+	// "Formal Parameters",
+	// Arrays.asList(this.variableDeclaration(
+	// "seed",
+	// this.basicType(BasicTypeKind.INT)))),
+	// false);
+	// abstractNode = nodeFactory.newAbstractFunctionDefinitionNode(
+	// function.getSource(), function.getIdentifier().copy(),
+	// funcTypeNode, null, 0);
+	// function.parent().setChild(function.childIndex(), abstractNode);
+	// }
+	// }
 
 	/**
 	 * Translates nodes if they meet one of various specific cases
@@ -427,46 +427,48 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					labelStatement.setChild(1,
 							this.assertFalse(labelStatement.getSource()));
 			}
-		} else if (node instanceof ExpressionStatementNode) {
-			ExpressionNode expression = ((ExpressionStatementNode) node)
-					.getExpression();
-			StatementNode newStatementNode = null;
-
-			if (expression.expressionKind() == ExpressionKind.FUNCTION_CALL) {
-				FunctionCallNode functionCall = (FunctionCallNode) expression;
-				ExpressionNode functionName = functionCall.getFunction();
-
-				if (functionName.expressionKind() == ExpressionKind.IDENTIFIER_EXPRESSION) {
-					String name = ((IdentifierExpressionNode) functionName)
-							.getIdentifier().name();
-
-					switch (name) {
-					case VERIFIER_ASSERT:
-						newStatementNode = this.assertNode(functionCall
-								.getSource(), functionCall.getArgument(0)
-								.copy());
-						break;
-					case VERIFIER_ASSUME:
-						newStatementNode = this.assumeNode(functionCall
-								.getArgument(0).copy());
-						break;
-					default:
-					}
-				}
-				if (newStatementNode != null)
-					node.parent().setChild(node.childIndex(), newStatementNode);
-			}
+			// } else if (node instanceof ExpressionStatementNode) {
+			// ExpressionNode expression = ((ExpressionStatementNode) node)
+			// .getExpression();
+			// StatementNode newStatementNode = null;
+			//
+			// if (expression.expressionKind() == ExpressionKind.FUNCTION_CALL)
+			// {
+			// FunctionCallNode functionCall = (FunctionCallNode) expression;
+			// ExpressionNode functionName = functionCall.getFunction();
+			//
+			// if (functionName.expressionKind() ==
+			// ExpressionKind.IDENTIFIER_EXPRESSION) {
+			// String name = ((IdentifierExpressionNode) functionName)
+			// .getIdentifier().name();
+			//
+			// switch (name) {
+			// case VERIFIER_ASSERT:
+			// newStatementNode = this.assertNode(functionCall
+			// .getSource(), functionCall.getArgument(0)
+			// .copy());
+			// break;
+			// case VERIFIER_ASSUME:
+			// newStatementNode = this.assumeNode(functionCall
+			// .getArgument(0).copy());
+			// break;
+			// default:
+			// }
+			// }
+			// if (newStatementNode != null)
+			// node.parent().setChild(node.childIndex(), newStatementNode);
+			// }
 		} else
 			for (ASTNode child : node.children())
 				if (child != null)
 					this.translateNode(child);
 	}
 
-	private StatementNode assumeNode(ExpressionNode expression) {
-		return nodeFactory.newExpressionStatementNode(this.functionCall(
-				this.newSource("assumption", CParser.EXPRESSION_STATEMENT),
-				ASSUME, Arrays.asList(expression)));
-	}
+	// private StatementNode assumeNode(ExpressionNode expression) {
+	// return nodeFactory.newExpressionStatementNode(this.functionCall(
+	// this.newSource("assumption", CParser.EXPRESSION_STATEMENT),
+	// ASSUME, Arrays.asList(expression)));
+	// }
 
 	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
 		return nodeFactory.newExpressionStatementNode(this.functionCall(

@@ -113,7 +113,17 @@ public class NondeterminsticCompareTest {
 
 	@Test
 	public void queue() {
-		ui.run("verify  -showSavedStates", filename("queue", "twoLock.cvl"));
+		ui.run("verify  -collectOutput", filename("queue", "twoLock.cvl"));
+	}
+
+	// verify -userIncludePath=. -collectOutput=false -showTransitions
+	// driver.cvl queue_non_blocking.c
+
+	@Test
+	public void nonblocking() {
+		ui.run("verify -collectOutput -showSavedStates -showTransitions -userIncludePath="
+				+ filename("queue"), filename("queue", "driver.cvl"),
+				filename("queue", "queue_non_blocking.c"));
 	}
 
 	@AfterClass
