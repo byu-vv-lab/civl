@@ -112,6 +112,7 @@ OPTION_NAME
     | '-checkDivisionByZero'
     | '-analyze_abs'
     | '-ast'
+    | '-checkMemoryLeak'
     | '-collectHeaps'
     | '-collectOutput'
     | '-collectProcesses'
