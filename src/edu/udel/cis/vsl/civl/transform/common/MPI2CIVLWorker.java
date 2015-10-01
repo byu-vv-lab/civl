@@ -31,6 +31,8 @@ import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
+import edu.udel.cis.vsl.civl.transform.IF.GeneralTransformer;
+import edu.udel.cis.vsl.civl.transform.IF.MPI2CIVLTransformer;
 import edu.udel.cis.vsl.civl.util.IF.Triple;
 
 //TODO: added CMPI_destroy call before each call to exit(k);
@@ -201,7 +203,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
 	public MPI2CIVLWorker(ASTFactory astFactory) {
-		super("MPItoCIVLTransformer", astFactory);
+		super(MPI2CIVLTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = MPI_PREFIX;
 	}
 
@@ -606,7 +608,7 @@ public class MPI2CIVLWorker extends BaseWorker {
 
 					if (variable.getTypeNode().isInputQualified()
 							|| variable.getTypeNode().isOutputQualified()
-							|| (sourceFile.equals(GeneralWorker.NAME) && variable
+							|| (sourceFile.equals(GeneralTransformer.LONG_NAME) && variable
 									.getName().equals(GeneralWorker._argvName))) {
 						vars.add(variable);
 						continue;

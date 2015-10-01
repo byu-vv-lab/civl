@@ -42,6 +42,7 @@ import edu.udel.cis.vsl.abc.transform.IF.NameTransformer;
 import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
+import edu.udel.cis.vsl.civl.transform.IF.GeneralTransformer;
 
 /**
  * The general transformer performs the following transformations:
@@ -65,7 +66,6 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSyntaxException;
 public class GeneralWorker extends BaseWorker {
 
 	private final static int DEFAULT_ARGV_SIZE = 10;
-	final static String NAME = "GeneralTransformer";
 	private final static String MALLOC = "malloc";
 	final static String GENERAL_ROOT = "_gen_root";
 	private final static String separator = "$";
@@ -83,7 +83,7 @@ public class GeneralWorker extends BaseWorker {
 	private List<VariableDeclarationNode> static_variables = new LinkedList<>();
 
 	public GeneralWorker(ASTFactory astFactory, CIVLConfiguration config) {
-		super(NAME, astFactory);
+		super(GeneralTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "_gen_";
 		this.config = config;
 	}

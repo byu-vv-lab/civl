@@ -23,11 +23,11 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
+import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpExecutableNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpForNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpParallelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpReductionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpExecutableNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSymbolReductionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.omp.OmpSyncNode.OmpSyncNodeKind;
@@ -44,6 +44,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.SwitchNode;
 import edu.udel.cis.vsl.abc.ast.util.ExpressionEvaluator;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.IF.OpenMPSimplifier;
 
 /**
  * This transformer analyzes OpenMP constructs and converts them to simpler,
@@ -84,7 +85,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 	private Set<Entity> readVars;
 	private Set<OperatorNode> writeArrayRefs;
 	private Set<OperatorNode> readArrayRefs;
-	
+
 	private Set<Entity> sharedWrites;
 	private Set<Entity> sharedReads;
 	private Set<OperatorNode> sharedArrayWrites;
@@ -97,11 +98,11 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 	private List<Entity> privateIDs;
 	private List<Entity> loopPrivateIDs;
-	
+
 	private boolean debug = false;
 
 	public OpenMPSimplifierWorker(ASTFactory astFactory) {
-		super("OpenMPSimplifier", astFactory);
+		super(OpenMPSimplifier.LONG_NAME, astFactory);
 		this.identifierPrefix = "$omp_sim_";
 	}
 
@@ -112,8 +113,9 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		assert this.astFactory == unit.getASTFactory();
 		assert this.nodeFactory == astFactory.getNodeFactory();
 		unit.release();
-		
-		//OpenMPParallelRegions ompRegions = new OpenMPParallelRegions(rootNode);
+
+		// OpenMPParallelRegions ompRegions = new
+		// OpenMPParallelRegions(rootNode);
 
 		/*
 		 * TBD: We want a proper inter-procedural analysis. This is more of a
@@ -222,9 +224,10 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 					addEntities(privateIDs, r.variables());
 				}
 			}
-			
+
 			/*
-			 * Initialize shared read/writes performed within parallel, but not in workshares
+			 * Initialize shared read/writes performed within parallel, but not
+			 * in workshares
 			 */
 			sharedWrites = new HashSet<Entity>();
 			sharedReads = new HashSet<Entity>();
@@ -246,11 +249,15 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 			// Visit the rest of this node
 			transformOmpWorkshare(opn.statementNode());
-			
-			/* Check for dependences between statements that are not within workshares */
+
+			/*
+			 * Check for dependences between statements that are not within
+			 * workshares
+			 */
 			sharedWrites.retainAll(sharedReads);
 			allIndependent &= sharedWrites.isEmpty();
-			allIndependent &= noArrayRefDependences(sharedArrayWrites, sharedArrayReads);
+			allIndependent &= noArrayRefDependences(sharedArrayWrites,
+					sharedArrayReads);
 
 			boolean isOrphaned = callsMethodWithOmpConstruct(opn
 					.statementNode());
@@ -265,7 +272,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				/*
 				 * NB: the call above can change its argument (by restructuring
 				 * the AST), so we need to recompute the statementNode below.
-				 */				
+				 */
 
 				// Remove "statement" node from "omp parallel" node
 				StatementNode stmt = opn.statementNode();
@@ -407,10 +414,10 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 			}
 
 			processFor(ompFor);
-			
-			// reset variable to avoid interference with processing of non-loop parallel regions
-			loopPrivateIDs = new ArrayList<Entity>();
 
+			// reset variable to avoid interference with processing of non-loop
+			// parallel regions
+			loopPrivateIDs = new ArrayList<Entity>();
 
 		} else if (node instanceof OmpSyncNode) {
 			OmpSyncNode syncNode = (OmpSyncNode) node;
@@ -462,41 +469,47 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				allIndependent = false;
 				break;
 			}
-			
+
 		} else if (isAssignment(node)) {
-			/* Collect up the set of assignment statements that are not within workshares */
-			
-			/* This code is clunky because it uses globals, but we can accumulate the
-			 * read/write sets for these statements within the parallel and then post
-			 * process them. 
+			/*
+			 * Collect up the set of assignment statements that are not within
+			 * workshares
 			 */
-						
+
+			/*
+			 * This code is clunky because it uses globals, but we can
+			 * accumulate the read/write sets for these statements within the
+			 * parallel and then post process them.
+			 */
+
 			// Reset visitor globals
 			writeVars = new HashSet<Entity>();
 			readVars = new HashSet<Entity>();
 			writeArrayRefs = new HashSet<OperatorNode>();
 			readArrayRefs = new HashSet<OperatorNode>();
-			
+
 			loopPrivateIDs = new ArrayList<Entity>();
-			
+
 			collectAssignRefExprs(node);
-			
+
 			if (debug) {
-				System.out.println("Analyzed non-workshare assignment "+node+" with:");
-				System.out.println("   sharedReads = "+readVars);
-				System.out.println("   sharedWrites = "+writeVars);
-				System.out.println("   sharedArrayReads = "+readArrayRefs);
-				System.out.println("   sharedArrayWrites = "+writeArrayRefs);
+				System.out.println("Analyzed non-workshare assignment " + node
+						+ " with:");
+				System.out.println("   sharedReads = " + readVars);
+				System.out.println("   sharedWrites = " + writeVars);
+				System.out.println("   sharedArrayReads = " + readArrayRefs);
+				System.out.println("   sharedArrayWrites = " + writeArrayRefs);
 			}
-			
+
 			sharedReads.addAll(readVars);
 			sharedWrites.addAll(writeVars);
 			sharedArrayReads.addAll(readArrayRefs);
 			sharedArrayWrites.addAll(writeArrayRefs);
-			
+
 			/*
-			 *  TBD: we are not collecting the reads from all of the appropriate statements. 
-			 *  For example the reads in the conditions of if/while/for/... 
+			 * TBD: we are not collecting the reads from all of the appropriate
+			 * statements. For example the reads in the conditions of
+			 * if/while/for/...
 			 */
 
 		} else if (node != null) {
@@ -721,11 +734,13 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 				writeArrayRefs, readArrayRefs);
 
 		if (debug) {
-			System.out.println("Found "+(independent?"independent":"dependent")+" OpenMP for "+ompFor);
-			System.out.println("  writeVars : "+writeVars);
-			System.out.println("  readVars : "+readVars);
-			System.out.println("  writeArrays : "+writeArrayRefs);
-			System.out.println("  readArrays : "+readArrayRefs);
+			System.out.println("Found "
+					+ (independent ? "independent" : "dependent")
+					+ " OpenMP for " + ompFor);
+			System.out.println("  writeVars : " + writeVars);
+			System.out.println("  readVars : " + readVars);
+			System.out.println("  writeArrays : " + writeArrayRefs);
+			System.out.println("  readArrays : " + readArrayRefs);
 		}
 
 		if (independent) {
@@ -926,13 +941,13 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		}
 		return op;
 	}
-	
+
 	private boolean isAssignment(ASTNode node) {
-		return (node instanceof OperatorNode) &&
-				(  ((OperatorNode) node).getOperator() == Operator.ASSIGN
-				|| ((OperatorNode) node).getOperator() == Operator.PLUSEQ
-				|| ((OperatorNode) node).getOperator() == Operator.POSTINCREMENT
-				|| ((OperatorNode) node).getOperator() == Operator.POSTDECREMENT);
+		return (node instanceof OperatorNode)
+				&& (((OperatorNode) node).getOperator() == Operator.ASSIGN
+						|| ((OperatorNode) node).getOperator() == Operator.PLUSEQ
+						|| ((OperatorNode) node).getOperator() == Operator.POSTINCREMENT || ((OperatorNode) node)
+						.getOperator() == Operator.POSTDECREMENT);
 	}
 
 	/*
@@ -954,58 +969,60 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 			ExpressionNode lhs = assign.getArgument(0);
 			if (lhs instanceof IdentifierExpressionNode) {
-				Entity idEnt = ((IdentifierExpressionNode) lhs)
-						.getIdentifier().getEntity();
+				Entity idEnt = ((IdentifierExpressionNode) lhs).getIdentifier()
+						.getEntity();
 				if (!privateIDs.contains(idEnt)
 						&& !loopPrivateIDs.contains(idEnt)) {
 					writeVars.add(idEnt);
 				}
 			} else if (lhs instanceof OperatorNode
 					&& ((OperatorNode) lhs).getOperator() == Operator.SUBSCRIPT) {
-				Entity idEnt = baseArray((OperatorNode) lhs)
-						.getIdentifier().getEntity();
+				Entity idEnt = baseArray((OperatorNode) lhs).getIdentifier()
+						.getEntity();
 				if (!privateIDs.contains(idEnt)
 						&& !loopPrivateIDs.contains(idEnt)) {
 					writeArrayRefs.add((OperatorNode) lhs);
 				}
 
 			} else {
-				
+
 			}
 
-			// The argument at index 1 is the RHS.   If there is no RHS then this is a unary assignment and
+			// The argument at index 1 is the RHS. If there is no RHS then this
+			// is a unary assignment and
 			// we should collect from argument 0.
-			ASTNode rhs = (assign.getNumberOfArguments() > 1) ? assign.getArgument(1) : lhs;
+			ASTNode rhs = (assign.getNumberOfArguments() > 1) ? assign
+					.getArgument(1) : lhs;
 
 			collectRHSRefExprs(rhs);
-			
+
 		} else if (node instanceof IfNode) {
 			// Collect up the expressions from other statements
-			IfNode ifn = (IfNode)node;
+			IfNode ifn = (IfNode) node;
 			collectRHSRefExprs(ifn.getCondition());
 			collectAssignRefExprs(ifn.getTrueBranch());
 			if (ifn.getTrueBranch() != null) {
 				collectAssignRefExprs(ifn.getFalseBranch());
 			}
-			
+
 		} else if (node instanceof LoopNode) {
-			LoopNode loopn = (LoopNode)node;
+			LoopNode loopn = (LoopNode) node;
 			collectRHSRefExprs(loopn.getCondition());
 			collectAssignRefExprs(loopn.getBody());
-			
+
 			if (loopn instanceof ForLoopNode) {
-				ForLoopNode forn = (ForLoopNode)loopn;
+				ForLoopNode forn = (ForLoopNode) loopn;
 				collectAssignRefExprs(forn.getInitializer());
 				collectAssignRefExprs(forn.getIncrementer());
 			}
-			
+
 		} else if (node instanceof SwitchNode) {
-			SwitchNode switchn = (SwitchNode)node;
+			SwitchNode switchn = (SwitchNode) node;
 			collectRHSRefExprs(switchn.getCondition());
 			collectAssignRefExprs(switchn.getBody());
 
 		} else if (node instanceof ReturnNode) {
-			ReturnNode returnn = (ReturnNode)node;
+			ReturnNode returnn = (ReturnNode) node;
 			if (returnn.getExpression() != null) {
 				collectAssignRefExprs(returnn.getExpression());
 			}
@@ -1097,9 +1114,10 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 		}
 		return true;
 	}
-	
+
 	/* This is a weaker version of the test that just compares base arrays */
-	private boolean noArrayRefDependences(Set<OperatorNode> writes, Set<OperatorNode> reads) {
+	private boolean noArrayRefDependences(Set<OperatorNode> writes,
+			Set<OperatorNode> reads) {
 		for (OperatorNode w : writes) {
 			IdentifierExpressionNode baseWrite = baseArray(w);
 
@@ -1108,7 +1126,7 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 				if (baseWrite.getIdentifier().getEntity() == baseRead
 						.getIdentifier().getEntity()) {
-						return false;
+					return false;
 				}
 			}
 		}

@@ -42,6 +42,7 @@ import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
+import edu.udel.cis.vsl.civl.transform.IF.Pthread2CIVLTransformer;
 
 //TODO: add arguments to pthread_exit();
 
@@ -122,7 +123,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 *            The ASTFactory that will be used to create new nodes.
 	 */
 	public Pthread2CIVLWorker(ASTFactory astFactory) {
-		super("PthreadToCIVLTransformer", astFactory);
+		super(Pthread2CIVLTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "$pthreads_";
 	}
 
@@ -469,8 +470,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
 		return nodeFactory.newExpressionStatementNode(this.functionCall(
-				this.newSource("assertion", CParser.EXPRESSION_STATEMENT),
-				ASSERT, Arrays.asList(expression)));
+				mySource, ASSERT, Arrays.asList(expression)));
 	}
 
 	/**

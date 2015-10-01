@@ -27,6 +27,7 @@ import edu.udel.cis.vsl.abc.err.IF.ABCUnsupportedException;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.StringLiteral;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.IF.IOTransformer;
 import edu.udel.cis.vsl.civl.transform.IF.TransformerFactory;
 
 /**
@@ -181,7 +182,7 @@ public class IOWorker extends BaseWorker {
 	 *            The CIVL configuration.
 	 */
 	public IOWorker(ASTFactory astFactory) {
-		super("IOTransformer", astFactory);
+		super(IOTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "$io_";
 	}
 

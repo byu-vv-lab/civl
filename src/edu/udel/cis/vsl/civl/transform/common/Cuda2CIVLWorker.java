@@ -38,13 +38,14 @@ import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.IF.Cuda2CIVLTransformer;
 
 public class Cuda2CIVLWorker extends BaseWorker {
 
 	private int tempVarNum;
 
 	public Cuda2CIVLWorker(ASTFactory astFactory) {
-		super("CUDAtoCIVLTransformer", astFactory);
+		super(Cuda2CIVLTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "_cuda_";
 	}
 
@@ -314,11 +315,11 @@ public class Cuda2CIVLWorker extends BaseWorker {
 						"$cuda_wait_in_queue"), Arrays.asList(
 						this.identifierExpression(source, "_cuda_this"),
 						this.identifierExpression(source, "_cuda_event")), null);
-		FunctionCallNode runProcsCall = nodeFactory.newFunctionCallNode(source,
-				this.identifierExpression(source, "$cuda_run_procs"), Arrays
-						.asList(this.identifierExpression(source,
-								"gridDim"), this.identifierExpression(
-								source, "_cuda_block")), null);
+		FunctionCallNode runProcsCall = nodeFactory
+				.newFunctionCallNode(source, this.identifierExpression(source,
+						"$cuda_run_procs"), Arrays.asList(
+						this.identifierExpression(source, "gridDim"),
+						this.identifierExpression(source, "_cuda_block")), null);
 		FunctionCallNode kernelFinishCall = nodeFactory.newFunctionCallNode(
 				source,
 				this.identifierExpression(source, "$cuda_kernel_finish"),
@@ -388,9 +389,9 @@ public class Cuda2CIVLWorker extends BaseWorker {
 				.buildThreadDefinition(threadBody);
 		FunctionCallNode runProcsCall = nodeFactory.newFunctionCallNode(source,
 				this.identifierExpression(source, "$cuda_run_procs"), Arrays
-						.asList(this.identifierExpression(source,
-								"blockDim"), this.identifierExpression(
-								source, "_cuda_thread")), null);
+						.asList(this.identifierExpression(source, "blockDim"),
+								this.identifierExpression(source,
+										"_cuda_thread")), null);
 		FunctionCallNode gbarrierDestruction = nodeFactory.newFunctionCallNode(
 				source, this.identifierExpression(source, "$gbarrier_destroy"),
 				Arrays.asList(this.identifierExpression(source,
@@ -445,11 +446,10 @@ public class Cuda2CIVLWorker extends BaseWorker {
 						.identifier("_cuda_tid"), nodeFactory.newBasicTypeNode(
 						source, BasicTypeKind.INT), nodeFactory
 						.newFunctionCallNode(source, this.identifierExpression(
-								source, "$cuda_index"), Arrays.asList(
-								this.identifierExpression(source,
-										"blockDim"), this
-										.identifierExpression(source,
-												"threadIdx")), null));
+								source, "$cuda_index"),
+								Arrays.asList(this.identifierExpression(source,
+										"blockDim"), this.identifierExpression(
+										source, "threadIdx")), null));
 		FunctionCallNode newBarrier = nodeFactory.newFunctionCallNode(source,
 				this.identifierExpression(source, "$barrier_create"), Arrays
 						.asList(nodeFactory.newHereNode(source), this
@@ -599,16 +599,16 @@ public class Cuda2CIVLWorker extends BaseWorker {
 				continue;
 			if (child.nodeKind() == NodeKind.VARIABLE_DECLARATION) {
 				VariableDeclarationNode variableDeclaration = (VariableDeclarationNode) child;
-				if (variableDeclaration.getIdentifier() != null 
-						&& variableDeclaration.getIdentifier().getSource().getFirstToken().getSourceFile().getName().equals("cuda.h")
+				if (variableDeclaration.getIdentifier() != null
+						&& variableDeclaration.getIdentifier().getSource()
+								.getFirstToken().getSourceFile().getName()
+								.equals("cuda.h")
 						&& builtinVariables.contains(variableDeclaration
 								.getIdentifier().name())) {
 					root.removeChild(child.childIndex());
 					continue;
 				}
 			}
-			
-			
 
 			removeBuiltinDefinitions(child);
 		}

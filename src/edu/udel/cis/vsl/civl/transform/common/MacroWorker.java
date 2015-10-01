@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.abc.token.IF.MacroExpansion;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.civl.transform.IF.MacroTransformer;
 
 /**
  * Recovers macros.
@@ -30,7 +31,7 @@ import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 public class MacroWorker extends BaseWorker {
 
 	public MacroWorker(ASTFactory astFactory) {
-		super("MacroTransformer", astFactory);
+		super(MacroTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "$macro_";
 	}
 

@@ -25,6 +25,7 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.config.IF.Configuration.Architecture;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
 import edu.udel.cis.vsl.abc.parse.IF.ParseException;
 import edu.udel.cis.vsl.abc.parse.IF.ParseTree;
@@ -35,6 +36,7 @@ import edu.udel.cis.vsl.abc.token.IF.CTokenSource;
 import edu.udel.cis.vsl.abc.token.IF.Macro;
 import edu.udel.cis.vsl.abc.token.IF.SourceFile;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
+import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.model.IF.Model;
@@ -246,8 +248,11 @@ public class ModelTranslator {
 		this.filenames = filenames;
 		userFileName = filenames[0];
 		this.frontEnd = frontEnd;
-		frontEnd.getConfiguration().setSvcomp(config.svcomp());
 		frontEnd.getConfiguration().setLanguage(Language.CIVL_C);
+		if (config.svcomp()) {
+			frontEnd.getConfiguration().setSvcomp(config.svcomp());
+			frontEnd.getConfiguration().setArchitecture(Architecture._32_BIT);
+		}
 		this.preprocessor = frontEnd.getPreprocessor();
 		systemIncludes = this.getSysIncludes(cmdSection);
 		userIncludes = this.getUserIncludes(cmdSection);
@@ -288,6 +293,19 @@ public class ModelTranslator {
 					+ tokenSources.length + " translation units");
 		}
 		asts = this.parseTokens(tokenSources);
+		if (this.config.svcomp()) {
+			// parsing preprocessed .i file
+			if (userFileName.endsWith(".i")) {
+				AST userAST = asts.get(0);
+
+				frontEnd.getStandardAnalyzer().clear(userAST);
+				frontEnd.getStandardAnalyzer().analyze(userAST);
+				userAST = Transform.newTransformer("prune",
+						userAST.getASTFactory()).transform(userAST);
+				asts.set(0, transformerFactory.getSvcompTransformer()
+						.transform(userAST));
+			}
+		}
 		program = this.link(asts);
 		startTime = System.currentTimeMillis();
 		this.applyAllTransformers(program);
@@ -527,7 +545,8 @@ public class ModelTranslator {
 			throws SyntaxException {
 		// ASTFactory astFactory = program.getAST().getASTFactory();
 		Set<String> headers = new HashSet<>();
-		boolean isC = userFileName.endsWith(".c");
+		boolean isC = userFileName.endsWith(".c")
+				|| userFileName.endsWith(".i");
 		boolean hasStdio = false, hasOmp = false, hasMpi = false, hasPthread = false, hasCuda = false;
 
 		for (SourceFile sourceFile : program.getAST().getSourceFiles()) {
