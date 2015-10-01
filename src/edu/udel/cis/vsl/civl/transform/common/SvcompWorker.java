@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.transform.common;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
@@ -32,9 +33,15 @@ public class SvcompWorker extends BaseWorker {
 
 	private final static String IO_HEADER = "stdio.h";
 
+	private final static String EXIT = "exit";
+
+	private final static String STDLIB_HEADER = "stdlib.h";
+
 	private boolean needsPthreadHeader = false;
 
 	private boolean needsIoHeader = false;
+
+	private boolean needsStdlibHeader = false;
 
 	public SvcompWorker(ASTFactory astFactory) {
 		super(SvcompTransformer.LONG_NAME, astFactory);
@@ -45,8 +52,9 @@ public class SvcompWorker extends BaseWorker {
 		SequenceNode<BlockItemNode> rootNode = ast.getRootNode();
 
 		ast.release();
-		this.removeIoNodes(rootNode);
-		this.removePthreadTypedefs(rootNode);
+		// this.removeIoNodes(rootNode);
+		// this.removePthreadTypedefs(rootNode);
+		this.removeNodes(rootNode);
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
 		// ast.prettyPrint(System.out, false);
 		ast = this.addHeaders(ast);
@@ -54,17 +62,49 @@ public class SvcompWorker extends BaseWorker {
 	}
 
 	private AST addHeaders(AST ast) throws SyntaxException {
-		if (needsPthreadHeader) {
-			AST pthreadHeaderAST = this.parseSystemLibrary(PTHREAD_HEADER);
-
-			ast = this.combineASTs(pthreadHeaderAST, ast);
-		}
 		if (needsIoHeader) {
 			AST ioHeaderAST = this.parseSystemLibrary(IO_HEADER);
 
 			ast = this.combineASTs(ioHeaderAST, ast);
 		}
+		if (needsStdlibHeader) {
+			AST stdlibHeaderAST = this.parseSystemLibrary(STDLIB_HEADER);
+
+			ast = this.combineASTs(stdlibHeaderAST, ast);
+		}
+		// ast = Transform.newTransformer("prune",
+		// ast.getASTFactory()).transform(
+		// ast);
+		if (needsPthreadHeader) {
+			AST pthreadHeaderAST = this.parseSystemLibrary(PTHREAD_HEADER);
+
+			ast = this.combineASTs(pthreadHeaderAST, ast);
+		}
 		return ast;
+	}
+
+	private void removeNodes(SequenceNode<BlockItemNode> root) {
+		for (BlockItemNode item : root) {
+			boolean toRemove = false;
+
+			toRemove = isQualifiedIoNode(item);
+			if (!toRemove)
+				toRemove = isQualifiedPthreadNode(item);
+			if (!toRemove) {
+				isStdlibNode(item);
+			}
+			if (toRemove)
+				item.remove();
+		}
+	}
+
+	private void isStdlibNode(BlockItemNode item) {
+		if (item instanceof FunctionDeclarationNode) {
+			FunctionDeclarationNode functionDecl = (FunctionDeclarationNode) item;
+
+			if (functionDecl.getName().equals(EXIT))
+				this.needsStdlibHeader = true;
+		}
 	}
 
 	/**
@@ -81,31 +121,28 @@ public class SvcompWorker extends BaseWorker {
 	 * <code>typedef SOME_TYPE pthread_*</code>. i.e., the identifier starts
 	 * with "pthread_".
 	 * 
-	 * @param root
+	 * @param node
 	 */
-	private void removeIoNodes(SequenceNode<BlockItemNode> root) {
-		for (BlockItemNode item : root) {
-			boolean toRemove = false;
+	private boolean isQualifiedIoNode(BlockItemNode node) {
+		boolean toRemove = false;
 
-			if (item instanceof TypedefDeclarationNode) {
-				toRemove = isStructOrUnionOfIO(((TypedefDeclarationNode) item)
-						.getTypeNode());
-			} else if (item instanceof StructureOrUnionTypeNode) {
-				toRemove = isStructOrUnionOfIO((StructureOrUnionTypeNode) item);
-			} else if (item instanceof VariableDeclarationNode) {
-				TypeNode type = ((VariableDeclarationNode) item).getTypeNode();
+		if (node instanceof TypedefDeclarationNode) {
+			toRemove = isStructOrUnionOfIO(((TypedefDeclarationNode) node)
+					.getTypeNode());
+		} else if (node instanceof StructureOrUnionTypeNode) {
+			toRemove = isStructOrUnionOfIO((StructureOrUnionTypeNode) node);
+		} else if (node instanceof VariableDeclarationNode) {
+			TypeNode type = ((VariableDeclarationNode) node).getTypeNode();
 
-				if (type instanceof PointerTypeNode) {
-					toRemove = this
-							.isStructOrUnionOfIO(((PointerTypeNode) type)
-									.referencedType());
-				}
-			}
-			if (toRemove) {
-				item.remove();
-				this.needsIoHeader = true;
+			if (type instanceof PointerTypeNode) {
+				toRemove = this.isStructOrUnionOfIO(((PointerTypeNode) type)
+						.referencedType());
 			}
 		}
+		if (toRemove) {
+			this.needsIoHeader = true;
+		}
+		return toRemove;
 	}
 
 	/**
@@ -132,24 +169,23 @@ public class SvcompWorker extends BaseWorker {
 	 * 
 	 * @param root
 	 */
-	private void removePthreadTypedefs(SequenceNode<BlockItemNode> root) {
-		for (BlockItemNode item : root) {
-			if (item instanceof TypedefDeclarationNode) {
-				TypedefDeclarationNode typedef = (TypedefDeclarationNode) item;
+	private boolean isQualifiedPthreadNode(BlockItemNode item) {
+		if (item instanceof TypedefDeclarationNode) {
+			TypedefDeclarationNode typedef = (TypedefDeclarationNode) item;
 
-				if (typedef.getName().startsWith(PTHREAD_PREFIX)) {
-					typedef.remove();
-					needsPthreadHeader = true;
-				}
-			} else if (item instanceof StructureOrUnionTypeNode) {
-				StructureOrUnionTypeNode structOrUnion = (StructureOrUnionTypeNode) item;
+			if (typedef.getName().startsWith(PTHREAD_PREFIX)) {
+				needsPthreadHeader = true;
+				return true;
+			}
+		} else if (item instanceof StructureOrUnionTypeNode) {
+			StructureOrUnionTypeNode structOrUnion = (StructureOrUnionTypeNode) item;
 
-				if (structOrUnion.getName().startsWith(PTHREAD_PREFIX)) {
-					structOrUnion.remove();
-					needsPthreadHeader = true;
-				}
+			if (structOrUnion.getName().startsWith(PTHREAD_PREFIX)) {
+				needsPthreadHeader = true;
+				return true;
 			}
 		}
+		return false;
 	}
 
 }
