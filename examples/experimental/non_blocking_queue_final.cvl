@@ -115,7 +115,7 @@ void enqueue(queue_t *Q, int value) {
     tail = Q->Tail;
     next = tail.ptr->next;
     if (ptr_equal(tail, Q->Tail)) {
-      if (next.ptr == NULL){
+      if (next.ptr == NULL) {
 	if (CAS(&tail.ptr->next,
 		next,
 		(pointer_t){node, next.count+1}))
@@ -185,7 +185,7 @@ _Bool is_permutation(int n, int *data) {
  * 10 times.  Checks that the dequeued sequence is the
  * same as the enqueued sequence.
  */
-void test1() {
+void sequentialTest() {
   int d;
   queue_t sq;
 	
@@ -207,7 +207,7 @@ void test1() {
  * and one dequeue.   Check that the result is a permutation
  * of the numbers 0..n-1.
  */
-void test2(int n) {
+void permuteTest(int n) {
   queue_t sq;
   int array[n];
   
@@ -272,7 +272,7 @@ void test3(int nthreads, int nvals) {
 }
 
 void main() {
-  test1();
-  test2(2);
-  test3(3, 2);
+  sequentialTest();
+  permuteTest(3);
+  test3(2, 3);
 }
