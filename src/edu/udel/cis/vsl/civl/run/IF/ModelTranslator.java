@@ -302,7 +302,8 @@ public class ModelTranslator {
 				frontEnd.getStandardAnalyzer().analyze(userAST);
 				userAST = Transform.newTransformer("prune",
 						userAST.getASTFactory()).transform(userAST);
-				asts.set(0, transformerFactory.getSvcompTransformer()
+				// userAST.prettyPrint(System.out, true);
+				asts.set(0, transformerFactory.getSvcompUnPPTransformer()
 						.transform(userAST));
 			}
 		}
@@ -566,6 +567,11 @@ public class ModelTranslator {
 			hasMpi = true;
 		if (headers.contains("cuda.h"))
 			hasCuda = true;
+		if (config.svcomp()) {
+			if (config.debugOrVerbose())
+				this.out.println("Apply svcomp transformer...");
+			program.apply(transformerFactory.getSvcompTransformer());
+		}
 		// always apply general transformation.
 		if (config.debugOrVerbose())
 			this.out.println("Apply general transformer...");

@@ -45,6 +45,8 @@ public class TransformerFactory {
 
 	private Transformer cuda2CivlTransformer;
 
+	private Transformer svcompUnPPTransformer;
+	
 	private Transformer svcompTransformer;
 
 	public TransformerFactory(ASTFactory astFactory) {
@@ -141,6 +143,12 @@ public class TransformerFactory {
 		return false;
 	}
 
+	public Transformer getSvcompUnPPTransformer() {
+		if (svcompUnPPTransformer == null)
+			svcompUnPPTransformer = new SvcompUnPPTransformer(astFactory);
+		return svcompUnPPTransformer;
+	}
+	
 	public Transformer getSvcompTransformer() {
 		if (svcompTransformer == null)
 			svcompTransformer = new SvcompTransformer(astFactory);

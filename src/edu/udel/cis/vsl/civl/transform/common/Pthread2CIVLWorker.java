@@ -108,6 +108,18 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private Set<FunctionDefinitionNode> nonThreadFunctionsWtSyncCalls = new HashSet<>();
 
+	private Set<String> nonThreadFunctionNamesWtSyncCalls = new HashSet<>();
+
+	// private Set<FunctionDefinitionNode> newNonThreadFunctionsWtSyncCalls =
+	// new HashSet<>();
+
+	private Set<String> newNonThreadFunctionNamesWtSyncCalls = new HashSet<>();
+
+	// private Set<FunctionDefinitionNode>
+	// currentNewNonThreadFunctionsWtSyncCalls=new HashSet<>();
+
+	private Set<String> currentNewNonThreadFunctionNamesWtSyncCalls = new HashSet<>();
+
 	private List<String> syncCallFunctionNames = new ArrayList<>();
 
 	// private boolean isSvComp = true;
@@ -122,6 +134,14 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	public Pthread2CIVLWorker(ASTFactory astFactory) {
 		super(Pthread2CIVLTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "$pthreads_";
+		newNonThreadFunctionNamesWtSyncCalls.add(PTHREAD_COND_WAIT);
+		// newNonThreadFunctionNamesWtSyncCalls.add(PTHREAD_EXIT_NEW);
+		newNonThreadFunctionNamesWtSyncCalls.add(PTHREAD_MUTEX_LOCK);
+		newNonThreadFunctionNamesWtSyncCalls.add(PTHREAD_SELF);
+		nonThreadFunctionNamesWtSyncCalls.add(PTHREAD_COND_WAIT);
+		nonThreadFunctionNamesWtSyncCalls.add(PTHREAD_MUTEX_LOCK);
+		nonThreadFunctionNamesWtSyncCalls.add(PTHREAD_SELF);
+
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -167,13 +187,28 @@ public class Pthread2CIVLWorker extends BaseWorker {
 				// node);
 				// }
 				process_pthread_exits((FunctionDefinitionNode) node, funcList);
-				process_pthread_sync_calls((FunctionDefinitionNode) node);
+				// process_pthread_sync_calls((FunctionDefinitionNode) node);
 			}
 			// else if (/*
 			// * config.svcomp() &&
 			// */node instanceof FunctionDeclarationNode) {
 			// process_VERIFIER_functions((FunctionDeclarationNode) node);
 			// }
+		}
+		while (!this.newNonThreadFunctionNamesWtSyncCalls.isEmpty()) {
+			// currentNewNonThreadFunctionsWtSyncCalls = new HashSet<>(
+			// newNonThreadFunctionsWtSyncCalls);
+			currentNewNonThreadFunctionNamesWtSyncCalls = new HashSet<>(
+					newNonThreadFunctionNamesWtSyncCalls);
+			// newNonThreadFunctionsWtSyncCalls.clear();
+			newNonThreadFunctionNamesWtSyncCalls.clear();
+			for (ASTNode node : root.children()) {
+				if (node == null)
+					continue;
+				if (node instanceof FunctionDefinitionNode) {
+					process_pthread_sync_calls((FunctionDefinitionNode) node);
+				}
+			}
 		}
 		process_nonThread_functions_wt_syncCalls();
 		if (this.syncCallFunctionNames.size() > 0)
@@ -224,8 +259,8 @@ public class Pthread2CIVLWorker extends BaseWorker {
 				.pthread_pool_declaration(false);
 
 		funcType.getParameters().addSequenceChild(pthread_pool_param);
-		if (!this.funcList.contains(funcDef.getName()))
-			syncCallFunctionNames.add(funcDef.getName());
+		// if (!this.funcList.contains(funcDef.getName()))
+		// syncCallFunctionNames.add(funcDef.getName());
 	}
 
 	private void process_pthread_sync_calls(FunctionDefinitionNode node) {
@@ -238,7 +273,8 @@ public class Pthread2CIVLWorker extends BaseWorker {
 			if (child == null)
 				continue;
 			if (child instanceof FunctionCallNode) {
-				process_pthread_sync_call(funcDef, (FunctionCallNode) child);
+				process_pthread_sync_call_work(funcDef,
+						(FunctionCallNode) child);
 			}
 			process_pthread_sync_calls(funcDef, child);
 		}
@@ -246,31 +282,42 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	/**
 	 * transforms pthread_mutex_lock(mutex) to pthread_mutex_lock(mutex,
-	 * $pthread_pool) and similar for pthread_cond_wait();
+	 * _pthread_pool) and similar for pthread_cond_wait();
 	 * 
 	 * @param node
 	 */
-	private void process_pthread_sync_call(FunctionDefinitionNode funcDef,
+	private void process_pthread_sync_call_work(FunctionDefinitionNode funcDef,
 			FunctionCallNode node) {
 		ExpressionNode function = node.getFunction();
 		boolean hasSyncCall = false;
 
 		if (function instanceof IdentifierExpressionNode) {
-			String funcName = ((IdentifierExpressionNode) function)
+			String calleeName = ((IdentifierExpressionNode) function)
 					.getIdentifier().name();
 
-			if (funcName.equals(PTHREAD_MUTEX_LOCK)
-					|| funcName.equals(PTHREAD_COND_WAIT)
-					|| funcName.equals(PTHREAD_SELF)) {
+			if (this.currentNewNonThreadFunctionNamesWtSyncCalls
+					.contains(calleeName)) {
 				hasSyncCall = true;
+			}
+			if (calleeName.equals(PTHREAD_MUTEX_LOCK)
+					|| calleeName.equals(PTHREAD_COND_WAIT)
+					|| calleeName.equals(PTHREAD_SELF)) {
 				((IdentifierExpressionNode) function).getIdentifier().setName(
-						"$" + funcName);
+						"$" + calleeName);
 			}
 			if (hasSyncCall) {
+				String funcName = funcDef.getName();
+
 				node.getArguments().addSequenceChild(
 						this.identifierExpression(PTHREAD_POOL));
-				if (!this.funcList.contains(funcDef.getName()))
+				if (!this.funcList.contains(funcName)
+						&& !this.nonThreadFunctionNamesWtSyncCalls
+								.contains(funcName)) {
 					nonThreadFunctionsWtSyncCalls.add(funcDef);
+					nonThreadFunctionNamesWtSyncCalls.add(funcName);
+					// this.newNonThreadFunctionsWtSyncCalls.add(funcDef);
+					this.newNonThreadFunctionNamesWtSyncCalls.add(funcName);
+				}
 			}
 		}
 	}

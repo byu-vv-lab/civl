@@ -5,7 +5,6 @@ import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
 import edu.udel.cis.vsl.civl.transform.common.SvcompUnPPWorker;
-import edu.udel.cis.vsl.civl.transform.common.SvcompWorker;
 
 /**
  * Transforms svcomp programs which are preprocessed by GCC
@@ -13,30 +12,30 @@ import edu.udel.cis.vsl.civl.transform.common.SvcompWorker;
  * @author Manchun Zheng
  *
  */
-public class SvcompTransformer extends BaseTransformer {
+public class SvcompUnPPTransformer extends BaseTransformer {
 
 	/**
 	 * The code (short name) of this transformer.
 	 */
-	public final static String CODE = "svcomp";
+	public final static String CODE = "svcomp-unpp";
 
 	/**
 	 * The long name of the transformer.
 	 */
-	public static String LONG_NAME = "SvcompTransformer";
+	public static String LONG_NAME = "SvcompUnPPTransformer";
 
 	/**
 	 * The description of this transformer.
 	 */
-	public static String SHORT_DESCRIPTION = "transforms (unpreprocessed) programs from SVCOMP benchmarks to CIVL-C";
+	public static String SHORT_DESCRIPTION = "transforms preprocessed programs from SVCOMP benchmarks to CIVL-C";
 
-	public SvcompTransformer(ASTFactory astFactory) {
+	public SvcompUnPPTransformer(ASTFactory astFactory) {
 		super(CODE, LONG_NAME, SHORT_DESCRIPTION, astFactory);
 	}
 
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
-		return new SvcompWorker(astFactory).transform(ast);
+		return new SvcompUnPPWorker(astFactory).transform(ast);
 	}
 
 }
