@@ -308,6 +308,19 @@ public abstract class BaseWorker {
 		return true;
 	}
 
+	protected boolean is_callee_name_equals(FunctionCallNode call, String name) {
+		ExpressionNode function = call.getFunction();
+
+		if (function instanceof IdentifierExpressionNode) {
+			String callee = ((IdentifierExpressionNode) function)
+					.getIdentifier().name();
+
+			if (callee.equals(name))
+				return true;
+		}
+		return false;
+	}
+
 	/**
 	 * rename all main function declaration to _main, and all function call to
 	 * main to _main.
