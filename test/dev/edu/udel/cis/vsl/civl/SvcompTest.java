@@ -84,11 +84,12 @@ public class SvcompTest {
 
 	// civl verify -svcomp -procBound=10 -checkMemoryLeak=false
 	// -input_svcomp_scale=8 pthread/bigshot_p_false-unreach-call.i
+	@Ignore
 	@Test
 	public void mix023_tso() throws ABCException {
-		assertTrue(ui
-				.run("show -showProgram",
-						"-svcomp -procBound=10 -checkMemoryLeak=false -input_svcomp_unpp_scale=8 -showTransitions",
+		assertFalse(ui
+				.run("verify -showProgram=false",
+						"-svcomp -procBound=10 -checkMemoryLeak=false -input_svcomp_unpp_scale=8 -showAmpleSetWtStates=false",
 						filename("mix023_tso.opt_false-unreach-call.i")));
 	}
 
