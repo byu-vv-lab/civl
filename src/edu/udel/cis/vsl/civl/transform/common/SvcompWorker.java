@@ -240,10 +240,10 @@ public class SvcompWorker extends BaseWorker {
 					if (expression instanceof FunctionCallNode) {
 						if (is_atomic_begin_call((FunctionCallNode) expression)) {
 							atomicCount++;
-							changed=true;
+							changed = true;
 						} else if (is_atomic_end_call((FunctionCallNode) expression)) {
 							atomicCount--;
-							if (atomicCount == 0) {
+							if (atomicCount == 0 && atomicItems.size() > 0) {
 								this.releaseNodes(atomicItems);
 								newItems.add(this.nodeFactory.newAtomicStatementNode(
 										this.newSource("$atomic",

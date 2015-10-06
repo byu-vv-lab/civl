@@ -5,6 +5,12 @@
 int _int_count=0;
 int _uint_count=0;
 int _bool_count=0;
+int _pointer_count=0;
+
+void* __VERIFIER_nondet_pointer(){
+  $abstract void* __VERIFIER_nondet_pointer_worker(int x);
+  return __VERIFIER_nondet_pointer_worker(_pointer_count++);
+}
 
 int __VERIFIER_nondet_int(){
   $abstract int __VERIFIER_nondet_int_worker(int x);
