@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -37,7 +38,8 @@ public class SvcompTest {
 	// reorder_2_false-unreach-call.i
 	@Test
 	public void reorder_2_false() throws ABCException {
-		assertFalse(ui.run("verify", "-svcomp -showProgram=false",
+		assertFalse(ui.run("verify",
+				"-svcomp -showProgram=false -input_gen_argc=1",
 				filename("reorder_2_false-unreach-call.i")));
 	}
 
@@ -56,6 +58,7 @@ public class SvcompTest {
 	}
 
 	// scull_true-unreach-call.i
+	@Ignore
 	@Test
 	public void scull_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp",
@@ -65,13 +68,39 @@ public class SvcompTest {
 	// sssc12_variant_true-unreach-call.i
 	@Test
 	public void sssc12_variant_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp",
-				filename("sssc12_variant_true-unreach-call.i")));
+		// assertTrue(ui.run("verify", "-svcomp -procBound=3 -showProgram",
+		// filename("sssc12_variant_true-unreach-call.i")));
+		ui.run("replay", "-svcomp -procBound=3 -showTransitions",
+				filename("sssc12_variant_true-unreach-call.i"));
 	}
 
 	@Test
 	public void intPointer() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", filename("intPointer.c")));
+		assertTrue(ui.run("verify", "-svcomp -input_svcomp_scale=5",
+				filename("intPointer.c")));
 	}
 
+	// stack_longest_true-unreach-call.i
+	@Test
+	public void stack_longest_true() throws ABCException {
+		assertTrue(ui.run("verify",
+				"-svcomp -showProgram -input_svcomp_scale=5",
+				filename("stack_longest_true-unreach-call.i")));
+	}
+
+	// mix000_power.oepc_false-unreach-call.i
+	@Test
+	public void mix000_power() throws ABCException {
+		assertFalse(ui.run("verify",
+				"-svcomp -showProgram -input_svcomp_scale=5",
+				filename("mix000_power.oepc_false-unreach-call.i")));
+	}
+
+	// mix000_power.opt_false-unreach-call.i
+	@Test
+	public void mix000_power_opt() throws ABCException {
+		assertFalse(ui.run("verify",
+				"-svcomp -showProgram -input_svcomp_scale=5",
+				filename("mix000_power.opt_false-unreach-call.i")));
+	}
 }
