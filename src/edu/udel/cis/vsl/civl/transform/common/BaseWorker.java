@@ -881,6 +881,14 @@ public abstract class BaseWorker {
 				nodeList);
 	}
 
+	protected void releaseNodes(List<? extends ASTNode> nodes) {
+		for (ASTNode node : nodes) {
+			if (node == null)
+				continue;
+			node.remove();
+		}
+	}
+
 	/* *************************** Private Methods ************************* */
 
 	/**
