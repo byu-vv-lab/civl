@@ -53,8 +53,10 @@ public class SvcompTest {
 	// singleton_false-unreach-call.i
 	@Test
 	public void singleton_false() throws ABCException {
-		assertFalse(ui.run("verify", "-svcomp -checkMemoryLeak=false",
-				filename("singleton_false-unreach-call.i")));
+		assertFalse(ui
+				.run("verify",
+						"-svcomp -checkMemoryLeak=false -showTransitions=true -showAmpleSet",
+						filename("singleton_false-unreach-call.i")));
 	}
 
 	// scull_true-unreach-call.i
@@ -76,15 +78,25 @@ public class SvcompTest {
 
 	@Test
 	public void intPointer() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp -input_svcomp_scale=5",
+		assertTrue(ui.run("verify", "-svcomp -input_svcomp_unpp_scale=5",
 				filename("intPointer.c")));
+	}
+
+	// civl verify -svcomp -procBound=10 -checkMemoryLeak=false
+	// -input_svcomp_scale=8 pthread/bigshot_p_false-unreach-call.i
+	@Test
+	public void mix023_tso() throws ABCException {
+		assertTrue(ui
+				.run("show -showProgram",
+						"-svcomp -procBound=10 -checkMemoryLeak=false -input_svcomp_unpp_scale=8 -showTransitions",
+						filename("mix023_tso.opt_false-unreach-call.i")));
 	}
 
 	// stack_longest_true-unreach-call.i
 	@Test
 	public void stack_longest_true() throws ABCException {
 		assertTrue(ui.run("verify",
-				"-svcomp -showProgram -input_svcomp_scale=5",
+				"-svcomp -showProgram -input_svcomp_unpp_scale=5",
 				filename("stack_longest_true-unreach-call.i")));
 	}
 
@@ -92,7 +104,7 @@ public class SvcompTest {
 	@Test
 	public void mix000_power() throws ABCException {
 		assertFalse(ui.run("verify",
-				"-svcomp -showProgram -input_svcomp_scale=5",
+				"-svcomp -showProgram -input_svcomp_unpp_scale=5",
 				filename("mix000_power.oepc_false-unreach-call.i")));
 	}
 
@@ -100,7 +112,7 @@ public class SvcompTest {
 	@Test
 	public void mix000_power_opt() throws ABCException {
 		assertFalse(ui.run("verify",
-				"-svcomp -showProgram -input_svcomp_scale=5",
+				"-svcomp -showProgram -input_svcomp_unpp_scale=5",
 				filename("mix000_power.opt_false-unreach-call.i")));
 	}
 }

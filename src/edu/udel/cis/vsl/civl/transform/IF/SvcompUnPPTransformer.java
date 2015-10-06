@@ -17,7 +17,7 @@ public class SvcompUnPPTransformer extends BaseTransformer {
 	/**
 	 * The code (short name) of this transformer.
 	 */
-	public final static String CODE = "svcomp-unpp";
+	public final static String CODE = "svcomp_unpp";
 
 	/**
 	 * The long name of the transformer.

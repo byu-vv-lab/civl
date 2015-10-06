@@ -20,12 +20,9 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.label.LabelNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.label.OrdinaryLabelNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.statement.LabeledStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ReturnNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.FunctionTypeNode;
@@ -82,7 +79,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	// needs to go to MPI process scope
 	final static String PTHREAD_EXIT_MAIN_NEW = "$pthread_exit_main";
 
-	private final static String ERROR = "ERROR";
+	// private final static String ERROR = "ERROR";
 
 	// private final static String VERIFIER_NONDET_UINT =
 	// "__VERIFIER_nondet_uint";
@@ -214,7 +211,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		if (this.syncCallFunctionNames.size() > 0)
 			process_function_call_of_functionsWtSyncCalls(root);
 		// if (config.svcomp())
-		translateNode(root);
+		// translateNode(root);
 	}
 
 	private void process_function_call_of_functionsWtSyncCalls(ASTNode root) {
@@ -474,54 +471,54 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 *            Node to be translated
 	 * 
 	 */
-	private void translateNode(ASTNode node) {
-		if (node instanceof LabeledStatementNode) {
-			LabeledStatementNode labelStatement = (LabeledStatementNode) node;
-			LabelNode labelNode = labelStatement.getLabel();
-
-			if (labelNode instanceof OrdinaryLabelNode) {
-				OrdinaryLabelNode label = (OrdinaryLabelNode) labelNode;
-				String name = label.getName();
-				if (name.equals(ERROR))
-					labelStatement.setChild(1,
-							this.assertFalse(labelStatement.getSource()));
-			}
-			// } else if (node instanceof ExpressionStatementNode) {
-			// ExpressionNode expression = ((ExpressionStatementNode) node)
-			// .getExpression();
-			// StatementNode newStatementNode = null;
-			//
-			// if (expression.expressionKind() == ExpressionKind.FUNCTION_CALL)
-			// {
-			// FunctionCallNode functionCall = (FunctionCallNode) expression;
-			// ExpressionNode functionName = functionCall.getFunction();
-			//
-			// if (functionName.expressionKind() ==
-			// ExpressionKind.IDENTIFIER_EXPRESSION) {
-			// String name = ((IdentifierExpressionNode) functionName)
-			// .getIdentifier().name();
-			//
-			// switch (name) {
-			// case VERIFIER_ASSERT:
-			// newStatementNode = this.assertNode(functionCall
-			// .getSource(), functionCall.getArgument(0)
-			// .copy());
-			// break;
-			// case VERIFIER_ASSUME:
-			// newStatementNode = this.assumeNode(functionCall
-			// .getArgument(0).copy());
-			// break;
-			// default:
-			// }
-			// }
-			// if (newStatementNode != null)
-			// node.parent().setChild(node.childIndex(), newStatementNode);
-			// }
-		} else
-			for (ASTNode child : node.children())
-				if (child != null)
-					this.translateNode(child);
-	}
+	// private void translateNode(ASTNode node) {
+	// if (node instanceof LabeledStatementNode) {
+	// LabeledStatementNode labelStatement = (LabeledStatementNode) node;
+	// LabelNode labelNode = labelStatement.getLabel();
+	//
+	// if (labelNode instanceof OrdinaryLabelNode) {
+	// OrdinaryLabelNode label = (OrdinaryLabelNode) labelNode;
+	// String name = label.getName();
+	// if (name.equals(ERROR))
+	// labelStatement.setChild(1,
+	// this.assertFalse(labelStatement.getSource()));
+	// }
+	// // } else if (node instanceof ExpressionStatementNode) {
+	// // ExpressionNode expression = ((ExpressionStatementNode) node)
+	// // .getExpression();
+	// // StatementNode newStatementNode = null;
+	// //
+	// // if (expression.expressionKind() == ExpressionKind.FUNCTION_CALL)
+	// // {
+	// // FunctionCallNode functionCall = (FunctionCallNode) expression;
+	// // ExpressionNode functionName = functionCall.getFunction();
+	// //
+	// // if (functionName.expressionKind() ==
+	// // ExpressionKind.IDENTIFIER_EXPRESSION) {
+	// // String name = ((IdentifierExpressionNode) functionName)
+	// // .getIdentifier().name();
+	// //
+	// // switch (name) {
+	// // case VERIFIER_ASSERT:
+	// // newStatementNode = this.assertNode(functionCall
+	// // .getSource(), functionCall.getArgument(0)
+	// // .copy());
+	// // break;
+	// // case VERIFIER_ASSUME:
+	// // newStatementNode = this.assumeNode(functionCall
+	// // .getArgument(0).copy());
+	// // break;
+	// // default:
+	// // }
+	// // }
+	// // if (newStatementNode != null)
+	// // node.parent().setChild(node.childIndex(), newStatementNode);
+	// // }
+	// } else
+	// for (ASTNode child : node.children())
+	// if (child != null)
+	// this.translateNode(child);
+	// }
 
 	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
 		return nodeFactory.newExpressionStatementNode(this.functionCall(

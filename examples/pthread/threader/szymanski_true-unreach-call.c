@@ -1,14 +1,16 @@
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 /* Testcase from Threader's distribution. For details see:
    http://www.model.in.tum.de/~popeea/research/threader
 */
 
 #include <pthread.h>
-#define assert(e) if (!(e)) ERROR: goto ERROR; 
+#define assert(e) if (!(e)) ERROR: __VERIFIER_error();
 
 int flag1 = 0, flag2 = 0; // integer flags 
 int x; // boolean variable to test mutual exclusion
 
-void *thr1(void * arg) {
+void *thr1() {
   flag1 = 1;
   while (flag2 >= 3); 
   flag1 = 3;
@@ -26,7 +28,7 @@ void *thr1(void * arg) {
   flag1 = 0;
 }
 
-void *thr2(void * arg) {
+void *thr2() {
   flag2 = 1;
   while (flag1 >= 3);
   flag2 = 3;

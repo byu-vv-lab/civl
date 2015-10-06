@@ -1,3 +1,5 @@
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 /* Testcase from Threader's distribution. For details see:
    http://www.model.in.tum.de/~popeea/research/threader
 
@@ -7,15 +9,15 @@
 */
 
 #include <pthread.h>
-#define assert(e) if (!(e)) ERROR: goto ERROR;
+#define assert(e) if (!(e)) ERROR: __VERIFIER_error();
 
 int block;
-int busy = 0; // boolean flag indicating whether the block has been allocated to an inode
-int inode = 0;
+int busy; // boolean flag indicating whether the block has been allocated to an inode
+int inode;
 pthread_mutex_t m_inode; // protects the inode
 pthread_mutex_t m_busy; // protects the busy flag
 
-void *allocator(void * arg){
+void *allocator(){
   pthread_mutex_lock(&m_inode);
   if(inode == 0){
     pthread_mutex_lock(&m_busy);
@@ -29,7 +31,7 @@ void *allocator(void * arg){
   return NULL;
 }
 
-void *de_allocator(void * arg){
+void *de_allocator(){
   pthread_mutex_lock(&m_busy);
   if(busy == 0){
     block = 0;

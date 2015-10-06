@@ -38,13 +38,7 @@ public class SvcompWorker extends BaseWorker {
 
 	private final static String VERIFIER_ATOMIC_END = "__VERIFIER_atomic_end";
 
-	private final static int UPPER_BOUND = 10;
 
-	// private int scale_var_count = 0;
-
-	private final static String SCALE_VAR = "scale";
-
-	private Map<Integer, VariableDeclarationNode> numberVariableMap = new HashMap<>();
 
 	public SvcompWorker(ASTFactory astFactory) {
 		super(SvcompTransformer.LONG_NAME, astFactory);
@@ -57,114 +51,10 @@ public class SvcompWorker extends BaseWorker {
 
 		ast.release();
 		this.processVerifierFunctions(rootNode);
-		rootNode = downScaler(rootNode);
+		
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
 		// ast.prettyPrint(System.out, false);
 		return ast;
-	}
-
-	private SequenceNode<BlockItemNode> downScaler(
-			SequenceNode<BlockItemNode> root) throws SyntaxException {
-		List<BlockItemNode> newItems = new ArrayList<>();
-		VariableDeclarationNode scale_bound = this.variableDeclaration(
-				this.identifierPrefix + "_" + SCALE_VAR,
-				this.basicType(BasicTypeKind.INT));
-
-		scale_bound.getTypeNode().setInputQualified(true);
-		newItems.add(this.assumeFunctionDeclaration(this.newSource("$assume",
-				CParser.DECLARATION)));
-		newItems.add(scale_bound);
-		for (VariableDeclarationNode varNode : numberVariableMap.values()) {
-			newItems.add(varNode);
-			newItems.add(this.assumeNode(this.nodeFactory.newOperatorNode(
-					varNode.getSource(), Operator.LTE,
-					this.identifierExpression(varNode.getName()),
-					this.identifierExpression(scale_bound.getName()))));
-		}
-		for (BlockItemNode item : root) {
-			if (item == null)
-				continue;
-
-			downScalerWork(item);
-			item.remove();
-			newItems.add(item);
-		}
-		return this.nodeFactory.newSequenceNode(root.getSource(),
-				"Translation Unit", newItems);
-	}
-
-	private void downScalerWork(ASTNode node) throws SyntaxException {
-		if (node instanceof OperatorNode) {
-			OperatorNode operatorNode = (OperatorNode) node;
-			int numArgs = operatorNode.getNumberOfArguments();
-
-			for (int i = 0; i < numArgs; i++) {
-				ExpressionNode arg = operatorNode.getArgument(i);
-
-				if (arg instanceof IntegerConstantNode) {
-					ExpressionNode newArg = this
-							.getDownScaledExpression((IntegerConstantNode) arg);
-
-					if (newArg != null)
-						operatorNode.setArgument(i, newArg);
-				} else if (arg instanceof OperatorNode) {
-					downScalerWork(arg);
-				}
-			}
-			// Operator operator = operatorNode.getOperator();
-			// ExpressionNode upper = null;
-			// int argIndex = -1;
-			//
-			// if (operator == Operator.LT || operator == Operator.LTE) {
-			// upper = operatorNode.getArgument(1);
-			// argIndex = 1;
-			// } else if (operator == Operator.GT || operator == Operator.GTE) {
-			// upper = operatorNode.getArgument(0);
-			// argIndex = 0;
-			// }
-			// if (upper != null) {
-			// if (upper instanceof IntegerConstantNode) {
-			// ExpressionNode newArgument = this
-			// .getDownScaledExpression((IntegerConstantNode) upper);
-			//
-			// if (newArgument != null)
-			// operatorNode.setArgument(argIndex, newArgument);
-			// }
-			// }
-		} else {
-			for (ASTNode child : node.children()) {
-				if (child == null)
-					continue;
-				downScalerWork(child);
-			}
-		}
-	}
-
-	private ExpressionNode getDownScaledExpression(IntegerConstantNode constant)
-			throws SyntaxException {
-		int upperValue = ((IntegerConstantNode) constant).getConstantValue()
-				.getIntegerValue().intValue();
-
-		if (numberVariableMap.containsKey(upperValue)) {
-			return this.identifierExpression(numberVariableMap.get(upperValue)
-					.getName());
-		} else if (numberVariableMap.containsKey(upperValue - 1)) {
-			ExpressionNode variableIdentifier = this
-					.identifierExpression(numberVariableMap.get(upperValue - 1)
-							.getName());
-
-			return this.nodeFactory.newOperatorNode(constant.getSource(),
-					Operator.PLUS, variableIdentifier, this.integerConstant(1));
-		} else if (numberVariableMap.containsKey(upperValue + 1)) {
-			ExpressionNode variableIdentifier = this
-					.identifierExpression(numberVariableMap.get(upperValue + 1)
-							.getName());
-
-			this.nodeFactory
-					.newOperatorNode(constant.getSource(), Operator.MINUS,
-							variableIdentifier, this.integerConstant(1));
-		}
-		return null;
 	}
 
 	private void processVerifierFunctions(SequenceNode<BlockItemNode> root) {
@@ -188,39 +78,7 @@ public class SvcompWorker extends BaseWorker {
 					// } else {
 					process_atomic_begin_end(funcDef.getBody());
 				}
-			} else if (item instanceof VariableDeclarationNode) {
-				VariableDeclarationNode varDecl = (VariableDeclarationNode) item;
-				TypeNode type = varDecl.getTypeNode();
-
-				if (type instanceof ArrayTypeNode) {
-					ArrayTypeNode arrayType = (ArrayTypeNode) type;
-					ExpressionNode extent = arrayType.getExtent();
-
-					if (extent instanceof IntegerConstantNode) {
-						int extentValue = ((IntegerConstantNode) extent)
-								.getConstantValue().getIntegerValue()
-								.intValue();
-
-						if (extentValue > UPPER_BOUND) {
-							VariableDeclarationNode scaleVariable = this
-									.variableDeclaration(
-											this.newUniqueIdentifier(SCALE_VAR),
-											this.basicType(BasicTypeKind.INT));
-
-							scaleVariable.getTypeNode().setInputQualified(true);
-							this.numberVariableMap.put(extentValue,
-									scaleVariable);
-							// if(arrayType.)
-							// TODO check is static and set scale bound
-							// accordingly
-							arrayType.setExtent(this
-									.identifierExpression(scaleVariable
-											.getName()));
-						}
-
-					}
-				}
-			}
+			} 
 		}
 	}
 

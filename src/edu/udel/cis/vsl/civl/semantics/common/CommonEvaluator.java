@@ -2624,6 +2624,10 @@ public class CommonEvaluator implements Evaluator {
 				throw new UnsatisfiablePathConditionException();
 			}
 		} else if (expressionValue.type().equals(this.pointerType)) {
+			if (this.civlConfig.svcomp()) {
+				if (expressionValue.operator() != SymbolicOperator.CONCRETE)
+					return;
+			}
 			if (this.symbolicUtil.isNullPointer(expressionValue))
 				return;
 			try {

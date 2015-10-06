@@ -1,15 +1,28 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
+import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.transform.IF.SvcompUnPPTransformer;
 
@@ -43,8 +56,17 @@ public class SvcompUnPPWorker extends BaseWorker {
 
 	private boolean needsStdlibHeader = false;
 
+	private final static int UPPER_BOUND = 10;
+
+	// private int scale_var_count = 0;
+
+	private final static String SCALE_VAR = "scale";
+
+	private Map<Integer, VariableDeclarationNode> numberVariableMap = new HashMap<>();
+
 	public SvcompUnPPWorker(ASTFactory astFactory) {
 		super(SvcompUnPPTransformer.LONG_NAME, astFactory);
+		this.identifierPrefix = "_" + SvcompUnPPTransformer.CODE;
 	}
 
 	@Override
@@ -55,10 +77,115 @@ public class SvcompUnPPWorker extends BaseWorker {
 		// this.removeIoNodes(rootNode);
 		// this.removePthreadTypedefs(rootNode);
 		this.removeNodes(rootNode);
+		rootNode = downScaler(rootNode);
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
 		// ast.prettyPrint(System.out, false);
 		ast = this.addHeaders(ast);
 		return ast;
+	}
+
+	private SequenceNode<BlockItemNode> downScaler(
+			SequenceNode<BlockItemNode> root) throws SyntaxException {
+		List<BlockItemNode> newItems = new ArrayList<>();
+		VariableDeclarationNode scale_bound = this.variableDeclaration(
+				this.identifierPrefix + "_" + SCALE_VAR,
+				this.basicType(BasicTypeKind.INT));
+
+		scale_bound.getTypeNode().setInputQualified(true);
+		newItems.add(this.assumeFunctionDeclaration(this.newSource("$assume",
+				CParser.DECLARATION)));
+		newItems.add(scale_bound);
+		for (VariableDeclarationNode varNode : numberVariableMap.values()) {
+			newItems.add(varNode);
+			newItems.add(this.assumeNode(this.nodeFactory.newOperatorNode(
+					varNode.getSource(), Operator.LTE,
+					this.identifierExpression(varNode.getName()),
+					this.identifierExpression(scale_bound.getName()))));
+		}
+		for (BlockItemNode item : root) {
+			if (item == null)
+				continue;
+
+			downScalerWork(item);
+			item.remove();
+			newItems.add(item);
+		}
+		return this.nodeFactory.newSequenceNode(root.getSource(),
+				"Translation Unit", newItems);
+	}
+
+	private void downScalerWork(ASTNode node) throws SyntaxException {
+		if (node instanceof OperatorNode) {
+			OperatorNode operatorNode = (OperatorNode) node;
+			int numArgs = operatorNode.getNumberOfArguments();
+
+			for (int i = 0; i < numArgs; i++) {
+				ExpressionNode arg = operatorNode.getArgument(i);
+
+				if (arg instanceof IntegerConstantNode) {
+					ExpressionNode newArg = this
+							.getDownScaledExpression((IntegerConstantNode) arg);
+
+					if (newArg != null)
+						operatorNode.setArgument(i, newArg);
+				} else if (arg instanceof OperatorNode) {
+					downScalerWork(arg);
+				}
+			}
+			// Operator operator = operatorNode.getOperator();
+			// ExpressionNode upper = null;
+			// int argIndex = -1;
+			//
+			// if (operator == Operator.LT || operator == Operator.LTE) {
+			// upper = operatorNode.getArgument(1);
+			// argIndex = 1;
+			// } else if (operator == Operator.GT || operator == Operator.GTE) {
+			// upper = operatorNode.getArgument(0);
+			// argIndex = 0;
+			// }
+			// if (upper != null) {
+			// if (upper instanceof IntegerConstantNode) {
+			// ExpressionNode newArgument = this
+			// .getDownScaledExpression((IntegerConstantNode) upper);
+			//
+			// if (newArgument != null)
+			// operatorNode.setArgument(argIndex, newArgument);
+			// }
+			// }
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child == null)
+					continue;
+				downScalerWork(child);
+			}
+		}
+	}
+
+	private ExpressionNode getDownScaledExpression(IntegerConstantNode constant)
+			throws SyntaxException {
+		int upperValue = ((IntegerConstantNode) constant).getConstantValue()
+				.getIntegerValue().intValue();
+
+		if (numberVariableMap.containsKey(upperValue)) {
+			return this.identifierExpression(numberVariableMap.get(upperValue)
+					.getName());
+		} else if (numberVariableMap.containsKey(upperValue - 1)) {
+			ExpressionNode variableIdentifier = this
+					.identifierExpression(numberVariableMap.get(upperValue - 1)
+							.getName());
+
+			return this.nodeFactory.newOperatorNode(constant.getSource(),
+					Operator.PLUS, variableIdentifier, this.integerConstant(1));
+		} else if (numberVariableMap.containsKey(upperValue + 1)) {
+			ExpressionNode variableIdentifier = this
+					.identifierExpression(numberVariableMap.get(upperValue + 1)
+							.getName());
+
+			this.nodeFactory
+					.newOperatorNode(constant.getSource(), Operator.MINUS,
+							variableIdentifier, this.integerConstant(1));
+		}
+		return null;
 	}
 
 	private AST addHeaders(AST ast) throws SyntaxException {
@@ -97,6 +224,40 @@ public class SvcompUnPPWorker extends BaseWorker {
 			}
 			if (toRemove)
 				item.remove();
+			else if (item instanceof VariableDeclarationNode) {
+				VariableDeclarationNode varDecl = (VariableDeclarationNode) item;
+				TypeNode type = varDecl.getTypeNode();
+
+				if (type instanceof ArrayTypeNode) {
+					ArrayTypeNode arrayType = (ArrayTypeNode) type;
+					ExpressionNode extent = arrayType.getExtent();
+
+					if (extent instanceof IntegerConstantNode) {
+						int extentValue = ((IntegerConstantNode) extent)
+								.getConstantValue().getIntegerValue()
+								.intValue();
+
+						if (extentValue > UPPER_BOUND) {
+							VariableDeclarationNode scaleVariable = this
+									.variableDeclaration(
+											this.newUniqueIdentifier(SCALE_VAR),
+											this.basicType(BasicTypeKind.INT));
+
+							scaleVariable.getTypeNode().setInputQualified(true);
+							this.numberVariableMap.put(extentValue,
+									scaleVariable);
+							// TODO for now make the input variables the same
+							// storage class as the array
+							scaleVariable.setStaticStorage(varDecl
+									.hasStaticStorage());
+							arrayType.setExtent(this
+									.identifierExpression(scaleVariable
+											.getName()));
+						}
+
+					}
+				}
+			}
 		}
 	}
 

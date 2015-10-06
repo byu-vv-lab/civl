@@ -29,45 +29,54 @@ public class PthreadThreaderTest {
 
 	@Test
 	public void dekker_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", filename("dekker_true.c")));
+		assertTrue(ui.run("verify", "-svcomp",
+				filename("dekker_true-unreach-call.c")));
 	}
 
 	@Test
 	public void lamport_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", filename("lamport_true.c")));
+		assertTrue(ui.run("verify", "-svcomp",
+				filename("lamport_true-unreach-call.c")));
 	}
 
 	@Test
 	public void peterson_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", filename("peterson_true.c")));
+		assertTrue(ui.run("verify", "-svcomp",
+				filename("peterson_true-unreach-call.c")));
 	}
 
 	@Test
 	public void qrcu_false() throws ABCException {
-		assertFalse(ui.run("verify", "-svcomp", filename("qrcu_false.c")));
+		assertFalse(ui.run("verify", "-svcomp",
+				filename("qrcu_false-unreach-call.c")));
 	}
 
 	@Test
 	public void read_write_lock_false() throws ABCException {
 		assertFalse(ui.run("verify", "-svcomp",
-				filename("read_write_lock_false.c")));
+				filename("read_write_lock_false-unreach-call.c")));
 	}
 
 	@Test
 	public void read_write_lock_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp",
-				filename("read_write_lock_true.c")));
+		// assertTrue(ui.run("verify", "-svcomp -showProgram",
+		// filename("read_write_lock_true-unreach-call.c")));
+		ui.run("verify", "-svcomp -showProgram=false",
+				filename("read_write_lock_true-unreach-call.c"));
+		ui.run("replay", "-svcomp -showTransitions",
+				filename("read_write_lock_true-unreach-call.c"));
 	}
 
 	@Test
 	public void szymanski_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", filename("szymanski_true.c")));
+		assertTrue(ui.run("verify", "-svcomp",
+				filename("szymanski_true-unreach-call.c")));
 	}
 
 	@Test
 	public void time_var_mutex_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp",
-				filename("time_var_mutex_true.c")));
+				filename("time_var_mutex_true-unreach-call.c")));
 	}
 
 	@AfterClass
