@@ -435,6 +435,12 @@ public abstract class BaseWorker {
 		return identifierPrefix + this.newIdentifierCounter++ + "_" + name;
 	}
 
+	protected StatementNode assumeNode(ExpressionNode expression) {
+		return nodeFactory.newExpressionStatementNode(this.functionCall(
+				this.newSource("assumption", CParser.EXPRESSION_STATEMENT),
+				ASSUME, Arrays.asList(expression)));
+	}
+
 	/**
 	 * Produces a unique identifier.
 	 * 

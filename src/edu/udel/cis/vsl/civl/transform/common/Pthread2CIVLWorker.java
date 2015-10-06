@@ -243,8 +243,20 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		Iterator<FunctionDefinitionNode> iterator = this.nonThreadFunctionsWtSyncCalls
 				.iterator();
 
-		while (iterator.hasNext())
-			process_sync_call_function(iterator.next());
+		while (iterator.hasNext()) {
+			FunctionDefinitionNode function = iterator.next();
+
+			// function.getTypeNode()
+			// .getParameters()
+			// .addSequenceChild(
+			// this.variableDeclaration(PTHREAD_POOL, nodeFactory
+			// .newTypedefNameNode(nodeFactory
+			// .newIdentifierNode(this.newSource(
+			// "$phtread_pool_t type",
+			// CParser.IDENTIFIER),
+			// PTHREAD_POOL_TYPE), null)));
+			process_sync_call_function(function);
+		}
 	}
 
 	/**
@@ -510,12 +522,6 @@ public class Pthread2CIVLWorker extends BaseWorker {
 				if (child != null)
 					this.translateNode(child);
 	}
-
-	// private StatementNode assumeNode(ExpressionNode expression) {
-	// return nodeFactory.newExpressionStatementNode(this.functionCall(
-	// this.newSource("assumption", CParser.EXPRESSION_STATEMENT),
-	// ASSUME, Arrays.asList(expression)));
-	// }
 
 	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
 		return nodeFactory.newExpressionStatementNode(this.functionCall(

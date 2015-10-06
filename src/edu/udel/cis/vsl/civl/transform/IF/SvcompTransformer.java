@@ -4,7 +4,6 @@ import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.abc.transform.IF.BaseTransformer;
-import edu.udel.cis.vsl.civl.transform.common.SvcompUnPPWorker;
 import edu.udel.cis.vsl.civl.transform.common.SvcompWorker;
 
 /**
