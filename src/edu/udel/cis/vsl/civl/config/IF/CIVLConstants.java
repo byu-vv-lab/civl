@@ -498,6 +498,7 @@ public class CIVLConstants {
 	public final static String STDARG = "stdarg.h";
 	public final static String STDBOOL = "stdbool.h";
 	public final static String STDDEF = "stddef.h";
+	public final static String STDINT = "stdint.h";
 	public final static String UNISTD = "unistd.h";
 
 	/**
@@ -518,7 +519,7 @@ public class CIVLConstants {
 	public final static Set<String> getCinterfaces() {
 		return new HashSet<String>(
 				Arrays.asList(MPI, MATH, OMP, PTHREAD, STRING_LIB, SVCOMP,
-						STDIO, STDLIB, TIME, CUDA, SYS_TIME, UNISTD));
+						STDIO, STDLIB, TIME, CUDA, SYS_TIME, UNISTD, STDINT));
 	}
 
 	/**
