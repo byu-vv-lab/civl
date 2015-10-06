@@ -84,4 +84,14 @@ public class CommonAtomicLockAssignStatement extends CommonAssignStatement
 		this.hasDerefs = false;
 	}
 
+	@Override
+	public boolean enterAtomic() {
+		return this.enter;
+	}
+
+	@Override
+	public boolean leaveAtomic() {
+		return !this.enter;
+	}
+
 }

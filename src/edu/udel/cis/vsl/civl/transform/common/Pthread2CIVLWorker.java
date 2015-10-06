@@ -31,7 +31,6 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode.TypeNodeKind;
 import edu.udel.cis.vsl.abc.ast.type.IF.Type.TypeKind;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
-import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLUnimplementedFeatureException;
 import edu.udel.cis.vsl.civl.transform.IF.Pthread2CIVLTransformer;
@@ -520,23 +519,24 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	// this.translateNode(child);
 	// }
 
-	private StatementNode assertNode(Source mySource, ExpressionNode expression) {
-		return nodeFactory.newExpressionStatementNode(this.functionCall(
-				mySource, ASSERT, Arrays.asList(expression)));
-	}
+	// private StatementNode assertNode(Source mySource, ExpressionNode
+	// expression) {
+	// return nodeFactory.newExpressionStatementNode(this.functionCall(
+	// mySource, ASSERT, Arrays.asList(expression)));
+	// }
 
-	/**
-	 * Creates a StatementNode for error report: $assert $false.
-	 * 
-	 * @param mySource
-	 * 
-	 * @return
-	 */
-	private StatementNode assertFalse(Source mySource) {
-		ExpressionNode falseExpression = this.booleanConstant(false);
-
-		return assertNode(mySource, falseExpression);
-	}
+	// /**
+	// * Creates a StatementNode for error report: $assert $false.
+	// *
+	// * @param mySource
+	// *
+	// * @return
+	// */
+	// private StatementNode assertFalse(Source mySource) {
+	// ExpressionNode falseExpression = this.booleanConstant(false);
+	//
+	// return assertNode(mySource, falseExpression);
+	// }
 
 	/**
 	 * TODO javadocs

@@ -78,6 +78,7 @@ public class SvcompUnPPWorker extends BaseWorker {
 		// this.removePthreadTypedefs(rootNode);
 		this.removeNodes(rootNode);
 		rootNode = downScaler(rootNode);
+		this.completeSources(rootNode);
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
 		// ast.prettyPrint(System.out, false);
 		ast = this.addHeaders(ast);

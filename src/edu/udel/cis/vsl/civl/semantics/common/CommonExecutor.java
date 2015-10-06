@@ -38,6 +38,7 @@ import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.AtomicLockAssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlForEnterStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
@@ -221,8 +222,25 @@ public class CommonExecutor implements Executor {
 			throws UnsatisfiablePathConditionException {
 		Evaluation eval = evaluator.evaluate(state, pid, statement.rhs());
 
-		state = assign(eval.state, pid, process, statement.getLhs(),
-				eval.value, statement.isInitialization());
+		if (statement instanceof AtomicLockAssignStatement) {
+			AtomicLockAssignStatement atomicLockAssign = (AtomicLockAssignStatement) statement;
+			ProcessState procState = state.getProcessState(pid), newProcState;
+			int atomicCount = procState.atomicCount();
+
+			if (atomicLockAssign.enterAtomic()) {
+				newProcState = procState.incrementAtomicCount();
+				if (atomicCount == 0)
+					state = stateFactory.getAtomicLock(state, pid);
+			} else {// leave atomic
+				newProcState = procState.decrementAtomicCount();
+				if (atomicCount == 1)
+					state = stateFactory.releaseAtomicLock(state);
+			}
+			state = stateFactory.setProcessState(state, newProcState);
+		} else
+			state = assign(eval.state, pid, process, statement.getLhs(),
+					eval.value, statement.isInitialization());
+
 		state = stateFactory.setLocation(state, pid, statement.target(), true);
 		return state;
 	}

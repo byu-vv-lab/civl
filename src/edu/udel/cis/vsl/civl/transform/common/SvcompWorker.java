@@ -1,31 +1,21 @@
 package edu.udel.cis.vsl.civl.transform.common;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
-import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
-import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.transform.IF.SvcompTransformer;
@@ -38,8 +28,6 @@ public class SvcompWorker extends BaseWorker {
 
 	private final static String VERIFIER_ATOMIC_END = "__VERIFIER_atomic_end";
 
-
-
 	public SvcompWorker(ASTFactory astFactory) {
 		super(SvcompTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "_" + SvcompTransformer.CODE;
@@ -51,7 +39,7 @@ public class SvcompWorker extends BaseWorker {
 
 		ast.release();
 		this.processVerifierFunctions(rootNode);
-		
+		this.completeSources(rootNode);
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
 		// ast.prettyPrint(System.out, false);
 		return ast;
@@ -78,7 +66,7 @@ public class SvcompWorker extends BaseWorker {
 					// } else {
 					process_atomic_begin_end(funcDef.getBody());
 				}
-			} 
+			}
 		}
 	}
 
