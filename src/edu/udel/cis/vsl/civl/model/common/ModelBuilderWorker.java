@@ -964,10 +964,10 @@ public class ModelBuilderWorker {
 					inputInitMap.keySet());
 
 			commandLineVars.removeAll(initializedInputs);
-			// ignore extra input variable _svcomp_unpp_scale for svcomp
-			if (this.civlConfig.svcomp())
-				commandLineVars.remove("_svcomp_unpp_scale");
-			if (!commandLineVars.isEmpty()) {
+			// ignore extra input variables for svcomp
+			// if (this.civlConfig.svcomp())
+			// commandLineVars.remove("_svcomp_unpp_scale");
+			if (!this.civlConfig.svcomp() && !commandLineVars.isEmpty()) {
 				String msg = "Program contains no input variables named ";
 				boolean first = true;
 
