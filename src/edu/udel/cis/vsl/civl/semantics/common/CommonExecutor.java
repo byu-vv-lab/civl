@@ -467,7 +467,7 @@ public class CommonExecutor implements Executor {
 						continue;
 					if (proc.getPid() == pid)
 						continue;
-					if (!proc.hasEmptyStack()) {
+					if (!this.civlConfig.svcomp() && !proc.hasEmptyStack()) {
 						errorLogger
 								.logSimpleError(statement.getSource(), state,
 										process, symbolicAnalyzer

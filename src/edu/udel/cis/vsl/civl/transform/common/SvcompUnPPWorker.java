@@ -10,6 +10,7 @@ import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
@@ -17,6 +18,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.statement.ForLoopNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.ArrayTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
@@ -234,30 +236,71 @@ public class SvcompUnPPWorker extends BaseWorker {
 					ExpressionNode extent = arrayType.getExtent();
 
 					if (extent instanceof IntegerConstantNode) {
-						int extentValue = ((IntegerConstantNode) extent)
-								.getConstantValue().getIntegerValue()
-								.intValue();
+						// TODO for now make the input variables the same
+						// storage class as the array
+						ExpressionNode newExtent = this.factorNewInputVariable(
+								(IntegerConstantNode) extent,
+								varDecl.hasStaticStorage());
 
-						if (extentValue > UPPER_BOUND) {
-							VariableDeclarationNode scaleVariable = this
-									.variableDeclaration(
-											this.newUniqueIdentifier(SCALE_VAR),
-											this.basicType(BasicTypeKind.INT));
-
-							scaleVariable.getTypeNode().setInputQualified(true);
-							this.numberVariableMap.put(extentValue,
-									scaleVariable);
-							// TODO for now make the input variables the same
-							// storage class as the array
-							scaleVariable.setStaticStorage(varDecl
-									.hasStaticStorage());
-							arrayType.setExtent(this
-									.identifierExpression(scaleVariable
-											.getName()));
-						}
-
+						if (newExtent != null)
+							arrayType.setExtent(newExtent);
 					}
 				}
+			} else if (item instanceof FunctionDefinitionNode) {
+				this.checkBigLoopBound(((FunctionDefinitionNode) item)
+						.getBody());
+			}
+		}
+	}
+
+	private ExpressionNode factorNewInputVariable(IntegerConstantNode intConst,
+			boolean isStatic) {
+		int intValue = intConst.getConstantValue().getIntegerValue().intValue();
+
+		if (intValue > UPPER_BOUND) {
+			VariableDeclarationNode scaleVariable = this.variableDeclaration(
+					this.newUniqueIdentifier(SCALE_VAR),
+					this.basicType(BasicTypeKind.INT));
+
+			scaleVariable.getTypeNode().setInputQualified(true);
+			scaleVariable.setStaticStorage(isStatic);
+			this.numberVariableMap.put(intValue, scaleVariable);
+			return this.identifierExpression(scaleVariable.getName());
+		}
+		return null;
+	}
+
+	private void checkBigLoopBound(ASTNode node) {
+		if (node instanceof ForLoopNode) {
+			ExpressionNode condition = ((ForLoopNode) node).getCondition();
+
+			if (condition instanceof OperatorNode) {
+				OperatorNode operatorNode = (OperatorNode) condition;
+				Operator operator = operatorNode.getOperator();
+				ExpressionNode upper = null;
+				int argIndex = -1;
+
+				if (operator == Operator.LT || operator == Operator.LTE) {
+					upper = operatorNode.getArgument(1);
+					argIndex = 1;
+				} else if (operator == Operator.GT || operator == Operator.GTE) {
+					upper = operatorNode.getArgument(0);
+					argIndex = 0;
+				}
+				if (upper != null) {
+					if (upper instanceof IntegerConstantNode) {
+						ExpressionNode newArg = this.factorNewInputVariable(
+								(IntegerConstantNode) upper, false);
+
+						if (newArg != null)
+							operatorNode.setArgument(argIndex, newArg);
+					}
+				}
+			}
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child != null)
+					this.checkBigLoopBound(child);
 			}
 		}
 	}

@@ -989,24 +989,7 @@ public class CommonEvaluator implements Evaluator {
 		if (argType.isDomainType() && castType.isDomainType()) {
 			return new Evaluation(state, value);
 		} else if (argType.isBoolType() && castType.isIntegerType()) {
-			if (value.isTrue())
-				eval.value = universe.integer(1);
-			else if (value.isFalse())
-				eval.value = universe.integer(0);
-			else {
-				// BooleanExpression assumption = universe.or(
-				// universe.equals(this.zeroOrOne, this.zero),
-				// universe.equals(this.zeroOrOne, this.one));
-				// Reasoner reasoner =
-				// universe.reasoner(state.getPathCondition());
-				//
-				// if (reasoner.valid(assumption).getResultType() !=
-				// ResultType.YES)
-				// eval.state = state.setPathCondition(universe.and(
-				// state.getPathCondition(), assumption));
-				eval.value = this.universe.cond((BooleanExpression) value,
-						universe.integer(1), universe.integer(0));
-			}
+			eval.value = this.booleanToInteger(value);
 			return eval;
 		} else if (argType.isIntegerType() && castType.isPointerType()) {
 			// only good cast is from 0 to null pointer
@@ -1683,16 +1666,32 @@ public class CommonEvaluator implements Evaluator {
 		// equal and not_equal operators support scope, process, and pointer
 		// types. If the value of those types is undefined (e.g., process -1,
 		// scope -1, pointer<-1, ..., ...>), an error should be reported.
-		case EQUAL:
+		case EQUAL: {
+			SymbolicType leftType = left.type(), rightType = right.type();
+
 			this.isValueDefined(eval.state, process, expression.left(), left);
 			this.isValueDefined(eval.state, process, expression.right(), right);
+			if (leftType.isBoolean() && rightType.isInteger()) {
+				left = booleanToInteger(left);
+			} else if (leftType.isInteger() && rightType.isBoolean()) {
+				right = booleanToInteger(right);
+			}
 			eval.value = universe.equals(left, right);
 			break;
-		case NOT_EQUAL:
+		}
+		case NOT_EQUAL: {
+			SymbolicType leftType = left.type(), rightType = right.type();
+
 			this.isValueDefined(eval.state, process, expression.left(), left);
 			this.isValueDefined(eval.state, process, expression.right(), right);
+			if (leftType.isBoolean() && rightType.isInteger()) {
+				left = booleanToInteger(left);
+			} else if (leftType.isInteger() && rightType.isBoolean()) {
+				right = booleanToInteger(right);
+			}
 			eval.value = universe.neq(left, right);
 			break;
+		}
 		case MODULO: {
 			BooleanExpression assumption = eval.state.getPathCondition();
 			NumericExpression denominator = (NumericExpression) right;
@@ -1731,6 +1730,16 @@ public class CommonEvaluator implements Evaluator {
 					expression);
 		}
 		return eval;
+	}
+
+	private SymbolicExpression booleanToInteger(SymbolicExpression booleanValue) {
+		if (booleanValue.isTrue())
+			return one;
+		else if (booleanValue.isFalse())
+			return zero;
+		else
+			return this.universe.cond((BooleanExpression) booleanValue, one,
+					zero);
 	}
 
 	/**

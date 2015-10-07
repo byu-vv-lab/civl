@@ -2453,21 +2453,22 @@ public class FunctionTranslator {
 	 */
 	private Fragment translateLoopNode(Scope scope, LoopNode loopNode) {
 		Fragment result;
-		
+
 		switch (loopNode.getKind()) {
 		case DO_WHILE:
-			result= composeLoopFragment(scope, loopNode.getCondition(),
+			result = composeLoopFragment(scope, loopNode.getCondition(),
 					loopNode.getBody(), null, true);
 			break;
 		case FOR:
-			result= translateForLoopNode(scope, (ForLoopNode) loopNode);
+			result = translateForLoopNode(scope, (ForLoopNode) loopNode);
 			break;
 		default:// case WHILE:
-			result= composeLoopFragment(scope, loopNode.getCondition(),
+			result = composeLoopFragment(scope, loopNode.getCondition(),
 					loopNode.getBody(), null, false);
 		}
-		if(result.startLocation().getNumOutgoing()>1)
-			result=this.insertNoopAtBeginning(modelFactory.sourceOfBeginning(loopNode), scope, result);
+		if (result.startLocation().getNumOutgoing() > 1)
+			result = this.insertNoopAtBeginning(
+					modelFactory.sourceOfBeginning(loopNode), scope, result);
 		return result;
 	}
 
@@ -3602,9 +3603,9 @@ public class FunctionTranslator {
 								expression.getExpressionType(), 1));
 				break;
 			}
-			case POINTER_INTEGER:{
-				expression = modelFactory.castExpression(source, this.typeFactory.integerType()
-						, expression);
+			case POINTER_INTEGER: {
+				expression = modelFactory.castExpression(source,
+						this.typeFactory.integerType(), expression);
 				break;
 			}
 			// case INTEGER_POINTER:{
@@ -4088,8 +4089,7 @@ public class FunctionTranslator {
 			break;
 		}
 		case NOT: {
-			CIVLType argType = arguments.get(0).getExpressionType();
-
+//			CIVLType argType = arguments.get(0).getExpressionType();
 			try {
 				booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
 			} catch (ModelFactoryException err) {
@@ -4102,9 +4102,9 @@ public class FunctionTranslator {
 			}
 			result = modelFactory.unaryExpression(source, UNARY_OPERATOR.NOT,
 					booleanArg0);
-			if (argType.isIntegerType()) {
-				result = modelFactory.castExpression(source, argType, result);
-			}
+			// if (argType.isIntegerType()) {
+			// result = modelFactory.castExpression(source, argType, result);
+			// }
 		}
 			break;
 		case PLUS:

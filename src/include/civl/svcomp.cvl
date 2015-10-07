@@ -33,8 +33,7 @@ void __VERIFIER_error(){
 }
 
 void __VERIFIER_assume(int expression) { 
-  //$when(((int)expression));
-  if (!((int)expression)) 
+  if (!expression) 
   { 
     LOOP: 
       goto LOOP; 

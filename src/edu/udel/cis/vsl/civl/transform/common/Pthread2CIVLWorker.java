@@ -50,6 +50,12 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private final static String PTHREAD_POOL_TYPE = "$pthread_pool_t";
 
+	private final static String MAIN = "main";
+
+	private final static String GENERATED_MAIN = "_gen_main";
+
+	private boolean fixedMain = false;
+
 	static final String PTHREAD_MUTEX_LOCK = "pthread_mutex_lock";
 
 	static final String PTHREAD_MUTEX_LOCK_NEW = "$pthread_mutex_lock";
@@ -549,9 +555,14 @@ public class Pthread2CIVLWorker extends BaseWorker {
 			List<String> threadList) throws SyntaxException {
 		String name = function.getName();
 		TypeNode returnType = function.getTypeNode().getReturnType();
-		boolean isMain = name.equals("main");
+		boolean isMain=false;
 
-		if (name.equals("main")) {
+		if (name.equals(GENERATED_MAIN)
+				|| (!this.fixedMain && name.equals(MAIN))) {
+			isMain = true;
+			this.fixedMain = true;
+		}
+		if (isMain) {
 			ExpressionNode ZERO = this.integerConstant(0);
 			if (!hasReturn(function)) {
 				if (returnType.getType().kind() == TypeKind.VOID)
