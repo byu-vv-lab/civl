@@ -258,6 +258,11 @@ public class SvcompUnPPWorker extends BaseWorker {
 		int intValue = intConst.getConstantValue().getIntegerValue().intValue();
 
 		if (intValue > UPPER_BOUND) {
+			if (this.numberVariableMap.containsKey(intValue)
+					|| numberVariableMap.containsKey(intValue - 1)
+					|| numberVariableMap.containsKey(intValue + 1))
+				return null;
+
 			VariableDeclarationNode scaleVariable = this.variableDeclaration(
 					this.newUniqueIdentifier(SCALE_VAR),
 					this.basicType(BasicTypeKind.INT));
