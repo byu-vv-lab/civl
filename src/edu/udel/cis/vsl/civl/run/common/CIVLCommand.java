@@ -49,6 +49,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.strictCompareO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.svcompO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.sysIncludePathO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.timeoutO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.userIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.verboseO;
@@ -89,7 +90,7 @@ public class CIVLCommand {
 				collectScopesO, collectHeapsO, macroO, preprocO, astO,
 				showTimeO, showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO,
 				analyzeAbsO, collectOutputO, checkDivisionByZeroO,
-				checkMemoryLeakO);
+				checkMemoryLeakO, timeoutO);
 		CIVLCommand.addCompareOption(errorBoundO, verboseO, debugO, echoO,
 				userIncludePathO, sysIncludePathO, showTransitionsO,
 				showStatesO, showSavedStatesO, showQueriesO,
@@ -100,7 +101,8 @@ public class CIVLCommand {
 				ompLoopDecompO, collectProcessesO, collectScopesO,
 				collectHeapsO, macroO, preprocO, astO, showTimeO,
 				showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO, analyzeAbsO,
-				strictCompareO, checkDivisionByZeroO, checkMemoryLeakO);
+				strictCompareO, checkDivisionByZeroO, checkMemoryLeakO,
+				timeoutO);
 		CIVLCommand.addReplayOption(showModelO, verboseO, debugO, echoO,
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, idO, traceO, enablePrintfO, showAmpleSetO,
@@ -116,7 +118,7 @@ public class CIVLCommand {
 				showPathConditionO, ompNoSimplifyO, ompLoopDecompO,
 				collectProcessesO, collectScopesO, collectHeapsO, macroO,
 				preprocO, astO, showMemoryUnitsO, CIVLMacroO, collectOutputO,
-				checkDivisionByZeroO, checkMemoryLeakO);
+				checkDivisionByZeroO, checkMemoryLeakO, timeoutO);
 	}
 
 	private static void addShowOption(Option... options) {

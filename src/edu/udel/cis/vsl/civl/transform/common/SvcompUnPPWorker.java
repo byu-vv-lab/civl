@@ -101,7 +101,7 @@ public class SvcompUnPPWorker extends BaseWorker {
 		for (VariableDeclarationNode varNode : numberVariableMap.values()) {
 			newItems.add(varNode);
 			newItems.add(this.assumeNode(this.nodeFactory.newOperatorNode(
-					varNode.getSource(), Operator.LTE,
+					varNode.getSource(), Operator.EQUALS,
 					this.identifierExpression(varNode.getName()),
 					this.identifierExpression(scale_bound.getName()))));
 		}
@@ -118,7 +118,23 @@ public class SvcompUnPPWorker extends BaseWorker {
 	}
 
 	private void downScalerWork(ASTNode node) throws SyntaxException {
-		if (node instanceof OperatorNode) {
+		if (node instanceof VariableDeclarationNode) {
+			VariableDeclarationNode varDecl = (VariableDeclarationNode) node;
+			TypeNode type = varDecl.getTypeNode();
+
+			if (type instanceof ArrayTypeNode) {
+				ArrayTypeNode arrayType = (ArrayTypeNode) type;
+				ExpressionNode extent = arrayType.getExtent();
+
+				if (extent instanceof IntegerConstantNode) {
+					ExpressionNode newExtent = this
+							.getDownScaledExpression((IntegerConstantNode) extent);
+
+					if (newExtent != null)
+						arrayType.setExtent(newExtent);
+				}
+			}
+		} else if (node instanceof OperatorNode) {
 			OperatorNode operatorNode = (OperatorNode) node;
 			int numArgs = operatorNode.getNumberOfArguments();
 

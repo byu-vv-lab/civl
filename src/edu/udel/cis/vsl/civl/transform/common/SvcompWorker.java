@@ -9,6 +9,7 @@ import edu.udel.cis.vsl.abc.ast.IF.ASTFactory;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
@@ -16,6 +17,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.transform.IF.SvcompTransformer;
@@ -28,6 +30,12 @@ public class SvcompWorker extends BaseWorker {
 
 	private final static String VERIFIER_ATOMIC_END = "__VERIFIER_atomic_end";
 
+	private final static String VERIFIER_NONDET_INT = "__VERIFIER_nondet_int";
+
+	private final static String NONDET_INT = "int";
+
+	private List<VariableDeclarationNode> inputVariableDeclarations = new LinkedList<>();
+
 	public SvcompWorker(ASTFactory astFactory) {
 		super(SvcompTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "_" + SvcompTransformer.CODE;
@@ -39,10 +47,27 @@ public class SvcompWorker extends BaseWorker {
 
 		ast.release();
 		this.processVerifierFunctions(rootNode);
+		if (this.inputVariableDeclarations.size() > 0)
+			rootNode = insert_input_variables(rootNode);
 		this.completeSources(rootNode);
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
 		// ast.prettyPrint(System.out, false);
 		return ast;
+	}
+
+	private SequenceNode<BlockItemNode> insert_input_variables(
+			SequenceNode<BlockItemNode> rootNode) {
+		List<BlockItemNode> blockItems = new LinkedList<>();
+
+		blockItems.addAll(this.inputVariableDeclarations);
+		for (BlockItemNode item : rootNode) {
+			if (item != null) {
+				item.remove();
+				blockItems.add(item);
+			}
+		}
+		return this.nodeFactory.newTranslationUnitNode(rootNode.getSource(),
+				blockItems);
 	}
 
 	private void processVerifierFunctions(SequenceNode<BlockItemNode> root) {
@@ -67,6 +92,30 @@ public class SvcompWorker extends BaseWorker {
 					process_atomic_begin_end(funcDef.getBody());
 				}
 			}
+			process_nondet_int(item);
+		}
+	}
+
+	private void process_nondet_int(ASTNode node) {
+		if (node instanceof FunctionCallNode) {
+			FunctionCallNode callNode = (FunctionCallNode) node;
+
+			if (this.is_callee_name_equals(callNode, VERIFIER_NONDET_INT)) {
+				VariableDeclarationNode inputVar = this.variableDeclaration(
+						this.newUniqueIdentifier(NONDET_INT),
+						this.basicType(BasicTypeKind.INT));
+				ExpressionNode inputVarID = this.identifierExpression(inputVar
+						.getName());
+
+				inputVar.getTypeNode().setInputQualified(true);
+				this.inputVariableDeclarations.add(inputVar);
+				callNode.parent().setChild(callNode.childIndex(), inputVarID);
+				return;
+			}
+		}
+		for (ASTNode child : node.children()) {
+			if (child != null)
+				process_nondet_int(child);
 		}
 	}
 

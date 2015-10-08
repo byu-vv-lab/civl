@@ -12,6 +12,12 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
@@ -316,7 +322,63 @@ public class Verifier extends Player {
 		civlConfig.out().println(searcher.numTransitions());
 	}
 
-	public boolean run() throws FileNotFoundException {
+	public boolean run() throws FileNotFoundException, InterruptedException,
+			ExecutionException {
+		final int timeout = this.civlConfig.timeout();
+
+		if (timeout > 0) {
+			ScheduledExecutorService verifier_scheduler = Executors
+					.newScheduledThreadPool(2);
+//			final Runnable verify_run_work = new Runnable() {
+//				public void run() {
+//					try {
+//						run_work();
+//					} catch (FileNotFoundException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}
+//			};
+			final Callable<Boolean> verify_run_work = new Callable<Boolean>() {
+				public Boolean call() {
+					try {
+						return run_work();
+					} catch (FileNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					return false;
+				}
+			};
+			final ScheduledFuture<?> verify_handler = verifier_scheduler
+					.schedule(verify_run_work, 0, TimeUnit.MILLISECONDS);
+
+			verifier_scheduler.schedule(new Runnable() {
+				public void run() {
+					verify_handler.cancel(true);
+					if (result == null) {
+						result = "Time out.";
+						verificationStatus = new VerificationStatus(
+								stateManager.maxProcs(), stateManager
+										.numStatesExplored(), stateManager
+										.getNumStatesSaved(), searcher
+										.numStatesMatched(), executor
+										.getNumSteps(), searcher
+										.numTransitions());
+					}
+				}
+			}, timeout, TimeUnit.SECONDS);
+
+			Object tmp = verify_handler.get();
+
+			if (tmp != null)
+				return (boolean) tmp;
+			return false;
+		} else
+			return run_work();
+	}
+
+	public boolean run_work() throws FileNotFoundException {
 		try {
 			State initialState = stateFactory.initialState(model);
 			boolean violationFound = false;
@@ -387,8 +449,8 @@ public class Verifier extends Player {
 
 	/**
 	 * Terminates the update thread. This will be called automatically if
-	 * control exits normally from {@link #run()}, but if an exception is thrown
-	 * and caught elsewhere, this method should be called.
+	 * control exits normally from {@link #run_work()}, but if an exception is
+	 * thrown and caught elsewhere, this method should be called.
 	 */
 	public void terminateUpdater() {
 		alive = false;

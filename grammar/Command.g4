@@ -156,6 +156,7 @@ OPTION_NAME
     | '-strict'
     | '-svcomp'
     | '-sysIncludePath'
+    | '-timeout'
     | '-trace'
     | '-userIncludePath'
     | '-verbose'

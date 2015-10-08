@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.CancellationException;
 
 import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
@@ -450,7 +451,7 @@ public class UserInterface {
 		Model model = specWorker.translate();
 		Verifier verifier = new Verifier(gmcConfig, model, out, err, startTime,
 				true);
-		boolean result = verifier.run();
+		boolean result = verifier.run_work();
 		VerificationStatus statusSpec = verifier.verificationStatus, statusImpl;
 
 		// out.print("phase spec done.\n");
@@ -461,7 +462,7 @@ public class UserInterface {
 			verifier = new Verifier(gmcConfig, model, out, err, startTime,
 					stateManager.outptutNames(),
 					stateManager.collectedOutputs());
-			result = verifier.run();
+			result = verifier.run_work();
 			statusImpl = verifier.verificationStatus;
 			this.printCommand(out, compareCommand.getCommandString());
 			out.print("   max process count   : ");
@@ -661,7 +662,7 @@ public class UserInterface {
 
 	private boolean runVerify(String command, ModelTranslator modelTranslator)
 			throws CommandLineException, ABCException, IOException {
-		boolean result;
+		boolean result = false;
 		Model model;
 		Verifier verifier;
 
@@ -688,7 +689,14 @@ public class UserInterface {
 				return false;
 			} catch (Exception e) {
 				verifier.terminateUpdater();
-				throw e;
+				try {
+					throw e;
+				} catch (CancellationException cancel) {
+					// time out
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			if (result) {
 				if (modelTranslator.config.collectOutputs()) {
@@ -825,7 +833,7 @@ public class UserInterface {
 		boolean result = false;
 
 		try {
-			result = verifier.run();
+			result = verifier.run_work();
 		} catch (CIVLUnimplementedFeatureException unimplemented) {
 			verifier.terminateUpdater();
 			out.println();

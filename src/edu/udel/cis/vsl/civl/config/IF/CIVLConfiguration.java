@@ -208,6 +208,8 @@ public class CIVLConfiguration {
 
 	private boolean checkMemoryLeak = true;
 
+	private int timeout = -1;
+
 	/**
 	 * Constructs a new CIVL configuration object from the command line
 	 * configuration.
@@ -294,6 +296,7 @@ public class CIVLConfiguration {
 			this.checkMemoryLeak = config
 					.isTrue(CIVLConstants.checkMemoryLeakO);
 		}
+		this.setTimeout((int) config.getValueOrDefault(CIVLConstants.timeoutO));
 	}
 
 	public void setOut(PrintStream out) {
@@ -630,5 +633,20 @@ public class CIVLConfiguration {
 
 	public boolean checkMemoryLeak() {
 		return this.checkMemoryLeak;
+	}
+
+	/**
+	 * @return the timeout
+	 */
+	public int timeout() {
+		return timeout;
+	}
+
+	/**
+	 * @param timeout
+	 *            the timeout to set
+	 */
+	public void setTimeout(int timeout) {
+		this.timeout = timeout;
 	}
 }

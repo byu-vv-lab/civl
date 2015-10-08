@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.udel.cis.vsl.gmc.Option;
+import edu.udel.cis.vsl.gmc.Option.OptionType;
 
 /**
  * This class manages all constant configurations of the system.
@@ -86,6 +87,10 @@ public class CIVLConstants {
 	 */
 	public final static Option debugO = Option.newScalarOption("debug",
 			BOOLEAN, "debug mode: print very detailed information", false);
+
+	public final static Option timeoutO = Option.newScalarOption("timeout",
+			OptionType.INTEGER,
+			"time out in seconds, default is never time out", -1);
 
 	/**
 	 * Debug option, false by default.
@@ -461,7 +466,7 @@ public class CIVLConstants {
 				simplifyO, solveO, statelessPrintfO, svcompO, sysIncludePathO,
 				traceO, userIncludePathO, verboseO, webO, CIVLMacroO,
 				analyzeAbsO, strictCompareO, collectOutputO,
-				checkDivisionByZeroO, checkMemoryLeakO };
+				checkDivisionByZeroO, checkMemoryLeakO, timeoutO };
 	}
 
 	// headers...
@@ -517,9 +522,9 @@ public class CIVLConstants {
 	 * @return all standard c libraries.
 	 */
 	public final static Set<String> getCinterfaces() {
-		return new HashSet<String>(
-				Arrays.asList(MPI, MATH, OMP, PTHREAD, STRING_LIB, SVCOMP,
-						STDIO, STDLIB, TIME, CUDA, SYS_TIME, UNISTD, STDINT));
+		return new HashSet<String>(Arrays.asList(MPI, MATH, OMP, PTHREAD,
+				STRING_LIB, SVCOMP, STDIO, STDLIB, TIME, CUDA, SYS_TIME,
+				UNISTD, STDINT));
 	}
 
 	/**
