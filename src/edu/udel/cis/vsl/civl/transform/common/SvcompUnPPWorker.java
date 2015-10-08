@@ -58,7 +58,7 @@ public class SvcompUnPPWorker extends BaseWorker {
 
 	private boolean needsStdlibHeader = false;
 
-	private final static int UPPER_BOUND = 10;
+	private final static int UPPER_BOUND = 11;//has to use this because of pthread/fib_bench_longest_false-unreach-call.i 
 
 	// private int scale_var_count = 0;
 
@@ -89,32 +89,35 @@ public class SvcompUnPPWorker extends BaseWorker {
 
 	private SequenceNode<BlockItemNode> downScaler(
 			SequenceNode<BlockItemNode> root) throws SyntaxException {
-		List<BlockItemNode> newItems = new ArrayList<>();
-		VariableDeclarationNode scale_bound = this.variableDeclaration(
-				this.identifierPrefix + "_" + SCALE_VAR,
-				this.basicType(BasicTypeKind.INT));
+		if (numberVariableMap.size() > 0) {
+			List<BlockItemNode> newItems = new ArrayList<>();
+			VariableDeclarationNode scale_bound = this.variableDeclaration(
+					this.identifierPrefix + "_" + SCALE_VAR,
+					this.basicType(BasicTypeKind.INT));
 
-		scale_bound.getTypeNode().setInputQualified(true);
-		newItems.add(this.assumeFunctionDeclaration(this.newSource("$assume",
-				CParser.DECLARATION)));
-		newItems.add(scale_bound);
-		for (VariableDeclarationNode varNode : numberVariableMap.values()) {
-			newItems.add(varNode);
-			newItems.add(this.assumeNode(this.nodeFactory.newOperatorNode(
-					varNode.getSource(), Operator.EQUALS,
-					this.identifierExpression(varNode.getName()),
-					this.identifierExpression(scale_bound.getName()))));
-		}
-		for (BlockItemNode item : root) {
-			if (item == null)
-				continue;
+			scale_bound.getTypeNode().setInputQualified(true);
+			newItems.add(this.assumeFunctionDeclaration(this.newSource(
+					"$assume", CParser.DECLARATION)));
+			newItems.add(scale_bound);
+			for (VariableDeclarationNode varNode : numberVariableMap.values()) {
+				newItems.add(varNode);
+				newItems.add(this.assumeNode(this.nodeFactory.newOperatorNode(
+						varNode.getSource(), Operator.EQUALS,
+						this.identifierExpression(varNode.getName()),
+						this.identifierExpression(scale_bound.getName()))));
+			}
+			for (BlockItemNode item : root) {
+				if (item == null)
+					continue;
 
-			downScalerWork(item);
-			item.remove();
-			newItems.add(item);
+				downScalerWork(item);
+				item.remove();
+				newItems.add(item);
+			}
+			return this.nodeFactory.newSequenceNode(root.getSource(),
+					"Translation Unit", newItems);
 		}
-		return this.nodeFactory.newSequenceNode(root.getSource(),
-				"Translation Unit", newItems);
+		return root;
 	}
 
 	private void downScalerWork(ASTNode node) throws SyntaxException {

@@ -24,6 +24,7 @@ import edu.udel.cis.vsl.abc.FrontEnd;
 import edu.udel.cis.vsl.abc.ast.IF.AST;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode.NodeKind;
+import edu.udel.cis.vsl.abc.ast.node.IF.IdentifierNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Architecture;
 import edu.udel.cis.vsl.abc.config.IF.Configuration.Language;
@@ -274,9 +275,10 @@ public class ModelTranslator {
 	 *             if there is a problem parsing or linking the source files.
 	 * @throws IOException
 	 *             if there is a problem reading source files.
+	 * @throws SvcompException
 	 */
 	Program buildProgram() throws PreprocessorException, SyntaxException,
-			IOException, ParseException {
+			IOException, ParseException, SvcompException {
 		CTokenSource[] tokenSources;
 		List<AST> asts = null;
 		Program program = null;
@@ -294,10 +296,14 @@ public class ModelTranslator {
 		}
 		asts = this.parseTokens(tokenSources);
 		if (this.config.svcomp()) {
+			AST userAST = asts.get(0);
+
+			// ignore non-pthread benchmarks
+			if (!this.containsPthread(userAST.getRootNode())) {
+				throw new SvcompException();
+			}
 			// parsing preprocessed .i file
 			if (userFileName.endsWith(".i")) {
-				AST userAST = asts.get(0);
-
 				frontEnd.getStandardAnalyzer().clear(userAST);
 				frontEnd.getStandardAnalyzer().analyze(userAST);
 				userAST = Transform.newTransformer("prune",
@@ -334,6 +340,22 @@ public class ModelTranslator {
 		if (config.debugOrVerbose() || config.showInputVars())
 			this.printInputVariableNames(program);
 		return program;
+	}
+
+	private boolean containsPthread(ASTNode node) {
+		if (node instanceof IdentifierNode) {
+			return ((IdentifierNode) node).name().startsWith("pthread_");
+		} else
+			for (ASTNode child : node.children()) {
+				if (child == null)
+					continue;
+
+				boolean childResult = this.containsPthread(child);
+
+				if (childResult)
+					return true;
+			}
+		return false;
 	}
 
 	/**
@@ -390,13 +412,20 @@ public class ModelTranslator {
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 * @throws IOException
+	 * @throws SvcompException
 	 */
 	public List<VariableDeclarationNode> getInputVariables()
 			throws PreprocessorException, SyntaxException, ParseException,
 			IOException {
-		Program program = this.buildProgram();
+		Program program;
+		try {
+			program = this.buildProgram();
+			return this.inputVariablesOfProgram(program);
+		} catch (SvcompException e) {
+			throw new SyntaxException(
+					"non-pthread examples are ignored in -svcomp mode", null);
+		}
 
-		return this.inputVariablesOfProgram(program);
 	}
 
 	/**
@@ -409,9 +438,10 @@ public class ModelTranslator {
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 * @throws IOException
+	 * @throws SvcompException
 	 */
 	Model translate() throws PreprocessorException, CommandLineException,
-			SyntaxException, ParseException, IOException {
+			SyntaxException, ParseException, IOException, SvcompException {
 		long startTime = System.currentTimeMillis();
 		Program program = this.buildProgram();
 		long endTime = System.currentTimeMillis();

@@ -32,6 +32,8 @@ public class SvcompWorker extends BaseWorker {
 
 	private final static String VERIFIER_NONDET_INT = "__VERIFIER_nondet_int";
 
+	private final static String VERIFIER_NONDET_UINT = "__VERIFIER_nondet_uint";
+
 	private final static String NONDET_INT = "int";
 
 	private List<VariableDeclarationNode> inputVariableDeclarations = new LinkedList<>();
@@ -100,7 +102,9 @@ public class SvcompWorker extends BaseWorker {
 		if (node instanceof FunctionCallNode) {
 			FunctionCallNode callNode = (FunctionCallNode) node;
 
-			if (this.is_callee_name_equals(callNode, VERIFIER_NONDET_INT)) {
+			if (this.is_callee_name_equals(callNode, VERIFIER_NONDET_INT)
+					|| this.is_callee_name_equals(callNode,
+							VERIFIER_NONDET_UINT)) {
 				VariableDeclarationNode inputVar = this.variableDeclaration(
 						this.newUniqueIdentifier(NONDET_INT),
 						this.basicType(BasicTypeKind.INT));

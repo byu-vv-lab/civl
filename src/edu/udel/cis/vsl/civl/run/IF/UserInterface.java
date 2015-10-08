@@ -220,10 +220,11 @@ public class UserInterface {
 	 * @throws ABCException
 	 * @throws IOException
 	 * @throws MisguidedExecutionException
+	 * @throws SvcompException
 	 */
 	public boolean runNormalCommand(NormalCommandLine commandLine)
 			throws CommandLineException, ABCException, IOException,
-			MisguidedExecutionException {
+			MisguidedExecutionException, SvcompException {
 		if (commandLine.normalCommandKind() == NormalCommandKind.HELP)
 			runHelp((HelpCommandLine) commandLine);
 		else if (commandLine.normalCommandKind() == NormalCommandKind.CONFIG)
@@ -297,10 +298,11 @@ public class UserInterface {
 	 * @throws ABCException
 	 * @throws IOException
 	 * @throws MisguidedExecutionException
+	 * @throws SvcompException
 	 */
 	public boolean runCompareCommand(CompareCommandLine compareCommand)
 			throws CommandLineException, ABCException, IOException,
-			MisguidedExecutionException {
+			MisguidedExecutionException, SvcompException {
 		GMCConfiguration gmcConfig = compareCommand.gmcConfig();
 		GMCSection anonymousSection = gmcConfig.getAnonymousSection(), specSection = gmcConfig
 				.getSection(CompareCommandLine.SPEC), implSection = gmcConfig
@@ -379,12 +381,14 @@ public class UserInterface {
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 * @throws ABCException
+	 * @throws SvcompException
 	 */
 	private boolean strictCompareWorker(CompareCommandLine compareCommand,
 			ModelTranslator specWorker, ModelTranslator implWorker,
 			GMCConfiguration gmcConfig, GMCSection anonymousSection,
 			File traceFile) throws CommandLineException, FileNotFoundException,
-			IOException, MisguidedExecutionException, ABCException {
+			IOException, MisguidedExecutionException, ABCException,
+			SvcompException {
 		Combiner combiner = Transform.compareCombiner();
 		AST combinedAST;
 		Program specProgram = specWorker.buildProgram(), implProgram = implWorker
@@ -439,6 +443,7 @@ public class UserInterface {
 	 * @return
 	 * @throws IOException
 	 * @throws CommandLineException
+	 * @throws SvcompException
 	 * @throws ParseException
 	 * @throws SyntaxException
 	 * @throws PreprocessorException
@@ -447,7 +452,7 @@ public class UserInterface {
 			ModelTranslator specWorker, ModelTranslator implWorker,
 			GMCConfiguration gmcConfig, GMCSection anonymousSection,
 			File traceFile) throws ABCException, CommandLineException,
-			IOException {
+			IOException, SvcompException {
 		Model model = specWorker.translate();
 		Verifier verifier = new Verifier(gmcConfig, model, out, err, startTime,
 				true);
@@ -574,6 +579,8 @@ public class UserInterface {
 				throw e;
 			} catch (CIVLException e) {
 				err.println(e);
+			} catch (SvcompException e) {
+				err.println("non-pthread programs are ignored in -svcomp mode");
 			}
 			err.flush();
 			return false;
@@ -605,10 +612,12 @@ public class UserInterface {
 	 * @throws IOException
 	 * @throws ABCException
 	 * @throws MisguidedExecutionException
+	 * @throws SvcompException
 	 */
 	private boolean runReplay(String command, ModelTranslator modelTranslator,
 			File traceFile) throws CommandLineException, FileNotFoundException,
-			IOException, ABCException, MisguidedExecutionException {
+			IOException, ABCException, MisguidedExecutionException,
+			SvcompException {
 		boolean result;
 		Model model;
 		TracePlayer replayer;
@@ -637,7 +646,7 @@ public class UserInterface {
 
 	private boolean runRun(String command, ModelTranslator modelTranslator)
 			throws CommandLineException, ABCException, IOException,
-			MisguidedExecutionException {
+			MisguidedExecutionException, SvcompException {
 		boolean result;
 		Model model;
 		TracePlayer player;
@@ -670,7 +679,13 @@ public class UserInterface {
 			modelTranslator.universe.setShowProverQueries(true);
 		if (modelTranslator.cmdSection.isTrue(showQueriesO))
 			modelTranslator.universe.setShowQueries(true);
-		model = modelTranslator.translate();
+		try {
+			model = modelTranslator.translate();
+		} catch (SvcompException e2) {
+			System.out.println("Skipped non-pthreads programs.");
+			System.out.flush();
+			return false;
+		}
 		if (modelTranslator.config.web())
 			this.createWebLogs(model.program());
 		if (model != null) {
@@ -893,7 +908,7 @@ public class UserInterface {
 
 	private boolean runShow(ModelTranslator modelTranslator)
 			throws PreprocessorException, SyntaxException, ParseException,
-			CommandLineException, IOException {
+			CommandLineException, IOException, SvcompException {
 		return modelTranslator.translate() != null;
 	}
 

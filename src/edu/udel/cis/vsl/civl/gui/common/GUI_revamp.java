@@ -61,6 +61,7 @@ import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandLineKind;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandName;
+import edu.udel.cis.vsl.civl.run.IF.SvcompException;
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
 import edu.udel.cis.vsl.civl.run.common.CIVLCommand;
 import edu.udel.cis.vsl.civl.run.common.CompareCommandLine;
@@ -1317,7 +1318,7 @@ public class GUI_revamp extends JFrame {
 					try {
 						ui.runNormalCommand((NormalCommandLine) currConfig.comLine);
 					} catch (CommandLineException | ABCException | IOException
-							| MisguidedExecutionException e1) {
+							| MisguidedExecutionException | SvcompException e1) {
 						e1.printStackTrace();
 					}
 				}
