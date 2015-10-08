@@ -46,7 +46,8 @@ public class SvcompTest {
 	// sigma_false-unreach-call.i
 	@Test
 	public void sigma_false() throws ABCException {
-		assertFalse(ui.run("verify", "-svcomp",
+		assertFalse(ui.run("verify -showProgram=false",
+				"-svcomp -input_svcomp_unpp_scale=4",
 				filename("sigma_false-unreach-call.i")));
 	}
 
@@ -55,7 +56,7 @@ public class SvcompTest {
 	public void singleton_false() throws ABCException {
 		assertFalse(ui
 				.run("verify",
-						"-svcomp -checkMemoryLeak=false -showTransitions=true -showAmpleSet",
+						"-svcomp -checkMemoryLeak=false -showTransitions=false -showAmpleSet=false",
 						filename("singleton_false-unreach-call.i")));
 	}
 
@@ -115,5 +116,22 @@ public class SvcompTest {
 		assertFalse(ui.run("verify",
 				"-svcomp -showProgram -input_svcomp_unpp_scale=5",
 				filename("mix000_power.opt_false-unreach-call.i")));
+	}
+
+	@Test
+	public void gcd_true() throws ABCException {
+		assertTrue(ui
+				.run("verify -showPathCondition=false",
+						"-svcomp -input_svcomp_unpp_scale=6 -input_svcomp_int_bound=6",
+						filename("gcd_true-unreach-call_true-termination.i")));
+	}
+
+	// 28_buggy_simple_loop1_vf_false-unreach-call.i
+	@Test
+	public void buggy_simple_28() throws ABCException {
+		assertTrue(ui
+				.run("verify",
+						"-svcomp -input_svcomp_unpp_scale=5 -input_svcomp_int_bound=10",
+						filename("28_buggy_simple_loop1_vf_false-unreach-call.i")));
 	}
 }

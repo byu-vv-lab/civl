@@ -22,6 +22,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.StatementNode;
@@ -234,6 +235,10 @@ public abstract class BaseWorker {
 				return child;
 		}
 		return null;
+	}
+
+	protected int getIntValue(IntegerConstantNode constant) {
+		return constant.getConstantValue().getIntegerValue().intValue();
 	}
 
 	protected ASTNode getVeryLastItemNodeOfCompoundStatement(

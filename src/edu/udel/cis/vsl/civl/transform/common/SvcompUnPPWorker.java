@@ -11,9 +11,11 @@ import edu.udel.cis.vsl.abc.ast.node.IF.ASTNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.SequenceNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.FunctionDefinitionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.declaration.InitializerNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.TypedefDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IntegerConstantNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
@@ -25,6 +27,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
+import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.transform.IF.SvcompUnPPTransformer;
 
@@ -58,13 +61,18 @@ public class SvcompUnPPWorker extends BaseWorker {
 
 	private boolean needsStdlibHeader = false;
 
-	private final static int UPPER_BOUND = 11;//has to use this because of pthread/fib_bench_longest_false-unreach-call.i 
+	private final static int UPPER_BOUND = 11;// has to use this because of
+												// pthread/fib_bench_longest_false-unreach-call.i
 
 	// private int scale_var_count = 0;
 
 	private final static String SCALE_VAR = "scale";
 
-	private Map<Integer, VariableDeclarationNode> numberVariableMap = new HashMap<>();
+	private Map<String, Integer> variableNamesIntializedBig = new HashMap<>();
+
+	private Map<String, VariableDeclarationNode> variablesIntializedBig = new HashMap<>();
+
+	private Map<Integer, VariableDeclarationNode> scalerVariableMap = new HashMap<>();
 
 	public SvcompUnPPWorker(ASTFactory astFactory) {
 		super(SvcompUnPPTransformer.LONG_NAME, astFactory);
@@ -89,7 +97,7 @@ public class SvcompUnPPWorker extends BaseWorker {
 
 	private SequenceNode<BlockItemNode> downScaler(
 			SequenceNode<BlockItemNode> root) throws SyntaxException {
-		if (numberVariableMap.size() > 0) {
+		if (scalerVariableMap.size() > 0) {
 			List<BlockItemNode> newItems = new ArrayList<>();
 			VariableDeclarationNode scale_bound = this.variableDeclaration(
 					this.identifierPrefix + "_" + SCALE_VAR,
@@ -99,7 +107,7 @@ public class SvcompUnPPWorker extends BaseWorker {
 			newItems.add(this.assumeFunctionDeclaration(this.newSource(
 					"$assume", CParser.DECLARATION)));
 			newItems.add(scale_bound);
-			for (VariableDeclarationNode varNode : numberVariableMap.values()) {
+			for (VariableDeclarationNode varNode : scalerVariableMap.values()) {
 				newItems.add(varNode);
 				newItems.add(this.assumeNode(this.nodeFactory.newOperatorNode(
 						varNode.getSource(), Operator.EQUALS,
@@ -130,8 +138,9 @@ public class SvcompUnPPWorker extends BaseWorker {
 				ExpressionNode extent = arrayType.getExtent();
 
 				if (extent instanceof IntegerConstantNode) {
-					ExpressionNode newExtent = this
-							.getDownScaledExpression((IntegerConstantNode) extent);
+					ExpressionNode newExtent = this.getDownScaledExpression(
+							extent.getSource(),
+							this.getIntValue((IntegerConstantNode) extent));
 
 					if (newExtent != null)
 						arrayType.setExtent(newExtent);
@@ -145,8 +154,9 @@ public class SvcompUnPPWorker extends BaseWorker {
 				ExpressionNode arg = operatorNode.getArgument(i);
 
 				if (arg instanceof IntegerConstantNode) {
-					ExpressionNode newArg = this
-							.getDownScaledExpression((IntegerConstantNode) arg);
+					ExpressionNode newArg = this.getDownScaledExpression(
+							arg.getSource(),
+							this.getIntValue((IntegerConstantNode) arg));
 
 					if (newArg != null)
 						operatorNode.setArgument(i, newArg);
@@ -183,29 +193,27 @@ public class SvcompUnPPWorker extends BaseWorker {
 		}
 	}
 
-	private ExpressionNode getDownScaledExpression(IntegerConstantNode constant)
+	private ExpressionNode getDownScaledExpression(Source source, int upperValue)
 			throws SyntaxException {
-		int upperValue = ((IntegerConstantNode) constant).getConstantValue()
-				.getIntegerValue().intValue();
-
-		if (numberVariableMap.containsKey(upperValue)) {
-			return this.identifierExpression(numberVariableMap.get(upperValue)
+		// int upperValue = ((IntegerConstantNode) constant).getConstantValue()
+		// .getIntegerValue().intValue();
+		if (scalerVariableMap.containsKey(upperValue)) {
+			return this.identifierExpression(scalerVariableMap.get(upperValue)
 					.getName());
-		} else if (numberVariableMap.containsKey(upperValue - 1)) {
+		} else if (scalerVariableMap.containsKey(upperValue - 1)) {
 			ExpressionNode variableIdentifier = this
-					.identifierExpression(numberVariableMap.get(upperValue - 1)
+					.identifierExpression(scalerVariableMap.get(upperValue - 1)
 							.getName());
 
-			return this.nodeFactory.newOperatorNode(constant.getSource(),
-					Operator.PLUS, variableIdentifier, this.integerConstant(1));
-		} else if (numberVariableMap.containsKey(upperValue + 1)) {
+			return this.nodeFactory.newOperatorNode(source, Operator.PLUS,
+					variableIdentifier, this.integerConstant(1));
+		} else if (scalerVariableMap.containsKey(upperValue + 1)) {
 			ExpressionNode variableIdentifier = this
-					.identifierExpression(numberVariableMap.get(upperValue + 1)
+					.identifierExpression(scalerVariableMap.get(upperValue + 1)
 							.getName());
 
-			this.nodeFactory
-					.newOperatorNode(constant.getSource(), Operator.MINUS,
-							variableIdentifier, this.integerConstant(1));
+			this.nodeFactory.newOperatorNode(source, Operator.MINUS,
+					variableIdentifier, this.integerConstant(1));
 		}
 		return null;
 	}
@@ -232,7 +240,8 @@ public class SvcompUnPPWorker extends BaseWorker {
 		return ast;
 	}
 
-	private void removeNodes(SequenceNode<BlockItemNode> root) {
+	private void removeNodes(SequenceNode<BlockItemNode> root)
+			throws SyntaxException {
 		for (BlockItemNode item : root) {
 			boolean toRemove = false;
 
@@ -249,6 +258,7 @@ public class SvcompUnPPWorker extends BaseWorker {
 			else if (item instanceof VariableDeclarationNode) {
 				VariableDeclarationNode varDecl = (VariableDeclarationNode) item;
 				TypeNode type = varDecl.getTypeNode();
+				InitializerNode initializer = varDecl.getInitializer();
 
 				if (type instanceof ArrayTypeNode) {
 					ArrayTypeNode arrayType = (ArrayTypeNode) type;
@@ -258,11 +268,24 @@ public class SvcompUnPPWorker extends BaseWorker {
 						// TODO for now make the input variables the same
 						// storage class as the array
 						ExpressionNode newExtent = this.factorNewInputVariable(
-								(IntegerConstantNode) extent,
+								this.getIntValue((IntegerConstantNode) extent),
 								varDecl.hasStaticStorage());
 
 						if (newExtent != null)
 							arrayType.setExtent(newExtent);
+					}
+				} else if (initializer != null) {
+					if (initializer instanceof IntegerConstantNode) {
+						int initValue = ((IntegerConstantNode) initializer)
+								.getConstantValue().getIntegerValue()
+								.intValue();
+						String name = varDecl.getName();
+
+						if (initValue > UPPER_BOUND) {
+							this.variableNamesIntializedBig
+									.put(name, initValue);
+							this.variablesIntializedBig.put(name, varDecl);
+						}
 					}
 				}
 			} else if (item instanceof FunctionDefinitionNode) {
@@ -272,14 +295,13 @@ public class SvcompUnPPWorker extends BaseWorker {
 		}
 	}
 
-	private ExpressionNode factorNewInputVariable(IntegerConstantNode intConst,
-			boolean isStatic) {
-		int intValue = intConst.getConstantValue().getIntegerValue().intValue();
-
+	private ExpressionNode factorNewInputVariable(int intValue, boolean isStatic) {
+		// int intValue =
+		// intConst.getConstantValue().getIntegerValue().intValue();
 		if (intValue > UPPER_BOUND) {
-			if (this.numberVariableMap.containsKey(intValue)
-					|| numberVariableMap.containsKey(intValue - 1)
-					|| numberVariableMap.containsKey(intValue + 1))
+			if (this.scalerVariableMap.containsKey(intValue)
+					|| scalerVariableMap.containsKey(intValue - 1)
+					|| scalerVariableMap.containsKey(intValue + 1))
 				return null;
 
 			VariableDeclarationNode scaleVariable = this.variableDeclaration(
@@ -288,13 +310,13 @@ public class SvcompUnPPWorker extends BaseWorker {
 
 			scaleVariable.getTypeNode().setInputQualified(true);
 			scaleVariable.setStaticStorage(isStatic);
-			this.numberVariableMap.put(intValue, scaleVariable);
+			this.scalerVariableMap.put(intValue, scaleVariable);
 			return this.identifierExpression(scaleVariable.getName());
 		}
 		return null;
 	}
 
-	private void checkBigLoopBound(ASTNode node) {
+	private void checkBigLoopBound(ASTNode node) throws SyntaxException {
 		if (node instanceof ForLoopNode) {
 			ExpressionNode condition = ((ForLoopNode) node).getCondition();
 
@@ -314,10 +336,37 @@ public class SvcompUnPPWorker extends BaseWorker {
 				if (upper != null) {
 					if (upper instanceof IntegerConstantNode) {
 						ExpressionNode newArg = this.factorNewInputVariable(
-								(IntegerConstantNode) upper, false);
+								this.getIntValue((IntegerConstantNode) upper),
+								false);
 
 						if (newArg != null)
 							operatorNode.setArgument(argIndex, newArg);
+					} else if (upper instanceof IdentifierExpressionNode) {
+						String identifer = ((IdentifierExpressionNode) upper)
+								.getIdentifier().name();
+
+						// for(; i<N; ), and N is initialized with some big
+						// number
+						if (this.variableNamesIntializedBig
+								.containsKey(identifer)) {
+							int value = this.variableNamesIntializedBig
+									.get(identifer);
+							ExpressionNode newInit = null;
+
+							// update the declaration of N to be: int
+							// N=_svcomp_unppk_scale;
+							newInit = this.getDownScaledExpression(
+									upper.getSource(), value);
+							if (newInit == null) {
+								// create new scale variable for N
+								newInit = this.factorNewInputVariable(value,
+										false);
+							}
+							this.variablesIntializedBig.get(identifer)
+									.setInitializer(newInit);
+							variableNamesIntializedBig.remove(identifer);
+							variablesIntializedBig.remove(identifer);
+						}
 					}
 				}
 			}

@@ -13,6 +13,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
@@ -36,7 +37,9 @@ public class SvcompWorker extends BaseWorker {
 
 	private final static String NONDET_INT = "int";
 
-	private List<VariableDeclarationNode> inputVariableDeclarations = new LinkedList<>();
+	private final static String BOUND = "bound";
+
+	private List<VariableDeclarationNode> nondet_int_variable_declarations = new LinkedList<>();
 
 	public SvcompWorker(ASTFactory astFactory) {
 		super(SvcompTransformer.LONG_NAME, astFactory);
@@ -49,7 +52,7 @@ public class SvcompWorker extends BaseWorker {
 
 		ast.release();
 		this.processVerifierFunctions(rootNode);
-		if (this.inputVariableDeclarations.size() > 0)
+		if (this.nondet_int_variable_declarations.size() > 0)
 			rootNode = insert_input_variables(rootNode);
 		this.completeSources(rootNode);
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
@@ -60,8 +63,25 @@ public class SvcompWorker extends BaseWorker {
 	private SequenceNode<BlockItemNode> insert_input_variables(
 			SequenceNode<BlockItemNode> rootNode) {
 		List<BlockItemNode> blockItems = new LinkedList<>();
+		VariableDeclarationNode nondet_bound_var = this.variableDeclaration(
+				this.identifierPrefix + "_" + NONDET_INT + "_" + BOUND,
+				this.basicType(BasicTypeKind.INT));
+		String nondet_bound_var_name = nondet_bound_var.getName();
 
-		blockItems.addAll(this.inputVariableDeclarations);
+		nondet_bound_var.getTypeNode().setInputQualified(true);
+		blockItems.addAll(this.nondet_int_variable_declarations);
+
+		// create the bound variable for nondet int
+		blockItems.add(nondet_bound_var);
+		// add upper bound variable and assumptions
+		blockItems.add(this.assumeFunctionDeclaration(this.newSource("$assume",
+				CParser.DECLARATION)));
+		for (VariableDeclarationNode nondet_var : nondet_int_variable_declarations) {
+			blockItems.add(this.assumeNode(this.nodeFactory.newOperatorNode(
+					nondet_var.getSource(), Operator.LTE,
+					this.identifierExpression(nondet_var.getName()),
+					this.identifierExpression(nondet_bound_var_name))));
+		}
 		for (BlockItemNode item : rootNode) {
 			if (item != null) {
 				item.remove();
@@ -112,7 +132,7 @@ public class SvcompWorker extends BaseWorker {
 						.getName());
 
 				inputVar.getTypeNode().setInputQualified(true);
-				this.inputVariableDeclarations.add(inputVar);
+				this.nondet_int_variable_declarations.add(inputVar);
 				callNode.parent().setChild(callNode.childIndex(), inputVarID);
 				return;
 			}
