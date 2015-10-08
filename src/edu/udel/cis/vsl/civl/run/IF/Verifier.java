@@ -327,18 +327,8 @@ public class Verifier extends Player {
 		final int timeout = this.civlConfig.timeout();
 
 		if (timeout > 0) {
-			ScheduledExecutorService verifier_scheduler = Executors
+			final ScheduledExecutorService verifier_scheduler = Executors
 					.newScheduledThreadPool(2);
-//			final Runnable verify_run_work = new Runnable() {
-//				public void run() {
-//					try {
-//						run_work();
-//					} catch (FileNotFoundException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				}
-//			};
 			final Callable<Boolean> verify_run_work = new Callable<Boolean>() {
 				public Boolean call() {
 					try {
@@ -352,25 +342,26 @@ public class Verifier extends Player {
 			};
 			final ScheduledFuture<?> verify_handler = verifier_scheduler
 					.schedule(verify_run_work, 0, TimeUnit.MILLISECONDS);
-
-			verifier_scheduler.schedule(new Runnable() {
+			final Runnable timeOutWork = new Runnable() {
 				public void run() {
 					verify_handler.cancel(true);
 					if (result == null) {
 						result = "Time out.";
 						verificationStatus = new VerificationStatus(
-								stateManager.maxProcs(), stateManager
-										.numStatesExplored(), stateManager
-										.getNumStatesSaved(), searcher
-										.numStatesMatched(), executor
-										.getNumSteps(), searcher
-										.numTransitions());
+								stateManager.maxProcs(),
+								stateManager.numStatesExplored(),
+								stateManager.getNumStatesSaved(),
+								searcher.numStatesMatched(),
+								executor.getNumSteps(),
+								searcher.numTransitions());
 					}
+					return;
 				}
-			}, timeout, TimeUnit.SECONDS);
+			};
 
+			verifier_scheduler.schedule(timeOutWork, timeout, TimeUnit.SECONDS);
 			Object tmp = verify_handler.get();
-
+			verifier_scheduler.shutdownNow();
 			if (tmp != null)
 				return (boolean) tmp;
 			return false;

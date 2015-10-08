@@ -26,6 +26,7 @@ public class CIVL {
 
 			ui.run(args);
 		}
+		System.exit(0);
 	}
 
 }
