@@ -39,7 +39,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
  * @author Ben Handanyan (bhandy)
  * 
  */
-public class CIVL_GUI extends JFrame implements TreeSelectionListener {
+public class TraceViewer extends JFrame implements TreeSelectionListener {
 
 	/* **************************** Final Fields *************************** */
 
@@ -100,7 +100,7 @@ public class CIVL_GUI extends JFrame implements TreeSelectionListener {
 	 * @param transitions
 	 *            the array of transitions of the execution
 	 */
-	public CIVL_GUI(Trace<Transition, State> trace,
+	public TraceViewer(Trace<Transition, State> trace,
 			SymbolicAnalyzer symbolicAnalyzer) {
 		this.initState = trace.init();
 		this.transitions = new TraceStep[trace.traceSteps().size()];

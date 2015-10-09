@@ -56,7 +56,7 @@ import edu.udel.cis.vsl.abc.transform.IF.Transform;
 import edu.udel.cis.vsl.civl.analysis.IF.Analysis;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
-import edu.udel.cis.vsl.civl.gui.IF.CIVL_GUI;
+import edu.udel.cis.vsl.civl.gui.IF.TraceViewer;
 import edu.udel.cis.vsl.civl.kripke.IF.StateManager;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -632,7 +632,7 @@ public class UserInterface {
 			result = trace.result();
 			if (guiMode) {
 				@SuppressWarnings("unused")
-				CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
+				TraceViewer gui = new TraceViewer(trace, replayer.symbolicAnalyzer);
 			}
 			printCommand(out, command);
 			// printTimeAndMemory(out);
@@ -884,7 +884,7 @@ public class UserInterface {
 		result = trace.result();
 		if (guiMode) {
 			@SuppressWarnings("unused")
-			CIVL_GUI gui = new CIVL_GUI(trace, replayer.symbolicAnalyzer);
+			TraceViewer gui = new TraceViewer(trace, replayer.symbolicAnalyzer);
 		}
 		this.printCommand(out, command);
 		// this.printTimeAndMemory(out);
