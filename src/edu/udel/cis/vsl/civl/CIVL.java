@@ -25,8 +25,8 @@ public class CIVL {
 			UserInterface ui = new UserInterface();
 
 			ui.run(args);
+			System.exit(0);
 		}
-		System.exit(0);
 	}
 
 }
