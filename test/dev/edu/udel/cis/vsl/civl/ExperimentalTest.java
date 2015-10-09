@@ -80,6 +80,21 @@ public class ExperimentalTest {
 				.run("show -showProgram -input_NPROCS=2 -ompNoSimplify -inputTHREAD_MAX=2 ",
 						filename("mpi-omp-pie-calculation.c")));
 	}
+	
+	
+	@Test
+	public void omp1() {
+		assertTrue(ui
+				.run("verify -input_omp_thread_max=3",
+						filename("omp1.c")));
+	}
+	
+	@Test
+	public void omp2() {
+		assertTrue(ui
+				.run("verify -input_omp_thread_max=3",
+						filename("omp2.c")));
+	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
