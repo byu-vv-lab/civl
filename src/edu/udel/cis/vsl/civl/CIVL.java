@@ -25,7 +25,8 @@ public class CIVL {
 			UserInterface ui = new UserInterface();
 
 			ui.run(args);
-			System.exit(0);
+			if (!args[0].equals("replay"))
+				System.exit(0);
 		}
 	}
 
