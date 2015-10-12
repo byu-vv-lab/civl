@@ -187,6 +187,11 @@ public class OmpSimplifierTest {
 	public void region2() throws ABCException, IOException {
 		check("region2");
 	}
+	
+	@Test
+	public void defect_num_544() throws ABCException, IOException {
+		check("defect_num_544");
+	}
 
 	@SuppressWarnings("unused")
 	private static UserInterface ui = new UserInterface();

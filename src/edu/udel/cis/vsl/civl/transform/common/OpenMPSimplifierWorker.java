@@ -1103,6 +1103,14 @@ public class OpenMPSimplifierWorker extends BaseWorker {
 
 				if (baseWrite.getIdentifier().getEntity() == baseRead
 						.getIdentifier().getEntity()) {
+					
+					
+					System.out.println("Checking Array Refs for:");
+					System.out.println("  "+baseWrite+"["+indexExpression(w,1)+"]");
+					System.out.println("  "+baseRead+"["+indexExpression(r,1)+"]");
+					System.out.println("with bounding conditions:"+boundingConditions);
+
+					
 					// Need to check logical equality of these expressions
 					if (!ExpressionEvaluator.checkEqualityWithConditions(
 							indexExpression(w, 1), indexExpression(r, 1),
