@@ -712,6 +712,7 @@ public class UserInterface {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
+				return false;
 			}
 			if (result) {
 				if (modelTranslator.config.collectOutputs()) {

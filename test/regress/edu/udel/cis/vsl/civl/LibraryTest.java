@@ -103,6 +103,11 @@ public class LibraryTest {
 	}
 
 	@Test
+	public void malloc2() throws ABCException {
+		assertTrue(ui.run("verify", filename(STDLIB, "malloc2.c")));
+	}
+
+	@Test
 	public void mallocForSturct() throws ABCException {
 		assertTrue(ui.run("verify", filename(STDLIB, "mallocForStruct.cvl")));
 
