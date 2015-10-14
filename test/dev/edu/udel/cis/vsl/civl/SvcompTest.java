@@ -120,18 +120,21 @@ public class SvcompTest {
 
 	@Test
 	public void gcd_true() throws ABCException {
-		assertTrue(ui
-				.run("verify -showPathCondition=false",
-						"-svcomp -input_svcomp_unpp_scale=6 -input_svcomp_int_bound=6",
-						filename("gcd_true-unreach-call_true-termination.i")));
+		assertTrue(ui.run("verify -showPathCondition=false",
+				"-svcomp -input_svcomp_unpp_scale=6 -input_svcomp_int_bound=8",
+				filename("gcd_true-unreach-call_true-termination.i")));
 	}
 
 	// 28_buggy_simple_loop1_vf_false-unreach-call.i
 	@Test
 	public void buggy_simple_28() throws ABCException {
-		assertTrue(ui
-				.run("verify",
-						"-svcomp -input_svcomp_unpp_scale=5 -input_svcomp_int_bound=10",
-						filename("28_buggy_simple_loop1_vf_false-unreach-call.i")));
+		assertTrue(ui.run("verify",
+				"-svcomp -input_svcomp_unpp_scale=5 -input_svcomp_int_bound=8",
+				filename("28_buggy_simple_loop1_vf_false-unreach-call.i")));
+	}
+
+	@Test
+	public void thread_local() throws ABCException {
+		assertTrue(ui.run("verify", "-svcomp -showProgram", filename("threadLocal.c")));
 	}
 }
