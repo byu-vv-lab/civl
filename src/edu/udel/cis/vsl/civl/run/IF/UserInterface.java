@@ -31,8 +31,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -144,9 +146,11 @@ public class UserInterface {
 	private FrontEnd frontEnd = new FrontEnd();
 	
 	/*
-	 * The console view
+	 * The console view string and hashmap for stats table
 	 */
 	public String consoleString = "";
+	
+	public List<String> consoleStatsList = new ArrayList<String>();
 	
 	/**
 	 * The transformer factory that provides CIVL transformers.
@@ -736,8 +740,13 @@ public class UserInterface {
 					Analysis.printResults(model.factory().codeAnalyzers(), out);
 				}
 			}
+			//make sure to include other variables in our hashmap, not console string
 			this.printCommand(out, command);
 			verifier.printStats();
+			for (String tmp : verifier.consoleStatsList) {
+				consoleStatsList.add(tmp);
+			}
+
 			consoleString += verifier.consoleString;
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();
@@ -808,6 +817,10 @@ public class UserInterface {
 		double time = Math
 				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
 		long memory = Runtime.getRuntime().totalMemory();
+		consoleStatsList.add(command);
+		consoleStatsList.add(Double.toString(time));
+		consoleStatsList.add(Long.toString(memory));
+
 		String line1 = "\n" + statsBar + " Command " + statsBar;
 		String line2 = "civl " + command;
 		String line3 = "\n" + statsBar + " Stats " + statsBar;

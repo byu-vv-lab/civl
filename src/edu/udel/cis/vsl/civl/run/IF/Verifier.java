@@ -10,7 +10,11 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -47,6 +51,9 @@ public class Verifier extends Player {
 	VerificationStatus verificationStatus;
 	
 	String consoleString = "";
+	
+	//our new consolstatsLIST for jtable on console tab
+	List<String> consoleStatsList = new ArrayList<String>();
 
 	class SearchUpdater implements Printable {
 		@Override
@@ -315,20 +322,34 @@ public class Verifier extends Player {
 		String line5 = "   transitions         : " + Long.toString(executor.getNumSteps());
 		String line6 = "   trace steps         : " + Integer.toString(searcher.numTransitions());
 		consoleString += line1 + line2 + line3 + line4 + line5 + line6;
+		
 		civlConfig.out().print("   max process count   : ");
 		civlConfig.out().println(stateManager.maxProcs());
+		consoleStatsList.add(Integer.toString(stateManager.maxProcs()));
+		
 		civlConfig.out().print("   states              : ");
 		civlConfig.out().println(stateManager.numStatesExplored());
+		consoleStatsList.add(Integer.toString(stateManager.numStatesExplored()));
+		
 		civlConfig.out().print("   states saved        : ");
 		civlConfig.out().println(stateManager.getNumStatesSaved());
+		consoleStatsList.add(Integer.toString(stateManager.getNumStatesSaved()));
+		
 		// civlConfig.out().print("   statesSeen        : ");
 		// civlConfig.out().println(searcher.numStatesSeen());
+		
 		civlConfig.out().print("   state matches       : ");
 		civlConfig.out().println(searcher.numStatesMatched());
+		consoleStatsList.add(Integer.toString(searcher.numStatesMatched()));
+		
 		civlConfig.out().print("   transitions         : ");
 		civlConfig.out().println(executor.getNumSteps());
+		consoleStatsList.add(Long.toString(executor.getNumSteps()));
+		
 		civlConfig.out().print("   trace steps         : ");
 		civlConfig.out().println(searcher.numTransitions());
+		consoleStatsList.add(Integer.toString(searcher.numTransitions()));
+		
 	}
 
 	public boolean run() throws FileNotFoundException, InterruptedException,

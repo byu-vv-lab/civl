@@ -144,8 +144,11 @@ public class GUI_revamp extends JFrame {
 	 * The console string
 	 */
 	private String consoleString;
+	private Map<String, String> consoleStats;
+	private List<String> consoleStatsList;
 	
 	private String tempString = "";
+	private Map<String, String> tempStats = new HashMap<String, String>();
 	public GUI_revamp() {
 		setVisible(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -488,6 +491,9 @@ public class GUI_revamp extends JFrame {
 		ArrayList<CIVL_Input> inputList = currConfig.getInputs();
 		for (int i = 0; i < inputList.size(); i++) {
 			CIVL_Input input = inputList.get(i);
+//			System.out.println(input.getName());
+//			System.out.println(input.getType());
+//			System.out.println(input.getValue());
 			inputModel.addRow(new Object[] { input.getName(), input.getType(),
 					input.getValue(), input.getInitializer() });
 		}
@@ -520,19 +526,30 @@ public class GUI_revamp extends JFrame {
 	 */
 	
 	public void showConsole(){
+		//let's print out our values on new spaces
 		CIVLTable tbl_consoleTable = (CIVLTable) getComponentByName("tbl_consoleTable");
 		DefaultTableModel consoleModel = (DefaultTableModel) tbl_consoleTable
 				.getModel();
 		tbl_consoleTable.clearSelection();
 		
 		if(!tempString.equals(consoleString) && consoleString != null){
+			System.out.println(consoleString);
 			consoleModel.addRow(new Object[]{consoleString});
+//			consoleModel.addRow(new Object[]{" ", consoleStatsList.get(0), consoleStatsList.get(1), 
+//					consoleStatsList.get(2), consoleStatsList.get(3), consoleStatsList.get(4), 
+//					consoleStatsList.get(5), consoleStatsList.get(6), consoleStatsList.get(7),
+//					consoleStatsList.get(8)});
 			tempString = consoleString;
+			consoleModel.addRow(new Object[]{"command:", consoleStatsList.get(0)});
+			consoleModel.addRow(new Object[]{"time:", consoleStatsList.get(1)});
+			consoleModel.addRow(new Object[]{"memory:", consoleStatsList.get(2)});
+			consoleModel.addRow(new Object[]{"max process:", consoleStatsList.get(3)});
+			consoleModel.addRow(new Object[]{"states:", consoleStatsList.get(4)});
 		}
 		
-//		JTextArea consoleOutput = new JTextArea();
-//		consoleOutput.setText("Tester");
-//		tbl_consoleTable.add(consoleOutput);
+		JTextArea consoleOutput = new JTextArea();
+		consoleOutput.setText("Tester");
+		tbl_consoleTable.add(consoleOutput);
 		
 	}
 	/**
@@ -834,6 +851,7 @@ public class GUI_revamp extends JFrame {
 		final JTable tbl_fileTable = new CIVLTable(new int[] { 2 }, "file",
 				this);
 		//TODO: Console view added here, add statistics here
+		final JTable tbl_statistics = new CIVLTable(new int[] { 0 }, "statistics", this);
 		final JTable tbl_consoleTable = new CIVLTable(new int[] { 1 }, "console",
 				this);
 		
@@ -888,8 +906,8 @@ public class GUI_revamp extends JFrame {
 				"Variable", "Type", "Value", "Default" }));
 		tbl_fileTable.setModel(new DefaultTableModel(null, new String[] {
 				"File Name", "File Path", "Delete" }));
-		tbl_consoleTable.setModel(new DefaultTableModel(null, new String[] {"View" }));
-		
+		tbl_consoleTable.setModel(new DefaultTableModel(null, new String[] {"Results", "command", "time(s)", "memory(bytes)", "max process count", "states", "states saved", "state matches", "transitions", "trace steps" }));
+//		tbl_statistics.setModel(new DefaultTableModel(null, new String[] {"hey"}));
 		
 		tbl_optionTable.setCellSelectionEnabled(true);
 		tbl_inputTable.setCellSelectionEnabled(true);
@@ -1376,6 +1394,8 @@ public class GUI_revamp extends JFrame {
 					try {
 						ui.runNormalCommand((NormalCommandLine) currConfig.comLine);
 						consoleString = ui.consoleString;
+						consoleStatsList = ui.consoleStatsList;
+						System.out.println(consoleStatsList.size());
 						showConsole();
 						//Console gets drawn here
 					} catch (CommandLineException | ABCException | IOException
