@@ -10,8 +10,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -134,9 +136,16 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * The command line object that the GUI will use
 	 */
+	
 	@SuppressWarnings("unused")
 	private NormalCommandLine commandLine;
 
+	/*
+	 * The console string
+	 */
+	private String consoleString;
+	
+	private String tempString = "";
 	public GUI_revamp() {
 		setVisible(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -506,6 +515,26 @@ public class GUI_revamp extends JFrame {
 		}
 	}
 
+	/*
+	 * Shows the console view upon execution
+	 */
+	
+	public void showConsole(){
+		CIVLTable tbl_consoleTable = (CIVLTable) getComponentByName("tbl_consoleTable");
+		DefaultTableModel consoleModel = (DefaultTableModel) tbl_consoleTable
+				.getModel();
+		tbl_consoleTable.clearSelection();
+		
+		if(!tempString.equals(consoleString) && consoleString != null){
+			consoleModel.addRow(new Object[]{consoleString});
+			tempString = consoleString;
+		}
+		
+//		JTextArea consoleOutput = new JTextArea();
+//		consoleOutput.setText("Tester");
+//		tbl_consoleTable.add(consoleOutput);
+		
+	}
 	/**
 	 * Sets the options in the table when values are changed.
 	 */
@@ -635,6 +664,7 @@ public class GUI_revamp extends JFrame {
 		JPanel p_chooseFile = (JPanel) getComponentByName("p_chooseFile");
 		JPanel p_options = (JPanel) getComponentByName("p_options");
 		JPanel p_inputs = (JPanel) getComponentByName("p_inputs");
+		JPanel p_console = (JPanel) getComponentByName("p_console");
 		JTabbedPane tp_commandView = (JTabbedPane) getComponentByName("tp_commandView");
 		JTextField tf_chooseFile = (JTextField) getComponentByName("tf_chooseFile");
 		if (currConfig != null) {
@@ -674,6 +704,7 @@ public class GUI_revamp extends JFrame {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Inputs", p_inputs);
+				tp_commandView.addTab("Console", p_console);
 				p_view.add(tp_commandView);
 				showSelectedFiles();
 				p_view.validate();
@@ -682,9 +713,11 @@ public class GUI_revamp extends JFrame {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Inputs", p_inputs);
+				tp_commandView.addTab("Console", p_console);
 				p_view.add(tp_commandView);
 				showOptions();
 				showInputs();
+				showConsole();
 				showSelectedFiles();
 				p_view.validate();
 
@@ -692,8 +725,10 @@ public class GUI_revamp extends JFrame {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Inputs", p_inputs);
+				tp_commandView.addTab("Console", p_console);
 				showOptions();
 				showInputs();
+				showConsole();
 				showSelectedFiles();
 				p_view.add(tp_commandView);
 				p_view.validate();
@@ -762,11 +797,13 @@ public class GUI_revamp extends JFrame {
 		JPanel p_info = new JPanel();
 		JPanel p_chooseFile = new JPanel();
 		JPanel p_options = new JPanel();
+		JPanel p_console = new JPanel();
 		JPanel p_inputs = new JPanel();
 
 		JScrollPane sp_optionTable = new JScrollPane();
 		JScrollPane sp_inputTable = new JScrollPane();
 		JScrollPane sp_fileTable = new JScrollPane();
+		JScrollPane sp_consoleTable = new JScrollPane();
 
 		JTabbedPane tp_commandView = new JTabbedPane();
 
@@ -796,6 +833,12 @@ public class GUI_revamp extends JFrame {
 				this);
 		final JTable tbl_fileTable = new CIVLTable(new int[] { 2 }, "file",
 				this);
+		//TODO: Console view added here, add statistics here
+		final JTable tbl_consoleTable = new CIVLTable(new int[] { 1 }, "console",
+				this);
+		
+		
+		
 
 		tbl_optionTable.putClientProperty("terminateEditOnFocusLost",
 				Boolean.TRUE);
@@ -805,16 +848,19 @@ public class GUI_revamp extends JFrame {
 
 		p_options.setLayout(new BorderLayout(0, 0));
 		p_inputs.setLayout(new BorderLayout(0, 0));
+		p_console.setLayout(new BorderLayout(0, 0));
 
 		p_container.setName("p_container");
 		p_view.setName("p_view");
 		p_info.setName("p_info");
 		p_chooseFile.setName("p_chooseFile");
 		p_options.setName("p_options");
+		p_console.setName("p_console");
 		p_inputs.setName("p_inputs");
 		sp_optionTable.setName("sp_optionTable");
 		sp_inputTable.setName("sp_inputTable");
 		sp_fileTable.setName("sp_fileTable");
+		sp_consoleTable.setName("sp_consoleTable");
 		tp_commandView.setName("tp_commandView");
 		bt_revert.setName("bt_revert");
 		bt_apply.setName("bt_apply");
@@ -825,6 +871,7 @@ public class GUI_revamp extends JFrame {
 		tbl_optionTable.setName("tbl_optionTable");
 		tbl_inputTable.setName("tbl_inputTable");
 		tbl_fileTable.setName("tbl_fileTable");
+		tbl_consoleTable.setName("tbl_consoleTable");
 
 		lb_new.setBounds(6, 6, 554, 16);
 		lb_duplicate.setBounds(6, 39, 589, 16);
@@ -833,6 +880,7 @@ public class GUI_revamp extends JFrame {
 		sp_optionTable.setViewportView(tbl_optionTable);
 		sp_inputTable.setViewportView(tbl_inputTable);
 		sp_fileTable.setViewportView(tbl_fileTable);
+		sp_consoleTable.setViewportView(tbl_consoleTable);
 
 		tbl_optionTable.setModel(new DefaultTableModel(null, new String[] {
 				"Option", "Value", "Default" }));
@@ -840,16 +888,21 @@ public class GUI_revamp extends JFrame {
 				"Variable", "Type", "Value", "Default" }));
 		tbl_fileTable.setModel(new DefaultTableModel(null, new String[] {
 				"File Name", "File Path", "Delete" }));
-
+		tbl_consoleTable.setModel(new DefaultTableModel(null, new String[] {"View" }));
+		
+		
 		tbl_optionTable.setCellSelectionEnabled(true);
 		tbl_inputTable.setCellSelectionEnabled(true);
 		tbl_fileTable.setCellSelectionEnabled(true);
+		tbl_consoleTable.setCellSelectionEnabled(true);
 
 		tbl_optionTable.setShowGrid(true);
 		tbl_optionTable.setGridColor(Color.BLUE);
 
+		//TODO: Investigate rows for different views
 		tbl_optionTable.setRowHeight(35);
 		tbl_inputTable.setRowHeight(35);
+		tbl_fileTable.setRowHeight(35);
 		tbl_fileTable.setRowHeight(35);
 
 		setColumnSize((CIVLTable) tbl_optionTable, 215, 0);
@@ -904,20 +957,24 @@ public class GUI_revamp extends JFrame {
 
 		p_options.add(sp_optionTable);
 		p_inputs.add(sp_inputTable);
+		p_console.add(sp_consoleTable);
 
 		addToMap(p_info);
 		addToMap(tp_commandView);
 		addToMap(p_chooseFile);
 		addToMap(p_options);
+		addToMap(p_console);
 		addToMap(p_inputs);
 		addToMap(bt_browseFile);
 		addToMap(tf_chooseFile);
 		addToMap(sp_optionTable);
 		addToMap(sp_inputTable);
 		addToMap(sp_fileTable);
+		addToMap(sp_consoleTable);
 		addToMap(tbl_optionTable);
 		addToMap(tbl_inputTable);
 		addToMap(tbl_fileTable);
+		addToMap(tbl_consoleTable);
 		add(p_container);
 
 		revalidate();
@@ -967,6 +1024,7 @@ public class GUI_revamp extends JFrame {
 
 		lb_icon.setIcon(new ImageIcon("Images/logo.png"));
 
+		
 		p_header.add(ta_header);
 		p_header.add(lb_icon);
 
@@ -1317,6 +1375,9 @@ public class GUI_revamp extends JFrame {
 
 					try {
 						ui.runNormalCommand((NormalCommandLine) currConfig.comLine);
+						consoleString = ui.consoleString;
+						showConsole();
+						//Console gets drawn here
 					} catch (CommandLineException | ABCException | IOException
 							| MisguidedExecutionException | SvcompException e1) {
 						e1.printStackTrace();

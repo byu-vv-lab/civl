@@ -68,7 +68,6 @@ public class PathChooser extends JFrame {
 		bt_apply = new JButton("Apply");
 		bt_cancel = new JButton("Cancel");
 		tbl_fileTable = new CIVLTable(new int[] { 2 }, "file", null);
-
 		sp_fileTable.setViewportView(tbl_fileTable);
 		tbl_fileTable.setModel(new DefaultTableModel(null, new String[] {
 				"File Name", "File Path", "Delete" }));

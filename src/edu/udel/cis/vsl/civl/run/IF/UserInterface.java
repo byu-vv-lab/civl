@@ -142,7 +142,12 @@ public class UserInterface {
 	 * The ABC front end.
 	 */
 	private FrontEnd frontEnd = new FrontEnd();
-
+	
+	/*
+	 * The console view
+	 */
+	public String consoleString = "";
+	
 	/**
 	 * The transformer factory that provides CIVL transformers.
 	 */
@@ -635,6 +640,7 @@ public class UserInterface {
 				TraceViewer gui = new TraceViewer(trace, replayer.symbolicAnalyzer);
 			}
 			printCommand(out, command);
+			
 			// printTimeAndMemory(out);
 			replayer.printStats();
 			printUniverseStats(out, modelTranslator.universe);
@@ -644,6 +650,8 @@ public class UserInterface {
 		return false;
 	}
 
+	
+	//TODO: This is where the printing of the output is done.
 	private boolean runRun(String command, ModelTranslator modelTranslator)
 			throws CommandLineException, ABCException, IOException,
 			MisguidedExecutionException, SvcompException {
@@ -660,6 +668,7 @@ public class UserInterface {
 			out.flush();
 			result = player.run().result();
 			this.printCommand(out, command);
+			
 			// printTimeAndMemory(out);
 			player.printStats();
 			printUniverseStats(out, modelTranslator.universe);
@@ -729,6 +738,7 @@ public class UserInterface {
 			}
 			this.printCommand(out, command);
 			verifier.printStats();
+			consoleString += verifier.consoleString;
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();
 			verifier.printResult();
@@ -798,7 +808,12 @@ public class UserInterface {
 		double time = Math
 				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
 		long memory = Runtime.getRuntime().totalMemory();
-
+		String line1 = "\n" + statsBar + " Command " + statsBar;
+		String line2 = "civl " + command;
+		String line3 = "\n" + statsBar + " Stats " + statsBar;
+		String line4 = "   time (s)            : " + time;
+		String line5 = "   memory (bytes)      : " + memory;
+		consoleString += line1 + line2 + line3 + line4 + line5;
 		out.println("\n" + statsBar + " Command " + statsBar);
 		out.print("civl " + command);
 		out.println("\n" + statsBar + " Stats " + statsBar);
@@ -1032,17 +1047,25 @@ public class UserInterface {
 
 		out.print("   valid calls         : ");
 		out.println(numValidCalls);
+		String line1 = "   valid calls         : " + numValidCalls;
+		consoleString += line1; 
 		provers = Configurations.getDefaultConfiguration().getProvers();
 		out.print("   provers             : ");
+		consoleString += "   provers             : ";
 		for (ProverInfo prover : provers) {
-			if (i != 0)
+			if (i != 0){
 				out.print(", ");
+				consoleString += ", ";
+			}
 			out.print(prover);
+			consoleString += prover;
 			i++;
 		}
 		out.println();
+		String line2 = "   prover calls        : " + numProverCalls;
 		out.print("   prover calls        : ");
 		out.println(numProverCalls);
+		consoleString += line2;
 	}
 
 	private void setToDefault(GMCSection config, Collection<Option> options) {
