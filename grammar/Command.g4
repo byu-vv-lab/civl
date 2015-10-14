@@ -132,6 +132,7 @@ OPTION_NAME
     | '-ompLoopDecomp'
     | '-preproc'
     | '-procBound'
+    | '-pthreadOnly'
     | '-random'
     | '-saveStates'
     | '-seed'
