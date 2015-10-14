@@ -545,6 +545,13 @@ public class GUI_revamp extends JFrame {
 			consoleModel.addRow(new Object[]{"memory:", consoleStatsList.get(2)});
 			consoleModel.addRow(new Object[]{"max process:", consoleStatsList.get(3)});
 			consoleModel.addRow(new Object[]{"states:", consoleStatsList.get(4)});
+			consoleModel.addRow(new Object[]{"states saved", consoleStatsList.get(5)});
+			consoleModel.addRow(new Object[]{"state matches", consoleStatsList.get(6)});
+			consoleModel.addRow(new Object[]{"transitions", consoleStatsList.get(7)});
+			consoleModel.addRow(new Object[]{"trace steps", consoleStatsList.get(8)});
+			consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(9)});
+			consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(10)});
+			consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(11)});
 		}
 		
 		JTextArea consoleOutput = new JTextArea();
@@ -906,7 +913,8 @@ public class GUI_revamp extends JFrame {
 				"Variable", "Type", "Value", "Default" }));
 		tbl_fileTable.setModel(new DefaultTableModel(null, new String[] {
 				"File Name", "File Path", "Delete" }));
-		tbl_consoleTable.setModel(new DefaultTableModel(null, new String[] {"Results", "command", "time(s)", "memory(bytes)", "max process count", "states", "states saved", "state matches", "transitions", "trace steps" }));
+//		tbl_consoleTable.setModel(new DefaultTableModel(null, new String[] {"Results", "command", "time(s)", "memory(bytes)", "max process count", "states", "states saved", "state matches", "transitions", "trace steps" }));
+		tbl_consoleTable.setModel(new DefaultTableModel(null, new String[] {"Results", "Statistics"}));
 //		tbl_statistics.setModel(new DefaultTableModel(null, new String[] {"hey"}));
 		
 		tbl_optionTable.setCellSelectionEnabled(true);

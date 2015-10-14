@@ -1058,25 +1058,36 @@ public class UserInterface {
 		Iterable<ProverInfo> provers;
 		int i = 0;
 
+		//valid calls
 		out.print("   valid calls         : ");
 		out.println(numValidCalls);
 		String line1 = "   valid calls         : " + numValidCalls;
-		consoleString += line1; 
+		consoleString += line1;
+		consoleStatsList.add(Long.toString(numValidCalls));
+		
+		//provers
 		provers = Configurations.getDefaultConfiguration().getProvers();
 		out.print("   provers             : ");
 		consoleString += "   provers             : ";
+		String tmp = "";
 		for (ProverInfo prover : provers) {
 			if (i != 0){
 				out.print(", ");
 				consoleString += ", ";
+				tmp += ", ";
 			}
 			out.print(prover);
 			consoleString += prover;
+			tmp += prover;
 			i++;
 		}
 		out.println();
+		consoleStatsList.add(tmp);
+		
+		//prover calls
 		String line2 = "   prover calls        : " + numProverCalls;
 		out.print("   prover calls        : ");
+		consoleStatsList.add(Long.toString(numProverCalls));
 		out.println(numProverCalls);
 		consoleString += line2;
 	}
