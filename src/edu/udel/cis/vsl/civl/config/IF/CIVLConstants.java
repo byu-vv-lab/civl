@@ -306,6 +306,16 @@ public class CIVLConstants {
 			"strict", BOOLEAN, "check strict functional equivalence?", true);
 
 	/**
+	 * skip non-pthread programs?
+	 */
+	public final static Option pthreadOnlyO = Option
+			.newScalarOption(
+					"pthreadOnly",
+					BOOLEAN,
+					"skip non-pthread programs? Only valid when -svcomp is true.",
+					true);
+
+	/**
 	 * Set the system include path.
 	 */
 	public final static Option sysIncludePathO = Option.newScalarOption(
@@ -463,9 +473,9 @@ public class CIVLConstants {
 				showMemoryUnitsO, showModelO, showPathConditionO, showProgramO,
 				showProverQueriesO, showQueriesO, showSavedStatesO,
 				showStatesO, showTimeO, showTransitionsO, showUnreachedCodeO,
-				simplifyO, solveO, statelessPrintfO, svcompO, sysIncludePathO,
-				traceO, userIncludePathO, verboseO, webO, CIVLMacroO,
-				analyzeAbsO, strictCompareO, collectOutputO,
+				simplifyO, solveO, statelessPrintfO, svcompO, pthreadOnlyO,
+				sysIncludePathO, traceO, userIncludePathO, verboseO, webO,
+				CIVLMacroO, analyzeAbsO, strictCompareO, collectOutputO,
 				checkDivisionByZeroO, checkMemoryLeakO, timeoutO };
 	}
 

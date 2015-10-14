@@ -299,7 +299,8 @@ public class ModelTranslator {
 			AST userAST = asts.get(0);
 
 			// ignore non-pthread benchmarks
-			if (!this.containsPthread(userAST.getRootNode())) {
+			if (config.pthreadOnly()
+					&& !this.containsPthread(userAST.getRootNode())) {
 				throw new SvcompException();
 			}
 			// parsing preprocessed .i file

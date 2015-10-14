@@ -210,6 +210,8 @@ public class CIVLConfiguration {
 
 	private int timeout = -1;
 
+	private boolean pthreadOnly = true;
+
 	/**
 	 * Constructs a new CIVL configuration object from the command line
 	 * configuration.
@@ -297,6 +299,10 @@ public class CIVLConfiguration {
 					.isTrue(CIVLConstants.checkMemoryLeakO);
 		}
 		this.setTimeout((int) config.getValueOrDefault(CIVLConstants.timeoutO));
+		if (this.svcomp) {
+			this.setPthreadOnly((boolean) config
+					.getValueOrDefault(CIVLConstants.pthreadOnlyO));
+		}
 	}
 
 	public void setOut(PrintStream out) {
@@ -648,5 +654,19 @@ public class CIVLConfiguration {
 	 */
 	public void setTimeout(int timeout) {
 		this.timeout = timeout;
+	}
+
+	/**
+	 * @return the pthreadOnly
+	 */
+	public boolean pthreadOnly() {
+		return pthreadOnly;
+	}
+
+	/**
+	 * @param pthreadOnly the pthreadOnly to set
+	 */
+	public void setPthreadOnly(boolean pthreadOnly) {
+		this.pthreadOnly = pthreadOnly;
 	}
 }
