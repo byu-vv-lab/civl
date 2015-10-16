@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import org.junit.AfterClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.civl.run.IF.UserInterface;
@@ -53,9 +52,9 @@ public class ContractTest {
 				.run("show -showModel -mpiContract ", filename("result.c")));
 	}
 
-	@Ignore
+	@Test
 	public void isRecvBufEmpty() {
-		assertTrue(ui.run("verify -showModel -mpiContract -input_mpi_nprocs=2",
+		assertTrue(ui.run("verify -min -mpiContract -input_mpi_nprocs=4",
 				filename("isRecvBufEmpty.c")));
 	}
 
@@ -66,10 +65,10 @@ public class ContractTest {
 				filename("mergeContracts.c")));
 	}
 
-	@Ignore
+	@Test
 	public void notEmptyRecvBuf() {
-		assertFalse(ui.run("verify -mpiContract -deadlock=potential",
-				filename("notEmptyRecvBuf.c")));
+		assertFalse(ui
+				.run("verify -mpiContract", filename("notEmptyRecvBuf.c")));
 	}
 
 	@Test
