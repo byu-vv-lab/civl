@@ -33,6 +33,8 @@ public class CommonNoopStatement extends CommonStatement implements
 	 */
 	private boolean isTemporary = false;
 
+	private boolean removable = false;
+
 	/**
 	 * true iff this associates to a variable declaration
 	 */
@@ -137,6 +139,16 @@ public class CommonNoopStatement extends CommonStatement implements
 	}
 
 	@Override
+	public void setRemovable() {
+		removable = true;
+	}
+
+	@Override
+	public boolean isRemovable() {
+		return removable;
+	}
+
+	@Override
 	public boolean isTemporary() {
 		return this.isTemporary;
 	}
@@ -145,5 +157,4 @@ public class CommonNoopStatement extends CommonStatement implements
 	public boolean isVariableDeclaration() {
 		return this.isVariableDeclaration;
 	}
-
 }

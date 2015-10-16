@@ -4,7 +4,6 @@
 package edu.udel.cis.vsl.civl.model.common;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -386,25 +385,29 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 
 	@Override
 	public void simplify() {
-		List<Location> oldLocations = new ArrayList<Location>(this.locations);
-		int count = oldLocations.size();
+		int count = locations.size();
+		Location[] oldLocations = new Location[count];
 		Set<Location> newLocations;
 		// The index of locations that can be removed
 		Set<Integer> toRemove = new HashSet<Integer>();
+		Iterator<Integer> removeIter;
 
+		this.locations.toArray(oldLocations);
 		for (int i = 0; i < count; i++) {
-			Location loc = oldLocations.get(i);
+			Location loc = oldLocations[i];
 
 			if (loc.atomicKind() != AtomicKind.NONE)
 				continue;
 			// loc has exactly one outgoing statement
 			if (loc.getNumOutgoing() == 1) {
-				Statement s = loc.getOutgoing(0);
+				Statement s = loc.getSoleOutgoing();
 
 				// The only statement of loc is a no-op statement
 				if (s instanceof NoopStatement) {
 					NoopStatement noop = (NoopStatement) s;
 
+					if (noop.isRemovable())
+						toRemove.add(i);
 					// The noop is temporary or associates to a variable
 					// declaration
 					if (noop.isTemporary() || noop.isVariableDeclaration()) {
@@ -413,7 +416,6 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 						// The guard of the no-op is true
 						if (guard instanceof BooleanLiteralExpression) {
 							if (((BooleanLiteralExpression) guard).value()) {
-								Location target = s.target();
 
 								// Record the index of loc so that it can be
 								// removed later
@@ -422,42 +424,33 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 									this.startLocation = loc.getSoleOutgoing()
 											.target();
 								}
-								// TODO simplify me: using incoming statements
-								for (int j = 0; j < count; j++) {
-									Location curLoc;
-
-									// Do nothing to the locations that are to
-									// be
-									// removed
-									if (toRemove.contains(j))
-										continue;
-									curLoc = oldLocations.get(j);
-									// For each outgoing statement of curLoc \in
-									// (this.locations - toRemove)
-									for (Statement curS : curLoc.outgoing()) {
-										Location curTarget = curS.target();
-
-										// Redirect the target location so that
-										// no-op location is skipped
-										if (curTarget != null
-												&& curTarget.id() == loc.id()) {
-											// the incoming field is implicitly
-											// modified by setTarget()
-											curS.setTarget(target);
-										}
-									}
-								}
 							}
 						}
 					}
 				}
 			}
 		}
+		removeIter = toRemove.iterator();
+		while (removeIter.hasNext()) {
+			// the location will be removed
+			Location removal = oldLocations[removeIter.next()];
+			Location removalSoleTarget;
+			List<Statement> tmpIncomes = new LinkedList<>();
+
+			assert removal.getNumOutgoing() == 1;
+			removalSoleTarget = removal.getSoleOutgoing().target();
+			for (Statement income : removal.incoming())
+				tmpIncomes.add(income);
+			// setTarget will affect removal's incomes, so it needs a temporary
+			// collection "tmpIncomes"
+			for (Statement income : tmpIncomes)
+				income.setTarget(removalSoleTarget);
+		}
 		newLocations = new LinkedHashSet<Location>();
 		for (int k = 0; k < count; k++) {
 			if (toRemove.contains(k))
 				continue;
-			newLocations.add(oldLocations.get(k));
+			newLocations.add(oldLocations[k]);
 		}
 		this.locations = newLocations;
 	}

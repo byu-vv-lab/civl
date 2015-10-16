@@ -35,6 +35,10 @@ public interface NoopStatement extends Statement {
 	 */
 	boolean isTemporary();
 
+	void setRemovable();
+
+	boolean isRemovable();
+
 	/**
 	 * is this noop associating to a variable declaration?
 	 * 

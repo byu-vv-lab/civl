@@ -69,7 +69,7 @@ int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
   $assert(curr_status == __INIT, "MPI_Send() cannot be invoked "
     "without MPI_Init() being called before.\n");
   $mpi_assertConsistentType(buf, datatype);
-  return $mpi_send(buf, count, datatype, dest, tag, comm.p2p);
+  return $mpi_send(buf, count, datatype, dest, tag, comm.p2p, comm.gcommIndex);
 }
 
 int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
@@ -80,7 +80,7 @@ int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
   $assert(curr_status == __INIT, "MPI_Recv() cannot be invoked "
     "without MPI_Init() being called before.\n");
   $mpi_assertConsistentType(buf, datatype);
-  return $mpi_recv(buf, count, datatype, source, tag, comm.p2p, status);
+  return $mpi_recv(buf, count, datatype, source, tag, comm.p2p, status, comm.gcommIndex);
 }
 
 int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) {
@@ -106,10 +106,8 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
   $mpi_assertConsistentType(sendbuf, sendtype);
   $mpi_assertConsistentType(recvbuf, recvtype);
   // not correct for checking potential deadlock...rewrite:
-  //CMPI_Send(sendbuf, sendcount, sendtype, dest, sendtag, comm.p2p);
-  //CMPI_Recv(recvbuf, recvcount, recvtype, source, recvtag, comm.p2p, status);
   $mpi_sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount,
-		recvtype, source, recvtag, comm.p2p, status);
+		recvtype, source, recvtag, comm.p2p, status, comm.gcommIndex);
   return 0;
 }
 /******************************** Collective ***********************************/
@@ -135,7 +133,7 @@ int MPI_Bcast(void *buf, int count, MPI_Datatype datatype, int root,
   $assert(checkPassed, "Process with rank %d is calling an "
 	 "possibly inconsistent MPI_Bcast routine with "
 	 "at least one of other processes.\n", place);
-  $mpi_bcast(buf, count, datatype, root, BCAST_TAG, comm, "MPI_Bcast()");
+  $mpi_bcast(buf, count, datatype, root, BCAST_TAG, comm, "MPI_Bcast()",  comm.gcommIndex);
   return 0;
 }
 
@@ -162,7 +160,7 @@ int MPI_Reduce(const void* sendbuf, void* recvbuf, int count,
 	 "at least one of other processes.\n", place);
   $mpi_assertConsistentType(sendbuf, datatype);
   $mpi_assertConsistentType(recvbuf, datatype);
-  $mpi_reduce(sendbuf, recvbuf, count, datatype, op, root, REDUCE_TAG, comm, "MPI_Reduce()");
+  $mpi_reduce(sendbuf, recvbuf, count, datatype, op, root, REDUCE_TAG, comm, "MPI_Reduce()",  comm.gcommIndex);
   return 0;
 }
 
@@ -192,9 +190,9 @@ int MPI_Allreduce(const void* sendbuf, void* recvbuf, int count,
 	 "possibly inconsistent MPI_Allreduce routine with "
 	 "at least one of other processes.\n", place);
   $mpi_reduce(sendbuf, recvbuf, count, datatype, op, root, ALLREDUCE_TAG, comm,
-	      "MPI_Allreduce()");
+	      "MPI_Allreduce()",  comm.gcommIndex);
   $mpi_bcast(recvbuf, count, datatype, root, ALLREDUCE_TAG, comm, 
-	     "MPI_Allreduce()");
+	     "MPI_Allreduce()",  comm.gcommIndex);
   return 0;
 }
 
@@ -244,7 +242,7 @@ int MPI_Gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 	 "possibly inconsistent MPI_Gather routine with "
 	 "at least one of other processes.\n", place);
   $mpi_gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-	      root, GATHER_TAG, comm, "MPI_Gather()");
+	      root, GATHER_TAG, comm, "MPI_Gather()",  comm.gcommIndex);
   return 0;
 }
 
@@ -272,7 +270,7 @@ int MPI_Scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 	 "possibly inconsistent MPI_Scatter routine with "
 	 "at least one of other processes.\n", place);
   $mpi_scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-	       root, SCATTER_TAG, comm, "MPI_Scatter()");
+	       root, SCATTER_TAG, comm, "MPI_Scatter()",  comm.gcommIndex);
   return 0;
 }
 
@@ -301,7 +299,7 @@ int MPI_Gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 	 "possibly inconsistent MPI_Gatherv routine with "
 	 "at least one of other processes.\n", place);
   $mpi_gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
-	       recvtype, root, GATHERV_TAG, comm, "MPI_Gatherv()");
+	       recvtype, root, GATHERV_TAG, comm, "MPI_Gatherv()",  comm.gcommIndex);
   return 0;
 }
 
@@ -332,7 +330,7 @@ int MPI_Scatterv(const void* sendbuf, const int sendcounts[], const
 	 "at least one of other processes.\n", place);
   $mpi_scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf,
 		recvcount, recvtype, root, SCATTERV_TAG, comm, 
-		"MPI_Scatterv()");
+		"MPI_Scatterv()",  comm.gcommIndex);
   return 0;
 }
 
@@ -360,9 +358,9 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	 "at least one of other processes.\n", place);
   $mpi_gather(sendbuf, sendcount, sendtype,
 	     recvbuf, recvcount, recvtype,
-	      0, ALLGATHER_TAG, comm, "MPI_Allgather()");
+	      0, ALLGATHER_TAG, comm, "MPI_Allgather()",  comm.gcommIndex);
   $mpi_bcast(recvbuf, recvcount*nprocs, recvtype, 0, ALLGATHER_TAG, comm,
-	     "MPI_Allgather()");
+	     "MPI_Allgather()",  comm.gcommIndex);
   return 0;
 }
 
@@ -400,10 +398,10 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcount[]
    * because allocating a memory space for a void pointer is not
    * allowed in CIVL yet. */
   $mpi_reduce(sendbuf, sendbuf, total_count, datatype, op, 
-	      root, RED_SCATTER_TAG, comm, "MPI_Reduce_scatter()");
+	      root, RED_SCATTER_TAG, comm, "MPI_Reduce_scatter()",  comm.gcommIndex);
   $mpi_scatterv(sendbuf, recvcount, displs, datatype, recvbuf,
 		recvcount[rank], datatype, root, RED_SCATTER_TAG, comm,
-		"MPI_Reduce_scatter()");
+		"MPI_Reduce_scatter()",  comm.gcommIndex);
   return 0;
 }
 
@@ -440,7 +438,7 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     $mpi_scatterv(sendbuf, sendcounts, displs, sendtype, 
 		  ptr, recvcount, recvtype, i, ALLTOALL_TAG, comm,
-		  "MPI_Alltoall()");
+		  "MPI_Alltoall()",  comm.gcommIndex);
   }
   return 0;
 }
@@ -472,7 +470,7 @@ int MPI_Alltoallv(const void* sendbuf, const int sendcounts[],
 
     $mpi_scatterv(sendbuf, sendcounts, sdispls, sendtype, 
 		  ptr, recvcounts[i], recvtype, i, ALLTOALLV_TAG, comm,
-		  "MPI_Alltoallv()");
+		  "MPI_Alltoallv()", comm.gcommIndex);
   }
   return 0;
 }
@@ -495,7 +493,7 @@ int MPI_Alltoallw(const void* sendbuf, const int sendcounts[], const int sdispls
 
     $mpi_scatterv(sendbuf, sendcounts, sdispls, sendtypes[i], 
 		  ptr, recvcounts[i], recvtypes[i], i, 
-		  ALLTOALLW_TAG, comm, "MPI_Alltoallw()");
+		  ALLTOALLW_TAG, comm, "MPI_Alltoallw()", comm.gcommIndex);
   }
   return 0;
 }

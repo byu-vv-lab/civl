@@ -127,21 +127,40 @@ void * $mpi_pointerAdd(const void * ptr, int offset, MPI_Datatype datatype) {
    help implementing MPI routines. They should never be block which
    means no potential deadlocks related to these functions */
 int $mpi_send(void *buf, int count, MPI_Datatype datatype, int dest,
-	      int tag, $comm comm) {
+	      int tag, $comm comm, int MPICommId) {
   if (dest >= 0) {
     int size = count*sizeofDatatype(datatype);
     int place = $comm_place(comm);
     $message out = $message_pack(place, dest, tag, buf, size);
-    $comm_enqueue(comm, out);
+
+#ifdef _MPI_CONTRACT
+    $atomic{
+      $comm_enqueue(comm, out);
+      $mpi_imageP2pSend(MPICommId, out, place);
+    }
+#else 
+    $comm_enqueue(comm, out);   
+#endif
   }
   return 0;
 }
 
 int $mpi_recv(void *buf, int count, MPI_Datatype datatype, int source,
-	      int tag, $comm comm, MPI_Status *status) {
+	      int tag, $comm comm, MPI_Status *status, int MPICommId) {
   if (source >= 0 || source == MPI_ANY_SOURCE) {
+    $message in;
+
     $elaborate(source);
-    $message in = $comm_dequeue(comm, source, tag);
+#ifdef _MPI_CONTRACT
+    $atomic{
+      in = $comm_dequeue(comm, source, tag);
+      int place = $message_source(in);
+
+      $mpi_imageP2pRecv(MPICommId, source, place, tag);
+    }
+#else
+    in = $comm_dequeue(comm, source, tag);
+#endif
     int size = count*sizeofDatatype(datatype);
 
     $message_unpack(in, buf, size);
@@ -158,7 +177,7 @@ int $mpi_recv(void *buf, int count, MPI_Datatype datatype, int source,
 int $mpi_sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		  int dest, int sendtag, void *recvbuf, int recvcount, 
 		  MPI_Datatype recvtype, int source, int recvtag,
-		  $comm comm, MPI_Status *status) {
+		  $comm comm, MPI_Status *status, int MPICommId) {
   //send and receive triggering flags
   if((dest >= 0) && ((source >= 0 || source == MPI_ANY_SOURCE))) {
     $message out, in;
@@ -168,11 +187,29 @@ int $mpi_sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     out = $message_pack(place, dest, sendtag, sendbuf, size);
     $elaborate(source);
     $choose {
-      { 
-	$comm_enqueue(comm, out);
-	in = $comm_dequeue(comm, source, recvtag);
+      $when($true){
+	$atomic{
+	  $comm_enqueue(comm, out);
+#ifdef _MPI_CONTRACT
+	  $mpi_imageP2pSend(MPICommId, out, place);
+#endif
+	}
+	$atomic{
+	  in = $comm_dequeue(comm, source, recvtag);
+#ifdef _MPI_CONTRACT
+	  int nonWildSrc = $message_source(in);
+	  
+	  $mpi_imageP2pRecv(MPICommId, nonWildSrc, place, recvtag);	
+#endif
+	}
       }
-      {
+      $when($false){
+        /* This $choose branch plays a trick which correctly
+	   implements the sendrecv() semantically. Such a branch
+	   ensures that there is no chance of potential deadlocks when
+	   all processes do send then recv collectively. However,
+	   effectively, this branch is no need and never will be
+	   executed.*/
 	in = $comm_dequeue(comm, source, recvtag);
 	$comm_enqueue(comm, out);
       }
@@ -187,10 +224,10 @@ int $mpi_sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
   }
   else if (dest >= 0) {
-    $mpi_send(sendbuf, sendcount, sendtype, dest, sendtag, comm);
+    $mpi_send(sendbuf, sendcount, sendtype, dest, sendtag, comm, MPICommId);
   }
   else if (source >= 0 || source == MPI_ANY_SOURCE) {
-    $mpi_recv(recvbuf, recvcount, recvtype, source, recvtag, comm, status);
+    $mpi_recv(recvbuf, recvcount, recvtype, source, recvtag, comm, status, MPICommId);
   }
   return 0;
 }
@@ -205,7 +242,7 @@ int $mpi_sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 */
 int $mpi_collective_recv(void *buf, int count, MPI_Datatype datatype, 
 			 int source, int tag, $comm comm, 
-			 MPI_Status * status, char * routName) {
+			 MPI_Status * status, char * routName, int MPICommId) {
   if(source >= 0 || source == MPI_ANY_SOURCE) {
     $elaborate(source);
     $message in = $comm_dequeue(comm, source, MPI_ANY_TAG);
@@ -228,28 +265,28 @@ int $mpi_collective_recv(void *buf, int count, MPI_Datatype datatype,
 
 /* Broadcast helper function that uses any specified message tag */
 int $mpi_bcast(void *buf, int count, MPI_Datatype datatype, int root, int tag,
-	       MPI_Comm comm, char * routName) {
+	       MPI_Comm comm, char * routName, int MPICommId) {
   if ($comm_place(comm.col) == root) {
     int nprocs = $comm_size(comm.col);
 
     for (int i=0; i<nprocs; i++)
       if (i != root)
-	$mpi_send(buf, count, datatype, i, tag, comm.col);
+	$mpi_send(buf, count, datatype, i, tag, comm.col, MPICommId);
   } else
     $mpi_collective_recv(buf, count, datatype, root, tag, comm.col,
-			 MPI_STATUS_IGNORE, routName);
+			 MPI_STATUS_IGNORE, routName, MPICommId);
   return 0;
 }
 
 /* Reduction helper function that uses any specified message tag */
 int $mpi_reduce(const void* sendbuf, void* recvbuf, int count,
 		MPI_Datatype datatype, MPI_Op op, int root, int tag,
-		MPI_Comm comm, char * routName) {
+		MPI_Comm comm, char * routName, int MPICommId) {
   int rank;
 
   rank = $comm_place(comm.col);
   if (rank != root)
-    $mpi_send(sendbuf, count, datatype, root, tag, comm.col);
+    $mpi_send(sendbuf, count, datatype, root, tag, comm.col, MPICommId);
   else {
     int nprocs = $comm_size(comm.col);
     int size;
@@ -278,7 +315,7 @@ int $mpi_reduce(const void* sendbuf, void* recvbuf, int count,
 /* Gathering helper function that uses any specified message tag */
 int $mpi_gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, 
 	       void* recvbuf, int recvcount, MPI_Datatype recvtype, 
-		int root, int tag, MPI_Comm comm, char * routName){
+		int root, int tag, MPI_Comm comm, char * routName, int MPICommId){
   int rank, nprocs;
   MPI_Status status;
 
@@ -305,7 +342,7 @@ int $mpi_gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
     ptr = $mpi_pointerAdd(recvbuf, root * recvcount, recvtype);
     memcpy(ptr, sendbuf, recvcount * sizeofDatatype(recvtype));
   } else
-    $mpi_send(sendbuf, sendcount, sendtype, root, tag, comm.col);
+    $mpi_send(sendbuf, sendcount, sendtype, root, tag, comm.col, MPICommId);
   /* Root process receives messages and put them in right places */
   if(rank == root){
     int real_recvcount;
@@ -318,7 +355,7 @@ int $mpi_gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 	offset = i * recvcount; 
 	ptr = $mpi_pointerAdd(recvbuf, offset, recvtype);	
 	$mpi_collective_recv(ptr, recvcount, recvtype, 
-			     i, tag, comm.col, &status, routName);
+			     i, tag, comm.col, &status, routName, MPICommId);
 	real_recvcount = status.size/sizeofDatatype(recvtype);
 	$assert(real_recvcount == recvcount,
 		"%s asks for equality between"
@@ -333,7 +370,7 @@ int $mpi_gather(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 int $mpi_gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 		void* recvbuf, const int recvcounts[], const int displs[],
 		 MPI_Datatype recvtype, int root, int tag, 
-		 MPI_Comm comm, char * routName){
+		 MPI_Comm comm, char * routName, int MPICommId){
   int rank, nprocs;
 
   rank = $comm_place(comm.col);
@@ -357,7 +394,7 @@ int $mpi_gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
     ptr = $mpi_pointerAdd(recvbuf, displs[rank], recvtype);
     memcpy(ptr, sendbuf, sendcount * sizeofDatatype(recvtype));
   }else{
-    $mpi_send(sendbuf, sendcount, sendtype, root, tag, comm.col);
+    $mpi_send(sendbuf, sendcount, sendtype, root, tag, comm.col, MPICommId);
   }
   /* Root process receives messages and put them in right places */
   if(rank == root){
@@ -369,7 +406,7 @@ int $mpi_gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 	void * ptr = $mpi_pointerAdd(recvbuf, displs[i], recvtype);
 	
 	$mpi_collective_recv(ptr, recvcounts[i], 
-			     recvtype, i, tag, comm.col, &status, routName);
+			     recvtype, i, tag, comm.col, &status, routName, MPICommId);
 	real_recvcount = status.size/sizeofDatatype(recvtype);
 	$assert(real_recvcount == recvcounts[i], "%s asks for equality between"
 		" the amount of data sent and the "
@@ -383,7 +420,7 @@ int $mpi_gatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 /* Scatter helper function that uses any specified message tag */
 int $mpi_scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, 
 		 void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
-		 int tag, MPI_Comm comm, char * routName){
+		 int tag, MPI_Comm comm, char * routName, int MPICommId){
   int rank, nprocs;
 
   rank = $comm_place(comm.col);
@@ -417,7 +454,7 @@ int $mpi_scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 
 	offset = i * sendcount;
 	ptr = $mpi_pointerAdd(sendbuf, offset, sendtype);
-	$mpi_send(ptr, sendcount, sendtype, i, tag, comm.col);
+	$mpi_send(ptr, sendcount, sendtype, i, tag, comm.col, MPICommId);
       }
     }
   }
@@ -427,7 +464,7 @@ int $mpi_scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
     MPI_Status status;
     
     $mpi_collective_recv(recvbuf, recvcount, recvtype, 
-			 root, tag, comm.col, &status, routName);
+			 root, tag, comm.col, &status, routName, MPICommId);
     real_recvcount = status.size/sizeofDatatype(recvtype);
     $assert(real_recvcount == recvcount,
     "%s asks for equality between"
@@ -441,7 +478,7 @@ int $mpi_scatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 int $mpi_scatterv(const void* sendbuf, const int sendcounts[], const
 		 int displs[], MPI_Datatype sendtype, void* recvbuf,
 		 int recvcount, MPI_Datatype recvtype, int root, int tag,
-		  MPI_Comm comm, char * routName){
+		  MPI_Comm comm, char * routName, int MPICommId){
   int rank, nprocs;
 
   rank = $comm_place(comm.col);
@@ -472,7 +509,7 @@ int $mpi_scatterv(const void* sendbuf, const int sendcounts[], const
 	void * ptr = $mpi_pointerAdd(sendbuf, displs[i], sendtype);
 	
 	$mpi_send(ptr, sendcounts[i], sendtype, i, 
-		  tag, comm.col);
+		  tag, comm.col, MPICommId);
       }
     }
   }
@@ -481,7 +518,7 @@ int $mpi_scatterv(const void* sendbuf, const int sendcounts[], const
     int real_recvcount;
     
     $mpi_collective_recv(recvbuf, recvcount, recvtype, 
-			 root, tag, comm.col, &status, routName);
+			 root, tag, comm.col, &status, routName, MPICommId);
     real_recvcount = status.size/sizeofDatatype(recvtype);
     $assert(real_recvcount == recvcount, "Process rank:%d\n%s asks for equality between"
 	    " the amount of data sent (%d) and the "
@@ -503,7 +540,7 @@ int $mpi_comm_dup($scope scope, MPI_Comm comm, MPI_Comm * newcomm, char * routNa
     idx = $mpi_newGcomm(CMPI_ROOT_SCOPE, newgcomm);
   }
   $mpi_bcast(&idx, 1, MPI_INT, 0, COMMDUP_TAG,
-	     comm, routName);
+	     comm, routName, comm.gcommIndex);
   newgcomm = $mpi_getGcomm(CMPI_ROOT_SCOPE, idx);
   (*newcomm) = $mpi_comm_create(scope, newgcomm, place);
   newcomm->gcommIndex = idx;
@@ -523,7 +560,7 @@ int $mpi_comm_free(MPI_Comm * comm) {
 
   //TODO: $mpi_gather here is just a ugly synchronization
   $mpi_gather(&place, 1, MPI_INT, buf, 1, MPI_INT, 0, 
-	      COMMFREE_TAG, (*comm), "MPI_Comm_free synchronization.");
+	      COMMFREE_TAG, (*comm), "MPI_Comm_free synchronization.", comm->gcommIndex);
   $mpi_comm_destroy(*comm);
   if(place == 0) {
     $mpi_gcomm temp = $mpi_getGcomm(CMPI_ROOT_SCOPE, gcommIndex);

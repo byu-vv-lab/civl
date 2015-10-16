@@ -1,6 +1,5 @@
 package edu.udel.cis.vsl.civl.library.mpi;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,6 +9,7 @@ import java.util.Set;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.comm.LibcommEvaluator;
+import edu.udel.cis.vsl.civl.library.comm.LibcommExecutor;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryExecutor;
 import edu.udel.cis.vsl.civl.model.IF.CIVLException.ErrorKind;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
@@ -30,6 +30,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryExecutorLoader;
+import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.common.ContractEvaluator;
 import edu.udel.cis.vsl.civl.state.IF.DynamicScope;
@@ -183,6 +184,23 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		case "$mpi_proc_scope":
 			state = executeProcScope(state, pid, process, lhs, arguments,
 					argumentValues, statement.getSource());
+			break;
+		case "$mpi_imageP2pSend":
+			state = executeImageSend(state, pid, process, functionName,
+					arguments, argumentValues, zero, statement.getSource());
+			break;
+		case "$mpi_imageColSend": {
+			state = executeImageSend(state, pid, process, functionName,
+					arguments, argumentValues, one, statement.getSource());
+			break;
+		}
+		case "$mpi_imageP2pRecv":
+			state = executeImageRecv(state, pid, process, functionName,
+					arguments, argumentValues, zero, statement.getSource());
+			break;
+		case "$mpi_imageColRecv":
+			state = executeImageRecv(state, pid, process, functionName,
+					arguments, argumentValues, one, statement.getSource());
 			break;
 		default:
 			throw new CIVLInternalException("Unknown civl-mpi function: "
@@ -568,7 +586,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		NumericExpression symQueueID = (NumericExpression) universe.tupleRead(
 				MPIComm, universe.intObject(4));
 		SymbolicExpression colGcomm, colGcommHandle, colComm;
-		ArrayList<ImmutableCollectiveSnapshotsEntry> queue;
+		ImmutableCollectiveSnapshotsEntry[] queue;
 		boolean createNewEntry;
 		boolean entryComplete;
 		IntegerNumber tmpNumber;
@@ -606,18 +624,18 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		// create one.
 		createNewEntry = true; // if no corresponding entry there
 		entryComplete = false; // if the entry is completed
-		queue = tmpState.getSnapshots(queueID);
+		queue = stateFactory.getSnapshotsQueue(tmpState, queueID);
 		if (queue != null) {
-			queueLength = queue.size();
+			queueLength = queue.length;
 			for (int entryPos = 0; entryPos < queueLength; entryPos++) {
-				ImmutableCollectiveSnapshotsEntry entry = queue.get(entryPos);
+				ImmutableCollectiveSnapshotsEntry entry = queue[entryPos];
 
 				if (!entry.isRecorded(place)) {
 					createNewEntry = false;
 					tmpState = stateFactory.addToCollectiveSnapshotsEntry(
 							tmpState, pid, place, queueID, entryPos, assertion);
-					entryComplete = tmpState.getSnapshots(queueID).get(0)
-							.isComplete();
+					entryComplete = stateFactory.getSnapshotsQueue(tmpState,
+							queueID)[0].isComplete();
 					break;
 				}
 			}
@@ -803,5 +821,157 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		gcomm = eval.value;
 		return universe.tupleRead(gcomm,
 				universe.intObject(LibcommEvaluator.messageBufferField));
+	}
+
+	// TODO: doc !!!
+	private State executeImageSend(State state, int pid, String process,
+			String function, Expression[] arguments,
+			SymbolicExpression[] argumentValues, NumericExpression channelIdx,
+			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
+		ImmutableState tmpState = (ImmutableState) state;
+		ImmutableCollectiveSnapshotsEntry[] queue;
+		SymbolicExpression[] msgBuffers;
+		int mpiCommIdInt, queueLength;
+
+		// MPI_Comm ID should always be concrete:
+		mpiCommIdInt = ((IntegerNumber) universe
+				.extractNumber((NumericExpression) argumentValues[0]))
+				.intValue();
+		queue = stateFactory.getSnapshotsQueue(tmpState, mpiCommIdInt);
+		if (queue != null && queue.length > 0) {
+			// change entries in the queue
+			queueLength = queue.length;
+			msgBuffers = new SymbolicExpression[queueLength];
+			for (int i = 0; i < queueLength; i++) {
+				ImmutableCollectiveSnapshotsEntry entry = queue[i];
+				SymbolicExpression twoBuffers;
+				int place = ((IntegerNumber) universe
+						.extractNumber((NumericExpression) argumentValues[2]))
+						.intValue();
+
+				twoBuffers = entry.getMsgBuffers();
+				if (!entry.isRecorded(place)) {
+					if (twoBuffers != null) {
+						SymbolicExpression channel;
+
+						channel = universe.arrayRead(twoBuffers, channelIdx);
+						channel = doMPISendOnSnapshots(state, process,
+								function, channel, argumentValues[1],
+								civlsource);
+						twoBuffers = universe.arrayWrite(twoBuffers,
+								channelIdx, channel);
+					}
+				}
+				msgBuffers[i] = twoBuffers;
+			}
+			state = stateFactory.commitUpdatedChannelsToEntries(tmpState,
+					mpiCommIdInt, msgBuffers);
+		}
+		return state;
+	}
+
+	private State executeImageRecv(State state, int pid, String process,
+			String function, Expression[] arguments,
+			SymbolicExpression[] argumentValues, NumericExpression channelIdx,
+			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
+		ImmutableState tmpState = (ImmutableState) state;
+		ImmutableCollectiveSnapshotsEntry[] queue;
+		int mpiCommIdInt, queueLength;
+		SymbolicExpression[] msgBuffers;
+		NumericExpression src, dest, tag;
+
+		src = (NumericExpression) argumentValues[1];
+		dest = (NumericExpression) argumentValues[2];
+		tag = (NumericExpression) argumentValues[3];
+		// MPI_Comm ID should always be concrete:
+		mpiCommIdInt = ((IntegerNumber) universe
+				.extractNumber((NumericExpression) argumentValues[0]))
+				.intValue();
+		queue = stateFactory.getSnapshotsQueue(tmpState, mpiCommIdInt);
+		if (queue != null && queue.length > 0) {
+			// change entries in the queue
+			queueLength = queue.length;
+			msgBuffers = new SymbolicExpression[queueLength];
+			for (int i = 0; i < queueLength; i++) {
+				SymbolicExpression twoMsgBuffers;
+				ImmutableCollectiveSnapshotsEntry entry = queue[i];
+				int place = ((IntegerNumber) universe
+						.extractNumber((NumericExpression) argumentValues[2]))
+						.intValue();
+
+				if (!entry.isRecorded(place)) {
+					twoMsgBuffers = entry.getMsgBuffers();
+					if (twoMsgBuffers != null) {
+						SymbolicExpression msgBuffer = universe.arrayRead(
+								twoMsgBuffers, channelIdx);
+
+						msgBuffer = doMPIRecvOnSnapshots(tmpState, pid,
+								process, function, msgBuffer, src, dest, tag,
+								civlsource);
+						twoMsgBuffers = universe.arrayWrite(twoMsgBuffers,
+								channelIdx, msgBuffer);
+						msgBuffers[i] = twoMsgBuffers;
+					} else
+						msgBuffers[i] = null;
+				}
+			}
+			state = stateFactory.commitUpdatedChannelsToEntries(tmpState,
+					mpiCommIdInt, msgBuffers);
+		}
+		return state;
+	}
+
+	// TODO:DOC!!!
+	private SymbolicExpression doMPISendOnSnapshots(State state,
+			String process, String function, SymbolicExpression channel,
+			SymbolicExpression msg, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
+		LibcommExecutor libexecutor;
+
+		try {
+			libexecutor = (LibcommExecutor) libExecutorLoader
+					.getLibraryExecutor("comm", primaryExecutor, modelFactory,
+							symbolicUtil, symbolicAnalyzer);
+			return libexecutor.putMsgInChannel(channel, msg, civlsource);
+		} catch (LibraryLoaderException e) {
+			StringBuffer message = new StringBuffer();
+
+			message.append("unable to load the library executor for the library ");
+			message.append("comm");
+			message.append(" for the function ");
+			message.append(function);
+			this.errorLogger.logSimpleError(civlsource, state, process,
+					this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.LIBRARY, message.toString());
+			return channel;
+		}
+	}
+
+	// TODO:DOC!!!
+	private SymbolicExpression doMPIRecvOnSnapshots(State state, int pid,
+			String process, String function, SymbolicExpression channel,
+			NumericExpression src, NumericExpression dest,
+			NumericExpression tag, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
+		LibcommExecutor libexecutor;
+
+		try {
+			libexecutor = (LibcommExecutor) libExecutorLoader
+					.getLibraryExecutor("comm", primaryExecutor, modelFactory,
+							symbolicUtil, symbolicAnalyzer);
+			return libexecutor.getMsgOutofChannel(state, pid, channel, src,
+					dest, tag, civlsource).right;
+		} catch (LibraryLoaderException e) {
+			StringBuffer message = new StringBuffer();
+
+			message.append("unable to load the library executor for the library ");
+			message.append("comm");
+			message.append(" for the function ");
+			message.append(function);
+			this.errorLogger.logSimpleError(civlsource, state, process,
+					this.symbolicAnalyzer.stateInformation(state),
+					ErrorKind.LIBRARY, message.toString());
+			return channel;
+		}
 	}
 }

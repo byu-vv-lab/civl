@@ -2,7 +2,6 @@ package edu.udel.cis.vsl.civl.state.common.immutable;
 
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
@@ -809,14 +808,17 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public State setProcessState(State state, ProcessState p) {
 		ImmutableState theState = (ImmutableState) state;
+		ImmutableState newState;
 		ImmutableProcessState[] newProcesses;
 		int pid = p.getPid();
 
 		newProcesses = theState.copyProcessStates();
 		newProcesses[pid] = (ImmutableProcessState) p;
 		theState = theState.setProcessStates(newProcesses);
-		return new ImmutableState(newProcesses, theState.copyScopes(),
+		newState = new ImmutableState(newProcesses, theState.copyScopes(),
 				theState.getPathCondition());
+		newState = newState.setSnapshotsQueues(theState.getSnapshotsQueues());
+		return newState;
 	}
 
 	@Override
@@ -1867,6 +1869,32 @@ public class ImmutableStateFactory implements StateFactory {
 
 	/* **************** MPI contracts related functions ******************* */
 	@Override
+	public ImmutableState commitUpdatedChannelsToEntries(State state,
+			int queueId, SymbolicExpression[] newBuffers) {
+		ImmutableState tmpState = (ImmutableState) state;
+		ImmutableCollectiveSnapshotsEntry[][] queues = tmpState
+				.getSnapshotsQueues();
+		ImmutableCollectiveSnapshotsEntry[] queue;
+		int queueLength;
+
+		assert queues != null : "Commite updated message channels to a "
+				+ "state with empty collective queue";
+		assert queues.length > queueId;
+		queue = queues[queueId];
+		assert queue != null : "Commite updated message channels to an unexisted collective queue";
+		queueLength = queue.length;
+		assert queueLength == newBuffers.length;
+		for (int i = 0; i < queueLength; i++) {
+			ImmutableCollectiveSnapshotsEntry entry = queue[i];
+
+			entry = entry.setMsgBuffers(newBuffers[i]);
+			queue[i] = entry;
+		}
+		queues[queueId] = queue;
+		return tmpState.setSnapshotsQueues(queues);
+	}
+
+	@Override
 	public ImmutableState mergeMonostates(State state,
 			ImmutableCollectiveSnapshotsEntry entry) {
 		ImmutableState newState;
@@ -1916,17 +1944,16 @@ public class ImmutableStateFactory implements StateFactory {
 	@Override
 	public ImmutableState addToCollectiveSnapshotsEntry(ImmutableState state,
 			int pid, int place, int queueID, int entryPos, Expression assertion) {
-		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = state
-				.getSnapshots(queueID);
+		ImmutableCollectiveSnapshotsEntry[] queue = state.getSnapshots(queueID);
 		ImmutableCollectiveSnapshotsEntry entry;
 		ImmutableMonoState snapshot;
 
 		assert queue != null;
-		entry = queue.get(entryPos);
+		entry = queue[entryPos];
 		// take a snapshot
 		snapshot = takeSnapshot((ImmutableState) state, pid);
 		entry = entry.insertMonoState(place, snapshot, assertion);
-		queue.set(entryPos, entry);
+		queue[entryPos] = entry;
 		return state.updateQueue(queueID, queue);
 	}
 
@@ -1934,32 +1961,35 @@ public class ImmutableStateFactory implements StateFactory {
 	public ImmutableState createCollectiveSnapshotsEnrty(ImmutableState state,
 			int pid, int numProcesses, int place, int queueID,
 			Expression assertion, SymbolicExpression channels, ContractKind kind) {
-		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = state
-				.getSnapshots(queueID);
+		ImmutableCollectiveSnapshotsEntry[] queue = state.getSnapshots(queueID);
+		ImmutableCollectiveSnapshotsEntry[] newQueue;
 		ImmutableCollectiveSnapshotsEntry entry = new ImmutableCollectiveSnapshotsEntry(
 				numProcesses, universe, kind);
 		ImmutableMonoState snapshot;
 
-		if (queue == null)
-			queue = new ArrayList<>();
 		// take a snapshot
 		snapshot = this.takeSnapshot((ImmutableState) state, pid);
 		entry = entry.insertMonoState(place, snapshot, assertion);
-		entry = entry.setChannels(channels);
-		queue.add(entry);
-		return state.updateQueue(queueID, queue);
+		entry = entry.setMsgBuffers(channels);
+		assert queue != null;
+		newQueue = new ImmutableCollectiveSnapshotsEntry[queue.length + 1];
+		for (int i = 0; i < queue.length; i++)
+			newQueue[i] = queue[i];
+		newQueue[queue.length] = entry;
+		return state.updateQueue(queueID, newQueue);
 	}
 
 	@Override
 	public State dequeueCollectiveSnapshotsEntry(State state, int queueID) {
 		ImmutableState immuState = (ImmutableState) state;
-		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = immuState
+		ImmutableCollectiveSnapshotsEntry[] queue = immuState
 				.getSnapshots(queueID);
 
-		assert queue != null;
-		queue.remove(0);
-		if (queue.isEmpty())
-			queue = null;
+		assert queue != null && queue.length > 0 : "Dequeues on an empty queue";
+		if (queue.length == 1)
+			queue = new ImmutableCollectiveSnapshotsEntry[0];
+		else
+			queue = Arrays.copyOfRange(queue, 1, queue.length - 1);
 		return immuState.updateQueue(queueID, queue);
 	}
 
@@ -1967,13 +1997,20 @@ public class ImmutableStateFactory implements StateFactory {
 	public ImmutableCollectiveSnapshotsEntry peekCollectiveSnapshotsEntry(
 			State state, int queueID) {
 		ImmutableState immuState = (ImmutableState) state;
-		ArrayList<ImmutableCollectiveSnapshotsEntry> queue = immuState
+		ImmutableCollectiveSnapshotsEntry[] queue = immuState
 				.getSnapshots(queueID);
-		ImmutableCollectiveSnapshotsEntry entry = queue.get(0);
+		ImmutableCollectiveSnapshotsEntry entry;
+		;
 
-		assert queue != null;
-		assert entry.isComplete();
+		assert queue != null && queue.length > 0 : "Peeks on an empty queue";
+		entry = queue[0];
 		return entry;
+	}
+
+	@Override
+	public ImmutableCollectiveSnapshotsEntry[] getSnapshotsQueue(State state,
+			int queueID) {
+		return ((ImmutableState) state).getSnapshots(queueID);
 	}
 
 	/**

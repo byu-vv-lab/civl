@@ -28,6 +28,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.LibraryLoaderException;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.Reasoner;
 import edu.udel.cis.vsl.sarl.IF.ValidityResult.ResultType;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -258,8 +259,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		boolean isDerefable = symbolicUtil
-				.isDerefablePointer(
-				argumentValues[0]);
+				.isDerefablePointer(argumentValues[0]);
 		SymbolicExpression result = isDerefable ? this.trueValue
 				: this.falseValue;
 
@@ -306,12 +306,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		NumericExpression tag = (NumericExpression) argumentValues[2];
 		NumericExpression dest;
 		SymbolicExpression buf;
-		SymbolicExpression bufRow = null;
-		SymbolicExpression queue = null;
-		NumericExpression queueLength = null;
-		SymbolicExpression messages = null;
 		Evaluation eval;
-		int msgIdx;
+		Pair<SymbolicExpression, SymbolicExpression> msg_buf;
 
 		eval = evaluator.dereference(civlsource, state, process, arguments[0],
 				commHandle, false);
@@ -324,24 +320,10 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, threeObject);
 		dest = (NumericExpression) universe.tupleRead(comm, zeroObject);
-		bufRow = universe.arrayRead(buf, source);
-		queue = universe.arrayRead(bufRow, dest);
-		queueLength = (NumericExpression) universe.tupleRead(queue, zeroObject);
-		messages = universe.tupleRead(queue, oneObject);
-		msgIdx = this.getMatchedMsgIdx(state, pid, messages, queueLength, tag,
+		msg_buf = getMsgOutofChannel(state, pid, buf, source, dest, tag,
 				civlsource);
-		if (msgIdx == -1)
-			throw new CIVLExecutionException(ErrorKind.INTERNAL,
-					Certainty.CONCRETE, state.getProcessState(pid).name(),
-					"Message dequeue fails",
-					this.symbolicAnalyzer.stateInformation(state), civlsource);
-		message = universe.arrayRead(messages, universe.integer(msgIdx));
-		messages = universe.removeElementAt(messages, msgIdx);
-		queueLength = universe.subtract(queueLength, one);
-		queue = universe.tupleWrite(queue, zeroObject, queueLength);
-		queue = universe.tupleWrite(queue, oneObject, messages);
-		bufRow = universe.arrayWrite(bufRow, dest, queue);
-		buf = universe.arrayWrite(buf, source, bufRow);
+		message = msg_buf.left;
+		buf = msg_buf.right;
 		gcomm = universe.tupleWrite(gcomm, threeObject, buf);
 		state = this.primaryExecutor.assign(civlsource, state, process,
 				gcommHandle, gcomm);
@@ -381,15 +363,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		SymbolicExpression comm;
 		SymbolicExpression gcommHandle;
 		SymbolicExpression gcomm;
-		SymbolicExpression source;
-		SymbolicExpression dest;
 		SymbolicExpression buf;
-		SymbolicExpression bufRow;
-		SymbolicExpression queue;
-		SymbolicExpression queueLength;
-		SymbolicExpression messages;
 		Evaluation eval;
-		int int_queueLength;
 
 		eval = evaluator.dereference(civlsource, state, process, arguments[0],
 				commHandle, false);
@@ -401,22 +376,8 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 		state = eval.state;
 		gcomm = eval.value;
 		buf = universe.tupleRead(gcomm, threeObject);
+		buf = putMsgInChannel(buf, newMessage, civlsource);
 		// TODO checks if source is equal to the place of comm.
-		source = universe.tupleRead(newMessage, zeroObject);
-		dest = universe.tupleRead(newMessage, oneObject);
-		bufRow = universe.arrayRead(buf, (NumericExpression) source);
-		queue = universe.arrayRead(bufRow, (NumericExpression) dest);
-		queueLength = universe.tupleRead(queue, zeroObject);
-		messages = universe.tupleRead(queue, oneObject);
-		messages = universe.append(messages, newMessage);
-		int_queueLength = symbolicUtil.extractInt(civlsource,
-				(NumericExpression) queueLength);
-		int_queueLength++;
-		queueLength = universe.integer(int_queueLength);
-		queue = universe.tupleWrite(queue, zeroObject, queueLength);
-		queue = universe.tupleWrite(queue, oneObject, messages);
-		bufRow = universe.arrayWrite(bufRow, (NumericExpression) dest, queue);
-		buf = universe.arrayWrite(buf, (NumericExpression) source, bufRow);
 		gcomm = universe.tupleWrite(gcomm, threeObject, buf);
 		state = this.primaryExecutor.assign(civlsource, state, process,
 				gcommHandle, gcomm);
@@ -707,8 +668,7 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		boolean isDerefable = symbolicUtil
-				.isDerefablePointer(
-				argumentValues[0]);
+				.isDerefablePointer(argumentValues[0]);
 		SymbolicExpression result = isDerefable ? this.trueValue
 				: this.falseValue;
 
@@ -947,5 +907,80 @@ public class LibcommExecutor extends BaseLibraryExecutor implements
 				(SymbolicTupleType) messageType.getDynamicType(universe),
 				emptyMessageComponents);
 		return message;
+	}
+
+	/**
+	 * Public helper function of inserting a message into the destination
+	 * position of a given message buffer. The function may be called by other
+	 * library (e.g. MPI Library).
+	 * 
+	 * @param channel
+	 *            The message buffer which is a 2-d array of message queues.
+	 * @param source
+	 *            The place where the message comes from
+	 * @param dest
+	 *            The destination where the message goes to
+	 * @param message
+	 *            The message delivered
+	 * @param civlsource
+	 *            The CIVLSource of this action
+	 * @return
+	 */
+	public SymbolicExpression putMsgInChannel(SymbolicExpression channel,
+			SymbolicExpression message, CIVLSource civlsource) {
+		SymbolicExpression buf = channel;
+		SymbolicExpression bufRow, queue, messages;
+		NumericExpression queueLength, source, dest;
+		int int_queueLength;
+
+		source = (NumericExpression) universe.tupleRead(message, zeroObject);
+		dest = (NumericExpression) universe.tupleRead(message, oneObject);
+		bufRow = universe.arrayRead(buf, (NumericExpression) source);
+		queue = universe.arrayRead(bufRow, (NumericExpression) dest);
+		queueLength = (NumericExpression) universe.tupleRead(queue, zeroObject);
+		messages = universe.tupleRead(queue, oneObject);
+		messages = universe.append(messages, message);
+		int_queueLength = symbolicUtil.extractInt(civlsource, queueLength);
+		int_queueLength++;
+		queueLength = universe.integer(int_queueLength);
+		queue = universe.tupleWrite(queue, zeroObject, queueLength);
+		queue = universe.tupleWrite(queue, oneObject, messages);
+		bufRow = universe.arrayWrite(bufRow, (NumericExpression) dest, queue);
+		buf = universe.arrayWrite(buf, (NumericExpression) source, bufRow);
+		return buf;
+	}
+
+	public Pair<SymbolicExpression, SymbolicExpression> getMsgOutofChannel(
+			State state, int pid, SymbolicExpression channel,
+			NumericExpression source, NumericExpression dest,
+			NumericExpression tag, CIVLSource civlsource)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression bufRow, queue, messages;
+		SymbolicExpression message, buf;
+		NumericExpression queueLength;
+		int msgIdx;
+
+		buf = channel;
+		bufRow = universe.arrayRead(channel, source);
+		queue = universe.arrayRead(bufRow, dest);
+		queueLength = (NumericExpression) universe.tupleRead(queue, zeroObject);
+		messages = universe.tupleRead(queue, oneObject);
+		msgIdx = this.getMatchedMsgIdx(state, pid, messages, queueLength, tag,
+				civlsource);
+		if (msgIdx == -1) {
+			state = errorLogger.logError(civlsource, state, state
+					.getProcessState(pid).name(), symbolicAnalyzer
+					.stateInformation(state), universe.trueExpression(),
+					ResultType.NO, ErrorKind.INTERNAL, "Message dequeue fails");
+			return new Pair<>(getEmptyMessage(state), buf);
+		}
+		message = universe.arrayRead(messages, universe.integer(msgIdx));
+		messages = universe.removeElementAt(messages, msgIdx);
+		queueLength = universe.subtract(queueLength, one);
+		queue = universe.tupleWrite(queue, zeroObject, queueLength);
+		queue = universe.tupleWrite(queue, oneObject, messages);
+		bufRow = universe.arrayWrite(bufRow, dest, queue);
+		buf = universe.arrayWrite(buf, source, bufRow);
+		return new Pair<>(message, buf);
 	}
 }

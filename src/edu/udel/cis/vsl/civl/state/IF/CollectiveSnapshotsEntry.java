@@ -65,13 +65,11 @@ public interface CollectiveSnapshotsEntry {
 	int numInvolvedProcesses();
 
 	/**
-	 * Returns the message channel specified by the source and destination.
+	 * Returns the message channels stored in this entry.
 	 * 
-	 * @param src
-	 *            The source of the messages in the channel
-	 * @param dest
-	 *            The destination of the messages in the channel
-	 * @return
+	 *
+	 * @return An array of length 2 of message buffers. one for "p2p" and the
+	 *         other for "col"
 	 */
 	SymbolicExpression getMsgBuffers();
 

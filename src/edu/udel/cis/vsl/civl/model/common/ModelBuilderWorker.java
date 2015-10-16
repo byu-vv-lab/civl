@@ -41,12 +41,10 @@ import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.BinaryExpression.BINARY_OPERATOR;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.expression.LHSExpression;
-import edu.udel.cis.vsl.civl.model.IF.expression.SystemFunctionCallExpression;
 import edu.udel.cis.vsl.civl.model.IF.expression.VariableExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.AssignStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.CivlParForSpawnStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.LoopBranchStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.MallocStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
@@ -95,8 +93,6 @@ public class ModelBuilderWorker {
 
 	Map<CIVLFunction, StatementNode> parProcFunctions = new HashMap<>();
 
-	Map<CivlParForSpawnStatement, CallOrSpawnStatement> incompleteParForEnters = new HashMap<>();
-
 	/** Used to shortcut checking whether circular types are bundleable. */
 	private List<CIVLType> bundleableEncountered = new LinkedList<>();
 
@@ -119,8 +115,6 @@ public class ModelBuilderWorker {
 	 * package-private since CommonModelFactory needs to access it
 	 */
 	Map<CallOrSpawnStatement, Function> callStatements;
-
-	List<SystemFunctionCallExpression> systemCallExpressions = new ArrayList<>();
 
 	// Map<Scope, CIVLFunction> elaborateDomainFunction = new HashMap<>();
 
@@ -587,71 +581,6 @@ public class ModelBuilderWorker {
 	}
 
 	/**
-	 * Set the function field of each call or spawn statements with the
-	 * corresponding function. This has to be a post-translation method because
-	 * the function might haven't been translated at the time when the function
-	 * call is translated.
-	 */
-	protected void completeCallOrSpawnStatements() {
-		for (Entry<CallOrSpawnStatement, Function> entry : callStatements
-				.entrySet()) {
-			CallOrSpawnStatement call = entry.getKey();
-			CIVLFunction function = functionMap.get(entry.getValue());
-
-			call.setFunction(factory.functionIdentifierExpression(
-					function.getSource(), function));
-			// TODO when the function is a function pointer, we are unable to
-			// identify if it is a system call.
-			if (call.isSystemCall()) {
-				call.setGuard(factory.systemGuardExpression(call));
-			}
-		}
-		for (SystemFunctionCallExpression callExpression : this.systemCallExpressions) {
-			callExpression.setExpressionType(callExpression.callStatement()
-					.function().returnType());
-		}
-		for (Entry<CivlParForSpawnStatement, CallOrSpawnStatement> entry : this.incompleteParForEnters
-				.entrySet()) {
-			entry.getKey().setParProcFunction(entry.getValue().function());
-		}
-		// if (this.elaborateDomainCalls.size() > 0) {
-		// if (this.elaborateDomainFunction.size() < 1) {
-		// CIVLFunction func = factory.systemFunction(factory
-		// .systemSource(),
-		// factory.identifier(factory.systemSource(),
-		// "$elaborate_rectangular_domain"), Arrays
-		// .asList(factory.variable(
-		// factory.systemSource(),
-		// factory.typeFactory().domainType(
-		// factory.typeFactory()
-		// .rangeType()), factory
-		// .identifier(
-		// factory.systemSource(),
-		// "domain"), 1)), factory
-		// .typeFactory().voidType(), this.systemScope,
-		// "domain");
-		//
-		// this.elaborateDomainFunction.put(systemScope, func);
-		// needToAddElaborateDomainFunction = true;
-		// }
-		// for (CallOrSpawnStatement call : this.elaborateDomainCalls) {
-		// for (Entry<Scope, CIVLFunction> entry : elaborateDomainFunction
-		// .entrySet()) {
-		// Scope callScope = call.source().scope(), functionScope = entry
-		// .getKey();
-		//
-		// if (callScope.isDescendantOf(functionScope)
-		// || callScope.id() == functionScope.id()) {
-		// call.setFunction(factory.functionIdentifierExpression(
-		// entry.getValue().getSource(), entry.getValue()));
-		// break;
-		// }
-		// }
-		// }
-		// }
-	}
-
-	/**
 	 * Complete the model by updating its fields according to the information
 	 * obtained by the translation.
 	 * 
@@ -988,7 +917,8 @@ public class ModelBuilderWorker {
 		translateUndefinedFunctions();
 		translateParProcFunctions();
 		translateUndefinedFunctions();
-		completeCallOrSpawnStatements();
+		// TODO when the function is a function pointer, we are unable to
+		// identify if it is a system call.
 		completeBundleType();
 		completeHeapType();
 		completeTimeVar();
@@ -1032,4 +962,28 @@ public class ModelBuilderWorker {
 		return model;
 	}
 
+	// void pushChooseGuard(Location startLocation, Expression guard) {
+	// if (this.chooseGuards == null)
+	// this.chooseGuards = new Stack<>();
+	// this.chooseGuards.add(new Pair<>(startLocation, guard));
+	// }
+	//
+	// void clearChooseGuard() {
+	// if (this.chooseGuards != null)
+	// this.chooseGuards.clear();
+	// }
+	//
+	// Expression popChooseGuard() {
+	// if (this.chooseGuards != null)
+	// if (!this.chooseGuards.isEmpty())
+	// return this.chooseGuards.pop().right;
+	// return null;
+	// }
+	//
+	// Location peekChooseGuardLocaton() {
+	// if (this.chooseGuards != null)
+	// if (!this.chooseGuards.isEmpty())
+	// return this.chooseGuards.peek().left;
+	// return null;
+	// }
 }

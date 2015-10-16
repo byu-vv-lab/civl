@@ -700,5 +700,40 @@ public interface StateFactory {
 	 */
 	ImmutableCollectiveSnapshotsEntry peekCollectiveSnapshotsEntry(State state,
 			int queueID);
+
+	/**
+	 * Update all entries in a collective queue with a group of message buffers.
+	 * Note: The entry in position i will be updated with the message buffers in
+	 * newBuffers[i]. The 0 position in collective queue is the head of the
+	 * queue. The reason of using an array of message buffers to update the
+	 * collective queue is to prevent the queue in state be changed for other
+	 * purposes.
+	 * 
+	 * 
+	 * @param state
+	 *            The current state
+	 * @param queueId
+	 *            The ID of the collective queue
+	 * @param newChannels
+	 *            The array of new message buffers. see
+	 *            {@link CollectiveSnapshotsEntry#getMsgBuffers()}
+	 * @return
+	 */
+	ImmutableState commitUpdatedChannelsToEntries(State state, int queueId,
+			SymbolicExpression[] newChannels);
+
+	/**
+	 * Returns the corresponding snapshot queue by giving the identifier of an
+	 * MPI communicator (The identifier is a component of the CIVL MPI library
+	 * implementation). If there is no such a snapshot queue for the MPI
+	 * communicator, returns an empty array.
+	 * 
+	 * @param id
+	 *            The identifier of a MPI communicator
+	 * @return
+	 */
+	ImmutableCollectiveSnapshotsEntry[] getSnapshotsQueue(State state,
+			int queueID);
 	/* ****************** End of Snapshots related method ****************** */
+
 }

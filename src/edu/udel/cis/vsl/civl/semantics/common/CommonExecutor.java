@@ -305,7 +305,7 @@ public class CommonExecutor implements Executor {
 					.preconditions();
 
 			if (preconditions != null && !preconditions.isEmpty())
-				this.assertMPIContractClauses(state, pid, preconditions);
+				state = assertMPIContractClauses(state, pid, preconditions);
 		}
 		return state;
 	}

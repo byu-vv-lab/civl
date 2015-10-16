@@ -252,7 +252,7 @@ public class ModelTranslator {
 		frontEnd.getConfiguration().setLanguage(Language.CIVL_C);
 		if (config.svcomp()) {
 			frontEnd.getConfiguration().setSvcomp(config.svcomp());
-			frontEnd.getConfiguration().setArchitecture(Architecture._32_BIT);
+			frontEnd.getConfiguration().setArchitecture(Architecture._32_BIT); 
 		}
 		this.preprocessor = frontEnd.getPreprocessor();
 		systemIncludes = this.getSysIncludes(cmdSection);

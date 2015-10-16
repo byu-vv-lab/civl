@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.state.common.immutable;
 
+import java.util.Map;
+
 import edu.udel.cis.vsl.civl.model.IF.expression.ContractClauseExpression.ContractKind;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.state.IF.CollectiveSnapshotsEntry;
@@ -128,7 +130,7 @@ public class ImmutableCollectiveSnapshotsEntry implements
 		clone.isSimplified = isSimplified.clone();
 		clone.isRecorded = this.isRecorded.clone();
 		clone.maxPid = this.maxPid;
-		clone.channels = this.channels;
+		clone.channels = channels;
 		clone.kind = this.kind;
 		return clone;
 	}
@@ -196,6 +198,17 @@ public class ImmutableCollectiveSnapshotsEntry implements
 	}
 
 	/* ************* Simplification and collection interfaces **************** */
+	void makeCanonic(int canonicId,
+			Map<ImmutableDynamicScope, ImmutableDynamicScope> scopeMap,
+			Map<ImmutableProcessState, ImmutableProcessState> processesMap) {
+		if (monoStates == null)
+			return;
+		for (ImmutableMonoState state : monoStates)
+			if (state != null)
+				state.makeCanonic(canonicId, universe, scopeMap, processesMap);
+		channels = (channels != null) ? universe.canonic(channels) : null;
+	}
+
 	CollectiveSnapshotsEntry simplify() {
 		ImmutableMonoState[] newMonoStates;
 		ImmutableCollectiveSnapshotsEntry newCollectiveEntry;
@@ -251,10 +264,16 @@ public class ImmutableCollectiveSnapshotsEntry implements
 		return kind;
 	}
 
-	ImmutableCollectiveSnapshotsEntry setChannels(SymbolicExpression channels) {
+	@Override
+	public String toString() {
+		return "Snapshot entry: " + instanceId;
+	}
+
+	ImmutableCollectiveSnapshotsEntry setMsgBuffers(SymbolicExpression channels) {
 		ImmutableCollectiveSnapshotsEntry newEntry = this.copy();
 
-		newEntry.channels = channels;
+		newEntry.channels = (channels != null) ? universe.canonic(channels)
+				: null;
 		return newEntry;
 	}
 

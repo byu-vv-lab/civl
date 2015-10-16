@@ -589,7 +589,7 @@ public class FunctionTranslator {
 					parForEndSource);
 
 			// modelBuilder.callStatements.put(call, value)
-			procFunc = null;
+			procFunc = call.function();
 		} else {
 			CIVLSource procFuncSource = modelFactory.sourceOf(bodyNode);
 			CIVLSource procFuncStartSource = modelFactory
@@ -620,8 +620,8 @@ public class FunctionTranslator {
 		location = modelFactory.location(parForBeginSource, scope);
 		parForEnter = modelFactory.civlParForEnterStatement(parForBeginSource,
 				location, domain, domSizeVar, parProcs, procFunc);
-		if (procFunc == null)
-			modelBuilder.incompleteParForEnters.put(parForEnter, call);
+		assert procFunc != null;
+		parForEnter.setParProcFunction(procFunc);
 		result = result.combineWith(new CommonFragment(parForEnter));
 		location = modelFactory.location(parForEndSource, scope);
 		callWaitAll = modelFactory.callOrSpawnStatement(parForEndSource,
@@ -1524,18 +1524,43 @@ public class FunctionTranslator {
 				modelFactory.sourceOfBeginning(atomicNode), scope);
 		Location end = modelFactory.location(
 				modelFactory.sourceOfEnd(atomicNode), scope);
+		Location firstStmtLoc, atomicEnterLoc;
+		Iterator<Statement> firstStmtsIter;
+		Expression guard = null;
 
 		if (atomicNode.isAtom())
 			this.atomCount++;
 		else
 			this.atomicCount++;
 		bodyFragment = translateStatementNode(scope, bodyNode);
+		firstStmtLoc = bodyFragment.startLocation();
+		// translate of the first statement guard:
+		// stackTopLoc = modelBuilder.peekChooseGuardLocaton();
+		// if (stackTopLoc != null && stackTopLoc.id() == firstStmtLoc.id()) {
+		// assert firstStmtLoc.getNumOutgoing() == 1;
+		// guard = modelBuilder.popChooseGuard();
+		// modelBuilder.clearChooseGuard();
+		// } else {
+		firstStmtsIter = firstStmtLoc.outgoing().iterator();
+		while (firstStmtsIter.hasNext()) {
+			Statement currStmt = firstStmtsIter.next();
+
+			guard = (guard == null) ? currStmt.guard() : modelFactory
+					.binaryExpression(currStmt.getSource(),
+							BINARY_OPERATOR.AND, guard, currStmt.guard());
+		}
+		// }
 		if (atomicNode.isAtom())
 			this.atomCount--;
 		else
 			this.atomicCount--;
 		bodyFragment = modelFactory.atomicFragment(atomicNode.isAtom(),
 				bodyFragment, start, end);
+		atomicEnterLoc = bodyFragment.startLocation();
+		assert atomicEnterLoc.getNumOutgoing() == 1 : "ENTER_ATOMIC location "
+				+ "should only have exactly one outgoing statement.";
+		assert guard != null;
+		atomicEnterLoc.getSoleOutgoing().setGuard(guard);
 		return bodyFragment;
 	}
 
@@ -1556,7 +1581,9 @@ public class FunctionTranslator {
 		Location startLocation = modelFactory.location(startSource, scope);
 		int defaultOffset = 0;
 		Fragment result = new CommonFragment();
-		Expression defaultGuard = null;
+		Expression defaultGuard = null; // guard of default cqse
+		Expression wholeGuard = null; // guard of wholse statement
+		NoopStatement insertedNoop;
 
 		if (chooseStatementNode.getDefaultCase() != null) {
 			defaultOffset = 1;
@@ -1576,11 +1603,9 @@ public class FunctionTranslator {
 			caseGuard = this.factorOutGuards(caseFragment.startLocation());
 			caseFragment.updateStartLocation(startLocation);
 			result.addFinalStatementSet(caseFragment.finalStatements());
-			defaultGuard = this.disjunction(defaultGuard, caseGuard);
+			wholeGuard = this.disjunction(wholeGuard, caseGuard);
 		}
-		if (!modelFactory.isTrue(defaultGuard)) {
-			defaultGuard = modelFactory.unaryExpression(
-					defaultGuard.getSource(), UNARY_OPERATOR.NOT, defaultGuard);
+		if (!modelFactory.isTrue(wholeGuard)) {
 			if (chooseStatementNode.getDefaultCase() != null) {
 				Fragment defaultFragment = translateStatementNode(scope,
 						chooseStatementNode.getDefaultCase());
@@ -1591,23 +1616,33 @@ public class FunctionTranslator {
 									+ "of a clause of $choose should not use $here",
 							defaultFragment.startLocation().getSource());
 				}
+				defaultGuard = modelFactory.unaryExpression(
+						wholeGuard.getSource(), UNARY_OPERATOR.NOT, wholeGuard);
 				defaultFragment.addGuardToStartLocation(defaultGuard,
 						modelFactory);
 				defaultFragment.updateStartLocation(startLocation);
 				result.addFinalStatementSet(defaultFragment.finalStatements());
+				wholeGuard = modelFactory.trueExpression(startSource);
 			}
 		}
+		assert wholeGuard != null;
 		// insert noop at the beginning the fragment so that the guard of the
 		// start location will be true;
-		return this.insertNoopAtBeginning(startSource, scope, result);
+		result = insertNoopAtBeginning(startSource, scope, result);
+		result.startLocation().getSoleOutgoing().setGuard(wholeGuard);
+		insertedNoop = (NoopStatement) result.startLocation().getSoleOutgoing();
+		insertedNoop.setRemovable();
+		return result;
 	}
 
 	private Fragment insertNoopAtBeginning(CIVLSource source, Scope scope,
 			Fragment old) {
 		Location start = modelFactory.location(source, scope);
-		NoopStatement noop = modelFactory.noopStatementTemporary(source, start);
-		Fragment noopFragment = new CommonFragment(noop);
+		NoopStatement noop;
+		Fragment noopFragment;
 
+		noop = modelFactory.noopStatementTemporary(source, start);
+		noopFragment = new CommonFragment(noop);
 		return noopFragment.combineWith(old);
 	}
 
@@ -2052,9 +2087,10 @@ public class FunctionTranslator {
 		// modelFactory.sourceOfBeginning(functionCallNode);TODO:Changed
 		ArrayList<Expression> arguments = new ArrayList<Expression>();
 		Location location;
-		CIVLFunction abstractFunction = null;
+		CIVLFunction civlFunction = null;
 		Function callee;
 		ExpressionNode functionExpression = functionCallNode.getFunction();
+		CallOrSpawnStatement callStmt;
 
 		if (functionExpression instanceof IdentifierExpressionNode) {
 			Entity entity = ((IdentifierExpressionNode) functionExpression)
@@ -2062,14 +2098,9 @@ public class FunctionTranslator {
 
 			if (entity.getEntityKind() == EntityKind.FUNCTION) {
 				callee = (Function) entity;
-				abstractFunction = modelBuilder.functionMap.get(callee);
+				civlFunction = modelBuilder.functionMap.get(callee);
 			}
 		}
-
-		// else
-		// throw new CIVLUnimplementedFeatureException(
-		// "Function call must use identifier for now: "
-		// + functionExpression.getSource());
 		for (int i = 0; i < functionCallNode.getNumberOfArguments(); i++) {
 			Expression actual = translateExpressionNode(
 					functionCallNode.getArgument(i), scope, true);
@@ -2079,29 +2110,28 @@ public class FunctionTranslator {
 		}
 		location = modelFactory.location(
 				modelFactory.sourceOfBeginning(functionCallNode), scope);
-		if (abstractFunction != null
-				&& abstractFunction instanceof AbstractFunction) {
-			Expression abstractFunctionCall = modelFactory
-					.abstractFunctionCallExpression(
-							modelFactory.sourceOf(functionCallNode),
-							(AbstractFunction) abstractFunction, arguments);
+		if (civlFunction != null) {
+			if (civlFunction.isAbstractFunction()) {
+				Expression abstractFunctionCall = modelFactory
+						.abstractFunctionCallExpression(
+								modelFactory.sourceOf(functionCallNode),
+								(AbstractFunction) civlFunction, arguments);
 
-			return modelFactory.assignStatement(source, location, lhs,
-					abstractFunctionCall, false);
-		}
-		// switch (functionName) {
-		// // // special translation for some system functions like $assert,
-		// assert
-		// // case "assert":
-		// // case "$assert":
-		// // return translateAssertFunctionCall(source, location, scope,
-		// // arguments);
-		// default:
-		// return callOrSpawnStatement(scope, location, functionCallNode, lhs,
-		// arguments, isCall);
-		// }
-		return callOrSpawnStatement(scope, location, functionCallNode, lhs,
-				arguments, isCall, source);
+				return modelFactory.assignStatement(source, location, lhs,
+						abstractFunctionCall, false);
+			}
+			callStmt = callOrSpawnStatement(scope, location, functionCallNode,
+					lhs, arguments, isCall, source);
+			callStmt.setFunction(modelFactory.functionIdentifierExpression(
+					civlFunction.getSource(), civlFunction));
+			if (callStmt.isSystemCall())
+				callStmt.setGuard(modelFactory.systemGuardExpression(callStmt));
+			return callStmt;
+		} else
+			// call on a function pointer
+			return callOrSpawnStatement(scope, location, functionCallNode, lhs,
+					arguments, isCall, source);
+
 	}
 
 	/**
@@ -2158,8 +2188,13 @@ public class FunctionTranslator {
 		// ignore pure function declarations for functions that have its
 		// corresponding definition node.
 		if ((entity.getDefinition() != null)
-				&& (!(node instanceof FunctionDefinitionNode)))
-			return;
+				&& (!(node instanceof FunctionDefinitionNode))) {
+			// Since function definition hasn't be translated, find out the
+			// definition node, translate it.
+			FunctionDefinitionNode defNode = entity.getDefinition();
+
+			translateASTNode(defNode, scope, null);
+		}
 		result = modelBuilder.functionMap.get(entity);
 		if (result == null) {
 			CIVLSource nodeSource = modelFactory.sourceOf(node);
@@ -3810,7 +3845,7 @@ public class FunctionTranslator {
 		civlFunction = modelBuilder.functionMap.get(callee);
 		functionName = civlFunction.name().name();
 		assert civlFunction != null;
-		if (civlFunction instanceof AbstractFunction) {
+		if (civlFunction.isAbstractFunction()) {
 			List<Expression> arguments = new ArrayList<Expression>();
 
 			for (int i = 0; i < callNode.getNumberOfArguments(); i++) {

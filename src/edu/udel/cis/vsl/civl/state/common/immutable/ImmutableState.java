@@ -4,10 +4,8 @@
 package edu.udel.cis.vsl.civl.state.common.immutable;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -36,6 +34,7 @@ import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression.SymbolicOperator;
  * @author Stephen F. Siegel (siegel)
  * @author Timothy K. Zirkel (zirkel)
  * @author Tim McClory (tmcclory)
+ * @author Ziqing Luo (ziqing)
  * 
  */
 public class ImmutableState implements State {
@@ -91,10 +90,10 @@ public class ImmutableState implements State {
 	static long instanceCount = 0;
 
 	/**
-	 * Snapshots queue HashMap for MPI communicators, one MPI communicator has
-	 * an corresponding snapshot queue.
+	 * Snapshots queue array for MPI communicators, one MPI communicator has an
+	 * corresponding snapshot queue.
 	 */
-	private Map<Integer, ArrayList<ImmutableCollectiveSnapshotsEntry>> snapshotsQueues;
+	private ImmutableCollectiveSnapshotsEntry[][] snapshotsQueues;
 	/* ************************** Instance Fields ************************** */
 
 	/**
@@ -477,11 +476,19 @@ public class ImmutableState implements State {
 	 * 
 	 * @return
 	 */
-	Map<Integer, ArrayList<ImmutableCollectiveSnapshotsEntry>> getSnapshotsQueues() {
-		if (snapshotsQueues == null)
-			return new HashMap<>();
-		else
-			return new HashMap<>(snapshotsQueues);
+	ImmutableCollectiveSnapshotsEntry[][] getSnapshotsQueues() {
+		ImmutableCollectiveSnapshotsEntry[][] returnedEntry;
+
+		if (snapshotsQueues == null) {
+			snapshotsQueues = new ImmutableCollectiveSnapshotsEntry[0][0];
+			return new ImmutableCollectiveSnapshotsEntry[0][0];
+		} else {
+			returnedEntry = new ImmutableCollectiveSnapshotsEntry[snapshotsQueues.length][];
+
+			for (int i = 0; i < snapshotsQueues.length; i++)
+				returnedEntry[i] = snapshotsQueues[i].clone();
+		}
+		return returnedEntry;
 	}
 
 	/**
@@ -492,11 +499,14 @@ public class ImmutableState implements State {
 	 * @return
 	 */
 	ImmutableState setSnapshotsQueues(
-			Map<Integer, ArrayList<ImmutableCollectiveSnapshotsEntry>> newQueues) {
+			ImmutableCollectiveSnapshotsEntry[][] newQueues) {
 		ImmutableState newState = newState(this, processStates, dyscopes,
 				pathCondition);
+		int queueLength = newQueues.length;
 
-		newState.snapshotsQueues = new HashMap<>(newQueues);
+		newState.snapshotsQueues = newQueues.clone();
+		for (int i = 0; i < queueLength; i++)
+			newState.snapshotsQueues[i] = newQueues[i].clone();
 		return newState;
 	}
 
@@ -613,19 +623,19 @@ public class ImmutableState implements State {
 	 * Returns the corresponding snapshot queue by giving the identifier of an
 	 * MPI communicator (The identifier is a component of the CIVL MPI library
 	 * implementation). If there is no such a snapshot queue for the MPI
-	 * communicator, returns null.
+	 * communicator, returns an empty array.
 	 * 
 	 * @param id
 	 *            The identifier of a MPI communicator
 	 * @return
 	 */
-	public ArrayList<ImmutableCollectiveSnapshotsEntry> getSnapshots(int id) {
+	ImmutableCollectiveSnapshotsEntry[] getSnapshots(int id) {
 		if (snapshotsQueues == null)
-			snapshotsQueues = new HashMap<>();
-		if (snapshotsQueues.containsKey(id))
-			return snapshotsQueues.get(id);
+			snapshotsQueues = new ImmutableCollectiveSnapshotsEntry[id + 1][0];
+		if (snapshotsQueues.length > id)
+			return snapshotsQueues[id].clone();
 		else
-			return null;
+			return new ImmutableCollectiveSnapshotsEntry[0];
 	}
 
 	/**
@@ -639,13 +649,22 @@ public class ImmutableState implements State {
 	 *            The updated snapshot queue
 	 * @return
 	 */
-	public ImmutableState updateQueue(int id,
-			ArrayList<ImmutableCollectiveSnapshotsEntry> queue) {
+	ImmutableState updateQueue(int id, ImmutableCollectiveSnapshotsEntry[] queue) {
 		ImmutableState newState;
+		int newLength;
 
+		assert queue != null;
 		newState = newState(this, processStates, dyscopes, pathCondition);
-		newState.snapshotsQueues = new HashMap<>(snapshotsQueues);
-		newState.snapshotsQueues.put(id, queue);
+		if (newState.snapshotsQueues.length <= id)
+			newState.snapshotsQueues = new ImmutableCollectiveSnapshotsEntry[id + 1][];
+		else
+			newState.snapshotsQueues = this.snapshotsQueues.clone();
+		newLength = snapshotsQueues.length;
+		// For unchanged queues, there is no need to do clone();
+		for (int i = 0; i < newLength; i++)
+			newState.snapshotsQueues[i] = this.snapshotsQueues[i];
+		// The updated queue must be cloned in case it is changed some where.
+		newState.snapshotsQueues[id] = queue.clone();
 		return newState;
 	}
 
