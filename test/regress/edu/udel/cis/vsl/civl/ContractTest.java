@@ -53,22 +53,15 @@ public class ContractTest {
 	}
 
 	@Test
-	public void isRecvBufEmpty() {
+	public void isRecvBufEmptyOK() {
 		assertTrue(ui.run("verify -min -mpiContract -input_mpi_nprocs=4",
-				filename("isRecvBufEmpty.c")));
+				filename("isRecvBufEmpty_OK.c")));
 	}
 
 	@Test
-	public void mergeContracts() {
-		assertTrue(ui.run(
-				"verify -mpiContract  -deadlock=potential -input_mpi_nprocs=2",
-				filename("mergeContracts.c")));
-	}
-
-	@Test
-	public void notEmptyRecvBuf() {
-		assertFalse(ui
-				.run("verify -mpiContract", filename("notEmptyRecvBuf.c")));
+	public void isEmptyRecvBufBad() {
+		assertFalse(ui.run("verify -mpiContract",
+				filename("isEmptyRecvBuf_BAD.c")));
 	}
 
 	@Test

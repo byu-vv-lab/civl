@@ -27,9 +27,7 @@ int main(int argc, char * argv[]) {
   MPI_Comm_rank(comm, &rank);
   if(rank == 1)
     MPI_Send(&rank, 1, MPI_INT, 0, 0, comm);
-  printf("rank %d call\n", rank);
   x = gimmeOne(in);
-  printf("rank %d return\n", rank);
   if(rank == 0)
     MPI_Recv(&x, 1, MPI_INT, 1, 0, comm, MPI_STATUS_IGNORE);
   MPI_Finalize();

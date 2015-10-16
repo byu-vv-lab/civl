@@ -24,9 +24,7 @@ int main(int argc, char * argv[]) {
   MPI_Comm_rank(comm, &rank);
   left = (rank-1) % nprocs;
   right = (rank+1) % nprocs;
-  printf("rank %d call\n", rank);
   x = sendrecv();
-  printf("rank %d return\n", rank);
   MPI_Finalize();
   return 0;
 }
