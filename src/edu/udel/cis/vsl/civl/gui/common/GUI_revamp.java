@@ -491,9 +491,6 @@ public class GUI_revamp extends JFrame {
 		ArrayList<CIVL_Input> inputList = currConfig.getInputs();
 		for (int i = 0; i < inputList.size(); i++) {
 			CIVL_Input input = inputList.get(i);
-//			System.out.println(input.getName());
-//			System.out.println(input.getType());
-//			System.out.println(input.getValue());
 			inputModel.addRow(new Object[] { input.getName(), input.getType(),
 					input.getValue(), input.getInitializer() });
 		}
@@ -524,13 +521,19 @@ public class GUI_revamp extends JFrame {
 	/*
 	 * Shows the console view upon execution
 	 */
-	
 	public void showConsole(){
-		//let's print out our values on new spaces
+
 		CIVLTable tbl_consoleTable = (CIVLTable) getComponentByName("tbl_consoleTable");
 		DefaultTableModel consoleModel = (DefaultTableModel) tbl_consoleTable
 				.getModel();
+		
+		if (consoleModel.getRowCount() != 0) {
+			consoleModel.setRowCount(0);
+			tbl_consoleTable.clearSelection();
+		}
+		
 		tbl_consoleTable.clearSelection();
+		
 		
 		if(!tempString.equals(consoleString) && consoleString != null){
 			System.out.println(consoleString);
@@ -540,6 +543,9 @@ public class GUI_revamp extends JFrame {
 //					consoleStatsList.get(5), consoleStatsList.get(6), consoleStatsList.get(7),
 //					consoleStatsList.get(8)});
 			tempString = consoleString;
+// if there are now rows, add the rows
+// otherwise, just replace current row with new values
+			consoleModel.fireTableDataChanged();
 			consoleModel.addRow(new Object[]{"command:", consoleStatsList.get(0)});
 			consoleModel.addRow(new Object[]{"time:", consoleStatsList.get(1)});
 			consoleModel.addRow(new Object[]{"memory:", consoleStatsList.get(2)});
@@ -554,11 +560,16 @@ public class GUI_revamp extends JFrame {
 			consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(11)});
 		}
 		
-		JTextArea consoleOutput = new JTextArea();
-		consoleOutput.setText("Tester");
-		tbl_consoleTable.add(consoleOutput);
+//		JTextArea consoleOutput = new JTextArea();
+//		consoleOutput.setText("Tester");
+//		tbl_consoleTable.add(consoleOutput);
+//		
+	}
+	
+	public static void clearTable() {
 		
 	}
+	
 	/**
 	 * Sets the options in the table when values are changed.
 	 */
@@ -858,7 +869,7 @@ public class GUI_revamp extends JFrame {
 		final JTable tbl_fileTable = new CIVLTable(new int[] { 2 }, "file",
 				this);
 		//TODO: Console view added here, add statistics here
-		final JTable tbl_statistics = new CIVLTable(new int[] { 0 }, "statistics", this);
+//		final JTable tbl_statistics = new CIVLTable(new int[] { 0 }, "statistics", this);
 		final JTable tbl_consoleTable = new CIVLTable(new int[] { 1 }, "console",
 				this);
 		
