@@ -1,14 +1,13 @@
 #include<assert.h>
 #include<mpi.h>
 #include<civl-mpi.cvh>
+#include<stdio.h>
 
 #define comm MPI_COMM_WORLD
 int rank, nprocs, left, right;
 
 int sendrecv() 
-$requires {$collective(comm) $mpi_isRecvBufEmpty(left)}
 $ensures  {$collective(comm) ($mpi_isRecvBufEmpty(left) && left == $result)}
-$ensures  {left == $result}
 {
   int message = rank;
   int recvBuf;
@@ -25,7 +24,9 @@ int main(int argc, char * argv[]) {
   MPI_Comm_rank(comm, &rank);
   left = (rank-1) % nprocs;
   right = (rank+1) % nprocs;
+  printf("rank %d call\n", rank);
   x = sendrecv();
+  printf("rank %d return\n", rank);
   MPI_Finalize();
   return 0;
 }
