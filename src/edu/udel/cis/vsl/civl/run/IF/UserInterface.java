@@ -234,6 +234,7 @@ public class UserInterface {
 	public boolean runNormalCommand(NormalCommandLine commandLine)
 			throws CommandLineException, ABCException, IOException,
 			MisguidedExecutionException, SvcompException {
+		startTime = System.currentTimeMillis();
 		if (commandLine.normalCommandKind() == NormalCommandKind.HELP)
 			runHelp((HelpCommandLine) commandLine);
 		else if (commandLine.normalCommandKind() == NormalCommandKind.CONFIG)
@@ -321,6 +322,7 @@ public class UserInterface {
 		SymbolicUniverse universe = SARL.newStandardUniverse();
 		File traceFile = null;
 
+		startTime = System.currentTimeMillis();
 		if (compareCommand.isReplay()) {
 			String traceFilename;
 
@@ -687,7 +689,8 @@ public class UserInterface {
 		boolean result = false;
 		Model model;
 		Verifier verifier;
-
+		
+//		startTime = System.currentTimeMillis();
 		if (modelTranslator.cmdSection.isTrue(showProverQueriesO))
 			modelTranslator.universe.setShowProverQueries(true);
 		if (modelTranslator.cmdSection.isTrue(showQueriesO))
