@@ -4,10 +4,12 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -24,6 +26,7 @@ import edu.udel.cis.vsl.civl.semantics.IF.NoopTransition;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition.TransitionKind;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.CIVLHeapException;
 import edu.udel.cis.vsl.civl.state.IF.CIVLHeapException.HeapErrorKind;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
@@ -32,6 +35,7 @@ import edu.udel.cis.vsl.civl.state.IF.StateFactory;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
+import edu.udel.cis.vsl.civl.util.IF.Utils;
 import edu.udel.cis.vsl.gmc.TraceStepIF;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
@@ -103,6 +107,8 @@ public class CommonStateManager implements StateManager {
 	private int numStatesExplored = 1;
 
 	private OutputCollector outputCollector;
+
+	private Stack<TransitionSequence> stack;
 
 	// TODO: trying to fix this:
 	// private boolean saveStates;
@@ -263,6 +269,15 @@ public class CommonStateManager implements StateManager {
 					ignoredErrorSet.add(hex.heapErrorKind());
 				}
 			} while (!finished);
+			if (state.onStack()) {
+				// this is a back-edge, we need to fulfill ample set condition
+				// C3 cycle)
+				TransitionSequence transitionSequence = stack.peek();
+
+				if (!transitionSequence.containsAllEnabled()) {
+					this.expandTransitionSequence(transitionSequence);
+				}
+			}
 			traceStep.complete(state);
 			newCanonicId = state.getCanonicId();
 			if (newCanonicId > this.maxCanonicId) {
@@ -312,6 +327,22 @@ public class CommonStateManager implements StateManager {
 		return traceStep;
 	}
 
+	void expandTransitionSequence(TransitionSequence transitionSequence) {
+		if (!transitionSequence.containsAllEnabled()) {
+			State state = transitionSequence.state();
+			TransitionSequence ampleSet = enabler.enabledTransitionsPOR(state);
+			TransitionSequence enabledSet = enabler
+					.enabledTransitionsOfAllProcesses(state);
+			@SuppressWarnings("unchecked")
+			Collection<Transition> difference = (Collection<Transition>) Utils
+					.difference(enabledSet.transitions(),
+							ampleSet.transitions());
+
+			transitionSequence.setContainingAllEnabled(true);
+			transitionSequence.addAll(difference);
+		}
+	}
+
 	/**
 	 * Analyzes if the current process has a single (deterministic) enabled
 	 * transition at the given state. The point of this is that a sequence of
@@ -346,7 +377,7 @@ public class CommonStateManager implements StateManager {
 	 * @param atomCount
 	 *            The number of incomplete atom blocks.
 	 * @return
-	 * @throws UnsatisfiablePathConditionException 
+	 * @throws UnsatisfiablePathConditionException
 	 */
 	private StateStatus singleEnabled(State state, int pid, int atomCount,
 			String process) throws UnsatisfiablePathConditionException {
@@ -377,21 +408,22 @@ public class CommonStateManager implements StateManager {
 				return new StateStatus(true, enabled.get(0), atomCount,
 						EnabledStatus.DETERMINISTIC);
 			else if (enabled.size() > 1) {// non deterministic
-				reportErrorForAtom(EnabledStatus.NONDETERMINISTIC, state, pLocation,
-						process);
+				reportErrorForAtom(EnabledStatus.NONDETERMINISTIC, state,
+						pLocation, process);
 				return new StateStatus(false, null, atomCount,
 						EnabledStatus.NONDETERMINISTIC);
 			} else {// blocked
-				reportErrorForAtom(EnabledStatus.BLOCKED, state, pLocation, process);
+				reportErrorForAtom(EnabledStatus.BLOCKED, state, pLocation,
+						process);
 				return new StateStatus(false, null, atomCount,
 						EnabledStatus.BLOCKED);
 			}
 		} else {
 			int pidInAtomic = stateFactory.processInAtomic(state);
 
-			if (pidInAtomic != -1) {
+			if (pidInAtomic == pid) {
 				// the process is in atomic execution
-				assert pidInAtomic == pid;
+				// assert pidInAtomic == pid;
 				if ((pLocation.getNumIncoming() > 1 && !pLocation.isSafeLoop())
 						|| (pLocation.isStart() && pLocation.getNumIncoming() > 0))
 					// possible loop, save state
@@ -650,5 +682,10 @@ public class CommonStateManager implements StateManager {
 		if (outputCollector != null)
 			return this.outputCollector.outptutNames;
 		return null;
+	}
+
+	@Override
+	public void setStack(Stack<TransitionSequence> stack) {
+		this.stack = stack;
 	}
 }

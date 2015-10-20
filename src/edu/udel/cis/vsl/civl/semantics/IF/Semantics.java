@@ -181,10 +181,13 @@ public class Semantics {
 	 * @param state
 	 *            The state of the program before this transition sequence
 	 *            departs.
+	 * @param containingAllEnabled
+	 *            does this contain all enabled transitions
 	 * @return A new transition sequence.
 	 */
-	public static TransitionSequence newTransitionSequence(State state) {
-		return new CommonTransitionSequence(state);
+	public static TransitionSequence newTransitionSequence(State state,
+			boolean containingAllEnabled) {
+		return new CommonTransitionSequence(state, containingAllEnabled);
 	}
 
 	public static MemoryUnitExpressionEvaluator newMemoryUnitEvaluator(

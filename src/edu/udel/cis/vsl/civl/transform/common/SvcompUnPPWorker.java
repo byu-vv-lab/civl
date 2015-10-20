@@ -26,6 +26,8 @@ import edu.udel.cis.vsl.abc.ast.node.IF.type.PointerTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.StructureOrUnionTypeNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.type.TypeNode;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.ast.value.IF.IntegerValue;
+import edu.udel.cis.vsl.abc.ast.value.IF.Value;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
@@ -88,6 +90,7 @@ public class SvcompUnPPWorker extends BaseWorker {
 		// this.removePthreadTypedefs(rootNode);
 		this.removeNodes(rootNode);
 		rootNode = downScaler(rootNode);
+		// rootNode.prettyPrint(System.out);
 		this.completeSources(rootNode);
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
 		// ast.prettyPrint(System.out, false);
@@ -148,20 +151,49 @@ public class SvcompUnPPWorker extends BaseWorker {
 			}
 		} else if (node instanceof OperatorNode) {
 			OperatorNode operatorNode = (OperatorNode) node;
-			int numArgs = operatorNode.getNumberOfArguments();
+			Operator operator = operatorNode.getOperator();
+			boolean transformed = false;
 
-			for (int i = 0; i < numArgs; i++) {
-				ExpressionNode arg = operatorNode.getArgument(i);
+			if (operator == Operator.DIV || operator == Operator.MINUS
+					|| operator == Operator.PLUS || operator == Operator.TIMES
+					|| operator == Operator.MOD) {
+				try {
 
-				if (arg instanceof IntegerConstantNode) {
-					ExpressionNode newArg = this.getDownScaledExpression(
-							arg.getSource(),
-							this.getIntValue((IntegerConstantNode) arg));
+					Value value = this.nodeFactory
+							.getConstantValue(operatorNode);
 
-					if (newArg != null)
-						operatorNode.setArgument(i, newArg);
-				} else if (arg instanceof OperatorNode) {
-					downScalerWork(arg);
+					if (value != null && (value instanceof IntegerValue)) {
+						ExpressionNode newExpression = this
+								.getDownScaledExpression(operatorNode
+										.getSource(), ((IntegerValue) value)
+										.getIntegerValue().intValue());
+
+						if (newExpression != null) {
+							transformed = true;
+							operatorNode.parent().setChild(
+									operatorNode.childIndex(), newExpression);
+						}
+					}
+				} catch (SyntaxException ex) {
+					transformed = false;
+				}
+			}
+			if (!transformed) {
+				int numArgs = operatorNode.getNumberOfArguments();
+
+				for (int i = 0; i < numArgs; i++) {
+					ExpressionNode arg = operatorNode.getArgument(i);
+
+					if (arg instanceof IntegerConstantNode) {
+						ExpressionNode newArg = this.getDownScaledExpression(
+								arg.getSource(),
+								this.getIntValue((IntegerConstantNode) arg));
+
+						if (newArg != null)
+							operatorNode.setArgument(i, newArg);
+					} else if (arg instanceof OperatorNode) {
+						downScalerWork(arg);
+					}
 				}
 			}
 			// Operator operator = operatorNode.getOperator();
@@ -263,17 +295,27 @@ public class SvcompUnPPWorker extends BaseWorker {
 				if (type instanceof ArrayTypeNode) {
 					ArrayTypeNode arrayType = (ArrayTypeNode) type;
 					ExpressionNode extent = arrayType.getExtent();
+					ExpressionNode newExtent = null;
+					int intValue = -1;
 
 					if (extent instanceof IntegerConstantNode) {
 						// TODO for now make the input variables the same
 						// storage class as the array
-						ExpressionNode newExtent = this.factorNewInputVariable(
-								this.getIntValue((IntegerConstantNode) extent),
-								varDecl.hasStaticStorage());
+						intValue = this
+								.getIntValue((IntegerConstantNode) extent);
+					} else if (extent instanceof OperatorNode) {
+						// search for things like 320*4+1
+						Value value = this.nodeFactory.getConstantValue(extent);
 
-						if (newExtent != null)
-							arrayType.setExtent(newExtent);
+						if (value != null && (value instanceof IntegerValue)) {
+							intValue = ((IntegerValue) value).getIntegerValue()
+									.intValue();
+						}
 					}
+					newExtent = this.factorNewInputVariable(intValue,
+							varDecl.hasStaticStorage());
+					if (newExtent != null)
+						arrayType.setExtent(newExtent);
 				} else if (initializer != null) {
 					if (initializer instanceof IntegerConstantNode) {
 						int initValue = ((IntegerConstantNode) initializer)

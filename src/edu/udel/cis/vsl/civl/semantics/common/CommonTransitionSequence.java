@@ -33,6 +33,8 @@ public class CommonTransitionSequence implements TransitionSequence {
 	 */
 	private int numRemoved = 0;
 
+	private boolean containingAllEnabled = false;
+
 	/* ***************************** Constructors ************************** */
 
 	/**
@@ -41,9 +43,10 @@ public class CommonTransitionSequence implements TransitionSequence {
 	 * @param state
 	 *            The state that all transitions of this sequence emanate from.
 	 */
-	public CommonTransitionSequence(State state) {
+	public CommonTransitionSequence(State state, boolean allEnabled) {
 		this.state = state;
 		this.transitions = new LinkedList<Transition>();
+		this.containingAllEnabled = allEnabled;
 	}
 
 	/* ******************* Methods from TransitionSequence ***************** */
@@ -98,5 +101,20 @@ public class CommonTransitionSequence implements TransitionSequence {
 			result.append(transition.toString());
 		}
 		return result.toString();
+	}
+
+	@Override
+	public boolean containsAllEnabled() {
+		return this.containingAllEnabled;
+	}
+
+	@Override
+	public Collection<Transition> transitions() {
+		return transitions;
+	}
+
+	@Override
+	public void setContainingAllEnabled(boolean value) {
+		this.containingAllEnabled = value;
 	}
 }

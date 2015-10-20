@@ -168,7 +168,7 @@ public abstract class CommonEnabler implements Enabler {
 
 		if (state.getPathCondition().isFalse())
 			// return empty set of transitions.
-			return Semantics.newTransitionSequence(state);
+			return Semantics.newTransitionSequence(state, true);
 		// return resumable atomic transitions.
 		transitions = enabledAtomicTransitions(state);
 		if (transitions == null)
@@ -262,6 +262,20 @@ public abstract class CommonEnabler implements Enabler {
 	 */
 	abstract TransitionSequence enabledTransitionsPOR(State state);
 
+	TransitionSequence enabledTransitionsOfAllProcesses(State state) {
+		Iterable<? extends ProcessState> processes = state.getProcessStates();
+		List<Transition> transitions = new LinkedList<>();
+		TransitionSequence result = Semantics
+				.newTransitionSequence(state, true);
+
+		for (ProcessState process : processes) {
+			transitions.addAll(this.enabledTransitionsOfProcess(state,
+					process.getPid()));
+		}
+		result.addAll(transitions);
+		return result;
+	}
+
 	/**
 	 * Get the enabled transitions of a certain process at a given state.
 	 * 
@@ -330,7 +344,7 @@ public abstract class CommonEnabler implements Enabler {
 			// execute a transition in an atomic block of a certain process
 			// without interleaving with other processes
 			TransitionSequence localTransitions = Semantics
-					.newTransitionSequence(state);
+					.newTransitionSequence(state, false);
 
 			localTransitions.addAll(enabledTransitionsOfProcess(state,
 					pidInAtomic, EMPTY_STATEMENT_GUARD_MAP));

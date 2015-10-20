@@ -2,8 +2,10 @@ package edu.udel.cis.vsl.civl.kripke.IF;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
+import edu.udel.cis.vsl.civl.semantics.IF.TransitionSequence;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.civl.util.IF.Printable;
@@ -71,5 +73,7 @@ public interface StateManager extends StateManagerIF<State, Transition> {
 	 * @return the names of output variables
 	 */
 	String[] outptutNames();
+
+	void setStack(Stack<TransitionSequence> stack);
 
 }

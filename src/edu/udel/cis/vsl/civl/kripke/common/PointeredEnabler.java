@@ -2,6 +2,7 @@ package edu.udel.cis.vsl.civl.kripke.common;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.kripke.IF.Enabler;
@@ -15,6 +16,7 @@ import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.StateFactory;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.gmc.EnablerIF;
 
 /**
@@ -75,21 +77,17 @@ public class PointeredEnabler extends CommonEnabler implements Enabler {
 	 */
 	@Override
 	protected TransitionSequence enabledTransitionsPOR(State state) {
-		TransitionSequence transitions = Semantics.newTransitionSequence(state);
+		TransitionSequence transitions;
 		List<ProcessState> processStates;
-		// if (this.testNewAmpleSet) {
 		AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this, evaluator,
 				memUnitFactory, this.procBound, debugging
 						|| this.showMemoryUnits, debugOut);
+		Pair<Boolean, Set<ProcessState>> ampleSetResult = ampleWorker
+				.ampleProcesses();
 
-		processStates = new LinkedList<>(ampleWorker.ampleProcesses());
-		// compute ample processes
-		// } else {
-		// AmpleSetWorker ampleWorker = new AmpleSetWorker(state, this,
-		// evaluator, this.symbolicAnalyzer, debugging, debugOut);
-		//
-		// processStates = new LinkedList<>(ampleWorker.ampleProcesses());
-		// }
+		processStates = new LinkedList<>(ampleSetResult.right);
+		transitions = Semantics.newTransitionSequence(state,
+				ampleSetResult.left);
 		if (debugging || showAmpleSet) {
 			if (processStates.size() > 1) {
 				debugOut.print("ample processes at state "

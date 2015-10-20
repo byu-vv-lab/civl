@@ -22,7 +22,7 @@ public interface TransitionSequence {
 	 * 
 	 * @return The head (first element) of this transition sequence.
 	 */
-	public Transition remove();
+	Transition remove();
 
 	/**
 	 * Returns the number of transitions removed from this sequence since it was
@@ -30,7 +30,7 @@ public interface TransitionSequence {
 	 * 
 	 * @return the number of transitions removed
 	 */
-	public int numRemoved();
+	int numRemoved();
 
 	/**
 	 * Returns the source state from which all transitions in this sequence
@@ -39,7 +39,7 @@ public interface TransitionSequence {
 	 * @return The source state from which all transitions in this sequence
 	 *         emanate.
 	 */
-	public State state();
+	State state();
 
 	/**
 	 * Adds transitions to this sequence.
@@ -47,21 +47,21 @@ public interface TransitionSequence {
 	 * @param transitions
 	 *            The transitions to be added to this sequence.
 	 */
-	public void addAll(Collection<Transition> transitions);
+	void addAll(Collection<Transition> transitions);
 
 	/**
 	 * Returns the number of transitions contained in this sequence.
 	 * 
 	 * @return The number of transitions contained in this sequence.
 	 */
-	public int size();
+	int size();
 
 	/**
 	 * Returns true iff this sequence is empty.
 	 * 
 	 * @return Returns true iff this sequence is empty.
 	 */
-	public boolean isEmpty();
+	boolean isEmpty();
 
 	/**
 	 * Retrieves, but not removes, the head (first element) of this transition
@@ -69,5 +69,22 @@ public interface TransitionSequence {
 	 * 
 	 * @return The head (first element) of this transition sequence.
 	 */
-	public Transition peek();
+	Transition peek();
+
+	/**
+	 * does this set of transitions contain all enabled transitions of the given
+	 * state
+	 * 
+	 * @return true iff this set of transitions contain all enabled transitions
+	 *         of the given state
+	 */
+	boolean containsAllEnabled();
+
+	Collection<Transition> transitions();
+
+	/**
+	 * sets the flag that denotes if this transition sequence contains all
+	 * enabled transitions of the state
+	 */
+	void setContainingAllEnabled(boolean value);
 }

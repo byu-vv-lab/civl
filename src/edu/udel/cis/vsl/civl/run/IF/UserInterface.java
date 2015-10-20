@@ -225,6 +225,7 @@ public class UserInterface {
 	public boolean runNormalCommand(NormalCommandLine commandLine)
 			throws CommandLineException, ABCException, IOException,
 			MisguidedExecutionException, SvcompException {
+		this.startTime = System.currentTimeMillis();
 		if (commandLine.normalCommandKind() == NormalCommandKind.HELP)
 			runHelp((HelpCommandLine) commandLine);
 		else if (commandLine.normalCommandKind() == NormalCommandKind.CONFIG)
@@ -312,6 +313,7 @@ public class UserInterface {
 		SymbolicUniverse universe = SARL.newStandardUniverse();
 		File traceFile = null;
 
+		this.startTime = System.currentTimeMillis();
 		if (compareCommand.isReplay()) {
 			String traceFilename;
 
@@ -540,7 +542,6 @@ public class UserInterface {
 	 * @throws IOException
 	 */
 	private boolean runMain(String[] args) throws CommandLineException {
-		this.startTime = System.currentTimeMillis();
 		out.println("CIVL v" + version + " of " + date
 				+ " -- http://vsl.cis.udel.edu/civl");
 		out.flush();
@@ -711,8 +712,8 @@ public class UserInterface {
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
+					return false;
 				}
-				return false;
 			}
 			if (result) {
 				if (modelTranslator.config.collectOutputs()) {

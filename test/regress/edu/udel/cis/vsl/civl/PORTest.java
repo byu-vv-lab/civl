@@ -81,6 +81,11 @@ public class PORTest {
 		assertFalse(ui.run("verify", filename("wait.cvl")));
 	}
 
+	@Test
+	public void loop() {
+		assertFalse(ui.run("verify -errorBound=4", filename("loop.cvl")));
+	}
+
 	// @Test
 	// public void spawns() {
 	// assertFalse(ui.run("verify", filename("spawns.cvl")));

@@ -89,6 +89,29 @@ public class CommonTransition implements Transition {
 				atomicLockAction);
 	}
 
+	/* ************************* Methods from Object *********************** */
+
+	@Override
+	public String toString() {
+		String result = "p" + processIdentifier + ": ";
+
+		result += statement.toStepString(AtomicKind.NONE, pid, false);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		if (object instanceof Transition) {
+			Transition that = (Transition) object;
+
+			if (this.pid == that.pid()
+					&& this.pathCondition.equals(that.pathCondition())
+					&& this.statement.equals(that.statement()))
+				return true;
+		}
+		return false;
+	}
+
 	/* *********************** Methods from Transition ********************* */
 
 	public int pid() {
@@ -108,16 +131,6 @@ public class CommonTransition implements Transition {
 		return this.pathCondition;
 	}
 
-	/* ************************* Methods from Object *********************** */
-
-	@Override
-	public String toString() {
-		String result = "p" + processIdentifier + ": ";
-
-		result += statement.toStepString(AtomicKind.NONE, pid, false);
-		return result;
-	}
-
 	@Override
 	public AtomicLockAction atomicLockAction() {
 		return this.atomicLockAction;
@@ -132,4 +145,5 @@ public class CommonTransition implements Transition {
 	public boolean simpifyState() {
 		return simplifyState;
 	}
+
 }

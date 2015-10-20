@@ -254,6 +254,7 @@ public class Verifier extends Player {
 			searcher.setDebugOut(out);
 		searcher.setName(sessionName);
 		log.setSearcher(searcher);
+		stateManager.setStack(searcher.stack());
 		if (minimize)
 			log.setMinimize(true);
 		if (config.getAnonymousSection().getValue(maxdepthO) != null)

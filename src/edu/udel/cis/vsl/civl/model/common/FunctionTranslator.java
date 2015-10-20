@@ -3347,6 +3347,12 @@ public class FunctionTranslator {
 								typeFactory.pointerType(typeFactory.voidType()),
 								source);
 				break;
+			} else if (convertedType.kind() == TypeKind.POINTER
+					&& constantNode instanceof IntegerConstantNode) {
+				result = modelFactory.integerLiteralExpression(source,
+						((IntegerConstantNode) constantNode).getConstantValue()
+								.getIntegerValue());
+				break;
 			} else if (constantNode instanceof StringLiteralNode) {
 				Type elementType = null;
 
@@ -3651,6 +3657,13 @@ public class FunctionTranslator {
 				// ignore, pointer types are all the same
 				// all pointer types are using the same symbolic object type
 				break;
+			case INTEGER_POINTER: {
+				expression = modelFactory.castExpression(
+						source,
+						this.translateABCType(source, scope,
+								conversion.getNewType()), expression);
+				break;
+			}
 			default:
 				throw new CIVLUnimplementedFeatureException("applying "
 						+ conversion + " conversion", source);
@@ -4124,7 +4137,7 @@ public class FunctionTranslator {
 			break;
 		}
 		case NOT: {
-//			CIVLType argType = arguments.get(0).getExpressionType();
+			// CIVLType argType = arguments.get(0).getExpressionType();
 			try {
 				booleanArg0 = modelFactory.booleanExpression(arguments.get(0));
 			} catch (ModelFactoryException err) {

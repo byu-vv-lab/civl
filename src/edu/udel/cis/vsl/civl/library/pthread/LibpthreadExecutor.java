@@ -341,12 +341,14 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 							this.twoObject));
 			state = this.primaryExecutor.assign(source, state, process,
 					threadTermPointer, trueValue);
-			threadExitValuePointer = this.symbolicUtil.makePointer(
-					threadPointer, universe.tupleComponentReference(
-							symbolicUtil.getSymRef(threadPointer),
-							this.threeObject));
-			state = this.primaryExecutor.assign(source, state, process,
-					threadExitValuePointer, argumentValues[1]);
+			if (!argumentValues[1].type().isInteger()) {
+				threadExitValuePointer = this.symbolicUtil.makePointer(
+						threadPointer, universe.tupleComponentReference(
+								symbolicUtil.getSymRef(threadPointer),
+								this.threeObject));
+				state = this.primaryExecutor.assign(source, state, process,
+						threadExitValuePointer, argumentValues[1]);
+			}
 		}
 		return state;
 	}

@@ -31,6 +31,7 @@ import edu.udel.cis.vsl.civl.state.IF.ProcessState;
 import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
+import edu.udel.cis.vsl.civl.util.IF.Pair;
 import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
@@ -259,6 +260,13 @@ public class AmpleSetWorker {
 	 */
 	private MemoryUnitSet[] reachablePtrWritable;
 
+	// /**
+	// * processes at a location of infinite loop
+	// */
+	// private BitSet infiniteLoopProcesses = new BitSet();
+
+	// private BitSet noLoopProcesses = new BitSet();
+
 	// private SymbolicAnalyzer symbolicAnalyzer;
 
 	/* ***************************** Constructors ************************** */
@@ -303,23 +311,27 @@ public class AmpleSetWorker {
 	/**
 	 * Obtains the set of ample processes for the current state.
 	 * 
-	 * @return
+	 * @return the set of ample processes and a boolean denoting if all active
+	 *         processes are included
 	 */
-	Set<ProcessState> ampleProcesses() {
+	Pair<Boolean, Set<ProcessState>> ampleProcesses() {
 		BitSet ampleProcessIDs;
 		Set<ProcessState> ampleProcesses = new LinkedHashSet<>();
+		Boolean containingAll = false;
 
 		computeActiveProcesses();
-		if (activeProcesses.cardinality() <= 1)
+		if (activeProcesses.cardinality() <= 1) {
 			// return immediately if at most one process is activated.
 			ampleProcessIDs = this.activeProcesses;
-		else
+		} else
 			ampleProcessIDs = ampleProcessesWork();
 		for (int pid = 0; pid < ampleProcessIDs.length(); pid++) {
 			pid = ampleProcessIDs.nextSetBit(pid);
 			ampleProcesses.add(state.getProcessState(pid));
 		}
-		return ampleProcesses;
+		containingAll = ampleProcessIDs.cardinality() == activeProcesses
+				.cardinality();
+		return new Pair<>(containingAll, ampleProcesses);
 	}
 
 	/* *************************** Private Methods ************************* */
@@ -334,7 +346,7 @@ public class AmpleSetWorker {
 		int minimalAmpleSetSize = activeProcesses.cardinality() + 1;
 
 		preprocessing();
-		for (int pid = 0; pid < activeProcesses.length(); pid++) {
+		for (int pid = 0; pid < this.activeProcesses.length(); pid++) {
 			BitSet ampleSet;
 			int currentSize;
 
@@ -350,6 +362,19 @@ public class AmpleSetWorker {
 		}
 		return result;
 	}
+
+	// /**
+	// * updates the left by setting all bits that are set in the right
+	// *
+	// * @param left
+	// * @param right
+	// */
+	// private void setAll(BitSet left, BitSet right) {
+	// for (int i = 0; i < right.length(); i++) {
+	// if (right.get(i))
+	// left.set(i);
+	// }
+	// }
 
 	/**
 	 * Computes the ample set by fixing a certain process and looking at system
@@ -599,9 +624,25 @@ public class AmpleSetWorker {
 			if (active) {
 				activeProcesses.set(pid);
 				this.newGuardMap.put(pid, myGuards);
+				// if (this.isInfiniteLoopLocation(p.getLocation()))
+				// this.infiniteLoopProcesses.set(pid);
+				// else
+				// this.noLoopProcesses.set(pid);
 			}
 		}
 	}
+
+	// private boolean isInfiniteLoopLocation(Location location) {
+	// if (location.getNumOutgoing() == 1) {
+	// Statement outgoing = location.getOutgoing(0);
+	//
+	// if (outgoing instanceof NoopStatement) {
+	// if (outgoing.source().id() == outgoing.target().id())
+	// return true;
+	// }
+	// }
+	// return false;
+	// }
 
 	/**
 	 * Computes the impact memory units of a certain process at the current
