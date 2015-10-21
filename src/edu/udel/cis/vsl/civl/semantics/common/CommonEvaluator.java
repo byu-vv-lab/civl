@@ -1022,7 +1022,10 @@ public class CommonEvaluator implements Evaluator {
 			// pointer to pointer: for now...no change.
 			return eval;
 		} else if (argType.isIntegerType() && castType.isBoolType()) {
-			eval.value = universe.not(universe.equals(value, zero));
+			if (value.type().isBoolean())
+				eval.value = value;
+			else
+				eval.value = universe.not(universe.equals(value, zero));
 			return eval;
 		} else if (argType.isIntegerType() && castType.isCharType()) {
 			NumericExpression integerValue = (NumericExpression) value;
