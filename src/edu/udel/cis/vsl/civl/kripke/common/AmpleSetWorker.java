@@ -19,7 +19,6 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
-import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
@@ -261,10 +260,10 @@ public class AmpleSetWorker {
 	 */
 	private MemoryUnitSet[] reachablePtrWritable;
 
-	/**
-	 * processes at a location of infinite loop
-	 */
-	private BitSet infiniteLoopProcesses = new BitSet();
+	// /**
+	// * processes at a location of infinite loop
+	// */
+	// private BitSet infiniteLoopProcesses = new BitSet();
 
 	// private BitSet noLoopProcesses = new BitSet();
 
@@ -362,8 +361,8 @@ public class AmpleSetWorker {
 			int currentSize;
 
 			pid = activeProcesses.nextSetBit(pid);
-			if (this.infiniteLoopProcesses.get(pid))
-				continue;
+			// if (this.infiniteLoopProcesses.get(pid))
+			// continue;
 			ampleSet = ampleSetOfProcess(pid, minimalAmpleSetSize);
 			currentSize = ampleSet.cardinality();
 			if (currentSize == 1)
@@ -639,25 +638,25 @@ public class AmpleSetWorker {
 			if (active) {
 				activeProcesses.set(pid);
 				this.newGuardMap.put(pid, myGuards);
-				if (this.isInfiniteLoopLocation(p.getLocation()))
-					this.infiniteLoopProcesses.set(pid);
+				// if (this.isInfiniteLoopLocation(p.getLocation()))
+				// this.infiniteLoopProcesses.set(pid);
 				// else
 				// this.noLoopProcesses.set(pid);
 			}
 		}
 	}
 
-	private boolean isInfiniteLoopLocation(Location location) {
-		if (location.getNumOutgoing() == 1) {
-			Statement outgoing = location.getOutgoing(0);
-
-			if (outgoing instanceof NoopStatement) {
-				if (outgoing.source().id() == outgoing.target().id())
-					return true;
-			}
-		}
-		return false;
-	}
+	// private boolean isInfiniteLoopLocation(Location location) {
+	// if (location.getNumOutgoing() == 1) {
+	// Statement outgoing = location.getOutgoing(0);
+	//
+	// if (outgoing instanceof NoopStatement) {
+	// if (outgoing.source().id() == outgoing.target().id())
+	// return true;
+	// }
+	// }
+	// return false;
+	// }
 
 	/**
 	 * Computes the impact memory units of a certain process at the current
