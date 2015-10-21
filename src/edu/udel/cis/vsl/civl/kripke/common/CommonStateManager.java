@@ -171,6 +171,7 @@ public class CommonStateManager implements StateManager {
 		TraceStep traceStep;
 		String process;
 		int atomCount = 0;
+		boolean ampleSetUpdated = false;
 
 		assert transition instanceof Transition;
 		pid = ((Transition) transition).pid();
@@ -276,6 +277,7 @@ public class CommonStateManager implements StateManager {
 
 				if (!transitionSequence.containsAllEnabled()) {
 					this.expandTransitionSequence(transitionSequence);
+					ampleSetUpdated = true;
 				}
 			}
 			traceStep.complete(state);
@@ -307,6 +309,14 @@ public class CommonStateManager implements StateManager {
 		}
 		if (config.printTransitions())
 			config.out().println(state);
+		if (ampleSetUpdated
+				&& (config.showAmpleSet() || config.showAmpleSetWtStates())) {
+			State updatedState = stack.peek().state();
+
+			config.out().println(
+					"ample set at state " + updatedState.getCanonicId()
+							+ " fully expanded");
+		}
 		if (config.debugOrVerbose()
 				|| (!config.saveStates() && config.showStates())
 				|| (config.saveStates() && config.showStates() && this.maxCanonicId > oldMaxCanonicId)

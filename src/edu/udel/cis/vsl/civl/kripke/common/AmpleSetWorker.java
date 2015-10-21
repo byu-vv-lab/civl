@@ -19,6 +19,7 @@ import edu.udel.cis.vsl.civl.model.IF.SystemFunction;
 import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
@@ -260,10 +261,10 @@ public class AmpleSetWorker {
 	 */
 	private MemoryUnitSet[] reachablePtrWritable;
 
-	// /**
-	// * processes at a location of infinite loop
-	// */
-	// private BitSet infiniteLoopProcesses = new BitSet();
+	/**
+	 * processes at a location of infinite loop
+	 */
+	private BitSet infiniteLoopProcesses = new BitSet();
 
 	// private BitSet noLoopProcesses = new BitSet();
 
@@ -338,6 +339,16 @@ public class AmpleSetWorker {
 
 	/**
 	 * Computes the ample set when there are more than one active processes.
+	 * When the number of active processes are greater than one, this method is
+	 * called.
+	 * 
+	 * Fixed one process, and then find out its ample set, i.e, processes that
+	 * are dependent with it. Repeat for all processes
+	 * 
+	 * Processes at a side-effect-free self-loop location are not chosen
+	 * purposely. If all active processes are at a side-effect-free self-loop
+	 * location, then the ample set is the whole enable set.
+	 * 
 	 * 
 	 * @return The set of process ID's to be contained in the ample set.
 	 */
@@ -351,6 +362,8 @@ public class AmpleSetWorker {
 			int currentSize;
 
 			pid = activeProcesses.nextSetBit(pid);
+			if (this.infiniteLoopProcesses.get(pid))
+				continue;
 			ampleSet = ampleSetOfProcess(pid, minimalAmpleSetSize);
 			currentSize = ampleSet.cardinality();
 			if (currentSize == 1)
@@ -360,6 +373,8 @@ public class AmpleSetWorker {
 				minimalAmpleSetSize = currentSize;
 			}
 		}
+		if (result.isEmpty())
+			return activeProcesses;
 		return result;
 	}
 
@@ -624,25 +639,25 @@ public class AmpleSetWorker {
 			if (active) {
 				activeProcesses.set(pid);
 				this.newGuardMap.put(pid, myGuards);
-				// if (this.isInfiniteLoopLocation(p.getLocation()))
-				// this.infiniteLoopProcesses.set(pid);
+				if (this.isInfiniteLoopLocation(p.getLocation()))
+					this.infiniteLoopProcesses.set(pid);
 				// else
 				// this.noLoopProcesses.set(pid);
 			}
 		}
 	}
 
-	// private boolean isInfiniteLoopLocation(Location location) {
-	// if (location.getNumOutgoing() == 1) {
-	// Statement outgoing = location.getOutgoing(0);
-	//
-	// if (outgoing instanceof NoopStatement) {
-	// if (outgoing.source().id() == outgoing.target().id())
-	// return true;
-	// }
-	// }
-	// return false;
-	// }
+	private boolean isInfiniteLoopLocation(Location location) {
+		if (location.getNumOutgoing() == 1) {
+			Statement outgoing = location.getOutgoing(0);
+
+			if (outgoing instanceof NoopStatement) {
+				if (outgoing.source().id() == outgoing.target().id())
+					return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Computes the impact memory units of a certain process at the current
@@ -865,16 +880,17 @@ public class AmpleSetWorker {
 		}
 	}
 
-	/**
-	 * Given a process, computes the set of reachable memory units and if the
-	 * memory unit could be modified at the current location or any future
-	 * location.
-	 * 
-	 * @param proc
-	 *            The process whose reachable memory units are to be computed.
-	 * @return A map of reachable memory units and if they could be modified by
-	 *         the process. //
-	 */
+	// /**
+	// * Given a process, computes the set of reachable memory units and if the
+	// * memory unit could be modified at the current location or any future
+	// * location.
+	// *
+	// * @param proc
+	// * The process whose reachable memory units are to be computed.
+	// * @return A map of reachable memory units and if they could be modified
+	// by
+	// * the process. //
+	// */
 	// private Map<SymbolicExpression, Boolean> reachableMemoryUnits(
 	// ProcessState proc) {
 	// Set<Integer> checkedDyScopes = new HashSet<>();
