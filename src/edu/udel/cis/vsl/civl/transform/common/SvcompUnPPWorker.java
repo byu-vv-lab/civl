@@ -80,7 +80,7 @@ public class SvcompUnPPWorker extends BaseWorker {
 		super(SvcompUnPPTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "_" + SvcompUnPPTransformer.CODE;
 	}
-
+	
 	@Override
 	public AST transform(AST ast) throws SyntaxException {
 		SequenceNode<BlockItemNode> rootNode = ast.getRootNode();

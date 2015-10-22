@@ -162,6 +162,10 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = this.executePathCondition(state, pid, process, arguments,
 					argumentValues, call.getSource());
 			break;
+		case "$pow":
+			state = this.executePow(state, pid, process, lhs, arguments,
+					argumentValues);
+			break;
 		case "$proc_defined":
 			state = this.executeProcDefined(state, pid, process, lhs,
 					arguments, argumentValues);
@@ -181,7 +185,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 					argumentValues, call.getSource());
 			break;
 		case "$variable_reference":
-			state=executeVariableReference(state, pid, process, lhs,
+			state = executeVariableReference(state, pid, process, lhs,
 					arguments, argumentValues);
 			break;
 		case "$apply":
@@ -203,11 +207,26 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 
 	/* ************************** Private Methods ************************** */
 
+	private State executePow(State state, int pid, String process,
+			LHSExpression lhs, Expression[] arguments,
+			SymbolicExpression[] argumentValues)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression result = this.universe.power(
+				(NumericExpression) argumentValues[0],
+				(NumericExpression) argumentValues[1]);
+
+		if (lhs != null) {
+			state = this.primaryExecutor.assign(state, pid, process, lhs,
+					result);
+		}
+		return state;
+	}
+
 	private State executeVariableReference(State state, int pid,
 			String process, LHSExpression lhs, Expression[] arguments,
 			SymbolicExpression[] argumentValues) {
 		// TODO Auto-generated method stub
-		//dd
+		// dd
 		return null;
 	}
 
@@ -743,7 +762,5 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		}
 		return state;
 	}
-	
-	
 
 }

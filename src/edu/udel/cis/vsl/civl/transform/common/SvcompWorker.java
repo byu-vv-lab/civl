@@ -13,13 +13,18 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.AtomicNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
+import edu.udel.cis.vsl.abc.ast.type.IF.QualifiedObjectType;
+import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType;
 import edu.udel.cis.vsl.abc.ast.type.IF.StandardBasicType.BasicTypeKind;
+import edu.udel.cis.vsl.abc.ast.type.IF.Type;
 import edu.udel.cis.vsl.abc.parse.IF.CParser;
+import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.abc.token.IF.SyntaxException;
 import edu.udel.cis.vsl.civl.transform.IF.SvcompTransformer;
 
@@ -39,11 +44,16 @@ public class SvcompWorker extends BaseWorker {
 
 	private final static String BOUND = "bound";
 
+	// private final static String POWER = "$pow";// name of the power function
+
+	private String UNSIGINED_BOUND;
+
 	private List<VariableDeclarationNode> nondet_int_variable_declarations = new LinkedList<>();
 
 	public SvcompWorker(ASTFactory astFactory) {
 		super(SvcompTransformer.LONG_NAME, astFactory);
 		this.identifierPrefix = "_" + SvcompTransformer.CODE;
+		this.UNSIGINED_BOUND = this.identifierPrefix + "_unsigned_bound";
 	}
 
 	@Override
@@ -51,36 +61,193 @@ public class SvcompWorker extends BaseWorker {
 		SequenceNode<BlockItemNode> rootNode = ast.getRootNode();
 
 		ast.release();
+		this.processUnsignedOperators(rootNode);
 		this.processVerifierFunctions(rootNode);
-		if (this.nondet_int_variable_declarations.size() > 0)
-			rootNode = insert_input_variables(rootNode);
+		rootNode = insert_input_variables(rootNode);
 		this.completeSources(rootNode);
 		ast = astFactory.newAST(rootNode, ast.getSourceFiles());
 		// ast.prettyPrint(System.out, false);
 		return ast;
 	}
 
+	private VariableDeclarationNode unsignedBoundVariableDeclaration() {
+		VariableDeclarationNode variable = this.variableDeclaration(
+				UNSIGINED_BOUND, this.basicType(BasicTypeKind.INT));
+
+		variable.getTypeNode().setInputQualified(true);
+		return variable;
+	}
+
+	private void processUnsignedOperators(ASTNode node) throws SyntaxException {
+		boolean processed = false;
+
+		if (node instanceof OperatorNode) {
+			OperatorNode operatorNode = (OperatorNode) node;
+			Type type = operatorNode.getType();
+
+			if (this.isUnsignedIntegerType(type)) {
+				Source source = operatorNode.getSource();
+				ExpressionNode unsignedBound = this
+						.unsigned_bound_in_pow(source);
+				Operator rhsOperator = null;
+				ExpressionNode rightOfRhs = null;
+				int operatorIndex = operatorNode.childIndex();
+				ASTNode operatorParent = operatorNode.parent();
+				boolean isAssign = false;
+				boolean needsTransform = true;
+
+				processed = true;
+				switch (operatorNode.getOperator()) {
+				case ASSIGN: {
+					ExpressionNode rhs = operatorNode.getArgument(1);
+
+					rhs.remove();
+					operatorNode.setArgument(1,
+							this.moduloExpression(source, rhs, unsignedBound));
+					isAssign = true;
+					break;
+				}
+				case BITANDEQ:
+					rhsOperator = Operator.BITAND;
+					break;
+				case BITOREQ:
+					rhsOperator = Operator.BITOR;
+					break;
+				case BITXOREQ:
+					rhsOperator = Operator.BITXOR;
+					break;
+				case DIVEQ:
+					rhsOperator = Operator.DIV;
+					break;
+				case MINUSEQ:
+					rhsOperator = Operator.MINUS;
+					break;
+				case MODEQ:
+					rhsOperator = Operator.MOD;
+					break;
+				case PLUSEQ:
+					rhsOperator = Operator.PLUS;
+					break;
+				case TIMESEQ:
+					rhsOperator = Operator.PLUS;
+					break;
+				case POSTINCREMENT:
+				case PREINCREMENT:
+					rhsOperator = Operator.PLUS;
+					rightOfRhs = this.integerConstant(1);
+					break;
+				case PREDECREMENT:
+				case POSTDECREMENT:
+					rhsOperator = Operator.MINUS;
+					rightOfRhs = this.integerConstant(1);
+					break;
+				case MINUS:
+				case PLUS:
+				case TIMES:
+				case DIV:
+				case MOD:
+					break;
+				default:
+					needsTransform = false;
+				}
+				if (!isAssign && needsTransform) {
+					ExpressionNode newOperatorNode;
+
+					if (rhsOperator != null) {
+						ExpressionNode lhs = operatorNode.getArgument(0);
+						ExpressionNode rhs;
+
+						lhs.remove();
+						if (rightOfRhs == null) {
+							rightOfRhs = operatorNode.getArgument(1);
+							rightOfRhs.remove();
+						}
+						rhs = this.nodeFactory.newOperatorNode(source,
+								rhsOperator, lhs.copy(), rightOfRhs);
+						rhs = this.moduloExpression(source, rhs, unsignedBound);
+						newOperatorNode = this.nodeFactory.newOperatorNode(
+								source, Operator.ASSIGN, lhs, rhs);
+					} else {
+						operatorNode.remove();
+						newOperatorNode = this.moduloExpression(source,
+								operatorNode, unsignedBound);
+					}
+					operatorParent.setChild(operatorIndex, newOperatorNode);
+				}
+			}
+		}
+		if (!processed) {
+			for (ASTNode child : node.children()) {
+				if (child == null)
+					continue;
+				this.processUnsignedOperators(child);
+			}
+		}
+	}
+
+	private ExpressionNode moduloExpression(Source source, ExpressionNode left,
+			ExpressionNode right) {
+		return this.nodeFactory.newOperatorNode(source, Operator.MOD, left,
+				right);
+	};
+
+	private ExpressionNode unsigned_bound_in_pow(Source source)
+			throws SyntaxException {
+		// return this.nodeFactory.newFunctionCallNode(
+		// source,
+		// this.identifierExpression(POWER),
+		// Arrays.asList(this.integerConstant(2),
+		// this.identifierExpression(this.UNSIGINED_BOUNT)), null);
+		return this.identifierExpression(this.UNSIGINED_BOUND);
+	}
+
+	private boolean isUnsignedIntegerType(Type type) {
+		if (type instanceof StandardBasicType) {
+			StandardBasicType basicType = (StandardBasicType) type;
+
+			return (basicType.getBasicTypeKind() == BasicTypeKind.UNSIGNED);
+		}
+		if (type instanceof QualifiedObjectType) {
+			return this.isUnsignedIntegerType(((QualifiedObjectType) type)
+					.getBaseType());
+		}
+		return false;
+	}
+
+	/**
+	 * insert input variables at the beginning the given root node
+	 * 
+	 * @param rootNode
+	 * @return
+	 */
 	private SequenceNode<BlockItemNode> insert_input_variables(
 			SequenceNode<BlockItemNode> rootNode) {
 		List<BlockItemNode> blockItems = new LinkedList<>();
-		VariableDeclarationNode nondet_bound_var = this.variableDeclaration(
-				this.identifierPrefix + "_" + NONDET_INT + "_" + BOUND,
-				this.basicType(BasicTypeKind.INT));
-		String nondet_bound_var_name = nondet_bound_var.getName();
 
-		nondet_bound_var.getTypeNode().setInputQualified(true);
-		blockItems.addAll(this.nondet_int_variable_declarations);
+		blockItems.add(this.unsignedBoundVariableDeclaration());
+		if (this.nondet_int_variable_declarations.size() > 0) {
+			VariableDeclarationNode nondet_bound_var = this
+					.variableDeclaration(this.identifierPrefix + "_"
+							+ NONDET_INT + "_" + BOUND,
+							this.basicType(BasicTypeKind.INT));
+			String nondet_bound_var_name = nondet_bound_var.getName();
 
-		// create the bound variable for nondet int
-		blockItems.add(nondet_bound_var);
-		// add upper bound variable and assumptions
-		blockItems.add(this.assumeFunctionDeclaration(this.newSource("$assume",
-				CParser.DECLARATION)));
-		for (VariableDeclarationNode nondet_var : nondet_int_variable_declarations) {
-			blockItems.add(this.assumeNode(this.nodeFactory.newOperatorNode(
-					nondet_var.getSource(), Operator.LTE,
-					this.identifierExpression(nondet_var.getName()),
-					this.identifierExpression(nondet_bound_var_name))));
+			nondet_bound_var.getTypeNode().setInputQualified(true);
+			blockItems.addAll(this.nondet_int_variable_declarations);
+
+			// create the bound variable for nondet int
+			blockItems.add(nondet_bound_var);
+			// add upper bound variable and assumptions
+			blockItems.add(this.assumeFunctionDeclaration(this.newSource(
+					"$assume", CParser.DECLARATION)));
+			for (VariableDeclarationNode nondet_var : nondet_int_variable_declarations) {
+				blockItems
+						.add(this.assumeNode(this.nodeFactory.newOperatorNode(
+								nondet_var.getSource(),
+								Operator.LTE,
+								this.identifierExpression(nondet_var.getName()),
+								this.identifierExpression(nondet_bound_var_name))));
+			}
 		}
 		for (BlockItemNode item : rootNode) {
 			if (item != null) {
@@ -92,6 +259,12 @@ public class SvcompWorker extends BaseWorker {
 				blockItems);
 	}
 
+	/**
+	 * processes _VERIFIER_atomic_begin/end and _VERIFIER_nondet_int(uint)
+	 * function calls
+	 * 
+	 * @param root
+	 */
 	private void processVerifierFunctions(SequenceNode<BlockItemNode> root) {
 		for (BlockItemNode item : root) {
 			if (item == null)
@@ -100,24 +273,29 @@ public class SvcompWorker extends BaseWorker {
 			if (item instanceof FunctionDefinitionNode) {
 				FunctionDefinitionNode funcDef = (FunctionDefinitionNode) item;
 
-				if (funcDef.getName().startsWith(VERIFIER_ATOMIC)) {
-					CompoundStatementNode body = funcDef.getBody();
-					BlockItemNode atomicStmt;
-
-					body.remove();
-					atomicStmt = this.nodeFactory.newAtomicStatementNode(
-							body.getSource(), false, body);
-					body = this.nodeFactory.newCompoundStatementNode(
-							body.getSource(), Arrays.asList(atomicStmt));
-					funcDef.setBody(body);
-				} else {
-					process_atomic_begin_end(funcDef.getBody());
-				}
+				// if (funcDef.getName().startsWith(VERIFIER_ATOMIC)) {
+				// CompoundStatementNode body = funcDef.getBody();
+				// BlockItemNode atomicStmt;
+				//
+				// body.remove();
+				// atomicStmt = this.nodeFactory.newAtomicStatementNode(
+				// body.getSource(), false, body);
+				// body = this.nodeFactory.newCompoundStatementNode(
+				// body.getSource(), Arrays.asList(atomicStmt));
+				// funcDef.setBody(body);
+				// } else {
+				process_atomic_begin_end(funcDef.getBody());
+				// }
 			}
 			process_nondet_int(item);
 		}
 	}
 
+	/**
+	 * transforms _VERIFIER_nondet_int(uint) function calls into input variables
+	 * 
+	 * @param node
+	 */
 	private void process_nondet_int(ASTNode node) {
 		if (node instanceof FunctionCallNode) {
 			FunctionCallNode callNode = (FunctionCallNode) node;
@@ -143,6 +321,11 @@ public class SvcompWorker extends BaseWorker {
 		}
 	}
 
+	/**
+	 * transforms _VERIFIER_atomic_begin/end pairs into $atomic blocks.
+	 * 
+	 * @param node
+	 */
 	private void process_atomic_begin_end(ASTNode node) {
 		if (node instanceof CompoundStatementNode) {
 			CompoundStatementNode body = (CompoundStatementNode) node;
@@ -229,8 +412,13 @@ public class SvcompWorker extends BaseWorker {
 		}
 	}
 
-	// private void process_atomic_begin_end_work()
-
+	/**
+	 * checks if the name of the callee of the given function call starts with
+	 * _VERIFIER_atomic, i.e., the function call is atomic.
+	 * 
+	 * @param call
+	 * @return
+	 */
 	private boolean is_atomic_call(FunctionCallNode call) {
 		ExpressionNode function = call.getFunction();
 
