@@ -146,4 +146,10 @@ public class SvcompTest {
 				+ "-input_gen_argc=1 -input_svcomp_unpp_scale=3 -timeout=200 -input_svcomp_int_bound=4",
 				filename("10_fmaxsym_cas_true-unreach-call.i"));
 	}
+
+	@Test
+	public void pointerSubtraction() {
+		ui.run("verify -svcomp -pthreadOnly=false",
+				filename("pointerSubtraction.c"));
+	}
 }
