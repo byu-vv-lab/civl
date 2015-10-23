@@ -95,7 +95,7 @@ public class CommonBooleanLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public void calculateConstantValue(SymbolicUniverse universe) {
+	public void calculateConstantValueWork(SymbolicUniverse universe) {
 		this.constantValue = value ? universe.trueExpression() : universe
 				.falseExpression();
 	}

@@ -686,6 +686,7 @@ public class ModelBuilderWorker {
 				}
 				this.loopAnalysis(loc, addressedOfVariables);
 				loc.purelyLocalAnalysis();
+				loc.loopAnalysis();
 				factory.computeImpactScopeOfLocation(loc);
 			}
 		}

@@ -310,7 +310,7 @@ public abstract class CommonStatement extends CommonSourceable implements
 	@Override
 	public void calculateConstantValue(SymbolicUniverse universe) {
 		this.guard.calculateConstantValue(universe);
-
+		this.calculateConstantValueWork(universe);
 	}
 
 	@Override

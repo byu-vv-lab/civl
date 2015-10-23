@@ -98,15 +98,17 @@ public class CommonRecDomainLiteralExpression extends CommonExpression
 	}
 
 	@Override
-	public void calculateConstantValue(SymbolicUniverse universe) {
+	public void calculateConstantValueWork(SymbolicUniverse universe) {
 		List<SymbolicExpression> rangeValues = new ArrayList<>();
 		List<SymbolicExpression> domValueComponents = new LinkedList<>();
 		SymbolicExpression rangesArray;
 		CIVLDomainType civlDomType = (CIVLDomainType) this.expressionType;
 
 		for (Expression range : ranges) {
-			SymbolicExpression rangeValue = range.constantValue();
+			SymbolicExpression rangeValue;
 
+			range.calculateConstantValue(universe);
+			rangeValue = range.constantValue();
 			if (rangeValue == null)
 				return;
 			rangeValues.add(rangeValue);

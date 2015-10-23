@@ -17,9 +17,11 @@ import edu.udel.cis.vsl.civl.model.IF.Scope;
 import edu.udel.cis.vsl.civl.model.IF.expression.MemoryUnitExpression;
 import edu.udel.cis.vsl.civl.model.IF.location.Location;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.model.IF.statement.NoopStatement;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.IF.variable.Variable;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
+import edu.udel.cis.vsl.sarl.IF.expr.SymbolicExpression;
 
 /**
  * The parent of all locations.
@@ -125,6 +127,11 @@ public class CommonLocation extends CommonSourceable implements Location {
 	private int spawnBound = 0;
 
 	private boolean isSafeLoop = false;
+
+	/**
+	 * true iff this location is in a side-effect-free infinite loop
+	 */
+	private boolean isInNoopLoop = false;
 
 	/* **************************** Constructors *************************** */
 
@@ -253,8 +260,57 @@ public class CommonLocation extends CommonSourceable implements Location {
 		return this.atomicKind == AtomicKind.ATOM_EXIT;
 	}
 
+	private Statement singleNoopOutgoing(Location location) {
+		Statement outgoing = null;
+
+		for (Statement stmt : location.outgoing()) {
+			SymbolicExpression guard = stmt.guard().constantValue();
+
+			if (guard != null && guard.isFalse())
+				continue;
+			if (outgoing != null) {
+				// more than one enabled outgoing statement
+				return null;
+			}
+			outgoing = stmt;
+		}
+		if (outgoing instanceof NoopStatement)
+			return outgoing;
+		return null;
+	}
+
 	@Override
 	public void loopAnalysis() {
+		if (!this.isInNoopLoop) {
+			Stack<Location> visited = new Stack<>();
+			Location current = this;
+			Location loopLocation = null;
+
+			while (current != null) {
+				Statement singleEnabledNoop = this.singleNoopOutgoing(current);
+
+				visited.push(current);
+				if (singleEnabledNoop != null) {
+					Location target = singleEnabledNoop.target();
+
+					if (visited.contains(target)) {
+						loopLocation = target;
+						target.setInNoopLoop(true);
+						current = null;
+					} else {
+						current = target;
+					}
+				} else
+					return;
+			}
+			if (loopLocation != null) {
+
+				do {
+					current = visited.pop();
+					current.setInNoopLoop(true);
+				} while (!visited.isEmpty() && !current.equals(loopLocation));
+			}
+		}
 
 		// if (this.loopPossible) {
 		// // this is the loop entrance of a loop statement
@@ -748,6 +804,16 @@ public class CommonLocation extends CommonSourceable implements Location {
 	@Override
 	public boolean isSafeLoop() {
 		return this.isSafeLoop;
+	}
+
+	@Override
+	public void setInNoopLoop(boolean value) {
+		this.isInNoopLoop = value;
+	}
+
+	@Override
+	public boolean isInNoopLoop() {
+		return this.isInNoopLoop;
 	}
 
 }

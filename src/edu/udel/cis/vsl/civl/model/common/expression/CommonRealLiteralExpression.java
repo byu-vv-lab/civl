@@ -85,7 +85,7 @@ public class CommonRealLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public void calculateConstantValue(SymbolicUniverse universe) {
+	public void calculateConstantValueWork(SymbolicUniverse universe) {
 		this.constantValue = universe.number(universe.numberObject(universe
 				.numberFactory().rational(value.toPlainString())));
 	}

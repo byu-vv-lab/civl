@@ -154,9 +154,11 @@ public class CommonUnaryExpression extends CommonExpression implements
 	}
 
 	@Override
-	public void calculateConstantValue(SymbolicUniverse universe) {
-		SymbolicExpression operandValue = this.operand.constantValue();
+	public void calculateConstantValueWork(SymbolicUniverse universe) {
+		SymbolicExpression operandValue;
 
+		operand.calculateConstantValue(universe);
+		operandValue = this.operand.constantValue();
 		if (operandValue == null)
 			return;
 		switch (operator) {

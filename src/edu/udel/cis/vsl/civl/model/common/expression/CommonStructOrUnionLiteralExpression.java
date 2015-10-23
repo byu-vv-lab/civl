@@ -124,13 +124,18 @@ public class CommonStructOrUnionLiteralExpression extends CommonExpression
 		List<SymbolicExpression> fieldValues = new ArrayList<>();
 
 		for (Expression field : fields) {
-			SymbolicExpression fieldValue = field.constantValue();
+			SymbolicExpression fieldValue;
 
+			field.calculateConstantValue(universe);
+			fieldValue = field.constantValue();
 			if (fieldValue == null)
 				return;
+			fieldValues.add(fieldValue);
 		}
-		constantValue = universe.tuple((SymbolicTupleType) this.expressionType
-				.getDynamicType(universe), fieldValues);
+		if (this.isStruct())
+			constantValue = universe.tuple(
+					(SymbolicTupleType) this.expressionType
+							.getDynamicType(universe), fieldValues);
 	}
 
 	@Override

@@ -238,7 +238,6 @@ public interface Location extends Sourceable {
 	 */
 	void purelyLocalAnalysisForOutgoing();
 
-
 	/**
 	 * During the translation of AST node into CIVL model, it is possible to
 	 * know if a location with more than one incoming statement possible to be a
@@ -256,6 +255,13 @@ public interface Location extends Sourceable {
 	 * @return
 	 */
 	void loopAnalysis();
+
+	/**
+	 * sets the flag that denotes if the location is in a side-effect-free loop.
+	 * 
+	 * @param value
+	 */
+	void setInNoopLoop(boolean value);
 
 	/**
 	 * The impact scope of a location is required in the enabler when an
@@ -326,8 +332,15 @@ public interface Location extends Sourceable {
 	boolean hasSpawn();
 
 	void staticAnalysis();
-	
+
 	void setSafeLoop(boolean value);
-	
+
 	boolean isSafeLoop();
+
+	/**
+	 * returns true iff this location is in a side-effect-free loop.
+	 * 
+	 * @return
+	 */
+	boolean isInNoopLoop();
 }

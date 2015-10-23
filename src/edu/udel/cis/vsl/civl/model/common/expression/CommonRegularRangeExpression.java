@@ -24,8 +24,9 @@ public class CommonRegularRangeExpression extends CommonExpression implements
 	private Expression high;
 	private Expression step;
 
-	public CommonRegularRangeExpression(CIVLSource source, Scope hscope, Scope lscope,
-			CIVLType type, Expression low, Expression high, Expression step) {
+	public CommonRegularRangeExpression(CIVLSource source, Scope hscope,
+			Scope lscope, CIVLType type, Expression low, Expression high,
+			Expression step) {
 		super(source, hscope, lscope, type);
 		this.low = low;
 		this.high = high;
@@ -97,13 +98,18 @@ public class CommonRegularRangeExpression extends CommonExpression implements
 	}
 
 	@Override
-	public void calculateConstantValue(SymbolicUniverse universe) {
-		SymbolicExpression lowValue = low.constantValue(), highValue = high
-				.constantValue(), stepValue = step.constantValue();
+	public void calculateConstantValueWork(SymbolicUniverse universe) {
+		SymbolicExpression lowValue, highValue, stepValue;
 		BooleanExpression claim;
 		ResultType validity;
 		boolean negativeStep = false;
 
+		low.calculateConstantValue(universe);
+		high.calculateConstantValue(universe);
+		step.calculateConstantValue(universe);
+		lowValue = low.constantValue();
+		highValue = high.constantValue();
+		stepValue = step.constantValue();
 		if (lowValue == null || highValue == null || stepValue == null)
 			return;
 		claim = universe.equals(universe.zeroInt(), stepValue);
@@ -111,7 +117,7 @@ public class CommonRegularRangeExpression extends CommonExpression implements
 				.getResultType();
 		if (validity == ResultType.YES)
 			return;
-		claim = universe.lessThan(universe.zeroInt(), (NumericExpression) step);
+		claim = universe.lessThan(universe.zeroInt(), (NumericExpression) stepValue);
 		validity = universe.reasoner(universe.trueExpression()).valid(claim)
 				.getResultType();
 		if (validity == ResultType.NO)

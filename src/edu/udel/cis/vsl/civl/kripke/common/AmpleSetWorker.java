@@ -260,10 +260,10 @@ public class AmpleSetWorker {
 	 */
 	private MemoryUnitSet[] reachablePtrWritable;
 
-	// /**
-	// * processes at a location of infinite loop
-	// */
-	// private BitSet infiniteLoopProcesses = new BitSet();
+	/**
+	 * processes at a location of infinite loop
+	 */
+	private BitSet infiniteLoopProcesses = new BitSet();
 
 	// private BitSet noLoopProcesses = new BitSet();
 
@@ -361,9 +361,10 @@ public class AmpleSetWorker {
 			int currentSize;
 
 			pid = activeProcesses.nextSetBit(pid);
-			// if (this.infiniteLoopProcesses.get(pid))
-			// continue;
+			if (this.infiniteLoopProcesses.get(pid))
+				continue;
 			ampleSet = ampleSetOfProcess(pid, minimalAmpleSetSize);
+			this.difference(ampleSet, infiniteLoopProcesses);
 			currentSize = ampleSet.cardinality();
 			if (currentSize == 1)
 				return ampleSet;
@@ -372,9 +373,31 @@ public class AmpleSetWorker {
 				minimalAmpleSetSize = currentSize;
 			}
 		}
-		if (result.isEmpty())
-			return activeProcesses;
+		if (result.isEmpty() && !this.infiniteLoopProcesses.isEmpty()) {
+			for (int pid = 0; pid < this.infiniteLoopProcesses.length(); pid++) {
+				BitSet ampleSet;
+				int currentSize;
+
+				pid = infiniteLoopProcesses.nextSetBit(pid);
+				ampleSet = ampleSetOfProcess(pid, minimalAmpleSetSize);
+				currentSize = ampleSet.cardinality();
+				if (currentSize == 1)
+					return ampleSet;
+				if (currentSize < minimalAmpleSetSize) {
+					result = ampleSet;
+					minimalAmpleSetSize = currentSize;
+				}
+			}
+		}
 		return result;
+	}
+
+	public void difference(BitSet lhs, BitSet rhs) {
+		for (int i = 0; i < lhs.length(); i++) {
+			i = lhs.nextSetBit(i);
+			if (rhs.get(i))
+				lhs.clear(i);
+		}
 	}
 
 	// /**
@@ -639,7 +662,8 @@ public class AmpleSetWorker {
 				activeProcesses.set(pid);
 				this.newGuardMap.put(pid, myGuards);
 				// if (this.isInfiniteLoopLocation(p.getLocation()))
-				// this.infiniteLoopProcesses.set(pid);
+				if (p.getLocation().isInNoopLoop())
+					this.infiniteLoopProcesses.set(pid);
 				// else
 				// this.noLoopProcesses.set(pid);
 			}

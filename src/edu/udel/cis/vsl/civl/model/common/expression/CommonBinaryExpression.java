@@ -215,10 +215,13 @@ public class CommonBinaryExpression extends CommonExpression implements
 	}
 
 	@Override
-	public void calculateConstantValue(SymbolicUniverse universe) {
-		SymbolicExpression leftValue = left.constantValue(), rightValue = right
-				.constantValue();
+	public void calculateConstantValueWork(SymbolicUniverse universe) {
+		SymbolicExpression leftValue, rightValue;
 
+		left.calculateConstantValue(universe);
+		right.calculateConstantValue(universe);
+		leftValue = left.constantValue();
+		rightValue = right.constantValue();
 		if (leftValue == null || rightValue == null)
 			return;
 		switch (operator) {
@@ -239,8 +242,12 @@ public class CommonBinaryExpression extends CommonExpression implements
 					(NumericExpression) rightValue);
 			break;
 		case DIVIDE:
-			constantValue = universe.divide((NumericExpression) leftValue,
-					(NumericExpression) rightValue);
+			try {
+				constantValue = universe.divide((NumericExpression) leftValue,
+						(NumericExpression) rightValue);
+			} catch (Exception ex) {
+
+			}
 			break;
 		case LESS_THAN:
 			constantValue = universe.lessThan((NumericExpression) leftValue,

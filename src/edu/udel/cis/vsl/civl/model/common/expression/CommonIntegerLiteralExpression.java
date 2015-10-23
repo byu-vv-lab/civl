@@ -79,7 +79,7 @@ public class CommonIntegerLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public void calculateConstantValue(SymbolicUniverse universe) {
+	public void calculateConstantValueWork(SymbolicUniverse universe) {
 		this.constantValue = universe.integer(value);
 	}
 

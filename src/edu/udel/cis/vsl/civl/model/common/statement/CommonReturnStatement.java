@@ -158,7 +158,8 @@ public class CommonReturnStatement extends CommonStatement implements
 
 	@Override
 	protected void calculateConstantValueWork(SymbolicUniverse universe) {
-		this.expression.calculateConstantValue(universe);
+		if (expression != null)
+			this.expression.calculateConstantValue(universe);
 	}
 
 	@Override

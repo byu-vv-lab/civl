@@ -152,12 +152,14 @@ public class CommonArrayLiteralExpression extends CommonExpression implements
 	}
 
 	@Override
-	public void calculateConstantValue(SymbolicUniverse universe) {
+	public void calculateConstantValueWork(SymbolicUniverse universe) {
 		List<SymbolicExpression> elementValues = new ArrayList<>();
 
 		for (Expression element : elements) {
-			SymbolicExpression elementValue = element.constantValue();
+			SymbolicExpression elementValue;
 
+			element.calculateConstantValue(universe);
+			elementValue = element.constantValue();
 			if (elementValue == null)
 				return;
 			elementValues.add(elementValue);

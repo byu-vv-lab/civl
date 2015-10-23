@@ -78,102 +78,140 @@ public class SvcompWorker extends BaseWorker {
 		return variable;
 	}
 
+	// private boolean isUnsignedIntegerTypeNode(TypeNode typeNode) {
+	// if (typeNode instanceof BasicTypeNode) {
+	// BasicTypeNode basicTypeNode = (BasicTypeNode) typeNode;
+	//
+	// return basicTypeNode.getBasicTypeKind() == BasicTypeKind.UNSIGNED;
+	// }
+	// return false;
+	// }
+
 	private void processUnsignedOperators(ASTNode node) throws SyntaxException {
 		boolean processed = false;
 
-		if (node instanceof OperatorNode) {
-			OperatorNode operatorNode = (OperatorNode) node;
-			Type type = operatorNode.getType();
+		// if (node instanceof VariableDeclarationNode) {
+		// VariableDeclarationNode variable = (VariableDeclarationNode) node;
+		// InitializerNode init = variable.getInitializer();
+		//
+		// if (init != null && (init instanceof ExpressionNode)) {
+		// if (this.isUnsignedIntegerTypeNode(variable.getTypeNode())) {
+		// ExpressionNode newInit;
+		// Source source = init.getSource();
+		//
+		// init.remove();
+		// newInit = this.moduloExpression(source,
+		// (ExpressionNode) init,
+		// this.unsigned_bound_in_pow(source));
+		// variable.setInitializer(newInit);
+		// }
+		// }
+		// } else
+		if (node instanceof ExpressionNode) {
+			Type type = ((ExpressionNode) node).getConvertedType();
 
 			if (this.isUnsignedIntegerType(type)) {
-				Source source = operatorNode.getSource();
+				ASTNode expressionParent = node.parent();
+				int expressionIndex = node.childIndex();
+				Source source = node.getSource();
 				ExpressionNode unsignedBound = this
 						.unsigned_bound_in_pow(source);
-				Operator rhsOperator = null;
-				ExpressionNode rightOfRhs = null;
-				int operatorIndex = operatorNode.childIndex();
-				ASTNode operatorParent = operatorNode.parent();
-				boolean isAssign = false;
-				boolean needsTransform = true;
+				ExpressionNode newExpressionNode = null;
 
 				processed = true;
-				switch (operatorNode.getOperator()) {
-				case ASSIGN: {
-					ExpressionNode rhs = operatorNode.getArgument(1);
+				if (node instanceof OperatorNode) {
+					OperatorNode operatorNode = (OperatorNode) node;
+					Operator rhsOperator = null;
+					ExpressionNode rightOfRhs = null;
+					boolean isAssign = false;
+					boolean needsTransform = true;
 
-					rhs.remove();
-					operatorNode.setArgument(1,
-							this.moduloExpression(source, rhs, unsignedBound));
-					isAssign = true;
-					break;
-				}
-				case BITANDEQ:
-					rhsOperator = Operator.BITAND;
-					break;
-				case BITOREQ:
-					rhsOperator = Operator.BITOR;
-					break;
-				case BITXOREQ:
-					rhsOperator = Operator.BITXOR;
-					break;
-				case DIVEQ:
-					rhsOperator = Operator.DIV;
-					break;
-				case MINUSEQ:
-					rhsOperator = Operator.MINUS;
-					break;
-				case MODEQ:
-					rhsOperator = Operator.MOD;
-					break;
-				case PLUSEQ:
-					rhsOperator = Operator.PLUS;
-					break;
-				case TIMESEQ:
-					rhsOperator = Operator.PLUS;
-					break;
-				case POSTINCREMENT:
-				case PREINCREMENT:
-					rhsOperator = Operator.PLUS;
-					rightOfRhs = this.integerConstant(1);
-					break;
-				case PREDECREMENT:
-				case POSTDECREMENT:
-					rhsOperator = Operator.MINUS;
-					rightOfRhs = this.integerConstant(1);
-					break;
-				case MINUS:
-				case PLUS:
-				case TIMES:
-				case DIV:
-				case MOD:
-					break;
-				default:
-					needsTransform = false;
-				}
-				if (!isAssign && needsTransform) {
-					ExpressionNode newOperatorNode;
+					switch (operatorNode.getOperator()) {
+					case ASSIGN: {
+						ExpressionNode rhs = operatorNode.getArgument(1);
 
-					if (rhsOperator != null) {
-						ExpressionNode lhs = operatorNode.getArgument(0);
-						ExpressionNode rhs;
-
-						lhs.remove();
-						if (rightOfRhs == null) {
-							rightOfRhs = operatorNode.getArgument(1);
-							rightOfRhs.remove();
-						}
-						rhs = this.nodeFactory.newOperatorNode(source,
-								rhsOperator, lhs.copy(), rightOfRhs);
-						rhs = this.moduloExpression(source, rhs, unsignedBound);
-						newOperatorNode = this.nodeFactory.newOperatorNode(
-								source, Operator.ASSIGN, lhs, rhs);
-					} else {
-						operatorNode.remove();
-						newOperatorNode = this.moduloExpression(source,
-								operatorNode, unsignedBound);
+						rhs.remove();
+						operatorNode.setArgument(1, this.moduloExpression(
+								source, rhs, unsignedBound));
+						isAssign = true;
+						break;
 					}
-					operatorParent.setChild(operatorIndex, newOperatorNode);
+					case BITANDEQ:
+						rhsOperator = Operator.BITAND;
+						break;
+					case BITOREQ:
+						rhsOperator = Operator.BITOR;
+						break;
+					case BITXOREQ:
+						rhsOperator = Operator.BITXOR;
+						break;
+					case DIVEQ:
+						rhsOperator = Operator.DIV;
+						break;
+					case MINUSEQ:
+						rhsOperator = Operator.MINUS;
+						break;
+					case MODEQ:
+						rhsOperator = Operator.MOD;
+						break;
+					case PLUSEQ:
+						rhsOperator = Operator.PLUS;
+						break;
+					case TIMESEQ:
+						rhsOperator = Operator.PLUS;
+						break;
+					case POSTINCREMENT:
+					case PREINCREMENT:
+						rhsOperator = Operator.PLUS;
+						rightOfRhs = this.integerConstant(1);
+						break;
+					case PREDECREMENT:
+					case POSTDECREMENT:
+						rhsOperator = Operator.MINUS;
+						rightOfRhs = this.integerConstant(1);
+						break;
+					case MINUS:
+					case PLUS:
+					case TIMES:
+					case DIV:
+					case MOD:
+					case UNARYMINUS:
+					case UNARYPLUS:
+						break;
+					default:
+						needsTransform = false;
+					}
+					if (!isAssign && needsTransform) {
+						if (rhsOperator != null) {
+							ExpressionNode lhs = operatorNode.getArgument(0);
+							ExpressionNode rhs;
+
+							lhs.remove();
+							if (rightOfRhs == null) {
+								rightOfRhs = operatorNode.getArgument(1);
+								rightOfRhs.remove();
+							}
+							rhs = this.nodeFactory.newOperatorNode(source,
+									rhsOperator, lhs.copy(), rightOfRhs);
+							rhs = this.moduloExpression(source, rhs,
+									unsignedBound);
+							newExpressionNode = this.nodeFactory
+									.newOperatorNode(source, Operator.ASSIGN,
+											lhs, rhs);
+						} else {
+							operatorNode.remove();
+							newExpressionNode = this.moduloExpression(source,
+									operatorNode, unsignedBound);
+						}
+					}
+				} else if (!(node instanceof IdentifierExpressionNode)) {
+					node.remove();
+					newExpressionNode = this.moduloExpression(source,
+							(ExpressionNode) node, unsignedBound);
 				}
+				if (newExpressionNode != null)
+					expressionParent.setChild(expressionIndex,
+							newExpressionNode);
 			}
 		}
 		if (!processed) {

@@ -133,6 +133,12 @@ public abstract class CommonExpression extends CommonSourceable implements
 
 	@Override
 	public void calculateConstantValue(SymbolicUniverse universe) {
+		if (this.constantValue == null)
+			this.calculateConstantValueWork(universe);
+	}
+
+	protected void calculateConstantValueWork(SymbolicUniverse universe) {
+		return;
 	}
 
 	@Override
