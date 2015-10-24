@@ -311,19 +311,19 @@ public class SvcompWorker extends BaseWorker {
 			if (item instanceof FunctionDefinitionNode) {
 				FunctionDefinitionNode funcDef = (FunctionDefinitionNode) item;
 
-				// if (funcDef.getName().startsWith(VERIFIER_ATOMIC)) {
-				// CompoundStatementNode body = funcDef.getBody();
-				// BlockItemNode atomicStmt;
-				//
-				// body.remove();
-				// atomicStmt = this.nodeFactory.newAtomicStatementNode(
-				// body.getSource(), false, body);
-				// body = this.nodeFactory.newCompoundStatementNode(
-				// body.getSource(), Arrays.asList(atomicStmt));
-				// funcDef.setBody(body);
-				// } else {
-				process_atomic_begin_end(funcDef.getBody());
-				// }
+				if (funcDef.getName().startsWith(VERIFIER_ATOMIC)) {
+					CompoundStatementNode body = funcDef.getBody();
+					BlockItemNode atomicStmt;
+
+					body.remove();
+					atomicStmt = this.nodeFactory.newAtomicStatementNode(
+							body.getSource(), false, body);
+					body = this.nodeFactory.newCompoundStatementNode(
+							body.getSource(), Arrays.asList(atomicStmt));
+					funcDef.setBody(body);
+				} else {
+					process_atomic_begin_end(funcDef.getBody());
+				}
 			}
 			process_nondet_int(item);
 		}
