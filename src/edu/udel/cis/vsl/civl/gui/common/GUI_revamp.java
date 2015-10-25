@@ -552,12 +552,12 @@ public class GUI_revamp extends JFrame {
 			consoleModel.addRow(new Object[]{"max process:", consoleStatsList.get(3)});
 			consoleModel.addRow(new Object[]{"states:", consoleStatsList.get(4)});
 			consoleModel.addRow(new Object[]{"states saved", consoleStatsList.get(5)});
-			consoleModel.addRow(new Object[]{"state matches", consoleStatsList.get(6)});
-			consoleModel.addRow(new Object[]{"transitions", consoleStatsList.get(7)});
-			consoleModel.addRow(new Object[]{"trace steps", consoleStatsList.get(8)});
-			consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(9)});
-			consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(10)});
-			consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(11)});
+//			consoleModel.addRow(new Object[]{"state matches", consoleStatsList.get(6)});
+//			consoleModel.addRow(new Object[]{"transitions", consoleStatsList.get(7)});
+//			consoleModel.addRow(new Object[]{"trace steps", consoleStatsList.get(8)});
+//			consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(9)});
+//			consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(10)});
+//			consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(11)});
 		}
 		
 //		JTextArea consoleOutput = new JTextArea();
@@ -732,6 +732,8 @@ public class GUI_revamp extends JFrame {
 
 			} else if (currCommand.equals(NormalCommandKind.REPLAY)) {
 				tp_commandView.addTab("Choose File", p_chooseFile);
+				tp_commandView.addTab("Options", p_options);
+				tp_commandView.addTab("Console", p_console);
 				p_view.add(tp_commandView);
 				p_view.validate();
 
@@ -741,6 +743,9 @@ public class GUI_revamp extends JFrame {
 				tp_commandView.addTab("Inputs", p_inputs);
 				tp_commandView.addTab("Console", p_console);
 				p_view.add(tp_commandView);
+				showOptions();
+				showConsole();
+				showSelectedFiles();
 				showSelectedFiles();
 				p_view.validate();
 
@@ -1092,7 +1097,8 @@ public class GUI_revamp extends JFrame {
 			if (!nodeName.equals("HELP") && !nodeName.equals("CONFIG")
 					&& !nodeName.equals("GUI") && !nodeName.equals("COMPARE")
 					&& !nodeName.equals("COMPARE_REPLAY")
-					&& !nodeName.equals("REPLAY") && !nodeName.equals("SHOW")) {
+					//&& !nodeName.equals("REPLAY")
+					&& !nodeName.equals("SHOW")) {
 				CommandNode node = new CommandNode(nodeName,
 						(CommandName) vals[i]);
 				top.add(node);
