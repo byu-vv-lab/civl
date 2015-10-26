@@ -1401,4 +1401,10 @@ public class CommonSymbolicUtility implements SymbolicUtility {
 			return getDyscopeId(null, pointer) >= 0;
 		return false;
 	}
+
+	@Override
+	public SymbolicExpression pointerDifference(SymbolicExpression minuend,
+			SymbolicExpression subtrachend, SymbolicType type) {
+		return new CommonPointerDifference(minuend, subtrachend, type);
+	}
 }
