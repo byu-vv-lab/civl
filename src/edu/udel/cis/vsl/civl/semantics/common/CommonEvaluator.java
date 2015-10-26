@@ -1719,10 +1719,16 @@ public class CommonEvaluator implements Evaluator {
 			eval = pointerAdd(eval.state, pid, process, expression, left,
 					(NumericExpression) right);
 			break;
-		case POINTER_SUBTRACT:
-			eval = pointerSubtraction(eval.state, pid, process, expression,
-					left, right);
+		case POINTER_SUBTRACT: {
+			if (right.isNumeric())
+				eval = this.pointerAdd(state, pid, process, expression, left,
+						universe.minus((NumericExpression) right));
+			else
+				eval = pointerSubtraction(eval.state, pid, process, expression,
+						left, right);
 			break;
+
+		}
 		case IMPLIES:
 		case AND:
 		case OR:
@@ -3321,91 +3327,107 @@ public class CommonEvaluator implements Evaluator {
 				rightPtr);
 		rightSid = symbolicUtil.getDyscopeId(expression.right().getSource(),
 				rightPtr);
-		// Check if the two point to the same object
-		if ((rightVid != leftVid) || (rightSid != leftSid))
-			state = errorLogger.logError(expression.getSource(), state,
-					process, symbolicAnalyzer.stateInformation(state), null,
-					ResultType.NO, ErrorKind.POINTER,
-					"Operands of pointer subtraction point to the same obejct");
-		// Check if two pointers are array element reference pointers. Based on
-		// C11 Standard 6.5.6, entry 9: When two pointers are subtracted, both
-		// shall point to elements of the same array object, or one past the
-		// last element of the array object; the result is the difference of the
-		// subscripts of the two array elements.
-		// Thus, any pointer which is not an array element reference is invalid
-		// for pointer subtraction.
-		if (!(symbolicUtil.getSymRef(leftPtr).isArrayElementReference() && symbolicUtil
-				.getSymRef(rightPtr).isArrayElementReference()))
-			state = errorLogger
-					.logError(expression.getSource(), state, process,
-							symbolicAnalyzer.stateInformation(state), null,
-							ResultType.NO, ErrorKind.POINTER,
-							"Not both of the operands of pointer subtraction points to an array element");
-		// Get the pointer to the whole array
-		arrayPtr = symbolicUtil.arrayRootPtr(leftPtr, expression.left()
-				.getSource());
-		leftPtrIndices = symbolicUtil
-				.stripIndicesFromReference((ArrayElementReference) symbolicUtil
-						.getSymRef(leftPtr));
-		rightPtrIndices = symbolicUtil
-				.stripIndicesFromReference((ArrayElementReference) symbolicUtil
-						.getSymRef(rightPtr));
-		// Check compatibility for heap objects:
-		// If VID == 0, all ancestor indexes of left pointer should be same as
-		// right pointer. Because different heap objects all have variable ID of
-		// number zero and ancestor indexes indicate if they are same heap
-		// objects.
-		if (leftVid == 0) {
-			boolean isCompatiable = true;
-			int temp = leftPtrIndices.length - 1;
 
-			if (leftPtrIndices.length != rightPtrIndices.length)
-				isCompatiable = false;
-			else {
-
-				for (int i = 0; i < temp; i++) {
-					if (!(leftPtrIndices[i].equals(rightPtrIndices[i]))) {
-						isCompatiable = false;
-						break;
-					}
-				}
-			}
-			if (!isCompatiable)
+		if (rightSid == -1 && rightVid == -1) {
+			// offset subtraction
+			return new Evaluation(state,
+					this.symbolicAnalyzer.pointerArithmetics(
+							expression.getSource(), state, true, leftPtr,
+							rightPtr));
+		} else {
+			// Check if the two point to the same object
+			if ((rightVid != leftVid) || (rightSid != leftSid))
 				state = errorLogger
 						.logError(expression.getSource(), state, process,
 								symbolicAnalyzer.stateInformation(state), null,
 								ResultType.NO, ErrorKind.POINTER,
-								"Operands of pointer subtraction point to different heap obejcts");
-			// Since they are in the same heap object, the result is directly
-			// do a subtraction between two indexes
-			eval = new Evaluation(state, null);
-			eval.value = universe.subtract(leftPtrIndices[temp],
-					rightPtrIndices[temp]);
+								"Operands of pointer subtraction point to the same obejct");
+			// Check if two pointers are array element reference pointers. Based
+			// on
+			// C11 Standard 6.5.6, entry 9: When two pointers are subtracted,
+			// both
+			// shall point to elements of the same array object, or one past the
+			// last element of the array object; the result is the difference of
+			// the
+			// subscripts of the two array elements.
+			// Thus, any pointer which is not an array element reference is
+			// invalid
+			// for pointer subtraction.
+			if (!(symbolicUtil.getSymRef(leftPtr).isArrayElementReference() && symbolicUtil
+					.getSymRef(rightPtr).isArrayElementReference()))
+				state = errorLogger
+						.logError(expression.getSource(), state, process,
+								symbolicAnalyzer.stateInformation(state), null,
+								ResultType.NO, ErrorKind.POINTER,
+								"Not both of the operands of pointer subtraction points to an array element");
+			// Get the pointer to the whole array
+			arrayPtr = symbolicUtil.arrayRootPtr(leftPtr, expression.left()
+					.getSource());
+			leftPtrIndices = symbolicUtil
+					.stripIndicesFromReference((ArrayElementReference) symbolicUtil
+							.getSymRef(leftPtr));
+			rightPtrIndices = symbolicUtil
+					.stripIndicesFromReference((ArrayElementReference) symbolicUtil
+							.getSymRef(rightPtr));
+			// Check compatibility for heap objects:
+			// If VID == 0, all ancestor indexes of left pointer should be same
+			// as
+			// right pointer. Because different heap objects all have variable
+			// ID of
+			// number zero and ancestor indexes indicate if they are same heap
+			// objects.
+			if (leftVid == 0) {
+				boolean isCompatiable = true;
+				int temp = leftPtrIndices.length - 1;
+
+				if (leftPtrIndices.length != rightPtrIndices.length)
+					isCompatiable = false;
+				else {
+
+					for (int i = 0; i < temp; i++) {
+						if (!(leftPtrIndices[i].equals(rightPtrIndices[i]))) {
+							isCompatiable = false;
+							break;
+						}
+					}
+				}
+				if (!isCompatiable)
+					state = errorLogger
+							.logError(expression.getSource(), state, process,
+									symbolicAnalyzer.stateInformation(state),
+									null, ResultType.NO, ErrorKind.POINTER,
+									"Operands of pointer subtraction point to different heap obejcts");
+				// Since they are in the same heap object, the result is
+				// directly
+				// do a subtraction between two indexes
+				eval = new Evaluation(state, null);
+				eval.value = universe.subtract(leftPtrIndices[temp],
+						rightPtrIndices[temp]);
+				return eval;
+			}
+			// Get array by dereferencing array pointer
+			eval = this.dereference(expression.left().getSource(), state,
+					process, null, arrayPtr, false);
+			state = eval.state;
+			array = eval.value;
+			arraySliceSizes = symbolicUtil.arraySlicesSizes(symbolicUtil
+					.arrayCoordinateSizes((SymbolicCompleteArrayType) array
+							.type()));
+			for (int i = leftPtrIndices.length, j = arraySliceSizes.length - 1; --i >= 0; j--) {
+				NumericExpression leftIdx, rightIdx;
+				NumericExpression sliceSizes = arraySliceSizes[j];
+
+				leftIdx = leftPtrIndices[i];
+				rightIdx = rightPtrIndices[i];
+				leftPos = universe.add(leftPos,
+						universe.multiply(leftIdx, sliceSizes));
+				rightPos = universe.add(rightPos,
+						universe.multiply(rightIdx, sliceSizes));
+			}
+			eval.state = state;
+			eval.value = universe.subtract(leftPos, rightPos);
 			return eval;
 		}
-		// Get array by dereferencing array pointer
-		eval = this.dereference(expression.left().getSource(), state, process,
-				null, arrayPtr, false);
-		state = eval.state;
-		array = eval.value;
-		arraySliceSizes = symbolicUtil
-				.arraySlicesSizes(symbolicUtil
-						.arrayCoordinateSizes((SymbolicCompleteArrayType) array
-								.type()));
-		for (int i = leftPtrIndices.length, j = arraySliceSizes.length - 1; --i >= 0; j--) {
-			NumericExpression leftIdx, rightIdx;
-			NumericExpression sliceSizes = arraySliceSizes[j];
-
-			leftIdx = leftPtrIndices[i];
-			rightIdx = rightPtrIndices[i];
-			leftPos = universe.add(leftPos,
-					universe.multiply(leftIdx, sliceSizes));
-			rightPos = universe.add(rightPos,
-					universe.multiply(rightIdx, sliceSizes));
-		}
-		eval.state = state;
-		eval.value = universe.subtract(leftPos, rightPos);
-		return eval;
 	}
 
 	@Override

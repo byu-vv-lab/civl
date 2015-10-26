@@ -4254,43 +4254,43 @@ public class FunctionTranslator {
 			return modelFactory.binaryExpression(source, BINARY_OPERATOR.MINUS,
 					arg0, arg1);
 		} else {
-			Expression pointer, secondPtr, offset;
-			boolean isSub = false;
+			Expression pointer, rightOperand;// , offset;
+			// boolean isSub = false;
 
-			secondPtr = null;
-			offset = null;
-			if (isNumeric1) {
-				pointer = arrayToPointer(arg0);
-				offset = arg1;
-			} else if (isNumeric0) {
-				pointer = arrayToPointer(arg1);
-				offset = arg0;
-			} else {
-				pointer = arrayToPointer(arg0);
-				secondPtr = arrayToPointer(arg1);
-				isSub = true;
-			}
+			rightOperand = null;
+			// // offset = null;
+			// if (isNumeric1) {
+			// pointer = arrayToPointer(arg0);
+			// // offset = arg1;
+			// } else if (isNumeric0) {
+			// pointer = arrayToPointer(arg1);
+			// // offset = arg0;
+			// } else {
+			pointer = arrayToPointer(arg0);
+			rightOperand = arrayToPointer(arg1);
+			// isSub = true;
+			// }
 			if (!pointer.getExpressionType().isPointerType())
 				throw new CIVLInternalException(
 						"Expected expression of pointer type",
 						pointer.getSource());
-			if (isSub) {
-				if (!secondPtr.getExpressionType().isPointerType())
-					throw new CIVLInternalException(
-							"Expected expression of pointer type",
-							secondPtr.getSource());
-				return modelFactory.binaryExpression(source,
-						BINARY_OPERATOR.POINTER_SUBTRACT, pointer, secondPtr);
-			} else {
-				if (!offset.getExpressionType().isIntegerType())
-					throw new CIVLInternalException(
-							"Expected expression of integer type",
-							offset.getSource());
-				return modelFactory.binaryExpression(source,
-						BINARY_OPERATOR.POINTER_ADD, pointer, modelFactory
-								.unaryExpression(offset.getSource(),
-										UNARY_OPERATOR.NEGATIVE, offset));
-			}
+			// if (isSub) {
+			// if (!rightOperand.getExpressionType().isPointerType())
+			// throw new CIVLInternalException(
+			// "Expected expression of pointer type",
+			// rightOperand.getSource());
+			return modelFactory.binaryExpression(source,
+					BINARY_OPERATOR.POINTER_SUBTRACT, pointer, rightOperand);
+			// } else {
+			// if (!offset.getExpressionType().isIntegerType())
+			// throw new CIVLInternalException(
+			// "Expected expression of integer type",
+			// offset.getSource());
+			// return modelFactory.binaryExpression(source,
+			// BINARY_OPERATOR.POINTER_ADD, pointer, modelFactory
+			// .unaryExpression(offset.getSource(),
+			// UNARY_OPERATOR.NEGATIVE, offset));
+			// }
 
 		}
 	}

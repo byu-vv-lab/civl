@@ -206,4 +206,8 @@ public interface SymbolicAnalyzer {
 	StringBuffer inputVariablesToStringBuffer(State state);
 
 	Evaluator evaluator();
+	
+	SymbolicExpression pointerArithmetics(CIVLSource source,
+			State state, boolean isSubtract, SymbolicExpression pointer,
+			SymbolicExpression offset) ;
 }

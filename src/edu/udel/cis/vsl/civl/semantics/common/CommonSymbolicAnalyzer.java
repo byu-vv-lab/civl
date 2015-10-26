@@ -2072,4 +2072,61 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 	public Evaluator evaluator() {
 		return this.evaluator;
 	}
+
+	/**
+	 * C11, 6.2.6.1 paragraph 4:
+	 * 
+	 * Values stored in non-bit-field objects of any other object type consist
+	 * of n × CHAR_BIT bits, where n is the size of an object of that type, in
+	 * bytes. The value may be copied into an object of type unsigned char [ n ]
+	 * (e.g., by memcpy); the resulting set of bytes is called the object
+	 * representation of the value.
+	 * 
+	 * 6.3.2.3 Pointers p7:
+	 * 
+	 * ... When a pointer to an object is converted to a pointer to a character
+	 * type, the result points to the lowest addressed byte of the object.
+	 * Successive increments of the result, up to the size of the object, yield
+	 * pointers to the remaining bytes of the object.
+	 * 
+	 * @param source
+	 * @param state
+	 * @param isSubtract
+	 * @param pointer
+	 * @param offset
+	 * @return
+	 */
+	@Override
+	public SymbolicExpression pointerArithmetics(CIVLSource source,
+			State state, boolean isSubtract, SymbolicExpression pointer,
+			SymbolicExpression offset) {
+		SymbolicExpression result = null;
+
+		if (isSubtract) {
+			assert this.symbolicUtil.getDyscopeId(source, offset) == -1;
+			assert this.symbolicUtil.getVariableId(source, offset) == -1;
+
+			ReferenceExpression offsetRef = symbolicUtil.getSymRef(offset);
+			return symbolicUtil.setSymRef(pointer,
+					this.subtract(symbolicUtil.getSymRef(pointer), offsetRef));
+		}
+		return result;
+	}
+
+	/**
+	 * left-right
+	 * 
+	 * for example, if left is TupleComponenent(<Ref 1>, 1), and right is
+	 * TupleComponent(<Ref 1>, 1), then result is <Ref 1>.
+	 * 
+	 * @param left
+	 * @param right
+	 * @return
+	 */
+	private ReferenceExpression subtract(ReferenceExpression left,
+			ReferenceExpression right) {
+		if (universe.equals(left, right).isTrue())
+			return universe.identityReference();
+		return null;
+	}
 }
