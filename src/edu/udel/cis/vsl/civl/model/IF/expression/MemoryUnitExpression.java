@@ -32,7 +32,7 @@ public interface MemoryUnitExpression extends Expression {
 	 * @return The variable ID.
 	 */
 	int variableId();
-	
+
 	Variable variable();
 
 	/**
@@ -46,5 +46,10 @@ public interface MemoryUnitExpression extends Expression {
 
 	boolean writable();
 
-	boolean hasPointerRef();
+	/**
+	 * shall this memory unit be dereferenced?
+	 * 
+	 * @return
+	 */
+	boolean deref();
 }

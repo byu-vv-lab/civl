@@ -34,7 +34,10 @@ public class CommonMemoryUnitExpression extends CommonExpression implements
 
 	private boolean writable;
 
-	private boolean hasPointerRef = false;
+	/**
+	 * shall this memory unit be dereferenced?
+	 */
+	private boolean deref = false;
 
 	/**
 	 * Creates a memory unit expression.
@@ -50,13 +53,13 @@ public class CommonMemoryUnitExpression extends CommonExpression implements
 	 */
 	public CommonMemoryUnitExpression(CIVLSource source, Variable variable,
 			CIVLType objType, MemoryUnitReference ref, boolean writable,
-			boolean hasPointerRef) {
+			boolean deref) {
 		super(source, null, null, null);
 		this.variable = variable;
 		this.objectType = objType;
 		this.reference = ref;
 		this.writable = writable;
-		this.hasPointerRef = hasPointerRef;
+		this.deref = deref;
 	}
 
 	@Override
@@ -120,8 +123,8 @@ public class CommonMemoryUnitExpression extends CommonExpression implements
 	}
 
 	@Override
-	public boolean hasPointerRef() {
-		return this.hasPointerRef;
+	public boolean deref() {
+		return this.deref;
 	}
 
 	@Override

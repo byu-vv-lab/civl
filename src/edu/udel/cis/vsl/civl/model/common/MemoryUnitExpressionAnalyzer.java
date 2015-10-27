@@ -310,6 +310,12 @@ public class MemoryUnitExpressionAnalyzer {
 
 	}
 
+	private void computeImpactMemoryUnitsOfExpression(
+			Set<Variable> writableVars, Expression expression,
+			Set<MemoryUnitExpression> result) {
+		this.computeImpactMemoryUnitsOfExpression(writableVars, expression, result, 0);
+	}
+
 	private boolean isLowerThan(Scope s0, Scope s1) {
 		if (s0 == null || s1 == null)
 			return false;
@@ -338,19 +344,21 @@ public class MemoryUnitExpressionAnalyzer {
 	 */
 	private void computeImpactMemoryUnitsOfExpression(
 			Set<Variable> writableVars, Expression expression,
-			Set<MemoryUnitExpression> result) {
+			Set<MemoryUnitExpression> result, int derefCount) {
 		ExpressionKind expressionKind = expression.expressionKind();
 
 		switch (expressionKind) {
 		case ABSTRACT_FUNCTION_CALL:
 			for (Expression arg : ((AbstractFunctionCallExpression) expression)
 					.arguments()) {
-				computeImpactMemoryUnitsOfExpression(writableVars, arg, result);
+				computeImpactMemoryUnitsOfExpression(writableVars, arg, result,
+						derefCount);
 			}
 			break;
 		case ADDRESS_OF:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((AddressOfExpression) expression).operand(), result);
+					((AddressOfExpression) expression).operand(), result,
+					derefCount);
 			break;
 		case ARRAY_LITERAL: {
 			Expression[] elements = ((ArrayLiteralExpression) expression)
@@ -358,7 +366,7 @@ public class MemoryUnitExpressionAnalyzer {
 
 			for (Expression element : elements) {
 				computeImpactMemoryUnitsOfExpression(writableVars, element,
-						result);
+						result, derefCount);
 			}
 			break;
 		}
@@ -366,9 +374,9 @@ public class MemoryUnitExpressionAnalyzer {
 			BinaryExpression binaryExpression = (BinaryExpression) expression;
 
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					binaryExpression.left(), result);
+					binaryExpression.left(), result, derefCount);
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					binaryExpression.right(), result);
+					binaryExpression.right(), result, derefCount);
 			break;
 		}
 		case BOOLEAN_LITERAL:
@@ -380,7 +388,8 @@ public class MemoryUnitExpressionAnalyzer {
 			break;
 		case CAST:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((CastExpression) expression).getExpression(), result);
+					((CastExpression) expression).getExpression(), result,
+					derefCount);
 			break;
 		case CHAR_LITERAL:
 			break;
@@ -391,17 +400,20 @@ public class MemoryUnitExpressionAnalyzer {
 							+ "model translator", expression.getSource());
 		case DEREFERENCE:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((DereferenceExpression) expression).pointer(), result);
+					((DereferenceExpression) expression).pointer(), result,
+					derefCount + 1);
 			break;
 		case DERIVATIVE:// TODO check if its arguments should be checked
 			break;
 		case DOMAIN_GUARD:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((DomainGuardExpression) expression).domain(), result);
+					((DomainGuardExpression) expression).domain(), result,
+					derefCount);
 			break;
 		case DOT:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((DotExpression) expression).structOrUnion(), result);
+					((DotExpression) expression).structOrUnion(), result,
+					derefCount);
 			break;
 		case DYNAMIC_TYPE_OF:
 			break;
@@ -427,25 +439,26 @@ public class MemoryUnitExpressionAnalyzer {
 
 			for (int i = 0; i < dim; i++)
 				computeImpactMemoryUnitsOfExpression(writableVars,
-						domain.rangeAt(i), result);
+						domain.rangeAt(i), result, derefCount);
 			break;
 		}
 		case REGULAR_RANGE: {
 			RegularRangeExpression rangeExpr = (RegularRangeExpression) expression;
 
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					rangeExpr.getLow(), result);
+					rangeExpr.getLow(), result, derefCount);
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					rangeExpr.getHigh(), result);
+					rangeExpr.getHigh(), result, derefCount);
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					rangeExpr.getStep(), result);
+					rangeExpr.getStep(), result, derefCount);
 			break;
 		}
 		case RESULT:
 			break;
 		case SCOPEOF:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((ScopeofExpression) expression).argument(), result);
+					((ScopeofExpression) expression).argument(), result,
+					derefCount);
 			break;
 		case SELF:
 			break;
@@ -453,7 +466,8 @@ public class MemoryUnitExpressionAnalyzer {
 			break;
 		case SIZEOF_EXPRESSION:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((SizeofExpression) expression).getArgument(), result);
+					((SizeofExpression) expression).getArgument(), result,
+					derefCount);
 			break;
 		case STRING_LITERAL:
 			break;
@@ -463,22 +477,25 @@ public class MemoryUnitExpressionAnalyzer {
 
 			for (Expression field : fields) {
 				computeImpactMemoryUnitsOfExpression(writableVars, field,
-						result);
+						result, derefCount);
 			}
 		}
 			break;
 		case SUBSCRIPT:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((SubscriptExpression) expression).array(), result);
+					((SubscriptExpression) expression).array(), result,
+					derefCount);
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((SubscriptExpression) expression).index(), result);
+					((SubscriptExpression) expression).index(), result,
+					derefCount);
 
 			break;
 		case SYSTEM_GUARD:
 			break;
 		case UNARY:
 			computeImpactMemoryUnitsOfExpression(writableVars,
-					((UnaryExpression) expression).operand(), result);
+					((UnaryExpression) expression).operand(), result,
+					derefCount);
 			break;
 		case UNDEFINED_PROC:
 			break;
@@ -487,12 +504,18 @@ public class MemoryUnitExpressionAnalyzer {
 
 			if (!((variable.scope().id() == 0 && variable.name().name()
 					.equals(ModelConfiguration.ATOMIC_LOCK_VARIABLE)) || variable
-					.type().isHandleType()))
+					.type().isHandleType())) {
+				boolean deref = false;
+
+				if (derefCount > 0) {
+					deref = true;
+					derefCount--;
+				}
 				result.add(this.modelFactory.memoryUnitExpression(
 						variable.getSource(), variable, variable.type(),
 						modelFactory.selfReference(),
-						writableVars.contains(variable),
-						variable.hasPointerRef()));
+						writableVars.contains(variable), deref));
+			}
 			break;
 		}
 		case HERE_OR_ROOT:

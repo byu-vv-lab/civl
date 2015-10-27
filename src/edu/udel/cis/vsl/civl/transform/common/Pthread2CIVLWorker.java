@@ -23,6 +23,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.expression.ExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.FunctionCallNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.IdentifierExpressionNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode;
+import edu.udel.cis.vsl.abc.ast.node.IF.expression.OperatorNode.Operator;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.BlockItemNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.CompoundStatementNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.statement.ExpressionStatementNode;
@@ -129,6 +130,8 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 	private Set<FunctionDefinitionNode> nonThreadFunctionsWtThreadLocal = new HashSet<>();
 
+	private Set<VariableDeclarationNode> shared_variables = new HashSet<>();
+
 	/* ****************************** Constructor ************************** */
 	/**
 	 * Creates a new instance of MPITransformer.
@@ -180,9 +183,9 @@ public class Pthread2CIVLWorker extends BaseWorker {
 	 * @param root
 	 * @throws SyntaxException
 	 */
-	private void processRoot(SequenceNode<BlockItemNode> root)
+	private void transformWorker(SequenceNode<BlockItemNode> root)
 			throws SyntaxException {
-		getThreadFunctions(root);
+		// getThreadFunctions(root);
 		for (String threadFunction : this.threadFunctionNames) {
 			this.newNonThreadFunctionNamesWtThreadLocal.remove(threadFunction);
 			this.nonThreadFunctionNamesWtThreadLocal.remove(threadFunction);
@@ -192,6 +195,7 @@ public class Pthread2CIVLWorker extends BaseWorker {
 				continue;
 			if (node instanceof FunctionDefinitionNode) {
 				// if (config.svcomp()) {
+				process_shared_variable_access((FunctionDefinitionNode) node);
 				process_thread_functions((FunctionDefinitionNode) node);
 				// process_VERIFIER_function_calls((FunctionDefinitionNode)
 				// node);
@@ -231,6 +235,17 @@ public class Pthread2CIVLWorker extends BaseWorker {
 			process_function_call_of_functionsWtSyncCalls(root);
 		// if (config.svcomp())
 		// translateNode(root);
+	}
+
+	private void process_shared_variable_access(ASTNode node) {
+		if (node instanceof ExpressionStatementNode) {
+			this.transformAccess2SharedVariables((ExpressionStatementNode) node);
+		} else {
+			for (ASTNode child : node.children()) {
+				if (child != null)
+					process_shared_variable_access(child);
+			}
+		}
 	}
 
 	private void process_function_call_of_functionsWtSyncCalls(ASTNode root) {
@@ -447,6 +462,120 @@ public class Pthread2CIVLWorker extends BaseWorker {
 					body.getSource(), newBodyNodes));
 		}
 	}
+
+	private void transformAccess2SharedVariables(
+			ExpressionStatementNode expressionStatement) {
+		int index = expressionStatement.childIndex();
+		ASTNode parent = expressionStatement.parent();
+
+		ExpressionNode expression = expressionStatement.getExpression();
+
+		if (expression instanceof OperatorNode) {
+			OperatorNode operatorNode = (OperatorNode) expression;
+
+			if (operatorNode.getOperator() == Operator.ASSIGN) {
+				ExpressionNode rhs = operatorNode.getArgument(1);
+				ExpressionNode lhs = operatorNode.getArgument(0);
+				List<BlockItemNode> newItems = null;// =
+													// transform_access_to_shared_varaibles(rhs);
+
+				if (!(lhs instanceof IdentifierExpressionNode)) {
+					newItems = breakAtomicity(lhs, rhs);
+				}
+				// List<BlockItemNode> newItems =
+				// transform_access_to_shared_varaibles(rhs);
+				//
+				// if (newItems.size() <= 0) {
+				// ExpressionNode lhs = operatorNode.getArgument(0);
+				//
+				// if (!(lhs instanceof IdentifierExpressionNode)) {
+				// newItems = breakAtomicity(lhs, rhs);
+				// }
+				// }
+				if (newItems != null && newItems.size() > 0) {
+					expressionStatement.remove();
+					newItems.add(expressionStatement);
+					parent.setChild(index, this.nodeFactory
+							.newCompoundStatementNode(
+									expressionStatement.getSource(), newItems));
+				}
+			}
+		}
+	}
+
+	private List<BlockItemNode> breakAtomicity(ExpressionNode lhs,
+			ExpressionNode rhs) {
+		List<BlockItemNode> result = new LinkedList<>();
+
+		if (rhs.equiv(lhs)) {
+			String tmpName = this.newUniqueIdentifier("tmp");
+			VariableDeclarationNode tmpVariable = this.variableDeclaration(
+					tmpName, this.typeNode(rhs.getType()), rhs.copy());
+
+			rhs.parent().setChild(rhs.childIndex(),
+					this.identifierExpression(tmpName));
+			result.add(tmpVariable);
+		} else {
+			for (ASTNode child : rhs.children()) {
+				if (child != null && (child instanceof ExpressionNode)) {
+					List<BlockItemNode> subResult = breakAtomicity(lhs,
+							(ExpressionNode) child);
+
+					result.addAll(subResult);
+				}
+			}
+		}
+		return result;
+	}
+
+	// private List<BlockItemNode> transform_access_to_shared_varaibles(
+	// ASTNode node) {
+	// List<BlockItemNode> result = new LinkedList<>();
+	//
+	// if (node instanceof IdentifierExpressionNode) {
+	// IdentifierExpressionNode identiferExpression = (IdentifierExpressionNode)
+	// node;
+	// VariableDeclarationNode replace =
+	// process_identifier_expression(identiferExpression);
+	//
+	// if (replace != null) {
+	// result.add(replace);
+	// }
+	// } else {
+	// for (ASTNode child : node.children()) {
+	// if (child == null)
+	// continue;
+	//
+	// List<BlockItemNode> subResult =
+	// transform_access_to_shared_varaibles(child);
+	//
+	// result.addAll(subResult);
+	// }
+	// }
+	// return result;
+	// }
+
+	// private VariableDeclarationNode process_identifier_expression(
+	// IdentifierExpressionNode identifier) {
+	// Entity entity = identifier.getIdentifier().getEntity();
+	//
+	// if (entity instanceof Variable) {
+	// VariableDeclarationNode variableDeclaration = ((Variable) entity)
+	// .getDefinition();
+	//
+	// if (this.shared_variables.contains(variableDeclaration)) {
+	// String tmpName = this.newUniqueIdentifier("tmp");
+	// VariableDeclarationNode tmpVariable = this.variableDeclaration(
+	// tmpName, variableDeclaration.getTypeNode().copy(),
+	// identifier.copy());
+	//
+	// identifier.parent().setChild(identifier.childIndex(),
+	// this.identifierExpression(tmpName));
+	// return tmpVariable;
+	// }
+	// }
+	// return null;
+	// }
 
 	// /**
 	// * Processes function calls starting with __VERIFIER_, which are special
@@ -1014,6 +1143,11 @@ public class Pthread2CIVLWorker extends BaseWorker {
 
 				if (varDecl.hasThreadLocalStorage())
 					this.thread_local_variable_declarations.add(varDecl);
+				else {
+					if (!varDecl.getTypeNode().isInputQualified())
+						this.shared_variables.add(varDecl.getEntity()
+								.getDefinition());
+				}
 			} else if (item instanceof FunctionDefinitionNode) {
 				if (thread_local_variable_declarations.size() > 0) {
 					FunctionDefinitionNode function = (FunctionDefinitionNode) item;
@@ -1067,8 +1201,9 @@ public class Pthread2CIVLWorker extends BaseWorker {
 		assert this.nodeFactory == astFactory.getNodeFactory();
 
 		check_thread_local_accesses(root);
+		this.getThreadFunctions(root);
 		ast.release();
-		processRoot(root);
+		transformWorker(root);
 		this.completeSources(root);
 		AST result = astFactory.newAST(root, ast.getSourceFiles());
 		// result.prettyPrint(System.out, false);

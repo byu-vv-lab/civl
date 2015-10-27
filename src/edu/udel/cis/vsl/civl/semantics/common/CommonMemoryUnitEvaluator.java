@@ -21,6 +21,7 @@ import edu.udel.cis.vsl.civl.model.IF.type.CIVLType;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.MemoryUnitExpressionEvaluator;
+import edu.udel.cis.vsl.civl.state.IF.MemoryUnit;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitFactory;
 import edu.udel.cis.vsl.civl.state.IF.MemoryUnitSet;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -101,11 +102,26 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitExpressionEvaluator 
 				memUnit.getSource(), state, pid, memUnit.objectType(),
 				memUnit.reference(), null).right;
 		for (ReferenceExpression reference : referenceValues) {
-			muFactory.add(result, muFactory.newMemoryUnit(dyscopeID,
-					memUnit.variableId(), reference));
+			MemoryUnit newMemUnit = muFactory.newMemoryUnit(dyscopeID,
+					memUnit.variableId(), reference);
+
+			muFactory.add(result, newMemUnit);
+			if (memUnit.deref()) {
+				SymbolicExpression pointer = state.getVariableValue(dyscopeID,
+						memUnit.variableId());
+
+				if (pointer.type().equals(
+						this.typeFactory.pointerSymbolicType()))
+					muFactory.add(result, this.muFactory.newMemoryUnit(
+							this.symbolicUtil.getDyscopeId(null, pointer),
+							this.symbolicUtil.getVariableId(null, pointer),
+							symbolicUtil.getSymRef(pointer)));
+			}
 			// result.add(pointer);
-			// this.findPointersInExpression(pointer, result, state, state
-			// .getProcessState(pid).name());
+			// this.findPointersInExpression(
+			// this.symbolicUtil.makePointer(dyscopeID,
+			// memUnit.variableId(), reference), result,
+			// state, state.getProcessState(pid).name());
 			// result.add(symbolicUtil.makePointer(dyscopeID,
 			// memUnit.variableId(), reference));
 		}
@@ -219,7 +235,7 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitExpressionEvaluator 
 	 * @param state
 	 */
 	private void findPointersInExpression(SymbolicExpression expr,
-			Set<SymbolicExpression> set, State state, String process) {
+			MemoryUnitSet set, State state, String process) {
 		SymbolicType type = expr.type();
 
 		// TODO check comm type
@@ -230,7 +246,11 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitExpressionEvaluator 
 				SymbolicExpression pointerValue;
 				Evaluation eval;
 
-				set.add(expr);
+				this.muFactory.add(set, this.muFactory.newMemoryUnit(
+						this.symbolicUtil.getDyscopeId(null, expr),
+						this.symbolicUtil.getVariableId(null, expr),
+						symbolicUtil.getSymRef(expr)));
+				// set.add(expr);
 				try {
 					if (expr.operator() == SymbolicOperator.CONCRETE
 							&& symbolicUtil.getDyscopeId(null, expr) >= 0) {
@@ -291,8 +311,8 @@ public class CommonMemoryUnitEvaluator implements MemoryUnitExpressionEvaluator 
 	 * @param heapType
 	 *            the heap type, which will be ignored
 	 */
-	private void findPointersInObject(SymbolicObject object,
-			Set<SymbolicExpression> set, State state, String process) {
+	private void findPointersInObject(SymbolicObject object, MemoryUnitSet set,
+			State state, String process) {
 		switch (object.symbolicObjectKind()) {
 		case EXPRESSION:
 			findPointersInExpression((SymbolicExpression) object, set, state,

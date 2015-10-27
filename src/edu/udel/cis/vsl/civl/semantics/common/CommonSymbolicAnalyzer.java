@@ -1382,9 +1382,12 @@ public class CommonSymbolicAnalyzer implements SymbolicAnalyzer {
 				return new Pair<>(null, arrayType.elementType());
 			} else if (type instanceof CIVLStructOrUnionType) {
 				CIVLStructOrUnionType structOrUnionType = (CIVLStructOrUnionType) type;
-				StructOrUnionField field = structOrUnionType.getField(i);
 
-				return new Pair<>(field.name().name(), field.type());
+				if (structOrUnionType.numFields() > 0) {
+					StructOrUnionField field = structOrUnionType.getField(i);
+
+					return new Pair<>(field.name().name(), field.type());
+				}
 			}
 		return new Pair<>(null, null);
 	}
