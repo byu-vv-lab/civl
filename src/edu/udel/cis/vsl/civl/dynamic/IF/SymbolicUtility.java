@@ -812,8 +812,4 @@ public interface SymbolicUtility {
 	 * @return True iff the pointer is valid, i.e., can be dereferenced.
 	 */
 	boolean isDerefablePointer(SymbolicExpression pointer);
-
-	// TODO: doc and a better name
-	SymbolicExpression pointerDifference(SymbolicExpression minuend,
-			SymbolicExpression subtrachend, SymbolicType type);
 }
