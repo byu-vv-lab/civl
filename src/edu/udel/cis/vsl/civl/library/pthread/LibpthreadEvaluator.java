@@ -66,10 +66,12 @@ public class LibpthreadEvaluator extends BaseLibraryEvaluator implements
 		numThreads = this.symbolicUtil.extractInt(source,
 				universe.length(threads));
 		for (int i = 0; i < numThreads; i++) {
-			SymbolicExpression threadObj;
+			SymbolicExpression threadObj, threadPtr=universe.arrayRead(threads, universe.integer(i));
 			SymbolicExpression pidValue;
 			int pidInt;
 
+			if(!this.symbolicUtil.isDerefablePointer(threadPtr))
+				continue;
 			eval = this.evaluator.dereference(source, state, process, null,
 					universe.arrayRead(threads, universe.integer(i)), false);
 			threadObj = eval.value;
