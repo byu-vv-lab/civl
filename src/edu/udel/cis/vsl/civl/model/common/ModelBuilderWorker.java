@@ -660,6 +660,7 @@ public class ModelBuilderWorker {
 		if (debugging) {
 			debugOut.println("static analysis of locations...");
 		}
+		// model.print(System.out, false);
 		for (CIVLFunction f : model.functions()) {
 			// purely local statements can only be
 			// identified after ALL variables have been

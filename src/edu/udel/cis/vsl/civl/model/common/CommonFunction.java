@@ -389,7 +389,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 		Location[] oldLocations = new Location[count];
 		Set<Location> newLocations;
 		// The index of locations that can be removed
-		Set<Integer> toRemove = new HashSet<Integer>();
+		Set<Integer> toRemove = new LinkedHashSet<Integer>();
 		Iterator<Integer> removeIter;
 
 		this.locations.toArray(oldLocations);
@@ -423,6 +423,7 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 								if (this.startLocation == loc) {
 									this.startLocation = loc.getSoleOutgoing()
 											.target();
+									startLocation.setAsStart(true);
 								}
 							}
 						}
@@ -435,10 +436,11 @@ public class CommonFunction extends CommonSourceable implements CIVLFunction {
 			// the location will be removed
 			Location removal = oldLocations[removeIter.next()];
 			Location removalSoleTarget;
-			List<Statement> tmpIncomes = new LinkedList<>();
+			Set<Statement> tmpIncomes = new LinkedHashSet<>();
 
 			assert removal.getNumOutgoing() == 1;
 			removalSoleTarget = removal.getSoleOutgoing().target();
+			removal.getSoleOutgoing().setTarget(null);
 			for (Statement income : removal.incoming())
 				tmpIncomes.add(income);
 			// setTarget will affect removal's incomes, so it needs a temporary

@@ -120,8 +120,10 @@ public abstract class CommonStatement extends CommonSourceable implements
 		if (this.target != null) {
 			this.target().removeIncoming(this);
 		}
-		this.target = target;
-		target.addIncoming(this);
+		if (target != null) {
+			this.target = target;
+			target.addIncoming(this);
+		}
 	}
 
 	@Override
