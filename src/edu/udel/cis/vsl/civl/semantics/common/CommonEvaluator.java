@@ -2447,9 +2447,11 @@ public class CommonEvaluator implements Evaluator {
 			LibraryEvaluator libEvaluator = this.libLoader.getLibraryEvaluator(
 					library, this, this.modelFactory, symbolicUtil,
 					symbolicAnalyzer);
+			Expression[] args = new Expression[arguments.size()];
 
+			arguments.toArray(args);
 			return libEvaluator.evaluateGuard(source, state, pid, function,
-					arguments);
+					args);
 		} catch (LibraryLoaderException exception) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
 					+ ")";

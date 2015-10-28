@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.semantics.IF;
 
-import java.util.List;
-
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -40,7 +38,7 @@ public interface LibraryEvaluator {
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments)
+			String function, Expression[] arguments)
 			throws UnsatisfiablePathConditionException;
 
 }

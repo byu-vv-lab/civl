@@ -1,7 +1,6 @@
 package edu.udel.cis.vsl.civl.library.civlc;
 
 import java.math.BigInteger;
-import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
@@ -40,7 +39,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 
 	@Override
 	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments)
+			String function, Expression[] arguments)
 			throws UnsatisfiablePathConditionException {
 		Pair<State, SymbolicExpression[]> argumentsEval;
 		BooleanExpression guard;
@@ -71,12 +70,12 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression guardOfWait(State state, int pid,
-			List<Expression> arguments, SymbolicExpression[] argumentValues)
+			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression joinProcess = argumentValues[0];
 		BooleanExpression guard;
 		int pidValue;
-		Expression joinProcessExpr = arguments.get(0);
+		Expression joinProcessExpr = arguments[0];
 
 		if (joinProcess.operator() != SymbolicOperator.CONCRETE) {
 			String process = state.getProcessState(pid).name() + "(id=" + pid
@@ -111,7 +110,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression guardOfWaitall(State state, int pid,
-			List<Expression> arguments, SymbolicExpression[] argumentValues)
+			Expression[] arguments, SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression procsPointer = argumentValues[0];
 		SymbolicExpression numOfProcs = argumentValues[1];
@@ -121,15 +120,15 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 		String process = state.getProcessState(pid).name() + "(id=" + pid + ")";
 
 		if (number_nprocs == null) {
-			this.errorLogger.logSimpleError(arguments.get(1).getSource(),
-					state, process, symbolicAnalyzer.stateInformation(state),
+			this.errorLogger.logSimpleError(arguments[1].getSource(), state,
+					process, symbolicAnalyzer.stateInformation(state),
 					ErrorKind.OTHER, "the number of processes for $waitall "
 							+ "needs a concrete value");
 			throw new UnsatisfiablePathConditionException();
 		} else {
 			int numOfProcs_int = number_nprocs.intValue();
 			BinaryExpression pointerAdd;
-			CIVLSource procsSource = arguments.get(0).getSource();
+			CIVLSource procsSource = arguments[0].getSource();
 			Evaluation eval;
 
 			for (int i = 0; i < numOfProcs_int; i++) {
@@ -140,7 +139,7 @@ public class LibcivlcEvaluator extends BaseLibraryEvaluator implements
 				int pidValue;
 
 				pointerAdd = modelFactory.binaryExpression(procsSource,
-						BINARY_OPERATOR.POINTER_ADD, arguments.get(0), offSet);
+						BINARY_OPERATOR.POINTER_ADD, arguments[0], offSet);
 				eval = evaluator.pointerAdd(state, pid, process, pointerAdd,
 						procsPointer, offSetV);
 				procPointer = eval.value;

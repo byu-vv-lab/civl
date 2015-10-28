@@ -174,12 +174,14 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 			state = this.executeScopeDefined(state, pid, process, lhs,
 					arguments, argumentValues);
 			break;
-		case "$wait":// return immediately since target location has been set.
-			return executeWait(state, pid, arguments, argumentValues,
+		case "$wait":
+			state = executeWait(state, pid, arguments, argumentValues,
 					call.getSource(), call.target());
+			break;
 		case "$waitall":
-			return executeWaitAll(state, pid, arguments, argumentValues,
+			state = executeWaitAll(state, pid, arguments, argumentValues,
 					call.getSource(), call.target());
+			break;
 		case "$set_default":
 			state = executeSetDefault(state, pid, process, arguments,
 					argumentValues, call.getSource());
@@ -706,7 +708,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 		int joinedPid = modelFactory.getProcessId(arguments[0].getSource(),
 				procVal);
 
-		state = stateFactory.setLocation(state, pid, target);
+		// state = stateFactory.setLocation(state, pid, target);
 		if (!modelFactory.isPocessIdDefined(joinedPid)
 				|| modelFactory.isProcessIdNull(joinedPid))
 			return state;
@@ -758,7 +760,7 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 						&& modelFactory.isPocessIdDefined(pidValue))
 					state = stateFactory.removeProcess(state, pidValue);
 			}
-			state = stateFactory.setLocation(state, pid, target);
+			// state = stateFactory.setLocation(state, pid, target);
 		}
 		return state;
 	}

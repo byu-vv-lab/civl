@@ -117,6 +117,10 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			state = execute_pthread_gpool_add(state, pid, process, arguments,
 					argumentValues, source);
 			break;
+		case "$pthread_gpool_join":
+			state = execute_pthread_gpool_join(state, pid, process, arguments,
+					argumentValues, source);
+			break;
 		// case "$pthread_pool_exit":
 		// state = execute_pthread_pool_exit(state, pid, process, arguments,
 		// argumentValues, source);
@@ -152,6 +156,40 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		}
 		state = stateFactory.setLocation(state, pid, statement.target(),
 				statement.lhs() != null);
+		return state;
+	}
+
+	private State execute_pthread_gpool_join(State state, int pid,
+			String process, Expression[] arguments,
+			SymbolicExpression[] argumentValues, CIVLSource source)
+			throws UnsatisfiablePathConditionException {
+		SymbolicExpression gpool = argumentValues[0];
+		Evaluation eval;
+		SymbolicExpression gpoolObj, threads;
+		int numThreads;
+
+		eval = this.evaluator.dereference(source, state, process, arguments[0],
+				gpool, false);
+		gpoolObj = eval.value;
+		state = eval.state;
+		threads = this.universe.tupleRead(gpoolObj, zeroObject);
+		numThreads = this.symbolicUtil.extractInt(source,
+				universe.length(threads));
+		for (int i = 0; i < numThreads; i++) {
+			SymbolicExpression threadObj;
+			SymbolicExpression pidValue;
+			int pidInt;
+
+			eval = this.evaluator.dereference(source, state, process, null,
+					universe.arrayRead(threads, universe.integer(i)), false);
+			threadObj = eval.value;
+			state = eval.state;
+			pidValue = universe.tupleRead(threadObj, this.zeroObject);
+			pidInt = modelFactory.getProcessId(source, pidValue);
+			if (!modelFactory.isProcessIdNull(pidInt)
+					&& modelFactory.isPocessIdDefined(pidInt))
+				state = stateFactory.removeProcess(state, pidInt);
+		}
 		return state;
 	}
 

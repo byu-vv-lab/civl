@@ -48,7 +48,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 
 	@Override
 	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments)
+			String function, Expression[] arguments)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression[] argumentValues;
 		int numArgs;
@@ -56,13 +56,13 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 		int processIdentifier = state.getProcessState(pid).identifier();
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
-		numArgs = arguments.size();
+		numArgs = arguments.length;
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval = null;
 
 			try {
-				eval = evaluator.evaluate(state, pid, arguments.get(i));
+				eval = evaluator.evaluate(state, pid, arguments[i]);
 			} catch (UnsatisfiablePathConditionException e) {
 				// the error that caused the unsatifiable path condition should
 				// already have been reported.
@@ -114,7 +114,7 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression getDequeueGuard(State state, int pid,
-			String process, List<Expression> arguments,
+			String process, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression commHandle = argumentValues[0];
@@ -131,12 +131,12 @@ public class LibcommEvaluator extends BaseLibraryEvaluator implements
 		boolean certainSrc, certainTag;
 		BooleanExpression guard;
 		List<BooleanExpression> predicates = new LinkedList<>();
-		CIVLSource civlsource = arguments.get(0).getSource();
+		CIVLSource civlsource = arguments[0].getSource();
 		Evaluation eval;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
 
-		eval = evaluator.dereference(civlsource, state, process,
-				arguments.get(0), commHandle, false);
+		eval = evaluator.dereference(civlsource, state, process, arguments[0],
+				commHandle, false);
 		state = eval.state;
 		comm = eval.value;
 		gcommHandle = universe.tupleRead(comm, oneObject);

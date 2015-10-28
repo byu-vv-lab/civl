@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.library.common;
 
-import java.util.List;
-
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.log.IF.CIVLErrorLogger;
@@ -359,16 +357,16 @@ public abstract class LibraryComponent {
 	}
 
 	protected Pair<State, SymbolicExpression[]> evaluateArguments(State state,
-			int pid, List<Expression> arguments)
+			int pid, Expression[] arguments)
 			throws UnsatisfiablePathConditionException {
-		int numArgs = arguments.size();
+		int numArgs = arguments.length;
 		SymbolicExpression[] argumentValues = new SymbolicExpression[numArgs];
 
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval = null;
 
 			eval = symbolicAnalyzer.evaluator().evaluate(state, pid,
-					arguments.get(i));
+					arguments[i]);
 			argumentValues[i] = eval.value;
 			state = eval.state;
 		}

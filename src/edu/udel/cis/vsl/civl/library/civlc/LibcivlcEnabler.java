@@ -101,11 +101,12 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			throws UnsatisfiablePathConditionException {
 		String functionName = call.function().name().name();
 		AssignStatement assignmentCall;
-		List<Expression> arguments = call.arguments();
+		Expression[] arguments = new Expression[call.arguments().size()];// call.arguments();
 		List<Transition> localTransitions = new LinkedList<>();
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
 		Pair<State, SymbolicExpression[]> argumentsEval;
 
+		call.arguments().toArray(arguments);
 		switch (functionName) {
 		case "$choose_int":
 			argumentsEval = this.evaluateArguments(state, pid, arguments);
@@ -118,7 +119,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 
 			// TODO: can it be solved by symbolic execution?
 			if (upperNumber == null) {
-				this.errorLogger.logSimpleError(arguments.get(0).getSource(),
+				this.errorLogger.logSimpleError(arguments[0].getSource(),
 						state, process,
 						symbolicAnalyzer.stateInformation(state),
 						ErrorKind.INTERNAL,
@@ -129,11 +130,12 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			upper = upperNumber.intValue();
 			for (int i = 0; i < upper; i++) {
 				Expression singleChoice = modelFactory
-						.integerLiteralExpression(arguments.get(0).getSource(),
+						.integerLiteralExpression(arguments[0].getSource(),
 								BigInteger.valueOf(i));
 
-				assignmentCall = modelFactory.assignStatement(arguments.get(0)
-						.getSource(), call.source(), call.lhs(), singleChoice,
+				assignmentCall = modelFactory.assignStatement(
+						arguments[0].getSource(), call.source(), call.lhs(),
+						singleChoice,
 						(call.lhs() instanceof InitialValueExpression));
 				assignmentCall.setTargetTemp(call.target());
 				assignmentCall.setTarget(call.target());
@@ -290,7 +292,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 	 */
 	private List<Transition> elaborateIntWorker(State state, int pid,
 			int processIdentifier, Statement call, CIVLSource source,
-			List<Expression> arguments, SymbolicExpression[] argumentValues,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
 			AtomicLockAction atomicLockAction) {
 		Set<SymbolicConstant> symbolicConstants = universe
 				.getFreeSymbolicConstants(argumentValues[0]);
@@ -301,7 +303,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 
 	private List<Transition> elaborateRectangularDomainWorker(State state,
 			int pid, int processIdentifier, CallOrSpawnStatement call,
-			CIVLSource source, List<Expression> arguments,
+			CIVLSource source, Expression[] arguments,
 			SymbolicExpression[] argumentValues,
 			AtomicLockAction atomicLockAction) {
 		Set<SymbolicConstant> symbolicConstants = universe

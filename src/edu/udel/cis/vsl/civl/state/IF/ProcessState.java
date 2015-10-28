@@ -59,9 +59,10 @@ public interface ProcessState {
 	 * @return top frame on call stack.
 	 */
 	StackEntry peekStack();
-	
+
 	/**
-	 * Returns the second top frame on the call stack. Return NULL if the process has fewer than two stacks.
+	 * Returns the second top frame on the call stack. Return NULL if the
+	 * process has fewer than two stacks.
 	 * 
 	 * @return top frame on call stack.
 	 */
@@ -146,7 +147,8 @@ public interface ProcessState {
 	 * This name is not part of the state. It is immutable and never renamed,
 	 * helping to identify a specific process when processes get collected.
 	 * 
-	 * @return The name of this process.
+	 * @return The name of this process, in the form of ,<code>p</code>
+	 *         +identifier, e.g. <code>p2</code>, <code>p3</code>.
 	 */
 	String name();
 

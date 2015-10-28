@@ -1,7 +1,5 @@
 package edu.udel.cis.vsl.civl.library.concurrency;
 
-import java.util.List;
-
 import edu.udel.cis.vsl.civl.config.IF.CIVLConfiguration;
 import edu.udel.cis.vsl.civl.dynamic.IF.SymbolicUtility;
 import edu.udel.cis.vsl.civl.library.common.BaseLibraryEvaluator;
@@ -32,7 +30,7 @@ public class LibconcurrencyEvaluator extends BaseLibraryEvaluator implements
 
 	@Override
 	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments)
+			String function, Expression[] arguments)
 			throws UnsatisfiablePathConditionException {
 		SymbolicExpression[] argumentValues;
 		int numArgs;
@@ -40,13 +38,13 @@ public class LibconcurrencyEvaluator extends BaseLibraryEvaluator implements
 		int processIdentifier = state.getProcessState(pid).identifier();
 		String process = "p" + processIdentifier + " (id = " + pid + ")";
 
-		numArgs = arguments.size();
+		numArgs = arguments.length;
 		argumentValues = new SymbolicExpression[numArgs];
 		for (int i = 0; i < numArgs; i++) {
 			Evaluation eval = null;
 
 			try {
-				eval = evaluator.evaluate(state, pid, arguments.get(i));
+				eval = evaluator.evaluate(state, pid, arguments[i]);
 			} catch (UnsatisfiablePathConditionException e) {
 				// the error that caused the unsatifiable path condition should
 				// already have been reported.
@@ -84,17 +82,17 @@ public class LibconcurrencyEvaluator extends BaseLibraryEvaluator implements
 	 * @throws UnsatisfiablePathConditionException
 	 */
 	private BooleanExpression getBarrierExitGuard(State state, int pid,
-			String process, List<Expression> arguments,
+			String process, Expression[] arguments,
 			SymbolicExpression[] argumentValues)
 			throws UnsatisfiablePathConditionException {
-		CIVLSource source = arguments.get(0).getSource();
+		CIVLSource source = arguments[0].getSource();
 		SymbolicExpression barrier = argumentValues[0];
 		NumericExpression myPlace;
 		SymbolicExpression barrierObj;
 		SymbolicExpression gbarrier;
 		SymbolicExpression gbarrierObj;
 		Evaluation eval = evaluator.dereference(source, state, process,
-				arguments.get(0), barrier, false);
+				arguments[0], barrier, false);
 		SymbolicExpression inBarrierArray;
 		SymbolicExpression meInBarrier;
 

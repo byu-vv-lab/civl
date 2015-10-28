@@ -791,13 +791,14 @@ void $pthread_exit(void *value_ptr, $pthread_pool_t $pthread_pool){
 }
 
 void $pthread_exit_main(void *value_ptr){
-  int len = $pthread_gpool_size($pthread_gpool);
+  $pthread_gpool_join($pthread_gpool);
+  /*int len = $pthread_gpool_size($pthread_gpool);
   
   for(int i = 0; i<len; i++){
     $proc tid = $pthread_gpool_thread($pthread_gpool, i);
       
     $wait(tid);
-  }    
+    }*/    
   $free($pthread_gpool);
   //$exit();
 }

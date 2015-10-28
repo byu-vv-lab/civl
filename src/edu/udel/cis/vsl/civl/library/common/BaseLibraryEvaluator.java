@@ -88,7 +88,7 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 
 	@Override
 	public Evaluation evaluateGuard(CIVLSource source, State state, int pid,
-			String function, List<Expression> arguments)
+			String function, Expression[] arguments)
 			throws UnsatisfiablePathConditionException {
 		return new Evaluation(state, universe.trueExpression());
 	}
