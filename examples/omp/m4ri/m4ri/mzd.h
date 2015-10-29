@@ -121,17 +121,19 @@ typedef struct mzd_t {
    * 5: Spans more than 1 block.
    */
 
-  uint8_t flags;
+  unsigned char flags;
 
   /**
    * blockrows_log = log2(blockrows);
    * where blockrows is the number of rows in one block, which is a power of 2.
    */
 
-  uint8_t blockrows_log;
+  unsigned char blockrows_log;
 
   /* ensures sizeof(mzd_t) == 64 */
-  uint8_t padding[62 - 2*sizeof(rci_t) - 4*sizeof(wi_t) - sizeof(word) - 2*sizeof(void*)];
+  unsigned char padding[62 - 2*4 - 4*4 - 8 - 2*8]; 
+  
+  //unsigned char padding[62 - 2*sizeof(rci_t) - 4*sizeof(wi_t) - sizeof(word) - 2*sizeof(void*)];
 
   word high_bitmask;    /*!< Mask for valid bits in the word with the highest index (width - 1). */
   mzd_block_t *blocks;  /*!< Pointers to the actual blocks of memory containing the values packed into words. */
@@ -147,31 +149,31 @@ static wi_t const mzd_paddingwidth = 1;
  * \brief flag when ncols%64 == 0
  */
 
-static uint8_t const mzd_flag_nonzero_excess = 0x2;
+static unsigned char const mzd_flag_nonzero_excess = 0x2;
 
 /**
  * \brief flag for windowed matrix
  */
 
-static uint8_t const mzd_flag_windowed_zerooffset = 0x4;
+static unsigned char const mzd_flag_windowed_zerooffset = 0x4;
 
 /**
  * \brief flag for windowed matrix where ncols%64 == 0
  */
 
-static uint8_t const mzd_flag_windowed_zeroexcess = 0x8;
+static unsigned char const mzd_flag_windowed_zeroexcess = 0x8;
 
 /**
  * \brief flag for windowed matrix wich owns its memory
  */
 
-static uint8_t const mzd_flag_windowed_ownsblocks = 0x10;
+static unsigned char const mzd_flag_windowed_ownsblocks = 0x10;
 
 /**
  * \brief flag for multiply blocks
  */
 
-static uint8_t const mzd_flag_multiple_blocks = 0x20;
+static unsigned char const mzd_flag_multiple_blocks = 0x20;
 
 /**
  * \brief Test if a matrix is windowed.

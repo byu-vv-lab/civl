@@ -26,7 +26,8 @@ public class M4RITest {
 
 	@Test
 	public void m4ri() {
-		assertTrue(ui.run("show", "-ompNoSimplify", "-input_omp_thread_max=1",
+		assertTrue(ui.run("show", "-showProgram", "-ompNoSimplify", "-input_omp_thread_max=1",
+				"-userIncludePath=examples/omp/m4ri/m4ri:examples/omp/m4ri",
 				"-sysIncludePath=examples/omp/m4ri/m4ri:examples/omp/m4ri",
 				filename("tests/test_colswap.c")));
 		

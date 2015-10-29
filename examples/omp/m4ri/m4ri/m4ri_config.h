@@ -2,28 +2,28 @@
 #define M4RI_M4RI_CONFIG_H
 
 // Defines determined during configuration of m4ri.
-#define __M4RI_HAVE_MM_MALLOC		M4RI_HAVE_MM_MALLOC
-#define __M4RI_HAVE_POSIX_MEMALIGN	M4RI_HAVE_POSIX_MEMALIGN
-#define __M4RI_HAVE_SSE2		M4RI_HAVE_SSE2
-#define __M4RI_HAVE_OPENMP		M4RI_HAVE_OPENMP
-#define __M4RI_CPU_L1_CACHE		M4RI_CPU_L1_CACHE
-#define __M4RI_CPU_L2_CACHE		M4RI_CPU_L2_CACHE
-#define __M4RI_CPU_L3_CACHE		M4RI_CPU_L3_CACHE
-#define __M4RI_DEBUG_DUMP		(M4RI_DEBUG_DUMP || @M4RI_DEBUG_MZD)
-#define __M4RI_DEBUG_MZD		M4RI_DEBUG_MZD
-#define __M4RI_HAVE_LIBPNG              M4RI_HAVE_LIBPNG
+#define __M4RI_HAVE_MM_MALLOC		1
+#define __M4RI_HAVE_POSIX_MEMALIGN	1
+#define __M4RI_HAVE_SSE2		0
+#define __M4RI_HAVE_OPENMP		1
+#define __M4RI_CPU_L1_CACHE		32768
+#define __M4RI_CPU_L2_CACHE		0
+#define __M4RI_CPU_L3_CACHE		0
+#define __M4RI_DEBUG_DUMP		(0 || 0)
+#define __M4RI_DEBUG_MZD		0
+#define __M4RI_HAVE_LIBPNG              0
 
-#define __M4RI_CC                       "CC"
-#define __M4RI_CFLAGS                   "SIMD_CFLAGS OPENMP_CFLAGS CFLAGS"
-#define __M4RI_SIMD_CFLAGS              "SIMD_CFLAGS"
-#define __M4RI_OPENMP_CFLAGS            "OPENMP_CFLAGS"
+#define __M4RI_CC                       "gcc -std=gnu99"
+#define __M4RI_CFLAGS                   " -mmmx -msse -msse2 -msse3  -g -O2"
+#define __M4RI_SIMD_CFLAGS              " -mmmx -msse -msse2 -msse3"
+#define __M4RI_OPENMP_CFLAGS            ""
 
 // Helper macros.
 #define __M4RI_USE_MM_MALLOC		(__M4RI_HAVE_MM_MALLOC && __M4RI_HAVE_SSE2)
 #define __M4RI_USE_POSIX_MEMALIGN	(__M4RI_HAVE_POSIX_MEMALIGN && __M4RI_HAVE_SSE2)
-#define __M4RI_DD_QUIET			(M4RI_DEBUG_MZD && !M4RI_DEBUG_DUMP)
+#define __M4RI_DD_QUIET			(0 && !0)
 
-#define __M4RI_ENABLE_MZD_CACHE         M4RI_ENABLE_MZD_CACHE
-#define __M4RI_ENABLE_MMC               M4RI_ENABLE_MMC
+#define __M4RI_ENABLE_MZD_CACHE         1
+#define __M4RI_ENABLE_MMC               1
 
 #endif // M4RI_M4RI_CONFIG_H

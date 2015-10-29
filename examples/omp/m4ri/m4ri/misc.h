@@ -84,7 +84,7 @@ typedef int wi_t;
  * \brief A word is the typical packed data structure to represent packed bits.
  */
 
-typedef uint64_t word;
+typedef unsigned long word;
 
 /**
  * \brief Explicit conversion macro.
@@ -132,7 +132,7 @@ typedef uint64_t word;
  * \note This is a no-op. It's purpose it to track intention.
  */
 
-#define __M4RI_CONVERT_TO_WORD(i) ((word)(i))
+#define __M4RI_CONVERT_TO_WORD(i) ((unsigned long)(i))
 
 /**
  * \brief The number of bits in a word.
@@ -144,13 +144,13 @@ static int const m4ri_radix = 64;
  * \brief The number one as a word.
  */
 
-static word const m4ri_one = __M4RI_CONVERT_TO_WORD(1);
+static unsigned long const m4ri_one = __M4RI_CONVERT_TO_WORD(1);
 
 /**
  * \brief A word with all bits set.
  */
 
-static word const m4ri_ffff = __M4RI_CONVERT_TO_WORD(-1);
+static unsigned long const m4ri_ffff = __M4RI_CONVERT_TO_WORD(-1);
 
 /**
  * \brief Return the maximal element of x and y
@@ -465,8 +465,8 @@ static inline word m4ri_spread_bits(word const from, rci_t* const Q, int const l
 
 static inline int m4ri_lesser_LSB(word a, word b)
 {
-  uint64_t const ia = __M4RI_CONVERT_TO_UINT64_T(a);
-  uint64_t const ib = __M4RI_CONVERT_TO_UINT64_T(b);
+  unsigned long const ia = __M4RI_CONVERT_TO_UINT64_T(a);
+  unsigned long const ib = __M4RI_CONVERT_TO_UINT64_T(b);
   /*
    * If a is zero then we should always return false, otherwise
    * if b is zero we should return true iff a has at least one bit set.
