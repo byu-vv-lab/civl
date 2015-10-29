@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.predicate.common.CommonAndPredicate;
 import edu.udel.cis.vsl.civl.predicate.common.CommonDeadlock;
 import edu.udel.cis.vsl.civl.predicate.common.CommonFunctionalEquivalence;
 import edu.udel.cis.vsl.civl.predicate.common.CommonPotentialDeadlock;
+import edu.udel.cis.vsl.civl.predicate.common.CommonTrivialPredicate;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.SymbolicAnalyzer;
 import edu.udel.cis.vsl.civl.state.IF.State;
@@ -46,5 +47,9 @@ public class Predicates {
 
 	public static AndPredicate newAndPredicate(CIVLStatePredicate predicate) {
 		return new CommonAndPredicate(predicate);
+	}
+
+	public static TrivialPredicate newTrivialPredicate() {
+		return new CommonTrivialPredicate();
 	}
 }

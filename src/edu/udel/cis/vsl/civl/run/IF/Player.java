@@ -114,8 +114,8 @@ public abstract class Player {
 		this.sessionName = model.name();
 		this.modelFactory = model.factory();
 		universe = modelFactory.universe();
-		this.solve = (Boolean) gmcConfig.getAnonymousSection().getValueOrDefault(
-				solveO);
+		this.solve = (Boolean) gmcConfig.getAnonymousSection()
+				.getValueOrDefault(solveO);
 		this.log = new CIVLErrorLogger(new File("CIVLREP"), sessionName, out,
 				gmcConfig, universe, solve);
 		this.log.setErrorBound((int) gmcConfig.getAnonymousSection()
@@ -141,8 +141,8 @@ public abstract class Player {
 				civlConfig);
 		this.random = gmcConfig.getAnonymousSection().isTrue(randomO);
 		this.minimize = gmcConfig.getAnonymousSection().isTrue(minO);
-		this.maxdepth = (int) gmcConfig.getAnonymousSection().getValueOrDefault(
-				maxdepthO);
+		this.maxdepth = (int) gmcConfig.getAnonymousSection()
+				.getValueOrDefault(maxdepthO);
 		this.libraryEnablerLoader = Kripkes.newLibraryEnablerLoader(
 				this.libraryEvaluatorLoader, this.civlConfig);
 		enabler = Kripkes.newEnabler(stateFactory, evaluator, symbolicAnalyzer,
@@ -154,10 +154,9 @@ public abstract class Player {
 			this.addPredicate(Predicates.newPotentialDeadlock(universe,
 					(Enabler) this.enabler, libraryEnablerLoader, evaluator,
 					modelFactory, symbolicUtil, symbolicAnalyzer));
+		} else {
+			this.addPredicate(Predicates.newTrivialPredicate());
 		}
-		// else {
-		// this.predicates = null;
-		// }
 		stateManager = Kripkes.newStateManager((Enabler) enabler, executor,
 				symbolicAnalyzer, log, civlConfig);
 	}

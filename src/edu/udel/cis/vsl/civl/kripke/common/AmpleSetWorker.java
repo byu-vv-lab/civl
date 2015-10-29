@@ -32,7 +32,6 @@ import edu.udel.cis.vsl.civl.state.IF.StackEntry;
 import edu.udel.cis.vsl.civl.state.IF.State;
 import edu.udel.cis.vsl.civl.state.IF.UnsatisfiablePathConditionException;
 import edu.udel.cis.vsl.civl.util.IF.Pair;
-import edu.udel.cis.vsl.sarl.IF.SARLException;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
 import edu.udel.cis.vsl.sarl.IF.expr.BooleanExpression;
 import edu.udel.cis.vsl.sarl.IF.expr.ReferenceExpression;
@@ -1174,7 +1173,7 @@ public class AmpleSetWorker {
 
 						eval = this.dereference(state, arrayPointer);
 						/* Check if it's length == 0 */
-						if (universe.length(eval).isZero())
+						if (eval == null || universe.length(eval).isZero())
 							return;
 					}
 					pointerValue = this.dereference(state, expr);
@@ -1249,7 +1248,7 @@ public class AmpleSetWorker {
 		variableValue = state.getDyscope(sid).getValue(vid);
 		try {
 			deref = universe.dereference(variableValue, symRef);
-		} catch (SARLException e) {
+		} catch (Exception e) {
 			return null;
 		}
 		return deref;
