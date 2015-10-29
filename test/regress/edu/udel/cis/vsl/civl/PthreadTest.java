@@ -60,8 +60,9 @@ public class PthreadTest {
 
 	@Test
 	public void indexer_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", "-inputSIZE=2", "-inputMAX=2",
-				"-inputNUM_THREADS=2", filename("indexer_true-unreach-call.c")));
+		assertTrue(ui.run("verify", "-svcomp -showProgram", "-inputSIZE=2",
+				"-inputMAX=4", "-inputNUM_THREADS=2",
+				filename("indexer_true-unreach-call.c")));
 	}
 
 	@Test
@@ -119,14 +120,16 @@ public class PthreadTest {
 	@Test
 	public void stack_false() throws ABCException {
 		assertFalse(ui.run("verify", "-svcomp", "-inputSIZE=5",
-				"-inputOVERFLOW=-1", "-inputUNDERFLOW=-2",
+				"-inputOVERFLOW=-1",
+				"-inputUNDERFLOW=-2 -input_svcomp_unsigned_bound=8",
 				filename("stack_false-unreach-call.c")));
 	}
 
 	@Test
 	public void stack_true() throws ABCException {
 		assertTrue(ui.run("verify", "-svcomp", "-inputSIZE=5",
-				"-inputOVERFLOW=-1", "-inputUNDERFLOW=-2",
+				"-inputOVERFLOW=-1",
+				"-inputUNDERFLOW=-2 -input_svcomp_unsigned_bound=8",
 				filename("stack_true-unreach-call.c")));
 	}
 
