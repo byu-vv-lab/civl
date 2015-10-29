@@ -292,13 +292,18 @@ public class CIVLConfiguration {
 		this.setEnableMpiContract(config.isTrue(CIVLConstants.mpiContractO));
 		this.setCheckDivisionByZero(config
 				.isTrue(CIVLConstants.checkDivisionByZeroO));
-		if (this.svcomp) {
-			this.checkMemoryLeak = false;
-		} else {
-			this.checkMemoryLeak = config
-					.isTrue(CIVLConstants.checkMemoryLeakO);
-		}
+		this.checkMemoryLeak = config.isTrue(CIVLConstants.checkMemoryLeakO);
 		this.setTimeout((int) config.getValueOrDefault(CIVLConstants.timeoutO));
+		if (this.svcomp) {
+			if (config.getValue(CIVLConstants.checkMemoryLeakO) == null)
+				this.checkMemoryLeak = false;
+			if (config.getValue(CIVLConstants.collectHeapsO) == null)
+				this.collectHeaps = false;
+			if (config.getValue(CIVLConstants.simplifyO) == null)
+				this.simplify = false;
+			if (config.getValue(CIVLConstants.deadlockO) == null)
+				this.deadlock = DeadlockKind.NONE;
+		}
 		if (this.svcomp) {
 			this.setPthreadOnly((boolean) config
 					.getValueOrDefault(CIVLConstants.pthreadOnlyO));
@@ -664,7 +669,8 @@ public class CIVLConfiguration {
 	}
 
 	/**
-	 * @param pthreadOnly the pthreadOnly to set
+	 * @param pthreadOnly
+	 *            the pthreadOnly to set
 	 */
 	public void setPthreadOnly(boolean pthreadOnly) {
 		this.pthreadOnly = pthreadOnly;

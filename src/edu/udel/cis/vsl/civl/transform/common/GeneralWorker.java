@@ -535,7 +535,8 @@ public class GeneralWorker extends BaseWorker {
 		Map<Entity, String> newNameMap = new HashMap<>();
 		NameTransformer staticVariableNameTransformer;
 
-		newNameMap = newNameMapOfStaticVariables(ast.getRootNode(), newNameMap);
+		newNameMap = newNameMapOfStaticVariables(ast.getRootNode(),
+				ast.getRootNode(), newNameMap);
 		staticVariableNameTransformer = Transform.nameTransformer(newNameMap,
 				astFactory);
 		return staticVariableNameTransformer.transform(ast);
@@ -544,6 +545,7 @@ public class GeneralWorker extends BaseWorker {
 	// TODO can you have static for function parameters?
 	// TODO what if the initializer of the variable node access some variables
 	// not declared in the root scope?
+	// TODO what if the type is defined somewhere in the AST?
 	/**
 	 * Computes the new name map of static variables. A static variable "var" is
 	 * renamed to "var$n", where n is the current static variable ID.
@@ -552,8 +554,8 @@ public class GeneralWorker extends BaseWorker {
 	 * @param newNames
 	 * @return
 	 */
-	private Map<Entity, String> newNameMapOfStaticVariables(ASTNode node,
-			Map<Entity, String> newNames) {
+	private Map<Entity, String> newNameMapOfStaticVariables(ASTNode root,
+			ASTNode node, Map<Entity, String> newNames) {
 		if (node instanceof VariableDeclarationNode) {
 			VariableDeclarationNode variable = (VariableDeclarationNode) node;
 
@@ -562,13 +564,15 @@ public class GeneralWorker extends BaseWorker {
 				String newName = oldName + separator + this.static_var_count++;
 
 				newNames.put(variable.getEntity(), newName);
-				this.static_variables.add(variable);
+				// don't move the variable if it is already in the root scope
+				if (!variable.parent().equals(root))
+					this.static_variables.add(variable);
 			}
 		} else {
 			for (ASTNode child : node.children()) {
 				if (child == null)
 					continue;
-				newNames = newNameMapOfStaticVariables(child, newNames);
+				newNames = newNameMapOfStaticVariables(root, child, newNames);
 			}
 		}
 		return newNames;
