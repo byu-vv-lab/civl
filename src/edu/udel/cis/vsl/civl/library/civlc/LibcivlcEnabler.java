@@ -108,6 +108,11 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 
 		call.arguments().toArray(arguments);
 		switch (functionName) {
+		case "$assume": {
+			localTransitions.add(Semantics.newTransition(pathCondition, pid,
+					processIdentifier, call, true, atomicLockAction));
+			return localTransitions;
+		}
 		case "$choose_int":
 			argumentsEval = this.evaluateArguments(state, pid, arguments);
 			state = argumentsEval.left;
@@ -143,7 +148,7 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 						pid, processIdentifier, assignmentCall,
 						atomicLockAction));
 			}
-			break;
+			return localTransitions;
 		case "$elaborate":
 			argumentsEval = this.evaluateArguments(state, pid, arguments);
 			return this.elaborateIntWorker(argumentsEval.left, pid,
@@ -158,7 +163,6 @@ public class LibcivlcEnabler extends BaseLibraryEnabler implements
 			return super.enabledTransitions(state, call, pathCondition, pid,
 					processIdentifier, atomicLockAction);
 		}
-		return localTransitions;
 	}
 
 	/* *************************** Private Methods ************************* */

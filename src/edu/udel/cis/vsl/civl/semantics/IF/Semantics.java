@@ -152,6 +152,23 @@ public class Semantics {
 	}
 
 	/**
+	 * 
+	 * @param pathCondition
+	 * @param pid
+	 * @param processIdentifier
+	 * @param statement
+	 * @param simplifyState
+	 * @param atomicLockAction
+	 * @return
+	 */
+	public static Transition newTransition(BooleanExpression pathCondition,
+			int pid, int processIdentifier, Statement statement,
+			boolean simplifyState, AtomicLockAction atomicLockAction) {
+		return new CommonTransition(pathCondition, pid, processIdentifier,
+				statement, simplifyState, atomicLockAction);
+	}
+
+	/**
 	 * Create a new Noop transition.
 	 * 
 	 * @param pathCondition
