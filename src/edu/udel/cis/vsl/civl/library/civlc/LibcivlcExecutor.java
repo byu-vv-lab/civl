@@ -393,24 +393,6 @@ public class LibcivlcExecutor extends BaseLibraryExecutor implements
 	}
 
 	/**
-	 * $exit terminates the calling process.
-	 * 
-	 * @param state
-	 *            The current state.
-	 * @param pid
-	 *            The process ID of the process to be terminated.
-	 * @return The state resulting from removing the specified process.
-	 */
-	private State executeExit(State state, int pid) {
-		int atomicPID = stateFactory.processInAtomic(state);
-
-		if (atomicPID == pid) {
-			state = stateFactory.releaseAtomicLock(state);
-		}
-		return stateFactory.terminateProcess(state, pid);
-	}
-
-	/**
 	 * Creates a new iterator for an array of integers, and returns the handle
 	 * of the iterator. The new object will be allocated in the given scope.<br>
 	 * <code>$int_iter $int_iter_create($scope scope, int *array, int

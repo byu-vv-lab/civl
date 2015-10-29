@@ -149,6 +149,9 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 			state = execute_pthread_pool_thread(state, pid, process, lhs,
 					arguments, argumentValues, source);
 			break;
+		case "$pthread_exit":
+			return execute_pthread_exit(state, pid, process, arguments,
+					argumentValues, source);
 		default:
 			throw new CIVLUnimplementedFeatureException(
 					"execution of function " + functionName
@@ -157,6 +160,41 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		state = stateFactory.setLocation(state, pid, statement.target(),
 				statement.lhs() != null);
 		return state;
+	}
+
+	/**
+	 * <pre>
+	 * void $pthread_exit(void *value_ptr, $pthread_pool_t $pthread_pool){
+	 *   $pthread_pool_terminates($pthread_pool, value_ptr); 
+	 *   $free($pthread_pool);
+	 *   $exit(); 
+	 * }
+	 * </pre>
+	 * 
+	 * @param state
+	 * @param pid
+	 * @param process
+	 * @param arguments
+	 * @param argumentValues
+	 * @param source
+	 * @return
+	 * @throws UnsatisfiablePathConditionException
+	 */
+	private State execute_pthread_exit(State state, int pid, String process,
+			Expression[] arguments, SymbolicExpression[] argumentValues,
+			CIVLSource source) throws UnsatisfiablePathConditionException {
+		Expression[] terminatesExprs = new Expression[2];
+		SymbolicExpression[] terminatesExprValues = new SymbolicExpression[2];
+
+		terminatesExprs[0] = arguments[1];
+		terminatesExprs[1] = arguments[0];
+		terminatesExprValues[0] = argumentValues[1];
+		terminatesExprValues[1] = argumentValues[0];
+		state = this.execute_pthread_pool_terminates(state, pid, process,
+				terminatesExprs, terminatesExprValues, source);
+		state = this.executeFree(state, pid, process, terminatesExprs,
+				terminatesExprValues, source);
+		return this.executeExit(state, pid);
 	}
 
 	private State execute_pthread_gpool_join(State state, int pid,
@@ -176,11 +214,12 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 		numThreads = this.symbolicUtil.extractInt(source,
 				universe.length(threads));
 		for (int i = 0; i < numThreads; i++) {
-			SymbolicExpression threadObj, threadPtr=universe.arrayRead(threads, universe.integer(i));
+			SymbolicExpression threadObj, threadPtr = universe.arrayRead(
+					threads, universe.integer(i));
 			SymbolicExpression pidValue;
 			int pidInt;
 
-			if(!this.symbolicUtil.isDerefablePointer(threadPtr))
+			if (!this.symbolicUtil.isDerefablePointer(threadPtr))
 				continue;
 			eval = this.evaluator.dereference(source, state, process, null,
 					universe.arrayRead(threads, universe.integer(i)), false);
@@ -192,6 +231,7 @@ public class LibpthreadExecutor extends BaseLibraryExecutor implements
 					&& modelFactory.isPocessIdDefined(pidInt))
 				state = stateFactory.removeProcess(state, pidInt);
 		}
+		state=this.executeFree(state, pid, process, arguments, argumentValues, source);
 		return state;
 	}
 

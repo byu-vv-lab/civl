@@ -274,6 +274,24 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 		return state;
 	}
 
+	/**
+	 * $exit terminates the calling process.
+	 * 
+	 * @param state
+	 *            The current state.
+	 * @param pid
+	 *            The process ID of the process to be terminated.
+	 * @return The state resulting from removing the specified process.
+	 */
+	protected State executeExit(State state, int pid) {
+		int atomicPID = stateFactory.processInAtomic(state);
+
+		if (atomicPID == pid) {
+			state = stateFactory.releaseAtomicLock(state);
+		}
+		return stateFactory.terminateProcess(state, pid);
+	}
+
 	/* ************************** Private Methods ************************** */
 
 	/**
