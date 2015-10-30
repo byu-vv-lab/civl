@@ -130,8 +130,8 @@ public class LibraryTest {
 
 	@Test
 	public void barrier() throws ABCException {
-		assertTrue(ui.run("verify", "-inputB=5 -showSavedStates",
-				filename(CIVLC, "barrier.cvl")));
+		assertTrue(ui
+				.run("verify", "-inputB=5", filename(CIVLC, "barrier.cvl")));
 	}
 
 	@Test
@@ -207,8 +207,7 @@ public class LibraryTest {
 
 	@Test
 	public void domainDecomp() throws ABCException {
-		assertTrue(ui.run("verify", "-inputn=4",
-				"-enablePrintf=false -showTransitions",
+		assertTrue(ui.run("verify", "-inputn=4", "-enablePrintf=false",
 				filename(CIVLC, "domainDecomposition.cvl")));
 	}
 
@@ -249,7 +248,12 @@ public class LibraryTest {
 
 	@Test
 	public void assume() throws ABCException {
-		assertTrue(ui.run("verify -showProgram", filename(CIVLC, "assume.cvl")));
+		assertTrue(ui.run("verify", filename(CIVLC, "assume.cvl")));
+	}
+
+	@Test
+	public void assume1() throws ABCException {
+		assertFalse(ui.run("verify", filename(CIVLC, "assume1.cvl")));
 	}
 
 	@Test
@@ -293,6 +297,11 @@ public class LibraryTest {
 	@Test
 	public void sqrt() throws ABCException {
 		assertTrue(ui.run("verify ", filename(MATH, "sqrt.c")));
+	}
+
+	@Test
+	public void exitTest() throws ABCException {
+		assertTrue(ui.run("verify", filename(STDLIB, "exitTest.c")));
 	}
 
 	@AfterClass
