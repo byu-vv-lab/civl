@@ -987,10 +987,12 @@ public class ImmutableStateFactory implements StateFactory {
 		IntObject mallocIndex = universe.intObject(mallocId);
 		SymbolicExpression heapField = universe.tupleRead(heapValue,
 				mallocIndex);
-		int heapFieldLength = ((IntegerNumber) universe.extractNumber(universe
-				.length(heapField))).intValue();
-		Map<SymbolicExpression, SymbolicExpression> oldToNewHeapMemUnits = new HashMap<>(
-				heapFieldLength - index);
+		// int heapFieldLength = ((IntegerNumber)
+		// universe.extractNumber(universe
+		// .length(heapField))).intValue();
+		// Map<SymbolicExpression, SymbolicExpression> oldToNewHeapMemUnits =
+		// new HashMap<>(
+		// heapFieldLength - index);
 		// Map<SymbolicExpression, SymbolicExpression> oldToNewHeapPointers =
 		// new HashMap<>();
 		// int numDyscopes = state.numDyscopes();
@@ -998,8 +1000,8 @@ public class ImmutableStateFactory implements StateFactory {
 		// ImmutableDynamicScope[numDyscopes];
 		ImmutableState theState = (ImmutableState) state;
 
-		oldToNewHeapMemUnits.put(symbolicUtil.heapMemUnit(heapObjectPointer),
-				this.symbolicUtil.undefinedPointer());
+		// oldToNewHeapMemUnits.put(symbolicUtil.heapMemUnit(heapObjectPointer),
+		// this.symbolicUtil.undefinedPointer());
 		heapField = universe.arrayWrite(heapField, universe.integer(index),
 				symbolicUtil.invalidHeapObject(((SymbolicArrayType) heapField
 						.type()).elementType()));

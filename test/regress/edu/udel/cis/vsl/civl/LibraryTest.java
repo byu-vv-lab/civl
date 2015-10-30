@@ -288,13 +288,6 @@ public class LibraryTest {
 	}
 
 	@Test
-	public void testMyLib() throws ABCException {
-		assertFalse(ui
-				.run("verify -showTransitions=false -showStates=false -errorBound=100",
-						filename(EXTERNAL, "testMyLib.cvl")));
-	}
-
-	@Test
 	public void sqrt() throws ABCException {
 		assertTrue(ui.run("verify ", filename(MATH, "sqrt.c")));
 	}

@@ -490,6 +490,14 @@ public class CommonEvaluator implements Evaluator {
 					}
 				}
 				variableValue = state.getDyscope(sid).getValue(vid);
+				if (!symRef.isIdentityReference() && variableValue.isNull()) {
+					errorLogger.logSimpleError(source, state, process,
+							symbolicAnalyzer.stateInformation(state),
+							ErrorKind.UNDEFINED_VALUE,
+							"Attempt to dereference a pointer that refers "
+									+ "to an object with undefined value");
+					throwPCException = true;
+				}
 				try {
 					// this function should never return a java null
 					deref = universe.dereference(variableValue, symRef);

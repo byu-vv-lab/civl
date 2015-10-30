@@ -11,6 +11,7 @@ import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.model.IF.ModelFactory;
 import edu.udel.cis.vsl.civl.model.IF.expression.Expression;
 import edu.udel.cis.vsl.civl.model.IF.statement.CallOrSpawnStatement;
+import edu.udel.cis.vsl.civl.semantics.IF.Evaluation;
 import edu.udel.cis.vsl.civl.semantics.IF.Evaluator;
 import edu.udel.cis.vsl.civl.semantics.IF.Executor;
 import edu.udel.cis.vsl.civl.semantics.IF.LibraryEvaluatorLoader;
@@ -210,14 +211,27 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 							+ " is not a pointer returned by a memory "
 							+ "management method");
 		} else {
-			Pair<Integer, Integer> indexes;
+			Evaluation eval = this.evaluator.dereference(source, state,
+					process, null, firstElementPointer, false);
+			SymbolicExpression heapObject = eval.value;
 
-			indexes = getMallocIndex(firstElementPointer);
-			state = stateFactory
-					.deallocate(state, firstElementPointer, modelFactory
-							.getScopeId(source, universe.tupleRead(
-									firstElementPointer, zeroObject)),
-							indexes.left, indexes.right);
+			state = eval.state;
+			if (heapObject.isNull()) {
+				// the heap object has been deallocated
+				this.errorLogger
+						.logSimpleError(source, state, process,
+								symbolicAnalyzer.stateInformation(state),
+								ErrorKind.MEMORY_LEAK,
+								"attempt to deallocate an object that has been deallocated previously");
+			} else {
+				Pair<Integer, Integer> indexes;
+
+				indexes = getMallocIndex(firstElementPointer);
+				state = stateFactory.deallocate(state, firstElementPointer,
+						modelFactory.getScopeId(source, universe.tupleRead(
+								firstElementPointer, zeroObject)),
+						indexes.left, indexes.right);
+			}
 		}
 		return state;
 	}
