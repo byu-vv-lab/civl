@@ -145,12 +145,14 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		int dim;
 
 		// If data length > count, report an error:
-		claim = universe.lessThan(dataSeqLength, count);
-		resultType = reasoner.valid(claim).getResultType();
-		if (resultType.equals(ResultType.YES)) {
-			state = reportOutOfBoundError(state, process, claim, resultType,
-					pointer, dataSeqLength, count, source);
-			return new Pair<>(new Evaluation(state, dataArray), pointer);
+		if (!this.civlConfig.svcomp()) {
+			claim = universe.lessThan(dataSeqLength, count);
+			resultType = reasoner.valid(claim).getResultType();
+			if (resultType.equals(ResultType.YES)) {
+				state = reportOutOfBoundError(state, process, claim,
+						resultType, pointer, dataSeqLength, count, source);
+				return new Pair<>(new Evaluation(state, dataArray), pointer);
+			}
 		}
 		// If count is one:
 		if (reasoner.isValid(universe.equals(count, one))) {
@@ -354,13 +356,17 @@ public abstract class BaseLibraryEvaluator extends LibraryComponent implements
 		arraySlicesSizes = symbolicUtil.arraySlicesSizes(coordinatesSizes);
 		elementType = ((SymbolicArrayType) flattenOldArray.type())
 				.elementType();
-		// check if the flatten array is compatible with the given array type
-		claim = universe.equals(universe.length(flattenOldArray),
-				universe.multiply(arraySlicesSizes[0], coordinatesSizes[0]));
-		resultType = reasoner.valid(claim).getResultType();
-		if (!resultType.equals(ResultType.YES))
-			throw new CIVLInternalException(
-					"Casting an array between incompatiable types", source);
+		if (!this.civlConfig.svcomp()) {
+			// check if the flatten array is compatible with the given array
+			// type
+			claim = universe
+					.equals(universe.length(flattenOldArray), universe
+							.multiply(arraySlicesSizes[0], coordinatesSizes[0]));
+			resultType = reasoner.valid(claim).getResultType();
+			if (!resultType.equals(ResultType.YES))
+				throw new CIVLInternalException(
+						"Casting an array between incompatiable types", source);
+		}
 		dim = coordinatesSizes.length;
 		// Extracting sub-arrays out of SYMBOLIC flatten array
 		dimensionalSpace = (IntegerNumber) reasoner

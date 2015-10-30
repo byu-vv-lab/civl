@@ -377,24 +377,27 @@ public class CommonExecutor implements Executor {
 		state = eval.state;
 		elementSize = (NumericExpression) eval.value;
 		pathCondition = state.getPathCondition();
-		claim = universe.divides(elementSize, mallocSize);
-		validity = universe.reasoner(pathCondition).valid(claim)
-				.getResultType();
-		if (validity != ResultType.YES) {
-			String elementType = statement.getStaticElementType().toString();
-			String message = "For a $malloc returning " + elementType
-					+ "*, the size argument must be a multiple of sizeof("
-					+ elementType + ")\n" + "      actual size argument: "
-					+ mallocSize.toString() + "\n"
-					+ "      expected size argument: a multile of "
-					+ elementSize.toString();
+		if (!this.civlConfig.svcomp()) {
+			claim = universe.divides(elementSize, mallocSize);
+			validity = universe.reasoner(pathCondition).valid(claim)
+					.getResultType();
+			if (validity != ResultType.YES) {
+				String elementType = statement.getStaticElementType()
+						.toString();
+				String message = "For a $malloc returning " + elementType
+						+ "*, the size argument must be a multiple of sizeof("
+						+ elementType + ")\n" + "      actual size argument: "
+						+ mallocSize.toString() + "\n"
+						+ "      expected size argument: a multile of "
+						+ elementSize.toString();
 
-			state = errorLogger.logError(source, state, process,
-					symbolicAnalyzer.stateInformation(state), claim, validity,
-					ErrorKind.MALLOC, message);
-			// state = state.setPathCondition(universe.and(pathCondition,
-			// claim));
-			throw new UnsatisfiablePathConditionException();
+				state = errorLogger.logError(source, state, process,
+						symbolicAnalyzer.stateInformation(state), claim,
+						validity, ErrorKind.MALLOC, message);
+				// state = state.setPathCondition(universe.and(pathCondition,
+				// claim));
+				throw new UnsatisfiablePathConditionException();
+			}
 		}
 		elementCount = universe.divide(mallocSize, elementSize);
 		// If the type of the allocated element object is an struct or union

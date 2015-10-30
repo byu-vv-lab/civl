@@ -765,28 +765,30 @@ public class LibpointerExecutor extends BaseLibraryExecutor implements
 				.getDynamicType(universe);
 		ptr_primType_size = symbolicUtil.sizeof(arguments[0].getSource(),
 				primitiveTypePointedStatic, primitiveTypePointed);
-		claim = universe.equals(ptr_primType_size, type_size);
-		reasoner = universe.reasoner(state.getPathCondition());
-		resultType = reasoner.valid(claim).getResultType();
-		if (!resultType.equals(ResultType.YES)) {
-			// Certainty certainty = resultType.equals(ResultType.NO) ?
-			// Certainty.CONCRETE
-			// : Certainty.MAYBE;
-			return this.errorLogger
-					.logError(
-							source,
-							state,
-							process,
-							this.symbolicAnalyzer.stateInformation(state),
-							claim,
-							resultType,
-							ErrorKind.POINTER,
-							"the primitive type of the object pointed by input pointer:"
-									+ primitiveTypePointed
-									+ " must be"
-									+ " consistent with the size of the"
-									+ " primitive type specified at the forth argument: "
-									+ type_size);
+		if (!this.civlConfig.svcomp()) {
+			claim = universe.equals(ptr_primType_size, type_size);
+			reasoner = universe.reasoner(state.getPathCondition());
+			resultType = reasoner.valid(claim).getResultType();
+			if (!resultType.equals(ResultType.YES)) {
+				// Certainty certainty = resultType.equals(ResultType.NO) ?
+				// Certainty.CONCRETE
+				// : Certainty.MAYBE;
+				return this.errorLogger
+						.logError(
+								source,
+								state,
+								process,
+								this.symbolicAnalyzer.stateInformation(state),
+								claim,
+								resultType,
+								ErrorKind.POINTER,
+								"the primitive type of the object pointed by input pointer:"
+										+ primitiveTypePointed
+										+ " must be"
+										+ " consistent with the size of the"
+										+ " primitive type specified at the forth argument: "
+										+ type_size);
+			}
 		}
 		eval = evaluator.evaluatePointerAdd(state, process, ptr, offset, true,
 				source).left;

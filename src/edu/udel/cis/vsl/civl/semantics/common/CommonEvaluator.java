@@ -1698,19 +1698,22 @@ public class CommonEvaluator implements Evaluator {
 		case MODULO: {
 			BooleanExpression assumption = eval.state.getPathCondition();
 			NumericExpression denominator = (NumericExpression) right;
-			BooleanExpression claim = universe.neq(
-					zeroOf(expression.getSource(),
-							expression.getExpressionType()), denominator);
-			ResultType resultType = universe.reasoner(assumption).valid(claim)
-					.getResultType();
 
-			// TODO: check not negative
-			if (resultType != ResultType.YES) {
-				eval.state = errorLogger.logError(expression.getSource(),
-						eval.state, process,
-						this.symbolicAnalyzer.stateInformation(eval.state),
-						claim, resultType, ErrorKind.DIVISION_BY_ZERO,
-						"Modulus denominator is zero");
+			if (!this.civlConfig.svcomp()) {
+				BooleanExpression claim = universe.neq(
+						zeroOf(expression.getSource(),
+								expression.getExpressionType()), denominator);
+				ResultType resultType = universe.reasoner(assumption)
+						.valid(claim).getResultType();
+
+				// TODO: check not negative
+				if (resultType != ResultType.YES) {
+					eval.state = errorLogger.logError(expression.getSource(),
+							eval.state, process,
+							this.symbolicAnalyzer.stateInformation(eval.state),
+							claim, resultType, ErrorKind.DIVISION_BY_ZERO,
+							"Modulus denominator is zero");
+				}
 			}
 			eval.value = universe.modulo((NumericExpression) left, denominator);
 			break;
@@ -2083,7 +2086,7 @@ public class CommonEvaluator implements Evaluator {
 
 		eval = evaluate(state, pid, expression.index());
 		index = (NumericExpression) eval.value;
-		if (arrayType.isComplete()) {
+		if (!this.civlConfig.svcomp() && arrayType.isComplete()) {
 			NumericExpression length = universe.length(array);
 			BooleanExpression assumption = eval.state.getPathCondition();
 			// TODO change to andTo
@@ -2745,7 +2748,7 @@ public class CommonEvaluator implements Evaluator {
 		Evaluation eval;
 		int scopeId, vid;
 		Reasoner reasoner = universe.reasoner(state.getPathCondition());
-		ResultType resultType;
+		ResultType resultType = null;
 		boolean isOutBound = false;
 
 		claim = universe.equals(offset, zero);
@@ -2787,22 +2790,25 @@ public class CommonEvaluator implements Evaluator {
 		// a sequence of memory space)
 		isOutBound = true;
 		outCondExpr = notOver;
-		resultType = reasoner.valid(notOver).getResultType();
-		if (resultType.equals(ResultType.YES)) {
-			// not over
-			outCondExpr = notDrown;
-			resultType = reasoner.valid(notDrown).getResultType();
+		if (!this.civlConfig.svcomp()) {
+			resultType = reasoner.valid(notOver).getResultType();
 			if (resultType.equals(ResultType.YES)) {
-				// not drown
-				outCondExpr = notEqual;
-				resultType = reasoner.valid(notEqual).getResultType();
-				if (resultType.equals(ResultType.YES)) // not equal
-					isOutBound = false;
-				else if (!symbolicUtil.getSymRef(arrayPtr)
-						.isArrayElementReference() || vid == 0)
-					isOutBound = false; // equal but valid
+				// not over
+				outCondExpr = notDrown;
+				resultType = reasoner.valid(notDrown).getResultType();
+				if (resultType.equals(ResultType.YES)) {
+					// not drown
+					outCondExpr = notEqual;
+					resultType = reasoner.valid(notEqual).getResultType();
+					if (resultType.equals(ResultType.YES)) // not equal
+						isOutBound = false;
+					else if (!symbolicUtil.getSymRef(arrayPtr)
+							.isArrayElementReference() || vid == 0)
+						isOutBound = false; // equal but valid
+				}
 			}
-		}
+		} else
+			isOutBound = false;
 		if (isOutBound) {
 			// Checking if the array is an allocated memory space
 			if (vid == 0)
@@ -3252,21 +3258,28 @@ public class CommonEvaluator implements Evaluator {
 				OffsetReference offsetRef = (OffsetReference) symRef;
 				NumericExpression oldOffset = offsetRef.getOffset();
 				NumericExpression newOffset = universe.add(oldOffset, offset);
-				// TODO change to andTo
-				BooleanExpression claim = universe.and(
-						universe.lessThanEquals(zero, newOffset),
-						universe.lessThanEquals(newOffset, one));
-				BooleanExpression assumption = state.getPathCondition();
-				ResultType resultType = universe.reasoner(assumption)
-						.valid(claim).getResultType();
 				Evaluation eval;
 
-				if (resultType != ResultType.YES) {
-					state = errorLogger.logError(expression.getSource(), state,
-							process, symbolicAnalyzer.stateInformation(state),
-							claim, resultType, ErrorKind.OUT_OF_BOUNDS,
-							"Pointer addition resulted in out of bounds.\nobject pointer:"
-									+ pointer + "\n" + "offset = " + offset);
+				if (!this.civlConfig.svcomp()) {
+					// TODO change to andTo
+					BooleanExpression claim = universe.and(
+							universe.lessThanEquals(zero, newOffset),
+							universe.lessThanEquals(newOffset, one));
+					BooleanExpression assumption = state.getPathCondition();
+					ResultType resultType = universe.reasoner(assumption)
+							.valid(claim).getResultType();
+
+					if (resultType != ResultType.YES) {
+						state = errorLogger
+								.logError(expression.getSource(), state,
+										process, symbolicAnalyzer
+												.stateInformation(state),
+										claim, resultType,
+										ErrorKind.OUT_OF_BOUNDS,
+										"Pointer addition resulted in out of bounds.\nobject pointer:"
+												+ pointer + "\n" + "offset = "
+												+ offset);
+					}
 				}
 				eval = new Evaluation(state, symbolicUtil.setSymRef(pointer,
 						universe.offsetReference(offsetRef.getParent(),

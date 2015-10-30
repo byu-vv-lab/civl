@@ -224,21 +224,23 @@ public class LibconcurrencyExecutor extends BaseLibraryExecutor implements
 		gbarrierObj = eval.value;
 		totalPlaces = (NumericExpression) universe.tupleRead(gbarrierObj,
 				zeroObject);
-		claim = universe.lessThanEquals(place, totalPlaces);
-		resultType = reasoner.valid(claim).getResultType();
-		if (!resultType.equals(ResultType.YES)) {
-			this.errorLogger
-					.logSimpleError(
-							source,
-							state,
-							process,
-							this.symbolicAnalyzer.stateInformation(state),
-							ErrorKind.OTHER,
-							"place "
-									+ place
-									+ " used in $barrier_create() exceeds the size of the $gbarrier object which is "
-									+ totalPlaces);
-			throw new UnsatisfiablePathConditionException();
+		if (!this.civlConfig.svcomp()) {
+			claim = universe.lessThanEquals(place, totalPlaces);
+			resultType = reasoner.valid(claim).getResultType();
+			if (!resultType.equals(ResultType.YES)) {
+				this.errorLogger
+						.logSimpleError(
+								source,
+								state,
+								process,
+								this.symbolicAnalyzer.stateInformation(state),
+								ErrorKind.OTHER,
+								"place "
+										+ place
+										+ " used in $barrier_create() exceeds the size of the $gbarrier object which is "
+										+ totalPlaces);
+				throw new UnsatisfiablePathConditionException();
+			}
 		}
 		procMapArray = universe.tupleRead(gbarrierObj, oneObject);
 		if (!universe.arrayRead(procMapArray, (NumericExpression) place)
