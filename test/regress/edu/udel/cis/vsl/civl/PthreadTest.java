@@ -102,7 +102,7 @@ public class PthreadTest {
 	@Test
 	public void sigma_false() throws ABCException {
 		assertFalse(ui.run("verify", "-svcomp16",
-				filename("sigma_false-unreach-call.c")));
+				filename("sigma_false-unreach-call.i")));
 	}
 
 	@Test
