@@ -28,7 +28,7 @@ public class PthreadThreaderBigTest {
 
 	@Test
 	public void qrcu_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", filename("qrcu_true.c")));
+		assertTrue(ui.run("verify", "-svcomp16", filename("qrcu_true.c")));
 	}
 
 	@AfterClass

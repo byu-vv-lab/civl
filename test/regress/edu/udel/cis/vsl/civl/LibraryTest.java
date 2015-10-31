@@ -28,6 +28,7 @@ public class LibraryTest {
 	private final static String STRING = "string";
 	private final static String TIME = "time";
 	private final static String POINTER = "pointer";
+	@SuppressWarnings("unused")
 	private final static String EXTERNAL = "external";
 	private final static String MATH = "math";
 

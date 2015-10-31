@@ -29,53 +29,53 @@ public class PthreadThreaderTest {
 
 	@Test
 	public void dekker_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp",
+		assertTrue(ui.run("verify", "-svcomp16 -showProgram=false",
 				filename("dekker_true-unreach-call.c")));
 	}
 
 	@Test
 	public void lamport_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp",
+		assertTrue(ui.run("verify", "-svcomp16",
 				filename("lamport_true-unreach-call.c")));
 	}
 
 	@Test
 	public void peterson_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp",
+		assertTrue(ui.run("verify", "-svcomp16",
 				filename("peterson_true-unreach-call.c")));
 	}
 
 	@Test
 	public void qrcu_false() throws ABCException {
-		assertFalse(ui.run("verify", "-svcomp",
+		assertFalse(ui.run("verify", "-svcomp16",
 				filename("qrcu_false-unreach-call.c")));
 	}
 
 	@Test
 	public void read_write_lock_false() throws ABCException {
-		assertFalse(ui.run("verify", "-svcomp",
+		assertFalse(ui.run("verify", "-svcomp16",
 				filename("read_write_lock_false-unreach-call.c")));
 	}
 
 	@Test
 	public void read_write_lock_true() throws ABCException {
-		// assertTrue(ui.run("verify", "-svcomp -showProgram",
+		// assertTrue(ui.run("verify", "-svcomp16 -showProgram",
 		// filename("read_write_lock_true-unreach-call.c")));
-		ui.run("verify", "-svcomp -showProgram=false",
-				filename("read_write_lock_true-unreach-call.c"));
-		ui.run("replay", "-svcomp -showTransitions",
-				filename("read_write_lock_true-unreach-call.c"));
+		assertTrue(ui.run("verify", "-svcomp16 -showProgram=false",
+				filename("read_write_lock_true-unreach-call.c")));
+		// ui.run("replay", "-svcomp16 -showTransitions",
+		// filename("read_write_lock_true-unreach-call.c"));
 	}
 
 	@Test
 	public void szymanski_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp",
+		assertTrue(ui.run("verify", "-svcomp16",
 				filename("szymanski_true-unreach-call.c")));
 	}
 
 	@Test
 	public void time_var_mutex_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp",
+		assertTrue(ui.run("verify", "-svcomp16",
 				filename("time_var_mutex_true-unreach-call.c")));
 	}
 

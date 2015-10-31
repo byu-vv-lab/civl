@@ -9,9 +9,13 @@ int f(int x){
 
 __thread int id=-1;
 
-int isRoot(){
+int isRootWork(){
   assert(id >= 0);
   return id == 0;
+}
+
+int isRoot(){
+  isRootWork();
 }
 
 void* thread(void *arg){
@@ -29,5 +33,3 @@ int main(){
   assert(id==-1);
   return 0;
 }
-
-

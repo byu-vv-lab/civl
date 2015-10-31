@@ -76,7 +76,8 @@ public class ConcurrencyTest {
 
 	@Test
 	public void dining() {
-		assertTrue(ui.run("verify", "-inputBOUND=4", filename("dining.cvl")));
+		assertTrue(ui.run("verify", "-inputBOUND=4 -showTransitions=false",
+				filename("dining.cvl")));
 	}
 
 	@Test
@@ -184,8 +185,8 @@ public class ConcurrencyTest {
 
 	@Test
 	public void wildcard() {
-		assertTrue(ui.run("verify", "-inputNPROCS=5", "-enablePrintf=false",
-				filename("wildcard.cvl")));
+		assertTrue(ui.run("verify", "-inputNPROCS=2 -showTransitions",
+				"-enablePrintf=false", filename("wildcard.cvl")));
 	}
 
 	@Test

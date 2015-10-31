@@ -272,7 +272,7 @@ public class CIVLConfiguration {
 		this.simplify = config.isTrue(CIVLConstants.simplifyO);
 		this.statelessPrintf = config.isTrue(CIVLConstants.statelessPrintfO);
 		this.verbose = config.isTrue(CIVLConstants.verboseO);
-		this.svcomp = config.isTrue(CIVLConstants.svcompO);
+		this.svcomp = config.isTrue(CIVLConstants.svcomp16O);
 		this.setShowProgram(config.isTrue(CIVLConstants.showProgramO));
 		this.showPathConditon = config.isTrue(CIVLConstants.showPathConditionO);
 		this.ompNoSimplify = config.isTrue(CIVLConstants.ompNoSimplifyO);
@@ -303,6 +303,8 @@ public class CIVLConfiguration {
 				this.simplify = false;
 			if (config.getValue(CIVLConstants.deadlockO) == null)
 				this.deadlock = DeadlockKind.NONE;
+			if (config.getValue(CIVLConstants.procBoundO) == null)
+				this.procBound = 6;
 		}
 		if (this.svcomp) {
 			this.setPthreadOnly((boolean) config

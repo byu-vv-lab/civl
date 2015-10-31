@@ -28,7 +28,7 @@ public class PthreadBigTest {
 
 	@Test
 	public void fib_bench_longer_true() throws ABCException {
-		assertTrue(ui.run("verify", "-svcomp", "-inputNUM=6",
+		assertTrue(ui.run("verify", "-svcomp16", "-inputNUM=6",
 				filename("fib_bench_longer_true-unreach-call.c")));
 	}
 

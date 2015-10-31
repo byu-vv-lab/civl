@@ -321,6 +321,14 @@ public class ModelBuilderWorker {
 		this.config = config;
 		this.civlConfig = new CIVLConfiguration(config);
 		this.inputInitMap = config.getMapValue(CIVLConstants.inputO);
+		if (civlConfig.svcomp()) {
+			if (inputInitMap == null)
+				inputInitMap = new HashMap<>();
+			inputInitMap.put("_gen_argc", 1);
+			inputInitMap.put("_svcomp_unpp_scale", 3);
+			inputInitMap.put("_svcomp_unsigned_bound", 4);
+			inputInitMap.put("_svcomp_int_bound", 5);
+		}
 		this.factory = factory;
 		this.program = program;
 		this.factory.setTokenFactory(program.getTokenFactory());

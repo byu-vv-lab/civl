@@ -83,13 +83,22 @@ public class PORTest {
 
 	@Test
 	public void loop() {
-		assertFalse(ui.run("verify -errorBound=4", filename("loop.cvl")));
+		assertFalse(ui.run(
+				"verify -showAmpleSet -showTransitions=false -errorBound=4",
+				filename("loop.cvl")));
 	}
 
-	// @Test
-	// public void spawns() {
-	// assertFalse(ui.run("verify", filename("spawns.cvl")));
-	// }
+	@Test
+	public void loop2() {
+		assertTrue(ui.run("verify -showAmpleSet -showTransitions=false",
+				filename("loop2.cvl")));
+	}
+
+	@Test
+	public void loop3() {
+		assertTrue(ui.run("verify -showAmpleSet -showTransitions=false",
+				filename("loop3.cvl")));
+	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {

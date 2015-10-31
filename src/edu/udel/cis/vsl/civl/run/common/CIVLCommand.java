@@ -48,7 +48,7 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.simplifyO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.solveO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.statelessPrintfO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.strictCompareO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.svcompO;
+import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.svcomp16O;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.sysIncludePathO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.timeoutO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.traceO;
@@ -77,7 +77,7 @@ public class CIVLCommand {
 
 	static {
 		CIVLCommand.addShowOption(showModelO, verboseO, debugO, echoO,
-				userIncludePathO, sysIncludePathO, svcompO, pthreadOnlyO, showInputVarsO,
+				userIncludePathO, sysIncludePathO, svcomp16O, pthreadOnlyO, showInputVarsO,
 				showProgramO, ompNoSimplifyO, ompLoopDecompO, macroO, preprocO,
 				astO, showTimeO, CIVLMacroO);
 		CIVLCommand.addVerifyOrCompareOption(errorBoundO, verboseO, debugO,
@@ -86,7 +86,7 @@ public class CIVLCommand {
 				showProverQueriesO, inputO, minO, mpiContractO, maxdepthO,
 				procBoundO, saveStatesO, simplifyO, solveO, enablePrintfO,
 				showAmpleSetO, showAmpleSetWtStatesO, statelessPrintfO,
-				deadlockO, svcompO,pthreadOnlyO, showProgramO, showPathConditionO,
+				deadlockO, svcomp16O,pthreadOnlyO, showProgramO, showPathConditionO,
 				ompNoSimplifyO, ompLoopDecompO, collectProcessesO,
 				collectScopesO, collectHeapsO, macroO, preprocO, astO,
 				showTimeO, showMemoryUnitsO, CIVLMacroO, showUnreachedCodeO,
@@ -97,7 +97,7 @@ public class CIVLCommand {
 				showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, minO, maxdepthO, procBoundO,
 				saveStatesO, simplifyO, solveO, enablePrintfO, showAmpleSetO,
-				showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcompO,
+				showAmpleSetWtStatesO, statelessPrintfO, deadlockO, svcomp16O,
 				pthreadOnlyO,
 				showProgramO, showPathConditionO, ompNoSimplifyO,
 				ompLoopDecompO, collectProcessesO, collectScopesO,
@@ -116,7 +116,7 @@ public class CIVLCommand {
 				showTransitionsO, showStatesO, showSavedStatesO, showQueriesO,
 				showProverQueriesO, inputO, maxdepthO, procBoundO, simplifyO,
 				enablePrintfO, showAmpleSetO, showAmpleSetWtStatesO,
-				statelessPrintfO, deadlockO, svcompO, pthreadOnlyO,showProgramO,
+				statelessPrintfO, deadlockO, svcomp16O, pthreadOnlyO,showProgramO,
 				showPathConditionO, ompNoSimplifyO, ompLoopDecompO,
 				collectProcessesO, collectScopesO, collectHeapsO, macroO,
 				preprocO, astO, showMemoryUnitsO, CIVLMacroO, collectOutputO,

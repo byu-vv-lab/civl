@@ -359,8 +359,8 @@ public class CIVLConstants {
 	/**
 	 * Perform svcomp transformation? false by default.
 	 */
-	public final static Option svcompO = Option.newScalarOption("svcomp",
-			BOOLEAN, "translate program for sv-comp?", false);
+	public final static Option svcomp16O = Option.newScalarOption("svcomp16",
+			BOOLEAN, "translate program for sv-comp 2016?", false);
 
 	/**
 	 * Show the input variables of this model? false by default.
@@ -473,7 +473,7 @@ public class CIVLConstants {
 				showMemoryUnitsO, showModelO, showPathConditionO, showProgramO,
 				showProverQueriesO, showQueriesO, showSavedStatesO,
 				showStatesO, showTimeO, showTransitionsO, showUnreachedCodeO,
-				simplifyO, solveO, statelessPrintfO, svcompO, pthreadOnlyO,
+				simplifyO, solveO, statelessPrintfO, svcomp16O, pthreadOnlyO,
 				sysIncludePathO, traceO, userIncludePathO, verboseO, webO,
 				CIVLMacroO, analyzeAbsO, strictCompareO, collectOutputO,
 				checkDivisionByZeroO, checkMemoryLeakO, timeoutO };
