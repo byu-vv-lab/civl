@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
@@ -103,6 +104,7 @@ public class LibraryTest {
 		assertTrue(ui.run("verify", filename(STDLIB, "malloc.cvl")));
 	}
 
+	@Ignore
 	@Test
 	public void malloc2() throws ABCException {
 		assertTrue(ui.run("verify", filename(STDLIB, "malloc2.c")));
