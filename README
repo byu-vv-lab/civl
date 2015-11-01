@@ -1,5 +1,5 @@
       CIVL: The Concurrency Intermediate Verification Language
-                               v1.4
+                               v1.5
 
 ------------------------------ Overview -------------------------------
 
@@ -27,6 +27,7 @@ Developers:
 
 Matthew B. Dwyer
 John Edenhofner
+Mitchell Gerrard
 Ziqing Luo
 Andre Marianiello
 Michael Rogers
@@ -41,12 +42,14 @@ General Public License.  However, the libraries used by CIVL
 (and incorporated into the complete distribution) use various
 licenses.  See directory licenses for the license of each component.
 
--------------------------- Updates from v1.3 -------------------------
-- adding new option -collectOutput for printing the output
-- adding new system functions for rectangular domain and regular range
-- improving naming conventions for transformers and libraries
-- fixing bugs for string literal initializing an array, 
-  simplifying states by reasoning the path conditions, etc.
+-------------------------- Updates from v1.4 -------------------------
+- adding new option -svcomp16 for verifying concurrency suite of 
+  the benchmarks from software-verification competition 2016. 
+- adding transformation for translating preprocessed source files from
+  software-verification competition 2016.
+- improving the performance of pthreads library implementation.
+- fixing various bugs in parsing and transforming pthreads program.
+- fixing a bug in partial order reduction related to cycles in the state space.
    
 ------------------------- Binary Installation -------------------------
 
