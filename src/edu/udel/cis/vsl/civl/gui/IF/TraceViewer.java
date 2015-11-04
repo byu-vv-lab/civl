@@ -108,7 +108,7 @@ public class TraceViewer extends JFrame implements TreeSelectionListener {
 		this.symbolicAnalyzer = symbolicAnalyzer;
 		initComponents();
 		setPreferredSize(new Dimension(1500, 1000));
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		pack();
 		setVisible(true);
 	}

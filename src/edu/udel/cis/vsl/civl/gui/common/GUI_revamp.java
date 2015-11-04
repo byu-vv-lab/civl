@@ -61,6 +61,7 @@ import edu.udel.cis.vsl.abc.ast.node.IF.declaration.VariableDeclarationNode;
 import edu.udel.cis.vsl.abc.ast.node.IF.expression.ConstantNode;
 import edu.udel.cis.vsl.abc.err.IF.ABCException;
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
+import edu.udel.cis.vsl.civl.gui.IF.TraceViewer;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandLineKind;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandName;
 import edu.udel.cis.vsl.civl.run.IF.SvcompException;
@@ -552,12 +553,19 @@ public class GUI_revamp extends JFrame {
 			consoleModel.addRow(new Object[]{"max process:", consoleStatsList.get(3)});
 			consoleModel.addRow(new Object[]{"states:", consoleStatsList.get(4)});
 			consoleModel.addRow(new Object[]{"states saved", consoleStatsList.get(5)});
-//			consoleModel.addRow(new Object[]{"state matches", consoleStatsList.get(6)});
-//			consoleModel.addRow(new Object[]{"transitions", consoleStatsList.get(7)});
-//			consoleModel.addRow(new Object[]{"trace steps", consoleStatsList.get(8)});
-//			consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(9)});
-//			consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(10)});
-//			consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(11)});
+//			if(!currCommand.equals(CommandName.REPLAY)){
+//				consoleModel.addRow(new Object[]{"state matches", consoleStatsList.get(6)});
+//				consoleModel.addRow(new Object[]{"transitions", consoleStatsList.get(7)});
+//				consoleModel.addRow(new Object[]{"trace steps", consoleStatsList.get(8)});
+//				consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(9)});
+//				consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(10)});
+//				consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(11)});
+//			}
+//			else{
+//				consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(6)});
+//				consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(7)});
+//				consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(8)});
+//			}
 		}
 		
 //		JTextArea consoleOutput = new JTextArea();
@@ -734,6 +742,8 @@ public class GUI_revamp extends JFrame {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Console", p_console);
+				showConsole();
+				showSelectedFiles();
 				p_view.add(tp_commandView);
 				p_view.validate();
 
@@ -873,8 +883,7 @@ public class GUI_revamp extends JFrame {
 				this);
 		final JTable tbl_fileTable = new CIVLTable(new int[] { 2 }, "file",
 				this);
-		//TODO: Console view added here, add statistics here
-//		final JTable tbl_statistics = new CIVLTable(new int[] { 0 }, "statistics", this);
+		
 		final JTable tbl_consoleTable = new CIVLTable(new int[] { 1 }, "console",
 				this);
 		
@@ -1078,6 +1087,7 @@ public class GUI_revamp extends JFrame {
 	/**
 	 * Creates all of the the {@link DefaultMutableTreeNode} that will be used
 	 * for the {@link JTree}, jt_commands.
+	 * This creates the initial view and where all of the command options are shown.
 	 * 
 	 * @return The node that will be the root of jt_commands
 	 */
@@ -1097,6 +1107,7 @@ public class GUI_revamp extends JFrame {
 			if (!nodeName.equals("HELP") && !nodeName.equals("CONFIG")
 					&& !nodeName.equals("GUI") && !nodeName.equals("COMPARE")
 					&& !nodeName.equals("COMPARE_REPLAY")
+
 					//&& !nodeName.equals("REPLAY")
 					&& !nodeName.equals("SHOW")) {
 				CommandNode node = new CommandNode(nodeName,
@@ -1417,7 +1428,13 @@ public class GUI_revamp extends JFrame {
 					currConfig.comLine.setCommandString(com);
 
 					try {
-						ui.runNormalCommand((NormalCommandLine) currConfig.comLine);
+						boolean result = ui.runNormalCommand((NormalCommandLine) currConfig.comLine);
+						if(currCommand.equals(CommandName.REPLAY)){
+							int n = JOptionPane.showConfirmDialog(gui, "Do you wish to run the Trace Viewer?", "Trace Viewer", JOptionPane.YES_NO_OPTION);
+							if(n==0){
+								TraceViewer viewer = new TraceViewer(ui.getTrace(), ui.getAnalyzer());
+							}
+						}
 						consoleString = ui.consoleString;
 						consoleStatsList = ui.consoleStatsList;
 						System.out.println(consoleStatsList.size());

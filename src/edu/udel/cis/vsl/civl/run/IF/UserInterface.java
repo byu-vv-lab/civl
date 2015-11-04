@@ -145,6 +145,9 @@ public class UserInterface {
 	 */
 	private FrontEnd frontEnd = new FrontEnd();
 	
+	private SymbolicAnalyzer analyzer;
+	
+	private Trace<Transition, State> trace;
 	/*
 	 * The console view string and hashmap for stats table
 	 */
@@ -641,6 +644,8 @@ public class UserInterface {
 					model, traceFile, out, err);
 			trace = replayer.run();
 			result = trace.result();
+			this.setTrace(trace);
+			this.setAnalyzer(replayer.symbolicAnalyzer);
 			if (guiMode) {
 				@SuppressWarnings("unused")
 				TraceViewer gui = new TraceViewer(trace, replayer.symbolicAnalyzer);
@@ -746,6 +751,7 @@ public class UserInterface {
 			//make sure to include other variables in our hashmap, not console string
 			this.printCommand(out, command);
 			verifier.printStats();
+				//Receive data from the verify class, and appended to the data structure
 			for (String tmp : verifier.consoleStatsList) {
 				consoleStatsList.add(tmp);
 			}
@@ -820,6 +826,7 @@ public class UserInterface {
 		double time = Math
 				.ceil((System.currentTimeMillis() - startTime) / 10.0) / 100.0;
 		long memory = Runtime.getRuntime().totalMemory();
+		// Collecting data from output from CIVL
 		consoleStatsList.add(command);
 		consoleStatsList.add(Double.toString(time));
 		consoleStatsList.add(Long.toString(memory));
@@ -1102,5 +1109,21 @@ public class UserInterface {
 
 	private void setToDefault(GMCSection config, Option option) {
 		config.setScalarValue(option, option.defaultValue());
+	}
+
+	public Trace<Transition, State> getTrace() {
+		return trace;
+	}
+
+	public void setTrace(Trace<Transition, State> trace) {
+		this.trace = trace;
+	}
+
+	public SymbolicAnalyzer getAnalyzer() {
+		return analyzer;
+	}
+
+	public void setAnalyzer(SymbolicAnalyzer analyzer) {
+		this.analyzer = analyzer;
 	}
 }
