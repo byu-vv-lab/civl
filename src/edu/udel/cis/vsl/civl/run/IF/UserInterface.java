@@ -755,8 +755,12 @@ public class UserInterface {
 			for (String tmp : verifier.consoleStatsList) {
 				consoleStatsList.add(tmp);
 			}
-
-			consoleString += verifier.consoleString;
+			if(verifier.errorFound == true){
+				consoleString = verifier.consoleString;
+			}
+			else{
+				consoleString += verifier.consoleString;
+			}
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();
 			verifier.printResult();

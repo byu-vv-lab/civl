@@ -50,6 +50,8 @@ public class Verifier extends Player {
 
 	VerificationStatus verificationStatus;
 	
+	public boolean errorFound;
+	
 	String consoleString = "";
 	
 	//our new consolstatsLIST for jtable on console tab
@@ -442,6 +444,8 @@ public class Verifier extends Player {
 			if (violationFound || log.numEntries() > 0) {
 				result = "The program MAY NOT be correct.  See "
 						+ log.getLogFile();
+				consoleString = result;
+				this.errorFound = violationFound;
 				try {
 					log.save();
 				} catch (FileNotFoundException e) {
