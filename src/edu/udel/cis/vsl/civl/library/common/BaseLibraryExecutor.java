@@ -282,9 +282,9 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			civlConfig.out().println();
 			// }
 		}
-		state = errorLogger.logError(source, state, process,
-				this.symbolicAnalyzer.stateInformation(state), assertValue,
-				resultType, ErrorKind.ASSERTION_VIOLATION, message);
+		errorLogger.logSimpleError(source, state, process,
+				this.symbolicAnalyzer.stateInformation(state),
+				ErrorKind.ASSERTION_VIOLATION, message);
 		return state;
 	}
 
