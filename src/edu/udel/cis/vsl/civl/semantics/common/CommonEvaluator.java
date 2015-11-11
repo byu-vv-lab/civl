@@ -2094,27 +2094,42 @@ public class CommonEvaluator implements Evaluator {
 
 		eval = evaluate(state, pid, expression.index());
 		index = (NumericExpression) eval.value;
+		eval.state = this
+				.checkArrayIndexInBound(eval.state, expression.getSource(),
+						process, arrayType, array, index, false);
+		eval.value = universe.arrayRead(array, index);
+		return eval;
+	}
+
+	private State checkArrayIndexInBound(State state, CIVLSource source,
+			String process, SymbolicArrayType arrayType,
+			SymbolicExpression array, NumericExpression index,
+			boolean addressOnly) throws UnsatisfiablePathConditionException {
 		if (!this.civlConfig.svcomp() && arrayType.isComplete()) {
 			NumericExpression length = universe.length(array);
-			BooleanExpression assumption = eval.state.getPathCondition();
+			BooleanExpression assumption = state.getPathCondition();
 			// TODO change to andTo
-			BooleanExpression claim = universe.and(
-					universe.lessThanEquals(zero, index),
-					universe.lessThan(index, length));
+			BooleanExpression claim;
+
+			if (addressOnly)
+				claim = universe.and(universe.lessThanEquals(zero, index),
+						universe.lessThanEquals(index, length));
+			else
+				claim = universe.and(universe.lessThanEquals(zero, index),
+						universe.lessThan(index, length));
+
 			ResultType resultType = universe.reasoner(assumption).valid(claim)
 					.getResultType();
 
 			if (resultType != ResultType.YES) {
-				eval.state = errorLogger.logError(expression.getSource(),
-						eval.state, process,
-						symbolicAnalyzer.stateInformation(eval.state), claim,
+				state = errorLogger.logError(source, state, process,
+						symbolicAnalyzer.stateInformation(state), claim,
 						resultType, ErrorKind.OUT_OF_BOUNDS,
 						"Out of bounds array index:\nindex = " + index
 								+ "\nlength = " + length);
 			}
 		}
-		eval.value = universe.arrayRead(array, index);
-		return eval;
+		return state;
 	}
 
 	private Evaluation evaluateSelf(State state, int pid,
@@ -3466,17 +3481,29 @@ public class CommonEvaluator implements Evaluator {
 			result = new Evaluation(state, symbolicUtil.makePointer(sid, vid,
 					identityReference));
 		} else if (operand instanceof SubscriptExpression) {
-			Evaluation refEval = reference(state, pid,
-					((SubscriptExpression) operand).array());
+			LHSExpression arrayExpr = ((SubscriptExpression) operand).array();
+			Evaluation refEval = reference(state, pid, arrayExpr);
 			SymbolicExpression arrayPointer = refEval.value;
 			ReferenceExpression oldSymRef = symbolicUtil
 					.getSymRef(arrayPointer);
 			NumericExpression index;
 			ReferenceExpression newSymRef;
+			SymbolicExpression array;
+			SymbolicArrayType arrayType;
 
 			result = evaluate(refEval.state, pid,
 					((SubscriptExpression) operand).index());
 			index = (NumericExpression) result.value;
+			result = this.dereference(operand.getSource(), state, state
+					.getProcessState(pid).name(), operand, arrayPointer, false);
+			array = result.value;
+			arrayType = (SymbolicArrayType) array.type();
+			if (array.type() == null)
+				arrayType = (SymbolicArrayType) arrayExpr.getExpressionType()
+						.getDynamicType(universe);
+			result.state = this.checkArrayIndexInBound(state,
+					operand.getSource(), state.getProcessState(pid).name(),
+					arrayType, array, index, true);
 			newSymRef = universe.arrayElementReference(oldSymRef, index);
 			result.value = symbolicUtil.setSymRef(arrayPointer, newSymRef);
 		} else if (operand instanceof DereferenceExpression) {

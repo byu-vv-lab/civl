@@ -5,7 +5,7 @@
 
 $input int B = 5; // upper bound on array length
 $input int N;     // length of array
-$assume(0<=N && N<=B);
+$assume(1<=N && N<=B);
 $input double a[N];
 
 double adderSeq(double *p, int n) {
