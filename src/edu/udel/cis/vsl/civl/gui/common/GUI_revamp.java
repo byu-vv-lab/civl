@@ -553,19 +553,25 @@ public class GUI_revamp extends JFrame {
 			consoleModel.addRow(new Object[]{"max process:", consoleStatsList.get(3)});
 			consoleModel.addRow(new Object[]{"states:", consoleStatsList.get(4)});
 			consoleModel.addRow(new Object[]{"states saved", consoleStatsList.get(5)});
-//			if(!currCommand.equals(CommandName.REPLAY)){
-//				consoleModel.addRow(new Object[]{"state matches", consoleStatsList.get(6)});
-//				consoleModel.addRow(new Object[]{"transitions", consoleStatsList.get(7)});
-//				consoleModel.addRow(new Object[]{"trace steps", consoleStatsList.get(8)});
-//				consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(9)});
-//				consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(10)});
-//				consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(11)});
-//			}
-//			else{
-//				consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(6)});
-//				consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(7)});
-//				consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(8)});
-//			}
+			if(!currCommand.equals(CommandName.REPLAY) && !currCommand.equals(CommandName.RUN)){
+				consoleModel.addRow(new Object[]{"state matches", consoleStatsList.get(6)});
+				consoleModel.addRow(new Object[]{"transitions", consoleStatsList.get(7)});
+				consoleModel.addRow(new Object[]{"trace steps", consoleStatsList.get(8)});
+				consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(9)});
+				consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(10)});
+				consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(11)});
+			}
+			else if(currCommand.equals(CommandName.RUN)){
+				consoleModel.addRow(new Object[]{"seed", consoleStatsList.get(6)});
+				consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(7)});
+				consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(8)});
+				consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(9)});
+			}
+			else{
+				consoleModel.addRow(new Object[]{"valid calls", consoleStatsList.get(6)});
+				consoleModel.addRow(new Object[]{"provers", consoleStatsList.get(7)});
+				consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(8)});
+			}
 		}
 		
 //		JTextArea consoleOutput = new JTextArea();

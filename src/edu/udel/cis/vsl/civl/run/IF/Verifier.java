@@ -317,14 +317,6 @@ public class Verifier extends Player {
 	 * general UserInterface class.
 	 */
 	public void printStats() {
-		String line1 = "   max process count   : " + Integer.toString(stateManager.maxProcs());
-		String line2 = "   states              : " + Integer.toString(stateManager.numStatesExplored());
-		String line3 = "   states saved        : " + Integer.toString(stateManager.getNumStatesSaved());
-		String line4 = "   state matches       : " + Integer.toString(searcher.numStatesMatched());
-		String line5 = "   transitions         : " + Long.toString(executor.getNumSteps());
-		String line6 = "   trace steps         : " + Integer.toString(searcher.numTransitions());
-		consoleString += line1 + line2 + line3 + line4 + line5 + line6;
-		
 		civlConfig.out().print("   max process count   : ");
 		civlConfig.out().println(stateManager.maxProcs());
 		consoleStatsList.add(Integer.toString(stateManager.maxProcs()));
@@ -454,6 +446,7 @@ public class Verifier extends Player {
 				}
 			} else {
 				result = "The standard properties hold for all executions.";
+				consoleString = result;
 				// result = "No violations found.";
 			}
 			this.verificationStatus = new VerificationStatus(

@@ -654,6 +654,9 @@ public class UserInterface {
 			
 			// printTimeAndMemory(out);
 			replayer.printStats();
+			for (String tmp : replayer.consoleStatsList) {
+				consoleStatsList.add(tmp);
+			}
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();
 			return result;
@@ -682,6 +685,10 @@ public class UserInterface {
 			
 			// printTimeAndMemory(out);
 			player.printStats();
+			for (String tmp : player.consoleStatsList) {
+				consoleStatsList.add(tmp);
+			}
+			consoleStatsList.add(Long.toString(player.getSeed()));
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();
 			return result;
@@ -755,12 +762,7 @@ public class UserInterface {
 			for (String tmp : verifier.consoleStatsList) {
 				consoleStatsList.add(tmp);
 			}
-			if(verifier.errorFound == true){
-				consoleString = verifier.consoleString;
-			}
-			else{
-				consoleString += verifier.consoleString;
-			}
+			consoleString=verifier.consoleString;
 			printUniverseStats(out, modelTranslator.universe);
 			out.println();
 			verifier.printResult();
@@ -834,13 +836,6 @@ public class UserInterface {
 		consoleStatsList.add(command);
 		consoleStatsList.add(Double.toString(time));
 		consoleStatsList.add(Long.toString(memory));
-
-		String line1 = "\n" + statsBar + " Command " + statsBar;
-		String line2 = "civl " + command;
-		String line3 = "\n" + statsBar + " Stats " + statsBar;
-		String line4 = "   time (s)            : " + time;
-		String line5 = "   memory (bytes)      : " + memory;
-		consoleString += line1 + line2 + line3 + line4 + line5;
 		out.println("\n" + statsBar + " Command " + statsBar);
 		out.print("civl " + command);
 		out.println("\n" + statsBar + " Stats " + statsBar);
@@ -1075,23 +1070,18 @@ public class UserInterface {
 		//valid calls
 		out.print("   valid calls         : ");
 		out.println(numValidCalls);
-		String line1 = "   valid calls         : " + numValidCalls;
-		consoleString += line1;
 		consoleStatsList.add(Long.toString(numValidCalls));
 		
 		//provers
 		provers = Configurations.getDefaultConfiguration().getProvers();
 		out.print("   provers             : ");
-		consoleString += "   provers             : ";
 		String tmp = "";
 		for (ProverInfo prover : provers) {
 			if (i != 0){
 				out.print(", ");
-				consoleString += ", ";
 				tmp += ", ";
 			}
 			out.print(prover);
-			consoleString += prover;
 			tmp += prover;
 			i++;
 		}
@@ -1103,7 +1093,6 @@ public class UserInterface {
 		out.print("   prover calls        : ");
 		consoleStatsList.add(Long.toString(numProverCalls));
 		out.println(numProverCalls);
-		consoleString += line2;
 	}
 
 	private void setToDefault(GMCSection config, Collection<Option> options) {

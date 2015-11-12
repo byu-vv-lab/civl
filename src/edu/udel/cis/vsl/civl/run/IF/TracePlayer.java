@@ -5,6 +5,9 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.seedO;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import edu.udel.cis.vsl.civl.config.IF.CIVLConstants;
 import edu.udel.cis.vsl.civl.log.IF.CIVLExecutionException;
@@ -40,6 +43,8 @@ public class TracePlayer extends Player {
 	private boolean isRandom = false;
 
 	private long seed = 0;
+	
+	List<String> consoleStatsList = new ArrayList<String>();
 
 	public static TracePlayer guidedPlayer(GMCConfiguration config,
 			Model model, File traceFile, PrintStream out, PrintStream err)
@@ -152,7 +157,9 @@ public class TracePlayer extends Player {
 		civlConfig.out().println(stateManager.numStatesExplored());
 		civlConfig.out().print("   states Saved        : ");
 		civlConfig.out().println(stateManager.getNumStatesSaved());
-
+		consoleStatsList.add(Integer.toString(stateManager.maxProcs()));
+		consoleStatsList.add(Integer.toString(stateManager.numStatesExplored()));
+		consoleStatsList.add(Integer.toString(stateManager.getNumStatesSaved()));
 		if (isRandom)
 			civlConfig.out().println("   seed                : " + seed);
 
