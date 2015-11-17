@@ -532,12 +532,8 @@ public class GUI_revamp extends JFrame {
 			consoleModel.setRowCount(0);
 			tbl_consoleTable.clearSelection();
 		}
-		
 		tbl_consoleTable.clearSelection();
-		
-		
-		if(!tempString.equals(consoleString) && consoleString != null){
-			System.out.println(consoleString);
+		if(consoleString != null){
 			consoleModel.addRow(new Object[]{consoleString});
 //			consoleModel.addRow(new Object[]{" ", consoleStatsList.get(0), consoleStatsList.get(1), 
 //					consoleStatsList.get(2), consoleStatsList.get(3), consoleStatsList.get(4), 
@@ -573,7 +569,6 @@ public class GUI_revamp extends JFrame {
 				consoleModel.addRow(new Object[]{"prover calls", consoleStatsList.get(8)});
 			}
 		}
-		
 //		JTextArea consoleOutput = new JTextArea();
 //		consoleOutput.setText("Tester");
 //		tbl_consoleTable.add(consoleOutput);
@@ -1169,6 +1164,7 @@ public class GUI_revamp extends JFrame {
 		final JButton bt_browseFile = (JButton) getComponentByName("bt_browseFile");
 		final JButton bt_deleteConfig = (JButton) getComponentByName("bt_deleteConfig");
 		final JButton bt_duplicate = (JButton) getComponentByName("bt_duplicate");
+		final JTabbedPane tp_commandView = (JTabbedPane) getComponentByName("tp_commandView");
 		final JTextField tf_name = (JTextField) getComponentByName("tf_name");
 		final JTextField tf_chooseFile = (JTextField) getComponentByName("tf_chooseFile");
 		final CIVLTable tbl_optionTable = (CIVLTable) getComponentByName("tbl_optionTable");
@@ -1445,6 +1441,7 @@ public class GUI_revamp extends JFrame {
 						consoleStatsList = ui.consoleStatsList;
 						System.out.println(consoleStatsList.size());
 						showConsole();
+						tp_commandView.setSelectedIndex(3);
 						//Console gets drawn here
 					} catch (CommandLineException | ABCException | IOException
 							| MisguidedExecutionException | SvcompException e1) {
