@@ -191,7 +191,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			this.errorLogger
 					.logSimpleError(source, state, process,
 							symbolicAnalyzer.stateInformation(state),
-							ErrorKind.MEMORY_LEAK,
+							ErrorKind.MEMORY_MANAGE,
 							"attempt to deallocate memory space through an undefined pointer");
 			// dont report unsatisfiable path condition exception
 		} else if (this.symbolicUtil.isNullPointer(firstElementPointer)) {
@@ -204,7 +204,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 					state,
 					process,
 					symbolicAnalyzer.stateInformation(state),
-					ErrorKind.MEMORY_LEAK,
+					ErrorKind.MEMORY_MANAGE,
 					"the argument of free "
 							+ symbolicAnalyzer.symbolicExpressionToString(
 									source, state,
@@ -223,7 +223,7 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 				this.errorLogger
 						.logSimpleError(source, state, process,
 								symbolicAnalyzer.stateInformation(state),
-								ErrorKind.MEMORY_LEAK,
+								ErrorKind.MEMORY_MANAGE,
 								"attempt to deallocate an object that has been deallocated previously");
 			} else {
 				Pair<Integer, Integer> indexes;
@@ -284,9 +284,15 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			civlConfig.out().println();
 			// }
 		}
+		// errorLogger.logError(source, state, process,
+		// this.symbolicAnalyzer.stateInformation(state), claim, resultType,
+		// ErrorKind.ASSERTION_VIOLATION, message)
 		errorLogger.logSimpleError(source, state, process,
 				this.symbolicAnalyzer.stateInformation(state),
 				ErrorKind.ASSERTION_VIOLATION, message);
+		state = state
+				.setPathCondition(this.universe.and(state.getPathCondition(),
+						(BooleanExpression) argumentValues[0]));
 		return state;
 	}
 
