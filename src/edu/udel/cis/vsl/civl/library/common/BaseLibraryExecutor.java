@@ -135,7 +135,9 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			// message.append(this.symbolicAnalyzer.symbolicExpressionToString(
 			// source, state, null, reasoner.getReducedContext()));
 			message.append("\nAssertion: ");
-			message.append(statement.toString());
+			message.append(this.symbolicAnalyzer.statementEvaluation(state,
+					state, pid, statement));
+			// message.append(statement.toString());
 			message.append("\n-> ");
 			message.append(messageResult.right);
 			firstEvaluation = messageResult.right;
