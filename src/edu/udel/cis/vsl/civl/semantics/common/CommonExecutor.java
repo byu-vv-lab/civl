@@ -1391,11 +1391,16 @@ public class CommonExecutor implements Executor {
 			boolean isInitialization)
 			throws UnsatisfiablePathConditionException {
 		if (!symbolicUtil.isDerefablePointer(pointer)) {
-			errorLogger.logSimpleError(source, state, process,
+			errorLogger.logSimpleError(
+					source,
+					state,
+					process,
 					symbolicAnalyzer.stateInformation(state),
 					ErrorKind.DEREFERENCE,
-					"attempt to write to a memory location through a pointer "
-							+ "that can't be dereferenced");
+					"attempt to write to a memory location through the pointer "
+							+ this.symbolicAnalyzer.symbolicExpressionToString(
+									source, state, null, pointer)
+							+ " which can't be dereferenced");
 			throw new UnsatisfiablePathConditionException();
 		} else {
 			int vid = symbolicUtil.getVariableId(source, pointer);
