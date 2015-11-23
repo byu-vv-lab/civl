@@ -159,6 +159,9 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 			state = this.reportAssertionFailure(state, pid, process,
 					resultType, message.toString(), arguments, argumentValues,
 					source, assertValue, 1);
+			state = state.setPathCondition(this.universe.and(
+					state.getPathCondition(),
+					(BooleanExpression) argumentValues[0]));
 		}
 		return state;
 	}
@@ -290,9 +293,6 @@ public abstract class BaseLibraryExecutor extends LibraryComponent implements
 		errorLogger.logSimpleError(source, state, process,
 				this.symbolicAnalyzer.stateInformation(state),
 				ErrorKind.ASSERTION_VIOLATION, message);
-		state = state
-				.setPathCondition(this.universe.and(state.getPathCondition(),
-						(BooleanExpression) argumentValues[0]));
 		return state;
 	}
 
