@@ -631,9 +631,9 @@ public class IOWorker extends BaseWorker {
 	 * 
 	 * <ul>
 	 * <li>there is at least one function call of <code>scanf</code>/
-	 * <code>fscanf</code>;
+	 * <code>fscanf</code>, <code>fopen</code>;
 	 * <li>the reference to <code>stderr</code> is present;
-	 * <li>there is at least one functioin call to <code>fprintf</code> whose
+	 * <li>there is at least one function call to <code>fprintf</code> whose
 	 * first argument is NOT <code>stdout</code>.
 	 * </ul>
 	 * 
@@ -642,7 +642,7 @@ public class IOWorker extends BaseWorker {
 	 */
 	private boolean isTransformationNeeded(AST unit) {
 		boolean hasScanf = TransformerFactory.hasFunctionCalls(unit,
-				Arrays.asList(SCANF, FSCANF));
+				Arrays.asList(SCANF, FSCANF, FOPEN));
 		boolean hasStderr;
 
 		if (hasScanf)
@@ -653,6 +653,13 @@ public class IOWorker extends BaseWorker {
 		return has_nt_fprintf(unit.getRootNode());
 	}
 
+	/**
+	 * checks if the given node contains any non-trivial call of fprintf. a
+	 * fprintf call is trivial if its first argument is stdout/stderr.
+	 * 
+	 * @param node
+	 * @return
+	 */
 	private boolean has_nt_fprintf(ASTNode node) {
 		if (node instanceof FunctionCallNode) {
 			FunctionCallNode funcCall = (FunctionCallNode) node;
