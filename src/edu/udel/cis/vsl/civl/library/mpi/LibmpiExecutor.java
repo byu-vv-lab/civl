@@ -879,6 +879,8 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		int mpiCommIdInt, queueLength;
 		SymbolicExpression[] msgBuffers;
 		NumericExpression src, dest, tag;
+		// Flag: is there any entry in queue being modified.
+		boolean anyEntryModified = false;
 
 		src = (NumericExpression) argumentValues[1];
 		dest = (NumericExpression) argumentValues[2];
@@ -901,6 +903,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 
 				if (!entry.isRecorded(place)) {
 					twoMsgBuffers = entry.getMsgBuffers();
+					anyEntryModified = true;
 					if (twoMsgBuffers != null) {
 						SymbolicExpression msgBuffer = universe.arrayRead(
 								twoMsgBuffers, channelIdx);
@@ -913,10 +916,12 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 						msgBuffers[i] = twoMsgBuffers;
 					} else
 						msgBuffers[i] = null;
-				}
+				} else
+					msgBuffers[i] = entry.getMsgBuffers();
 			}
-			state = stateFactory.commitUpdatedChannelsToEntries(tmpState,
-					mpiCommIdInt, msgBuffers);
+			if (anyEntryModified)
+				state = stateFactory.commitUpdatedChannelsToEntries(tmpState,
+						mpiCommIdInt, msgBuffers);
 		}
 		return state;
 	}
