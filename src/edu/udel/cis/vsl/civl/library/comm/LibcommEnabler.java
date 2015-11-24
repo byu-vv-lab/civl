@@ -304,9 +304,6 @@ public class LibcommEnabler extends BaseLibraryEnabler implements
 						"LibraryLoader exception happens when loading library comm evaluator.\n",
 						call.getSource());
 			}
-			possibleSources = libevaluator.getAllPossibleSources(eval.state,
-					reasoner, gcomm, intSource, intTag,
-					(NumericExpression) dest, call.getSource());
 			callWorkers = (List<Statement>) this.dequeueStatementGenerator(
 					sourceExpr, tagExpr, possibleSources, call.getSource(),
 					call.function().parameters(), arguments, call.function()

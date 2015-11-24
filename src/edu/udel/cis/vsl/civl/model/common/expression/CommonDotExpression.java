@@ -90,6 +90,8 @@ public class CommonDotExpression extends CommonExpression implements
 	@Override
 	public void purelyLocalAnalysisOfVariables(Scope funcScope) {
 		this.structOrUnion.purelyLocalAnalysisOfVariables(funcScope);
+		if (funcScope.isDescendantOf(this.expressionScope()))
+			this.setPurelyLocal(false);
 	}
 
 	@Override
@@ -98,7 +100,11 @@ public class CommonDotExpression extends CommonExpression implements
 			this.purelyLocal = false;
 			return;
 		}
-
+		if (this.expressionType.isPointerType()
+				|| this.expressionType.isHandleType()) {
+			this.setPurelyLocal(false);
+			return;
+		}
 		this.structOrUnion.purelyLocalAnalysis();
 		this.purelyLocal = this.structOrUnion.isPurelyLocal();
 	}
