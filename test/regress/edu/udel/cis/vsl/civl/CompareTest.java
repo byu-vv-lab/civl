@@ -90,9 +90,9 @@ public class CompareTest {
 	}
 	
 	@Test
-	public void outputTest() {
-		assertFalse(ui.run("compare", "-spec",
-				filename("dot", "out1.c"), "-impl", filename("dot", "out2.c")));
+	public void outputfiles() {
+		assertFalse(ui.run("compare", "-spec", filename("outputTest", "out1.c"), "-impl",
+				filename("outputTest", "out2.c")));
 	}
 
 	@AfterClass
