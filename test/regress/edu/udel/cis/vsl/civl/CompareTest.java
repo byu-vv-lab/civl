@@ -88,6 +88,12 @@ public class CompareTest {
 				"-impl -input_mpi_nprocs=2 -inputMAXTHRDS=2",
 				filename("dot", "mpithreads_both.c")));
 	}
+	
+	@Test
+	public void outputTest() {
+		assertFalse(ui.run("compare", "-spec",
+				filename("dot", "out1.c"), "-impl", filename("dot", "out2.c")));
+	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
