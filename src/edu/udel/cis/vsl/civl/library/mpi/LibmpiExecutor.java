@@ -185,20 +185,20 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 			state = executeProcScope(state, pid, process, lhs, arguments,
 					argumentValues, statement.getSource());
 			break;
-		case "$mpi_imageP2pSend":
+		case "$mpi_p2pSEnq":
 			state = executeImageSend(state, pid, process, functionName,
 					arguments, argumentValues, zero, statement.getSource());
 			break;
-		case "$mpi_imageColSend": {
+		case "$mpi_colSEnq": {
 			state = executeImageSend(state, pid, process, functionName,
 					arguments, argumentValues, one, statement.getSource());
 			break;
 		}
-		case "$mpi_imageP2pRecv":
+		case "$mpi_p2pSDeq":
 			state = executeImageRecv(state, pid, process, functionName,
 					arguments, argumentValues, zero, statement.getSource());
 			break;
-		case "$mpi_imageColRecv":
+		case "$mpi_colSDeq":
 			state = executeImageRecv(state, pid, process, functionName,
 					arguments, argumentValues, one, statement.getSource());
 			break;
