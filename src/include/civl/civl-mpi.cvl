@@ -136,7 +136,7 @@ int $mpi_send(void *buf, int count, MPI_Datatype datatype, int dest,
 #ifdef _MPI_CONTRACT
     $atomic{
       $comm_enqueue(comm.p2p, out);
-      $mpi_p2pSEnq(comm.gcommIndex, out, place);
+      $mpi_p2pSendShot(comm.gcommIndex, out, place);
     }
 #else 
     $comm_enqueue(comm.p2p, out);   
@@ -156,7 +156,7 @@ int $mpi_recv(void *buf, int count, MPI_Datatype datatype, int source,
       in = $comm_dequeue(comm.p2p, source, tag);
       int place = $message_source(in);
 
-      $mpi_p2pSDeq(comm.gcommIndex, source, place, tag);
+      $mpi_p2pRecvShot(comm.gcommIndex, source, place, tag);
     }
 #else
     in = $comm_dequeue(comm.p2p, source, tag);
@@ -191,7 +191,7 @@ int $mpi_sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	$atomic{
 	  $comm_enqueue(comm.p2p, out);
 #ifdef _MPI_CONTRACT
-	  $mpi_p2pSEnq(comm.gcommIndex, out, place);
+	  $mpi_p2pSendShot(comm.gcommIndex, out, place);
 #endif
 	}
 	$atomic{
@@ -199,7 +199,7 @@ int $mpi_sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 #ifdef _MPI_CONTRACT
 	  int nonWildSrc = $message_source(in);
 	  
-	  $mpi_p2pSDeq(comm.gcommIndex, nonWildSrc, place, recvtag);	
+	  $mpi_p2pRecvShot(comm.gcommIndex, nonWildSrc, place, recvtag);	
 #endif
 	}
       }
@@ -250,7 +250,7 @@ int $mpi_collective_send(void *buf, int count, MPI_Datatype datatype, int dest,
 #ifdef _MPI_CONTRACT
     $atomic{
       $comm_enqueue(comm.col, out);
-      $mpi_colSEnq(comm.gcommIndex, out, place);
+      $mpi_colSendShot(comm.gcommIndex, out, place);
     }
 #else 
     $comm_enqueue(comm.col, out);   
