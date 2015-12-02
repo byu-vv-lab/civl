@@ -149,6 +149,7 @@ public class GUI_revamp extends JFrame {
 	private List<String> consoleStatsList;
 	
 	private String tempString = "";
+	private String examplesPath = "";
 	private Map<String, String> tempStats = new HashMap<String, String>();
 	public GUI_revamp() {
 		setVisible(true);
@@ -1038,15 +1039,18 @@ public class GUI_revamp extends JFrame {
 	 */
 	public void initExecute() {
 		JPanel p_execute = new JPanel();
+		JButton bt_help = new JButton("Help");
 		JButton bt_cancel = new JButton("Cancel");
 		JButton bt_run = new JButton("Run");
 
 		bt_run.setEnabled(false);
 
 		p_execute.setName("p_execute");
+		bt_help.setName("bt_help");
 		bt_cancel.setName("bt_cancel");
 		bt_run.setName("bt_run");
 
+		p_execute.add(bt_help);
 		p_execute.add(bt_cancel);
 		p_execute.add(bt_run);
 
@@ -1158,6 +1162,7 @@ public class GUI_revamp extends JFrame {
 		final JTree jt_commands = (JTree) getComponentByName("jt_commands");
 		final JTextArea ta_header = (JTextArea) getComponentByName("ta_header");
 		final JButton bt_new = (JButton) getComponentByName("bt_new");
+		final JButton bt_help = (JButton) getComponentByName("bt_help");
 		final JButton bt_cancel = (JButton) getComponentByName("bt_cancel");
 		final JButton bt_run = (JButton) getComponentByName("bt_run");
 		final JButton bt_apply = (JButton) getComponentByName("bt_apply");
@@ -1286,7 +1291,6 @@ public class GUI_revamp extends JFrame {
 		 */
 		ActionListener browseFile = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String examplesPath = "/Users/noyes/Documents/workspace/CIVL/examples";
 				File start = new File(examplesPath);
 				final JFileChooser chooser = new JFileChooser();
 				chooser.setCurrentDirectory(start);
@@ -1300,6 +1304,7 @@ public class GUI_revamp extends JFrame {
 
 				chooser.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						
 						File selectedFile = chooser.getSelectedFile();
 						// currConfig.setSelectedFile(selectedFile);
 						currConfig.getSelectedFiles().add(selectedFile);
@@ -1582,6 +1587,15 @@ public class GUI_revamp extends JFrame {
 
 		bt_duplicate.addActionListener(duplicate);
 
+		ActionListener help =  new ActionListener(){
+			public void actionPerformed(ActionEvent e) {
+				JOptionPane.showConfirmDialog(gui, "Instructions for running the GUI:"
+						+ "\n\n\n\n", "Help Menu", JOptionPane.OK_CANCEL_OPTION);
+			}
+		};
+		
+		bt_help.addActionListener(help);
+		
 		ActionListener cancel = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				System.exit(0);
