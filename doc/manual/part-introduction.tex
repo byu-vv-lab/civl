@@ -159,28 +159,31 @@ CIVL-C as shown in Figure \ref{fig:dining}.
 \begin{figure}[t]
   \begin{small}
 \begin{verbatim}
-#include <civlc.h>
+#include <civlc.cvh>
 
-$input int B; // upper bound on number of philosophers
-$input int n; // number of philosophers
-$assume 2<=n && n<=B;
-_Bool forks[n]; // Each fork will be on the table (0) or in a hand (1). 
+$input int B = 4; // upper bound on number of philosophers
+$input int n;     // number of philosophers
+$assume(2<=n && n<=B);
+
+_Bool forks[n]; // Each fork will be on the table ($true) or in a hand ($false).
 
 void dine(int id) {
   int left = id;
   int right = (id + 1) % n;
 
   while (1) {
-    $when (forks[left] == 0) forks[left] = 1;
-    $when (forks[right] == 0) forks[right] = 1;
-    forks[right] = 0;
-    forks[left] = 0;
+    $when (forks[left]) forks[left] = $false;
+    $when (forks[right]) forks[right] = $false;
+    forks[right] = $true;
+    forks[left] = $true;
   }
 }
 
-void main() {
-  for (int i = 0; i < n; i++) forks[i] = 0;
-  for (int i = 0; i < n; i++) $spawn dine(i);
+void main() { 
+  $for(int i: 0 .. n-1)
+    forks[i] = $true;
+  $parfor(int i: 0 .. n-1)
+    dine(i);
 }
 \end{verbatim}
   \end{small}
@@ -222,10 +225,13 @@ will hold when this initial sub-statement executes. Since assignment
 statements are atomic in CIVL, in this example the bodiy of each
 $\cwhen$ statement executes atomically with the guard evaluation.
 
-The $\cspawn$ statement is very similar to a function call. The main
+The $\cfor$ statement is very similar to a for loop. The main
+difference is that it takes a domain and loops over it.
+
+The $\cparfor$ statement is a combination of $\cfor$ and $\cspawn$. 
+The latter is very similar to a function call. The main
 difference is that the function called is invoked in a new process
-which runs concurrently with the existing processes. The $\cspawn$
-statement itself returns immediately.
+which runs concurrently with the existing processes. 
 
 The program may be verified for an upper bound of $5$ by typing the
 following at the command line:
@@ -246,120 +252,119 @@ minimal counterexample, we issue the command
 \begin{figure}[t]
   \begin{small}
 \begin{verbatim}
-CIVL v0.15 of 2014-12-23 -- http://vsl.cis.udel.edu/civl
-Error 0 encountered at depth 129:
+CIVL v1.5 of 2015-10-31 -- http://vsl.cis.udel.edu/civl
+
+Violation 0 encountered at depth 19:
+CIVL execution violation (kind: DEADLOCK, certainty: PROVEABLE)
+at diningBad.cvl:31.11-12 ";":
+A deadlock is possible:
 ...
-Error 25 encountered at depth 16:
-CIVL execution error (kind: DEADLOCK, certainty: PROVEABLE)
+
+Logging new entry 0, writing trace to CIVLREP/diningBad_0.trace
+Restricting search depth to 18
+
+Violation 1 encountered at depth 14:
+CIVL execution violation (kind: DEADLOCK, certainty: PROVEABLE)
+at diningBad.cvl:31.11-12 ";":
 A deadlock is possible:
   Path condition: true
   Enabling predicate: false
-ProcessState 0: terminated
-ProcessState 1: at location 26, f0:21.30-42 "forks[right]"
-  Enabling predicate: false
-ProcessState 2: at location 26, f0:21.30-42 "forks[right]"
-  Enabling predicate: false
-at f0:21.30-42 "forks[right]".
-State 664
-| Path condition
-| | true
-| Dynamic scopes
-| | dyscope 0 (parent=-1, static=0)
-| | | reachers = {1,2}
-| | | variables
-| | | | __atomic_lock_var = process<-1>
-| | | | B = 5
-| | | | n = 2
-| | | | forks = X_s0v4[0:=1, 1:=1]
-...
-| Process states
-...
-| | process 2
-| | | atomicCount = 0
-| | | call stack
-| | | | Frame[function=dine, location=25, f0:21.30-42 "forks[right]", scope=3]
-...
-=================== Stats ===================
-   validCalls          : 15327
-   proverCalls         : 17
-   memory (bytes)      : 18554880
-   time (s)            : 2.17
-   maxProcs            : 6
-   statesInstantiated  : 9264
-   statesSaved         : 665
-   statesSeen          : 1758
-   statesMatched       : 1177
-   steps               : 2993
-   transitions         : 2934
+process p0 (id=0): false
+process p1 (id=1): false
+process p2 (id=2): false
 
+Context:
+true
+
+Call stacks:
+process p0 (id=0):
+  _CIVL_system at diningBad.cvl:31.11-12 ";"
+process p1 (id=1):
+  dine at diningBad.cvl:21.4-9 "$when"
+process p2 (id=2):
+  dine at diningBad.cvl:21.4-9 "$when"
+
+...
+
+=== Stats ===
+   time (s)            : 0.95
+   memory (bytes)      : 128974848
+   max process count   : 5
+   states              : 81
+   states saved        : 53
+   state matches       : 2
+   transitions         : 77
+   trace steps         : 56
+   valid calls         : 510
+   provers             : cvc4, z3, cvc3
+   prover calls        : 6
+
+=== Result ===
 The program MAY NOT be correct.  See CIVLREP/diningBad_log.txt
 \end{verbatim}
   \end{small}
-  \caption{Output from \texttt{civl verify -inputB=5 -min diningBad.cvl}}
+  \caption{Output from \texttt{civl verify -inputB=5 diningBad.cvl}}
   \label{fig:diningOut}
 \end{figure}
 
 The result of this command is shown in Figure \ref{fig:diningOut}. The
-output indicates that a minimal counterexample has length 19, i.e.,
-involves 20 states and 19 transitions (the depth of 20 is one more
-than 19).    It was the 26th and shortest trace found.  It was deemed
+output indicates that a minimal counterexample has length 14, i.e.,
+involves 15 states and 14 transitions (the depth of 19 is five more
+than 14).    It was the 2nd and shortest trace found.  It was deemed
 equivalent to the earlier traces and hence the earlier ones were
 discarded and only this one saved.  We can replay the trace with the command
 \begin{verbatim}
-  civl replay diningBad.cvl
+  civl replay -showTransitions diningBad.cvl
 \end{verbatim}
 
 \begin{figure}
   \begin{small}
 \begin{verbatim}
 ...
-Transition 1: State 0, proc 0: 
-  0->1: B = 5 at f0:9.0-12 "$input int B";
-  1->2: n = InitialValue(n) at f0:10.0-12 "$input int n";
-  2->3: $assume ((2<=n)&&(n<=B)) at f0:11.0-20 "$assume 2<=n && n ... B";
-  3->5: forks = InitialValue(forks) at f0:13.0-12 "int forks[n]";
-  5->6: i = 0 at f0:28.7-16 "int i = 0";
+Step 0: State 0, p0:
+  0->1: B=5 at diningBad.cvl:9.0-16 "$input int B = 4"
+  1->2: n=InitialValue(n) [n:=X0] at diningBad.cvl:10.0-12 "$input int n"
+  2->3: $assume((2<=X0)&&(X0<=5)) at diningBad.cvl:11.0-21 "$assume(2<=n && n ... )"
+  3->4: forks=InitialValue(forks) [forks:=(lambda i : int . false)] at diningBad.cvl:13.0-14 "_Bool forks[n]"
 --> State 1
-
-Transition 2: State 1, proc 0: 
-  6->8: LOOP_TRUE_BRANCH at f0:28.18-23 "i < n";
---> State 2
-
 ...
+Step 2: State 2, p0:
+  5->6: LOOP_BODY_ENTER(($domain(1)){(0..1#1)} has next for (NULL)) at diningBad.cvl:28.14-22 "0 .. n-1"
+  6->7: $for((NULL) has next in ($domain(1)){(0..1#1)} at diningBad.cvl:28.2-6 "$for"
+--> State 3
+...
+Step 6: State 6, p0:
+  ...
+  9->10: $parfor(i0: ($domain(1)){(0..1#1)}) $spawn dine(i0) at diningBad.cvl:30.2-9 "$parfor"
+--> State 7
 
-Transition 12: State 12, proc 2: 
-  18->19: left = id at f0:16.2-15 "int left = id";
-  19->20: right = ((id+1)%n) at f0:17.2-26 "int right = (id  ... n";
+Step 7: State 7, p1:
+  12->13: left=0 at diningBad.cvl:16.2-15 "int left = id"
+  13->14: right=(0+1)%2 [right:=1] at diningBad.cvl:17.2-26 "int right = (id  ... n"
+--> State 8
+...
+Step 11: State 11, p1:
+  15->16: forks[0]=false at diningBad.cvl:20.24-44 "forks[left] = $false"
+--> State 12
+
+Step 12: State 12, p2:
+  15->16: forks[1]=false at diningBad.cvl:20.24-44 "forks[left] = $false"
 --> State 13
-
-Transition 13: State 13, proc 2: 
-  20->23: LOOP_TRUE_BRANCH at f0:19.9-10 "1";
---> State 14
-
-Transition 14: State 14, proc 1: 
-  23->25: forks[left] = 1 at f0:20.29-44 "forks[left] = 1";
---> State 15
-
-Transition 15: State 15, proc 2: 
-  23->25: forks[left] = 1 at f0:20.29-44 "forks[left] = 1";
---> State 16
 ...
-Violation of Deadlock found in State 16:
+Violation of Deadlock found in State 13:
 A deadlock is possible:
   Path condition: true
   Enabling predicate: false
-ProcessState 0: terminated
-ProcessState 1: at location 25, f0:21.30-42 "forks[right]"
-  Enabling predicate: false
-ProcessState 2: at location 25, f0:21.30-42 "forks[right]"
-  Enabling predicate: false
+process p0 (id=0): false
+process p1 (id=1): false
+process p2 (id=2): false
 
-Trace ends after 15 transitions.
+Trace ends after 13 trace steps.
 Violation(s) found.
 ...
 \end{verbatim}
   \end{small}
-  \caption{Output from \texttt{civl replay diningBad.cvl}}
+  \caption{Output from \texttt{civl replay -showTransitions diningBad.cvl}}
   \label{fig:diningReplay}
 \end{figure}
 
@@ -472,7 +477,7 @@ int sum;
 void main() {
   int localsum = 0;
   for (int i = 1; i <= N; i++) {
-	  localsum+=i;
+    localsum+=i;
   } 
   sum = localsum;
 #ifdef _CIVL
@@ -490,14 +495,14 @@ void main() {
 \subsection{Verifying MPI C programs}
 CIVL generates default input variables for verifying MPI programs:
 \begin{itemize}
-\item \texttt{\_NPROCS}: number of MPI processes to be created;
-\item \texttt{\_NPROCS\_LOWER\_BOUND}/\texttt{\_NPROCS\_UPPER\_BOUND}: lower/upper bound of the number of MPI processes to be created.
+\item \texttt{\_mpi\_nprocs}: number of MPI processes to be created;
+\item \texttt{\_mpi\_nprocs\_lo}/\texttt{\_mpi\_nprocs\_hi}: lower/upper bound of the number of MPI processes to be created.
 \end{itemize}
 
-CIVL requires at least either \texttt{\_NPROCS} or \texttt{\_NPROCS\_UPPER\_BOUND} be specified in the command line in order to verify MPI programs. For example, one can specify  \texttt{civl verify -input\_NPROCS=5 ring.c}. 
+CIVL requires at least either \texttt{\_mpi\_nprocs} or \texttt{\_mpi\_nprocs\_hi} be specified in the command line in order to verify MPI programs (the default value of \texttt{\_mpi\_nprocs\_lo} is 1). For example, one can specify  \texttt{civl verify -input\_mpi\_nprocs=5 ring.c}. 
 
 \subsection{Verifying OpenMP C programs}
-CIVL introduces a default input variables \texttt{THREAD\_MAX} for OpenMP programs. Usually, \texttt{THREAD\_MAX} needs to be specified in the command line. CIVL will create 1 to \texttt{THREAD\_MAX-1} threads for all OpenMP parallel region during the verification. If \texttt{THREAD\_MAX} is not specified, then somewhere in the OpenMP program must be specifying the number of threads explicitly. By default, CIVL applies simplification to OpenMP based on independent loop analysis, and optimally that might reduce the program to be purely sequential. The option \texttt{ompNoSimplify} can be set to false so as to skip such simplification. Another option, \texttt{ompLoopDecomp} can be used to specify the loop decomposition strategy, which can be \texttt{ALL}, \texttt{ROUND\_ROBIN} or \texttt{RANDOM}.
+CIVL introduces a default input variables \texttt{\_omp\_thread\_max} for OpenMP programs, and it needs to be specified in the command line. CIVL will create 1 to \texttt{\_omp\_thread\_max-1} threads for all OpenMP parallel region during the verification. If \texttt{\_omp\_thread\_max} is not specified, then somewhere in the OpenMP program must be specifying the number of threads explicitly. By default, CIVL applies simplification to OpenMP based on independent loop analysis, and optimally that might reduce the program to be purely sequential. The option \texttt{ompNoSimplify} can be set to false so as to skip such simplification. Another option, \texttt{ompLoopDecomp} can be used to specify the loop decomposition strategy, which can be \texttt{ALL}, \texttt{ROUND\_ROBIN} or \texttt{RANDOM}.
 
 \subsection{Verifying Pthreads C  and CUDA C programs}
 There are no special option or default input variables for Pthreads or CUDA programs.
