@@ -624,8 +624,7 @@ transition system:
 
 \subsubsection{Nondeterministic choice of integer:
   \texorpdfstring{\cchooseint}{\$choose\_int}}
-The header \texttt{civlc.cvh} provides the function \cchooseint{} that returns an integer between 0 and the specified value
-in a nondeterministic way, as described in Section \ref{subsubsec:chooseint}.
+The header \texttt{civlc.cvh} provides the function \cchooseint{} that returns an integer between 0 (inclusive) and the specified value (exclusive)  in a nondeterministic way, as described in Section \ref{subsubsec:chooseint}.
 
 \subsection{Iteration using domains with \cfor}
 \label{sec:cfor}
@@ -642,7 +641,7 @@ assigning the integer variables the components of the current tuple in
 the domain at the start of each iteration.  The scope of the variables
 extends to the end of \texttt{S}.  The iterations takes place in the
 order specified by the domain, e.g., dictionary order for a Caretesian
-domain. Note that if a range expression can be used as \texttt{dom} here, which will be 
+domain. Note that if a range expression can be used as \texttt{dom} here, it will be 
 automatically converted to one dimensional domain. For example, 
  \begin{verbatim}
   $for (int i1, ..., in : 0 .. 10) S
@@ -650,17 +649,6 @@ automatically converted to one dimensional domain. For example,
 is equivalent to
 \begin{verbatim}
   $for (int i1, ..., in : ($domain(1){0 .. 10})) S
-\end{verbatim}
-
-
-Note that if a range expression can be used as \texttt{dom} here, which will be 
-automatically converted to one dimensional domain. For example, 
- \begin{verbatim}
-  $for (int i1, ..., in : 0 .. 10) S
-\end{verbatim}
-is equivalent to
-\begin{verbatim}
-  $for (int i1, ..., in : ($domain(1)){0 .. 10}) S
 \end{verbatim}
 
 There is a also a parallel version of this construct, \cparfor,
@@ -869,7 +857,7 @@ The syntax is exactly the same as that for the sequential loop \cfor
 (Section \ref{sec:cfor}), only with \cparfor{} replacing \cfor.
 
 The semantics are as follows: when control reaches the loop, one
-process in spawned for each element of the domain.  That process has
+process is spawned for each element of the domain.  That process has
 local variables corresponding to the iteration variables, and those
 local variables are initialized with the components of the tuple for
 the element of the domain that process is assigned.  Each process
@@ -1276,7 +1264,7 @@ The expression \verb!expr! must have \cproc{} type.  The variable
 which it is occurs.  When this expression is evaluated, the evaluation
 context will be shifted to the process referred to by \texttt{expr}.
 
-\emph{Status}: not implemented.
+\emph{Status}: implementation in progress.
 
 \subsection{Collective expressions: \ccollective}.  These have the form
 \begin{verbatim}
