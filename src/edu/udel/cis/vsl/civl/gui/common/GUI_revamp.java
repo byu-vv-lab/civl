@@ -1292,7 +1292,7 @@ public class GUI_revamp extends JFrame {
 		ActionListener browseFile = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				File start = new File(examplesPath);
-				final JFileChooser chooser = new JFileChooser();
+				final JFileChooser chooser = new JFileChooser();				
 				chooser.setCurrentDirectory(start);
 				FileNameExtensionFilter filter = new FileNameExtensionFilter(
 						"CIVL Files (.cvl)", "cvl");
@@ -1589,10 +1589,18 @@ public class GUI_revamp extends JFrame {
 
 		ActionListener help =  new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
-				JOptionPane.showConfirmDialog(gui, "Instructions for running the GUI:"
-						+ "\n\n\n\n", "Help Menu", JOptionPane.OK_CANCEL_OPTION);
+				String helpMenu = "In this GUI, you can run, replay, or verify programs.\n"
+						+ "\n\n"
+						+ "RUN — Run allows you to run various programs and output statistics\n\n"
+						+ "REPLAY — replays the minimal counterexample produced by the above civl verify command\n\n"
+						+ "VERIFY — the following figures demonstrate verifying a CIVL-C implementation of the dining philosopher problem.\n"
+						+ "The option '-inputB=4' specifies the value for the input variable for the upper bound of the number of \n"
+						+ "philosophers in the program, whereas the option '-min' requests the model checker to search for a minimal counterexample\n"
+						+ "There are also a number of different options to configure as referenced below.\n";
+				JOptionPane.showMessageDialog(gui, "Instructions for running the GUI:" + helpMenu);
 			}
 		};
+		
 		
 		bt_help.addActionListener(help);
 		
