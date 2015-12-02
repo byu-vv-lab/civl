@@ -186,20 +186,20 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 					argumentValues, statement.getSource());
 			break;
 		case "$mpi_p2pSendShot":
-			state = executeImageSend(state, pid, process, functionName,
+			state = executeSendShot(state, pid, process, functionName,
 					arguments, argumentValues, zero, statement.getSource());
 			break;
 		case "$mpi_colSendShot": {
-			state = executeImageSend(state, pid, process, functionName,
+			state = executeSendShot(state, pid, process, functionName,
 					arguments, argumentValues, one, statement.getSource());
 			break;
 		}
 		case "$mpi_p2pRecvShot":
-			state = executeImageRecv(state, pid, process, functionName,
+			state = executeRecvShot(state, pid, process, functionName,
 					arguments, argumentValues, zero, statement.getSource());
 			break;
 		case "$mpi_colRecvShot":
-			state = executeImageRecv(state, pid, process, functionName,
+			state = executeRecvShot(state, pid, process, functionName,
 					arguments, argumentValues, one, statement.getSource());
 			break;
 		default:
@@ -824,7 +824,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 	}
 
 	// TODO: doc !!!
-	private State executeImageSend(State state, int pid, String process,
+	private State executeSendShot(State state, int pid, String process,
 			String function, Expression[] arguments,
 			SymbolicExpression[] argumentValues, NumericExpression channelIdx,
 			CIVLSource civlsource) throws UnsatisfiablePathConditionException {
@@ -870,7 +870,7 @@ public class LibmpiExecutor extends BaseLibraryExecutor implements
 		return state;
 	}
 
-	private State executeImageRecv(State state, int pid, String process,
+	private State executeRecvShot(State state, int pid, String process,
 			String function, Expression[] arguments,
 			SymbolicExpression[] argumentValues, NumericExpression channelIdx,
 			CIVLSource civlsource) throws UnsatisfiablePathConditionException {

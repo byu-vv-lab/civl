@@ -193,6 +193,7 @@ public class ImmutableCollectiveSnapshotsEntry implements
 		return newEntry;
 	}
 
+	// TODO: why max pid ?
 	public int getMaxPid() {
 		return this.maxPid;
 	}
