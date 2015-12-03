@@ -28,8 +28,8 @@ public class OpenMP2CIVLTransformerTest {
 
 	@Test
 	public void dotProduct1() {
-		assertTrue(ui.run("verify ", "-ompNoSimplify", "-input_omp_thread_max=2",
-				filename("dotProduct1.c")));
+		assertTrue(ui.run("verify ", "-ompNoSimplify",
+				"-input_omp_thread_max=2", filename("dotProduct1.c")));
 	}
 
 	@Test
@@ -40,8 +40,8 @@ public class OpenMP2CIVLTransformerTest {
 
 	@Test
 	public void dotProductCritical() {
-		assertFalse(ui.run("verify ", "-ompNoSimplify", "-input_omp_thread_max=2",
-				filename("dotProduct_critical.c")));
+		assertFalse(ui.run("verify ", "-ompNoSimplify",
+				"-input_omp_thread_max=2", filename("dotProduct_critical.c")));
 	}
 
 	@Test
@@ -58,8 +58,8 @@ public class OpenMP2CIVLTransformerTest {
 
 	@Test
 	public void parallelfor() {
-		assertTrue(ui.run("verify", "-ompNoSimplify", "-input_omp_thread_max=2",
-				filename("parallelfor.c")));
+		assertTrue(ui.run("verify", "-ompNoSimplify",
+				"-input_omp_thread_max=2", filename("parallelfor.c")));
 	}
 
 	@Test
