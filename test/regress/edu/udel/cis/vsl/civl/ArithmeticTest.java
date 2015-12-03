@@ -89,13 +89,13 @@ public class ArithmeticTest {
 
 	@Test
 	public void multiplicationInLoopCondition() {
-		assertTrue(ui.run("verify", "-echo",
+		assertTrue(ui.run("verify",
 				filename("multiplicationInLoopCondition.cvl")));
 	}
 
 	@Test
 	public void math() {
-		assertTrue(ui.run("verify", "-echo", filename("mathematical.cvl")));
+		assertTrue(ui.run("verify", filename("mathematical.cvl")));
 	}
 
 	@Test

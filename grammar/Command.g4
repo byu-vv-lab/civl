@@ -119,7 +119,6 @@ OPTION_NAME
     | '-collectScopes'
     | '-deadlock'
     | '-debug'
-    | '-echo'
     | '-enablePrintf'
     | '-errorBound'
     | '-gui'

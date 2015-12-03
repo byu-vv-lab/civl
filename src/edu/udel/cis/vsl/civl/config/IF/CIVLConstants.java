@@ -104,11 +104,12 @@ public class CIVLConstants {
 	public final static Option checkMemoryLeakO = Option.newScalarOption(
 			"checkMemoryLeak", BOOLEAN, "check memory-leak errors?", true);
 
-	/**
-	 * Prints the command line? false by default.
-	 */
-	public final static Option echoO = Option.newScalarOption("echo", BOOLEAN,
-			"print the command line", false);
+	// /**
+	// * Prints the command line? false by default.
+	// */
+	// public final static Option echoO = Option.newScalarOption("echo",
+	// BOOLEAN,
+	// "print the command line", false);
 
 	/**
 	 * Enables printf? true by default. When false, nothing is printed for
@@ -465,12 +466,12 @@ public class CIVLConstants {
 	 */
 	public final static Option[] getAllOptions() {
 		return new Option[] { astO, collectHeapsO, collectProcessesO,
-				collectScopesO, deadlockO, debugO, echoO, enablePrintfO,
-				errorBoundO, guiO, guidedO, idO, inputO, linkO, macroO,
-				maxdepthO, minO, mpiContractO, ompLoopDecompO, ompNoSimplifyO,
-				preprocO, procBoundO, randomO, saveStatesO, seedO,
-				showAmpleSetO, showAmpleSetWtStatesO, showInputVarsO,
-				showMemoryUnitsO, showModelO, showPathConditionO, showProgramO,
+				collectScopesO, deadlockO, debugO, enablePrintfO, errorBoundO,
+				guiO, guidedO, idO, inputO, linkO, macroO, maxdepthO, minO,
+				mpiContractO, ompLoopDecompO, ompNoSimplifyO, preprocO,
+				procBoundO, randomO, saveStatesO, seedO, showAmpleSetO,
+				showAmpleSetWtStatesO, showInputVarsO, showMemoryUnitsO,
+				showModelO, showPathConditionO, showProgramO,
 				showProverQueriesO, showQueriesO, showSavedStatesO,
 				showStatesO, showTimeO, showTransitionsO, showUnreachedCodeO,
 				simplifyO, solveO, statelessPrintfO, svcomp16O, pthreadOnlyO,

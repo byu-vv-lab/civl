@@ -6,7 +6,6 @@ import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectProcessesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.collectScopesO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.date;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.debugO;
-import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.echoO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.enablePrintfO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.guiO;
 import static edu.udel.cis.vsl.civl.config.IF.CIVLConstants.idO;
@@ -266,8 +265,8 @@ public class UserInterface {
 					transformerFactory, frontEnd, gmcConfig, gmcSection,
 					commandLine.files(), commandLine.getCoreFileName());
 
-			if (commandLine.gmcSection().isTrue(echoO))
-				out.println(commandLine.getCommandString());
+			// if (commandLine.gmcSection().isTrue(echoO))
+			// out.println(commandLine.getCommandString());
 			switch (kind) {
 			case SHOW:
 				return runShow(modelTranslator);
@@ -357,8 +356,8 @@ public class UserInterface {
 				transformerFactory, frontEnd, gmcConfig, implSection,
 				impl.files(), impl.getCoreFileName(), universe);
 
-		if (anonymousSection.isTrue(echoO))
-			out.println(compareCommand.getCommandString());
+		// if (anonymousSection.isTrue(echoO))
+		// out.println(compareCommand.getCommandString());
 		universe.setShowQueries(anonymousSection.isTrue(showQueriesO));
 		universe.setShowProverQueries(anonymousSection
 				.isTrue(showProverQueriesO));
