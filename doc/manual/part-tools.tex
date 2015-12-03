@@ -28,9 +28,17 @@ Each tool is launched from the command line by typing ``\texttt{civl}
 \item \ct{help} : print usage information
 \item \ct{run}  : run the program using random simulation
 \item \ct{verify} : verify program
-\item \ct{replay} : replay trace for program
-\item \ct{parse} : show result of preprocessing and parsing file
-\item \ct{preprocess} : show result of preprocessing file only.
+\item \ct{replay} : replay trace for a program
+\item \ct{show} : show result of preprocessing, transforming and parsing a program
+\item \ct{compare}: compare two programs for functional equivalence
+%\item \ct{preprocess} : show result of preprocessing file only.
+\end{itemize}
+The syntax of the command line should be one of the following:
+\begin{itemize}
+\item civl \ct{show$|$run$|$verify$|$replay} [options] filename+
+\item civl \ct{compare$|$replay} [options] \ct{-spec} [options] filename+ \ct{-impl} [options] filename+
+\item civl \ct{config$|$gui}
+\item civl \ct{help} [command]
 \end{itemize}
 The additional arguments and options are described below and are also
 shown by the \ct{help} command.
@@ -64,6 +72,17 @@ The following command line options are available:
     (default: \ct{#2})}{#3}}
 
 \begin{optionlist}
+\stringoption{D}{none}{    macro definitions: \textit{macro} or \textit{macro=object}}
+\booloption{\_CIVL}{true} {define \textit{\_CIVL} macro}
+ \booloption{analyze\_abs}{false}{analyze \textit{abs} (absolute value) calls}
+\booloption{ast}{false}{print the AST of the program}
+\booloption{checkDivisionByZero}{true}{check division-by-zero error}
+\booloption{checkMemoryLeak}{true}{check memory-leak error}
+\booloption{collectHeaps}{true}{collect heaps}
+\booloption{collectOutput}{false}{collect outputs}
+\booloption{collectProcesses}{true}{collect processes}
+\booloption{collectScopes}{true}{collect dyscopes}
+\stringoption{deadlock}{absolute}{deadlock choices: potential, absolute, or none}
   \booloption{debug}{false}{debug mode: print very detailed information}
   \booloption{echo}{false}{print the command line}
   \booloption{enablePrintf}{true}{enable \texttt{printf} function}
