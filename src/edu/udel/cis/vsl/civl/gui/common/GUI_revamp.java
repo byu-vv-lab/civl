@@ -445,8 +445,31 @@ public class GUI_revamp extends JFrame {
 
 		GMCSection section = currConfig.getGmcConfig().getSection(
 				GMCConfiguration.ANONYMOUS_SECTION);
-		Object[] opts = currConfig.getGmcConfig().getOptions().toArray();
-		Collection<Option> options = currConfig.getGmcConfig().getOptions();
+		Object[] opts;
+		Collection<Option> options;
+		if(currCommand.equals(CommandName.REPLAY)){
+			options = CIVLCommand.getReplayOptions().values();
+			opts = options.toArray();
+		}
+		else if(currCommand.equals(CommandName.VERIFY)){
+			options= CIVLCommand.getVerifyOrCompareOptions().values();
+			opts = options.toArray();
+		}
+		// Currently takes care of the run options
+		else{
+			options= CIVLCommand.getRunOptions().values();
+			opts = options.toArray();
+		}
+//		else if(currCommand.equals(CommandName.RUN)){
+//			options= CIVLCommand.getRunOptions().values();
+//			opts = options.toArray();
+//		}
+//		else if(currCommand.equals(CommandName.COMPARE)){
+//			
+//		}
+//		else if(currCommand.equals(CommandName.SHOW)){
+//			
+//		}
 		Iterator<Option> iter_opt = options.iterator();
 		List<Object> vals = new ArrayList<Object>();
 
@@ -589,10 +612,33 @@ public class GUI_revamp extends JFrame {
 		DefaultTableModel optionModel = (DefaultTableModel) tbl_optionTable
 				.getModel();
 
-		Object[] opts = currConfig.getGmcConfig().getOptions().toArray();
+		Object[] opts;
 		GMCSection section = currConfig.getGmcConfig().getAnonymousSection();
 
-		Collection<Option> options = currConfig.getGmcConfig().getOptions();
+		Collection<Option> options;
+		if(currCommand.equals(CommandName.REPLAY)){
+			options = CIVLCommand.getReplayOptions().values();
+			opts = options.toArray();
+		}
+		else if(currCommand.equals(CommandName.VERIFY)){
+			options= CIVLCommand.getVerifyOrCompareOptions().values();
+			opts = options.toArray();
+		}
+		// Currently takes care of the run options
+		else{
+			options= CIVLCommand.getRunOptions().values();
+			opts = options.toArray();
+		}
+//		else if(currCommand.equals(CommandName.RUN)){
+//			options= CIVLCommand.getRunOptions().values();
+//			opts = options.toArray();
+//		}
+//		else if(currCommand.equals(CommandName.COMPARE)){
+//			
+//		}
+//		else if(currCommand.equals(CommandName.SHOW)){
+//			
+//		}
 		Iterator<Option> iter_opt = options.iterator();
 		List<Object> vals = new ArrayList<Object>();
 
@@ -744,6 +790,7 @@ public class GUI_revamp extends JFrame {
 				tp_commandView.addTab("Choose File", p_chooseFile);
 				tp_commandView.addTab("Options", p_options);
 				tp_commandView.addTab("Console", p_console);
+				showOptions();
 				showConsole();
 				showSelectedFiles();
 				p_view.add(tp_commandView);
@@ -1295,7 +1342,7 @@ public class GUI_revamp extends JFrame {
 				final JFileChooser chooser = new JFileChooser();				
 				chooser.setCurrentDirectory(start);
 				FileNameExtensionFilter filter = new FileNameExtensionFilter(
-						"CIVL Files (.cvl)", "cvl");
+						"CIVL Files (.cvl, .c, .cuda)", "cvl", "c", "cuda");
 				chooser.setFileFilter(filter);
 				final DefaultTableModel currFileModel = (DefaultTableModel) tbl_fileTable
 						.getModel();
@@ -1304,7 +1351,7 @@ public class GUI_revamp extends JFrame {
 
 				chooser.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						
+						examplesPath = chooser.getCurrentDirectory().getPath();
 						File selectedFile = chooser.getSelectedFile();
 						// currConfig.setSelectedFile(selectedFile);
 						currConfig.getSelectedFiles().add(selectedFile);
@@ -1589,15 +1636,18 @@ public class GUI_revamp extends JFrame {
 
 		ActionListener help =  new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
-				String helpMenu = "In this GUI, you can run, replay, or verify programs.\n"
-						+ "\n\n"
-						+ "RUN — Run allows you to run various programs and output statistics\n\n"
-						+ "REPLAY — replays the minimal counterexample produced by the above civl verify command\n\n"
-						+ "VERIFY — the following figures demonstrate verifying a CIVL-C implementation of the dining philosopher problem.\n"
-						+ "The option '-inputB=4' specifies the value for the input variable for the upper bound of the number of \n"
-						+ "philosophers in the program, whereas the option '-min' requests the model checker to search for a minimal counterexample\n"
-						+ "There are also a number of different options to configure as referenced below.\n";
-				JOptionPane.showMessageDialog(gui, "Instructions for running the GUI:" + helpMenu);
+				String helpMenu = "\nIn this GUI, you can use CIVL to run and verify programs, as well as replay counterexamples.\n"
+						+ "\nCommands:\n"
+						+ "RUN — Runs a random simulation of the program. \n\n"
+						+ "VERIFY — Runs a verification of the program, exploring all possible states for violations.\n\n"
+						+ "REPLAY — Replays the minimal counterexample trace produced by the VERIFY command."
+						+ "\n\nProgram Options:\n\n"
+						+ "After selecting a command, you have multiple tabs to select options.\n\n"
+						+ "Choose File: Choose the program you wish to run through the file browser.\n\n"
+						+ "Options: Select from the various options CIVL provides for program functionality.\n\n"
+						+ "Input: After file load, you can choose to provide values for the program's input variables.";
+				
+				JOptionPane.showMessageDialog(gui, "GUI Instructions: " + helpMenu);
 			}
 		};
 		
