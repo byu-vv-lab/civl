@@ -10,12 +10,31 @@
         <jacoco.version>0.7.5.201505241946</jacoco.version>
         <revision>0.1.0</revision>
         <maven.test.error.ignore>true</maven.test.error.ignore>
+        <test.groups>null</test.groups>
     </properties>
     <groupId>edu.udel.cis.vsl</groupId>
     <artifactId>civl</artifactId>
     <name>CIVL</name>
     <version>${revision}</version>
     <packaging>jar</packaging>
+
+    <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <test.excluded.groups>edu.udel.cis.vsl.civl.BigTests,edu.udel.cis.vsl.civl.DevTests</test.excluded.groups>
+            </properties>
+        </profile>
+        <profile>
+            <id>full</id>
+            <properties>
+                <test.excluded.groups></test.excluded.groups>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -87,6 +106,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
                 <configuration>
+                    <excludedGroups>${test.excluded.groups}</excludedGroups>
                     <forkCount>1</forkCount>
                     <argLine>-Xmx2048m</argLine>
                 </configuration>
@@ -99,6 +119,19 @@
                     <execution>
                         <goals>
                             <goal>antlr4</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
