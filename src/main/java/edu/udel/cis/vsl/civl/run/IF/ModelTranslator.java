@@ -80,7 +80,7 @@ public class ModelTranslator {
 	private static final String CIVL_MACRO = "_CIVL";
 
 	/**
-	 * A macro for MPI contract features. Once the option "-mpiContrac" is set
+	 * A macro for MPI contract features. Once the option "-mpiContract" is set
 	 * in command line, such a macro should be enabled.
 	 */
 	private static final String MPI_CONTRACT_MACRO = "_MPI_CONTRACT";
@@ -99,7 +99,7 @@ public class ModelTranslator {
 	/**
 	 * The GMC configuration that this model translator associates with.
 	 */
-	GMCConfiguration gmcConfig;
+	public GMCConfiguration gmcConfig;
 
 	/**
 	 * The command line section for this model translator.
@@ -196,9 +196,9 @@ public class ModelTranslator {
 	 *             if there is a problem processing any macros defined in the
 	 *             command line
 	 */
-	ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
-			GMCConfiguration gmcConfig, GMCSection gmcSection,
-			String[] filenames, String coreName) throws PreprocessorException {
+	public ModelTranslator(TransformerFactory transformerFactory, FrontEnd frontEnd,
+						   GMCConfiguration gmcConfig, GMCSection gmcSection,
+						   String[] filenames, String coreName) throws PreprocessorException {
 		this(transformerFactory, frontEnd, gmcConfig, gmcSection, filenames,
 				coreName, SARL.newStandardUniverse());
 	}
@@ -211,7 +211,7 @@ public class ModelTranslator {
 	 *            The ABC front end
 	 * @param gmcConfig
 	 *            The GMC configuration which corresponds to the command line.
-	 * @param gmcSection
+	 * @param cmdSection
 	 *            The GMC section which corresponds to the command line section
 	 *            this model translator associates with.
 	 * @param filenames
@@ -280,8 +280,8 @@ public class ModelTranslator {
 	Program buildProgram() throws PreprocessorException, SyntaxException,
 			IOException, ParseException, SvcompException {
 		CTokenSource[] tokenSources;
-		List<AST> asts = null;
-		Program program = null;
+		List<AST> asts;
+		Program program;
 		long startTime, endTime;
 		long totalTime;
 
@@ -413,7 +413,6 @@ public class ModelTranslator {
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 * @throws IOException
-	 * @throws SvcompException
 	 */
 	public List<VariableDeclarationNode> getInputVariables()
 			throws PreprocessorException, SyntaxException, ParseException,
@@ -439,9 +438,8 @@ public class ModelTranslator {
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 * @throws IOException
-	 * @throws SvcompException
 	 */
-	Model translate() throws PreprocessorException, CommandLineException,
+	public Model translate() throws PreprocessorException, CommandLineException,
 			SyntaxException, ParseException, IOException, SvcompException {
 		long startTime = System.currentTimeMillis();
 		Program program = this.buildProgram();

@@ -81,10 +81,6 @@ public class NormalCommandLine extends BaseCommandLine implements CommandLine{
 	 * "users/siegel/gcd/gcd1.cvl" will return "gcd1". This is the name used to
 	 * name the model and other structures; it is used in the log, to name
 	 * generated files, and for error reporting.
-	 * 
-	 * @param filename
-	 *            a filename
-	 * @return the core part of that filename
 	 */
 	private void computeCoreFile() {
 		String result = this.files[0];

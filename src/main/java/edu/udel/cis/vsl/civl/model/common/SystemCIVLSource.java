@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.model.common;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import org.json.JSONObject;
 
 public class SystemCIVLSource implements CIVLSource {
 
@@ -36,4 +37,10 @@ public class SystemCIVLSource implements CIVLSource {
 		return "CIVL System object";
 	}
 
+	@Override
+	public String toJSONString() {
+		JSONObject obj = new JSONObject();
+		obj.put("location", getLocation());
+		return obj.toString();
+	}
 }

@@ -390,8 +390,8 @@ public class Verifier extends Player {
 
 					if (violationFound) {
 						// may throw ExcessiveErrorException...
-						workRemains = searcher.proceedToNewState() ? searcher
-								.search() : false;
+						workRemains = searcher.proceedToNewState()
+								&& searcher.search();
 					} else {
 						// may throw ExcessiveErrorException...
 						workRemains = searcher.search(initialState);

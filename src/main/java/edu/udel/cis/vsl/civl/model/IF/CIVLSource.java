@@ -1,5 +1,7 @@
 package edu.udel.cis.vsl.civl.model.IF;
 
+import org.json.JSONString;
+
 import java.io.PrintStream;
 
 /**
@@ -8,7 +10,7 @@ import java.io.PrintStream;
  * @author siegel
  * 
  */
-public interface CIVLSource {
+public interface CIVLSource extends JSONString {
 
 	/**
 	 * Returns a human-readable string representation of this range of source

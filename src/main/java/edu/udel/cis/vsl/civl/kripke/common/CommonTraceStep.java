@@ -1,5 +1,6 @@
 package edu.udel.cis.vsl.civl.kripke.common;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -8,6 +9,8 @@ import edu.udel.cis.vsl.civl.kripke.IF.TraceStep;
 import edu.udel.cis.vsl.civl.model.IF.CIVLInternalException;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import org.json.JSONObject;
+import org.json.JSONString;
 
 /**
  * This represents a trace executing from a certain state for a certain process.
@@ -15,7 +18,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
  * @author Manchun Zheng
  * 
  */
-public class CommonTraceStep implements TraceStep {
+public class CommonTraceStep implements TraceStep, JSONString {
 
 	/* *************************** Instance Fields ************************* */
 
@@ -69,19 +72,19 @@ public class CommonTraceStep implements TraceStep {
 		return this.steps;
 	}
 
+	public Collection<AtomicStep> getStepSet() {
+		return this.steps;
+	}
+
 	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer();
-		boolean first = true;
 
 		result.append("p");
 		result.append(this.processIdentifier);
-		result.append(":\n");
+		result.append(":");
 		for (AtomicStep step : this.steps) {
-			if (first)
-				first = false;
-			else
-				result.append("\n");
+			result.append("\n");
 			result.append("| ");
 			result.append(step.toString());
 		}
@@ -103,4 +106,11 @@ public class CommonTraceStep implements TraceStep {
 		return finalState;
 	}
 
+	@Override
+	public String toJSONString() {
+		JSONObject obj = new JSONObject();
+		obj.put("pid", this.processIdentifier);
+		obj.put("steps", this.steps);
+		return obj.toString();
+	}
 }

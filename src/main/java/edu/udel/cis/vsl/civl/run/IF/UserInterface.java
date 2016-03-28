@@ -1013,16 +1013,6 @@ public class UserInterface {
 	 * 
 	 * @param out
 	 *            the stream to which to print
-	 * @param maxProcs
-	 *            the maximum number of processes that existed in any state
-	 *            encountered
-	 * @param statesSeen
-	 *            the number of states seen in the run
-	 * @param statesMatched
-	 *            the number of states encountered which were determined to have
-	 *            been seen before
-	 * @param transitions
-	 *            the number of transitions executed in the course of the run
 	 */
 	private void printUniverseStats(PrintStream out, SymbolicUniverse universe) {
 		// round up time to nearest 1/100th of second...

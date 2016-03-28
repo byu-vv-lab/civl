@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.antlr.v4.runtime.misc.NotNull;
-
 import edu.udel.cis.vsl.civl.run.IF.CommandLine;
 import edu.udel.cis.vsl.civl.run.IF.CommandLine.CommandLineKind;
 import edu.udel.cis.vsl.civl.run.common.NormalCommandLine.NormalCommandKind;
@@ -17,6 +15,7 @@ import edu.udel.cis.vsl.gmc.GMCConfiguration;
 import edu.udel.cis.vsl.gmc.GMCSection;
 import edu.udel.cis.vsl.gmc.Option;
 import edu.udel.cis.vsl.gmc.Option.OptionType;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class CIVLCommandListener extends CommandBaseListener implements
 		CommandListener {
@@ -58,7 +57,7 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	}
 
 	@Override
-	public void enterConfig(@NotNull CommandParser.ConfigContext ctx) {
+	public void enterConfig(CommandParser.ConfigContext ctx) {
 		kind = CommandLineKind.NORMAL;
 		normalCmd = new NormalCommandLine();
 		normalCmd.setCommandString(this.commandString);
@@ -66,7 +65,7 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	}
 
 	@Override
-	public void enterHelp(@NotNull CommandParser.HelpContext ctx) {
+	public void enterHelp(CommandParser.HelpContext ctx) {
 		String commandArg = null;
 		HelpCommandLine helpCmd = new HelpCommandLine();
 
@@ -96,7 +95,7 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	}
 
 	@Override
-	public void enterNormal(@NotNull CommandParser.NormalContext ctx) {
+	public void enterNormal(CommandParser.NormalContext ctx) {
 		String cmdString = ctx.COMMAND() != null ? ctx.COMMAND().getText()
 				: ctx.REPLAY().getText();
 
@@ -127,47 +126,46 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	}
 
 	@Override
-	public void enterCompare(@NotNull CommandParser.CompareContext ctx) {
+	public void enterCompare(CommandParser.CompareContext ctx) {
 		kind = CommandLineKind.COMPARE;
 		compareCmd = new CompareCommandLine(false);
 		compareCmd.setCommandString(this.commandString);
 	}
 
 	@Override
-	public void enterReplayCompare(
-			@NotNull CommandParser.ReplayCompareContext ctx) {
+	public void enterReplayCompare(CommandParser.ReplayCompareContext ctx) {
 		kind = CommandLineKind.COMPARE;
 		compareCmd = new CompareCommandLine(true);
 		compareCmd.setCommandString(this.commandString);
 	}
 
 	@Override
-	public void enterSpecCommand(@NotNull CommandParser.SpecCommandContext ctx) {
+	public void enterSpecCommand(CommandParser.SpecCommandContext ctx) {
 		this.normalCmd = new NormalCommandLine();
 		this.cmdSection = new GMCSection(CompareCommandLine.SPEC);
 		this.gmcConfig.addSection(cmdSection);
 	}
 
 	@Override
-	public void enterImplCommand(@NotNull CommandParser.ImplCommandContext ctx) {
+	public void enterImplCommand(CommandParser.ImplCommandContext ctx) {
 		this.normalCmd = new NormalCommandLine();
 		this.cmdSection = new GMCSection(CompareCommandLine.IMPL);
 		this.gmcConfig.addSection(cmdSection);
 	}
 
 	@Override
-	public void enterCommonOption(@NotNull CommandParser.CommonOptionContext ctx) {
+	public void enterCommonOption(CommandParser.CommonOptionContext ctx) {
 		this.cmdSection = new GMCSection(GMCConfiguration.ANONYMOUS_SECTION);
 		this.gmcConfig.setAnonymousSection(cmdSection);
 	}
 
 	@Override
-	public void enterCommandBody(@NotNull CommandParser.CommandBodyContext ctx) {
+	public void enterCommandBody(CommandParser.CommandBodyContext ctx) {
 		this.files = new LinkedList<>();
 	}
 
 	@Override
-	public void enterNormalOption(@NotNull CommandParser.NormalOptionContext ctx) {
+	public void enterNormalOption(CommandParser.NormalOptionContext ctx) {
 		String optionName = ctx.OPTION_NAME().getText().substring(1);
 		Option option = optionMap.get(optionName);
 
@@ -183,7 +181,7 @@ public class CIVLCommandListener extends CommandBaseListener implements
 		}
 	}
 
-	private Object translateValue(@NotNull CommandParser.ValueContext ctx) {
+	private Object translateValue(CommandParser.ValueContext ctx) {
 		if (ctx.VAR() != null) {
 			return ctx.VAR().getText();
 		} else if (ctx.BOOLEAN() != null) {
@@ -193,6 +191,9 @@ public class CIVLCommandListener extends CommandBaseListener implements
 				return false;
 		} else if (ctx.NUMBER() != null) {
 			// NUMBER
+			TerminalNode node = ctx.NUMBER();
+			String text = node.getText();
+//			return Integer.parseInt(text);
 			return Integer.parseInt(ctx.NUMBER().getText());
 		} else
 			// PATH
@@ -200,7 +201,7 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	}
 
 	@Override
-	public void enterInputOption(@NotNull CommandParser.InputOptionContext ctx) {
+	public void enterInputOption(CommandParser.InputOptionContext ctx) {
 		Option option = mapOptionMap.get("input");
 		String key = ctx.VAR().getText();
 		Object value = this.translateValue(ctx.value());
@@ -209,7 +210,7 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	}
 
 	@Override
-	public void enterMacroOption(@NotNull CommandParser.MacroOptionContext ctx) {
+	public void enterMacroOption(CommandParser.MacroOptionContext ctx) {
 		Option option = mapOptionMap.get("D");
 		String name = ctx.VAR().getText();
 		String value = ctx.value() != null ? ctx.value().getText() : "";
@@ -218,7 +219,7 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	}
 
 	@Override
-	public void enterFile(@NotNull CommandParser.FileContext ctx) {
+	public void enterFile(CommandParser.FileContext ctx) {
 		String file = ctx.PATH().getText();
 
 		this.cmdSection.addFreeArg(file);
@@ -234,37 +235,36 @@ public class CIVLCommandListener extends CommandBaseListener implements
 	// }
 
 	@Override
-	public void exitNormal(@NotNull CommandParser.NormalContext ctx) {
+	public void exitNormal(CommandParser.NormalContext ctx) {
 		normalCmd.complete();
 	}
 
 	@Override
-	public void exitCommandBody(@NotNull CommandParser.CommandBodyContext ctx) {
+	public void exitCommandBody(CommandParser.CommandBodyContext ctx) {
 		this.normalCmd.setFiles(this.files);
 		this.normalCmd.setGMCSection(this.cmdSection);
 		this.normalCmd.setGMCConfig(this.gmcConfig);
 	}
 
 	@Override
-	public void exitSpecCommand(@NotNull CommandParser.SpecCommandContext ctx) {
+	public void exitSpecCommand(CommandParser.SpecCommandContext ctx) {
 		this.normalCmd.complete();
 		this.compareCmd.setSpecification(this.normalCmd);
 	}
 
 	@Override
-	public void exitImplCommand(@NotNull CommandParser.ImplCommandContext ctx) {
+	public void exitImplCommand(CommandParser.ImplCommandContext ctx) {
 		this.normalCmd.complete();
 		this.compareCmd.setImplemenation(this.normalCmd);
 	}
 
 	@Override
-	public void exitCompare(@NotNull CommandParser.CompareContext ctx) {
+	public void exitCompare(CommandParser.CompareContext ctx) {
 		compareCmd.setGMCConfig(gmcConfig);
 	}
 
 	@Override
-	public void exitReplayCompare(
-			@NotNull CommandParser.ReplayCompareContext ctx) {
+	public void exitReplayCompare(CommandParser.ReplayCompareContext ctx) {
 		compareCmd.setGMCConfig(gmcConfig);
 	}
 }

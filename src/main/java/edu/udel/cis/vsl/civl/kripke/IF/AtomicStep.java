@@ -33,4 +33,5 @@ public interface AtomicStep {
 	 * @return the statement associated to this atomic step.
 	 */
 	Statement getStatement();
+
 }

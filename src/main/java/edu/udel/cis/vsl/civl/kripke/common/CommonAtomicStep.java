@@ -5,6 +5,8 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.semantics.IF.Transition;
 import edu.udel.cis.vsl.civl.state.IF.State;
+import org.json.JSONObject;
+import org.json.JSONString;
 
 /**
  * This represents an atomic execution step, which represents the execution of
@@ -16,7 +18,7 @@ import edu.udel.cis.vsl.civl.state.IF.State;
  * @author Manchun Zheng
  * 
  */
-public class CommonAtomicStep implements AtomicStep {
+public class CommonAtomicStep implements AtomicStep, JSONString {
 
 	/* *************************** Instance Fields ************************* */
 
@@ -79,5 +81,13 @@ public class CommonAtomicStep implements AtomicStep {
 	@Override
 	public Statement getStatement() {
 		return transition.statement();
+	}
+
+	@Override
+	public String toJSONString() {
+		JSONObject obj = new JSONObject();
+		obj.put("exec", transition.statement());
+		obj.put("post", this.postState.identifier());
+		return obj.toString();
 	}
 }

@@ -4,6 +4,7 @@ import java.io.PrintStream;
 
 import edu.udel.cis.vsl.abc.token.IF.Source;
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import org.json.JSONObject;
 
 /**
  * Implementation of CIVLSource formed by wrapping an ABC Source object.
@@ -67,4 +68,12 @@ public class ABC_CIVLSource implements CIVLSource {
 		return abcSource.getFirstToken().getFormation().getLastFile().getName();
 	}
 
+	@Override
+	public String toJSONString() {
+		JSONObject obj = new JSONObject();
+		obj.put("filename", getFileName());
+		obj.put("location", getLocation());
+		obj.put("source", abcSource.getSource());
+		return obj.toString();
+	}
 }

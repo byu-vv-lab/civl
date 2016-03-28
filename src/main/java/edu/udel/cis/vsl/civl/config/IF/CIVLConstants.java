@@ -1,8 +1,6 @@
 package edu.udel.cis.vsl.civl.config.IF;
 
-import static edu.udel.cis.vsl.gmc.Option.OptionType.BOOLEAN;
-import static edu.udel.cis.vsl.gmc.Option.OptionType.INTEGER;
-import static edu.udel.cis.vsl.gmc.Option.OptionType.STRING;
+import static edu.udel.cis.vsl.gmc.Option.OptionType.*;
 
 import java.io.File;
 import java.util.Arrays;

@@ -69,6 +69,7 @@ public class CIVLCommandFactory {
 			else
 				return translator.compareCmd;
 		} catch (RuntimeCommandException e) {
+			e.printStackTrace();
 			throw new CommandLineException(e.getMessage());
 		}
 	}

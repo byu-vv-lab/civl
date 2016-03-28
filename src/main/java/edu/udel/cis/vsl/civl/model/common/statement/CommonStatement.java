@@ -17,6 +17,8 @@ import edu.udel.cis.vsl.civl.model.IF.location.Location.AtomicKind;
 import edu.udel.cis.vsl.civl.model.IF.statement.Statement;
 import edu.udel.cis.vsl.civl.model.common.CommonSourceable;
 import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
+import org.json.JSONObject;
+import org.json.JSONString;
 
 /**
  * The parent of all statements.
@@ -25,7 +27,7 @@ import edu.udel.cis.vsl.sarl.IF.SymbolicUniverse;
  * 
  */
 public abstract class CommonStatement extends CommonSourceable implements
-		Statement {
+		Statement, JSONString {
 
 	private Location source;
 	private Location target;
@@ -288,6 +290,18 @@ public abstract class CommonStatement extends CommonSourceable implements
 		result += this.summaryOfSource();
 		result += ";";
 		return result;
+	}
+
+	@Override
+	public String toJSONString() {
+		JSONObject obj = new JSONObject();
+		obj.put("loc", this.locationStepString());
+		obj.put("type", this.statementKind().name());
+		if (getSource() != null)
+			obj.put("summary", getSource());
+		else
+			obj.put("summary", source.getSource().toJSONString());
+		return obj.toString();
 	}
 
 	@Override

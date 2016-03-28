@@ -3,6 +3,7 @@ package edu.udel.cis.vsl.civl.model.common;
 import java.io.PrintStream;
 
 import edu.udel.cis.vsl.civl.model.IF.CIVLSource;
+import org.json.JSONObject;
 
 public class ExpandedCIVL implements CIVLSource {
 
@@ -44,4 +45,12 @@ public class ExpandedCIVL implements CIVLSource {
 		return expandedSource.getContent() + " from " + baseSource.getContent();
 	}
 
+	@Override
+	public String toJSONString() {
+		JSONObject obj = new JSONObject();
+		obj.put("filename", getFileName());
+		obj.put("location", getLocation());
+		obj.put("content", getContent());
+		return obj.toString();
+	}
 }
